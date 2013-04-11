@@ -1,0 +1,57 @@
+NAXIS = 1
+
+RADECSYS = position coordsys
+EQUINOX = 1.0
+CTYPE1 = RA
+CUNIT1 = DEC
+CTYPE2 = GLON
+CUNIT2 = GLAT
+CSYER1 = 5.0
+CRDER1 = 6.0
+CSYER2 = 7.0
+CRDER2 = 8.0
+CD1_1 = 9.0
+CD1_2 = 10.0
+CD2_1 = 11.0
+CD2_2 = 12.0
+NAXIS1 = 13
+NAXIS2 = 14
+CRPIX1 = 15.0
+CRVAL1  = 16.0
+CRPIX2 = 17.0
+CRVAL2 = 18.0
+
+SPECSYS = energy specsys
+SSYSOBS = energy ssysobs
+RESTFRQ = 1.0
+RESTWAV = 2.0
+VELOSYS = 3.0
+ZSOURCE = 4.0
+SSYSSRC = energy ssyssrc
+VELANG = 5.0
+CTYPE3 = WAVE
+CUNIT3 = energy axis axis cunit
+CSYER3 = 7.0
+CRDER3 = 8.0
+NAXIS3 = 9
+CDELT3 = 10.0
+CRPIX3 = 11.0
+CRVAL3 = 12.0
+
+CTYPE4 = STOKES
+CUNIT4 = polarization axis cunit
+CSYER4 = 1.0
+CRDER4 = 2.0
+NAXIS4 = 3
+CDELT4 = 4.0
+CRPIX4 = 5.0
+CRVAL4 = 6.0
+
+CTYPE5 = TIME
+CUNIT5 = time axis cunit
+CSYER5 = 3.0
+CRDER5 = 4.0
+NAXIS5 = 5
+CDELT5 = 6.0
+CRPIX5 = 7.0
+CRVAL5 = 8.0

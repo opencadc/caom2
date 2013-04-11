@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<caom2:Observation xmlns:caom2="vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:type="caom2:SimpleObservation"
+	caom2:id="123">
+  <caom2:collection>TEST</caom2:collection>
+  <caom2:observationID>XMLIngestTest</caom2:observationID>
+  <caom2:algorithm>
+    <caom2:name>exposure</caom2:name>
+  </caom2:algorithm>
+  <caom2:planes>
+    <caom2:plane caom2:id="456" caom2:lastModified="2012-07-12T11:22:33.000">
+      <caom2:productID>productIDFromXML</caom2:productID>
+      <caom2:artifacts>
+        <caom2:artifact caom2:id="789" caom2:lastModified="2012-07-12T11:22:33.000">
+          <caom2:uri>ad:foo/bar</caom2:uri>
+          <caom2:alternative>false</caom2:alternative>
+        </caom2:artifact>
+      </caom2:artifacts>
+    </caom2:plane>
+  </caom2:planes>
+</caom2:Observation>

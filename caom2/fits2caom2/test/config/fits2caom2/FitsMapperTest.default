@@ -1,0 +1,85 @@
+obs.metaRelease = 2012-02-26 17:15:40.000PST
+
+#algorithm.name = algorithmName
+
+instrument.name = instrument name
+
+proposal.id = proposal id
+proposal.keywords = the proposal keywords
+
+target.name = target name
+target.type = object
+target.keywords = the target keywords
+
+telescope.name = telescope name
+telescope.geoLocationX = 1.0
+telescope.geoLocationY = 2.0
+telescope.geoLocationZ = 3.0
+
+plane.metaRelease = 2012-02-26 17:15:40.000
+plane.dataRelease = 2012-02-26 17:15:40.000
+plane.dataProductType = image
+plane.calibrationLevel = PRODUCT
+
+provenance.name = provenance name
+provenance.version = provenance version
+provenance.project = provenance project
+provenance.producer = provenance producer
+provenance.runID = provenance runID
+provenance.reference = http://localhost/provenance/reference
+provenance.lastExecuted = 2012-02-26 17:15:40.000
+provenance.keywords = the provenance keywords
+provenance.inputs = caom:foo/bar/plane1 caom:foo/bar/plane2
+
+metric.name = metric name
+metric.value = 1.0
+metric.error = 2.0
+
+artifact.contentType = artifact contentType
+artifact.contentLength = 1
+artifact.productType = science
+artifact.alternative = true
+
+part.name = 1
+part.productType = science
+
+chunk.observableAxis = 2
+chunk.productType = science
+
+observable.dependent.bin = 1
+observable.dependent.ctype = chunk observable dependent ctype
+observable.dependent.cunit = chunk observable dependent cunit
+observable.independent.bin = 2
+observable.independent.ctype = chunk observable independent ctype
+observable.independent.cunit = chunk observable independent cunit
+
+position.resolution = 2.0
+position.range.start.coord1.pix = 19.0
+position.range.start.coord1.val = 20.0
+position.range.start.coord2.pix = 21.0
+position.range.start.coord2.val = 22.0
+position.range.end.coord1.pix = 23.0
+position.range.end.coord1.val = 24.0
+position.range.end.coord2.pix = 25.0
+position.range.end.coord2.val = 26.0
+
+bandpassName = energy bandpassName
+resolvingPower = 6.0
+energy.range.start.pix = 13.0
+energy.range.start.val = 14.0
+energy.range.end.pix = 15.0
+energy.range.end.val = 16.0
+
+time.exposure = 1.0
+time.resolution = 2.0
+time.range.start.pix = 9.0
+time.range.start.val = 10.0
+time.range.end.pix = 11.0
+time.range.end.val = 12.0
+
+polarization.error.syser = 1.0
+polarization.error.reder = 2.0
+polarization.range.start.pix = 7.0
+polarization.range.start.val = 8.0
+polarization.range.end.pix = 9.0
+polarization.range.end.val = 10.0

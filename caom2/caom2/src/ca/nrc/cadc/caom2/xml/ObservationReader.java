@@ -1,0 +1,1570 @@
+/*
+************************************************************************
+*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+*
+*  (c) 2011.                            (c) 2011.
+*  Government of Canada                 Gouvernement du Canada
+*  National Research Council            Conseil national de recherches
+*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+*  All rights reserved                  Tous droits réservés
+*
+*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+*  expressed, implied, or               énoncée, implicite ou légale,
+*  statutory, of any kind with          de quelque nature que ce
+*  respect to the software,             soit, concernant le logiciel,
+*  including without limitation         y compris sans restriction
+*  any warranty of merchantability      toute garantie de valeur
+*  or fitness for a particular          marchande ou de pertinence
+*  purpose. NRC shall not be            pour un usage particulier.
+*  liable in any event for any          Le CNRC ne pourra en aucun cas
+*  damages, whether direct or           être tenu responsable de tout
+*  indirect, special or general,        dommage, direct ou indirect,
+*  consequential or incidental,         particulier ou général,
+*  arising from the use of the          accessoire ou fortuit, résultant
+*  software.  Neither the name          de l'utilisation du logiciel. Ni
+*  of the National Research             le nom du Conseil National de
+*  Council of Canada nor the            Recherches du Canada ni les noms
+*  names of its contributors may        de ses  participants ne peuvent
+*  be used to endorse or promote        être utilisés pour approuver ou
+*  products derived from this           promouvoir les produits dérivés
+*  software without specific prior      de ce logiciel sans autorisation
+*  written permission.                  préalable et particulière
+*                                       par écrit.
+*
+*  This file is part of the             Ce fichier fait partie du projet
+*  OpenCADC project.                    OpenCADC.
+*
+*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+*  you can redistribute it and/or       vous pouvez le redistribuer ou le
+*  modify it under the terms of         modifier suivant les termes de
+*  the GNU Affero General Public        la “GNU Affero General Public
+*  License as published by the          License” telle que publiée
+*  Free Software Foundation,            par la Free Software Foundation
+*  either version 3 of the              : soit la version 3 de cette
+*  License, or (at your option)         licence, soit (à votre gré)
+*  any later version.                   toute version ultérieure.
+*
+*  OpenCADC is distributed in the       OpenCADC est distribué
+*  hope that it will be useful,         dans l’espoir qu’il vous
+*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+*  without even the implied             GARANTIE : sans même la garantie
+*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+*  General Public License for           Générale Publique GNU Affero
+*  more details.                        pour plus de détails.
+*
+*  You should have received             Vous devriez avoir reçu une
+*  a copy of the GNU Affero             copie de la Licence Générale
+*  General Public License along         Publique GNU Affero avec
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+*                                       <http://www.gnu.org/licenses/>.
+*
+*  $Revision: 4 $
+*
+************************************************************************
+*/
+package ca.nrc.cadc.caom2.xml;
+
+import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.Algorithm;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CalibrationLevel;
+import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.EnergyTransition;
+import ca.nrc.cadc.caom2.Environment;
+import ca.nrc.cadc.caom2.Instrument;
+import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationIntentType;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.Proposal;
+import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetType;
+import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.wcs.Axis;
+import ca.nrc.cadc.caom2.wcs.Coord2D;
+import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
+import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
+import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
+import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
+import ca.nrc.cadc.caom2.wcs.CoordError;
+import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
+import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
+import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.caom2.wcs.ObservableAxis;
+import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
+import ca.nrc.cadc.caom2.wcs.RefCoord;
+import ca.nrc.cadc.caom2.wcs.Slice;
+import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.date.DateUtil;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
+
+/**
+ *
+ * @author jburke
+ */
+public class ObservationReader implements Serializable
+{
+    private static final long serialVersionUID = 201209071030L;
+    
+    private static final String CAOM2_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
+    
+    private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
+
+    private static final Logger log = Logger.getLogger(ObservationReader.class);
+
+    protected boolean enableSchemaValidation;
+    protected Map<String, String> schemaMap;
+    protected Namespace xsiNamespace;
+
+    private transient boolean initDone = false;
+    
+    /**
+     * Constructor. XML Schema validation is enabled by default.
+     */
+    public ObservationReader() { this(true); }
+
+    /**
+     * Constructor. XML schema validation may be disabled, in which case the client
+     * is likely to fail in horrible ways (e.g. NullPointerException) if it receives
+     * invalid documents. However, performance may be improved.
+     *
+     * @param enableSchemaValidation
+     */
+    public ObservationReader(boolean enableSchemaValidation)
+    {
+        this.enableSchemaValidation = enableSchemaValidation;
+    }
+
+    private void init()
+    {
+        if (!initDone)
+        {
+            if (enableSchemaValidation)
+            {
+                String caom2SchemaUrl = XmlUtil.getResourceUrlString(CAOM2_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom2SchemaUrl: " + caom2SchemaUrl);
+
+                String xlinkSchemaUrl = XmlUtil.getResourceUrlString(XLINK_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("xlinkSchemaUrl: " + xlinkSchemaUrl);
+
+                if (caom2SchemaUrl == null)
+                    throw new RuntimeException("failed to load " + CAOM2_SCHEMA_RESOURCE + " from classpath");
+                if (xlinkSchemaUrl == null)
+                    throw new RuntimeException("failed to load " + XLINK_SCHEMA_RESOURCE + " from classpath");
+
+                schemaMap = new HashMap<String, String>();
+                schemaMap.put(XmlConstants.CAOM2_NAMESPACE, caom2SchemaUrl);
+                schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
+                log.debug("schema validation enabled");
+            }
+            else
+                log.debug("schema validation disabled");
+
+            xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
+            this.initDone = true;
+        }
+    }
+    
+    /**
+     *  Construct an Observation from an XML String source.
+     *
+     * @param xml String of the XML.
+     * @return An Observation.
+     * @throws ObservationParsingException if there is an error parsing the XML.
+     */
+    public Observation read(String xml)
+        throws ObservationParsingException
+    {
+        if (xml == null)
+            throw new IllegalArgumentException("XML must not be null");
+        try
+        {
+            return read(new StringReader(xml));
+        }
+        catch (IOException ioe)
+        {
+            String error = "Error reading XML: " + ioe.getMessage();
+            throw new ObservationParsingException(error, ioe);
+        }
+    }
+    
+    /**
+     * Construct an Observation from a InputStream.
+     *
+     * @param in An InputStream.
+     * @return An Observation.
+     * @throws ObservationParsingException if there is an error parsing the XML.
+     */
+    public Observation read(InputStream in)
+        throws ObservationParsingException, IOException
+    {
+        if (in == null)
+            throw new IOException("stream must not be null");
+        try
+        {
+            return read(new InputStreamReader(in, "UTF-8"));
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException("UTF-8 encoding not supported");
+        }
+    }
+
+    private void assignEntityAttributes(Element e, CaomEntity ce, DateFormat df)
+        throws ObservationParsingException
+    {
+        Attribute aid = e.getAttribute("id", e.getNamespace());
+        Attribute alastModified = e.getAttribute("lastModified", e.getNamespace());
+        try
+        {
+            Long id = new Long(aid.getLongValue());
+            assignID(ce, id);
+            if (alastModified != null)
+            {
+                Date lastModified = df.parse(alastModified.getValue());
+                assignLastModified(ce, lastModified);
+            }
+        }
+        catch(DataConversionException ex)
+        {
+            throw new ObservationParsingException("invalid id: " + aid.getValue());
+        }
+        catch(ParseException ex)
+        {
+            throw new ObservationParsingException("invalid lastModified: " + alastModified.getValue());
+        }
+    }
+
+    /**
+     *  Construct an Observation from a Reader.
+     *
+     * @param reader A Reader.
+     * @return An Observation.
+     * @throws ObservationParsingException if there is an error parsing the XML.
+     */
+    public Observation read(Reader reader)
+        throws ObservationParsingException, IOException
+    {
+        if (reader == null)
+            throw new IllegalArgumentException("reader must not be null");
+
+        init();
+        
+        Document document;
+        try
+        {
+            document = XmlUtil.buildDocument(reader, schemaMap);
+        }
+        catch (JDOMException jde)
+        {
+            String error = "XML failed schema validation: " + jde.getMessage();
+            throw new ObservationParsingException(error, jde);
+        }
+        
+        // IVOA DateFormat.
+        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+
+        // Root element and namespace of the Document
+        Element root = document.getRootElement();
+        Namespace namespace = root.getNamespace();
+        log.debug("obs namespace uri: " + namespace.getURI());
+        log.debug("obs namespace prefix: " + namespace.getPrefix());
+        
+        // Simple or Composite
+        Attribute type = root.getAttribute("type", xsiNamespace);
+        String tval = type.getValue();
+        tval = tval.substring(namespace.getPrefix().length() + 1); // strip off ns:
+        
+        // collection and observationID.
+        String collection = getChildText("collection", root, namespace, true);
+        String observationID = getChildText("observationID", root, namespace, true);
+       
+        // Algorithm.
+        Algorithm algorithm = getAlgorithm(root, namespace, dateFormat);
+            
+        // Create the Observation.
+        Observation obs;
+        if ( SimpleObservation.class.getSimpleName().equals(tval) )
+        {
+            obs = new SimpleObservation(collection, observationID);
+            obs.setAlgorithm(algorithm);
+        }
+        else if ( CompositeObservation.class.getSimpleName().equals(tval) )
+        {
+            obs = new CompositeObservation(collection, observationID, algorithm);
+        }
+        else
+            throw new ObservationParsingException("unexpected observation type: " + tval);
+
+        // Observation children.
+        String intent = getChildText("intent", root, namespace, false);
+        if (intent != null)
+            obs.intent = ObservationIntentType.toValue(intent);
+        obs.type = getChildText("type", root, namespace, false);
+
+
+        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, dateFormat);
+        obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root, namespace, false);
+        obs.proposal = getProposal(root, namespace, dateFormat);
+        obs.target = getTarget(root, namespace, dateFormat);
+        obs.telescope = getTelescope(root, namespace, dateFormat);
+        obs.instrument = getInstrument(root, namespace, dateFormat);
+        obs.environment = getEnvironment(root, namespace, dateFormat);
+
+        addPlanes(obs.getPlanes(), root, namespace, dateFormat);
+        
+        if (obs instanceof CompositeObservation)
+        {
+            addMembers(((CompositeObservation) obs).getMembers(), root, namespace, dateFormat);
+        }
+
+        assignEntityAttributes(root, obs, dateFormat);
+        
+        return obs;
+    }
+
+    /**
+     * Build an Algorithm from a JDOM representation of an algorithm element.
+     *
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Algorithm, or null if the document doesn't contain an algorithm element.
+     * @throws ObservationParsingException
+     */
+    protected Environment getEnvironment(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("environment", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+
+        Environment env = new Environment();
+        env.seeing = getChildTextAsDouble("seeing", element, namespace, false);
+        env.humidity = getChildTextAsDouble("humidity", element, namespace, false);
+        env.elevation = getChildTextAsDouble("elevation", element, namespace, false);
+        env.tau = getChildTextAsDouble("tau", element, namespace, false);
+        env.wavelengthTau = getChildTextAsDouble("wavelengthTau", element, namespace, false);
+        env.ambientTemp = getChildTextAsDouble("ambientTemp", element, namespace, false);
+        env.photometric = getChildTextAsBoolean("photometric", element, namespace, false);
+        return env;
+    }
+
+    /**
+     * Build an Algorithm from a JDOM representation of an algorithm element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Algorithm, or null if the document doesn't contain an algorithm element.
+     * @throws ObservationParsingException 
+     */
+    protected Algorithm getAlgorithm(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("algorithm", parent, namespace, true);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String name = getChildText("name", element, namespace, true);
+        return new Algorithm(name);
+    }
+    
+    /**
+     * Build an Proposal from a JDOM representation of an proposal element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Proposal, or null if the document doesn't contain an proposal element.
+     * @throws ObservationParsingException 
+     */
+    protected Proposal getProposal(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("proposal", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String id = getChildText("id", element, namespace, true);
+        Proposal proposal = new Proposal(id);
+
+        proposal.pi = getChildText("pi", element, namespace, false);
+        proposal.project = getChildText("project", element, namespace, false);
+        proposal.title = getChildText("title", element, namespace, false);
+        addChildTextToStringList("keywords", proposal.getKeywords(), element, namespace, false);
+        
+        return proposal;
+    }
+    
+    /**
+     * Build an Target from a JDOM representation of an target element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Target, or null if the document doesn't contain an target element.
+     * @throws ObservationParsingException 
+     */
+    protected Target getTarget(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("target", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String name = getChildText("name", element, namespace, true);
+        
+        Target target = new Target(name);
+
+        String type = getChildText("type", element, namespace, false);
+        if (type != null)
+            target.type = TargetType.toValue(type);
+
+        target.standard = getChildTextAsBoolean("standard", element, namespace, false);
+        target.redshift =  getChildTextAsDouble("redshift", element, namespace, false);
+        addChildTextToStringList("keywords", target.getKeywords(), element, namespace, false);
+        
+        return target;
+    }
+    
+    /**
+     * Build an Telescope from a JDOM representation of an telescope element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an TarTelescopeget, or null if the document doesn't contain an telescope element.
+     * @throws ObservationParsingException 
+     */
+    protected Telescope getTelescope(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("telescope", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String name = getChildText("name", element, namespace, true);
+        Telescope telescope = new Telescope(name);
+
+        telescope.geoLocationX =  getChildTextAsDouble("geoLocationX", element, namespace, false);
+        telescope.geoLocationY =  getChildTextAsDouble("geoLocationY", element, namespace, false);
+        telescope.geoLocationZ =  getChildTextAsDouble("geoLocationZ", element, namespace, false);
+        addChildTextToStringList("keywords", telescope.getKeywords(), element, namespace, false);
+        
+        return telescope;
+    }
+    
+    /**
+     * Build an Instrument from a JDOM representation of an instrument element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Instrument, or null if the document doesn't contain an instrument element.
+     * @throws ObservationParsingException 
+     */
+    protected Instrument getInstrument(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("instrument", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String name = getChildText("name", element, namespace, true);
+        Instrument instrument = new Instrument(name);
+        
+        addChildTextToStringList("keywords", instrument.getKeywords(), element, namespace, false);
+        
+        return instrument;
+    }
+    
+    /**
+     * Creates ObservationURI from the observationURI elements found in the
+     * members element, and adds them to the given Set of ObservationURI's.
+     * 
+     * @param members Set of Member's from the Observation.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addMembers(Set<ObservationURI> members, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("members", parent, namespace, false);
+        if (element != null)
+        {
+            List children = getChildrenElements("observationURI", element, namespace, false);
+            Iterator it = children.iterator();
+            while (it.hasNext())
+            {
+                Element child = (Element) it.next();
+                try
+                {
+                    members.add(new ObservationURI(new URI(child.getText())));
+                }
+                catch (URISyntaxException e)
+                {
+                    String error = "Unable to parse observationURI " + child.getText() + 
+                                   " in to an ObservationURI in element " + element.getName() +
+                                   " because " + e.getMessage();
+                    throw new ObservationParsingException(error);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Creates Plane's from the plane elements found in the planes element,
+     * and adds them to the given Set of Plane's.
+     * 
+     * @param planes the Set of Plane's from the Observation.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addPlanes(Set<Plane> planes, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("planes", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return;
+        
+        List planeElements = getChildrenElements("plane", element, namespace, false);        
+        Iterator it = planeElements.iterator();
+        while (it.hasNext())
+        {
+            Element planeElement = (Element) it.next();
+            String productID = getChildText("productID", planeElement, namespace, true);
+            Plane plane = new Plane(productID);
+            
+            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, dateFormat);
+            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, dateFormat);
+            
+            String dataProductType = getChildText("dataProductType", planeElement, namespace, false);
+            if (dataProductType != null)
+            {
+                plane.dataProductType = DataProductType.toValue(dataProductType);
+            }
+            
+            String calibrationLevel = getChildText("calibrationLevel", planeElement, namespace, false);
+            if (calibrationLevel != null)
+            {
+                plane.calibrationLevel = CalibrationLevel.toValue(Integer.parseInt(calibrationLevel));
+            }
+            
+            plane.provenance = getProvenance(planeElement, namespace, dateFormat);
+            plane.metrics = getMetrics(planeElement, namespace, dateFormat);
+            addArtifacts(plane.getArtifacts(), planeElement, namespace, dateFormat);
+
+            assignEntityAttributes(planeElement, plane, dateFormat);
+
+            planes.add(plane);
+        }
+    }
+    
+    /**
+     * Build a Provenance from a JDOM representation of an Provenance.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return an Provenance, or null if the document doesn't contain a provenance element.
+     * @throws ObservationParsingException 
+     */
+    protected Provenance getProvenance(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("provenance", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String name = getChildText("name", element, namespace, true);
+        Provenance provenance = new Provenance(name);
+    
+        provenance.version =  getChildText("version", element, namespace, false);
+        provenance.project =  getChildText("project", element, namespace, false);
+        provenance.producer =  getChildText("producer", element, namespace, false);
+        provenance.runID =  getChildText("runID", element, namespace, false);
+        String reference =  getChildText("reference", element, namespace, false);
+        if (reference != null)
+        {
+            try
+            {
+                provenance.reference = new URI(reference);
+            }
+            catch (URISyntaxException e)
+            {
+                String error = "Unable to parse reference " + reference + 
+                               " to URI in element " + element.getName() +
+                               " because " + e.getMessage();
+                throw new ObservationParsingException(error);
+            }
+        }
+        provenance.lastExecuted = getChildTextAsDate("lastExecuted", element, namespace, false, dateFormat);
+        addChildTextToStringList("keywords", provenance.getKeywords(), element, namespace, false);
+        addInputs(provenance.getInputs(), element, namespace, dateFormat);
+        
+        return provenance;
+    }
+
+    protected Metrics getMetrics(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("metrics", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+
+        Metrics metrics = new Metrics();
+        metrics.sourceNumberDensity = getChildTextAsDouble("sourceNumberDensity", element, namespace, false);
+        metrics.background = getChildTextAsDouble("background", element, namespace, false);
+        metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev", element, namespace, false);
+        metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit", element, namespace, false);
+        metrics.magLimit = getChildTextAsDouble("magLimit", element, namespace, false);
+        return metrics;
+    }
+
+    protected EnergyTransition getTransition(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("transition", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+
+        String species = getChildText("species", element, namespace, true);
+        String transition = getChildText("transition", element, namespace, true);
+        return new EnergyTransition(species, transition);
+    }
+    
+    /**
+     * Creates PlaneURI's from the planeURI elements found in the inputs element,
+     * and adds them to the given Set of PlaneURI's.
+     * 
+     * @param inputs the Set of PlaneURI from the Provenance.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addInputs(Set<PlaneURI> inputs, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("inputs", parent, namespace, false);
+        if (element != null)
+        {
+            List children = getChildrenElements("planeURI", element, namespace, false);
+            Iterator it = children.iterator();
+            while (it.hasNext())
+            {
+                Element child = (Element) it.next();
+                try
+                {
+                    inputs.add(new PlaneURI(new URI(child.getText())));
+                }
+                catch (URISyntaxException e)
+                {
+                    String error = "Unable to parse observationURI " + child.getText() + 
+                                   " in to an ObservationURI in element " + element.getName() +
+                                   " because " + e.getMessage();
+                    throw new ObservationParsingException(error);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Creates Artifact's from the artifact elements found in the artifacts element,
+     * and adds them to the given Set of Artifact's.
+     * 
+     * @param artifacts the Set of Artifact's from the Plane.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addArtifacts(Set<Artifact> artifacts, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("artifacts", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return;
+        
+        List artifactElements = getChildrenElements("artifact", element, namespace, false);
+        Iterator it = artifactElements.iterator();
+        while (it.hasNext())
+        {
+            Element artifactElement = (Element) it.next();
+            String uri = getChildText("uri", artifactElement, namespace, true);
+            Artifact artifact;
+            try
+            {
+                artifact = new Artifact(new URI(uri));
+            }
+            catch (URISyntaxException e)
+            {
+                String error = "Unable to parse uri " + uri + " in to a URI in element " +
+                                artifactElement.getName() + " because " + e.getMessage();
+                throw new ObservationParsingException(error);
+            }
+
+            artifact.contentType = getChildText("contentType", artifactElement, namespace, false);
+            artifact.contentLength = getChildTextAsLong("contentLength", artifactElement, namespace, false);
+            String productType = getChildText("productType", artifactElement, namespace, false);
+            if (productType != null)
+            {
+                artifact.productType = ProductType.toValue(productType);
+            }
+            artifact.alternative = getChildTextAsBoolean("alternative", artifactElement, namespace, false);
+            addParts(artifact.getParts(), artifactElement, namespace, dateFormat);
+
+            assignEntityAttributes(artifactElement, artifact, dateFormat);
+            
+            artifacts.add(artifact);
+        }
+    }
+    
+    /**
+     * Creates Part's from the part elements found in the parts element,
+     * and adds them to the given Set of Part's.
+     * 
+     * @param parts the Set of Part's from the Artifact.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addParts(Set<Part> parts, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("parts", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return;
+        
+        List partElements = getChildrenElements("part", element, namespace, false);
+        Iterator it = partElements.iterator();
+        while (it.hasNext())
+        {
+            Element partElement = (Element) it.next();
+            String partName = getChildText("name", partElement, namespace, true);
+            
+            Part part = new Part(partName);
+            
+            String productType = getChildText("productType", partElement, namespace, false);
+            if (productType != null)
+            {
+                part.productType = ProductType.toValue(productType);
+            }
+            addChunks(part.getChunks(), partElement, namespace, dateFormat);
+
+            assignEntityAttributes(partElement, part, dateFormat);
+            
+            parts.add(part);
+        }
+    }
+    
+    /**
+     * Creates Chunk's from the chunk elements found in the chunks element,
+     * and adds them to the given Set of Chunk's.
+     * 
+     * @param chunks the Set of Chunk's from the Part.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @throws ObservationParsingException 
+     */
+    protected void addChunks(Set<Chunk> chunks, Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("chunks", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return;
+        
+        List chunkElements = getChildrenElements("chunk", element, namespace, false);
+        Iterator it = chunkElements.iterator();
+        while (it.hasNext())
+        {
+            Element chunkElement = (Element) it.next();
+            
+            Chunk chunk = new Chunk();
+            
+            String productType = getChildText("productType", chunkElement, namespace, false);
+            if (productType != null)
+            {
+                chunk.productType = ProductType.toValue(productType);
+            }
+            chunk.naxis = getChildTextAsInteger("naxis", chunkElement, namespace, false);
+            chunk.observableAxis = getChildTextAsInteger("observableAxis", chunkElement, namespace, false);
+            chunk.positionAxis1 = getChildTextAsInteger("positionAxis1", chunkElement, namespace, false);
+            chunk.positionAxis2 = getChildTextAsInteger("positionAxis2", chunkElement, namespace, false);
+            chunk.energyAxis = getChildTextAsInteger("energyAxis", chunkElement, namespace, false);
+            chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement, namespace, false);
+            chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis", chunkElement, namespace, false);
+
+            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, dateFormat);
+            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, dateFormat);
+            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, dateFormat);
+            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, dateFormat);
+            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, dateFormat);
+
+            assignEntityAttributes(chunkElement, chunk, dateFormat);
+            
+            chunks.add(chunk);
+        }
+    }
+    
+    /**
+     * Build an ObservableAxis from a JDOM representation of an observable element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @param required is the element expected to be found.
+     * @return an ObservableAxis, or null if the document doesn't contain an observable element.
+     * @throws ObservationParsingException 
+     */
+    protected ObservableAxis getObservableAxis(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Slice dependent = getSlice("dependent", element, namespace, true);        
+        ObservableAxis observable = new ObservableAxis(dependent);
+        observable.independent = getSlice("independent", element, namespace, false);
+        return observable;
+    }
+    
+    /**
+     * Build an SpatialWCS from a JDOM representation of an position element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @param required is the element expected to be found.
+     * @return an SpatialWCS, or null if the document doesn't contain an position element.
+     * @throws ObservationParsingException 
+     */
+    protected SpatialWCS getSpatialWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        CoordAxis2D axis = getCoordAxis2D("axis", element, namespace, true);
+        SpatialWCS position = new SpatialWCS(axis);
+        position.coordsys = getChildText("coordsys", element, namespace, false);
+        position.equinox = getChildTextAsDouble("equinox", element, namespace, false);
+        position.resolution = getChildTextAsDouble("resolution", element, namespace, false);
+        return position;
+    }
+    
+    /**
+     * Build an SpectralWCS from a JDOM representation of an energy element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @param required is the element expected to be found.
+     * @return an SpectralWCS, or null if the document doesn't contain an energy element.
+     * @throws ObservationParsingException 
+     */
+    protected SpectralWCS getSpectralWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
+        String specsys = getChildText("specsys", element, namespace, true);
+        SpectralWCS energy = new SpectralWCS(axis, specsys);
+        energy.ssysobs = getChildText("ssysobs", element, namespace, false);
+        energy.ssyssrc = getChildText("ssyssrc", element, namespace, false);
+        energy.restfrq = getChildTextAsDouble("restfrq", element, namespace, false);
+        energy.restwav = getChildTextAsDouble("restwav", element, namespace, false);
+        energy.velosys = getChildTextAsDouble("velosys", element, namespace, false);
+        energy.zsource = getChildTextAsDouble("zsource", element, namespace, false);
+        energy.velang = getChildTextAsDouble("velang", element, namespace, false);
+        energy.bandpassName = getChildText("bandpassName", element, namespace, false);
+        energy.resolvingPower = getChildTextAsDouble("resolvingPower", element, namespace, false);
+        energy.transition = getTransition(element, namespace, dateFormat);
+        return energy;
+    }
+    
+    /**
+     * Build an TemporalWCS from a JDOM representation of an time element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @param required is the element expected to be found.
+     * @return an TemporalWCS, or null if the document doesn't contain an time element.
+     * @throws ObservationParsingException 
+     */
+    protected TemporalWCS getTemporalWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
+        TemporalWCS time = new TemporalWCS(axis);
+        time.timesys = getChildText("timesys", element, namespace, false);
+        time.trefpos = getChildText("trefpos", element, namespace, false);
+        time.mjdref = getChildTextAsDouble("mjdref", element, namespace, false);
+        time.exposure = getChildTextAsDouble("exposure", element, namespace, false);
+        time.resolution = getChildTextAsDouble("resolution", element, namespace, false);
+        return time;
+    }
+    
+    /**
+     * Build an PolarizationWCS from a JDOM representation of an polarization element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @param required is the element expected to be found.
+     * @return an PolarizationWCS, or null if the document doesn't contain an polarization element.
+     * @throws ObservationParsingException 
+     */
+    protected PolarizationWCS getPolarizationWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
+        return new PolarizationWCS(axis);
+    }
+    
+    /**
+     * Build an Axis from a JDOM representation of an axis element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an Axis, or null if the document doesn't contain an axis element.
+     * @throws ObservationParsingException 
+     */
+    protected Axis getAxis(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String ctype = getChildText("ctype", element, namespace, true);
+        String cunit = getChildText("cunit", element, namespace, false);
+        return new Axis(ctype, cunit);
+    }
+    
+    /**
+     * Build an Coord2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an Coord2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected Coord2D getCoord2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        RefCoord coord1 = getRefCoord("coord1", element, namespace, true);
+        RefCoord coord2 = getRefCoord("coord2", element, namespace, true);
+        return new Coord2D(coord1, coord2);
+    }
+    
+    /**
+     * Build an CoordAxis1D from a JDOM representation of element name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordAxis1D, or null if the document doesn't contain element called name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordAxis1D getCoordAxis1D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Axis axis = getAxis("axis", element, namespace, true);
+        CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
+        coordAxis1D.error = getCoordError("error", element, namespace, false);
+        coordAxis1D.range = getCoordRange1D("range", element, namespace, false);
+        coordAxis1D.bounds = getCoordBounds1D("bounds", element, namespace, false);
+        coordAxis1D.function = getCoordFunction1D("function", element, namespace, false);
+        return coordAxis1D;
+    }
+    
+    /**
+     * Build an CoordAxis2D from a JDOM representation of element name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordAxis2D, or null if the document doesn't contain element called name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordAxis2D getCoordAxis2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Axis axis1 = getAxis("axis1", element, namespace, true);
+        Axis axis2 = getAxis("axis2", element, namespace, true);
+        
+        CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+        axis.error1 = getCoordError("error1", element, namespace, false);
+        axis.error2 = getCoordError("error2", element, namespace, false);
+        axis.range = getCoordRange2D("range", element, namespace, false);
+        axis.bounds = getCoordBounds2D("bounds", element, namespace, false);
+        axis.function = getCoordFunction2D("function", element, namespace, false);
+        return axis;
+    }
+    
+    /**
+     * Build an CoordBounds1D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordBounds1D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordBounds1D getCoordBounds1D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        CoordBounds1D coordBounds1D = new CoordBounds1D();
+        Element samples = getChildElement("samples", element, namespace, false);
+        if (samples != null)
+        {
+            addChildrenToCoordRange1DList("range", coordBounds1D.getSamples(), samples, namespace, false);
+        }
+        return coordBounds1D;
+    }
+    
+    /**
+     * Build an CoordBounds2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordBounds2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordBounds2D getCoordBounds2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        // Look for a CoordCircle2D which has a center and a radius.
+        CoordCircle2D circle = getCoordCircle2D("circle", element, namespace, false);
+        if (circle != null)
+            return circle;
+        
+        // Look for a CoordPolygon2D which has a list of Coord2D vertices.
+        CoordPolygon2D polygon = getCoordPolygon2D("polygon", element, namespace, false);
+        if (polygon != null)
+            return polygon;
+        
+        // Unknown children.
+        String error = "Unsupported element found in " + name + ": " + element.getText();
+        throw new ObservationParsingException(error);
+    }
+    
+    /**
+     * Build an CoordCircle2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordCircle2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordCircle2D getCoordCircle2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null)
+            return null;
+        
+        // Look for a CoordCircle2D which has a center and a radius.
+        Coord2D center = getCoord2D("center", element, namespace, true);
+        Double radius = getChildTextAsDouble("radius", element, namespace, true);
+        return new CoordCircle2D(center, radius);
+    }
+    
+    /**
+     * Build an CoordError from a JDOM representation of element name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordError, or null if the document doesn't contain element called name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordError getCoordError(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+
+        Double syser = getChildTextAsDouble("syser", element, namespace, true);
+        Double rnder = getChildTextAsDouble("rnder", element, namespace, true);
+        return new CoordError(syser, rnder);
+    }
+    
+    /**
+     * Build an CoordFunction1D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordFunction1D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordFunction1D getCoordFunction1D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Long naxis = getChildTextAsLong("naxis", element, namespace, true);
+        Double delta = getChildTextAsDouble("delta", element, namespace, true);
+        RefCoord refCoord = getRefCoord("refCoord", element, namespace, true);
+        return new CoordFunction1D(naxis, delta, refCoord);
+    }
+    
+    /**
+     * Build an CoordFunction2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordFunction2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordFunction2D getCoordFunction2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Dimension2D dimension = getDimension2D("dimension", element, namespace, true);
+        Coord2D refCoord = getCoord2D("refCoord", element, namespace, true);
+        double cd11 = getChildTextAsDouble("cd11", element, namespace, true);
+        double cd12 = getChildTextAsDouble("cd12", element, namespace, true);
+        double cd21 = getChildTextAsDouble("cd21", element, namespace, true);
+        double cd22 = getChildTextAsDouble("cd22", element, namespace, true);
+        return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
+    }
+    
+    /**
+     * Build an CoordPolygon2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordPolygon2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordPolygon2D getCoordPolygon2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null)
+            return null;
+        
+        Element vertices = getChildElement("vertices", element, namespace, true);
+        List children = getChildrenElements("vertex", vertices, namespace, true);
+        // Vertices must have a minimum of 3 vertexes.
+        if (children.size() < 3)
+        {
+            String error = "CoordPolygon2D must have a minimum of 3 vertexes, found " + children.size();
+            throw new ObservationParsingException(error);
+        }
+
+        CoordPolygon2D polygon = new CoordPolygon2D();
+        Iterator it = children.iterator();
+        while (it.hasNext())
+        {
+            Element vertexElement = (Element) it.next();
+            RefCoord coord1 = getRefCoord("coord1", vertexElement, namespace, true);
+            RefCoord coord2 = getRefCoord("coord2", vertexElement, namespace, true);
+            polygon.getVertices().add(new Coord2D(coord1, coord2));
+        }
+        return polygon;
+    }
+    
+    /**
+     * Build an CoordRange1D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordRange1D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordRange1D getCoordRange1D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        RefCoord start = getRefCoord("start", element, namespace, true);
+        RefCoord end = getRefCoord("end", element, namespace, true);
+        return new CoordRange1D(start, end);
+    }
+    
+    /**
+     * Build an CoordRange2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an CoordRange2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected CoordRange2D getCoordRange2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Coord2D start = getCoord2D("start", element, namespace, true);
+        Coord2D end = getCoord2D("end", element, namespace, true);
+        return new CoordRange2D(start, end);
+    }
+    
+    /**
+     * Build an Dimension2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an Dimension2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected Dimension2D getDimension2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+
+        Long naxis1 = getChildTextAsLong("naxis1", element, namespace, true);
+        Long naxis2 = getChildTextAsLong("naxis2", element, namespace, true);
+        return new Dimension2D(naxis1, naxis2);
+    }
+    
+    /**
+     * Build an RefCoord from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an RefCoord, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected RefCoord getRefCoord(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Double pix = getChildTextAsDouble("pix", element, namespace, true);
+        Double val = getChildTextAsDouble("val", element, namespace, true);
+        return new RefCoord(pix, val);
+    }
+
+    /**
+     * Build an Slice from a JDOM representation of an slice element.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return an Slice, or null if the document doesn't contain an slice element.
+     * @throws ObservationParsingException 
+     */
+    protected Slice getSlice(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Axis axis = getAxis("axis", element, namespace, true);        
+        Long bin = getChildTextAsLong("bin", element, namespace, true);
+        return new Slice(axis, bin);
+    }
+    
+//    protected String getAttributeValue(String name, Element element, boolean required)
+//        throws ObservationParsingException
+//    {
+//        String value = element.getAttributeValue(name);
+//        if (required && value == null)
+//        {
+//            String error = "Required attribute " + name + " not found in element " + element.getName();
+//            throw new ObservationParsingException(error);
+//        }
+//        return value;
+//    }
+    
+    protected Element getChildElement(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = element.getChild(name, ns);
+        if (required && child == null)
+        {
+            String error = name + " element not found in " + element.getName();
+            throw new ObservationParsingException(error);
+        }
+        return child;
+    }
+    
+    protected String getChildText(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = getChildElement(name, element, ns, required);
+        if (child != null)
+            return child.getText();
+        return null;
+    }
+    
+    protected Boolean getChildTextAsBoolean(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = getChildElement(name, element, ns, required);
+        if (child != null)
+            return Boolean.valueOf(child.getText());
+        return null;
+    }
+    
+    protected Integer getChildTextAsInteger(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = getChildElement(name, element, ns, required);
+        if (child != null)
+            return Integer.valueOf(child.getText());
+        return null;
+    }
+    
+    protected Double getChildTextAsDouble(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = getChildElement(name, element, ns, required);
+        if (child != null)
+            return Double.valueOf(child.getText());
+        return null;
+    }
+    
+    protected Long getChildTextAsLong(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        Element child = getChildElement(name, element, ns, required);
+        if (child != null)
+            return Long.valueOf(child.getText());
+        return null;
+    }
+    
+    protected void addChildTextToStringList(String name, List<String> list, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        String child = getChildText(name, element, ns, required);
+        if (child == null)
+            return;
+
+        String[] tokens = child.split("[\\s]+");
+        for (int i = 0; i < tokens.length; i++)
+        {
+            String token = tokens[i];
+            if (!token.trim().isEmpty())
+                list.add(token);
+        }
+    }
+    
+    protected void addChildrenToCoordRange1DList(String name, List<CoordRange1D> list, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        List children = getChildrenElements(name, element, ns, required);
+        Iterator it = children.iterator();
+        while (it.hasNext())
+        {
+            Element child = (Element) it.next();
+            RefCoord start = getRefCoord("start", child, ns, true);
+            RefCoord end = getRefCoord("end", child, ns, true);
+            list.add(new CoordRange1D(start, end));
+        }
+    }
+    
+    protected Date getChildTextAsDate(String name, Element element, Namespace ns, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        String child = getChildText(name, element, ns, required);
+        if (child != null)
+        {
+            try
+            {
+                return DateUtil.flexToDate(child, dateFormat);
+            }
+            catch (ParseException ex)
+            {
+                String error = "Unable to parse " + name + " in " + element.getName() + " to a date because " + ex.getMessage();
+                throw new ObservationParsingException(error, ex);
+            }
+        }
+        return null;
+    }
+
+    protected List getChildrenElements(String name, Element element, Namespace ns, boolean required)
+        throws ObservationParsingException
+    {
+        List children = element.getChildren(name, ns);
+        if (required && children.isEmpty())
+        {
+            String error = name + " element not found in " + element.getName();
+            throw new ObservationParsingException(error);
+        }
+        return children;
+    }
+
+    static void assignID(Object ce, Long id)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(ce, id);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+    static void assignLastModified(Object ce, Date value)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField("lastModified");
+            f.setAccessible(true);
+            f.set(ce, value);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+    static void assignStateCode(Object ce, Integer sc)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
+            f.setAccessible(true);
+            f.set(ce, sc);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+    static int getStateCode(Object ce)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
+            f.setAccessible(true);
+            Integer val = (Integer) f.get(ce);
+            if (val == null)
+                return -1;
+            return val.intValue();
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+}

@@ -1,0 +1,4 @@
+default_Boolean = true
+default_Double = 1.0
+default_Float = 1.5
+default_Long = 2

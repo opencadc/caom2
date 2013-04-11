@@ -1,0 +1,4 @@
+override_Date = 2012-3-13 12:12:12.000GMT
+override_List = a,list
+override_Set = caom:collection/observationID
+override_int_array = 1,2

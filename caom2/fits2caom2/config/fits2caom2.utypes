@@ -1,0 +1,159 @@
+CompositeObservation.members = 
+
+Observation.collection = 
+Observation.observationID = 
+Observation.metaRelease = 
+Observation.type =
+Observation.intent =
+
+Observation.instrument.name = 
+
+Observation.proposal.id = 
+Observation.proposal.pi = 
+Observation.proposal.project = 
+Observation.proposal.title = 
+Observation.proposal.keywords = 
+
+Observation.target.name = 
+Observation.target.type = 
+Observation.target.redshift = 
+Observation.target.keywords = 
+
+Observation.telescope.name = 
+Observation.telescope.geoLocationX = 
+Observation.telescope.geoLocationY = 
+Observation.telescope.geoLocationZ = 
+Observation.telescope.keywords = 
+
+Plane.productID = 
+Plane.metaRelease = 
+Plane.dataRelease = 
+Plane.dataProductType = 
+Plane.calibrationLevel = 
+
+Plane.provenance.name = 
+Plane.provenance.version = 
+Plane.provenance.project = 
+Plane.provenance.producer = 
+Plane.provenance.runID = 
+Plane.provenance.reference = 
+Plane.provenance.lastExecuted = 
+Plane.provenance.inputs = 
+
+Metric.name = 
+Metric.value = 
+Metric.error = 
+
+Artifact.uri = 
+Artifact.contentType = 
+Artifact.contentLength = 
+Artifact.productType = 
+Artifact.alternative = 
+
+Part.name = 
+Part.productType = 
+
+Chunk.naxis = 
+Chunk.observableAxis = 
+Chunk.positionAxis1 =
+Chunk.positionAxis2 = 
+Chunk.energyAxis = 
+Chunk.timeAxis = 
+Chunk.polarizationAxis = 
+Chunk.productType = 
+
+Chunk.observable.dependent.bin = 
+Chunk.observable.dependent.axis.ctype = 
+Chunk.observable.dependent.axis.cunit = 
+Chunk.observable.independent.bin = 
+Chunk.observable.independent.axis.ctype = 
+Chunk.observable.independent.axis.cunit = 
+
+Chunk.position.coordsys = 
+Chunk.position.equinox = 
+Chunk.position.resolution =
+Chunk.position.axis.axis1.ctype = 
+Chunk.position.axis.axis1.cunit = 
+Chunk.position.axis.axis2.ctype = 
+Chunk.position.axis.axis2.cunit = 
+Chunk.position.axis.delta.delt1 = 
+Chunk.position.axis.delta.delt2 =
+Chunk.position.axis.error1.syser = 
+Chunk.position.axis.error1.rnder = 
+Chunk.position.axis.error2.syser = 
+Chunk.position.axis.error2.rnder = 
+Chunk.position.axis.function.cd11 = 
+Chunk.position.axis.function.cd12 = 
+Chunk.position.axis.function.cd21 = 
+Chunk.position.axis.function.cd22 = 
+Chunk.position.axis.function.dimension.naxis1 = 
+Chunk.position.axis.function.dimension.naxis2 = 
+Chunk.position.axis.function.refcoord.coord1.pix = 
+Chunk.position.axis.function.refcoord.coord1.val = 
+Chunk.position.axis.function.refcoord.coord2.pix = 
+Chunk.position.axis.function.refcoord.coord2.val =
+Chunk.position.axis.range.start.coord1.pix = 
+Chunk.position.axis.range.start.coord1.val = 
+Chunk.position.axis.range.start.coord2.pix = 
+Chunk.position.axis.range.start.coord2.val = 
+Chunk.position.axis.range.end.coord1.pix = 
+Chunk.position.axis.range.end.coord1.val = 
+Chunk.position.axis.range.end.coord2.pix = 
+Chunk.position.axis.range.end.coord2.val = 
+
+Chunk.energy.specsys = 
+Chunk.energy.ssysobs = 
+Chunk.energy.restfrq = 
+Chunk.energy.restwav = 
+Chunk.energy.velosys = 
+Chunk.energy.zsource = 
+Chunk.energy.ssyssrc = 
+Chunk.energy.velang = 
+Chunk.energy.bandpassName = 
+Chunk.energy.resolvingPower =
+Chunk.energy.axis.axis.ctype = 
+Chunk.energy.axis.axis.cunit = 
+Chunk.energy.axis.bounds.samples =
+Chunk.energy.axis.error.syser =
+Chunk.energy.axis.error.rnder =
+Chunk.energy.axis.function.naxis = 
+Chunk.energy.axis.function.delta = 
+Chunk.energy.axis.function.refcoord.pix = 
+Chunk.energy.axis.function.refcoord.val =
+Chunk.energy.axis.range.start.coord1.pix = 
+Chunk.energy.axis.range.start.coord1.val = 
+Chunk.energy.axis.range.end.coord1.pix = 
+Chunk.energy.axis.range.end.coord1.val = 
+
+Chunk.time.exposure = 
+Chunk.time.resolution =
+Chunk.time.timesys =
+Chunk.time.trefpos =
+Chunk.time.mjdref =
+Chunk.time.axis.axis.ctype = 
+Chunk.time.axis.axis.cunit = 
+Chunk.time.axis.bounds.samples =
+Chunk.time.axis.error.syser =
+Chunk.time.axis.error.rnder =
+Chunk.time.axis.function.naxis = 
+Chunk.time.axis.function.delta = 
+Chunk.time.axis.function.refcoord.pix = 
+Chunk.time.axis.function.refcoord.val =
+Chunk.time.axis.range.start.coord1.pix = 
+Chunk.time.axis.range.start.coord1.val = 
+Chunk.time.axis.range.end.coord1.pix = 
+Chunk.time.axis.range.end.coord1.val = 
+
+Chunk.polarization.axis.axis.ctype = 
+Chunk.polarization.axis.axis.cunit = 
+Chunk.polarization.axis.bounds.samples =
+Chunk.polarization.axis.error.syser = 
+Chunk.polarization.axis.error.rnder = 
+Chunk.polarization.axis.function.naxis = 
+Chunk.polarization.axis.function.delta = 
+Chunk.polarization.axis.function.refcoord.pix = 
+Chunk.polarization.axis.function.refcoord.val = 
+Chunk.polarization.axis.range.start.coord1.pix = 
+Chunk.polarization.axis.range.start.coord1.val = 
+Chunk.polarization.axis.range.end.coord1.pix = 
+Chunk.polarization.axis.range.end.coord1.val =
