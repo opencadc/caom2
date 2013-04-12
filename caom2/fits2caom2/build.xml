@@ -98,7 +98,7 @@
     <property name="log4j"              value="${ext.lib}/log4j.jar" />
     <property name="xerces"             value="${ext.lib}/xerces.jar" />
     
-    <property name="jars"   value="${cadcRegistryClient}:${cadcUtil}:${cadcVOSClient}:${caom2}:${fits}:${jdom2}:${log4j}" />
+    <property name="jars"   value="${wcs}:${cadcRegistryClient}:${cadcUtil}:${cadcVOSClient}:${caom2}:${fits}:${jdom2}:${log4j}" />
 
     <property name="client.cadc.jars"      value="${cadcRegistryClient}:${cadcUtil}:${cadcVOSClient}:${caom2}:${wcs}" />
     <property name="client.external.jars"  value="${fits}:${jdom2}:${log4j}:${xerces}" />
