@@ -1,0 +1,598 @@
+<?xml version="1.0"?>
+
+<!--
+# -*- coding: latin-1 -*-
+#***********************************************************************
+#******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+#*************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+#
+#  (c) 2010.                            (c) 2010.
+#  Government of Canada                 Gouvernement du Canada
+#  National Research Council            Conseil national de recherches
+#  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+#  All rights reserved                  Tous droits réservés
+#                                       
+#  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+#  expressed, implied, or               énoncée, implicite ou légale,
+#  statutory, of any kind with          de quelque nature que ce
+#  respect to the software,             soit, concernant le logiciel,
+#  including without limitation         y compris sans restriction
+#  any warranty of merchantability      toute garantie de valeur
+#  or fitness for a particular          marchande ou de pertinence
+#  purpose. NRC shall not be            pour un usage particulier.
+#  liable in any event for any          Le CNRC ne pourra en aucun cas
+#  damages, whether direct or           être tenu responsable de tout
+#  indirect, special or general,        dommage, direct ou indirect,
+#  consequential or incidental,         particulier ou général,
+#  arising from the use of the          accessoire ou fortuit, résultant
+#  software.  Neither the name          de l'utilisation du logiciel. Ni
+#  of the National Research             le nom du Conseil National de
+#  Council of Canada nor the            Recherches du Canada ni les noms
+#  names of its contributors may        de ses  participants ne peuvent
+#  be used to endorse or promote        être utilisés pour approuver ou
+#  products derived from this           promouvoir les produits dérivés
+#  software without specific prior      de ce logiciel sans autorisation
+#  written permission.                  préalable et particulière
+#                                       par écrit.
+#                                       
+#  This file is part of the             Ce fichier fait partie du projet
+#  OpenCADC project.                    OpenCADC.
+#                                       
+#  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+#  you can redistribute it and/or       vous pouvez le redistribuer ou le
+#  modify it under the terms of         modifier suivant les termes de
+#  the GNU Affero General Public        la “GNU Affero General Public
+#  License as published by the          License” telle que publiée
+#  Free Software Foundation,            par la Free Software Foundation
+#  either version 3 of the              : soit la version 3 de cette
+#  License, or (at your option)         licence, soit (à votre gré)
+#  any later version.                   toute version ultérieure.
+#                                       
+#  OpenCADC is distributed in the       OpenCADC est distribué
+#  hope that it will be useful,         dans l’espoir qu’il vous
+#  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+#  without even the implied             GARANTIE : sans même la garantie
+#  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+#  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+#  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+#  General Public License for           Générale Publique GNU Affero
+#  more details.                        pour plus de détails.
+#                                       
+#  You should have received             Vous devriez avoir reçu une
+#  a copy of the GNU Affero             copie de la Licence Générale
+#  General Public License along         Publique GNU Affero avec
+#  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+#  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+#                                       <http://www.gnu.org/licenses/>.
+#
+#  $Revision: 4 $
+#
+#***********************************************************************
+#
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           xmlns:caom2="vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0"
+           targetNamespace="vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="qualified">
+
+    <!-- Observation -->
+    <xs:element name="Observation" type="caom2:ObsType" />
+
+    <xs:complexType name="ObsType" abstract="true">
+        <xs:sequence>
+            <xs:element name="collection" type="xs:string"/>
+            <xs:element name="observationID" type="xs:string"/>
+            <xs:element name="metaRelease" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        The metaRelease date is expected to be in IVOA date format: 
+                        yyyy-MM-dd'T'HH:mm:ss.SSS
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="sequenceNumber" type="xs:integer" minOccurs="0"/>
+            <xs:element name="algorithm" type="caom2:Algorithm"/>
+            <xs:element name="type" type="xs:string" minOccurs="0"/>
+            <xs:element name="intent" type="caom2:ObservationIntentType" minOccurs="0"/>
+            <xs:element name="proposal" type="caom2:Proposal" minOccurs="0"/>
+            <xs:element name="target" type="caom2:Target" minOccurs="0"/>
+            <xs:element name="telescope" type="caom2:Telescope" minOccurs="0"/>
+            <xs:element name="instrument" type="caom2:Instrument" minOccurs="0"/>
+            <xs:element name="environment" type="caom2:Environment" minOccurs="0"/>
+            <xs:element name="planes" type="caom2:Planes" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="lastModified" type="xs:string"/>
+    </xs:complexType>
+    
+    <xs:complexType name="SimpleObservation">
+        <xs:complexContent>
+            <xs:extension base="caom2:ObsType"/>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="CompositeObservation">
+        <xs:complexContent>
+            <xs:extension base="caom2:ObsType">
+                <xs:sequence>
+                    <xs:element name="members" type="caom2:ObservationMemberList" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="Algorithm">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Proposal">
+        <xs:sequence>
+            <xs:element name="id" type="xs:string"/>
+            <xs:element name="pi" type="xs:string" minOccurs="0"/>
+            <xs:element name="project" type="xs:string" minOccurs="0"/>
+            <xs:element name="title" type="xs:string" minOccurs="0"/>
+            <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Target">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="type" type="caom2:TargetType" minOccurs="0"/>
+            <xs:element name="standard" type="xs:boolean"  minOccurs="0"/>
+            <xs:element name="redshift" type="xs:double" minOccurs="0"/>
+            <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Telescope">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="geoLocationX" type="xs:double" minOccurs="0"/>
+            <xs:element name="geoLocationY" type="xs:double" minOccurs="0"/>
+            <xs:element name="geoLocationZ" type="xs:double" minOccurs="0"/>
+            <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Instrument">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Environment">
+        <xs:sequence>
+            <xs:element name="seeing" type="xs:double" minOccurs="0"/>
+            <xs:element name="humidity" type="xs:double" minOccurs="0"/>
+            <xs:element name="elevation" type="xs:double" minOccurs="0"/>
+            <xs:element name="tau" type="xs:double" minOccurs="0"/>
+            <xs:element name="wavelengthTau" type="xs:double" minOccurs="0"/>
+            <xs:element name="ambientTemp" type="xs:double" minOccurs="0"/>
+            <xs:element name="photometric" type="xs:boolean" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="ObservationMemberList">
+        <xs:sequence>
+            <xs:element name="observationURI" type="xs:anyURI" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        The observationURI must be constructed as follows:
+                            caom:{collection}/{observationID}
+                            
+                         TODO: formally specify the ObservationURI type
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Plane -->
+    
+    <xs:complexType name="Planes">
+        <xs:sequence>
+            <xs:element name="plane" type="caom2:Plane" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Plane">
+        <xs:sequence>
+            <xs:element name="productID" type="xs:string"/>
+            <xs:element name="metaRelease" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        The metaRelease date is expected to be in IVOA date format: 
+                        yyyy-MM-dd'T'HH:mm:ss.SSS
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="dataRelease" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        The dataRelease date is expected to be in IVOA date format: 
+                        yyyy-MM-dd'T'HH:mm:ss.SSS
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="dataProductType" type="caom2:DataProductType" minOccurs="0"/>
+            <xs:element name="calibrationLevel" type="caom2:CalibrationLevel" minOccurs="0"/>
+            <xs:element name="provenance" type="caom2:Provenance" minOccurs="0"/>
+            <xs:element name="metrics" type="caom2:Metrics" minOccurs="0"/>
+            <xs:element name="artifacts" type="caom2:Artifacts"  minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="lastModified" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="Provenance">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="version" type="xs:string" minOccurs="0"/>
+            <xs:element name="project" type="xs:string" minOccurs="0"/>
+            <xs:element name="producer" type="xs:string" minOccurs="0"/>
+            <xs:element name="runID" type="xs:string" minOccurs="0"/>
+            <xs:element name="reference" type="xs:anyURI" minOccurs="0"/>
+            <xs:element name="lastExecuted" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        The dataRelease date is expected to be in IVOA date format: 
+                        yyyy-MM-dd'T'HH:mm:ss.SSS
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
+            <xs:element name="inputs" type="caom2:PlaneInputList" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Metrics">
+        <xs:sequence>
+            <xs:element name="sourceNumberDensity" type="xs:double"  minOccurs="0"/>
+            <xs:element name="background" type="xs:double" minOccurs="0"/>
+            <xs:element name="backgroundStddev" type="xs:double" minOccurs="0"/>
+            <xs:element name="fluxDensityLimit" type="xs:double" minOccurs="0"/>
+            <xs:element name="magLimit" type="xs:double" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EnergyTransition">
+        <xs:sequence>
+            <xs:element name="species" type="xs:string"/>
+            <xs:element name="transition" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="PlaneInputList">
+        <xs:sequence>
+            <xs:element name="planeURI" type="xs:anyURI" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        The planeURI must be constructed as follows:
+                            caom:{collection}/{observationID}/{productID}
+                        which is based on the observationURI syntax, e.g.:
+                            {observationURI}/{productID}
+
+                        TODO: formally specify the PlaneURI type
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Artifact -->
+    
+    <xs:complexType name="Artifacts">
+        <xs:sequence>
+            <xs:element name="artifact" type="caom2:Artifact" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Artifact">
+        <xs:sequence>
+            <xs:element name="uri" type="xs:anyURI"/>
+            <xs:element name="contentType" type="xs:string" minOccurs="0"/>
+            <xs:element name="contentLength" type="xs:long" minOccurs="0"/>
+            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+            <xs:element name="alternative" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="parts" type="caom2:Parts" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="lastModified" type="xs:string"/>
+    </xs:complexType>
+    
+    <!-- Part -->
+    
+    <xs:complexType name="Parts">
+        <xs:sequence>
+            <xs:element name="part" type="caom2:Part" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Part">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" minOccurs="1"/>
+            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+            <xs:element name="chunks" type="caom2:Chunks" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="lastModified" type="xs:string"/>
+    </xs:complexType>
+    
+    <!-- Chunk -->
+    
+    <xs:complexType name="Chunks">
+        <xs:sequence>
+            <xs:element name="chunk" type="caom2:Chunk" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Chunk">
+        <xs:sequence>
+            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+            <xs:element name="naxis" type="xs:integer" minOccurs="0"/>
+            <xs:element name="observableAxis" type="xs:integer" minOccurs="0"/>
+            <xs:element name="positionAxis1" type="xs:integer" minOccurs="0"/>
+            <xs:element name="positionAxis2" type="xs:integer" minOccurs="0"/>
+            <xs:element name="energyAxis" type="xs:integer" minOccurs="0"/>
+            <xs:element name="timeAxis" type="xs:integer" minOccurs="0"/>
+            <xs:element name="polarizationAxis" type="xs:integer" minOccurs="0"/>
+            <xs:element name="observable" type="caom2:ObservableAxis" minOccurs="0"/>
+            <xs:element name="position" type="caom2:SpatialWCS" minOccurs="0"/>
+            <xs:element name="energy" type="caom2:SpectralWCS" minOccurs="0"/>
+            <xs:element name="time" type="caom2:TemporalWCS" minOccurs="0"/>
+            <xs:element name="polarization" type="caom2:PolarizationWCS" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="lastModified" type="xs:string"/>
+    </xs:complexType>
+    
+    <!-- WCS -->
+    
+    <xs:complexType name="ObservableAxis">
+        <xs:sequence>
+            <xs:element name="dependent" type="caom2:Slice"/>
+            <xs:element name="independent" type="caom2:Slice" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="SpatialWCS">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:CoordAxis2D"/>
+            <xs:element name="coordsys" type="xs:string" minOccurs="0"/>
+            <xs:element name="equinox" type="xs:double" minOccurs="0"/>
+            <xs:element name="resolution" type="xs:double" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="SpectralWCS">
+        <xs:sequence>    
+            <xs:element name="axis" type="caom2:CoordAxis1D"/>
+            <xs:element name="specsys" type="xs:string" minOccurs="0"/>
+            <xs:element name="ssysobs" type="xs:string" minOccurs="0"/>
+            <xs:element name="ssyssrc" type="xs:string" minOccurs="0"/>
+            <xs:element name="restfrq" type="xs:double" minOccurs="0"/>
+            <xs:element name="restwav" type="xs:double" minOccurs="0"/>
+            <xs:element name="velosys" type="xs:double" minOccurs="0"/>
+            <xs:element name="zsource" type="xs:double" minOccurs="0"/>
+            <xs:element name="velang" type="xs:double" minOccurs="0"/>
+            <xs:element name="bandpassName" type="xs:string" minOccurs="0"/>
+            <xs:element name="resolvingPower" type="xs:double" minOccurs="0"/>
+            <xs:element name="transition" type="caom2:EnergyTransition" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="TemporalWCS">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:CoordAxis1D"/>
+            <xs:element name="timesys" type="xs:string" minOccurs="0"/>
+            <xs:element name="trefpos" type="xs:string" minOccurs="0"/>
+            <xs:element name="mjdref" type="xs:double" minOccurs="0"/>
+            <xs:element name="exposure" type="xs:double" minOccurs="0"/>
+            <xs:element name="resolution" type="xs:double" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="PolarizationWCS">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:CoordAxis1D"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Common WCS Types -->
+    
+    <xs:complexType name="Axis">
+        <xs:sequence>
+            <xs:element name="ctype" type="xs:string"/>
+            <xs:element name="cunit" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Coord2D">
+        <xs:sequence>
+            <xs:element name="coord1" type="caom2:RefCoord"/>
+            <xs:element name="coord2" type="caom2:RefCoord"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordAxis1D">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:Axis"/>
+            <xs:element name="error" type="caom2:CoordError" minOccurs="0"/>
+            <xs:element name="range" type="caom2:CoordRange1D" minOccurs="0"/>
+            <xs:element name="bounds" type="caom2:CoordBounds1D" minOccurs="0"/>
+            <xs:element name="function" type="caom2:CoordFunction1D" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordAxis2D">
+        <xs:sequence>
+            <xs:element name="axis1" type="caom2:Axis"/>
+            <xs:element name="axis2" type="caom2:Axis"/>
+            <xs:element name="error1" type="caom2:CoordError" minOccurs="0"/>
+            <xs:element name="error2" type="caom2:CoordError" minOccurs="0"/>
+            <xs:element name="range" type="caom2:CoordRange2D" minOccurs="0"/>
+            <xs:element name="bounds" type="caom2:CoordBounds2D" minOccurs="0"/>
+            <xs:element name="function" type="caom2:CoordFunction2D" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordBounds1D">
+        <xs:sequence>
+            <xs:element name="samples" type="caom2:Samples"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordBounds2D">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="circle" type="caom2:CoordCircle2D"/>
+                <xs:element name="polygon" type="caom2:CoordPolygon2D"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordCircle2D">
+        <xs:sequence>
+            <xs:element name="center" type="caom2:Coord2D"/>
+            <xs:element name="radius" type="xs:double"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordError">
+        <xs:sequence>
+            <xs:element name="syser" type="xs:double"/>
+            <xs:element name="rnder" type="xs:double"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordFunction1D">
+        <xs:sequence>
+            <xs:element name="naxis" type="xs:long"/>
+            <xs:element name="delta" type="xs:double"/>
+            <xs:element name="refCoord" type="caom2:RefCoord"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordFunction2D">
+        <xs:sequence>
+            <xs:element name="dimension" type="caom2:Dimension2D"/>
+            <xs:element name="refCoord" type="caom2:Coord2D"/>
+            <xs:element name="cd11" type="xs:double" minOccurs="0"/>
+            <xs:element name="cd12" type="xs:double" minOccurs="0"/>
+            <xs:element name="cd21" type="xs:double" minOccurs="0"/>
+            <xs:element name="cd22" type="xs:double" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CoordPolygon2D">
+        <xs:sequence>
+            <xs:element name="vertices" type="caom2:Vertices"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Vertices">
+        <xs:sequence>
+            <xs:element name="vertex" type="caom2:Coord2D"  minOccurs="3" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordRange1D">
+        <xs:sequence>
+            <xs:element name="start" type="caom2:RefCoord"/>
+            <xs:element name="end" type="caom2:RefCoord"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CoordRange2D">
+        <xs:sequence>
+            <xs:element name="start" type="caom2:Coord2D"/>
+            <xs:element name="end" type="caom2:Coord2D"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Dimension2D">
+        <xs:sequence>
+            <xs:element name="naxis1" type="xs:long"/>
+            <xs:element name="naxis2" type="xs:long"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="RefCoord">
+        <xs:sequence>
+            <xs:element name="pix" type="xs:double"/>
+            <xs:element name="val" type="xs:double"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Slice">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:Axis"/>
+            <xs:element name="bin" type="xs:long"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Common Types -->
+    
+    <xs:simpleType name="Keywords">
+        <xs:list itemType="xs:string" />
+    </xs:simpleType>
+    
+    <xs:complexType name="Samples">
+        <xs:sequence>
+            <xs:element name="range" type="caom2:CoordRange1D" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:simpleType name="ObservationIntentType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="science"/>
+            <xs:enumeration value="calibration"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TargetType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="object"/>
+            <xs:enumeration value="field"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="ProductType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="science"/>
+            <xs:enumeration value="calibration"/>
+            <xs:enumeration value="auxiliary"/>
+            <xs:enumeration value="info"/>
+            <xs:enumeration value="preview"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="DataProductType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="image"/>
+            <xs:enumeration value="spectrum"/>
+            <xs:enumeration value="timeseries"/>
+            <xs:enumeration value="visibility"/>
+            <xs:enumeration value="eventlist"/>
+            <xs:enumeration value="cube"/>
+            <xs:enumeration value="catalog"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="CalibrationLevel">
+        <xs:restriction base="xs:integer">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="3"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+</xs:schema>
