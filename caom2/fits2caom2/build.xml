@@ -130,8 +130,17 @@
         <manifest file="${build}/tmp/${project}.mf" mode="replace">
             <attribute name="Main-Class" value="ca.nrc.cadc.fits2caom2.Main"/>
             <attribute name="Class-Path" value="${client.flat.manifest} ${client.non-flat.manifest}"/>
-
         </manifest>
+    </target>
+    
+    <!-- create the client distribution tar file -->
+    <target name="distribute" depends="build" >
+        <echo message="${ant.project.name}"/>
+        <antcall target="build_distribution">
+            <param name="jarFiles" value="${build}/lib/${project}.jar:${client.cadc.jars}:${client.external.jars}"/>
+            <param name="scriptFiles" value="${env.CADC_PREFIX}/scripts/fits2caom2"/>
+            <param name="distName" value="fits2caom2"/> 
+        </antcall>
     </target>
     
     <!-- JAR files needed to run the test suite -->
