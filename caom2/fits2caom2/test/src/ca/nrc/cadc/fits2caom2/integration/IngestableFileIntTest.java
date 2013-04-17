@@ -223,28 +223,25 @@ public class IngestableFileIntTest
             try
             {
                 file = (File) Subject.doAs(s, new PrivilegedAction<File>()
+                    {
+                        @SuppressWarnings("finally")
+			public File run()
                         {
-
-                            @SuppressWarnings("finally")
-							public File run()
+                            File file = null;
+                            try 
                             {
-                            	File file = null;
-                            	
-								try 
-								{
-									file = ingestableFile2.get();
-								} 
-					            catch (Exception e)
-					            {
-					                fail("Get should not throw an exception " + e.getMessage());
-					            }
-								finally
-								{
-									return file;
-								}
+                                file = ingestableFile2.get();
+                            } 
+                            catch (Exception e)
+                            {
+                                fail("Get should not throw an exception " + e.getMessage());
                             }
-
-                        } );
+                            finally
+                            {
+                                return file;
+                            }
+                        }
+                    });
             }
             catch (RuntimeException e)
             {
@@ -259,28 +256,25 @@ public class IngestableFileIntTest
             try
             {
                 file = (File) Subject.doAs(s, new PrivilegedAction<File>()
+                    {
+                        @SuppressWarnings("finally")
+                        public File run()
                         {
-
-                            @SuppressWarnings("finally")
-							public File run()
+                            File file = null;
+                            try 
                             {
-                            	File file = null;
-                            	
-								try 
-								{
-									file = ingestableFile3.get();
-								} 
-					            catch (Exception e)
-					            {
-					                fail("Get should not throw an exception " + e.getMessage());
-					            }
-								finally
-								{
-									return file;
-								}
+                                file = ingestableFile3.get();
+                            } 
+                            catch (Exception e)
+                            {
+                                fail("Get should not throw an exception " + e.getMessage());
                             }
-
-                        } );
+                            finally
+                            {
+                                return file;
+                            }
+                        }
+                    });
             }
             catch (RuntimeException e)
             {

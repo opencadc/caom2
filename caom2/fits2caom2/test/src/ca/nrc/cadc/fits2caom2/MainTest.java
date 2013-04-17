@@ -129,7 +129,7 @@ public class MainTest
             "--" + Argument.NETRC,
             "--" + Argument.KEEP,
             "--" + Argument.TEST,
-            "--" + CertCmdArgUtil.ARG_CERT + "=build/test/class/proxy.pem"
+            "--" + CertCmdArgUtil.ARG_CERT + "=test/config/fits2caom2/fakeproxy.pem"
         };
     }
 
