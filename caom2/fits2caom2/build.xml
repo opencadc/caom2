@@ -138,7 +138,7 @@
         <echo message="${ant.project.name}"/>
         <antcall target="build_distribution">
             <param name="jarFiles" value="${build}/lib/${project}.jar:${client.cadc.jars}:${client.external.jars}"/>
-            <param name="scriptFiles" value="${env.CADC_PREFIX}/scripts/fits2caom2"/>
+            <param name="scriptFiles" value="scripts/fits2caom2"/>
             <param name="distName" value="fits2caom2"/> 
         </antcall>
     </target>
