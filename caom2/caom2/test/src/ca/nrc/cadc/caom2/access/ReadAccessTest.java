@@ -152,20 +152,4 @@ public class ReadAccessTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-    @Test
-    public void testProcessMetaReadAccess()
-    {
-        try
-        {
-            ReadAccess ra = new ProcessMetaReadAccess(assetID, groupID);
-            Assert.assertEquals(assetID, ra.getAssetID());
-            Assert.assertEquals(groupID, ra.getGroupID());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 }
