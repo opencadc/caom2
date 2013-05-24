@@ -181,7 +181,7 @@ public abstract class Util
         return ret;
     }
 
-    static FitsMapping getFitsMapping(Map<String,String> config, String defaultFile, String overrideFile)
+    public static FitsMapping getFitsMapping(Map<String,String> config, String defaultFile, String overrideFile)
     {
         StringBuilder errors = new StringBuilder();
 
@@ -269,15 +269,19 @@ public abstract class Util
      * @throws URISyntaxException 
      */
     public static URI[] argumentUriToArray(String argument)
-        throws URISyntaxException
+        throws URISyntaxException, IllegalArgumentException
     {
         if (argument == null || argument.length() == 0)
             return null;
-        String[] value = argument.split(",");
-        URI[] array = new URI[value.length];
-        for (int i = 0; i < value.length; i++)
+        String[] values = argument.split(",");
+        URI[] array = new URI[values.length];
+        for (int i = 0; i < values.length; i++)
         {
-            array[i] = new URI(value[i].trim());
+            String value = values[i].trim();
+            URI uri = new URI(value);
+            if (uri.getScheme() == null)
+                throw new IllegalArgumentException("Missing scheme in uri " + value);
+            array[i] = uri;
         }
         return array;
     }

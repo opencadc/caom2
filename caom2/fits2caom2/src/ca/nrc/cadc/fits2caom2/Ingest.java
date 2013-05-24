@@ -320,48 +320,45 @@ public class Ingest implements Runnable
             // Only process the file if it's a FITS file.
             boolean isFITS = true;
             boolean isSimpleFITS = true;
-            //if (!noRetrieve)
-            //{
-                // Get the file.
-                File file = ingestFile.get();
-                if (file == null)
+
+            // Get the file.
+            File file = ingestFile.get();
+            if (file == null)
+            {
+                throw new IngestException("Unable to download file for uri " + ingestFile.getURI());
+            }
+
+            // Load the file into the nom.tam FITS class.
+            Fits fits = new Fits(file, FitsUtil.isCompressed(file.getAbsolutePath()));
+            try
+            {
+                headers = fits.read();
+                if (headers.length == 0)
                 {
-                    throw new IngestException("Unable to download file for uri " + ingestFile.getURI());
+                    throw new IngestException("No headers found in FITS file " + ingestFile.getURI().toString());
+                }
+                if (headers[0] == null)
+                {
+                    throw new IngestException("Primary header is null in " + file.getAbsolutePath());
                 }
 
-                // FITS file or not.
-                isFITS = isFITSContentType(ingestFile, mapping);
-                if (isFITS)
-                {
-                    // Load the file into the nom.tam FITS class.
-                    Fits fits = new Fits(file, FitsUtil.isCompressed(file.getAbsolutePath()));
-                    headers = fits.read();
-                    if (headers.length == 0)
-                    {
-                        throw new IngestException("No headers found in FITS file " + ingestFile.getURI().toString());
-                    }
+                // Save the primary header.
+                mapping.primary = headers[0].getHeader();
+                mapping.header = headers[0].getHeader();
 
-                    // Get the primary header.
-                    if (headers[0] == null)
-                    {
-                        throw new IngestException("Primary header is null in " + file.getAbsolutePath());
-                    }
+                // Check if this is a simple FITS file or a MEF.
+                isSimpleFITS = isSimpleFITS(headers);
+            }
+            catch (FitsException fe)
+            {
+                isFITS = false;
+                log.info("Not a FITS file because " + fe.getMessage());
+            }
 
-                    // Save the primary header.
-                    mapping.primary = headers[0].getHeader();
-                    mapping.header = headers[0].getHeader();
-
-                    // Check if this is a simple FITS file or a MEF.
-                    isSimpleFITS = isSimpleFITS(headers);
-                }
-            //}
-
-            // Populate the Observation using the first header.
+            // Populate the Observation.
             fitsMapper.populate(Observation.class, observation, "Observation");
             if (observation instanceof CompositeObservation)
                 fitsMapper.populate(CompositeObservation.class, observation, "CompositeObservation");
-            //else
-            //    fitsMapper.populate(SimpleObservation.class, observation, "SimpleObservation");
             log.debug("Observation.environment: " + observation.environment);
 
             // Populate an existing or new Plane.
@@ -398,7 +395,7 @@ public class Ingest implements Runnable
 
             // Set the contentType and contentLength of the FITS file.
             setContentLength(artifact, ingestFile);
-            setContentType(artifact, ingestFile);
+            setContentType(artifact, ingestFile, isFITS);
 
             // If FITS file, get details about parts and chunks
             if (isFITS)
@@ -672,9 +669,13 @@ public class Ingest implements Runnable
      * @param artifact the Artifact being populated.
      * @param file  the FITS file currently being processed.
      */
-    protected void setContentType(Artifact artifact, IngestableFile file)
+    protected void setContentType(Artifact artifact, IngestableFile file, boolean isFITS)
     {
-        if (artifact.contentType == null)
+        if (!isFITS)
+        {
+            artifact.contentType = null;
+        }
+        else if (artifact.contentType == null)
         {
             artifact.contentType = file.getContentType();
         }
