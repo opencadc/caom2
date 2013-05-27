@@ -195,6 +195,14 @@ public class IngestableFile
             return file;
         }
         
+        if (uri.getScheme().equalsIgnoreCase("file"))
+        {
+            file = new File(uri);
+            this.contentLength = file.length();
+            this.contentType = FITS_MIME_TYPE;
+            return file;
+        }
+        
         String op = "download ";
         boolean headOnly = false;
         if (localFile != null)
@@ -206,8 +214,10 @@ public class IngestableFile
         URL url = null;
         AdSchemeHandler schemeHandler = null;
         if (uri.getScheme().equalsIgnoreCase("vos"))
+        {
             // use VOSpace API to get the URL
             url = getFromVOSpace();
+        }
         else
         {
             // Anonymous HTTP download
