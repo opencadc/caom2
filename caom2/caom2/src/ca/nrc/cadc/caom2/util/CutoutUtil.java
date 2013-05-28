@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,9 +86,11 @@ import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
-public class CutoutUtil
+public class CutoutUtil implements Serializable
 {
-    private static final Logger log = Logger.getLogger(CutoutUtil.class);
+	private static final long serialVersionUID = -9042392160991055157L;
+
+	private static final Logger log = Logger.getLogger(CutoutUtil.class);
 
     private static final String POS1_CUT = "px";
     private static final String POS2_CUT = "py";
