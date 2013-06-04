@@ -272,7 +272,7 @@ public class Ingest implements Runnable
             }
             
             long duration = System.currentTimeMillis() - start;
-            log.info("ingested Observation[" + collection + "/" + observationID + "/" + productID + "] " + duration + "ms");
+            log.info("Wrote Observation[" + collection + "/" + observationID + "/" + productID + "] to " + out.getName() + " in " + duration + "ms");
         }
         catch (FitsException fe)
         {
@@ -352,7 +352,7 @@ public class Ingest implements Runnable
             catch (FitsException fe)
             {
                 isFITS = false;
-                log.info("Not a FITS file because " + fe.getMessage());
+                log.debug("Not a FITS file because " + fe.getMessage());
             }
 
             // Populate the Observation.
@@ -532,7 +532,7 @@ public class Ingest implements Runnable
         if (s != null)
         {
             wcsaxes = Integer.parseInt(s);
-            log.info("found WCSAXES = " + wcsaxes + " for " + mapping.uri + "[" + mapping.extension + "]");
+            log.debug("found WCSAXES = " + wcsaxes + " for " + mapping.uri + "[" + mapping.extension + "]");
         }
         
         Integer[] positionAxis = Wcs.getPositionAxis(wcsaxes, mapping);

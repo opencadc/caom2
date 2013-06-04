@@ -225,7 +225,7 @@ public class IngestableFile
             url = schemeHandler.getURL(uri, false);
         }
         
-        log.info(op + uri + " -- trying " + url);
+        log.debug(op + uri + " -- trying " + url);
         HttpDownload download = doDownload(url, op, headOnly);
         
         if (download.getThrowable() != null && 
@@ -237,7 +237,7 @@ public class IngestableFile
                 url = schemeHandler.getURL(uri, true);
             }
             
-            log.info(op + uri + " -- trying " + url);
+            log.debug(op + uri + " -- trying " + url);
             download = doDownload(url, op, headOnly);            
         }
 
@@ -351,8 +351,8 @@ public class IngestableFile
             throw new RuntimeException("BUG: failed to find CADC VOSpace service URL", e);
         }
 
-        log.info("server uri: " + serverUri);
-        log.info("base url: " + baseURL.toString());
+        log.debug("server uri: " + serverUri);
+        log.debug("base url: " + baseURL.toString());
 
         // schema validation is always enabled
         VOSpaceClient client = new VOSpaceClient(baseURL.toString(), true);
