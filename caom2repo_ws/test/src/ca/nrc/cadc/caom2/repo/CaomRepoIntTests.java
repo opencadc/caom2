@@ -543,7 +543,7 @@ public class CaomRepoIntTests
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         Plane plane = null;
-        for (int i=0; i<10000; i++)
+        for (int i=0; i<200000; i++)
         {
             plane = new Plane("product-" + i);
             observation.getPlanes().add(plane);
