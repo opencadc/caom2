@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.cutout.CutoutAction;
+import ca.nrc.cadc.caom2.util.CutoutUtil;
 import ca.nrc.cadc.datalink.DataLink;
 import ca.nrc.cadc.datalink.util.AuthMethod;
 import ca.nrc.cadc.datalink.util.CaomSchemeHandler;
@@ -260,7 +260,7 @@ public class ArtifactProcessor
         {
             for (Chunk c : p.getChunks())
             {
-                if ( CutoutAction.canCutout(c) )
+                if ( CutoutUtil.canCutout(c) )
                     return true;
             }
         }
