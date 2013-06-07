@@ -75,10 +75,20 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import junit.framework.Assert;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Data;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
+import nom.tam.fits.FitsUtil;
+import nom.tam.fits.Header;
+import nom.tam.fits.PaddingException;
+import nom.tam.util.ArrayDataInput;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -128,4 +138,4 @@ public class IngestTest
         out.delete();
     }
     
-}
+                }

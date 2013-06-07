@@ -68,65 +68,52 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.File;
 import java.io.FileReader;
+import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class VOSUriTest extends AbstractTest
+public class ImageFileTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(VOSUriTest.class);
+    private static final Logger log = Logger.getLogger(ImageFileTest.class);
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
+    }
 
-    private static final String VOS_URI_BLAST_250 = "vos://cadc.nrc.ca~vospace/" +
-        "CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits";
-    private static final String VOS_URI_BLAST_350 = "vos://cadc.nrc.ca~vospace/" +
-        "CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_350.fits";
-
-    private static File SSL_CERT;
-    private static File SSL_KEY;
-
-    public VOSUriTest()
+    public ImageFileTest()
     {
         super();
     }
 
-    @BeforeClass
-    public static void setUpClass()
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
-        SSL_CERT = new File("build/test/class/proxy.crt");
-        SSL_KEY = new File("build/test/class/proxy.key");
-    }
-
     @Test
-    public void testSingleVOSUri()
+    public void testImageFile()
     {
         try
         {
-            log.debug("testSingleVOSUri");
+            log.debug("testSimpleFits");
+            
+            String userDir = System.getProperty("user.dir");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=VOSpaceFile",
+                "--observationID=ImageFile",
                 "--productID=productID",
-                "--uri=" + VOS_URI_BLAST_250,
-                "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
+                "--uri=file://" + userDir + "/test/files/image.png"
             };
 
+            cleanup();
             doTest(args);
             doTest(args, "build/test/SimpleFitsTest.xml");
 
@@ -134,50 +121,12 @@ public class VOSUriTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-            Assert.assertNotNull("chunk.position", c.position);
-            Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
-
-            log.info("testSingleVOSUri passed.");
-        }
-        catch (Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testMultipleVOSUri()
-    {
-        try
-        {
-            log.debug("testMultipleVOSUri");
-
-            String[] args = new String[]
-            {
-                "--collection=TEST",
-                "--observationID=VOSpaceFile",
-                "--productID=productID",
-                "--uri=" + VOS_URI_BLAST_250 +"," + VOS_URI_BLAST_350,
-                "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
-            };
-
-            doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
-
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
-            Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-            Assert.assertNotNull("chunk.position", c.position);
-            Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
+            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
+            Assert.assertNotNull("plane.artifacts", artifacts);
+            Assert.assertEquals(1, artifacts.size());
             cleanup();
 
-            log.info("testMultipleVOSUri passed.");
+            log.info("testSimpleFits passed.");
         }
         catch (Exception unexpected)
         {
@@ -186,43 +135,4 @@ public class VOSUriTest extends AbstractTest
         }
     }
 
-    @Test
-    public void testVOSUriWithLocal()
-    {
-        try
-        {
-            log.debug("testVOSUriWithLocal");
-
-            String[] args = new String[]
-            {
-                "--collection=TEST",
-                "--observationID=VOSpaceFile",
-                "--productID=productID",
-                "--uri=" + VOS_URI_BLAST_250,
-                "--local=test/files/mef.fits",
-                "--default=test/config/fits2caom2/multiextensionfits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
-            };
-
-            doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
-
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
-            Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-            Assert.assertNotNull("chunk.position", c.position);
-            Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
-
-            log.info("testVOSUriWithLocal passed.");
-        }
-        catch (Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
 }
