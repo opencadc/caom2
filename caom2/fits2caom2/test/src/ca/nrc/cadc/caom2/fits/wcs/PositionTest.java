@@ -96,4 +96,66 @@ public class PositionTest
         
     }
     
+    @Test
+    public void testNullCunit()
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.axis.axis1.ctype", "ctype1");
+        mapping.setArgumentProperty("utype.axis.axis2.ctype", "ctype2");
+        mapping.setArgumentProperty("utype.axis.range.start.coord1.pix", "1.0");
+        mapping.setArgumentProperty("utype.axis.range.start.coord1.val", "2.0");
+        mapping.setArgumentProperty("utype.axis.range.start.coord2.pix", "3.0");
+        mapping.setArgumentProperty("utype.axis.range.start.coord2.val", "4.0");
+        mapping.setArgumentProperty("utype.axis.range.end.coord1.pix", "5.0");
+        mapping.setArgumentProperty("utype.axis.range.end.coord1.val", "6.0");
+        mapping.setArgumentProperty("utype.axis.range.end.coord2.pix", "7.0");
+        mapping.setArgumentProperty("utype.axis.range.end.coord2.val", "8.0");
+        mapping.setArgumentProperty("utype.coordsys", "coordsys");
+        mapping.setArgumentProperty("utype.equinox", "1.0");
+        mapping.setArgumentProperty("utype.resolution", "2.0");
+        
+        SpatialWCS spatialWCS = Position.getPosition("utype", mapping);
+        
+        Assert.assertNotNull(spatialWCS);
+        
+        Assert.assertNotNull(spatialWCS);
+        Assert.assertNotNull(spatialWCS.getAxis());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis1());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis2());
+        Assert.assertEquals("deg", spatialWCS.getAxis().getAxis1().getCunit());
+        Assert.assertEquals("ctype1", spatialWCS.getAxis().getAxis1().getCtype());
+        Assert.assertEquals("deg", spatialWCS.getAxis().getAxis2().getCunit());
+        Assert.assertEquals("ctype2", spatialWCS.getAxis().getAxis2().getCtype());
+
+        mapping.setArgumentProperty("utype.axis.axis1.cunit", "cunit1");
+        
+        spatialWCS = Position.getPosition("utype", mapping);
+        
+        Assert.assertNotNull(spatialWCS);
+        
+        Assert.assertNotNull(spatialWCS);
+        Assert.assertNotNull(spatialWCS.getAxis());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis1());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis2());
+        Assert.assertEquals("cunit1", spatialWCS.getAxis().getAxis1().getCunit());
+        Assert.assertEquals("ctype1", spatialWCS.getAxis().getAxis1().getCtype());
+        Assert.assertEquals("deg", spatialWCS.getAxis().getAxis2().getCunit());
+        Assert.assertEquals("ctype2", spatialWCS.getAxis().getAxis2().getCtype());
+        
+        mapping.setArgumentProperty("utype.axis.axis2.cunit", "cunit2");
+        
+        spatialWCS = Position.getPosition("utype", mapping);
+        
+        Assert.assertNotNull(spatialWCS);
+        
+        Assert.assertNotNull(spatialWCS);
+        Assert.assertNotNull(spatialWCS.getAxis());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis1());
+        Assert.assertNotNull(spatialWCS.getAxis().getAxis2());
+        Assert.assertEquals("cunit1", spatialWCS.getAxis().getAxis1().getCunit());
+        Assert.assertEquals("ctype1", spatialWCS.getAxis().getAxis1().getCtype());
+        Assert.assertEquals("cunit2", spatialWCS.getAxis().getAxis2().getCunit());
+        Assert.assertEquals("ctype2", spatialWCS.getAxis().getAxis2().getCtype());
+    }
+    
 }
