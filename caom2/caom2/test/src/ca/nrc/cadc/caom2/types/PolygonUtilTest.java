@@ -368,12 +368,12 @@ public class PolygonUtilTest
             p2.getVertices().add( new Vertex( 7.0, 5.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
-            log.debug("testGetConcaveHullFromClose: " + p1);
-            log.debug("testGetConcaveHullFromClose: " + p2);
+            log.debug("testGetConcaveHullFromFar: " + p1);
+            log.debug("testGetConcaveHullFromFar: " + p2);
 
             Polygon union = PolygonUtil.doUnionCAG(p1, p2);
             Assert.assertNotNull(union);
-            log.debug("testGetConcaveHullFromClose: " + union);
+            log.debug("testGetConcaveHullFromFar: " + union);
             Assert.assertFalse(union.isSimple());
             Point center = union.getCenter();
             Double area = union.getArea();

@@ -60,34 +60,35 @@ public final class PolygonUtil
      */
     public static Polygon getConcaveHull(final Polygon poly)
     {
-        log.debug("[getConcaveHull] " + poly);
+        log.info("[getConcaveHull] " + poly);
         if (poly == null)
             return null;
         
         // deep copy
         Polygon outer = new Polygon();
         for (Vertex v : poly.getVertices())
+        {
             outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
+        }
 
         double scale = DEFAULT_SCALE;
         List<Polygon> parts = removeHoles(outer);
         while ( parts.size() > 1 && scale <= MAX_SCALE)
         {
-            log.debug("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
+            log.info("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
             outer = union(parts, scale);
-            log.debug("[getConcaveHull] union = " + outer);
+            log.info("[getConcaveHull] union = " + outer);
             scale += DEFAULT_SCALE; // 2x, 3x, etc
-            parts = parts = removeHoles(outer);
+            parts = removeHoles(outer);
             log.debug("");
         }
         if (parts.size() == 1)
         {
             outer = parts.get(0);
-            //validateSegments(outer);
-            log.debug("[getConcaveHull] SUCCESS: " + outer);
+            log.info("[getConcaveHull] SUCCESS: " + outer);
             return outer;
         }
-        log.debug("[getConcaveHull] FAILED");
+        log.info("[getConcaveHull] FAILED");
         return null;
     }
 
@@ -106,7 +107,9 @@ public final class PolygonUtil
         // deep copy
         Polygon outer = new Polygon();
         for (Vertex v : poly.getVertices())
+        {
             outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
+        }
 
         // TODO: triangulate and find union of all triangles
         // technically just need to add triangles that have one vertex in one part and two in
@@ -127,14 +130,18 @@ public final class PolygonUtil
         // transform the input polygons to some other 2D coordinates where cartesian CAG is good enough
         double[] cube = null;
         for (Polygon p : polys)
+        {
             cube = CartesianTransform.getBoundingCube(p, cube);
+        }
         CartesianTransform trans = CartesianTransform.getTransform(cube, false);
-        //trans = new CartesianTransform();
+        log.debug("working transform: " + trans);
         
         // transform all the polygons
         List<Polygon> work = new ArrayList<Polygon>(polys.size());
         for (Polygon p : polys)
+        {
             work.add(trans.transform(p));
+        }
 
         // compute union without scaling
         Polygon union = computeUnion(work, scale);
@@ -172,7 +179,9 @@ public final class PolygonUtil
         {
             scaled = new ArrayList<Polygon>(work.size());
             for (Polygon p : work)
+            {
                 scaled.add(scalePolygon(p, scale));
+            }
         }
 
         Polygon poly = null;
@@ -235,34 +244,55 @@ public final class PolygonUtil
     {
         log.debug("[unscalePolygon] start: " + poly);
         Polygon ret = new Polygon();
+        
+        boolean validSeg = false;
+        double tol = 0.01 * poly.getSize() * DEFAULT_SCALE;
+        log.info("[unscalePolygon] tol = " + tol);
 
-        // TODO: for each polygon in orig, scale it again and look for the scaled vertex in poly
-        // if found, replace with original unscaled vertex
+        // or each vertex in poly, look for the scaled vertex in the list of input polygons
+        // that is nearest and use the original unscaled vertex if it is close enough
         for (Vertex pv : poly.getVertices())
         {
-            if ( SegmentType.CLOSE.equals(pv.getType()) )
-                ret.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            else
+            ret.getVertices().add(pv); // shallow copy
+        }
+        
+        List<Vertex> verts = poly.getVertices();
+        for (int i=0; i<verts.size(); i++)
+        {
+            Vertex pv = verts.get(i);
+            if ( !SegmentType.CLOSE.equals(pv.getType()) )
             {
                 ScaledVertex sv = (ScaledVertex) findNearest(pv, scaled);
-                log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
+                log.info("[unscalePolygon] nearest: " + pv+ " " + sv);
                 double d = Math.sqrt(distanceSquared(pv, sv));
-                if (d < 1.0e-6) // ??
+                
+                if (d < tol)
                 {
                     // use orig coords but keep current segtype
                     Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
-                    log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
-                    ret.getVertices().add(v);
+                    log.info("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
+                    ret.getVertices().set(i, v);
+                    if (validSeg)
+                    {
+                        try { validateSegments(ret); }
+                        catch(IllegalPolygonException oops)
+                        {
+                            log.info("[unscalePolygon] REVERT: " + v + " -> " + pv);
+                            ret.getVertices().set(i, pv); // undo
+                        }
+                    }
                 }
                 else
                 {
-                    log.debug("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
-                    Vertex v = new Vertex(pv.cval1, pv.cval2, pv.getType());
-                    ret.getVertices().add(v);
+                    log.info("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
+                //    Vertex v = new Vertex(pv.cval1, pv.cval2, pv.getType());
+                //    ret.getVertices().add(v);
                 }
             }
         }
-        log.debug("[unscalePolygon] done: " + ret);
+        // TODO: could track which vertices were replaced and undo it if validateSegments proves
+        // we created an invalid polygon
+        log.info("[unscalePolygon] done: " + ret);
         return ret;
     }
 
@@ -271,6 +301,7 @@ public final class PolygonUtil
         double d = Double.MAX_VALUE;
         Vertex ret = null;
         for (Polygon p : polys)
+        {
             for (Vertex pv : p.getVertices())
             {
                 if ( !SegmentType.CLOSE.equals(pv.getType()) )
@@ -283,6 +314,7 @@ public final class PolygonUtil
                     }
                 }
             }
+        }
         return ret;
     }
 
@@ -309,7 +341,9 @@ public final class PolygonUtil
         
         poly.getVertices().clear();
         for (Polygon p : samples)
+        {
             poly.getVertices().addAll(p.getVertices());
+        }
         log.debug("[removeHoles] done: " + poly);
         return samples;
     }
@@ -680,7 +714,7 @@ public final class PolygonUtil
             // make segments with orig coords for reporting
             vi = poly.getVertices().iterator();
             psegs = new ArrayList<Segment>();
-            start = start = (Vertex) vi.next();
+            start = (Vertex) vi.next();
             v1 = start;
             while ( vi.hasNext() )
             {
@@ -819,7 +853,7 @@ public final class PolygonUtil
         PathIterator pi = area.getPathIterator(null);
 
         double[] prev = null;
-        int type = -666;
+        int type;
         while (!pi.isDone())
         {
             double[] coords = new double[2];
