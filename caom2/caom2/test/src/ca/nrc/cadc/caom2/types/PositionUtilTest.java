@@ -373,7 +373,7 @@ public class PositionUtilTest
             poly = PositionUtil.computeBounds(plane.getArtifacts());
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(2.0, poly.getArea(), 0.02);
+            Assert.assertEquals(2.0, poly.getArea(), 0.05);
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
@@ -381,7 +381,7 @@ public class PositionUtilTest
             poly = PositionUtil.computeBounds(plane.getArtifacts());
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(3.0, poly.getArea(), 0.02);
+            Assert.assertEquals(3.0, poly.getArea(), 0.08);
             Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
@@ -389,7 +389,7 @@ public class PositionUtilTest
             poly = PositionUtil.computeBounds(plane.getArtifacts());
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(4.0, poly.getArea(), 0.02);
+            Assert.assertEquals(4.0, poly.getArea(), 0.1);
             Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
@@ -416,7 +416,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(3.0, poly.getArea(), 0.05);
+            Assert.assertEquals(3.0, poly.getArea(), 0.08);
             Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
@@ -425,7 +425,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(4.0, poly.getArea(), 0.05);
+            Assert.assertEquals(4.0, poly.getArea(), 0.1);
             Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
@@ -434,7 +434,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(4.0, poly.getArea(), 0.05);
+            Assert.assertEquals(4.0, poly.getArea(), 0.1);
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(11.0, poly.getCenter().cval2, 0.02);
 

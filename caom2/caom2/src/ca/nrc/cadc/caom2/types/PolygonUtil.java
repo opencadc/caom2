@@ -60,7 +60,7 @@ public final class PolygonUtil
      */
     public static Polygon getConcaveHull(final Polygon poly)
     {
-        log.info("[getConcaveHull] " + poly);
+        log.debug("[getConcaveHull] " + poly);
         if (poly == null)
             return null;
         
@@ -75,9 +75,9 @@ public final class PolygonUtil
         List<Polygon> parts = removeHoles(outer);
         while ( parts.size() > 1 && scale <= MAX_SCALE)
         {
-            log.info("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
+            log.debug("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
             outer = union(parts, scale);
-            log.info("[getConcaveHull] union = " + outer);
+            log.debug("[getConcaveHull] union = " + outer);
             scale += DEFAULT_SCALE; // 2x, 3x, etc
             parts = removeHoles(outer);
             log.debug("");
@@ -85,10 +85,10 @@ public final class PolygonUtil
         if (parts.size() == 1)
         {
             outer = parts.get(0);
-            log.info("[getConcaveHull] SUCCESS: " + outer);
+            log.debug("[getConcaveHull] SUCCESS: " + outer);
             return outer;
         }
-        log.info("[getConcaveHull] FAILED");
+        log.debug("[getConcaveHull] FAILED");
         return null;
     }
 
@@ -246,8 +246,8 @@ public final class PolygonUtil
         Polygon ret = new Polygon();
         
         boolean validSeg = false;
-        double tol = 0.01 * poly.getSize() * DEFAULT_SCALE;
-        log.info("[unscalePolygon] tol = " + tol);
+        double tol = 0.5* poly.getSize() * DEFAULT_SCALE;
+        log.debug("[unscalePolygon] tol = " + tol);
 
         // or each vertex in poly, look for the scaled vertex in the list of input polygons
         // that is nearest and use the original unscaled vertex if it is close enough
@@ -263,28 +263,28 @@ public final class PolygonUtil
             if ( !SegmentType.CLOSE.equals(pv.getType()) )
             {
                 ScaledVertex sv = (ScaledVertex) findNearest(pv, scaled);
-                log.info("[unscalePolygon] nearest: " + pv+ " " + sv);
+                log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
                 double d = Math.sqrt(distanceSquared(pv, sv));
                 
                 if (d < tol)
                 {
                     // use orig coords but keep current segtype
                     Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
-                    log.info("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
+                    log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
                     ret.getVertices().set(i, v);
                     if (validSeg)
                     {
                         try { validateSegments(ret); }
                         catch(IllegalPolygonException oops)
                         {
-                            log.info("[unscalePolygon] REVERT: " + v + " -> " + pv);
+                            log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
                             ret.getVertices().set(i, pv); // undo
                         }
                     }
                 }
                 else
                 {
-                    log.info("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
+                    log.debug("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
                 //    Vertex v = new Vertex(pv.cval1, pv.cval2, pv.getType());
                 //    ret.getVertices().add(v);
                 }
@@ -292,7 +292,7 @@ public final class PolygonUtil
         }
         // TODO: could track which vertices were replaced and undo it if validateSegments proves
         // we created an invalid polygon
-        log.info("[unscalePolygon] done: " + ret);
+        log.debug("[unscalePolygon] done: " + ret);
         return ret;
     }
 

@@ -162,17 +162,18 @@ public class PolygonUtilTest
     {
         try
         {
+            double x = 30.0;
             Polygon p1 = new Polygon(); // 2x2 at 2,2
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex( x+1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add( new Vertex( x+3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex( x+3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex( x+1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
             Polygon p2 = new Polygon(); // 2x2 at 6,6
-            p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 7.0, 5.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex( x+5.0, 5.0, SegmentType.MOVE));
+            p2.getVertices().add( new Vertex( x+7.0, 5.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex( x+7.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex( x+5.0, 7.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             // area = 8 center=4,4
@@ -190,11 +191,11 @@ public class PolygonUtilTest
             Double area = actual.getArea();
 
             Assert.assertNotNull(center);
-            Assert.assertEquals(4.0, center.cval1, 0.01);
-            Assert.assertEquals(4.0, center.cval2, 0.01);
+            Assert.assertEquals(x+4.0, center.cval1, 0.02);
+            Assert.assertEquals(4.0, center.cval2, 0.02);
 
             Assert.assertNotNull(area);
-            Assert.assertEquals(8.0, area, 0.01);
+            Assert.assertEquals(8.0, area, 0.02);
         }
         catch(Exception unexpected)
         {
@@ -244,7 +245,7 @@ public class PolygonUtilTest
             Assert.assertEquals(2.5, center.cval2, 0.01);
 
             Assert.assertNotNull(area);
-            Assert.assertEquals(9.0, area, 0.01);
+            Assert.assertEquals(9.0, area, 0.02);
         }
         catch(Exception unexpected)
         {
@@ -382,7 +383,7 @@ public class PolygonUtilTest
             Assert.assertEquals(4.0, center.cval2, 0.01);
 
             Assert.assertNotNull(area);
-            Assert.assertEquals(8.0, area, 0.01); // 4 + 4
+            Assert.assertEquals(8.0, area, 0.02); // 4 + 4
 
             log.debug("computing concave hull from " + union);
 

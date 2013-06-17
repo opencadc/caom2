@@ -52,7 +52,7 @@ public class CartesianTransform implements Serializable
         double cz = 0.5*(z1 + z2);
         //log.debug("getTransform: bounding cube center = " + cx +   " " + cy + " " + cz);
 
-        if (Math.abs(cz) > 0.001 || force)
+        if (Math.abs(cz) > 0.02 || force)
         {
             CartesianTransform trans = new CartesianTransform();
             trans.axis = CartesianTransform.Y;
