@@ -74,7 +74,7 @@ Resources:
 </tr>
 <tr>
 <td>
-    /caom2/repo/pub
+    /caom2repo/pub
 </td>
 <td>
     anonymous (http), client-certificate authentication (https)
@@ -82,7 +82,7 @@ Resources:
 </tr>
 <tr>
 <td>
-    /caom2/repo/auth
+    /caom2repo/auth
 </td>
 <td>
     username/password authentication (http)
@@ -90,7 +90,7 @@ Resources:
 </tr>
 <tr>
 <td>
-    <a href="availability">/caom2/repo/availability</a>
+    <a href="availability">/caom2repo/availability</a>
 </td>
 <td>
     VOSI availability
@@ -105,7 +105,7 @@ Resources:
 <p>
 All HTTP actions are supported: GET, POST, PUT, DELETE. In all cases, the path <em>must</em> be composed
 by appending the path component of a CAOM-2.0 ObservationURI onto one of the above (pub or auth) resources,
-(e.g. <b>/caom2/repo/pub/IRIS/f001h000</b>).
+(e.g. <b>/caom2repo/pub/IRIS/f001h000</b>).
 </p>
 
 <p>Standard response codes:<br/>
@@ -155,7 +155,7 @@ metadata due to invalid WCS),<br/>
 if the path of URI in the document submitted does not match the path in the URL to which
 the document was posted,<br/> 
 - 409 (conflict) with the text "already exists" if the observation already exists,<br/>
-- 413 (too large) if the size of the document exceeds the 500Kb maximum imposed in this web
+- 413 (too large) if the size of the document exceeds the 20MB maximum imposed in this web
 service.
 </p>
 
