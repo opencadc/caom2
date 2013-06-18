@@ -201,6 +201,32 @@ public class Wcs
             log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - timeAxis" + axis);
         return axis;
     }
+    
+    public static Integer getObservableAxis(Integer naxis, FitsMapping mapping)
+    {
+        String ctype = null;
+        Integer axis = null;
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.observable")))
+        {
+            for (int i = 1; i <= naxis.intValue(); i++)
+            {
+                ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (!Ctypes.isPositionCtype(ctype) &&
+                    !Ctypes.isEnergyCtype(ctype) &&
+                    !Ctypes.isTimeCtype(ctype) &&
+                    !Ctypes.isPolarizationCtype(ctype))
+                {
+                    axis = Integer.valueOf(i);
+                    break;
+                }
+            }
+        }
+        if (axis != null)
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - observableAxis" + axis);
+        return axis;
+    }
         
     public static EnergyTransition getEnergyTransition(String utype, FitsMapping mapping)
     {
