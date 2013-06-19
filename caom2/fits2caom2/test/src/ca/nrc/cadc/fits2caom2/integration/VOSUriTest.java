@@ -68,15 +68,12 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileReader;
-import java.security.PrivilegedExceptionAction;
-import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -91,9 +88,9 @@ public class VOSUriTest extends AbstractTest
 {
     private static final Logger log = Logger.getLogger(VOSUriTest.class);
 
-    private static final String VOS_URI_BLAST_250 = "vos://cadc.nrc.ca!vospace/" +
+    private static final String VOS_URI_BLAST_250 = "vos://cadc.nrc.ca~vospace/" +
         "CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits";
-    private static final String VOS_URI_BLAST_350 = "vos://cadc.nrc.ca!vospace/" +
+    private static final String VOS_URI_BLAST_350 = "vos://cadc.nrc.ca~vospace/" +
         "CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_350.fits";
 
     private static File SSL_CERT;
@@ -125,16 +122,13 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--default=test/config/fits2caom2/simplefits.default",
+                "--cert=" + SSL_CERT,
+                "--key=" + SSL_KEY
             };
 
-            Subject s = SSLUtil.createSubject(SSL_CERT, SSL_KEY);
-
-            Fits2Caom2VOSpaceAction action = new Fits2Caom2VOSpaceAction(args, null);
-            Subject.doAs(s, action);
-
-            action = new Fits2Caom2VOSpaceAction(args, "build/test/SimpleFitsTest.xml");
-            Subject.doAs(s, action);
+            doTest(args);
+            doTest(args, "build/test/SimpleFitsTest.xml");
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
@@ -166,16 +160,13 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250 +"," + VOS_URI_BLAST_350,
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--default=test/config/fits2caom2/simplefits.default",
+                "--cert=" + SSL_CERT,
+                "--key=" + SSL_KEY
             };
 
-            Subject s = SSLUtil.createSubject(SSL_CERT, SSL_KEY);
-
-            Fits2Caom2VOSpaceAction action = new Fits2Caom2VOSpaceAction(args, null);
-            Subject.doAs(s, action);
-
-            action = new Fits2Caom2VOSpaceAction(args, "build/test/SimpleFitsTest.xml");
-            Subject.doAs(s, action);
+            doTest(args);
+            doTest(args, "build/test/SimpleFitsTest.xml");
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
@@ -208,17 +199,14 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--local=test/files/simple1.fits",
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--local=test/files/mef.fits",
+                "--default=test/config/fits2caom2/multiextensionfits.default",
+                "--cert=" + SSL_CERT,
+                "--key=" + SSL_KEY
             };
 
-            Subject s = SSLUtil.createSubject(SSL_CERT, SSL_KEY);
-
-            Fits2Caom2VOSpaceAction action = new Fits2Caom2VOSpaceAction(args, null);
-            Subject.doAs(s, action);
-
-            action = new Fits2Caom2VOSpaceAction(args, "build/test/SimpleFitsTest.xml");
-            Subject.doAs(s, action);
+            doTest(args);
+            doTest(args, "build/test/SimpleFitsTest.xml");
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
@@ -235,27 +223,6 @@ public class VOSUriTest extends AbstractTest
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
-    }
-
-    private class Fits2Caom2VOSpaceAction implements PrivilegedExceptionAction<Integer>
-    {
-        String[] args;
-        String path;
-
-        Fits2Caom2VOSpaceAction(String[] args, String path)
-        {
-            this.args = args;
-            this.path = path;
-        }
-
-        public Integer run() throws Exception
-        {
-            if (path == null)
-                return doTest(args);
-            else
-                return doTest(args, path);
-        }
-   
     }
     
 }

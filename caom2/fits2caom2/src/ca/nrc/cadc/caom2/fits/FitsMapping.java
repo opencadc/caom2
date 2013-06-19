@@ -113,6 +113,7 @@ public class FitsMapping
     public Integer energyAxis;
     public Integer polarizationAxis;
     public Integer timeAxis;
+    public Integer observableAxis;
     
     /**
      * Default constructor.

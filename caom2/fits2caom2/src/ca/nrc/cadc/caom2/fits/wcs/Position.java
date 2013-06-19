@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 public class Position
 {   
     private static final boolean DESCRIBED = true;
+    private static final String DEFAULT_CUNIT = "deg";
     
     public static SpatialWCS getPosition(String utype, FitsMapping mapping)
     {
@@ -87,6 +88,12 @@ public class Position
         
         try
         {
+            // If cunit isn't set, update the mapping cunit to deg.
+            if (mapping.getMapping(utype + ".axis.axis1.cunit") == null)
+                mapping.setArgumentProperty(utype + ".axis.axis1.cunit", DEFAULT_CUNIT);
+            if (mapping.getMapping(utype + ".axis.axis2.cunit") == null)
+                mapping.setArgumentProperty(utype + ".axis.axis2.cunit", DEFAULT_CUNIT);
+            
             CoordAxis2D axis = Wcs.getCoordAxis2D(utype + ".axis", mapping);
             if (axis == null)
                 return null;

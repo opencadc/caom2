@@ -115,6 +115,7 @@ public class IngestableFile
     private String contentType;
     private String contentEncoding;
     private long contentLength = -1;
+    private boolean uriIsFile;
 
     /**
      * Default constructor takes a URI, which is either an AD fileID,
@@ -132,6 +133,7 @@ public class IngestableFile
         this.localFile = localFile;
         this.sslEnabled = sslEnabled;
         this.tmpDirPath = TEMP_DEFAULT;
+        this.uriIsFile = false;
     }
 
     /**
@@ -169,7 +171,7 @@ public class IngestableFile
      */
     public void delete()
     {
-        if (localFile == null && file != null) // downloaded
+        if (localFile == null && file != null && !uriIsFile) // downloaded
         {
             file.delete();
         }
@@ -200,6 +202,7 @@ public class IngestableFile
             file = new File(uri);
             this.contentLength = file.length();
             this.contentType = FITS_MIME_TYPE;
+            this.uriIsFile = true;
             return file;
         }
         

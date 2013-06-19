@@ -66,52 +66,73 @@
 *
 ************************************************************************
 */
-package ca.nrc.cadc.caom2.fits.wcs;
+package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.fits.FitsMapping;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.ObservableAxis;
-import ca.nrc.cadc.caom2.wcs.Slice;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.FileReader;
+import java.util.Set;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class Observable
+public class ImageFileTest extends AbstractTest
 {
-    public static ObservableAxis getObservableAxis(String utype, FitsMapping mapping)
+    private static final Logger log = Logger.getLogger(ImageFileTest.class);
+    static
     {
-        Slice dependent = Wcs.getSlice(utype + ".dependent", mapping);
-        if (dependent == null)
-            return null;
-        ObservableAxis observable = new ObservableAxis(dependent);
-        observable.independent = Wcs.getSlice(utype + ".independent", mapping);
-        return observable;
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
-    
-    public static ObservableAxis getObservable(String utype, FitsMapping mapping)
-    {    
-        if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.observable")) )
-            return null;
-        
+
+    public ImageFileTest()
+    {
+        super();
+    }
+
+    @Test
+    public void testImageFile()
+    {
         try
         {
-            String ctype = mapping.getKeywordValue("CTYPE" + mapping.observableAxis);
-            String cunit = mapping.getKeywordValue("CUNIT" + mapping.observableAxis);
-            String bin = mapping.getKeywordValue("CRPIX" + mapping.observableAxis);
+            log.debug("testSimpleFits");
             
-            if (ctype == null || cunit == null || bin == null)
-                return null;
+            String userDir = System.getProperty("user.dir");
 
-            Axis axis = new Axis(ctype, cunit);
-            Slice dependent = new Slice(axis, Long.valueOf(bin));
-            ObservableAxis observable = new ObservableAxis(dependent);
-            return observable;
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=ImageFile",
+                "--productID=productID",
+                "--uri=file://" + userDir + "/test/files/image.png"
+            };
+
+            cleanup();
+            doTest(args);
+            doTest(args, "build/test/SimpleFitsTest.xml");
+
+            // check that CDi_j worked
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Assert.assertNotNull(o);
+            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
+            Assert.assertNotNull("plane.artifacts", artifacts);
+            Assert.assertEquals(1, artifacts.size());
+            cleanup();
+
+            log.info("testSimpleFits passed.");
         }
-        catch(IllegalArgumentException ex)
+        catch (Exception unexpected)
         {
-            throw new IllegalArgumentException("failed to create Observable: " + ex.getMessage(), ex);
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
 }

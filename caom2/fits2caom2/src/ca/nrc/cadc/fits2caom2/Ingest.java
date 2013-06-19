@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.fits.IngestableFile;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.caom2.fits.exceptions.MapperException;
 import ca.nrc.cadc.caom2.fits.wcs.Energy;
+import ca.nrc.cadc.caom2.fits.wcs.Observable;
 import ca.nrc.cadc.caom2.fits.wcs.Polarization;
 import ca.nrc.cadc.caom2.fits.wcs.Position;
 import ca.nrc.cadc.caom2.fits.wcs.Time;
@@ -98,10 +99,11 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
-import nom.tam.fits.FitsUtil;
+import nom.tam.fits.Header;
+import nom.tam.fits.TruncatedFileException;
+import nom.tam.util.ArrayDataInput;
 import org.apache.log4j.Logger;
 
 /**
@@ -313,46 +315,44 @@ public class Ingest implements Runnable
             // Update the mapping with the URI.
             mapping.uri = ingestFile.getURI().toString();
 
-            // Current FITS extension header.
-            BasicHDU[] headers = null;
-
-            // Get and process the file unless told not to retrieve it.
-            // Only process the file if it's a FITS file.
-            boolean isFITS = true;
-            boolean isSimpleFITS = true;
-
             // Get the file.
             File file = ingestFile.get();
             if (file == null)
             {
                 throw new IngestException("Unable to download file for uri " + ingestFile.getURI());
             }
+            
+            // List of FITS header objects.
+            List<Header> headers;
+
+            // Is this SIMPLE or MEF FITS file.
+            boolean isSimpleFITS = true;
 
             // Load the file into the nom.tam FITS class.
-            Fits fits = new Fits(file, FitsUtil.isCompressed(file.getAbsolutePath()));
+            Fits fits = new Fits(file);
             try
             {
-                headers = fits.read();
-                if (headers.length == 0)
+                headers = getHeaders(fits);
+                if (headers.isEmpty())
                 {
                     throw new IngestException("No headers found in FITS file " + ingestFile.getURI().toString());
                 }
-                if (headers[0] == null)
+                if (headers.get(0) == null)
                 {
                     throw new IngestException("Primary header is null in " + file.getAbsolutePath());
                 }
 
                 // Save the primary header.
-                mapping.primary = headers[0].getHeader();
-                mapping.header = headers[0].getHeader();
+                mapping.primary = headers.get(0);
+                mapping.header = headers.get(0);
 
                 // Check if this is a simple FITS file or a MEF.
                 isSimpleFITS = isSimpleFITS(headers);
             }
             catch (FitsException fe)
             {
-                isFITS = false;
                 log.debug("Not a FITS file because " + fe.getMessage());
+                headers = new ArrayList<Header>();
             }
 
             // Populate the Observation.
@@ -395,63 +395,59 @@ public class Ingest implements Runnable
 
             // Set the contentType and contentLength of the FITS file.
             setContentLength(artifact, ingestFile);
-            setContentType(artifact, ingestFile, isFITS);
+            setContentType(artifact, ingestFile, !headers.isEmpty());
 
             // If FITS file, get details about parts and chunks
-            if (isFITS)
-            {
-                for (int i = 0; i < headers.length; i++)
-                {                        
-                    // Update the mapping with the extension.
-                    Integer extensionNumber = Integer.valueOf(i);
-                    mapping.extension = extensionNumber;
-                    log.debug("ingest: " + artifact.getURI() + "[" + extensionNumber + "]");
+            Integer extension = 0;
+            for (Header header : headers)
+            {                        
+                // Update the mapping with the extension.
+                mapping.extension = extension++;
+                log.debug("ingest: " + artifact.getURI() + "[" + extension + "]");
 
-                    // Get the header and update the mapping.
-                    BasicHDU header = headers[i];
-                    if (header == null)
-                    {
-                        continue;
-                    }
-                    mapping.header = header.getHeader();
-
-                    // Populate an existing or new Part.
-                    Part part = buildPart(mapping, extensionNumber, isSimpleFITS);
-                    for (Part p : artifact.getParts())
-                    {
-                        if (p.equals(part))
-                        {
-                            part = p;
-                            break;
-                        }
-                    }
-                    fitsMapper.populate(Part.class, part, "Part");
-                    insert = artifact.getParts().add(part);
-                    log.debug(insert ? "adding "  + part : "updating " + part);
-
-
-                    if ( hasData(mapping) )
-                    {
-                        // Populate an existing or new Chunk.
-                        Chunk chunk = new Chunk();
-                        if (!part.getChunks().isEmpty())
-                        {
-                            // Should only be a single chunk.
-                            if (part.getChunks().size() > 1)
-                            {
-                                String error = "Multiple Chunks found for Part " +
-                                                part + " in " + artifact;
-                                throw new IngestException(error);
-                            }
-                            chunk = part.getChunks().iterator().next();
-                        }
-                        populateChunk(chunk, mapping);
-                        insert = part.getChunks().add(chunk);
-                        log.debug(insert ? "adding "  + chunk : "updating " + chunk);
-                    }
-                    else
-                        log.debug("part " + extensionNumber + ": no data");
+                // Get the header and update the mapping.
+                if (header == null)
+                {
+                    continue;
                 }
+                mapping.header = header;
+
+                // Populate an existing or new Part.
+                Part part = buildPart(mapping, extension, isSimpleFITS);
+                for (Part p : artifact.getParts())
+                {
+                    if (p.equals(part))
+                    {
+                        part = p;
+                        break;
+                    }
+                }
+                fitsMapper.populate(Part.class, part, "Part");
+                insert = artifact.getParts().add(part);
+                log.debug(insert ? "adding "  + part : "updating " + part);
+
+
+                if ( hasData(mapping) )
+                {
+                    // Populate an existing or new Chunk.
+                    Chunk chunk = new Chunk();
+                    if (!part.getChunks().isEmpty())
+                    {
+                        // Should only be a single chunk.
+                        if (part.getChunks().size() > 1)
+                        {
+                            String error = "Multiple Chunks found for Part " +
+                                            part + " in " + artifact;
+                            throw new IngestException(error);
+                        }
+                        chunk = part.getChunks().iterator().next();
+                    }
+                    populateChunk(chunk, mapping);
+                    insert = part.getChunks().add(chunk);
+                    log.debug(insert ? "adding "  + chunk : "updating " + chunk);
+                }
+                else
+                    log.debug("part " + extension + ": no data");
             }
 
             // Delete the file if it is stored locally.
@@ -541,11 +537,13 @@ public class Ingest implements Runnable
         chunk.energyAxis = Wcs.getEnergyAxis(wcsaxes, mapping);
         chunk.timeAxis = Wcs.getTimeAxis(wcsaxes, mapping);
         chunk.polarizationAxis = Wcs.getPolarizationAxis(wcsaxes, mapping);
+        chunk.observableAxis = Wcs.getObservableAxis(wcsaxes, mapping);
         log.debug("Chunk axes: position="
                 + chunk.positionAxis1 + "," + chunk.positionAxis2
                 + " energy=" + chunk.energyAxis
                 + " time="+chunk.timeAxis
-                + " polarization="+chunk.polarizationAxis);
+                + " polarization="+chunk.polarizationAxis
+                + " observable="+chunk.observableAxis);
 
         // Update mapping with axes values.
         mapping.positionAxis1 = chunk.positionAxis1;
@@ -553,6 +551,7 @@ public class Ingest implements Runnable
         mapping.energyAxis = chunk.energyAxis;
         mapping.timeAxis = chunk.timeAxis;
         mapping.polarizationAxis = chunk.polarizationAxis;
+        mapping.observableAxis = chunk.observableAxis;
         
         // Populate the WCS.
         log.debug("ingest: chunk.position for " + mapping.uri + "[" + mapping.extension + "]");
@@ -563,12 +562,14 @@ public class Ingest implements Runnable
         chunk.time = Time.getTime("Chunk.time", mapping);
         log.debug("ingest: chunk.polarization for " + mapping.uri + "[" + mapping.extension + "]");
         chunk.polarization = Polarization.getPolarization("Chunk.polarization", mapping);
+        log.debug("ingest: chunk.observable for " + mapping.uri + "[" + mapping.extension + "]");
+        chunk.observable = Observable.getObservable("Chunk.observable", mapping);
         log.debug("ingest: chunk DONE");
     }
     
-    protected boolean isSimpleFITS(BasicHDU[] headers)
+    protected boolean isSimpleFITS(List<Header> headers)
     {
-        return headers != null && headers.length == 1;
+        return headers != null && headers.size() == 1;
     }
 
     protected boolean hasData(FitsMapping mapping)
@@ -680,6 +681,44 @@ public class Ingest implements Runnable
             artifact.contentType = file.getContentType();
         }
         log.debug("Artifact.contentType = " + artifact.contentType);
+    }
+    
+    protected List<Header> getHeaders(Fits fits)
+        throws FitsException
+    {
+        List<Header> headers = new ArrayList<Header>();
+        ArrayDataInput dataStr = fits.getStream();
+
+        try
+        {
+            Header header;
+            while ((header = Header.readHeader(dataStr)) != null)
+            {                
+                headers.add(header);
+                dataStr.skip(header.getDataSize());
+            }
+        }
+        catch (TruncatedFileException tfe)
+        {
+            throw new FitsException("Unexpected end to file because " + tfe.getMessage());
+        }
+        catch (IOException ioe)
+        {
+            throw new FitsException("Error reading file because " + ioe.getMessage());
+        }
+        finally
+        {
+            try
+            {
+                if (dataStr != null)
+                    dataStr.close();
+            }
+            catch (IOException ioe)
+            {
+                log.error("");
+            }
+        }
+        return headers;
     }
     
 }

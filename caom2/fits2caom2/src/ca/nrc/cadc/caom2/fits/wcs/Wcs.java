@@ -100,72 +100,132 @@ public class Wcs
     
     public static Integer[] getPositionAxis(Integer naxis, FitsMapping mapping)
     {
-        Integer[] positionAxis = new Integer[] { null, null };
-        if (naxis == null || FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")))
-            return positionAxis;
-        
-        for (int i = 1; i <= naxis.intValue(); i++)
+        String ctype0 = null;
+        String ctype1 = null;
+        Integer[] axis = new Integer[] { null, null };
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")))
         {
-            String ctype = mapping.getKeywordValue("CTYPE" + i);
-            if (ctype == null)
-                continue;
-            if (Ctypes.isPositionCtype(ctype))
+            for (int i = 1; i <= naxis.intValue(); i++)
             {
-                if (positionAxis[0] == null)
-                    positionAxis[0] = Integer.valueOf(i);
-                else
-                    positionAxis[1] = Integer.valueOf(i);
+                String ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (Ctypes.isPositionCtype(ctype))
+                {
+                    if (axis[0] == null)
+                    {
+                        axis[0] = Integer.valueOf(i);
+                        ctype0 = ctype;
+                    }
+                    else
+                    {
+                        axis[1] = Integer.valueOf(i);
+                        ctype1 = ctype;
+                    }
+                }
             }
         }
-        return positionAxis;
+        if (axis[0] != null && axis[1] != null)
+        {
+            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[0] + "=" + ctype0 + " - positionAxis" + axis[0]);
+            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[1] + "=" + ctype1 + " - positionAxis" + axis[1]);
+        }
+        return axis;
     }
     
     public static Integer getEnergyAxis(Integer naxis, FitsMapping mapping)
     {
-        if (naxis == null || FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.energy")))
-            return null;
-        
-        for (int i = 1; i <= naxis.intValue(); i++)
+        String ctype = null;
+        Integer axis = null;
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.energy")))
         {
-            String ctype = mapping.getKeywordValue("CTYPE" + i);
-            if (ctype == null)
-                continue;
-            if (Ctypes.isEnergyCtype(ctype))
-                return Integer.valueOf(i);
+            for (int i = 1; i <= naxis.intValue(); i++)
+            {
+                ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (Ctypes.isEnergyCtype(ctype))
+                {
+                    axis = Integer.valueOf(i);
+                    break;
+                }
+            }
         }
-        return null;
+        if (axis != null)
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - energyAxis" + axis);
+        return axis;
     }
     
     public static Integer getTimeAxis(Integer naxis, FitsMapping mapping)
     {
-        if (naxis == null || FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.time")))
-            return null;
-        
-        for (int i = 1; i <= naxis.intValue(); i++)
+        String ctype = null;
+        Integer axis = null;
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.time")))
         {
-            String ctype = mapping.getKeywordValue("CTYPE" + i);
-            if (ctype == null)
-                continue;
-            if (Ctypes.isTimeCtype(ctype))
-                return Integer.valueOf(i);
+            for (int i = 1; i <= naxis.intValue(); i++)
+            {
+                ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (Ctypes.isTimeCtype(ctype))
+                {
+                    axis = Integer.valueOf(i);
+                    break;
+                }
+            }
         }
-        return null;
+        if (axis != null)
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - timeAxis" + axis);
+        return axis;
     }
     
     public static Integer getPolarizationAxis(Integer naxis, FitsMapping mapping)
     {
-        if (naxis == null || FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.polarization")))
-            return null;
-        
-        for (int i = 1; i <= naxis.intValue(); i++)
+        String ctype = null;
+        Integer axis = null;
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.polarization")))
         {
-            String ctype = mapping.getKeywordValue("CTYPE" + i);
-            if (ctype == null)
-                continue;
-            if (Ctypes.isPolarizationCtype(ctype))
-                return Integer.valueOf(i);
+            for (int i = 1; i <= naxis.intValue(); i++)
+            {
+                ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (Ctypes.isPolarizationCtype(ctype))
+                {
+                    axis = Integer.valueOf(i);
+                    break;
+                }
+            }
         }
-        return null;
+        if (axis != null)
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - timeAxis" + axis);
+        return axis;
+    }
+    
+    public static Integer getObservableAxis(Integer naxis, FitsMapping mapping)
+    {
+        String ctype = null;
+        Integer axis = null;
+        if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.observable")))
+        {
+            for (int i = 1; i <= naxis.intValue(); i++)
+            {
+                ctype = mapping.getKeywordValue("CTYPE" + i);
+                if (ctype == null)
+                    continue;
+                if (!Ctypes.isPositionCtype(ctype) &&
+                    !Ctypes.isEnergyCtype(ctype) &&
+                    !Ctypes.isTimeCtype(ctype) &&
+                    !Ctypes.isPolarizationCtype(ctype))
+                {
+                    axis = Integer.valueOf(i);
+                    break;
+                }
+            }
+        }
+        if (axis != null)
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - observableAxis" + axis);
+        return axis;
     }
         
     public static EnergyTransition getEnergyTransition(String utype, FitsMapping mapping)
