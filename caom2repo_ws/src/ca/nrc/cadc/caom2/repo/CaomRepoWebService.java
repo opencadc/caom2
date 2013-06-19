@@ -124,7 +124,7 @@ public class CaomRepoWebService implements WebService
             while ( i.hasNext() )
             {
                 CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();;
+                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
                 CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
                 checkDataSource.check();
             }
