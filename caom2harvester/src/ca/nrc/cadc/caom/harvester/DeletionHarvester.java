@@ -1,0 +1,320 @@
+
+package ca.nrc.cadc.caom.harvester;
+
+import ca.nrc.cadc.caom.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.DeletedEntity;
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
+import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
+import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.dao.TransactionManager;
+import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import org.apache.log4j.Logger;
+
+/**
+ * Harvest and perform deletions of CaomEntity instances.
+ * 
+ * @author pdowler
+ */
+public class DeletionHarvester extends Harvester implements Runnable
+{
+    private static Logger log = Logger.getLogger(DeletionHarvester.class);
+
+    private DeletedEntityDAO deletedDAO;
+    private WrapperDAO entityDAO;
+    private TransactionManager txnManager;
+    
+    private DeletionHarvester() { }
+
+    /**
+     * Constructor.
+     * 
+     * @param src source server.database.schema
+     * @param dest destination server.database.schema
+     * @param targetClass the class specifying what should be deleted
+     * @param batchSize ignored, always full list
+     * @throws IOException
+     */
+    public DeletionHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun)
+        throws IOException
+    {
+        super(entityClass, src, dest, batchSize, false, dryrun);
+
+
+    }
+
+    private void init()
+        throws IOException
+    {
+        Map<String,Object> config1 = getConfigDAO(src);
+        Map<String,Object> config2 = getConfigDAO(dest);
+
+        this.deletedDAO = new DeletedEntityDAO<DeletedObservation>();
+        deletedDAO.setConfig(config1);
+
+        if (DeletedObservation.class.equals(entityClass))
+        {
+            DatabaseObservationDAO dao = new DatabaseObservationDAO();
+            dao.setConfig(config2);
+            this.txnManager = dao.getTransactionManager();
+            this.entityDAO = new WrapperDAO(dao, null);
+            initHarvestState(dao.getDataSource(), entityClass);
+        }
+        else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
+        {
+            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            dao.setConfig(config2);
+            this.txnManager = dao.getTransactionManager();
+            this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
+            initHarvestState(dao.getDataSource(), entityClass);
+        }
+        else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
+        {
+            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            dao.setConfig(config2);
+            this.txnManager = dao.getTransactionManager();
+            this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
+            initHarvestState(dao.getDataSource(), entityClass);
+        }
+        else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
+        {
+            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            dao.setConfig(config2);
+            this.txnManager = dao.getTransactionManager();
+            this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
+            initHarvestState(dao.getDataSource(), entityClass);
+        }
+        else
+            throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
+    }
+
+    private void close()
+        throws IOException
+    {
+        // TODO
+    }
+
+    // invoke delete(Long) method on an arbitrary object via reflection
+    private class WrapperDAO
+    {
+        private Object dao;
+        private Method deleteMethod;
+        private Class<?> targetClass;
+
+        WrapperDAO(Object dao, Class<?> targetClass)
+        {
+            this.dao = dao;
+            this.targetClass = targetClass;
+            
+            try
+            {
+                if (targetClass != null)
+                    this.deleteMethod = dao.getClass().getMethod("delete", Class.class, Long.class);
+                else
+                    this.deleteMethod = dao.getClass().getMethod("delete", Long.class);
+            }
+            catch(NoSuchMethodException bug)  { throw new RuntimeException("BUG", bug); }
+            log.debug("created wrapper to call " + dao.getClass().getSimpleName() + ".delete(Long)");
+        }
+        
+        public void delete(Long id)
+        {
+            log.debug("invoking " + deleteMethod + " with id=" + id);
+            try
+            {
+                if (targetClass != null)
+                    deleteMethod.invoke(dao, targetClass, id);
+                else
+                    deleteMethod.invoke(dao, id);
+            }
+            catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+            catch(InvocationTargetException bug) { throw new RuntimeException("BUG", bug); }
+        }
+        @Override
+        public String toString() { return deleteMethod.toString(); }
+    }
+
+    public void run()
+    {
+        log.info("START: " + entityClass.getSimpleName());
+        try
+        {
+            init();
+        }
+        catch(Throwable oops)
+        {
+            log.error("failed to init connections and state", oops);
+            return;
+        }
+        boolean go = true;
+        while (go)
+        {
+            Progress num = doit();
+            if (num.found > 0)
+                log.info("finished batch: " + num);
+            if (num.failed > num.found/2) // more than half failed
+            {
+                log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
+                num.abort = true;
+            }
+            if (num.abort)
+                log.error("batched aborted");
+            go = (num.found > 0 && !num.abort && !num.done);
+            full = false; // do not start at min(lastModified) again
+            if (dryrun)
+                go = false; // no state update -> infinite loop
+        }
+        try
+        {
+            close();
+        }
+        catch(Throwable oops)
+        {
+            log.error("failed to cleanup connections and state", oops);
+            return;
+        }
+        log.info("DONE: " + entityClass.getSimpleName() + "\n");
+    }
+
+    private static class Progress
+    {
+        boolean done = false;
+        boolean abort = false;
+        int found = 0;
+        int ingested = 0;
+        int failed = 0;
+        @Override
+        public String toString() { return found + " ingested: " + ingested + " failed: " + failed; }
+    }
+
+    Object prevBatchLeader = null;
+    private Progress doit()
+    {
+        log.info("batch: " + entityClass.getSimpleName());
+        Progress ret = new Progress();
+        
+        DeletedEntity curBatchLeader = null;
+        try
+        {
+            HarvestState state = harvestState.get(source, cname);
+            log.info("last harvest: " + format(state.curLastModified));
+
+            Date start = state.curLastModified;
+            if (full)
+                start = null;
+            List<DeletedEntity> entityList = deletedDAO.getList(entityClass, start, batchSize);
+            
+            // avoid re-processing the last successful one stored in HarvestState
+            if ( !entityList.isEmpty() )
+            {
+                ListIterator<DeletedEntity> iter = entityList.listIterator();
+                curBatchLeader = iter.next();
+                if (curBatchLeader.id.equals(state.curID))
+                {
+                    log.debug("skipping first entity in batch: " + curBatchLeader.id);
+                    iter.remove(); // processed last batch but picked up by lastModified query
+                    curBatchLeader = null;
+                    if (iter.hasNext())
+                        curBatchLeader = iter.next();
+                }
+                // try to detect an infinite loop
+                if (curBatchLeader != null)
+                    detectLoop(curBatchLeader);
+            }
+            prevBatchLeader = curBatchLeader;
+
+            ret.found = entityList.size();
+            log.info("found: " + entityList.size());
+            ListIterator<DeletedEntity> iter = entityList.listIterator();
+            while ( iter.hasNext() )
+            {
+                DeletedEntity de = iter.next();
+                iter.remove(); // allow garbage collection asap
+
+                if (de.id.equals(state.curID))
+                {
+                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.id + " -- was end of last batch");
+                    break;
+                }
+
+                if (!dryrun)
+                    txnManager.startTransaction();
+                boolean ok = false;
+                try
+                {
+                    log.info("put: " + de.getClass().getSimpleName() + " " + de.id + " " + de.lastModified);
+                    if (!dryrun)
+                    {
+                        state.curLastModified = de.lastModified;
+                        state.curID = de.id;
+
+                        // keep a record of the deletion
+                        //dORM.put(de);
+
+                        // perform the actual deletion
+                        entityDAO.delete(de.id);
+
+                        // track progress
+                        harvestState.put(state);
+
+                        log.debug("committing transaction");
+                        txnManager.commitTransaction();
+                        log.debug("commit: OK");
+                    }
+                    ok = true;
+                    ret.ingested++;
+                }
+                catch(Throwable t)
+                {
+                    log.error("unexpected exception", t);
+                }
+                finally
+                {
+                    if (!ok && !dryrun)
+                    {
+                        log.warn("failed to process " + de + ": trying to rollback the transaction");
+                        txnManager.rollbackTransaction();
+                        log.warn("rollback: OK");
+                        ret.abort = true;
+                    }
+                }
+            }
+            if (ret.abort)
+                return ret;
+        }
+        finally
+        {
+            
+        }
+        return ret;
+    }
+
+    private void detectLoop(DeletedEntity cde)
+    {
+        log.warn("check for loop: " + prevBatchLeader + " vs " + cde);
+        if (prevBatchLeader != null)
+        {
+            DeletedEntity pde = (DeletedEntity) prevBatchLeader;
+            log.debug("check for infinite loop: " + pde.id + "," + pde.lastModified.getTime()
+                    + " vs " + cde.id + "," + cde.lastModified.getTime());
+            if (pde.id.equals(cde.id))
+                throw new RuntimeException("detected infinite harvesting loop by ID: "
+                    + entityClass.getSimpleName() + " at " + cde.id);
+            if (pde.lastModified.equals(cde.lastModified))
+                throw new RuntimeException("detected infinite harvesting loop: "
+                    + entityClass.getSimpleName() + " at " + cde.lastModified);
+        }
+    }
+}

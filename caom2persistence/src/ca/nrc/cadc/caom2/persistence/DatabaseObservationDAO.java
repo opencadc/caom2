@@ -1,0 +1,506 @@
+/*
+************************************************************************
+*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+*
+*  (c) 2011.                            (c) 2011.
+*  Government of Canada                 Gouvernement du Canada
+*  National Research Council            Conseil national de recherches
+*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+*  All rights reserved                  Tous droits réservés
+*
+*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+*  expressed, implied, or               énoncée, implicite ou légale,
+*  statutory, of any kind with          de quelque nature que ce
+*  respect to the software,             soit, concernant le logiciel,
+*  including without limitation         y compris sans restriction
+*  any warranty of merchantability      toute garantie de valeur
+*  or fitness for a particular          marchande ou de pertinence
+*  purpose. NRC shall not be            pour un usage particulier.
+*  liable in any event for any          Le CNRC ne pourra en aucun cas
+*  damages, whether direct or           être tenu responsable de tout
+*  indirect, special or general,        dommage, direct ou indirect,
+*  consequential or incidental,         particulier ou général,
+*  arising from the use of the          accessoire ou fortuit, résultant
+*  software.  Neither the name          de l'utilisation du logiciel. Ni
+*  of the National Research             le nom du Conseil National de
+*  Council of Canada nor the            Recherches du Canada ni les noms
+*  names of its contributors may        de ses  participants ne peuvent
+*  be used to endorse or promote        être utilisés pour approuver ou
+*  products derived from this           promouvoir les produits dérivés
+*  software without specific prior      de ce logiciel sans autorisation
+*  written permission.                  préalable et particulière
+*                                       par écrit.
+*
+*  This file is part of the             Ce fichier fait partie du projet
+*  OpenCADC project.                    OpenCADC.
+*
+*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+*  you can redistribute it and/or       vous pouvez le redistribuer ou le
+*  modify it under the terms of         modifier suivant les termes de
+*  the GNU Affero General Public        la “GNU Affero General Public
+*  License as published by the          License” telle que publiée
+*  Free Software Foundation,            par la Free Software Foundation
+*  either version 3 of the              : soit la version 3 de cette
+*  License, or (at your option)         licence, soit (à votre gré)
+*  any later version.                   toute version ultérieure.
+*
+*  OpenCADC is distributed in the       OpenCADC est distribué
+*  hope that it will be useful,         dans l’espoir qu’il vous
+*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+*  without even the implied             GARANTIE : sans même la garantie
+*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+*  General Public License for           Générale Publique GNU Affero
+*  more details.                        pour plus de détails.
+*
+*  You should have received             Vous devriez avoir reçu une
+*  a copy of the GNU Affero             copie de la Licence Générale
+*  General Public License along         Publique GNU Affero avec
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+*                                       <http://www.gnu.org/licenses/>.
+*
+*  $Revision: 4 $
+*
+************************************************************************
+*/
+
+package ca.nrc.cadc.caom2.persistence;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.dao.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import java.util.LinkedList;
+
+/**
+ * Persistence layer operations.
+ * 
+ * @author pdowler
+ */
+public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> implements ObservationDAO
+{
+    private static final Logger log = Logger.getLogger(DatabaseObservationDAO.class);
+
+    private PlaneDAO planeDAO;
+    
+    public DatabaseObservationDAO() { }
+
+    @Override
+    public Map<String, Class> getParams()
+    {
+        Map<String,Class> ret = super.getParams();
+        ret.put("schemaPrefixHack", Boolean.class);
+        return ret;
+    }
+
+    @Override
+    public void setConfig(Map<String,Object> config)
+    {
+        super.setConfig(config);
+        this.planeDAO = new PlaneDAO(gen, forceUpdate, readOnly);
+    }
+    
+    /**
+     * Return true if the observation identified by observation
+     * URI exists.
+     */
+    @Override
+    public boolean exists(ObservationURI uri)
+    {
+        Observation observation = get(uri, null, 1);
+        return observation != null;
+    }
+
+    @Override
+    public Observation get(Long id)
+    {
+        if (id == null)
+            throw new IllegalArgumentException("id cannot be null");
+        return get(null, id, SQLGenerator.MAX_DEPTH);
+    }
+    
+    /**
+     * Get a stored observation by URI.
+     *
+     * @param uri
+     * @return the complete observation
+     */
+    @Override
+    public Observation get(ObservationURI uri)
+    {
+        if (uri == null)
+            throw new IllegalArgumentException("uri cannot be null");
+        return get(uri, null, SQLGenerator.MAX_DEPTH);
+    }
+
+    private Observation get(ObservationURI uri, Long id, int depth)
+    {
+        checkInit();
+        if (uri == null && id == null)
+            throw new IllegalArgumentException("args cannot be null");
+        log.debug("GET: " + uri);
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            String sql;
+            if (uri != null)
+                sql = gen.getSelectSQL(uri, depth);
+            else
+                sql = gen.getSelectSQL(Observation.class, id);
+            
+            if (log.isDebugEnabled())
+                log.debug("GET: " + Util.formatSQL(sql));
+
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Object result = jdbc.query(sql, gen.getObservationExtractor());
+            if (result == null)
+                return null;
+            if (result instanceof List)
+            {
+                List obs = (List) result;
+                if (obs.isEmpty())
+                    return null;
+                if (obs.size() > 1)
+                    throw new RuntimeException("BUG: get " + uri + " query returned " + obs.size() + " observations");
+                Object o = obs.get(0);
+                if (o instanceof Observation)
+                {
+                    Observation ret = (Observation) obs.get(0);
+                    return ret;
+                }
+                else
+                    throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
+            }
+            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + uri + " " + dt + "ms");
+        }
+    }
+
+    /**
+     * Store an observation.
+     * 
+     * @param ce
+     */
+    @Override
+    public void put(Observation obs)
+    {
+        if (readOnly)
+            throw new UnsupportedOperationException("put in readOnly mode");
+        checkInit();
+        if (obs == null)
+            throw new IllegalArgumentException("arg cannot be null");
+        log.debug("PUT: " + obs.getURI() + ", planes: " + obs.getPlanes().size());
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
+            //       and if they do not get(uri) they can get a duplicate observation error
+            //       if they violate unique keys... but if it was by uri, it would be the same
+            //       result as if they skipped the get(uri)
+            String sql = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
+            log.debug("PUT: " + sql);
+            ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+
+            boolean updateMax = false;
+            if (computeLastModified)
+                updateMax = updateLastModified(obs, cur);
+            
+            // delete obsolete children
+            List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
+            if (cur != null)
+            {
+                // delete the skeletons that are not in obs.getPlanes()
+                for (PlaneSkeleton ps : cur.planes)
+                {
+                    Plane p = Util.findPlane(obs.getPlanes(), ps.id);
+                    if ( p == null ) // removed by client
+                    {
+                        log.debug("PUT: caused delete: " + ps.id);
+                        planeDAO.delete(ps, jdbc);
+                    }
+                }
+                // pair up planes and skeletons for insert/update
+                for (Plane p : obs.getPlanes())
+                {
+                    PlaneSkeleton ps = Util.findPlaneSkel(cur.planes, p.getID());
+                    pairs.add(new Pair<Plane>(ps, p)); // null ok
+                }
+            }
+            else
+                for (Plane p : obs.getPlanes())
+                    pairs.add(new Pair<Plane>(null, p));
+
+            
+            super.put(cur, obs, null, jdbc, updateMax);
+
+            // insert/update children
+            LinkedList<CaomEntity> parents = new LinkedList<CaomEntity>();
+            parents.push(obs);
+            for (Pair<Plane> p : pairs)
+                planeDAO.put(p.cur, p.val, parents, jdbc);
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("PUT: " + obs.getURI() + " " + dt + "ms");
+        }
+    }
+
+    /**
+     * Delete a stored observation by URI.
+     *
+     * @param uri
+     */
+    @Override
+    public void delete(ObservationURI uri)
+    {
+        if (readOnly)
+            throw new UnsupportedOperationException("put in readOnly mode");
+        checkInit();
+        if (uri == null)
+            throw new IllegalArgumentException("uri cannot be null");
+        log.debug("DELETE: " + uri);
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            String sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
+            log.debug("DELETE: " + sql);
+            ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+            if (skel != null)
+                delete(skel, jdbc);
+            else
+                log.debug("DELETE: not found: " + uri);
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("DELETE: " + uri + " " + dt + "ms");
+        }
+    }
+
+    public void delete(Long id)
+    {
+        if (readOnly)
+            throw new UnsupportedOperationException("put in readOnly mode");
+        checkInit();
+        if (id == null)
+            throw new IllegalArgumentException("id cannot be null");
+        log.debug("DELETE: " + id);
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
+            log.debug("DELETE: " + sql);
+            ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+            if (skel != null)
+                delete(skel, jdbc);
+            else
+                log.debug("DELETE: not found: " + id);
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("DELETE: " + id + " " + dt + "ms");
+        }
+    }
+
+    @Override
+    protected void deleteChildren(Skeleton s, JdbcTemplate jdbc)
+    {
+        ObservationSkeleton o = (ObservationSkeleton) s;
+        if (o.planes.size() > 0)
+        {
+            // delete children of planes
+            for (PlaneSkeleton p : o.planes)
+                planeDAO.deleteChildren(p, jdbc);
+
+            // delete planes by FK
+            String sql = gen.getDeleteSQL(Plane.class, o.id, false);
+            log.debug("delete: " + sql);
+            jdbc.update(sql);
+        }
+        else
+            log.debug("no children: " + o.id);
+    }
+
+    private boolean updateLastModified(Observation o, ObservationSkeleton s)
+    {
+        if (s != null)
+            Util.assignLastModified(o, s.lastModified, "lastModified");
+        
+        Date now = new Date();
+        boolean updateMax = false;
+        for (Plane plane : o.getPlanes())
+        {
+            PlaneSkeleton skel = null;
+            if (s != null)
+                for (PlaneSkeleton ss : s.planes)
+                {
+                    if (plane.getID().equals(ss.id))
+                        skel = ss;
+                }
+            boolean ulm = updateLastModified(plane, skel, now);
+            updateMax = updateMax || ulm;
+        }
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != o.getStateCode(gen.persistTransientState()))
+        {
+            Util.assignLastModified(o, now, "lastModified");
+            updateMax = true;
+        }
+        
+        if (updateMax)
+            Util.assignLastModified(o, now, "maxLastModified");
+
+        return updateMax;
+    }
+    
+    private boolean updateLastModified(Plane p, PlaneSkeleton s, Date now)
+    {
+        if (s != null)
+            Util.assignLastModified(p, s.lastModified, "lastModified");
+        
+        boolean updateMax = false;
+        for (Artifact artifact : p.getArtifacts())
+        {
+            ArtifactSkeleton skel = null;
+            if (s != null)
+                for (ArtifactSkeleton ss : s.artifacts)
+                {
+                    if (artifact.getID().equals(ss.id))
+                        skel = ss;
+                }
+            boolean ulm = updateLastModified(artifact, skel, now);
+            updateMax = updateMax || ulm;
+        }
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != p.getStateCode(gen.persistTransientState()))
+        {
+            Util.assignLastModified(p, now, "lastModified");
+            updateMax = true;
+        }
+
+        if (updateMax)
+            Util.assignLastModified(p, now, "maxLastModified");
+
+        return updateMax;
+    }
+
+    private boolean updateLastModified(Artifact a, ArtifactSkeleton s, Date now)
+    {
+        if (s != null)
+            Util.assignLastModified(a, s.lastModified, "lastModified");
+
+        boolean updateMax = false;
+        for (Part part : a.getParts())
+        {
+            PartSkeleton skel = null;
+            if (s != null)
+                for (PartSkeleton ss : s.parts)
+                {
+                    if (part.getID().equals(ss.id))
+                        skel = ss;
+                }
+            boolean ulm = updateLastModified(part, skel, now);
+            updateMax = updateMax || ulm;
+        }
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != a.getStateCode(gen.persistTransientState()))
+        {
+            Util.assignLastModified(a, now, "lastModified");
+            updateMax = true;
+        }
+
+        if (updateMax)
+            Util.assignLastModified(a, now, "maxLastModified");
+
+        return updateMax;
+    }
+
+    private boolean updateLastModified(Part p, PartSkeleton s, Date now)
+    {
+        if (s != null)
+            Util.assignLastModified(p, s.lastModified, "lastModified");
+
+        boolean updateMax = false;
+        for (Chunk chunk : p.getChunks())
+        {
+            ChunkSkeleton skel = null;
+            if (s != null)
+                for (ChunkSkeleton ss : s.chunks)
+                {
+                    if (chunk.getID().equals(ss.id))
+                        skel = ss;
+                }
+            boolean ulm = updateLastModified(chunk, skel, now);
+            updateMax = updateMax || ulm;
+        }
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != p.getStateCode(gen.persistTransientState()))
+        {
+            Util.assignLastModified(p, now, "lastModified");
+            updateMax = true;
+        }
+
+        if (updateMax)
+            Util.assignLastModified(p, now, "maxLastModified");
+
+        return updateMax;
+    }
+
+    private boolean updateLastModified(Chunk c, ChunkSkeleton s, Date now)
+    {
+        if (s != null)
+            Util.assignLastModified(c, s.lastModified, "lastModified");
+
+        boolean updateMax = false;
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != c.getStateCode(gen.persistTransientState()))
+        {
+            Util.assignLastModified(c, now, "lastModified");
+            updateMax = true;
+        }
+
+        if (updateMax)
+            Util.assignLastModified(c, now, "maxLastModified");
+
+        return updateMax;
+    }
+}

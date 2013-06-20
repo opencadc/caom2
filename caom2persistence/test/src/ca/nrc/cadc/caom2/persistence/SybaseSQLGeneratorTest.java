@@ -67,131 +67,108 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.action.RepoAction;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
-import ca.nrc.cadc.vosi.avail.CheckException;
-import ca.nrc.cadc.vosi.avail.CheckResource;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.Log4jInit;
+import java.text.DateFormat;
+import java.util.Date;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoWebService implements WebService
+public class SybaseSQLGeneratorTest 
 {
-    private static final Logger log = Logger.getLogger(CaomRepoWebService.class);
-    
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=cadc tempacct,ou=hia.nrc.ca,o=grid,c=ca");
+    private static final Logger log = Logger.getLogger(SybaseSQLGeneratorTest.class);
 
-    public CaomRepoWebService()
+    static
     {
-        
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public AvailabilityStatus getStatus()
-    {
-        boolean isGood = true;
-        String note = "service is accepting queries";
+    BaseSQLGenerator gen = new SybaseSQLGenerator("cadctest", "");
 
+    //@Test
+    public void testTemplate()
+    {
         try
         {
-            String state = getState();
-            if (RepoAction.OFFLINE.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.OFFLINE_MSG);
-            if (RepoAction.READ_ONLY.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
 
-            // ReadWrite: proceed with live checks
-            
-            CaomRepoConfig rc = new CaomRepoConfig();
-            
-            if (rc.isEmpty())
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
-
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while ( i.hasNext() )
-            {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
-            }
-            
-            // load this dynamically so that missing wcs won't break this class
-            try
-            {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            }
-            catch(RuntimeException ex)
-            {
-                throw new CheckException("wcslib not available", ex);
-            }
-            catch(Error er)
-            {
-                throw new CheckException("wcslib not available", er);
-            }
         }
-        catch(CheckException ce)
+        catch(Exception unexpected)
         {
-            // tests determined that the resource is not working
-            isGood = false;
-            note = ce.getMessage();
-        }
-        catch (Throwable t)
-        {
-            // the test itself failed
-            isGood = false;
-            note = "test failed, reason: " + t;
-        }
-        return new AvailabilityStatus(isGood, null, null, null, note);
-    }
-
-    public void setState(String state)
-    {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-
-        if (subject == null)
-            return;
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if ( AuthenticationUtil.equals(TRUSTED, caller) )
-        {
-            String key = RepoAction.class.getName() + ".state";
-            if (RepoAction.OFFLINE.equals(state))
-                System.setProperty(key, RepoAction.OFFLINE);
-            else if (RepoAction.READ_ONLY.equals(state))
-                System.setProperty(key, RepoAction.READ_ONLY);
-            else if (RepoAction.READ_WRITE.equals(state))
-                System.setProperty(key, RepoAction.READ_WRITE);
-            log.info("WebService state changed to " + state + " by " + caller + " [OK]");
-        }
-        else
-        {
-            log.warn("WebService state change to " + state + " by " + caller + " [DENIED]");
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    private String getState()
+    @Test
+    public void testSelectLastModifiedBatchSizeSQL()
     {
-        String key = RepoAction.MODE_KEY;
-        String ret = System.getProperty(key);
-        if (ret == null)
-            return RepoAction.READ_WRITE;
-        return ret;
+        try
+        {
+            String start = "select top 10 observation.maxlastmodified ";
+            String end = "order by observation.maxlastmodified";
+
+            Date d1 = new Date();
+            Integer batchSize = new Integer(10);
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+            String exp1 = "observation.maxlastmodified >= '" + df.format(d1) + "'";
+            
+
+            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, d1, batchSize);
+            log.debug("SQL: " + sql);
+            sql = sql.toLowerCase();
+
+            String actualStart = sql.substring(0, start.length());
+            String actualEnd = sql.substring(sql.length() - end.length());
+            Assert.assertEquals(start, actualStart);
+            Assert.assertEquals(end, actualEnd);
+
+            Assert.assertTrue(sql.contains(exp1));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testSelectByLastModifiedSQL()
+    {
+        try
+        {
+            String start = "select top 10 ";
+            String end = " order by observationmetareadaccess.lastmod";
+            Date d1 = new Date();
+            Integer batchSize = new Integer(10);
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+            String exp1 = "observationmetareadaccess.lastmod >= '" + df.format(d1) + "'";
+
+            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, batchSize);
+            log.debug("SQL: " + sql);
+            sql = sql.toLowerCase();
+            
+            String actualStart = sql.substring(0, start.length());
+            String actualEnd = sql.substring(sql.length() - end.length());
+            Assert.assertEquals(start, actualStart);
+            Assert.assertEquals(end, actualEnd);
+
+            log.debug("look for: " + exp1);
+            Assert.assertTrue(sql.contains(exp1));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
