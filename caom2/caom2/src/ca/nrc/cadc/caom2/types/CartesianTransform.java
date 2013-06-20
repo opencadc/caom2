@@ -3,9 +3,12 @@
 package ca.nrc.cadc.caom2.types;
 
 import java.io.Serializable;
+import org.apache.log4j.Logger;
 
 public class CartesianTransform implements Serializable
 {
+    private static final Logger log = Logger.getLogger(CartesianTransform.class);
+    
     private static final long serialVersionUID = 201207300900L;
     
     // the negative X axis
@@ -42,12 +45,14 @@ public class CartesianTransform implements Serializable
         double y2 = cube[3];
         double z1 = cube[4];
         double z2 = cube[5];
+        //log.debug("getTransform: bounding cube = " + x1+  ":" + x2 + " " + y1 + ":" + y2 + " " + z1 + ":" + z2);
 
         double cx = 0.5*(x1 + x2);
         double cy = 0.5*(y1 + y2);
         double cz = 0.5*(z1 + z2);
+        //log.debug("getTransform: bounding cube center = " + cx +   " " + cy + " " + cz);
 
-        if (Math.abs(cz) > 0.001 || force) // off-equator
+        if (Math.abs(cz) > 0.02 || force)
         {
             CartesianTransform trans = new CartesianTransform();
             trans.axis = CartesianTransform.Y;
@@ -69,13 +74,15 @@ public class CartesianTransform implements Serializable
                 double cosa = dotProduct(v1, v2);
                 trans.a = Math.acos(cosa);
             }
+            log.debug("off equator: " + trans);
             return trans;
         }
-        if (y1 < 0.0 && y2 > 0.0 && x1 > 0.0) // straddling meridan
+        if (y1 <= 0.0 && y2 >= 0.0 && x1 > 0.0) 
         {
             CartesianTransform trans = new CartesianTransform();
             trans.a = Math.PI;
             trans.axis = CartesianTransform.Z;
+            log.debug("straddling meridan at equator: " + trans);
             return trans;
         }
         return new CartesianTransform();
@@ -158,8 +165,9 @@ public class CartesianTransform implements Serializable
     {
         if (isNull())
             return v;
-        
-        double[] p2 = transformPoint(v);
+        double[] p2 = { 0.0, 0.0 };
+        if ( !SegmentType.CLOSE.equals(v.getType()) )
+            p2 = transformPoint(v);
         return new Vertex(p2[0], p2[1], v.getType());
     }
     public Vertex inverseTransform(Vertex v)
@@ -184,7 +192,9 @@ public class CartesianTransform implements Serializable
 
         Polygon ret = new Polygon();
         for (Vertex v : p.getVertices())
+        {
             ret.getVertices().add(transform(v));
+        }
         return ret;
     }
     public Polygon inverseTransform(Polygon p)
@@ -225,7 +235,7 @@ public class CartesianTransform implements Serializable
         }
         for (Vertex v : poly.getVertices())
         {
-            if (SegmentType.CLOSE.equals(v.getType()))
+            if (!SegmentType.CLOSE.equals(v.getType()))
             {
                 double[] xyz = CartesianTransform.toUnitSphere(v.cval1,
                                                                v.cval2);
@@ -263,7 +273,6 @@ public class CartesianTransform implements Serializable
             else if (cube[5] < 0.0) // z -1
                 cube[4] = -1.01; // slightly outside sphere
         }
-
         return cube;
     }
 

@@ -107,6 +107,8 @@ public class Time
             CoordAxis1D axis = Wcs.getCoordAxis1D(utype + ".axis", mapping);
             if (axis != null)
             {
+                if (axis.getAxis().getCunit() == null)
+                    throw new IllegalArgumentException("time axis has cunit = " + axis.getAxis().getCunit());   
                 time = new TemporalWCS(axis);
             }
             else

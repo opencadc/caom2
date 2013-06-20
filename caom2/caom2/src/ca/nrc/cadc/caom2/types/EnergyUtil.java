@@ -223,8 +223,11 @@ public final class EnergyUtil
         if (sw == null)
             return null;
         
-        double x1 = val2pix(sw, sw.getAxis().function, bounds.getLower());
-        double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
+        if (sw.getAxis().function == null)
+            return null;
+        
+        double x1 = val2pix(sw, bounds.getLower());
+        double x2 = val2pix(sw, bounds.getUpper());
         
         return new Long((long) Math.abs(x2 - x1));
     }
@@ -501,7 +504,7 @@ public final class EnergyUtil
         return new long[] { x1, x2 }; // an actual cutout
     }
     
-    private static double val2pix(SpectralWCS wcs, CoordFunction1D func, double val)
+    private static double val2pix(SpectralWCS wcs, double val)
         throws NoSuchKeywordException
     {
         // convert to TARGET_CTYPE

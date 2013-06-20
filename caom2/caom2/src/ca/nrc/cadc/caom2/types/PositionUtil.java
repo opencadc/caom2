@@ -635,8 +635,8 @@ public final class PositionUtil
                 coords[0] = v.cval1;
                 coords[1] = v.cval2;
                 Transform.Result tr = transform.pix2sky(coords);
-                log.debug("wcslib: " + coords[0] + "," + coords[1]
-                        + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                //log.debug("wcslib: " + coords[0] + "," + coords[1]
+                //        + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 v.cval1 = tr.coordinates[0];
                 v.cval2 = tr.coordinates[1];
                 //truncatePrecision(v);

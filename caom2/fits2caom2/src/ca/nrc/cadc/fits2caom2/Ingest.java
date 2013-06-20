@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.fits.IngestableFile;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.caom2.fits.exceptions.MapperException;
 import ca.nrc.cadc.caom2.fits.wcs.Energy;
+import ca.nrc.cadc.caom2.fits.wcs.Observable;
 import ca.nrc.cadc.caom2.fits.wcs.Polarization;
 import ca.nrc.cadc.caom2.fits.wcs.Position;
 import ca.nrc.cadc.caom2.fits.wcs.Time;
@@ -539,11 +540,13 @@ public class Ingest implements Runnable
         chunk.energyAxis = Wcs.getEnergyAxis(wcsaxes, mapping);
         chunk.timeAxis = Wcs.getTimeAxis(wcsaxes, mapping);
         chunk.polarizationAxis = Wcs.getPolarizationAxis(wcsaxes, mapping);
+        chunk.observableAxis = Wcs.getObservableAxis(wcsaxes, mapping);
         log.debug("Chunk axes: position="
                 + chunk.positionAxis1 + "," + chunk.positionAxis2
                 + " energy=" + chunk.energyAxis
                 + " time="+chunk.timeAxis
-                + " polarization="+chunk.polarizationAxis);
+                + " polarization="+chunk.polarizationAxis
+                + " observable="+chunk.observableAxis);
 
         // Update mapping with axes values.
         mapping.positionAxis1 = chunk.positionAxis1;
@@ -551,6 +554,7 @@ public class Ingest implements Runnable
         mapping.energyAxis = chunk.energyAxis;
         mapping.timeAxis = chunk.timeAxis;
         mapping.polarizationAxis = chunk.polarizationAxis;
+        mapping.observableAxis = chunk.observableAxis;
         
         // Populate the WCS.
         log.debug("ingest: chunk.position for " + mapping.uri + "[" + mapping.extension + "]");
@@ -561,6 +565,8 @@ public class Ingest implements Runnable
         chunk.time = Time.getTime("Chunk.time", mapping);
         log.debug("ingest: chunk.polarization for " + mapping.uri + "[" + mapping.extension + "]");
         chunk.polarization = Polarization.getPolarization("Chunk.polarization", mapping);
+        log.debug("ingest: chunk.observable for " + mapping.uri + "[" + mapping.extension + "]");
+        chunk.observable = Observable.getObservable("Chunk.observable", mapping);
         log.debug("ingest: chunk DONE");
     }
     

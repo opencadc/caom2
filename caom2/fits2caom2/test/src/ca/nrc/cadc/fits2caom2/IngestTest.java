@@ -68,29 +68,23 @@
 */
 package ca.nrc.cadc.fits2caom2;
 
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.FitsValuesMap;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import junit.framework.Assert;
-import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Data;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
-import nom.tam.fits.FitsFactory;
-import nom.tam.fits.FitsUtil;
-import nom.tam.fits.Header;
-import nom.tam.fits.PaddingException;
-import nom.tam.util.ArrayDataInput;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -105,13 +99,21 @@ public class IngestTest
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
+    public static Map<String,String> config;
+    
     String collection = "TEST";
     String observationID = "XMLIngestTest";
     String productID = "productIDFromFITS";
     
     public IngestTest() { }
+    
+    @BeforeClass
+    public static void setUpClass() throws Exception
+    {
+//        config = Util.loadConfig("config/fits2caom2.config");
+    }
  
-    @Test
+//    @Test
     public void testIngest() throws Exception
     {
         URI[] uris = new URI[] { new URI("ad", "BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03", null) };
@@ -138,4 +140,58 @@ public class IngestTest
         out.delete();
     }
     
-                }
+    @Test
+    public void testPopulateChunk() throws Exception
+    {
+        FitsValuesMap defaults = new FitsValuesMap(null, null);        
+        defaults.setKeywordValue("NAXIS", "2");
+        defaults.setKeywordValue("WCSAXES", "3");
+        defaults.setKeywordValue("CUNIT1", "deg");
+        defaults.setKeywordValue("CTYPE1", "RA");
+        defaults.setKeywordValue("CUNIT2", "deg");
+        defaults.setKeywordValue("CTYPE2", "DEC");
+        defaults.setKeywordValue("position.range.start.coord1.pix", "1.0");
+        defaults.setKeywordValue("position.range.start.coord1.val", "2.0");
+        defaults.setKeywordValue("position.range.start.coord2.pix", "3.0");
+        defaults.setKeywordValue("position.range.start.coord2.val", "4.0");
+        defaults.setKeywordValue("position.range.end.coord1.pix", "5.0");
+        defaults.setKeywordValue("position.range.end.coord1.val", "6.0");
+        defaults.setKeywordValue("position.range.end.coord2.pix", "7.0");
+        defaults.setKeywordValue("position.range.end.coord2.val", "8.0");
+        defaults.setKeywordValue("RADECSYS", "coordsys");
+        defaults.setKeywordValue("EQUINOX", "1.0");
+        defaults.setKeywordValue("position.resolution", "2.0");
+        defaults.setKeywordValue("CTYPE3", "ctype3");
+        defaults.setKeywordValue("CUNIT3", "cunit3");
+        defaults.setKeywordValue("CRPIX3", "3");
+        
+        String userConfig = null;
+        Map<String,String> config = Util.loadConfig(userConfig);
+        FitsMapping mapping = new FitsMapping(config, defaults, null);
+        
+        URI[] uris = new URI[] { new URI("ad", "CFHT/700000o", null) };
+        mapping.uri = "ad:CFHT/700000o";
+        mapping.extension = new Integer(1);
+        
+        Ingest ingest = new Ingest(collection, observationID, productID, uris, config);
+        
+        Chunk chunk = new Chunk();
+        ingest.populateChunk(chunk, mapping);
+        
+        Assert.assertNotNull(chunk);
+        Assert.assertNotNull(chunk.positionAxis1);
+        Assert.assertNotNull(chunk.positionAxis2);
+        Assert.assertNotNull(chunk.observableAxis);
+        Assert.assertNull(chunk.energyAxis);
+        Assert.assertNull(chunk.timeAxis);
+        Assert.assertNull(chunk.polarizationAxis);
+        
+        Assert.assertNotNull(chunk.position);
+        Assert.assertNotNull(chunk.observable);
+        Assert.assertNull(chunk.energy);
+        Assert.assertNull(chunk.time);
+        Assert.assertNull(chunk.polarization);
+        
+    }
+    
+}

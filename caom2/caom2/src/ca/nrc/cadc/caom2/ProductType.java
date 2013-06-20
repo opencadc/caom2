@@ -79,7 +79,10 @@ public enum ProductType implements CaomEnum
     CALIBRATION("calibration"),
     AUXILIARY("auxiliary"),
     INFO("info"),
-    PREVIEW("preview");
+    PREVIEW("preview"),
+    CATALOG("catalog"),
+    NOISE("noise"),
+    WEIGHT("weight");
 
     private String value;
 

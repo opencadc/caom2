@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.Slice;
 
@@ -86,6 +87,31 @@ public class Observable
         ObservableAxis observable = new ObservableAxis(dependent);
         observable.independent = Wcs.getSlice(utype + ".independent", mapping);
         return observable;
+    }
+    
+    public static ObservableAxis getObservable(String utype, FitsMapping mapping)
+    {    
+        if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.observable")) )
+            return null;
+        
+        try
+        {
+            String ctype = mapping.getKeywordValue("CTYPE" + mapping.observableAxis);
+            String cunit = mapping.getKeywordValue("CUNIT" + mapping.observableAxis);
+            String bin = mapping.getKeywordValue("CRPIX" + mapping.observableAxis);
+            
+            if (ctype == null || cunit == null || bin == null)
+                return null;
+
+            Axis axis = new Axis(ctype, cunit);
+            Slice dependent = new Slice(axis, Long.valueOf(bin));
+            ObservableAxis observable = new ObservableAxis(dependent);
+            return observable;
+        }
+        catch(IllegalArgumentException ex)
+        {
+            throw new IllegalArgumentException("failed to create Observable: " + ex.getMessage(), ex);
+        }
     }
     
 }

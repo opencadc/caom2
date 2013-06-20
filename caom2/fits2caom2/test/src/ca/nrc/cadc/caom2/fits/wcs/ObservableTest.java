@@ -34,7 +34,7 @@ public class ObservableTest
     {
         config = Util.loadConfig("config/fits2caom2.config");
     }
-
+    
     /**
      * Test of getObservableAxis method, of class Observable.
      */
@@ -60,4 +60,25 @@ public class ObservableTest
         Assert.assertEquals(3, observable.independent.getBin(), 0.0);
     }
     
+    /**
+     * Test of getObservable method, of class Observable.
+     */
+    @Test
+    public void testGetObservable()
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.observableAxis = new Integer(3);
+        mapping.setArgumentProperty("CTYPE3", "ctype3");
+        mapping.setArgumentProperty("CUNIT3", "cunit3");
+        mapping.setArgumentProperty("CRPIX3", "3");
+        
+        ObservableAxis observable = Observable.getObservable("utype", mapping);
+        
+        Assert.assertNotNull(observable);
+        Assert.assertEquals("ctype3", observable.getDependent().getAxis().getCtype());
+        Assert.assertEquals("cunit3", observable.getDependent().getAxis().getCunit());
+        Assert.assertEquals(3, observable.getDependent().getBin(), 0.0);
+        Assert.assertNull(observable.independent);
+    }
+
 }
