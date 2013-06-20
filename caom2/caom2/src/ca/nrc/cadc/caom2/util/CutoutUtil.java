@@ -103,13 +103,25 @@ public class CutoutUtil implements Serializable
     public List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
         throws NoSuchKeywordException
     {
-        log.debug("computeCutout: " + a.getURI() + " vs " );
+        if (log.isDebugEnabled()) // costly string conversions here
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.append("computeCutout: ").append(a.getURI());
+            if (shape != null)
+                sb.append(" vs ").append(shape);
+            if (energyInter != null)
+                sb.append(" vs ").append(energyInter);
+            log.debug(sb.toString());
+        }
 
         Circle circle = null;
-        if (shape instanceof Circle)
-        	circle = (Circle) shape;
-        else
-        	throw new IllegalArgumentException("Only Circle is currently supported.");
+        if (shape != null)
+        {
+            if (shape instanceof Circle)
+                circle = (Circle) shape;
+            else
+                throw new IllegalArgumentException("Only Circle is currently supported.");
+        }
         
          // for each chunk, we make a [part][chunk] cutout aka [extno][<pix range>,...]
         List<String> ret = new ArrayList<String>();
