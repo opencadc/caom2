@@ -401,12 +401,13 @@ public class Ingest implements Runnable
             for (Header header : headers)
             {                        
                 // Update the mapping with the extension.
-                mapping.extension = extension++;
+                mapping.extension = extension;
                 log.debug("ingest: " + artifact.getURI() + "[" + extension + "]");
 
                 // Get the header and update the mapping.
                 if (header == null)
                 {
+                    extension++;
                     continue;
                 }
                 mapping.header = header;
@@ -447,6 +448,8 @@ public class Ingest implements Runnable
                 }
                 else
                     log.debug("part " + extension + ": no data");
+                
+                extension++;
             }
 
             // Delete the file if it is stored locally.
