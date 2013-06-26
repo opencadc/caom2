@@ -100,6 +100,7 @@ public class LinkQueryGenerator
         sb.append(" WHERE Plane.planeURI = '");
         sb.append(puri.toString());
         sb.append("'");
+        sb.append(" ORDER BY Artifact.artifactID, Part.partID");
         return sb.toString();
     }
 
@@ -111,6 +112,7 @@ public class LinkQueryGenerator
         sb.append(" WHERE Artifact.uri = '");
         sb.append(artifactURI.toString());
         sb.append("'");
+        sb.append(" ORDER BY Artifact.artifactID, Part.partID");
         return sb.toString();
     }
 }
