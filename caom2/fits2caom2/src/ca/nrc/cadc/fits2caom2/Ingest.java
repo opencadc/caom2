@@ -101,6 +101,7 @@ import java.util.List;
 import java.util.Map;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsUtil;
 import nom.tam.fits.Header;
 import nom.tam.fits.TruncatedFileException;
 import nom.tam.util.ArrayDataInput;
@@ -329,7 +330,8 @@ public class Ingest implements Runnable
             boolean isSimpleFITS = true;
 
             // Load the file into the nom.tam FITS class.
-            Fits fits = new Fits(file);
+            Fits fits = new Fits(file, FitsUtil.isCompressed(file.getAbsolutePath()));
+
             try
             {
                 headers = getHeaders(fits);

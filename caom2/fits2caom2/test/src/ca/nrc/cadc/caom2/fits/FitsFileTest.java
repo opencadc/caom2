@@ -95,6 +95,7 @@ public class FitsFileTest
     }
     static FitsMapping mapping;
     static BasicHDU[] simple1Headers;
+    static BasicHDU[] simple1HeadersGZ;
     static BasicHDU[] simple2Headers;
     static BasicHDU[] mefHeaders;
     
@@ -111,14 +112,17 @@ public class FitsFileTest
         mapping = new FitsMapping(config, defaults, null);
         
         File simple1File = new File("test/files/simple1.fits");
+        File simple1FileGZ = new File("test/files/simple1.fits.gz");
         File simple2File = new File("test/files/simple2.fits");
         File mefFile = new File("test/files/mef.fits");
         
         Fits simple1Fits = new Fits(simple1File, FitsUtil.isCompressed(simple1File.getAbsolutePath()));
+        Fits simple1FitsGZ = new Fits(simple1FileGZ, FitsUtil.isCompressed(simple1FileGZ.getAbsolutePath()));
         Fits simple2Fits = new Fits(simple2File, FitsUtil.isCompressed(simple2File.getAbsolutePath()));
         Fits mefFits = new Fits(mefFile, FitsUtil.isCompressed(mefFile.getAbsolutePath()));
         
         simple1Headers = simple1Fits.read();
+        simple1HeadersGZ = simple1FitsGZ.read();
         simple2Headers = simple2Fits.read();
         mefHeaders = mefFits.read();
     }
@@ -129,6 +133,78 @@ public class FitsFileTest
     {
         mapping.primary = simple1Headers[0].getHeader();
         mapping.header = simple1Headers[0].getHeader();
+        
+        mapping.positionAxis1 = 1;
+        mapping.positionAxis2 = 2;
+        mapping.energyAxis = 3;
+        mapping.polarizationAxis = 4;
+        mapping.timeAxis = 5;
+        
+        Assert.assertEquals("5", mapping.getMapping("Chunk.naxis"));
+        Assert.assertEquals("30", mapping.getMapping("Chunk.position.axis.function.dimension.naxis1"));
+        Assert.assertEquals("30", mapping.getMapping("Chunk.position.axis.function.dimension.naxis2"));
+        Assert.assertEquals("1", mapping.getMapping("Chunk.energy.axis.function.naxis"));
+        Assert.assertEquals("1", mapping.getMapping("Chunk.polarization.axis.function.naxis"));
+        Assert.assertEquals("1", mapping.getMapping("Chunk.time.axis.function.naxis"));
+        
+        Assert.assertEquals("FK5", mapping.getMapping("Chunk.position.coordsys"));
+        Assert.assertEquals("2000.0", mapping.getMapping("Chunk.position.equinox"));
+        
+        Assert.assertEquals("GLON-CAR", mapping.getMapping("Chunk.position.axis.axis1.ctype"));
+        Assert.assertEquals("DEG", mapping.getMapping("Chunk.position.axis.axis1.cunit"));
+        Assert.assertEquals("1.420000000000E+02", mapping.getMapping("Chunk.position.axis.function.refCoord.coord1.val"));
+        Assert.assertEquals("513.00", mapping.getMapping("Chunk.position.axis.function.refCoord.coord1.pix"));
+        Assert.assertEquals("1.00", mapping.getMapping("Chunk.position.axis.error1.syser"));
+        Assert.assertEquals("1.50", mapping.getMapping("Chunk.position.axis.error1.rnder"));
+        Assert.assertEquals("1.10", mapping.getMapping("Chunk.position.axis.function.cd11"));
+        Assert.assertEquals("1.20", mapping.getMapping("Chunk.position.axis.function.cd12"));
+        Assert.assertEquals("2.10", mapping.getMapping("Chunk.position.axis.function.cd21"));
+        Assert.assertEquals("2.20", mapping.getMapping("Chunk.position.axis.function.cd22"));
+        
+        Assert.assertEquals("GLAT-CAR", mapping.getMapping("Chunk.position.axis.axis2.ctype"));
+        Assert.assertEquals("DEG", mapping.getMapping("Chunk.position.axis.axis2.cunit"));
+        Assert.assertEquals("1.000000000000E-00", mapping.getMapping("Chunk.position.axis.function.refCoord.coord2.val"));
+        Assert.assertEquals("513.00", mapping.getMapping("Chunk.position.axis.function.refCoord.coord2.pix"));
+        Assert.assertEquals("2.00", mapping.getMapping("Chunk.position.axis.error2.syser"));
+        Assert.assertEquals("2.50", mapping.getMapping("Chunk.position.axis.error2.rnder"));
+        
+        Assert.assertEquals("FREQ", mapping.getMapping("Chunk.energy.axis.axis.ctype"));
+        Assert.assertEquals("4.080000000000E+08", mapping.getMapping("Chunk.energy.axis.function.refCoord.val"));
+        Assert.assertEquals("1.00", mapping.getMapping("Chunk.energy.axis.function.refCoord.pix"));
+        Assert.assertEquals("1.0000000E+00", mapping.getMapping("Chunk.energy.axis.function.delta"));
+        Assert.assertEquals("3.00", mapping.getMapping("Chunk.energy.axis.error.syser"));
+        Assert.assertEquals("3.50", mapping.getMapping("Chunk.energy.axis.error.rnder"));
+        
+        Assert.assertEquals("BARYCENT", mapping.getMapping("Chunk.energy.specsys"));
+        Assert.assertEquals("TOPOCENT", mapping.getMapping("Chunk.energy.ssysobs"));
+        Assert.assertEquals("1.00", mapping.getMapping("Chunk.energy.restfrq"));
+        Assert.assertEquals("2.00", mapping.getMapping("Chunk.energy.restwav"));
+        Assert.assertEquals("3.00", mapping.getMapping("Chunk.energy.velosys"));
+        Assert.assertEquals("4.00", mapping.getMapping("Chunk.energy.zsource"));
+        Assert.assertEquals("BARYCENT", mapping.getMapping("Chunk.energy.ssyssrc"));
+        Assert.assertEquals("5.00", mapping.getMapping("Chunk.energy.velang"));
+        
+        Assert.assertEquals("STOKES", mapping.getMapping("Chunk.polarization.axis.axis.ctype"));
+        Assert.assertEquals("DEG", mapping.getMapping("Chunk.polarization.axis.axis.cunit"));
+        Assert.assertEquals("1.000000000000E+00", mapping.getMapping("Chunk.polarization.axis.function.refCoord.val"));
+        Assert.assertEquals("1.00", mapping.getMapping("Chunk.polarization.axis.function.refCoord.pix"));
+        Assert.assertEquals("1.0000000E+00", mapping.getMapping("Chunk.polarization.axis.function.delta"));
+        
+        Assert.assertEquals("STOKES", mapping.getMapping("Chunk.time.axis.axis.ctype"));
+        Assert.assertEquals("DEG", mapping.getMapping("Chunk.time.axis.axis.cunit"));
+        Assert.assertEquals("1.000000000000E+00", mapping.getMapping("Chunk.time.axis.function.refCoord.val"));
+        Assert.assertEquals("1.00", mapping.getMapping("Chunk.time.axis.function.refCoord.pix"));
+        Assert.assertEquals("1.0000000E+00", mapping.getMapping("Chunk.time.axis.function.delta"));
+        Assert.assertEquals("5.00", mapping.getMapping("Chunk.time.axis.error.syser"));
+        Assert.assertEquals("5.50", mapping.getMapping("Chunk.time.axis.error.rnder"));        
+    }
+
+        @Test
+    public void testSimple1GZIP()
+        throws Exception
+    {
+        mapping.primary = simple1HeadersGZ[0].getHeader();
+        mapping.header = simple1HeadersGZ[0].getHeader();
         
         mapping.positionAxis1 = 1;
         mapping.positionAxis2 = 2;

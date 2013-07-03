@@ -99,7 +99,6 @@ public class IngestTest
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    public static Map<String,String> config;
     
     String collection = "TEST";
     String observationID = "XMLIngestTest";
@@ -107,13 +106,7 @@ public class IngestTest
     
     public IngestTest() { }
     
-    @BeforeClass
-    public static void setUpClass() throws Exception
-    {
-//        config = Util.loadConfig("config/fits2caom2.config");
-    }
- 
-//    @Test
+    //@Test
     public void testIngest() throws Exception
     {
         URI[] uris = new URI[] { new URI("ad", "BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03", null) };
@@ -193,5 +186,4 @@ public class IngestTest
         Assert.assertNull(chunk.polarization);
         
     }
-    
 }
