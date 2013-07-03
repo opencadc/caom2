@@ -135,7 +135,7 @@ public final class PositionUtil
             p.sampleSize = computeSampleSize(artifacts, productType);
             p.timeDependent = computeTimeDependent(artifacts, productType);
         }
-        
+
         return p;
     }
 

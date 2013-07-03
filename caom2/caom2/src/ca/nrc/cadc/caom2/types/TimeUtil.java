@@ -237,6 +237,7 @@ public final class TimeUtil
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
     {
+        // assumption: all   pixels are distinct so just add up the number of pixels
         double numPixels = 0;
         for (Artifact a : artifacts)
         {
