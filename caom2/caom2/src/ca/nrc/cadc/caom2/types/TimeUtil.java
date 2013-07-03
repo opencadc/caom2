@@ -179,7 +179,7 @@ public final class TimeUtil
      */
     static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts)
     {
-        log.info("computeDimensionFromWCS: " + bounds);
+        log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null)
             return null;
         
@@ -221,7 +221,7 @@ public final class TimeUtil
         double x1 = val2pix(sw, sw.getAxis().function, bounds.getLower());
         double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
         
-        log.info("computeDimensionFromWCS: " + x1 + "," + x2);
+        log.debug("computeDimensionFromWCS: " + x1 + "," + x2);
         return new Long((long) Math.abs(x2 - x1));
     }
     
@@ -255,10 +255,10 @@ public final class TimeUtil
         
         if (numPixels > 0.0)
         {
-            log.info("computeDimensionFromRangeBounds: " + numPixels);
+            log.debug("computeDimensionFromRangeBounds: " + numPixels);
             return new Long((long) numPixels);
         }
-        log.info("computeDimensionFromRangeBounds: null");
+        log.debug("computeDimensionFromRangeBounds: null");
         return null;
     }
 
