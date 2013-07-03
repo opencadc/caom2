@@ -99,7 +99,8 @@ public final class Util
     static double pix2val(CoordFunction1D function, double pix)
     {
         // compute at middle of pixel (whole number)
-        double refPix = Util.roundToNearest(function.getRefCoord().pix);
+        double refPix = function.getRefCoord().pix; //Util.roundToNearest(function.getRefCoord().pix);
+        //double refPix = Util.roundToNearest(function.getRefCoord().pix);
         return function.getRefCoord().val + function.getDelta() * (pix - refPix);
     }
     
@@ -110,6 +111,10 @@ public final class Util
     }
     
     static double getNumPixels(CoordAxis1D axis)
+    {
+        return getNumPixels(axis, true);
+    }
+    static double getNumPixels(CoordAxis1D axis, boolean useFunc)
     {
         CoordRange1D range = axis.range;
         CoordBounds1D bounds = axis.bounds;
@@ -135,7 +140,7 @@ public final class Util
             }
             return ret;
         }
-        if (function != null)
+        if (useFunc && function != null)
         {
             return function.getNaxis();
         }

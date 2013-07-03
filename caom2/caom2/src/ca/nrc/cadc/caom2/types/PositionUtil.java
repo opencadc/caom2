@@ -122,9 +122,11 @@ public final class PositionUtil
         Position p = new Position();
         Polygon poly = computeBounds(artifacts);
         p.bounds = poly;
-        p.dimension = computeDimensionsFromWCS(poly, artifacts);
+        
+        p.dimension = computeDimensionsFromRangeBounds(artifacts);
         if (p.dimension == null)
-            p.dimension = computeDimensionsFromRangeBounds(artifacts);
+            p.dimension = computeDimensionsFromWCS(poly, artifacts);
+        
         p.resolution = computeResolution(artifacts);
         p.sampleSize = computeSampleSize(artifacts);
         p.timeDependent = computeTimeDependent(artifacts);
@@ -223,6 +225,7 @@ public final class PositionUtil
         // pick the WCS with the largest pixel size
         SpatialWCS sw = null;
         double scale = 0.0;
+        int num = 0;
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
@@ -233,6 +236,7 @@ public final class PositionUtil
                     {
                         if (c.position != null && c.position.getAxis().function != null)
                         {
+                            num++;
                             double ss = Util.getPixelScale(c.position.getAxis().function);
                             if (ss >= scale)
                             {
@@ -246,7 +250,15 @@ public final class PositionUtil
         }
         if (sw == null)
             return null;
-
+        
+        if (num == 1) // single WCS solution
+        {
+            // deep copy
+            long ix = sw.getAxis().function.getDimension().naxis1;
+            long iy = sw.getAxis().function.getDimension().naxis2;
+            return new Dimension2D(ix, iy);
+        }
+        
         WCSWrapper map = new WCSWrapper(sw, 1, 2);
         Transform transform = new Transform(map);
 
@@ -326,6 +338,7 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
+                // assumption is only true for all the chunks in a part
                 for (Chunk c : p.getChunks())
                 {
                     if ( Util.useChunk(a.productType, p.productType, c.productType) )
@@ -371,7 +384,6 @@ public final class PositionUtil
         return new Dimension2D((long) dx, (long) dy);
     }
 
-    // sampleSize of SCIENCE data, mean is weighted by number of pixels
     static Double computeSampleSize(Set<Artifact> artifacts)
     {
         double totSampleSize = 0.0;

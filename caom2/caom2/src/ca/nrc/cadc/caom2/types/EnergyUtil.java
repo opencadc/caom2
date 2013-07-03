@@ -48,9 +48,11 @@ public final class EnergyUtil
     {
         Energy e = new Energy();
         e.bounds = computeBounds(artifacts);
-        e.dimension = computeDimensionFromWCS(e.bounds, artifacts);
+        
+        e.dimension = computeDimensionFromRangeBounds(artifacts);
         if (e.dimension == null)
-            e.dimension = computeDimensionFromRangeBounds(artifacts);
+            e.dimension = computeDimensionFromWCS(e.bounds, artifacts);
+
         e.sampleSize = computeSampleSize(artifacts);
         e.resolvingPower = computeResolution(artifacts);
         e.bandpassName = computeBandpassName(artifacts);
@@ -198,6 +200,7 @@ public final class EnergyUtil
         
         SpectralWCS sw = null;
         double scale = 0.0;
+        int num = 0;
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
@@ -208,6 +211,7 @@ public final class EnergyUtil
                     {
                         if (c.energy != null && c.energy.getAxis().function != null)
                         {
+                            num++;
                             double ss = c.energy.getAxis().function.getDelta();
                             if (ss >= scale)
                             {
@@ -226,8 +230,26 @@ public final class EnergyUtil
         if (sw.getAxis().function == null)
             return null;
         
-        double x1 = val2pix(sw, bounds.getLower());
-        double x2 = val2pix(sw, bounds.getUpper());
+        if (num == 1)
+            return sw.getAxis().function.getNaxis();
+        
+        WCSKeywords kw = new WCSWrapper(sw,1);
+        Transform trans = new Transform(kw);
+        
+        String ctype = sw.getAxis().getAxis().getCtype();
+        if ( !ctype.startsWith(EnergyConverter.CORE_CTYPE) )
+        {
+            log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
+            kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
+            trans = new Transform(kw);
+        }
+        
+        // NOTE: this works correctly because wcslib assumes arg is in SI units (m)
+        Transform.Result pix;
+        pix = trans.sky2pix( new double[] { bounds.getLower() });
+        double x1 = pix.coordinates[0];
+        pix = trans.sky2pix( new double[] { bounds.getUpper() });
+        double x2 = pix.coordinates[0];
         
         return new Long((long) Math.abs(x2 - x1));
     }
@@ -240,6 +262,8 @@ public final class EnergyUtil
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts)
     {
+        // ASSUMPTION: different Chunks (different WCS) are always different pixels
+        // so we simply add up the pixels from each chunk
         double numPixels = 0;
         for (Artifact a : artifacts)
         {
@@ -251,7 +275,7 @@ public final class EnergyUtil
                     {
                         if (c.energy != null)
                         {
-                            double num = Util.getNumPixels(c.energy.getAxis());
+                            double num = Util.getNumPixels(c.energy.getAxis(), false);
                             log.debug("[computeDimension] num=" + num + ", numPixels="+numPixels);
                             numPixels += num;
                         }
@@ -502,25 +526,5 @@ public final class EnergyUtil
             return new long[0];
         }
         return new long[] { x1, x2 }; // an actual cutout
-    }
-    
-    private static double val2pix(SpectralWCS wcs, double val)
-        throws NoSuchKeywordException
-    {
-        // convert to TARGET_CTYPE
-        WCSKeywords kw = new WCSWrapper(wcs,1);
-        Transform trans = new Transform(kw);
-        
-        String ctype = wcs.getAxis().getAxis().getCtype();
-        if ( !ctype.startsWith(EnergyConverter.CORE_CTYPE) )
-        {
-            log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
-            kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
-            trans = new Transform(kw);
-        }
-
-        Transform.Result pix = trans.sky2pix( new double[] { val });
-        
-        return pix.coordinates[0];
     }
 }

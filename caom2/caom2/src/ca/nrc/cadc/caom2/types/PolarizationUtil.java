@@ -78,8 +78,8 @@ import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Set;
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -94,7 +94,7 @@ public final class PolarizationUtil
 
     public static Polarization compute(Set<Artifact> artifacts)
     {
-        Set<PolarizationState> pol = new TreeSet<PolarizationState>();
+        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
         int numPixels = 0;
         for (Artifact a : artifacts)
         {
@@ -115,7 +115,9 @@ public final class PolarizationUtil
                                 int lb = (int) range.getStart().val;
                                 int ub = (int) range.getEnd().val;
                                 for (int i=lb; i <= ub; i++)
+                                {
                                     pol.add(PolarizationState.toValue(i));
+                                }
                             }
                             else if (bounds != null)
                             {
@@ -124,7 +126,9 @@ public final class PolarizationUtil
                                     int lb = (int) cr.getStart().val;
                                     int ub = (int) cr.getEnd().val;
                                     for (int i=lb; i <= ub; i++)
+                                    {
                                         pol.add(PolarizationState.toValue(i));
+                                    }
                                 }
                             }
                             else if (function != null)

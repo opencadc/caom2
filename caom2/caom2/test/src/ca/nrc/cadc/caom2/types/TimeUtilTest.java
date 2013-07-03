@@ -102,7 +102,7 @@ public class TimeUtilTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
     }
 
 
@@ -163,8 +163,8 @@ public class TimeUtilTest
 
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
             Assert.assertTrue(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
@@ -204,8 +204,8 @@ public class TimeUtilTest
 
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
             Assert.assertEquals(2, actual.bounds.getSamples().size());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue(), 1L);
@@ -244,8 +244,8 @@ public class TimeUtilTest
 
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
             Assert.assertTrue(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
@@ -280,12 +280,12 @@ public class TimeUtilTest
 
             plane = getTestSetFunction(1, 2, 1, true);
             actual = TimeUtil.compute(plane.getArtifacts());
-            log.debug("testComputeFromFunction: " + actual);
+            log.info("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
             Assert.assertTrue(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
@@ -303,8 +303,9 @@ public class TimeUtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     @Test
-    public void testComputeFromMultipleFunctionCommon()
+    public void testComputeFromMultipleFunctionOverlap()
     {
         try
         {
@@ -320,7 +321,7 @@ public class TimeUtilTest
 
             plane = getTestSetFunction(1, 2, 1, false);
             actual = TimeUtil.compute(plane.getArtifacts());
-            log.debug("testComputeFromFunction: " + actual);
+            log.info("testComputeFromMultipleFunctionOverlap: " + actual);
 
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);

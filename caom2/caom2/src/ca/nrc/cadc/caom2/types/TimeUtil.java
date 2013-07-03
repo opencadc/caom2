@@ -37,9 +37,11 @@ public final class TimeUtil
     {
         Time t = new Time();
         t.bounds = computeBounds(artifacts);
-        t.dimension = computeDimensionFromWCS(t.bounds, artifacts);
+        
+        t.dimension = computeDimensionFromRangeBounds(artifacts);
         if (t.dimension == null)
-            t.dimension = computeDimensionFromRangeBounds(artifacts);
+            t.dimension = computeDimensionFromWCS(t.bounds, artifacts);
+        
         t.resolution = computeResolution(artifacts);
         t.sampleSize = computeSampleSize(artifacts);
         t.exposure = computeExposureTime(artifacts);
@@ -120,12 +122,14 @@ public final class TimeUtil
      */
     static Double computeSampleSize(Set<Artifact> artifacts)
     {
+        // assumption: all pixels are distinct so we can just compute a weighted average
         double totSampleSize = 0.0;
         double numPixels = 0.0;
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
             {
+                // assumption is only really true for the chunks in a single part
                 for (Chunk c : p.getChunks())
                 {
                     if ( Util.useChunk(a.productType, p.productType, c.productType) )
@@ -175,12 +179,14 @@ public final class TimeUtil
      */
     static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts)
     {
+        log.info("computeDimensionFromWCS: " + bounds);
         if (bounds == null)
             return null;
         
         // pick the WCS with the largest pixel size
         TemporalWCS sw = null;
         double scale = 0.0;
+        int num = 0;
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
@@ -191,6 +197,7 @@ public final class TimeUtil
                     {
                         if (c.time != null && c.time.getAxis().function != null)
                         {
+                            num++;
                             double ss = c.time.getAxis().function.getDelta();
                             if (ss >= scale)
                             {
@@ -205,9 +212,16 @@ public final class TimeUtil
         if (sw == null)
             return null;
         
+        if (sw.getAxis().function == null)
+            return null;
+        
+        if (num == 1)
+            return sw.getAxis().function.getNaxis();
+        
         double x1 = val2pix(sw, sw.getAxis().function, bounds.getLower());
         double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
         
+        log.info("computeDimensionFromWCS: " + x1 + "," + x2);
         return new Long((long) Math.abs(x2 - x1));
     }
     
@@ -219,6 +233,7 @@ public final class TimeUtil
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts)
     {
+        // assumption: all   pixels are distinct so just add up the number of pixels
         double x1 = 0.0;
         double x2 = 0.0;
         double numPixels = 0;
@@ -226,11 +241,12 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
+                // assumption is only really true for the chunks of a part
                 for (Chunk c : p.getChunks())
                 {
                     if ( c.time != null && Util.useChunk(a.productType, p.productType, c.productType) )
                     {
-                        double n = Util.getNumPixels(c.time.getAxis());
+                        double n = Util.getNumPixels(c.time.getAxis(), false);
                         numPixels += n;
                     }
                 }
@@ -238,7 +254,11 @@ public final class TimeUtil
         }
         
         if (numPixels > 0.0)
+        {
+            log.info("computeDimensionFromRangeBounds: " + numPixels);
             return new Long((long) numPixels);
+        }
+        log.info("computeDimensionFromRangeBounds: null");
         return null;
     }
 
