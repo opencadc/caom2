@@ -67,131 +67,128 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.action.RepoAction;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
-import ca.nrc.cadc.vosi.avail.CheckException;
-import ca.nrc.cadc.vosi.avail.CheckResource;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import java.util.Date;
+import java.util.List;
 import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoWebService implements WebService
+public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
 {
-    private static final Logger log = Logger.getLogger(CaomRepoWebService.class);
-    
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=cadc tempacct,ou=hia.nrc.ca,o=grid,c=ca");
+    private static final Logger log = Logger.getLogger(DatabaseReadAccessDAO.class);
 
-    public CaomRepoWebService()
-    {
-        
-    }
+    public DatabaseReadAccessDAO() { }
 
-    public AvailabilityStatus getStatus()
+    public ReadAccess get(Class<? extends ReadAccess> c, Long id)
     {
-        boolean isGood = true;
-        String note = "service is accepting queries";
+        checkInit();
+        if (c == null || id == null)
+            throw new IllegalArgumentException("args cannot be null");
+        log.debug("GET: " + c.getSimpleName() + " " + id);
+        long t = System.currentTimeMillis();
 
         try
         {
-            String state = getState();
-            if (RepoAction.OFFLINE.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.OFFLINE_MSG);
-            if (RepoAction.READ_ONLY.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
+            String sql = gen.getSelectSQL(c, id);
+            if (log.isDebugEnabled())
+                log.debug("GET SQL: " + Util.formatSQL(sql));
 
-            // ReadWrite: proceed with live checks
-            
-            CaomRepoConfig rc = new CaomRepoConfig();
-            
-            if (rc.isEmpty())
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
-
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while ( i.hasNext() )
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Object result = jdbc.query(sql, gen.getReadAccessMapper(c));
+            if (result == null)
+                return null;
+            if (result instanceof List)
             {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
+                List obs = (List) result;
+                if (obs.isEmpty())
+                    return null;
+                if (obs.size() > 1)
+                    throw new RuntimeException("BUG: get " + c.getSimpleName() + " " + id + " query returned " + obs.size() + " ReadAccess tuples");
+                Object o = obs.get(0);
+                if (o instanceof ReadAccess)
+                {
+                    ReadAccess ret = (ReadAccess) obs.get(0);
+                    return ret;
+                }
+                else
+                    throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
             }
-            
-            // load this dynamically so that missing wcs won't break this class
-            try
-            {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            }
-            catch(RuntimeException ex)
-            {
-                throw new CheckException("wcslib not available", ex);
-            }
-            catch(Error er)
-            {
-                throw new CheckException("wcslib not available", er);
-            }
+            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
         }
-        catch(CheckException ce)
+        finally
         {
-            // tests determined that the resource is not working
-            isGood = false;
-            note = ce.getMessage();
-        }
-        catch (Throwable t)
-        {
-            // the test itself failed
-            isGood = false;
-            note = "test failed, reason: " + t;
-        }
-        return new AvailabilityStatus(isGood, null, null, null, note);
-    }
-
-    public void setState(String state)
-    {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-
-        if (subject == null)
-            return;
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if ( AuthenticationUtil.equals(TRUSTED, caller) )
-        {
-            String key = RepoAction.class.getName() + ".state";
-            if (RepoAction.OFFLINE.equals(state))
-                System.setProperty(key, RepoAction.OFFLINE);
-            else if (RepoAction.READ_ONLY.equals(state))
-                System.setProperty(key, RepoAction.READ_ONLY);
-            else if (RepoAction.READ_WRITE.equals(state))
-                System.setProperty(key, RepoAction.READ_WRITE);
-            log.info("WebService state changed to " + state + " by " + caller + " [OK]");
-        }
-        else
-        {
-            log.warn("WebService state change to " + state + " by " + caller + " [DENIED]");
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + c.getSimpleName() + " " + id + " " + dt + "ms");
         }
     }
 
-    private String getState()
+    public void put(ReadAccess ra)
     {
-        String key = RepoAction.MODE_KEY;
-        String ret = System.getProperty(key);
-        if (ret == null)
-            return RepoAction.READ_WRITE;
-        return ret;
+        checkInit();
+        if (ra == null)
+            throw new IllegalArgumentException("arg cannot be null");
+        log.debug("PUT: " + ra);
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Class skel = gen.getSkeletonClass(ra.getClass());
+            String sql = gen.getSelectSQL(skel, ra.getID());
+            log.debug("PUT: " + sql);
+            Skeleton cur = (Skeleton) jdbc.query(sql, gen.getSkeletonExtractor(skel));
+
+            if (computeLastModified)
+                updateLastModified(ra, cur);
+
+            super.put(cur, ra, null, jdbc);
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("PUT: " + ra + " " + dt + "ms");
+        }
+    }
+
+    public void delete(Class<? extends ReadAccess> c, Long id)
+    {
+        checkInit();
+        if (c == null || id == null)
+            throw new IllegalArgumentException("args cannot be null");
+        log.debug("DELETE: " + c.getSimpleName() + " " + id);
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            String sql = gen.getDeleteSQL(c, id, true);
+            log.debug("DELETE: " + sql);
+            jdbc.update(sql);
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("DELETE: " +  c.getSimpleName() + " " + id + " " + dt + "ms");
+        }
+    }
+
+    private void updateLastModified(ReadAccess ra, Skeleton s)
+    {
+        boolean updateMax = false;
+
+        // new or changed
+        if (s == null || s.stateCode.intValue() != ra.getStateCode())
+        {
+            Util.assignLastModified(ra, new Date(), "lastModified");
+            //Util.assignLastModified(ra, ra.getLastModified(), "maxLastModified");
+        }
     }
 }

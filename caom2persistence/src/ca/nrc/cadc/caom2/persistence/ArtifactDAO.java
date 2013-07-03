@@ -67,131 +67,103 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.action.RepoAction;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
-import ca.nrc.cadc.vosi.avail.CheckException;
-import ca.nrc.cadc.vosi.avail.CheckResource;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoWebService implements WebService
+class ArtifactDAO extends AbstractCaomEntityDAO<Artifact>
 {
-    private static final Logger log = Logger.getLogger(CaomRepoWebService.class);
-    
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=cadc tempacct,ou=hia.nrc.ca,o=grid,c=ca");
+    private static final Logger log = Logger.getLogger(ArtifactDAO.class);
 
-    public CaomRepoWebService()
+    private PartDAO partDAO;
+
+    // package access for use by ObservationDAO only
+    ArtifactDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
     {
-        
+        super(gen, forceUpdate, readOnly);
+        this.partDAO = new PartDAO(gen, forceUpdate, readOnly);
     }
 
-    public AvailabilityStatus getStatus()
+    @Override
+    public void put(Skeleton cur, Artifact a, LinkedList<CaomEntity> parents, JdbcTemplate jdbc)
     {
-        boolean isGood = true;
-        String note = "service is accepting queries";
+        if (a == null)
+            throw new IllegalArgumentException("arg cannot be null");
+        log.debug("PUT: " + a.getID());
+        long t = System.currentTimeMillis();
 
         try
         {
-            String state = getState();
-            if (RepoAction.OFFLINE.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.OFFLINE_MSG);
-            if (RepoAction.READ_ONLY.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
-
-            // ReadWrite: proceed with live checks
-            
-            CaomRepoConfig rc = new CaomRepoConfig();
-            
-            if (rc.isEmpty())
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
-
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while ( i.hasNext() )
+            // delete obsolete children
+            List<Pair<Part>> pairs = new ArrayList<Pair<Part>>();
+            if (cur != null)
             {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
+                ArtifactSkeleton cs = (ArtifactSkeleton) cur;
+                // delete the skeletons that are not in a.getParts()
+                for (PartSkeleton s : cs.parts)
+                {
+                    Part p = Util.findPart(a.getParts(), s.id);
+                    if ( p == null ) // removed by client
+                    {
+                        log.debug("put caused delete: " + p);
+                        partDAO.delete(s, jdbc);
+                    }
+                }
+                // pair up parts and skeletons for insert/update
+                for (Part p : a.getParts())
+                {
+                    PartSkeleton ps = Util.findPartSkel(cs.parts, p.getID());
+                    pairs.add(new Pair<Part>(ps, p)); // null ok
+                }
             }
-            
-            // load this dynamically so that missing wcs won't break this class
-            try
-            {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            }
-            catch(RuntimeException ex)
-            {
-                throw new CheckException("wcslib not available", ex);
-            }
-            catch(Error er)
-            {
-                throw new CheckException("wcslib not available", er);
-            }
-        }
-        catch(CheckException ce)
-        {
-            // tests determined that the resource is not working
-            isGood = false;
-            note = ce.getMessage();
-        }
-        catch (Throwable t)
-        {
-            // the test itself failed
-            isGood = false;
-            note = "test failed, reason: " + t;
-        }
-        return new AvailabilityStatus(isGood, null, null, null, note);
-    }
+            else
+                for (Part p : a.getParts())
+                    pairs.add(new Pair<Part>(null, p));
 
-    public void setState(String state)
-    {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
+            super.put(cur, a, parents, jdbc);
 
-        if (subject == null)
-            return;
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if ( AuthenticationUtil.equals(TRUSTED, caller) )
-        {
-            String key = RepoAction.class.getName() + ".state";
-            if (RepoAction.OFFLINE.equals(state))
-                System.setProperty(key, RepoAction.OFFLINE);
-            else if (RepoAction.READ_ONLY.equals(state))
-                System.setProperty(key, RepoAction.READ_ONLY);
-            else if (RepoAction.READ_WRITE.equals(state))
-                System.setProperty(key, RepoAction.READ_WRITE);
-            log.info("WebService state changed to " + state + " by " + caller + " [OK]");
+            parents.push(a);
+            for (Pair<Part> p : pairs)
+                partDAO.put(p.cur, p.val, parents, jdbc);
+            parents.pop();
         }
-        else
+        finally
         {
-            log.warn("WebService state change to " + state + " by " + caller + " [DENIED]");
+            long dt = System.currentTimeMillis() - t;
+            log.debug("PUT: " + a.getID() + " " + dt + "ms");
         }
     }
 
-    private String getState()
+    @Override
+    protected void deleteChildren(Skeleton s, JdbcTemplate jdbc)
     {
-        String key = RepoAction.MODE_KEY;
-        String ret = System.getProperty(key);
-        if (ret == null)
-            return RepoAction.READ_WRITE;
-        return ret;
+        ArtifactSkeleton a = (ArtifactSkeleton) s;
+        if (a.parts.size() > 0)
+        {
+            // delete children of parts
+            for (PartSkeleton p : a.parts)
+                partDAO.deleteChildren(p, jdbc);
+
+            // delete parts by FK
+            String sql = gen.getDeleteSQL(Part.class, a.id, false);
+            log.debug("delete: " + sql);
+            jdbc.update(sql);
+        }
+
     }
 }

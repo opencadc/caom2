@@ -67,131 +67,127 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.action.RepoAction;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
-import ca.nrc.cadc.vosi.avail.CheckException;
-import ca.nrc.cadc.vosi.avail.CheckResource;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import ca.nrc.cadc.caom2.dao.TransactionManager;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoWebService implements WebService
+public class AbstractDAO 
 {
-    private static final Logger log = Logger.getLogger(CaomRepoWebService.class);
+     private static final Logger log = Logger.getLogger(AbstractDAO.class);
+
+    protected SQLGenerator gen;
+    protected boolean forceUpdate;
+    protected boolean readOnly;
+
+    protected DataSource dataSource;
+    protected TransactionManager txnManager;
+
+    protected AbstractDAO() { }
     
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=cadc tempacct,ou=hia.nrc.ca,o=grid,c=ca");
+    /**
+     * Get the DataSource in use by the DAO. This is intended so that applications can
+     * include other SQL statements along with DAO operations in a single transaction.
+     * 
+     * @return the DataSource
+     */
+    public DataSource getDataSource() { return dataSource; }
 
-    public CaomRepoWebService()
+    SQLGenerator getSQLGenerator() { return gen; }
+
+    /**
+     * Get the TransactionManager that controls transactions using this DAOs DataSource.
+     * 
+     * @return the TransactionManager
+     */
+    public TransactionManager getTransactionManager()
     {
-        
+        if (dataSource == null)
+            throw new IllegalStateException("cannot create TransactionManager before setConfig is called");
+        if (txnManager == null)
+            this.txnManager = new DatabaseTransactionManager(dataSource);
+        return txnManager;
     }
 
-    public AvailabilityStatus getStatus()
+    public Map<String, Class> getParams()
     {
-        boolean isGood = true;
-        String note = "service is accepting queries";
+        Map<String,Class> ret = new TreeMap<String,Class>();
+        // TODO: these two are alternatives... how to convey that?
+        ret.put("jndiDataSourceName", String.class);
+        ret.put("server", String.class);
 
-        try
-        {
-            String state = getState();
-            if (RepoAction.OFFLINE.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.OFFLINE_MSG);
-            if (RepoAction.READ_ONLY.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
-
-            // ReadWrite: proceed with live checks
-            
-            CaomRepoConfig rc = new CaomRepoConfig();
-            
-            if (rc.isEmpty())
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
-
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while ( i.hasNext() )
-            {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
-            }
-            
-            // load this dynamically so that missing wcs won't break this class
-            try
-            {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            }
-            catch(RuntimeException ex)
-            {
-                throw new CheckException("wcslib not available", ex);
-            }
-            catch(Error er)
-            {
-                throw new CheckException("wcslib not available", er);
-            }
-        }
-        catch(CheckException ce)
-        {
-            // tests determined that the resource is not working
-            isGood = false;
-            note = ce.getMessage();
-        }
-        catch (Throwable t)
-        {
-            // the test itself failed
-            isGood = false;
-            note = "test failed, reason: " + t;
-        }
-        return new AvailabilityStatus(isGood, null, null, null, note);
-    }
-
-    public void setState(String state)
-    {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-
-        if (subject == null)
-            return;
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if ( AuthenticationUtil.equals(TRUSTED, caller) )
-        {
-            String key = RepoAction.class.getName() + ".state";
-            if (RepoAction.OFFLINE.equals(state))
-                System.setProperty(key, RepoAction.OFFLINE);
-            else if (RepoAction.READ_ONLY.equals(state))
-                System.setProperty(key, RepoAction.READ_ONLY);
-            else if (RepoAction.READ_WRITE.equals(state))
-                System.setProperty(key, RepoAction.READ_WRITE);
-            log.info("WebService state changed to " + state + " by " + caller + " [OK]");
-        }
-        else
-        {
-            log.warn("WebService state change to " + state + " by " + caller + " [DENIED]");
-        }
-    }
-
-    private String getState()
-    {
-        String key = RepoAction.MODE_KEY;
-        String ret = System.getProperty(key);
-        if (ret == null)
-            return RepoAction.READ_WRITE;
+        ret.put("database", String.class);
+        ret.put("schema", String.class);
+        ret.put("forceUpdate", Boolean.class);
+        ret.put(SQLGenerator.class.getName(), Class.class);
         return ret;
     }
+
+    public void setConfig(Map<String,Object> config)
+    {
+        String jndiDataSourceName = (String) config.get("jndiDataSourceName");
+        String server = (String) config.get("server");
+        String database = (String) config.get("database");
+        String schema = (String) config.get("schema");
+        Boolean force = (Boolean) config.get("forceUpdate");
+        Class<?> genClass = (Class<?>) config.get(SQLGenerator.class.getName());
+        if (genClass == null)
+            throw new IllegalArgumentException(SQLGenerator.class.getName() + " must be specified in config");
+        try
+        {
+            if (jndiDataSourceName != null)
+                this.dataSource = DBUtil.getDataSource(jndiDataSourceName);
+            else
+            {
+                DBConfig dbrc = new DBConfig();
+                ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
+                this.dataSource = DBUtil.getDataSource(cc);
+            }
+        }
+        catch(NamingException ex)
+        {
+            throw new IllegalArgumentException("cannot find JNDI DataSource: "
+                    + jndiDataSourceName);
+        }
+        catch(IOException ex)
+        {
+            throw new IllegalArgumentException("cannot find ConnectionConfig for "
+                + server + " " + database);
+        }
+        if (force != null)
+            this.forceUpdate = force.booleanValue();
+
+        if (genClass != null)
+        {
+            try
+            {
+                Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
+                this.gen = (SQLGenerator) ctor.newInstance(database, schema);
+            }
+            catch(Exception ex)
+            {
+                throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
+            }
+        }
+    }
+
+    protected void checkInit()
+    {
+        if (gen == null)
+            throw new IllegalStateException("setConfig never called or failed");
+    }
+
 }

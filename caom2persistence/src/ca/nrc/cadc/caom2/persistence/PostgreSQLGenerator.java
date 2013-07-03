@@ -67,131 +67,123 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.action.RepoAction;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
-import ca.nrc.cadc.vosi.avail.CheckException;
-import ca.nrc.cadc.vosi.avail.CheckResource;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.PolygonUtil;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Vertex;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import org.apache.log4j.Logger;
+import org.postgresql.util.PGobject;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoWebService implements WebService
+public class PostgreSQLGenerator extends BaseSQLGenerator
 {
-    private static final Logger log = Logger.getLogger(CaomRepoWebService.class);
+    private static final Logger log = Logger.getLogger(PostgreSQLGenerator.class);
     
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=cadc tempacct,ou=hia.nrc.ca,o=grid,c=ca");
-
-    public CaomRepoWebService()
+    public PostgreSQLGenerator(String database, String schema)
     {
-        
+        super(database, schema, null, true);
+        this.useIntegerForBoolean = true;
     }
 
-    public AvailabilityStatus getStatus()
+    @Override
+    protected String getLimitConstraint(Integer batchSize)
     {
-        boolean isGood = true;
-        String note = "service is accepting queries";
-
-        try
-        {
-            String state = getState();
-            if (RepoAction.OFFLINE.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.OFFLINE_MSG);
-            if (RepoAction.READ_ONLY.equals(state))
-                return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
-
-            // ReadWrite: proceed with live checks
-            
-            CaomRepoConfig rc = new CaomRepoConfig();
-            
-            if (rc.isEmpty())
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
-
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while ( i.hasNext() )
-            {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT TOP 1 obsID FROM " + rci.getTestTable();
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
-            }
-            
-            // load this dynamically so that missing wcs won't break this class
-            try
-            {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            }
-            catch(RuntimeException ex)
-            {
-                throw new CheckException("wcslib not available", ex);
-            }
-            catch(Error er)
-            {
-                throw new CheckException("wcslib not available", er);
-            }
-        }
-        catch(CheckException ce)
-        {
-            // tests determined that the resource is not working
-            isGood = false;
-            note = ce.getMessage();
-        }
-        catch (Throwable t)
-        {
-            // the test itself failed
-            isGood = false;
-            note = "test failed, reason: " + t;
-        }
-        return new AvailabilityStatus(isGood, null, null, null, note);
+        if (batchSize == null)
+            return null;
+        return "LIMIT " + batchSize;
     }
 
-    public void setState(String state)
+    @Override
+    protected void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
+        throws SQLException
     {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-
-        if (subject == null)
-            return;
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if ( AuthenticationUtil.equals(TRUSTED, caller) )
+        if (val == null)
         {
-            String key = RepoAction.class.getName() + ".state";
-            if (RepoAction.OFFLINE.equals(state))
-                System.setProperty(key, RepoAction.OFFLINE);
-            else if (RepoAction.READ_ONLY.equals(state))
-                System.setProperty(key, RepoAction.READ_ONLY);
-            else if (RepoAction.READ_WRITE.equals(state))
-                System.setProperty(key, RepoAction.READ_WRITE);
-            log.info("WebService state changed to " + state + " by " + caller + " [OK]");
+            ps.setObject(col, null);
+            if (sb != null)
+                sb.append("null,");
         }
         else
         {
-            log.warn("WebService state change to " + state + " by " + caller + " [DENIED]");
+            log.debug("[safeSetPoint] in: " + val);
+            StringBuilder sval = new StringBuilder();
+            sval.append("(");
+            sval.append(val.cval1);
+            sval.append("d,");
+            sval.append(val.cval2);
+            sval.append("d)");
+            PGobject pgo = new PGobject();
+            String spoint = sval.toString();
+            pgo.setType("spoint");
+            pgo.setValue(spoint);
+            ps.setObject(col, pgo);
+            if (sb != null)
+            {
+                sb.append(spoint);
+                sb.append(",");
+            }
         }
     }
 
-    private String getState()
+    @Override
+    protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+        throws SQLException
     {
-        String key = RepoAction.MODE_KEY;
-        String ret = System.getProperty(key);
-        if (ret == null)
-            return RepoAction.READ_WRITE;
-        return ret;
+        if (val == null)
+        {
+            ps.setObject(col, null);
+            if (sb != null)
+                sb.append("null,");
+        }
+        else
+        {
+            log.debug("[safeSetPolygon] in: " + val);
+            // pg_sphere only supports simple polygons
+            Polygon poly = PolygonUtil.getOuterHull(val);
+            log.debug("[safeSetPolygon] hull: " + poly);
+            if (poly == null)
+            {
+                ps.setObject(col, null);
+                log.warn("failed to compute simple outer hull from " + val);
+                if (sb != null)
+                    sb.append("null,");
+            }
+            else
+            {
+                StringBuilder sval = new StringBuilder();
+                sval.append("{");
+                for (Vertex v : poly.getVertices())
+                {
+                    if ( !SegmentType.CLOSE.equals(v.getType()) )
+                    {
+                        sval.append("(");
+                        sval.append(v.cval1);
+                        sval.append("d,");
+                        sval.append(v.cval2);
+                        sval.append("d)");
+                        sval.append(",");
+                    }
+                }
+                sval.setCharAt(sval.length()-1, '}'); // replace last comma with closing }
+                String spoly = sval.toString();
+                PGobject pgo = new PGobject();
+                pgo.setType("spoly");
+                pgo.setValue(spoly);
+                ps.setObject(col, pgo);
+                if (sb != null)
+                {
+                    sb.append(spoly);
+                    sb.append(",");
+                }
+            }
+        }
     }
 }
