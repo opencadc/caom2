@@ -42,14 +42,14 @@ public class PolarizationTest
     public void testGetPolarization()
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
-        mapping.setArgumentProperty("utype.axis.axis.ctype", "ctype");
+        mapping.setArgumentProperty("utype.axis.axis.ctype", "STOKES");
         
         PolarizationWCS polarizationWCS = Polarization.getPolarization("utype", mapping);
         
         Assert.assertNull(polarizationWCS);
         
         mapping = new FitsMapping(config, null, null);
-        mapping.setArgumentProperty("utype.axis.axis.ctype", "ctype");
+        mapping.setArgumentProperty("utype.axis.axis.ctype", "STOKES");
         mapping.setArgumentProperty("utype.axis.range.start.pix", "1.0");
         mapping.setArgumentProperty("utype.axis.range.start.val", "2.0");
         mapping.setArgumentProperty("utype.axis.range.end.pix", "3.0");
@@ -60,7 +60,7 @@ public class PolarizationTest
         Assert.assertNotNull(polarizationWCS);
         Assert.assertNotNull(polarizationWCS.getAxis());
         
-        Assert.assertEquals("ctype", polarizationWCS.getAxis().getAxis().getCtype());
+        Assert.assertEquals("STOKES", polarizationWCS.getAxis().getAxis().getCtype());
         Assert.assertNull("cunit", polarizationWCS.getAxis().getAxis().getCunit());
         Assert.assertEquals(1.0, polarizationWCS.getAxis().range.getStart().pix, 0.0);
         Assert.assertEquals(2.0, polarizationWCS.getAxis().range.getStart().val, 0.0);
