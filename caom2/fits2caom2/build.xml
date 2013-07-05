@@ -150,7 +150,7 @@
 
     <target name="test" depends="test-app, test-lib" />
     
-    <target name="test-app" depends="config, compile-test">
+    <target name="test-app" depends="build, config, compile-test">
         <junit printsummary="yes" haltonfailure="yes" fork="yes">
             <classpath>
                 <pathelement path="build/test/class" />
@@ -164,7 +164,7 @@
         </junit>
     </target>
     
-    <target name="test-lib" depends="config, compile-test">
+    <target name="test-lib" depends="build, config, compile-test">
         <junit printsummary="yes" haltonfailure="yes" fork="yes">
             <classpath>
                 <pathelement path="build/test/class" />
@@ -196,6 +196,8 @@
                 <pathelement path="${jars}:${testingJars}" />
             </classpath>
             <formatter type="plain" usefile="false" />
+            
+            <!-- assumption: a suitable proxy cert in build/test/class/proxy.pem -->
 
             <test name="ca.nrc.cadc.fits2caom2.integration.IncludedConfigOnlyTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.MetaDataTest"/>
