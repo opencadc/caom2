@@ -431,7 +431,112 @@ public class EnergyUtilTest
         }
     }
     
+    @Test
+    public void testComputeFromCalibration()
+    {
+        log.debug("testComputeFromCalibration: START");
+        try
+        {
+            double expectedLB = 400e-9;
+            double expectedUB = 600e-9;
+            long expectedDimension = 200L;
+            double expectedSS = 1.0e-9;
+            double expectedRP = 33000.0;
+
+            Plane plane;
+            Energy actual;
+
+            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            // add some aux artifacts, should not effect result
+            Plane tmp = getTestSetRange(1, 1, 3);
+            Artifact tmpA = tmp.getArtifacts().iterator().next();
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
+            aux.productType = ProductType.AUXILIARY;
+            aux.getParts().addAll(tmpA.getParts());
+            plane.getArtifacts().add(aux);
+            
+            actual = EnergyUtil.compute(plane.getArtifacts());
+            log.debug("testComputeFromCalibration: " + actual);
+            
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
+            Assert.assertNotNull(actual.resolvingPower);
+            Assert.assertEquals(expectedRP, actual.resolvingPower.doubleValue(), 0.0001);
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+            Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
+            Assert.assertEquals(TRANSITION, actual.transition);
+            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testComputeFromMixed()
+    {
+        log.debug("testComputeFromMixed: START");
+        try
+        {
+            double expectedLB = 400e-9;
+            double expectedUB = 600e-9;
+            long expectedDimension = 200L;
+            double expectedSS = 1.0e-9;
+            double expectedRP = 33000.0;
+
+            Plane plane;
+            Energy actual;
+
+            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            
+            // add some cal artifacts, should not effect result
+            Plane tmp = getTestSetRange(1, 1, 3);
+            Artifact tmpA = tmp.getArtifacts().iterator().next();
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
+            aux.productType = ProductType.CALIBRATION;
+            aux.getParts().addAll(tmpA.getParts());
+            plane.getArtifacts().add(aux);
+            
+            actual = EnergyUtil.compute(plane.getArtifacts());
+            log.debug("testComputeFromMixed: " + actual);
+            
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
+            Assert.assertNotNull(actual.resolvingPower);
+            Assert.assertEquals(expectedRP, actual.resolvingPower.doubleValue(), 0.0001);
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+            Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
+            Assert.assertEquals(TRANSITION, actual.transition);
+            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     Plane getTestSetRange(int numA, int numP, int numC)
+        throws URISyntaxException
+    {
+        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+    }
+    
+    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
         throws URISyntaxException
     {
         double px = 0.5;
@@ -445,7 +550,7 @@ public class EnergyUtilTest
         for (int a=0; a<numA; a++)
         {
             Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            na.productType = ptype;
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {

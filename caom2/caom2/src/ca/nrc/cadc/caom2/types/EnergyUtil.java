@@ -3,11 +3,12 @@ package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -46,25 +47,30 @@ public final class EnergyUtil
     public static Energy compute(Set<Artifact> artifacts)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
-        Energy e = new Energy();
-        e.bounds = computeBounds(artifacts);
-        
-        e.dimension = computeDimensionFromRangeBounds(artifacts);
-        if (e.dimension == null)
-            e.dimension = computeDimensionFromWCS(e.bounds, artifacts);
+        ProductType productType = Util.choseProductType(artifacts);
+        log.debug("compute: " + productType);
 
-        e.sampleSize = computeSampleSize(artifacts);
-        e.resolvingPower = computeResolution(artifacts);
-        e.bandpassName = computeBandpassName(artifacts);
-        e.transition = computeTransition(artifacts);
-        e.emBand = EnergyBand.getEnergyBand(e.bounds);
+        Energy e = new Energy();
+        if (productType != null)
+        {
+            e.bounds = computeBounds(artifacts, productType);
+            e.dimension = computeDimensionFromRangeBounds(artifacts, productType);
+            if (e.dimension == null)
+                e.dimension = computeDimensionFromWCS(e.bounds, artifacts, productType);
+            e.sampleSize = computeSampleSize(artifacts, productType);
+            e.resolvingPower = computeResolution(artifacts, productType);
+            e.bandpassName = computeBandpassName(artifacts, productType);
+            e.transition = computeTransition(artifacts, productType);
+            e.emBand = EnergyBand.getEnergyBand(e.bounds);
+        }
+
         return e;
     }
 
     /**
      * Computes the union.
      */
-    static Interval computeBounds(Set<Artifact> artifacts)
+    static Interval computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
         double smooth = 0.02;
@@ -75,7 +81,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -128,7 +134,7 @@ public final class EnergyUtil
      * @param wcs
      * @return a new Polygon computed with the default union scale
      */
-    static Double computeSampleSize(Set<Artifact> artifacts)
+    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
         double totSampleSize = 0.0;
@@ -139,7 +145,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -192,7 +198,7 @@ public final class EnergyUtil
      * @param wcsArray
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts)
+    static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
         if (bounds == null)
@@ -207,7 +213,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null && c.energy.getAxis().function != null)
                         {
@@ -260,7 +266,7 @@ public final class EnergyUtil
      * @param wcsArray
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts)
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
     {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply add up the pixels from each chunk
@@ -271,7 +277,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -296,7 +302,7 @@ public final class EnergyUtil
      * @param wcs
      * @return exposure time in seconds
      */
-    static Double computeResolution(Set<Artifact> artifacts)
+    static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
     {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
@@ -309,7 +315,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null && c.energy.resolvingPower != null)
                         {
@@ -327,7 +333,7 @@ public final class EnergyUtil
         return null;
     }
 
-    static EnergyTransition computeTransition(Set<Artifact> artifacts)
+    static EnergyTransition computeTransition(Set<Artifact> artifacts, ProductType productType)
     {
         EnergyTransition ret = null;
         for (Artifact a : artifacts)
@@ -336,7 +342,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -357,7 +363,7 @@ public final class EnergyUtil
         return ret;
     }
     
-    static String computeBandpassName(Set<Artifact> artifacts)
+    static String computeBandpassName(Set<Artifact> artifacts, ProductType productType)
     {
         String ret = null;
         for (Artifact a : artifacts)
@@ -366,7 +372,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.energy != null)
                         {

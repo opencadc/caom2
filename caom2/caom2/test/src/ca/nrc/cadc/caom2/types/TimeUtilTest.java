@@ -85,8 +85,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -344,8 +342,165 @@ public class TimeUtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testComputeFromScience()
+    {
+        try
+        {
+            double expectedLB = 54321.0;
+            double expectedUB = expectedLB + 200*0.01;
+            long expectedDimension = 200L;
+            double expectedExposure = 300.0;
+            double expectedResolution = 0.1;
+            double expectedSS = 0.01;
+
+            Plane plane;
+            Time actual;
+
+            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            
+            // add some aux artifacts, should not effect result
+            Plane tmp = getTestSetRange(1, 1, 3);
+            Artifact tmpA = tmp.getArtifacts().iterator().next();
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
+            aux.productType = ProductType.AUXILIARY;
+            aux.getParts().addAll(tmpA.getParts());
+            plane.getArtifacts().add(aux);
+            
+            actual = TimeUtil.compute(plane.getArtifacts());
+
+            log.debug("testComputeFromScience: " + actual);
+
+            
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
+            Assert.assertNotNull(actual.exposure);
+            Assert.assertEquals(expectedExposure, actual.exposure.doubleValue(), 0.01);
+            Assert.assertNotNull(actual.resolution);
+            Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testComputeFromCalibration()
+    {
+        try
+        {
+            double expectedLB = 54321.0;
+            double expectedUB = expectedLB + 200*0.01;
+            long expectedDimension = 200L;
+            double expectedExposure = 300.0;
+            double expectedResolution = 0.1;
+            double expectedSS = 0.01;
+
+            Plane plane;
+            Time actual;
+
+            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            
+            // add some aux artifacts, should not effect result
+            Plane tmp = getTestSetRange(1, 1, 3);
+            Artifact tmpA = tmp.getArtifacts().iterator().next();
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
+            aux.productType = ProductType.AUXILIARY;
+            aux.getParts().addAll(tmpA.getParts());
+            plane.getArtifacts().add(aux);
+            
+            actual = TimeUtil.compute(plane.getArtifacts());
+
+            log.debug("testComputeFromScience: " + actual);
+
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
+            Assert.assertNotNull(actual.exposure);
+            Assert.assertEquals(expectedExposure, actual.exposure.doubleValue(), 0.01);
+            Assert.assertNotNull(actual.resolution);
+            Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testComputeFromMixed()
+    {
+        try
+        {
+            double expectedLB = 54321.0;
+            double expectedUB = expectedLB + 200*0.01;
+            long expectedDimension = 200L;
+            double expectedExposure = 300.0;
+            double expectedResolution = 0.1;
+            double expectedSS = 0.01;
+
+            Plane plane;
+            Time actual;
+
+            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            
+            // add some CAL artifacts, should not effect result since SCIENCE above
+            Plane tmp = getTestSetRange(1, 1, 3);
+            Artifact tmpA = tmp.getArtifacts().iterator().next();
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
+            aux.productType = ProductType.CALIBRATION;
+            aux.getParts().addAll(tmpA.getParts());
+            plane.getArtifacts().add(aux);
+            
+            actual = TimeUtil.compute(plane.getArtifacts());
+
+            log.debug("testComputeFromScience: " + actual);
+
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
+            Assert.assertNotNull(actual.exposure);
+            Assert.assertEquals(expectedExposure, actual.exposure.doubleValue(), 0.01);
+            Assert.assertNotNull(actual.resolution);
+            Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     Plane getTestSetRange(int numA, int numP, int numC)
+        throws URISyntaxException
+    {
+        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+    }
+
+    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
         throws URISyntaxException
     {
         double px = 0.5;
@@ -357,7 +512,7 @@ public class TimeUtilTest
         for (int a=0; a<numA; a++)
         {
             Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            na.productType = ptype;
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {

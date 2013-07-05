@@ -120,12 +120,12 @@ public class PolarizationUtilTest
         }
     }
 
-    private Plane getTestPlane()
+    private Plane getTestPlane(ProductType ptype)
         throws URISyntaxException
     {
         Plane plane = new Plane("foo");
         Artifact na = new Artifact(new URI("foo", "bar", null));
-        na.productType = ProductType.SCIENCE;
+        na.productType = ptype;
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
@@ -145,7 +145,7 @@ public class PolarizationUtilTest
             Assert.assertNull(pol.states);
             Assert.assertNull(pol.dimension);
 
-            plane = getTestPlane();
+            plane = getTestPlane(ProductType.SCIENCE);
             pol = PolarizationUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(pol);
             Assert.assertNull(pol.states);
@@ -163,13 +163,13 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane();
+            Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             for (PolarizationState pol : PolarizationState.values())
             {
-                CoordAxis1D axis = new CoordAxis1D(new Axis("STONES", null));
+                CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
                 PolarizationWCS w = new PolarizationWCS(axis);
                 RefCoord c1 = new RefCoord(0.5, pol.getValue());
                 RefCoord c2 = new RefCoord(1.5, pol.getValue());
@@ -201,7 +201,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane();
+            Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -236,11 +236,11 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane();
+            Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
-            CoordAxis1D axis = new CoordAxis1D(new Axis("STONES", null));
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
             RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
             w.getAxis().function = new CoordFunction1D(new Long(4L), new Double(1.0), c1);
@@ -272,11 +272,11 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane();
+            Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
-            CoordAxis1D axis = new CoordAxis1D(new Axis("STONES", null));
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
             RefCoord c1 = new RefCoord(0.5, PolarizationState.RR.getValue());
             w.getAxis().function = new CoordFunction1D(new Long(2L), new Double(-1.0), c1);
@@ -306,11 +306,11 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane();
+            Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
-            CoordAxis1D axis = new CoordAxis1D(new Axis("STONES", null));
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
             RefCoord c1 = new RefCoord(1.0, PolarizationState.V.getValue());
             w.getAxis().function = new CoordFunction1D(new Long(4L), new Double(-1.0), c1);
@@ -329,6 +329,108 @@ public class PolarizationUtilTest
             
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(4, actual.dimension.intValue());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testRangeFromCalibrationIQ()
+    {
+        log.debug("testRangeFromCalibrationIQ - START");
+        try
+        {
+            Plane plane = getTestPlane(ProductType.CALIBRATION);
+            // ouch :-)
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
+            PolarizationWCS w = new PolarizationWCS(axis);
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
+            RefCoord c2 = new RefCoord(2.5, PolarizationState.Q.getValue());
+            w.getAxis().range = new CoordRange1D(c1, c2);
+            c.polarization = w;
+            
+            // add some aux artifacts, should not effect result
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"));
+            plane.getArtifacts().add(at);
+            at.productType = ProductType.AUXILIARY;
+            Part pt = new Part("otherPart");
+            at.getParts().add(pt);
+            Chunk ct = new Chunk();
+            pt.getChunks().add(ct);
+            CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
+            ct.polarization = new PolarizationWCS(axist);
+            RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
+            RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
+            ct.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            
+            
+            
+            Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+            log.debug("testRangeIQU: " + actual);
+
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.states);
+            Assert.assertEquals(2, actual.states.size());
+            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
+            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(2, actual.dimension.intValue());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+     @Test
+    public void testRangeFromMixedIQ()
+    {
+        log.debug("testRangeFromCalibrationIQ - START");
+        try
+        {
+            Plane plane = getTestPlane(ProductType.SCIENCE);
+            // ouch :-)
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
+            PolarizationWCS w = new PolarizationWCS(axis);
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
+            RefCoord c2 = new RefCoord(2.5, PolarizationState.Q.getValue());
+            w.getAxis().range = new CoordRange1D(c1, c2);
+            c.polarization = w;
+            
+            // add some cal artifacts, should not effect result
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"));
+            plane.getArtifacts().add(at);
+            at.productType = ProductType.CALIBRATION;
+            Part pt = new Part("otherPart");
+            at.getParts().add(pt);
+            Chunk ct = new Chunk();
+            pt.getChunks().add(ct);
+            CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
+            ct.polarization = new PolarizationWCS(axist);
+            RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
+            RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
+            ct.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            
+            
+            
+            Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+            log.debug("testRangeIQU: " + actual);
+
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.states);
+            Assert.assertEquals(2, actual.states.size());
+            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
+            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals(2, actual.dimension.intValue());
         }
         catch(Exception unexpected)
         {

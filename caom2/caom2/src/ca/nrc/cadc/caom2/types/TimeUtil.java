@@ -4,6 +4,7 @@ package ca.nrc.cadc.caom2.types;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
@@ -35,16 +36,19 @@ public final class TimeUtil
     
     public static Time compute(Set<Artifact> artifacts)
     {
+        ProductType productType = Util.choseProductType(artifacts);
+        log.debug("compute: " + productType);
         Time t = new Time();
-        t.bounds = computeBounds(artifacts);
-        
-        t.dimension = computeDimensionFromRangeBounds(artifacts);
-        if (t.dimension == null)
-            t.dimension = computeDimensionFromWCS(t.bounds, artifacts);
-        
-        t.resolution = computeResolution(artifacts);
-        t.sampleSize = computeSampleSize(artifacts);
-        t.exposure = computeExposureTime(artifacts);
+        if (productType != null)
+        {
+            t.bounds = computeBounds(artifacts, productType);
+            t.dimension = computeDimensionFromRangeBounds(artifacts, productType);
+            if (t.dimension == null)
+                t.dimension = computeDimensionFromWCS(t.bounds, artifacts, productType);
+            t.resolution = computeResolution(artifacts, productType);
+            t.sampleSize = computeSampleSize(artifacts, productType);
+            t.exposure = computeExposureTime(artifacts, productType);
+        }
         
         return t;
     }
@@ -52,17 +56,18 @@ public final class TimeUtil
     /**
      * Computes the union.
      */
-    static Interval computeBounds(Set<Artifact> artifacts)
+    static Interval computeBounds(Set<Artifact> artifacts, ProductType productType)
     {
         double unionScale = 0.02;
         List<SubInterval> subs = new ArrayList<SubInterval>();
+        
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.time != null)
                         {
@@ -95,7 +100,9 @@ public final class TimeUtil
                 }
             }
         }
-
+        if (subs.isEmpty())
+            return null;
+        
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
@@ -104,9 +111,6 @@ public final class TimeUtil
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
-
-        if (subs.isEmpty())
-            return null;
         if (subs.size() == 1)
             return new Interval(lb, ub);
         return new Interval(lb, ub, subs);
@@ -120,7 +124,7 @@ public final class TimeUtil
      * @param wcs
      * @return a new Polygon computed with the default union scale
      */
-    static Double computeSampleSize(Set<Artifact> artifacts)
+    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
     {
         // assumption: all pixels are distinct so we can just compute a weighted average
         double totSampleSize = 0.0;
@@ -132,7 +136,7 @@ public final class TimeUtil
                 // assumption is only really true for the chunks in a single part
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.time != null)
                         {
@@ -177,7 +181,7 @@ public final class TimeUtil
      * @param wcsArray
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts)
+    static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
     {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null)
@@ -193,7 +197,7 @@ public final class TimeUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.time != null && c.time.getAxis().function != null)
                         {
@@ -231,11 +235,8 @@ public final class TimeUtil
      * @param wcsArray
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts)
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
     {
-        // assumption: all   pixels are distinct so just add up the number of pixels
-        double x1 = 0.0;
-        double x2 = 0.0;
         double numPixels = 0;
         for (Artifact a : artifacts)
         {
@@ -244,7 +245,7 @@ public final class TimeUtil
                 // assumption is only really true for the chunks of a part
                 for (Chunk c : p.getChunks())
                 {
-                    if ( c.time != null && Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( c.time != null && Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         double n = Util.getNumPixels(c.time.getAxis(), false);
                         numPixels += n;
@@ -269,7 +270,7 @@ public final class TimeUtil
      * @param wcs
      * @return exposure time in seconds
      */
-    static Double computeExposureTime(Set<Artifact> artifacts)
+    static Double computeExposureTime(Set<Artifact> artifacts, ProductType productType)
     {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
@@ -282,7 +283,7 @@ public final class TimeUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.time != null && c.time.exposure != null)
                         {
@@ -307,7 +308,7 @@ public final class TimeUtil
      * @param wcs
      * @return exposure time in seconds
      */
-    static Double computeResolution(Set<Artifact> artifacts)
+    static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
     {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
@@ -320,7 +321,7 @@ public final class TimeUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.time != null && c.time.resolution != null)
                         {

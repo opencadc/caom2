@@ -1,6 +1,9 @@
 
 package ca.nrc.cadc.caom2.types;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -12,6 +15,8 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * TODO.
@@ -20,6 +25,8 @@ import java.util.List;
  */
 public final class Util
 {
+    private static final Logger log = Logger.getLogger(Util.class);
+    
     private Util() { }
 
     static double roundToNearest(double d)
@@ -27,14 +34,53 @@ public final class Util
         return Math.floor(d+0.5);
     }
 
-    static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype)
+    static ProductType choseProductType(Set<Artifact> artifacts)
     {
-        if (atype != null && ProductType.SCIENCE.equals(atype))
+        ProductType ret = null;
+        for (Artifact a : artifacts)
+        {
+            if (ProductType.SCIENCE.equals(a.productType))
+                return ProductType.SCIENCE;
+            if (ProductType.CALIBRATION.equals(a.productType))
+                ret = ProductType.CALIBRATION;
+            for (Part p : a.getParts())
+            {
+                if (ProductType.SCIENCE.equals(p.productType))
+                    return ProductType.SCIENCE;
+                if (ProductType.CALIBRATION.equals(p.productType))
+                    ret = ProductType.CALIBRATION;
+                for (Chunk c : p.getChunks())
+                {
+                    if (ProductType.SCIENCE.equals(c.productType))
+                        return ProductType.SCIENCE;
+                    if (ProductType.CALIBRATION.equals(c.productType))
+                        ret = ProductType.CALIBRATION;
+                }
+            }
+        }
+        return ret;
+    }
+    
+    static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
+    {
+        if (matches == null)
+            return false;
+        if (atype != null && matches.equals(atype))
+        {
+            log.debug("useChunk: Artifact.productType="+atype);
             return true;
-        if (ptype != null && ProductType.SCIENCE.equals(ptype))
+        }
+        if (ptype != null && matches.equals(ptype))
+        {
+            log.debug("useChunk: Part.productType="+ptype);
             return true;
-        if (ctype != null && ProductType.SCIENCE.equals(ctype))
+        }
+        if (ctype != null && matches.equals(ctype))
+        {
+            log.debug("useChunk: Chunk.productType="+ctype);
             return true;
+        }
+        log.debug("useChunk: productType="+atype + "," + ptype + "," + ctype);
         return false;
     }
     

@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
@@ -119,17 +120,22 @@ public final class PositionUtil
     public static Position compute(Set<Artifact> artifacts)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
+        ProductType productType = Util.choseProductType(artifacts);
+        log.debug("compute: " + productType);
+                
         Position p = new Position();
-        Polygon poly = computeBounds(artifacts);
-        p.bounds = poly;
+        if (productType != null)
+        {
+            Polygon poly = computeBounds(artifacts, productType);
+            p.bounds = poly;
+            p.dimension = computeDimensionsFromRangeBounds(artifacts, productType);
+            if (p.dimension == null)
+                p.dimension = computeDimensionsFromWCS(poly, artifacts, productType);
+            p.resolution = computeResolution(artifacts, productType);
+            p.sampleSize = computeSampleSize(artifacts, productType);
+            p.timeDependent = computeTimeDependent(artifacts, productType);
+        }
         
-        p.dimension = computeDimensionsFromRangeBounds(artifacts);
-        if (p.dimension == null)
-            p.dimension = computeDimensionsFromWCS(poly, artifacts);
-        
-        p.resolution = computeResolution(artifacts);
-        p.sampleSize = computeSampleSize(artifacts);
-        p.timeDependent = computeTimeDependent(artifacts);
         return p;
     }
 
@@ -179,7 +185,7 @@ public final class PositionUtil
         throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
     }
    
-    static Polygon computeBounds(Set<Artifact> artifacts)
+    static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
         // since we compute the union, just blindly use all the polygons
@@ -191,7 +197,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -215,7 +221,7 @@ public final class PositionUtil
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
-    static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts)
+    static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
         log.debug("[computeDimensionsFromWCS] " + poly + " " + artifacts.size());
@@ -232,7 +238,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null && c.position.getAxis().function != null)
                         {
@@ -327,13 +333,14 @@ public final class PositionUtil
         return new Dimension2D(ix, iy);
     }
 
-    static Dimension2D computeDimensionsFromRangeBounds(Set<Artifact> artifacts)
+    static Dimension2D computeDimensionsFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
     {
         // assume all the WCS come from a single data array, find min/max pixel values
         double x1 = Double.MAX_VALUE;
         double x2 = -1 * x1;
         double y1 = x1;
         double y2 = -1 * y1;
+        boolean found = false;
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
@@ -341,7 +348,7 @@ public final class PositionUtil
                 // assumption is only true for all the chunks in a part
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -358,6 +365,7 @@ public final class PositionUtil
                                 y1 = Math.min(y1, range.getEnd().getCoord2().pix);
                                 y2 = Math.max(y2, range.getStart().getCoord2().pix);
                                 y2 = Math.max(y2, range.getEnd().getCoord2().pix);
+                                found = true;
                             }
                             else if (bounds != null && bounds instanceof CoordPolygon2D)
                             {
@@ -370,6 +378,7 @@ public final class PositionUtil
                                     y1 = Math.min(y1, c2.getCoord2().pix);
                                     y2 = Math.max(y2, c2.getCoord2().pix);
                                 }
+                                found = true;
                                 // for CoordCircle2D we rely on function since circle does not
                                 // have a RefCoord to determine number of pixels inside circle
                                 // by itself
@@ -379,12 +388,14 @@ public final class PositionUtil
                 }
             }
         }
+        if (!found)
+            return null;
         double dx = Math.abs(x2 - x1);
         double dy = Math.abs(y2 - y1);
         return new Dimension2D((long) dx, (long) dy);
     }
 
-    static Double computeSampleSize(Set<Artifact> artifacts)
+    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
     {
         double totSampleSize = 0.0;
         double numPixels = 0.0;
@@ -394,7 +405,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -413,7 +424,7 @@ public final class PositionUtil
     }
 
     // resolution of SCIENCE data, mean is weighted by number of pixels
-    static Double computeResolution(Set<Artifact> artifacts)
+    static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
     {
         double totResolution = 0.0;
         double numPixels = 0.0;
@@ -423,7 +434,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null && c.position.resolution != null)
                         {
@@ -440,7 +451,7 @@ public final class PositionUtil
         return null;
     }
 
-    static Boolean computeTimeDependent(Set<Artifact> artifacts)
+    static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType)
     {
         boolean foundTD = false;
         boolean foundTI = false;
@@ -450,7 +461,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.position != null)
                         {

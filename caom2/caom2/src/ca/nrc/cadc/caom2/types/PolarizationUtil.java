@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -95,6 +96,8 @@ public final class PolarizationUtil
     public static Polarization compute(Set<Artifact> artifacts)
     {
         Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
+        ProductType productType = Util.choseProductType(artifacts);
+        log.debug("compute: " + productType);
         int numPixels = 0;
         for (Artifact a : artifacts)
         {
@@ -102,7 +105,7 @@ public final class PolarizationUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType) )
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
                     {
                         if (c.polarization != null)
                         {
