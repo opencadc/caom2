@@ -555,8 +555,10 @@ public class FitsMapperTest
         mapper.populate(Artifact.class, artifact, "Artifact");
         Assert.assertNotNull(artifact);
         
-        Assert.assertEquals("artifact contentType", artifact.contentType);
-        Assert.assertEquals(1L, artifact.contentLength.longValue());
+        // these are not configured and dopn't get set by mapping
+        Assert.assertNull("artifact contentType", artifact.contentType);
+        Assert.assertNull("artifact.contentLength", artifact.contentLength);
+        
         Assert.assertEquals(ProductType.SCIENCE, artifact.productType);
         Assert.assertEquals(true, artifact.alternative);
     }
