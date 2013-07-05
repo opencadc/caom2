@@ -129,6 +129,7 @@ public class Ingest implements Runnable
 
     private boolean dryrun;
     private boolean keepFiles;
+    private boolean strictFitsParse = false;
     
     public Ingest(String collection, String observationID, String productID, URI[] uris, Map<String, String> config)
     {
@@ -164,6 +165,11 @@ public class Ingest implements Runnable
         this.mapping = mapping;
     }
 
+    public void setStructFitsParse(boolean structFitsParse)
+    {
+        this.strictFitsParse = structFitsParse;
+    }
+    
     public void setLocalFiles(File[] localFiles)
     {
         this.localFiles = localFiles;
@@ -253,16 +259,6 @@ public class Ingest implements Runnable
                     Algorithm algorithm = new Algorithm(algorithmName);
                     CompositeObservation co = new CompositeObservation(collection, observationID, algorithm);
                     observation = co;
-                    /*
-                    URI[] memURIS = Util.argumentUriToArray(members);
-                    for (URI u : memURIS)
-                    {
-                        ObservationURI ouri = new ObservationURI(u);
-                        boolean ok = co.getMembers().add(ouri);
-                        if (!ok)
-                            log.warn("duplicate member uri: " + ouri);
-                    }
-                    */
                 }
             }
             
@@ -322,19 +318,19 @@ public class Ingest implements Runnable
             {
                 throw new IngestException("Unable to download file for uri " + ingestFile.getURI());
             }
-            
+            log.debug("ingestFile: " + ingestFile);
             // List of FITS header objects.
-            List<Header> headers;
+            List<Header> headers = new ArrayList<Header>();
 
             // Is this SIMPLE or MEF FITS file.
             boolean isSimpleFITS = true;
 
             // Load the file into the nom.tam FITS class.
-            Fits fits = new Fits(file, FitsUtil.isCompressed(file.getAbsolutePath()));
+            Fits fits = new Fits(file, FitsUtil.isCompressed(file));
 
             try
             {
-                headers = getHeaders(fits);
+                readHeaders(fits, headers);
                 if (headers.isEmpty())
                 {
                     throw new IngestException("No headers found in FITS file " + ingestFile.getURI().toString());
@@ -353,8 +349,11 @@ public class Ingest implements Runnable
             }
             catch (FitsException fe)
             {
-                log.debug("Not a FITS file because " + fe.getMessage());
-                headers = new ArrayList<Header>();
+                if (strictFitsParse && isFITSContentType(ingestFile, mapping))
+                    throw new IngestException("failed to parse " + file, fe);
+
+                log.info("Not a FITS file: " + file.getAbsolutePath() + "... skipping");
+
             }
 
             // Populate the Observation.
@@ -377,8 +376,6 @@ public class Ingest implements Runnable
             boolean insert = observation.getPlanes().add(plane);
             log.debug(insert ? "adding "  + plane : "updating " + plane);
 
-            log.debug("Observation.environment: " + observation.environment);
-
             // Populate an existing or new Artifact.
             Artifact artifact = new Artifact(ingestFile.getURI());
             for (Artifact a : plane.getArtifacts())
@@ -393,11 +390,8 @@ public class Ingest implements Runnable
             insert = plane.getArtifacts().add(artifact);
             log.debug(insert ? "adding " + artifact : "updating " + artifact);
 
-            log.debug("Observation.environment: " + observation.environment);
-
-            // Set the contentType and contentLength of the FITS file.
             setContentLength(artifact, ingestFile);
-            setContentType(artifact, ingestFile, !headers.isEmpty());
+            setContentType(artifact, ingestFile);
 
             // If FITS file, get details about parts and chunks
             Integer extension = 0;
@@ -649,49 +643,34 @@ public class Ingest implements Runnable
     }
     
     /**
-     * Sets the contentLength field of the Artifact. If the Artifact 
-     * contentLength is not null, does nothing. If the IngestableFile 
-     * has a contentLength not equal to -1, sets the Artifact contentLength
-     * to the IngestableFile contentLength.
+     * Sets the contentLength field of the Artifact from the IngestableFile.
      * 
      * @param artifact the Artifact being populated.
      * @param file the FITS file currently being processed.
      */
     protected void setContentLength(Artifact artifact, IngestableFile file)
     {
-        if (artifact.contentLength == null && file.getContentLength() != -1)
-        {
-            artifact.contentLength = file.getContentLength();
-        }
+        artifact.contentLength = null;
+        if (file.getContentLength() != -1)
+            artifact.contentLength = new Long(file.getContentLength());
         log.debug("Artifact.contentLength = " + artifact.contentLength);
     }
     
     /**
-     * Sets the contentType field of the Artifact. If the Artifact 
-     * contentType is not null, does nothing. If the IngestableFile 
-     * has a contentType not equal to -1, sets the Artifact contentType
-     * to the IngestableFile contentType.
+     * Sets the contentType field of the Artifact from the IngestableFile.
      * 
      * @param artifact the Artifact being populated.
      * @param file  the FITS file currently being processed.
      */
-    protected void setContentType(Artifact artifact, IngestableFile file, boolean isFITS)
+    protected void setContentType(Artifact artifact, IngestableFile file)
     {
-        if (!isFITS)
-        {
-            artifact.contentType = null;
-        }
-        else if (artifact.contentType == null)
-        {
-            artifact.contentType = file.getContentType();
-        }
+        artifact.contentType = file.getContentType();
         log.debug("Artifact.contentType = " + artifact.contentType);
     }
     
-    protected List<Header> getHeaders(Fits fits)
+    protected void readHeaders(Fits fits, List<Header> headers)
         throws FitsException
     {
-        List<Header> headers = new ArrayList<Header>();
         ArrayDataInput dataStr = fits.getStream();
 
         try
@@ -705,11 +684,11 @@ public class Ingest implements Runnable
         }
         catch (TruncatedFileException tfe)
         {
-            throw new FitsException("Unexpected end to file because " + tfe.getMessage());
+            throw new FitsException("Unexpected end to file", tfe);
         }
         catch (IOException ioe)
         {
-            throw new FitsException("Error reading file because " + ioe.getMessage());
+            throw new FitsException("Error reading file", ioe);
         }
         finally
         {
@@ -718,12 +697,8 @@ public class Ingest implements Runnable
                 if (dataStr != null)
                     dataStr.close();
             }
-            catch (IOException ioe)
-            {
-                log.error("");
-            }
+            catch (IOException ignore) { }
         }
-        return headers;
     }
     
 }

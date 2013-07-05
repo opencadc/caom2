@@ -88,7 +88,7 @@ public class ImageFileTest extends AbstractTest
     private static final Logger log = Logger.getLogger(ImageFileTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.DEBUG);
     }
 
     public ImageFileTest()

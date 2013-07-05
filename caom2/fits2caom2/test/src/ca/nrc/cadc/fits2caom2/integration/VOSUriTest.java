@@ -94,7 +94,6 @@ public class VOSUriTest extends AbstractTest
         "CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_350.fits";
 
     private static File SSL_CERT;
-    private static File SSL_KEY;
 
     public VOSUriTest()
     {
@@ -105,8 +104,7 @@ public class VOSUriTest extends AbstractTest
     public static void setUpClass()
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
-        SSL_CERT = new File("build/test/class/proxy.crt");
-        SSL_KEY = new File("build/test/class/proxy.key");
+        SSL_CERT = new File("build/test/class/proxy.pem");
     }
 
     @Test
@@ -123,8 +121,7 @@ public class VOSUriTest extends AbstractTest
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
                 "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
+                "--cert=" + SSL_CERT
             };
 
             doTest(args);
@@ -161,8 +158,7 @@ public class VOSUriTest extends AbstractTest
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250 +"," + VOS_URI_BLAST_350,
                 "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
+                "--cert=" + SSL_CERT
             };
 
             doTest(args);
@@ -201,8 +197,7 @@ public class VOSUriTest extends AbstractTest
                 "--uri=" + VOS_URI_BLAST_250,
                 "--local=test/files/mef.fits",
                 "--default=test/config/fits2caom2/multiextensionfits.default",
-                "--cert=" + SSL_CERT,
-                "--key=" + SSL_KEY
+                "--cert=" + SSL_CERT
             };
 
             doTest(args);

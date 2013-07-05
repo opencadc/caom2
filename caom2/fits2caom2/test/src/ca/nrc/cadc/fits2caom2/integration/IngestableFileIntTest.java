@@ -212,9 +212,8 @@ public class IngestableFileIntTest
             assertNotNull("File returned by Get should not be null", file);
 
             // case3: get from ad with authentication.
-            File certFile = new File("build/test/class/proxy.crt");
-            File keyFile = new File("build/test/class/proxy.key");
-            Subject s = SSLUtil.createSubject(certFile, keyFile);
+            File certFile = new File("build/test/class/proxy.pem");
+            Subject s = SSLUtil.createSubject(certFile);
             
             uri = new URI("ad", "TEST/simple_fits", null);
             sslEnabled = true;

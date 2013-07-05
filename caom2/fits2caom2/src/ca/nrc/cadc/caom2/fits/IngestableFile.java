@@ -136,6 +136,19 @@ public class IngestableFile
         this.uriIsFile = false;
     }
 
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName()).append("[");
+        sb.append(uri).append(" ");
+        sb.append(contentType).append(" ");
+        sb.append(contentLength).append(" ");
+        sb.append(contentEncoding).append(" ");
+        sb.append("]");
+        return sb.toString();
+    }
+    
     /**
      * Get the URI for this file.
      * 
@@ -196,12 +209,12 @@ public class IngestableFile
         {
             return file;
         }
-        
+
         if (uri.getScheme().equalsIgnoreCase("file"))
         {
             file = new File(uri);
             this.contentLength = file.length();
-            this.contentType = FITS_MIME_TYPE;
+            this.contentType = null; // unknown
             this.uriIsFile = true;
             return file;
         }
@@ -249,17 +262,20 @@ public class IngestableFile
             throw new RuntimeException(op + url + " failed", download.getThrowable());
         }
 
-        this.contentType = download.getContentType();
-        this.contentLength = download.getContentLength();
-        this.contentEncoding = download.getContentEncoding();
-        log.debug("contentType = " + contentType);
-        log.debug("contentLength = " + contentLength);
-        log.debug("contentEncoding = " + contentEncoding);
-
         if (localFile != null)
             this.file = localFile;
         else
             this.file = download.getFile();
+        
+        this.contentType = download.getContentType();
+        this.contentLength = download.getContentLength();
+        this.contentEncoding = download.getContentEncoding();
+        if (this.contentLength == -1) // URL did not provide length, use local file
+            this.contentLength = this.file.length();
+        
+        log.debug("contentType = " + contentType);
+        log.debug("contentLength = " + contentLength);
+        log.debug("contentEncoding = " + contentEncoding);
 
         return file;
     }

@@ -188,6 +188,9 @@ public class Main
         // Optional command line arguments.
         ingest.setKeepFiles(argsMap.isSet(Argument.KEEP));
         ingest.setDryrun(argsMap.isSet(Argument.TEST));
+        
+        // always set this option
+        ingest.setStructFitsParse(true);
 
         FitsMapping fm = Util.getFitsMapping(config, argsMap.getValue(Argument.DEFAULT), argsMap.getValue(Argument.OVERRIDE));
         ingest.setMapping(fm);
