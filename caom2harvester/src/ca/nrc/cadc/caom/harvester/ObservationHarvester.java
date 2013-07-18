@@ -99,6 +99,8 @@ public class ObservationHarvester extends Harvester
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
+            if (batchSize != null && num.found < batchSize.intValue()/2)
+                go = false;
             full = false; // do not start at beginning again
             if (dryrun)
                 go = false; // no state update -> infinite loop
