@@ -78,8 +78,8 @@
     <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
 
     <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
+    <property file="${env.CADC_PREFIX}/etc/caom.properties" />
+    <import file="${env.CADC_PREFIX}/etc/caom.targets.xml"/>
 
     <!-- developer convenience: place for extra targets and properties -->
     <import file="extras.xml" optional="true" />
