@@ -15,7 +15,7 @@ public class Main
 {
     private static Logger log = Logger.getLogger(Main.class);
     
-    private static final Integer DEFAULT_BATCH_SIZE = new Integer(10000);
+    private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
     private static final Integer DEFAULT_BATCH_FACTOR = new Integer(10);
     
     public static void main(String[] args)

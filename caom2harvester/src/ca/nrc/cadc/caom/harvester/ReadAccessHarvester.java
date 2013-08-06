@@ -3,10 +3,11 @@ package ca.nrc.cadc.caom.harvester;
 
 import ca.nrc.cadc.caom.harvester.state.HarvestSkip;
 import ca.nrc.cadc.caom.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
+import ca.nrc.cadc.date.DateUtil;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -24,6 +25,8 @@ public class ReadAccessHarvester extends Harvester
 
     private DatabaseReadAccessDAO srcAccessDAO;
     private DatabaseReadAccessDAO destAccessDAO;
+    
+    private ReadAccess curBatchLeader = null;
 
     /**
      * Harvest ReadAccess tuples.
@@ -123,7 +126,7 @@ public class ReadAccessHarvester extends Harvester
     {
         log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
-        ReadAccess cur = null;
+        
         try
         {
             HarvestState state = harvestState.get(source, cname);
@@ -138,10 +141,13 @@ public class ReadAccessHarvester extends Harvester
             if (entityList.size() == batchSize.intValue())
             {
                 ReadAccess first = entityList.get(0);
-                ReadAccess last = entityList.get(entityList.size() - 1);
-                if ( first.compareTo(last) == 0)
+                if ( curBatchLeader != null && curBatchLeader.compareTo(first) == 0)
+                {
+                    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
                     throw new RuntimeException("detected infinite harvesting loop: "
-                        + entityClass.getSimpleName() + " at " + first.getLastModified());
+                        + entityClass.getSimpleName() + " at " + df.format(first.getLastModified()));
+                }
+                curBatchLeader = first;
             }
 
             ret.found = entityList.size();
@@ -151,7 +157,7 @@ public class ReadAccessHarvester extends Harvester
             while ( iter.hasNext() )
             {
                 ReadAccess ra = iter.next();
-                cur = ra;
+                
                 iter.remove(); // allow garbage collection asap
 
                 if (!dryrun)
@@ -159,7 +165,7 @@ public class ReadAccessHarvester extends Harvester
                 boolean ok = false;
                 try
                 {
-                    log.info("put: " + ra);
+                    log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID() + " " + format(ra.getLastModified()));
                     if (!dryrun)
                     {
                         state.curLastModified = ra.getLastModified();
