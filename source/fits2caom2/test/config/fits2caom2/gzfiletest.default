@@ -1,0 +1,45 @@
+
+
+telescope.geoLocationX = -5464228.6
+telescope.geoLocationY = -2493778.2
+telescope.geoLocationZ = 2150937.8
+telescope.name =  CFHT 3.6m
+
+provenance.producer = CFHT
+provenance.project = STANDARD PIPELINE
+
+plane.dataProductType=spectrum
+
+observation.type = OBJECT
+
+CUNIT3 = deg
+CUNIT4 = deg
+CRDER3 = 0.0000278
+CRDER4 = 0.0000278
+CSYER3 = 0.0000278
+CSYER4 = 0.0000278
+#Fibre size is 1.6", i.e. 0.000444 deg
+cd11 = 0.000444
+cd12 = 0.0
+cd21 = 0.0
+cd22 = 0.000444
+naxis3 = 1
+naxis4 = 1
+CRPIX3 = 1.0
+CRPIX4 = 1.0
+CTYPE3 = RA---TAN
+CTYPE4 = DEC--TAN
+
+CTYPE1 = WAVE
+CUNIT1 = nm
+SPECSYS = TOPOCENT
+SSYSOBS = TOPOCENT
+SSYSSRC = TOPOCENT
+CRDER1 = 0.001
+CSYER1 = 0.001
+
+CTYPE5 = TIME
+TIMESYS= UTC
+CUNIT5 = d
+CRDER5 = 0.0000001
+CSYER5 = 0.0000001

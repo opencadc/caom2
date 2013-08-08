@@ -68,12 +68,7 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.FileReader;
-import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -83,50 +78,42 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class ImageFileTest extends AbstractTest
+public class GZFileTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(ImageFileTest.class);
+    private static final Logger log = Logger.getLogger(GZFileTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public ImageFileTest()
+    public GZFileTest()
     {
         super();
     }
 
     @Test
-    public void testImageFile()
+    public void testGZFile()
     {
         try
         {
-            log.debug("testSimpleFits");
+            log.debug("testGZFile");
             
-            String userDir = System.getProperty("user.dir");
-
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=ImageFile",
+                "--observationID=GZFileTest",
                 "--productID=productID",
-                "--uri=file://" + userDir + "/test/files/image.png"
+                "--uri=ad:CFHT/1003700o",
+                "--config=test/config/fits2caom2/gzfiletest.config",
+                "--default=test/config/fits2caom2/gzfiletest.default",
+                "--override=test/config/fits2caom2/gzfiletest.override"
             };
 
             cleanup();
             doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
-
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
-            Assert.assertNotNull(o);
-            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
-            Assert.assertNotNull("plane.artifacts", artifacts);
-            Assert.assertEquals(1, artifacts.size());
             cleanup();
 
-            log.info("testSimpleFits passed.");
+            log.info("testGZFile passed.");
         }
         catch (Exception unexpected)
         {

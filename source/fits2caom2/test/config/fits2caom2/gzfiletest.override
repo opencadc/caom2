@@ -1,0 +1,23 @@
+
+algorithm.name = exposure
+sequenceNumber= 1003700
+obs.intent = science
+target.standard = false
+proposal.project =  
+plane.calibrationLevel = 1
+plane.dataRelease = 2009-08-31T00:00:00
+artifact.productType = science
+WCSAXES =         5
+CRPIX1 =       0.500000000000
+CRVAL1 =         370.000000000000
+CDELT1 =       0.003176400000
+NAXIS1 = 1
+resolvingPower = 65000
+time.resolution=     300.000000000000
+time.exposure=     300.000000000000
+CRVAL5 = 54642.4097488
+CRPIX5 = 0.5
+CDELT5 = 0.00347222222222
+NAXIS5 = 1
+CTYPE2 = observable
+

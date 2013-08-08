@@ -90,6 +90,7 @@ import ca.nrc.cadc.caom2.fits.wcs.Time;
 import ca.nrc.cadc.caom2.fits.wcs.Wcs;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -679,7 +680,13 @@ public class Ingest implements Runnable
             while ((header = Header.readHeader(dataStr)) != null)
             {                
                 headers.add(header);
-                dataStr.skip(header.getDataSize());
+                try
+                {
+                    dataStr.skipBytes(header.getDataSize());
+                }
+                catch (EOFException ignore) {
+                    break;
+                }
             }
         }
         catch (TruncatedFileException tfe)

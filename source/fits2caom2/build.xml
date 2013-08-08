@@ -207,6 +207,7 @@
             <test name="ca.nrc.cadc.fits2caom2.integration.IngestableFileIntTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.VOSUriTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.ImageFileTest"/>
+            <test name="ca.nrc.cadc.fits2caom2.integration.GZFileTest"/>
         </junit>
     </target>
 
