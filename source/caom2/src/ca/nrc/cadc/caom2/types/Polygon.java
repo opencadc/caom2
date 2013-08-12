@@ -180,7 +180,10 @@ public class Polygon implements Shape
             sb.append(vertices.get(i));
             sb.append(",");
         }
-        sb.setCharAt(sb.length()-1, ']'); // replace last comma
+        initProps();
+        sb.append("c=").append(getCenter().cval1).append(",").append(getCenter().cval2).append(",");
+        sb.append("a=").append(getArea());
+        sb.append("]");
         return sb.toString();
     }
 
