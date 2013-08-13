@@ -118,7 +118,7 @@ public class BaseSQLGenerator implements SQLGenerator
     static final String SIMPLE_TYPE = "S";
     static final String COMPOSITE_TYPE = "C";
 
-    private static final Calendar UTC_CAL = Calendar.getInstance(DateUtil.UTC);
+    private Calendar UTC_CAL = Calendar.getInstance(DateUtil.UTC);
 
     protected String database;
     protected String schema;
