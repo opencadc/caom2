@@ -73,6 +73,7 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Map;
+import nom.tam.fits.Header;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -156,6 +157,38 @@ public class FitsMappingTest
             Assert.fail("Uknown axis should have thrown IllegalArgumentException");
         }
         catch (IllegalArgumentException ignore) { }
+    }
+    
+    @Test
+    public void testGetExtensionOnlyKeyword() throws Exception
+    {
+        Map<String,String> config = Util.loadConfig("config/fits2caom2.config");   
+        FitsMapping mapping = new FitsMapping(config, null, null);
+
+        mapping.primary = new Header();
+        mapping.primary.addValue("NAXIS", "0", "");
+        mapping.primary.addValue("NAXIS1", "3", "");
+        mapping.primary.addValue("BITPIX", "8", "");
+        
+        mapping.header = new Header();
+        mapping.header.addValue("NAXIS", "2", "");
+        mapping.header.addValue("NAXIS2", "4", "");
+        mapping.header.addValue("CRPIX1", "1.0", "");
+        
+        String value = mapping.getKeywordValue("NAXIS");
+        Assert.assertEquals("NAXIS", "2", value);
+        
+        value = mapping.getKeywordValue("NAXIS1");
+        Assert.assertNull("NAXIS1", value);
+        
+        value = mapping.getKeywordValue("NAXIS2");
+        Assert.assertEquals("NAXIS2", "4", value);
+        
+        value = mapping.getKeywordValue("BITPIX");
+        Assert.assertNull("BITPIX", value);
+        
+        value = mapping.getKeywordValue("CRPIX1");
+        Assert.assertEquals("CRPIX1", "1.0", value);
     }
     
 }

@@ -92,6 +92,13 @@ public class FitsMapping
     public static final String POLARIZATION_AXIS = "polarizationAxis";
     public static final String TIME_AXIS = "timeAxis";
     
+    public static final List<String> EXTENSIONS_ONLY_KEYWORDS = new ArrayList<String>();
+    static
+    {
+        EXTENSIONS_ONLY_KEYWORDS.add("NAXIS");
+        EXTENSIONS_ONLY_KEYWORDS.add("BITPIX");
+    }
+    
     // Configuration files.
     private Map<String,String> config;
     private List<String> ignoreUTypes;
@@ -264,14 +271,17 @@ public class FitsMapping
         // Check the fits primary for the keyword value.
         if (primary != null) // && primary.containsKey(keyword))
         {
-            HeaderCard card = primary.findCard(keyword);
-            if (card != null)
+            if (!isExtensionOnlyKeyword(keyword))
             {
-                caomValue = card.getValue();
-                if (caomValue != null)
+                HeaderCard card = primary.findCard(keyword);
+                if (card != null)
                 {
-                    //log.debug("primary: " + keyword + " = "+ caomValue + " in " + uri);
-                    return caomValue;
+                    caomValue = card.getValue();
+                    if (caomValue != null)
+                    {
+                        //log.debug("primary: " + keyword + " = "+ caomValue + " in " + uri);
+                        return caomValue;
+                    }
                 }
             }
             //else
@@ -375,6 +385,18 @@ public class FitsMapping
         
         log.debug("getKeyword: key=" + key + " result="+ret);
         return ret;
+    }
+    
+    protected boolean isExtensionOnlyKeyword(String keyword)
+    {
+        for (String s : EXTENSIONS_ONLY_KEYWORDS)
+        {
+            if (keyword.startsWith(s))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
