@@ -160,8 +160,8 @@ public class CaomRepoIntTests
             RegistryClient rc = new RegistryClient();
 
             URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
-            BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http").toExternalForm() + "/pub";
-            BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https").toExternalForm() + "/pub";
+            BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http", "/pub").toExternalForm();
+            BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
             log.info("test service URL: " + BASE_HTTP_URL);
             log.info("test service URL: " + BASE_HTTPS_URL);
             
