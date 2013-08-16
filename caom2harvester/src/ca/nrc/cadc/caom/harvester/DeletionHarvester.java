@@ -171,7 +171,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             }
             if (num.abort)
                 log.error("batched aborted");
-            go = (num.found > 0 && !num.abort && !num.done);
+            go = (!num.abort && !num.done);
             full = false; // do not start at min(lastModified) again
             if (dryrun)
                 go = false; // no state update -> infinite loop
@@ -205,7 +205,10 @@ public class DeletionHarvester extends Harvester implements Runnable
         log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
         
-        DeletedEntity curBatchLeader = null;
+        int expectedNum = Integer.MAX_VALUE;
+        if (batchSize != null)
+            expectedNum = batchSize.intValue();
+        
         try
         {
             HarvestState state = harvestState.get(source, cname);
@@ -216,24 +219,8 @@ public class DeletionHarvester extends Harvester implements Runnable
                 start = null;
             List<DeletedEntity> entityList = deletedDAO.getList(entityClass, start, batchSize);
             
-            // avoid re-processing the last successful one stored in HarvestState
-            if ( !entityList.isEmpty() )
-            {
-                ListIterator<DeletedEntity> iter = entityList.listIterator();
-                curBatchLeader = iter.next();
-                if (curBatchLeader.id.equals(state.curID))
-                {
-                    log.debug("skipping first entity in batch: " + curBatchLeader.id);
-                    iter.remove(); // processed last batch but picked up by lastModified query
-                    curBatchLeader = null;
-                    if (iter.hasNext())
-                        curBatchLeader = iter.next();
-                }
-                // try to detect an infinite loop
-                if (curBatchLeader != null)
-                    detectLoop(curBatchLeader);
-            }
-            prevBatchLeader = curBatchLeader;
+            if (entityList.size() == expectedNum)
+                detectLoop(entityList);
 
             ret.found = entityList.size();
             log.info("found: " + entityList.size());
@@ -291,7 +278,9 @@ public class DeletionHarvester extends Harvester implements Runnable
                     }
                 }
             }
-            if (ret.abort)
+            if (ret.found < expectedNum)
+                ret.done = true;
+            if (ret.abort || ret.done)
                 return ret;
         }
         finally
@@ -301,20 +290,15 @@ public class DeletionHarvester extends Harvester implements Runnable
         return ret;
     }
 
-    private void detectLoop(DeletedEntity cde)
+    private void detectLoop(List<DeletedEntity> entityList)
     {
-        log.warn("check for loop: " + prevBatchLeader + " vs " + cde);
-        if (prevBatchLeader != null)
-        {
-            DeletedEntity pde = (DeletedEntity) prevBatchLeader;
-            log.debug("check for infinite loop: " + pde.id + "," + pde.lastModified.getTime()
-                    + " vs " + cde.id + "," + cde.lastModified.getTime());
-            if (pde.id.equals(cde.id))
-                throw new RuntimeException("detected infinite harvesting loop by ID: "
-                    + entityClass.getSimpleName() + " at " + cde.id);
-            if (pde.lastModified.equals(cde.lastModified))
-                throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at " + cde.lastModified);
-        }
+        if (entityList.size() < 2)
+            return;
+        DeletedEntity start = entityList.get(0);
+        DeletedEntity end = entityList.get(entityList.size() - 1);
+        if (start.lastModified.equals(end.lastModified))
+            throw new RuntimeException("detected infinite harvesting loop: "
+                    + entityClass.getSimpleName() + " at " + start.lastModified);
+ 
     }
 }

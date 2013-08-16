@@ -1,5 +1,10 @@
 
 -- case-sensitive
+create index i_collection_instrument
+    on caom2.Observation (collection, instrument_name)
+    tablespace caom_index
+;
+
 create index i_telescope_instrument
     on caom2.Observation (telescope_name, instrument_name)
     tablespace caom_index

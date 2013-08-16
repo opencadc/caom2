@@ -91,7 +91,8 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            if (num.failed > num.found/2) // more than half failed
+            double failFrac = ((double) num.failed) / ((double) num.found);
+            if (failFrac > 0.5)
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
@@ -181,7 +182,7 @@ public class ObservationHarvester extends Harvester
                 log.warn("curBatchLeader: " + curBatchLeader.getID() + " " + curBatchLeader.getMaxLastModified());
                 log.warn("  harvestState: " + state.curID + " " + state.curLastModified);
                 if (curBatchLeader.getID().equals(state.curID) // same obs as last time
-                        && curBatchLeader.getMaxLastModified().getTime() == state.curLastModified.getTime() // not modified since
+                        && curBatchLeader.getMaxLastModified().equals(state.curLastModified) // not modified since
                    )
                     
                 {
