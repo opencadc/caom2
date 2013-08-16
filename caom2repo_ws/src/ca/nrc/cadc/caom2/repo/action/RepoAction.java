@@ -200,6 +200,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         }
         catch(AccessControlException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 403, "permission denied: " + uri, false);
         }
         catch(CertificateException ex)
@@ -208,22 +209,27 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         }
         catch(IllegalArgumentException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 400, "invalid input: " + uri, true);
         }
         catch(CollectionNotFoundException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 404, "collection not found: " + uri.getCollection(), false);
         }
         catch(ObservationNotFoundException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 404, "not found: " + uri, false);
         }
         catch(ObservationAlreadyExistsException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 409, "already exists: " + uri, false);
         }
         catch(ByteLimitExceededException ex)
         {
+            logInfo.setSuccess(true);
             handleException(ex, 413, "too large: " + uri, false);
         }
         catch(TransientDataAccessResourceException ex)
