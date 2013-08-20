@@ -90,6 +90,10 @@ public class CoordRange2D implements Serializable
     {
         CaomValidator.assertNotNull(getClass(), "start", start);
         CaomValidator.assertNotNull(getClass(), "end", end);
+        if (start.getCoord1().pix == end.getCoord1().pix || start.getCoord2().pix == end.getCoord2().pix)
+            throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal pix bounds");
+        if (start.getCoord1().val == end.getCoord1().val || start.getCoord2().val == end.getCoord2().val)
+            throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal val bounds");
         this.start = start;
         this.end = end;
     }
