@@ -69,11 +69,9 @@
 
 package ca.nrc.cadc.datalink;
 
-import ca.nrc.cadc.auth.CadcIdentityManager;
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
 import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
 import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.MemoryJobPersistence;
-import ca.nrc.cadc.uws.server.RandomStringGenerator;
 import ca.nrc.cadc.uws.server.SimpleJobManager;
 import ca.nrc.cadc.uws.server.SyncJobExecutor;
 import org.apache.log4j.Logger;
@@ -86,9 +84,9 @@ public class LinkQueryJobManager extends SimpleJobManager
 {
     private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
-    private static final Long MAX_EXEC_DURATION = new Long(10*60L); // 10 minutes
-    private static final Long MAX_DESTRUCTION = new Long(10*60L);   // 10 minutes until MemoryJobPersistence deletes it
-    private static final Long MAX_QUOTE = new Long(10*60L);
+    private static final Long MAX_EXEC_DURATION = new Long(3600L); // 60 minutes
+    private static final Long MAX_DESTRUCTION = new Long(3600L);   // 60 minutes until MemoryJobPersistence deletes it
+    private static final Long MAX_QUOTE = new Long(3600L);
 
     private JobSchema config;
 
@@ -97,9 +95,9 @@ public class LinkQueryJobManager extends SimpleJobManager
         super();
         // persist UWS jobs to Sybase
         //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
-        //PostgresJobPersistence jobPersist = new PostgresJobPersistence();
-        MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        jobPersist.setJobCleaner(30000L);
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
+        //jobPersist.setJobCleaner(30000L);
         
         //this.config = jobPersist.getJobSchema();
 
