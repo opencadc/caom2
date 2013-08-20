@@ -116,7 +116,7 @@ public class PostgreSQLGeneratorTest
         {
             String start = "select observation.maxlastmodified ";
             String end = "order by observation.maxlastmodified limit 10";
-            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, new Date(), new Integer(10));
+            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, new Date(), null, new Integer(10));
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
             String actualStart = sql.substring(0, start.length());
@@ -139,11 +139,12 @@ public class PostgreSQLGeneratorTest
             String start = "select observationmetareadaccess.";
             String end = " order by observationmetareadaccess.lastmodified limit 10";
             Date d1 = new Date();
+            Date d2 = new Date(d1.getTime() + 1000000L);
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
             String exp1 = "observationmetareadaccess.lastmodified >= '" + df.format(d1) + "'";
 
-            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, batchSize);
+            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, null, batchSize);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
 

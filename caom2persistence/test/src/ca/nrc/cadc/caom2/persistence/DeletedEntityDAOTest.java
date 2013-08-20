@@ -197,12 +197,13 @@ public abstract class DeletedEntityDAOTest
             ds.getConnection().createStatement().execute(sql);
 
             Date start = new Date(o1.lastModified.getTime() - 100L); // past
+            Date end = null;
             Integer batchSize = new Integer(3);
             List<DeletedEntity> dels;
 
 
             // get first batch
-            dels = dao.getList(c, start, batchSize);
+            dels = dao.getList(c, start, end, batchSize);
             Assert.assertNotNull(dels);
             Assert.assertEquals(3, dels.size());
             Assert.assertEquals(o1.id, dels.get(0).id);
@@ -210,7 +211,7 @@ public abstract class DeletedEntityDAOTest
             Assert.assertEquals(o3.id, dels.get(2).id);
 
             // get next batch
-            dels = dao.getList(c, o3.lastModified, batchSize);
+            dels = dao.getList(c, o3.lastModified, end, batchSize);
             Assert.assertNotNull(dels);
             Assert.assertEquals(3, dels.size()); // o3 gets picked up by the >=
             Assert.assertEquals(o3.id, dels.get(0).id);

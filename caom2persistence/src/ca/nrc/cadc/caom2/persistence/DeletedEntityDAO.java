@@ -86,7 +86,7 @@ public class DeletedEntityDAO<T extends DeletedEntity> extends AbstractDAO
 
     public DeletedEntityDAO() { }
 
-    public List<T> getList(Class<? extends DeletedEntity> c, Date minLastModified, Integer batchSize)
+    public List<T> getList(Class<? extends DeletedEntity> c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         checkInit();
 
@@ -96,7 +96,7 @@ public class DeletedEntityDAO<T extends DeletedEntity> extends AbstractDAO
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
-            String sql = gen.getSelectSQL(c, minLastModified, batchSize);
+            String sql = gen.getSelectSQL(c, minLastModified, maxLastModified, batchSize);
             if (log.isDebugEnabled())
                 log.debug("GET SQL: " + Util.formatSQL(sql));
 

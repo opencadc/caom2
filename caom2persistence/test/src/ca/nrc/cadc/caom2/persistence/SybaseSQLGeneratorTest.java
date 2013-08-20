@@ -118,12 +118,13 @@ public class SybaseSQLGeneratorTest
             String end = "order by observation.maxlastmodified";
 
             Date d1 = new Date();
+            Date d2 = null;
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
             String exp1 = "observation.maxlastmodified >= '" + df.format(d1) + "'";
             
 
-            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, d1, batchSize);
+            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, d1, d2, batchSize);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
 
@@ -149,11 +150,12 @@ public class SybaseSQLGeneratorTest
             String start = "select top 10 ";
             String end = " order by observationmetareadaccess.lastmod";
             Date d1 = new Date();
+            Date d2 = null;
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
             String exp1 = "observationmetareadaccess.lastmod >= '" + df.format(d1) + "'";
 
-            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, batchSize);
+            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, d2, batchSize);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
             

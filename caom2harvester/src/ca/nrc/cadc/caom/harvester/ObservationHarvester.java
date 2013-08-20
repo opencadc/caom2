@@ -5,10 +5,12 @@ import ca.nrc.cadc.caom.harvester.state.HarvestSkip;
 import ca.nrc.cadc.caom.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.date.DateUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,7 +31,6 @@ public class ObservationHarvester extends Harvester
     private static Logger log = Logger.getLogger(ObservationHarvester.class);
     
     private boolean interactive;
-    private Observation prevBatchLeader;
 
     private DatabaseObservationDAO srcObservationDAO;
     private DatabaseObservationDAO destObservationDAO;
@@ -42,6 +43,7 @@ public class ObservationHarvester extends Harvester
         throws IOException
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
+        Date d = new Date();
     }
     
     public void setSkipped(boolean skipped)
@@ -148,15 +150,16 @@ public class ObservationHarvester extends Harvester
         long tTransaction = -1;
         
         Observation cur = null; // for use in the catch clause
-        Observation lastHarvested = null;
-        Observation curBatchLeader = null;
+        
+        int expectedNum = Integer.MAX_VALUE;
+        if (batchSize != null)
+            expectedNum = batchSize.intValue();
         try
         {
             System.gc(); // hint
             t = System.currentTimeMillis();
 
             HarvestState state = harvestState.get(source, Observation.class.getSimpleName());
-            log.info("last harvest: " + format(state.curLastModified));
             
             tState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -170,32 +173,29 @@ public class ObservationHarvester extends Harvester
                 entityList = getSkipped(start);
             else
             {
-                List<Observation> tmp = srcObservationDAO.getList(Observation.class, start, batchSize);
+                Date end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+                log.info("harvest window: " + format(start) + " :: " + format(end));
+                List<Observation> tmp = srcObservationDAO.getList(Observation.class, start, end, batchSize);
                 entityList = wrap(tmp);
             }
 
+            if (entityList.size() == expectedNum)
+                detectLoop(entityList);
+            
             // avoid re-processing the last successful one stored in HarvestState
             if ( !entityList.isEmpty() )
             {
                 ListIterator<ObservationWrapper> iter = entityList.listIterator();
-                curBatchLeader = iter.next().obs;
-                log.warn("curBatchLeader: " + curBatchLeader.getID() + " " + curBatchLeader.getMaxLastModified());
-                log.warn("  harvestState: " + state.curID + " " + state.curLastModified);
-                if (curBatchLeader.getID().equals(state.curID) // same obs as last time
-                        && curBatchLeader.getMaxLastModified().equals(state.curLastModified) // not modified since
-                   )
-                    
+                Observation curBatchLeader = iter.next().obs;
+                log.info("currentBatch: " + curBatchLeader.getID() + " " + curBatchLeader.getMaxLastModified());
+                log.info("harvestState: " + state.curID + " " + state.curLastModified);
+                if (curBatchLeader.getID().equals(state.curID)                                 // same obs as last time
+                        && curBatchLeader.getMaxLastModified().equals(state.curLastModified) ) // not modified since
                 {
                     iter.remove(); // processed in last batch but picked up by lastModified query
-                    curBatchLeader = null;
-                    if (iter.hasNext())
-                        curBatchLeader = iter.next().obs;
+                    expectedNum--;
                 }
-                // try to detect an infinite loop
-                if (curBatchLeader != null)
-                    detectLoop(curBatchLeader);
             }
-            prevBatchLeader = curBatchLeader;
 
             ret.found = entityList.size();
             log.info("found: " + entityList.size());
@@ -238,7 +238,6 @@ public class ObservationHarvester extends Harvester
                         log.debug("commit: OK");
                     }
                     ok = true;
-                    lastHarvested = o;
                     ret.ingested++;
                 }
                 //catch(CollisionException cex) // found entities with same CaomEntity.getID but different source.hashCode
@@ -360,6 +359,8 @@ public class ObservationHarvester extends Harvester
                 if (ret.abort)
                     return ret;
             }
+            if (ret.found < expectedNum)
+                ret.done = true;
         }
         finally
         {
@@ -371,16 +372,17 @@ public class ObservationHarvester extends Harvester
         return ret;
     }
 
-    private void detectLoop(Observation curBatchLeader)
+    private void detectLoop(List<ObservationWrapper> entityList)
     {
-        log.warn("check for loop: " + prevBatchLeader + " vs " + curBatchLeader);
-        if (prevBatchLeader != null)
+        if (entityList.size() < 2)
+            return;
+        ObservationWrapper start = entityList.get(0);
+        ObservationWrapper end = entityList.get(entityList.size() - 1);
+        if (start.obs.getLastModified().equals(end.obs.getLastModified()))
         {
-            log.debug("check for infinite loop: " + prevBatchLeader.getID() + "," + prevBatchLeader.getLastModified().getTime()
-                    + " vs " + curBatchLeader.getID() + "," + curBatchLeader.getLastModified().getTime());
-            if (prevBatchLeader.getLastModified().equals(curBatchLeader.getLastModified()))
-                    throw new RuntimeException("detected infinite harvesting loop by lastModified: "
-                        + prevBatchLeader + " vs " + curBatchLeader);
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
+            throw new RuntimeException("detected infinite harvesting loop: "
+                    + entityClass.getSimpleName() + " at " + df.format(start.obs.getLastModified()));
         }
     }
     

@@ -217,7 +217,10 @@ public class DeletionHarvester extends Harvester implements Runnable
             Date start = state.curLastModified;
             if (full)
                 start = null;
-            List<DeletedEntity> entityList = deletedDAO.getList(entityClass, start, batchSize);
+            Date end = null;
+            //end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+            
+            List<DeletedEntity> entityList = deletedDAO.getList(entityClass, start, end, batchSize);
             
             if (entityList.size() == expectedNum)
                 detectLoop(entityList);

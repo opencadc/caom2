@@ -627,7 +627,7 @@ public abstract class DatabaseObservationDAOTest
             List<Observation> obs;
 
             // get first batch
-            obs = dao.getList(Observation.class, null, batchSize);
+            obs = dao.getList(Observation.class, null, null, batchSize);
             Assert.assertNotNull(obs);
             Assert.assertEquals(3, obs.size());
             Assert.assertEquals(o1.getURI(), obs.get(0).getURI());
@@ -635,7 +635,7 @@ public abstract class DatabaseObservationDAOTest
             Assert.assertEquals(o3.getURI(), obs.get(2).getURI());
 
             // get next batch
-            obs = dao.getList(Observation.class, o3.getMaxLastModified(), batchSize);
+            obs = dao.getList(Observation.class, o3.getMaxLastModified(), null, batchSize);
             Assert.assertNotNull(obs);
             Assert.assertEquals(3, obs.size()); // o3 gets picked up by the >=
             Assert.assertEquals(o3.getURI(), obs.get(0).getURI());

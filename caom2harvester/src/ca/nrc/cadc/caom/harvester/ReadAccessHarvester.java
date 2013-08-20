@@ -132,7 +132,9 @@ public class ReadAccessHarvester extends Harvester
             Date start = state.curLastModified;
             if (full)
                 start = null;
-            List<ReadAccess> entityList = srcAccessDAO.getList(entityClass, start, batchSize);
+            Date end = null;
+            //end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+            List<ReadAccess> entityList = srcAccessDAO.getList(entityClass, start, end, batchSize);
             if (entityList.size() == expectedNum)
                 detectLoop(entityList);
 
