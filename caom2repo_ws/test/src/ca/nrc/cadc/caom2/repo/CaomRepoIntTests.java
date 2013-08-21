@@ -92,6 +92,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
@@ -159,8 +160,8 @@ public class CaomRepoIntTests
             RegistryClient rc = new RegistryClient();
 
             URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
-            BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http").toExternalForm() + "/pub";
-            BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https").toExternalForm() + "/pub";
+            BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http", "/pub").toExternalForm();
+            BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
             log.info("test service URL: " + BASE_HTTP_URL);
             log.info("test service URL: " + BASE_HTTPS_URL);
             
@@ -539,15 +540,22 @@ public class CaomRepoIntTests
         return conn;
     }
     
+    private long DOCUMENT_SIZE_MAX = 20971520L;
+    private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
     private Observation createVeryLargeObservation(String collection, String observationID)
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
-        Plane plane = null;
-        for (int i=0; i<200000; i++)
+        observation.instrument = new Instrument("FOO");
+        long num = DOCUMENT_SIZE_MAX/KW_STR.length();
+        log.debug("createVeryLargeObservation: " + num + " keywords");
+        long len = 0L;
+        for (long i=0; i<num; i++)
         {
-            plane = new Plane("product-" + i);
-            observation.getPlanes().add(plane);
+            String s = KW_STR + i;
+            len += s.length();
+            observation.instrument.getKeywords().add(s);
         }
+        log.debug("createVeryLargeObservation: " + observation.instrument.getKeywords().size() + " keywords, length = " + len);
         return observation;
     }
     
@@ -565,7 +573,7 @@ public class CaomRepoIntTests
         
         
         
-        String ctype = "type";
+        String ctype = "STOKES";
         String cunit = "unit";
         
         Axis axis = new Axis(ctype, cunit);

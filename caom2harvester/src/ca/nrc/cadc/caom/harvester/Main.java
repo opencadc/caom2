@@ -117,6 +117,7 @@ public class Main
                 log.warn("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
                 batchFactor = DEFAULT_BATCH_FACTOR;
             }
+            log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
             
             CaomHarvester ch = null;
             try

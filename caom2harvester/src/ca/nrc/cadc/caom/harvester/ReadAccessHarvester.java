@@ -26,8 +26,6 @@ public class ReadAccessHarvester extends Harvester
     private DatabaseReadAccessDAO srcAccessDAO;
     private DatabaseReadAccessDAO destAccessDAO;
     
-    private ReadAccess curBatchLeader = null;
-
     /**
      * Harvest ReadAccess tuples.
      * @param src source server.database.schema
@@ -90,14 +88,9 @@ public class ReadAccessHarvester extends Harvester
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
-            if (num.found < batchSize)
-                go = false;
             full = false; // do not start at min(lastModified) again
             if (dryrun)
-                go = false; // no state update -> infinite loop
-            
-            // hack to do one batch for testing
-            //go = false;
+                go = false;
         }
         try
         {
@@ -127,6 +120,10 @@ public class ReadAccessHarvester extends Harvester
         log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
         
+        int expectedNum = Integer.MAX_VALUE;
+        if (batchSize != null)
+            expectedNum = batchSize.intValue();
+        
         try
         {
             HarvestState state = harvestState.get(source, cname);
@@ -136,19 +133,8 @@ public class ReadAccessHarvester extends Harvester
             if (full)
                 start = null;
             List<ReadAccess> entityList = srcAccessDAO.getList(entityClass, start, batchSize);
-
-            // check for infinite loop before we process this batch
-            if (entityList.size() == batchSize.intValue())
-            {
-                ReadAccess first = entityList.get(0);
-                if ( curBatchLeader != null && curBatchLeader.compareTo(first) == 0)
-                {
-                    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
-                    throw new RuntimeException("detected infinite harvesting loop: "
-                        + entityClass.getSimpleName() + " at " + df.format(first.getLastModified()));
-                }
-                curBatchLeader = first;
-            }
+            if (entityList.size() == expectedNum)
+                detectLoop(entityList);
 
             ret.found = entityList.size();
             log.info("found: " + entityList.size());
@@ -220,7 +206,9 @@ public class ReadAccessHarvester extends Harvester
                     }
                 }
             }
-            if (ret.abort)
+            if (ret.found < expectedNum)
+                ret.done = true;
+            if (ret.abort || ret.done)
                 return ret;
         }
         finally
@@ -229,28 +217,18 @@ public class ReadAccessHarvester extends Harvester
         }
         return ret;
     }
-
-    /*
-    private void detectLoop(ReadAccess curBatchLeader)
+    
+    private void detectLoop(List<ReadAccess> entityList)
     {
-        log.warn("check for loop: " + prevBatchLeader + " vs " + curBatchLeader);
-        if (prevBatchLeader != null)
+        if (entityList.size() < 2)
+            return;
+        ReadAccess start = entityList.get(0);
+        ReadAccess end = entityList.get(entityList.size() - 1);
+        if (start.getLastModified().equals(end.getLastModified()))
         {
-            log.debug("check for loop: " + prevBatchLeader + " vs " + curBatchLeader);
-            if (prevBatchLeader != null)
-            {
-                ReadAccess pde = (ReadAccess) prevBatchLeader;
-                ReadAccess cde = (ReadAccess) curBatchLeader;
-                log.warn("check for infinite loop: " + pde.getAssetID() + "," + pde.getGroupID() + "," + pde.getLastModified().getTime()
-                        + " vs " + cde.getAssetID() + "," + cde.getGroupID() + "," + cde.getLastModified().getTime());
-                if (pde.getAssetID().equals(cde.getAssetID()) && pde.getGroupID().equals(cde.getGroupID()))
-                    throw new RuntimeException("detected infinite harvesting loop by ID: "
-                        + entityClass.getSimpleName() + " at " + cde.getAssetID() + "," + cde.getGroupID());
-                if (pde.getLastModified().equals(cde.getLastModified()))
-                    throw new RuntimeException("detected infinite harvesting loop: "
-                        + entityClass.getSimpleName() + " at " + cde.getLastModified());
-            }
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
+            throw new RuntimeException("detected infinite harvesting loop: "
+                    + entityClass.getSimpleName() + " at " + df.format(start.getLastModified()));
         }
     }
-    */
 }
