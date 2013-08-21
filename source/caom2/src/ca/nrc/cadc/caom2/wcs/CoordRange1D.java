@@ -90,6 +90,13 @@ public class CoordRange1D implements Serializable
     {
         CaomValidator.assertNotNull(getClass(), "start", start);
         CaomValidator.assertNotNull(getClass(), "end", end);
+        
+        // TODO: this constraint would be OK except for single pixel polarization, where start.val===end.val
+        //if (start.pix == end.pix)
+        //    throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal pix bounds");
+        //if (start.val == end.val)
+        //    throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal val bounds");
+        
         this.start = start;
         this.end = end;
     }
