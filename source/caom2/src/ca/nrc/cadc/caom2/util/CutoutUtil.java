@@ -97,6 +97,7 @@ public class CutoutUtil implements Serializable
     private static final String NRG_CUT = "ee";
     private static final String TIM_CUT = "tt";
     private static final String POL_CUT = "pp";
+    private static final String OBS_CUT = "oo";
     private static final int CUT_LEN = 2;
 
     // impl is for spatial cutout with a circle only
@@ -150,6 +151,8 @@ public class CutoutUtil implements Serializable
                         sb.append(TIM_CUT);
                     else if (c.polarizationAxis != null && i == c.polarizationAxis.intValue())
                         sb.append(POL_CUT);
+                    else if (c.observableAxis != null && i == c.observableAxis.intValue())
+                        sb.append(OBS_CUT);
                 }
                 sb.append("]");
                 log.debug("cutout template: " + sb.toString());
@@ -228,7 +231,10 @@ public class CutoutUtil implements Serializable
                 }
 
                 // time cutout: not supported
+                
                 // polarization cutout: not supported
+                
+                // observable cutout: not supported -- should be added as bin:bin with any other cutout?
 
 
                 // for any axis in the data but not in the cutout: keep all pixels
@@ -250,6 +256,10 @@ public class CutoutUtil implements Serializable
                     sb.replace(i, i+CUT_LEN, "*");
 
                 i = sb.indexOf(POL_CUT);
+                if (i > 0)
+                    sb.replace(i, i+CUT_LEN, "*");
+                
+                i = sb.indexOf(OBS_CUT);
                 if (i > 0)
                     sb.replace(i, i+CUT_LEN, "*");
 
