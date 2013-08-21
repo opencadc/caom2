@@ -69,8 +69,8 @@
 
 package ca.nrc.cadc.datalink;
 
-import ca.nrc.cadc.caomtap.LinkQuery;
-import ca.nrc.cadc.caomtap.ArtifactProcessor;
+import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.dali.tables.TableData;

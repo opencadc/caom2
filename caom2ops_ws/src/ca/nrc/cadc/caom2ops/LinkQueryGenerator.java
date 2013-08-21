@@ -67,21 +67,50 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caomtap;
+package ca.nrc.cadc.caom2ops;
+
+import ca.nrc.cadc.caom2.PlaneURI;
+import java.net.URI;
+import org.apache.log4j.Logger;
 
 /**
- *
- * @author yeunga
+ * Generates an ADQL query to select necessary metadata for all artifacts planes.
+ * @author pdowler
  */
-public final class ArgValidator
+public class LinkQueryGenerator 
 {
-    private ArgValidator() { }
-    
-    public static void assertNotNull(Class caller, String name, Object test)
-        throws IllegalArgumentException
+    private static final Logger log = Logger.getLogger(LinkQueryGenerator.class);
+
+    private static final String ADQL_SELECT = "SELECT Artifact.*, Part.*, Chunk.*";
+    private static final String FROM_PLANE_URI =
+        " FROM caom2.Plane AS Plane "
+        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
+        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
+        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
+    private static final String FROM_ARTIFACT_URI =
+        " FROM caom2.Artifact AS Artifact "
+        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
+        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
+        
+    public String getADQL(final PlaneURI puri)
     {
-        if (test == null)
-            throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
+        StringBuilder sb = new StringBuilder();
+        sb.append(ADQL_SELECT);
+        sb.append(FROM_PLANE_URI);
+        sb.append(" WHERE Plane.planeURI = '");
+        sb.append(puri.toString());
+        sb.append("'");
+        return sb.toString();
     }
 
+    public String getArtifactADQL(final URI artifactURI)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ADQL_SELECT);
+        sb.append(FROM_ARTIFACT_URI);
+        sb.append(" WHERE Artifact.uri = '");
+        sb.append(artifactURI.toString());
+        sb.append("'");
+        return sb.toString();
+    }
 }

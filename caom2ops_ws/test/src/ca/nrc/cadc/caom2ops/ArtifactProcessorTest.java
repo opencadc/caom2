@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caomtap;
+package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;

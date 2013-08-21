@@ -96,13 +96,10 @@ public class LinkQueryJobManager extends SimpleJobManager
         // persist UWS jobs to Sybase
         //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
         PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
+        
         //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
         //jobPersist.setJobCleaner(30000L);
-        
-        //this.config = jobPersist.getJobSchema();
-
-        // exec jobs in in new thread using QueryRunner from cadcTAP
-        //JobExecutor jobExec = new ThreadExecutor(jobPersist, QueryRunner.class);
 
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
 
