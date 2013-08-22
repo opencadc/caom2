@@ -133,7 +133,10 @@ public class ReadAccessHarvester extends Harvester
             if (full)
                 start = null;
             Date end = null;
+            
+            // lastModified is maintained in the DB so we do not need this
             //end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+            
             List<ReadAccess> entityList = srcAccessDAO.getList(entityClass, start, end, batchSize);
             if (entityList.size() == expectedNum)
                 detectLoop(entityList);
@@ -209,9 +212,20 @@ public class ReadAccessHarvester extends Harvester
                 }
             }
             if (ret.found < expectedNum)
+            {
                 ret.done = true;
-            if (ret.abort || ret.done)
-                return ret;
+                if (state != null && state.curLastModified != null)
+                {
+                    // tweak HarvestState so we don't keep picking up the same batch
+                    Date d = new Date(System.currentTimeMillis() - 5*60000L);  // 5 min ago
+                    Date n = new Date(state.curLastModified.getTime() + 1L);   // 1 ms ahead
+                    if (n.getTime() < d.getTime()) // the last timestamp is old, jump forward by a full second
+                        n = new Date(state.curLastModified.getTime() + 1000L);   // 1 sec ahead
+                    state.curLastModified = n;
+                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
+                    harvestState.put(state);
+                }
+            }
         }
         finally
         {
