@@ -93,12 +93,14 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
+            /*
             double failFrac = ((double) num.failed) / ((double) num.found);
             if (failFrac > 0.5)
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
             }
+            */
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
