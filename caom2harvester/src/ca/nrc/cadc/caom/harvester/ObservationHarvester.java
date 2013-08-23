@@ -378,11 +378,10 @@ public class ObservationHarvester extends Harvester
             return;
         ObservationWrapper start = entityList.get(0);
         ObservationWrapper end = entityList.get(entityList.size() - 1);
-        if (start.obs.getLastModified().equals(end.obs.getLastModified()))
+        if (start.obs.getMaxLastModified().equals(end.obs.getMaxLastModified()))
         {
-            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
             throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at " + df.format(start.obs.getLastModified()));
+                    + entityClass.getSimpleName() + " at " + format(start.obs.getMaxLastModified()));
         }
     }
     
