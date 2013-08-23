@@ -125,7 +125,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
      * @param depth
      * @return
      */
-    protected List<T> getList(Class<T> c, Date minlastModified, Integer batchSize, int depth)
+    protected List<T> getList(Class<T> c, Date minlastModified, Date maxLastModified, Integer batchSize, int depth)
     {
         checkInit();
 
@@ -137,7 +137,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
 
             // find the range of timestamps that gives batchSize entities
             Date endDate = null;
-            String sql = gen.getSelectLastModifiedRangeSQL(c, minlastModified, batchSize);
+            String sql = gen.getSelectLastModifiedRangeSQL(c, minlastModified, maxLastModified, batchSize);
             if (log.isDebugEnabled())
                 log.debug("GET SQL: " + Util.formatSQL(sql));
 
@@ -187,21 +187,21 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
      * @param batchSize
      * @return
      */
-    public List<T> getList(Class<T> c, Date minLastModified, Integer batchSize)
+    public List<T> getList(Class<T> c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         if (Observation.class.isAssignableFrom(c))
-            return getList(c, minLastModified, batchSize, SQLGenerator.MAX_DEPTH);
+            return getList(c, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
 
         if (ReadAccess.class.isAssignableFrom(c))
         {
             Class<? extends ReadAccess> rac = (Class<? extends ReadAccess>) c;
-            return getListImpl(rac, minLastModified, batchSize);
+            return getListImpl(rac, minLastModified, maxLastModified, batchSize);
         }
      
         throw new UnsupportedOperationException("unexpected class for getList: " + c.getName());
     }
     
-    protected List<T> getListImpl(Class<? extends ReadAccess> rac, Date minLastModified, Integer batchSize)
+    protected List<T> getListImpl(Class<? extends ReadAccess> rac, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         checkInit();
             
@@ -213,7 +213,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
-            String sql = gen.getSelectSQL(rac, minLastModified, batchSize);
+            String sql = gen.getSelectSQL(rac, minLastModified, maxLastModified, batchSize);
             log.debug("GET SQL: " + sql);
 
 

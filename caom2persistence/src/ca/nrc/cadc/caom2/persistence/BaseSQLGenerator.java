@@ -450,7 +450,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     // select batchSize Observation.maxLastModified, starting at minLastModified and in maxLastModified order
-    public String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Integer batchSize)
+    public String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         if (!Observation.class.equals(c))
             throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
@@ -476,6 +476,16 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(df.format(minLastModified));
             sb.append("'");
         }
+        if (maxLastModified != null)
+        {
+            if (minLastModified == null)
+                sb.append(" WHERE ");
+            else
+                sb.append(" AND ");
+            sb.append(alias).append(".maxLastModified <= '");
+            sb.append(df.format(maxLastModified));
+            sb.append("'");
+        }
         sb.append(" ORDER BY ");
         sb.append(alias).append(".maxLastModified");
         if (limit != null && limit.length() > 0)
@@ -487,7 +497,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     // select batchSize instances of c, starting at minLastModified and in lastModified order
-    public String getSelectSQL(Class c, Date minLastModified, Integer batchSize)
+    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
         String top = getTopConstraint(batchSize);
@@ -513,6 +523,16 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(" WHERE ");
             sb.append(alias).append(".").append(lastModifiedColumn).append(" >= '");
             sb.append(df.format(minLastModified));
+            sb.append("'");
+        }
+        if (maxLastModified != null)
+        {
+            if (minLastModified == null)
+                sb.append(" WHERE ");
+            else
+                sb.append(" AND ");
+            sb.append(alias).append(".").append(lastModifiedColumn).append(" <= '");
+            sb.append(df.format(maxLastModified));
             sb.append("'");
         }
         sb.append(" ORDER BY ");

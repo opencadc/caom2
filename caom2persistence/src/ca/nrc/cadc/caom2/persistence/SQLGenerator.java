@@ -119,9 +119,9 @@ public interface SQLGenerator
     
     String getSelectSQL(Class c, Long id);
     
-    String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Integer batchSize);
+    String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
-    String getSelectSQL(Class c, Date minLastModified, Integer batchSize);
+    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
     String getSelectSQL(Class c, Date minLastModified, Date maxLastModified);
 
