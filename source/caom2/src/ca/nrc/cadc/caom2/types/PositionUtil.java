@@ -419,7 +419,7 @@ public final class PositionUtil
             }
         }
         if (totSampleSize > 0.0 && numPixels > 0.0)
-            return new Double(totSampleSize / numPixels);
+            return new Double(3600.0 * totSampleSize / numPixels); // convert degrees to arcsec
         return null;
     }
 
