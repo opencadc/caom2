@@ -83,8 +83,8 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.caomtap.ArtifactProcessor;
-import ca.nrc.cadc.caomtap.LinkQuery;
+import ca.nrc.cadc.caom2ops.ArtifactProcessor;
+import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
@@ -111,7 +111,7 @@ public class LinkQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
-    static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
 
 
     private Job job;

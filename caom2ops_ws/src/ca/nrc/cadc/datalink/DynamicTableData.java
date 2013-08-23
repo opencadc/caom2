@@ -67,21 +67,129 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caomtap;
+package ca.nrc.cadc.datalink;
+
+import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.caom2ops.ArtifactProcessor;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.dali.tables.TableData;
+import ca.nrc.cadc.uws.Job;
+import ca.nrc.cadc.uws.ParameterUtil;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
- * @author yeunga
+ * @author pdowler
  */
-public final class ArgValidator
+public class DynamicTableData implements TableData
 {
-    private ArgValidator() { }
+    private static final Logger log = Logger.getLogger(DynamicTableData.class);
     
-    public static void assertNotNull(Class caller, String name, Object test)
-        throws IllegalArgumentException
+    private Iterator<String> argIter;
+    private LinkQuery query;
+    private ArtifactProcessor ap;
+
+    private Iterator<List<Object>> curIter;
+
+    public DynamicTableData(Job job, LinkQuery query, ArtifactProcessor ap)
     {
-        if (test == null)
-            throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
+        List<String> args = ParameterUtil.findParameterValues("uri", job.getParameterList());
+        this.argIter = args.iterator();
+        this.query = query;
+        this.ap = ap;
     }
+
+    public Iterator<List<Object>> iterator()
+    {
+        return new ConcatIterator();
+    }
+
+    private class ConcatIterator implements Iterator<List<Object>>
+    {
+
+        public boolean hasNext()
+        {
+            if (argIter == null)
+                return false; // done
+
+            if (curIter == null || !curIter.hasNext())
+                curIter = getBatchIterator();
+            
+            if (curIter == null)
+            {
+                argIter = null;
+                return false;
+            }
+
+            return curIter.hasNext();
+        }
+
+        public List<Object> next()
+        {
+            return curIter.next();
+        }
+
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        private Iterator<List<Object>> getBatchIterator()
+        {
+            if ( !argIter.hasNext() )
+                return null; // done
+
+            curIter = null;
+            boolean done = false;
+            while (!done && argIter.hasNext())
+            {
+                String s = argIter.next();
+                try
+                {
+                    URI uri = new URI(s);
+                    PlaneURI planeURI = new PlaneURI(uri);
+                    log.debug("getBatchIterator: " + planeURI);
+                    List<Artifact> artifacts = query.performQuery(planeURI);
+                    log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
+                    List<DataLink> links = ap.process(uri, artifacts);
+                    log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
+                    if (!links.isEmpty())
+                    {
+                        List<List<Object>> rows = new ArrayList<List<Object>>();
+                        for (DataLink dl : links)
+                        {
+                            log.debug("adding: " + dl);
+                            List<Object> r = new ArrayList<Object>(dl.size());
+                            for (Object o : dl)
+                                r.add(o);
+                            rows.add(r);
+                        }
+                        curIter = rows.iterator();
+                        done = true;
+                    }
+                }
+                catch(URISyntaxException ex)
+                {
+                    throw new IllegalArgumentException("invalid URI: " + s);
+                }
+                catch(IOException ex)
+                {
+                    throw new RuntimeException("query failed: " + s, ex);
+                }
+                finally { }
+            }
+
+            return curIter;
+        }
+    }
+
+
 
 }

@@ -67,56 +67,50 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.CadcIdentityManager;
-import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
-import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.MemoryJobPersistence;
-import ca.nrc.cadc.uws.server.RandomStringGenerator;
-import ca.nrc.cadc.uws.server.SimpleJobManager;
-import ca.nrc.cadc.uws.server.SyncJobExecutor;
+import ca.nrc.cadc.caom2.PlaneURI;
+import java.net.URI;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Generates an ADQL query to select necessary metadata for all artifacts planes.
  * @author pdowler
  */
-public class LinkQueryJobManager extends SimpleJobManager
+public class LinkQueryGenerator 
 {
-    private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
+    private static final Logger log = Logger.getLogger(LinkQueryGenerator.class);
 
-    private static final Long MAX_EXEC_DURATION = new Long(10*60L); // 10 minutes
-    private static final Long MAX_DESTRUCTION = new Long(10*60L);   // 10 minutes until MemoryJobPersistence deletes it
-    private static final Long MAX_QUOTE = new Long(10*60L);
-
-    private JobSchema config;
-
-    public LinkQueryJobManager()
-    {
-        super();
-        // persist UWS jobs to Sybase
-        //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
-        //PostgresJobPersistence jobPersist = new PostgresJobPersistence();
-        MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        jobPersist.setJobCleaner(30000L);
+    private static final String ADQL_SELECT = "SELECT Artifact.*, Part.*, Chunk.*";
+    private static final String FROM_PLANE_URI =
+        " FROM caom2.Plane AS Plane "
+        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
+        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
+        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
+    private static final String FROM_ARTIFACT_URI =
+        " FROM caom2.Artifact AS Artifact "
+        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
+        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
         
-        //this.config = jobPersist.getJobSchema();
-
-        // exec jobs in in new thread using QueryRunner from cadcTAP
-        //JobExecutor jobExec = new ThreadExecutor(jobPersist, QueryRunner.class);
-
-        JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
-
-        super.setJobPersistence(jobPersist);
-        super.setJobExecutor(jobExec);
-        super.setMaxExecDuration(MAX_EXEC_DURATION);
-        super.setMaxDestruction(MAX_DESTRUCTION);
-        super.setMaxQuote(MAX_QUOTE);
+    public String getADQL(final PlaneURI puri)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ADQL_SELECT);
+        sb.append(FROM_PLANE_URI);
+        sb.append(" WHERE Plane.planeURI = '");
+        sb.append(puri.toString());
+        sb.append("'");
+        return sb.toString();
     }
 
-    public JobSchema getConfig()
+    public String getArtifactADQL(final URI artifactURI)
     {
-        return config;
+        StringBuilder sb = new StringBuilder();
+        sb.append(ADQL_SELECT);
+        sb.append(FROM_ARTIFACT_URI);
+        sb.append(" WHERE Artifact.uri = '");
+        sb.append(artifactURI.toString());
+        sb.append("'");
+        return sb.toString();
     }
 }

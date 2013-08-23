@@ -1,5 +1,5 @@
 
-package ca.nrc.cadc.caomtap;
+package ca.nrc.cadc.caom2ops;
 
 import java.lang.reflect.Field;
 import java.util.Date;

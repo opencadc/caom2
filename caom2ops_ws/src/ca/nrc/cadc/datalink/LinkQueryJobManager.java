@@ -69,127 +69,49 @@
 
 package ca.nrc.cadc.datalink;
 
-import ca.nrc.cadc.caomtap.LinkQuery;
-import ca.nrc.cadc.caomtap.ArtifactProcessor;
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.dali.tables.TableData;
-import ca.nrc.cadc.uws.Job;
-import ca.nrc.cadc.uws.ParameterUtil;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
+import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
+import ca.nrc.cadc.uws.server.JobExecutor;
+import ca.nrc.cadc.uws.server.SimpleJobManager;
+import ca.nrc.cadc.uws.server.SyncJobExecutor;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class DynamicTableData implements TableData
+public class LinkQueryJobManager extends SimpleJobManager
 {
-    private static final Logger log = Logger.getLogger(DynamicTableData.class);
-    
-    private Iterator<String> argIter;
-    private LinkQuery query;
-    private ArtifactProcessor ap;
+    private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
-    private Iterator<List<Object>> curIter;
+    private static final Long MAX_EXEC_DURATION = new Long(3600L); // 60 minutes
+    private static final Long MAX_DESTRUCTION = new Long(3600L);   // 60 minutes until MemoryJobPersistence deletes it
+    private static final Long MAX_QUOTE = new Long(3600L);
 
-    public DynamicTableData(Job job, LinkQuery query, ArtifactProcessor ap)
+    private JobSchema config;
+
+    public LinkQueryJobManager()
     {
-        List<String> args = ParameterUtil.findParameterValues("uri", job.getParameterList());
-        this.argIter = args.iterator();
-        this.query = query;
-        this.ap = ap;
+        super();
+        // persist UWS jobs to Sybase
+        //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
+        
+        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
+        //jobPersist.setJobCleaner(30000L);
+
+        JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
+
+        super.setJobPersistence(jobPersist);
+        super.setJobExecutor(jobExec);
+        super.setMaxExecDuration(MAX_EXEC_DURATION);
+        super.setMaxDestruction(MAX_DESTRUCTION);
+        super.setMaxQuote(MAX_QUOTE);
     }
 
-    public Iterator<List<Object>> iterator()
+    public JobSchema getConfig()
     {
-        return new ConcatIterator();
+        return config;
     }
-
-    private class ConcatIterator implements Iterator<List<Object>>
-    {
-
-        public boolean hasNext()
-        {
-            if (argIter == null)
-                return false; // done
-
-            if (curIter == null || !curIter.hasNext())
-                curIter = getBatchIterator();
-            
-            if (curIter == null)
-            {
-                argIter = null;
-                return false;
-            }
-
-            return curIter.hasNext();
-        }
-
-        public List<Object> next()
-        {
-            return curIter.next();
-        }
-
-        public void remove()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        private Iterator<List<Object>> getBatchIterator()
-        {
-            if ( !argIter.hasNext() )
-                return null; // done
-
-            curIter = null;
-            boolean done = false;
-            while (!done && argIter.hasNext())
-            {
-                String s = argIter.next();
-                try
-                {
-                    URI uri = new URI(s);
-                    PlaneURI planeURI = new PlaneURI(uri);
-                    log.debug("getBatchIterator: " + planeURI);
-                    List<Artifact> artifacts = query.performQuery(planeURI);
-                    log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
-                    List<DataLink> links = ap.process(uri, artifacts);
-                    log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
-                    if (!links.isEmpty())
-                    {
-                        List<List<Object>> rows = new ArrayList<List<Object>>();
-                        for (DataLink dl : links)
-                        {
-                            log.debug("adding: " + dl);
-                            List<Object> r = new ArrayList<Object>(dl.size());
-                            for (Object o : dl)
-                                r.add(o);
-                            rows.add(r);
-                        }
-                        curIter = rows.iterator();
-                        done = true;
-                    }
-                }
-                catch(URISyntaxException ex)
-                {
-                    throw new IllegalArgumentException("invalid URI: " + s);
-                }
-                catch(IOException ex)
-                {
-                    throw new RuntimeException("query failed: " + s, ex);
-                }
-                finally { }
-            }
-
-            return curIter;
-        }
-    }
-
-
-
 }

@@ -67,21 +67,16 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caomtap.LinkQuery;
-import ca.nrc.cadc.caomtap.ArtifactProcessor;
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.datalink.DataLink;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.uws.Job;
-import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -89,21 +84,25 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ *
  * @author pdowler
  */
-public class DynamicTableDataTest 
+public class ArtifactProcessorTest 
 {
-    private static final Logger log = Logger.getLogger(DynamicTableDataTest.class);
+    private static final Logger log = Logger.getLogger(ArtifactProcessorTest.class);
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.datalink", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
-    
+
+    static String PLANE_URI = "caom:FOO/bar/baz";
+    static String BASE_ARTIFACT_URI = "ad:FOO/bar_baz_";
     static String RUNID = "abc123";
+
     RegistryClient registryClient;
 
-    public DynamicTableDataTest()
+    public ArtifactProcessorTest()
     {
         this.registryClient = new RegistryClient();
     }
@@ -123,19 +122,18 @@ public class DynamicTableDataTest
     }
 
     @Test
-    public void testNoInputURI()
+    public void testNoArtifacts()
     {
-        log.debug("testNoInputURI - START");
+        log.debug("testEmptyList START");
         try
         {
-            Job job = new Job();
-            
+            URI uri = new URI(PLANE_URI);
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
-            
-            Assert.assertFalse( iter.hasNext() );
+
+            List<Artifact> artifacts = new ArrayList<Artifact>();
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertTrue(links.isEmpty());
         }
         catch(Exception unexpected)
         {
@@ -145,128 +143,100 @@ public class DynamicTableDataTest
     }
 
     @Test
-    public void testNoResults()
+    public void testWithArtifacts()
     {
-        log.debug("testNoResults - START");
+        log.debug("testNoFilter START");
         try
         {
-            Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
-
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testSingleInputURI()
-    {
-        log.debug("testSingleInputURI - START");
-        try
-        {
-            Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 1);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
-
-            // 2x1 results
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testMultipleInputURI()
-    {
-        log.debug("testMultipleInputURI - START");
-        try
-        {
-            Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 2);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
-
-            // 2x2 results
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
+            URI uri = new URI(PLANE_URI);
             
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
+            Assert.assertEquals("test setup", 2, artifacts.size());
 
-    class TestLinkQuery extends LinkQuery
-    {
-        int num;
-        TestLinkQuery(String jobID, URL tapURL, int num)
-        {
-            super(jobID, tapURL);
-            this.num = num;
-        }
+            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
+            
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertEquals("num links", 2, links.size());
 
-        @Override
-        public List<Artifact> performQuery(PlaneURI planeURI)
-        {
-            List<Artifact> ret = new ArrayList<Artifact>();
-            try
+            for (DataLink dl : links)
             {
-                for (int i=0; i<num; i++)
+                log.debug("testNoFilter: " + dl);
+                Assert.assertNotNull(dl);
+                Assert.assertEquals(uri, dl.getURI());
+                Assert.assertNotNull(dl.getURL());
+                
+                String query = dl.getURL().getQuery();
+                Assert.assertNotNull("query string", query);
+                String expected = "runid="+RUNID;
+                String actual = query.toLowerCase();
+                Assert.assertTrue("runid", actual.contains(expected));
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testNoRunID()
+    {
+        log.debug("testRunID START");
+        try
+        {
+            URI uri = new URI(PLANE_URI);
+
+            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
+            Assert.assertEquals("test setup", 2, artifacts.size());
+
+            ArtifactProcessor ap = new ArtifactProcessor(null, registryClient);
+
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertEquals("num links", 2, links.size());
+
+            for (DataLink dl : links)
+            {
+                log.debug("testRunID: " + dl);
+                Assert.assertNotNull(dl);
+                Assert.assertEquals(uri, dl.getURI());
+                Assert.assertNotNull(dl.getURL());
+                String query = dl.getURL().getQuery();
+                Assert.assertNull(query);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    
+
+    private List<Artifact> getTestArtifacts(int num, int depth, int productTypeLevel)
+        throws Exception
+    {
+        List<Artifact> ret = new ArrayList<Artifact>();
+        for (int i=0; i<num; i++)
+        {
+            Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i));
+            if (productTypeLevel == 1)
+                a.productType = ProductType.SCIENCE;
+            ret.add(a);
+            if (depth > 1)
+            {
+                for (int j=0; j<num; j++)
                 {
-                    Artifact a = new Artifact(
-                            new URI(
-                                "ad:FOO/" + planeURI.getParent().getObservationID() + "_" + planeURI.getProductID() + "_" + i
-                                )
-                            );
-                    a.productType = ProductType.SCIENCE;
-                    a.contentLength = 123L;
-                    a.contentType = "text/plain";
-                    ret.add(a);
+                    Part p = new Part(new Integer(j));
+                    if (productTypeLevel == 2)
+                        p.productType = ProductType.SCIENCE;
+                    a.getParts().add(p);
                 }
             }
-            catch(Exception ex)
-            {
-                throw new RuntimeException("test setup failed", ex);
-            }
-            log.debug("TestLinkQuery.getArtifacts: " + ret.size());
-            return  ret;
         }
+        return ret;
     }
 }
