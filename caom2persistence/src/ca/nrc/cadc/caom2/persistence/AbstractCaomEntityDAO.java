@@ -136,7 +136,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
             // find the range of timestamps that gives batchSize entities
-            Date endDate = null;
+            Date endDate = maxLastModified;
             String sql = gen.getSelectLastModifiedRangeSQL(c, minlastModified, maxLastModified, batchSize);
             if (log.isDebugEnabled())
                 log.debug("GET SQL: " + Util.formatSQL(sql));
