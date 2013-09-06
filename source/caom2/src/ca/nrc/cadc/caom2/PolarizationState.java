@@ -70,7 +70,13 @@
 package ca.nrc.cadc.caom2;
 
 /**
- *
+ * Standard polarization codes for FITS WCS STOKES axis. We have added some additional codes
+ * for values outside the original FITS WCS paper from the discussion at
+ * </p>
+ * <p>
+ * http://listmgr.cv.nrao.edu/pipermail/fitswcs/2008-March/000408.html
+ * </p>
+ * 
  * @author pdowler
  */
 public enum PolarizationState
@@ -79,6 +85,12 @@ public enum PolarizationState
     Q(2),
     U(3),
     V(4),
+    POLI(5),   // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
+    FPOLI(6),  // fractional linear polarization POLI/I, code used in AIPS
+    POLA(7),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
+    EPOLI(8),  // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
+    CPOLI(9),  // circular polarization intensity |V|
+    NPOLI(10), // unpolarized intensity I - EPOLI
     RR(-1),
     LL(-2),
     RL(-3),
@@ -102,6 +114,12 @@ public enum PolarizationState
             case 2: return "Q";
             case 3: return "U";
             case 4: return "V";
+            case 5: return "POLI";
+            case 6: return "FPOLI"; 
+            case 7: return "POLA";  
+            case 8: return "EPOLI"; 
+            case 9: return "CPOLI"; 
+            case 10: return "NPOLI"; 
             case -1: return "RR";
             case -2: return "LL";
             case -3: return "RL";
@@ -128,6 +146,12 @@ public enum PolarizationState
             case 2: return Q;
             case 3: return U;
             case 4: return V;
+            case 5: return POLI; 
+            case 6: return FPOLI;
+            case 7: return POLA; 
+            case 8: return EPOLI; 
+            case 9: return CPOLI;
+            case 10: return NPOLI;
             case -1: return RR;
             case -2: return LL;
             case -3: return RL;
