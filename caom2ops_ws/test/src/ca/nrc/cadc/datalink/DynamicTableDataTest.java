@@ -151,8 +151,8 @@ public class DynamicTableDataTest
         try
         {
             Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
@@ -174,8 +174,8 @@ public class DynamicTableDataTest
         try
         {
             Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
@@ -204,8 +204,8 @@ public class DynamicTableDataTest
         try
         {
             Job job = new Job();
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("uri", "caom:FOO/bar/baz2"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 2);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);

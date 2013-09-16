@@ -88,26 +88,28 @@ public class DataLink implements Iterable<Object>
     public static final String DOWNLOAD = "ivo://ivoa.net/std/DataLink/v1.0#DOWNLOAD";
     public static final String CUTOUT = "ivo://ivoa.net/std/CutoutService/v1.0";
 
-    private URI uri;
+    // standard DataLink fields
+    private URI id;
     private URL url;
-
-    public URI linkSemantics;
-
-    public List<ProductType> productTypes = new ArrayList<ProductType>();
+    public URI serviceType;
+    public String description;
+    public String semantics;
     public String contentType;
     public Long contentLength;
     public String errorMessage;
+    
+    // custom CADC field
+    public List<ProductType> productTypes = new ArrayList<ProductType>();
 
-    public DataLink(URI uri, URL url, URI linkSemantics)
+    public DataLink(URI id, URL url)
     {
-        this.uri = uri;
+        this.id = id;
         this.url = url;
-        this.linkSemantics = linkSemantics;
     }
 
-    public URI getURI()
+    public URI getID()
     {
-        return uri;
+        return id;
     }
 
     public URL getURL()
@@ -115,7 +117,7 @@ public class DataLink implements Iterable<Object>
         return url;
     }
 
-    public int size() { return 7; } // number of fields
+    public int size() { return 9; } // number of fields
 
     // order: uri, productType, contentType, contentLength, URL
     public Iterator<Object> iterator()
@@ -134,13 +136,15 @@ public class DataLink implements Iterable<Object>
                 cur++;
                 switch(n)
                 {
-                    case 0: return uri;
+                    case 0: return id;
                     case 1: return url;
-                    case 2: return linkSemantics;
-                    case 3: return toProductTypeMask(productTypes);
-                    case 4: return contentType;
-                    case 5: return contentLength;
-                    case 6: return errorMessage;
+                    case 2: return serviceType;
+                    case 3: return semantics;
+                    case 4: return description;
+                    case 5: return contentType;
+                    case 6: return contentLength;
+                    case 7: return errorMessage;
+                    case 8: return toProductTypeMask(productTypes);
                 }
                 throw new NoSuchElementException();
             }
@@ -175,43 +179,50 @@ public class DataLink implements Iterable<Object>
         List<TableField> fields = new ArrayList<TableField>();
         TableField f;
 
-        f = new TableField("uri", "char");
+        f = new TableField("ID", "char");
         f.variableSize = Boolean.TRUE;
         f.ucd = "meta.id";
-        f.utype = "datalink:Datalink.uri";
-        f.xtype = "w3c:URI";
+        f.utype = "datalink:Datalink.ID";
         fields.add(f);
 
         f = new TableField("accessURL", "char");
         f.variableSize = Boolean.TRUE;
         f.utype = "datalink:Datalink.accessURL";
-        f.xtype = "w3c:URL";
         fields.add(f);
 
+        f = new TableField("serviceType", "char");
+        f.variableSize = Boolean.TRUE;
+        f.utype = "datalink:Datalink.serviceType";
+        fields.add(f);
+        
+        f = new TableField("description", "char");
+        f.variableSize = Boolean.TRUE;
+        f.utype = "datalink:Datalink.description";
+        fields.add(f);
+        
         f = new TableField("semantics", "char");
         f.variableSize = Boolean.TRUE;
         f.utype = "datalink:Datalink.semantics";
-        f.xtype = "w3c:URI";
-        fields.add(f);
-
-        f = new TableField("productType", "char");
-        f.variableSize = Boolean.TRUE;
-        f.utype = "caom:Artifact.productType";
         fields.add(f);
 
         f = new TableField("contentType", "char");
         f.variableSize = Boolean.TRUE;
-        f.utype = "caom:Artifact.contentType";
+        f.utype = "datalink:Datalink.contentType";
         fields.add(f);
 
         f = new TableField("contentLength", "long");
         f.unit = "byte";
-        f.utype = "caom:Artifact.contentLength";
+        f.utype = "datalink:Datalink.contentLength";
         fields.add(f);
 
         f = new TableField("errorMessage", "char");
         f.variableSize = Boolean.TRUE;
         f.utype = "datalink:Datalink.error";
+        fields.add(f);
+        
+        f = new TableField("productType", "char");
+        f.variableSize = Boolean.TRUE;
+        f.utype = "caom:Artifact.productType";
         fields.add(f);
         
         return fields;
@@ -220,6 +231,6 @@ public class DataLink implements Iterable<Object>
     @Override
     public String toString()
     {
-        return "DataLink[" + uri + "," + url + "]";
+        return "DataLink[" + id + "," + url + "]";
     }
 }
