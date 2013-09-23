@@ -107,3 +107,54 @@ tablespace caom_index
 create unique index i_input2output on caom2.Plane_inputs (inputID,outputID)
 tablespace caom_index
 ;
+
+create index Plane_position_i1
+        on caom2.Plane using gist (position_bounds)
+tablespace caom_index
+;
+
+-- pgSphere currently supports center(scircle) and center(sellipse) only
+create index Plane_position_i2
+        on caom2.Plane using gist (position_bounds_center)
+tablespace caom_index
+;
+create index Plane_position_i3
+        on caom2.Plane (position_bounds_area)
+tablespace caom_index
+;
+
+--create index Plane_energy_i1
+--      on caom.Plane using gist (energy_bounds)
+--tablespace caom_index
+--;
+create index Plane_energy_i2
+        on caom2.Plane (energy_bounds_width)
+tablespace caom_index
+;
+create index Plane_energy_i3
+        on caom2.Plane (energy_bounds_cval1,energy_bounds_cval2)
+tablespace caom_index
+;
+create index Plane_energy_i4
+        on caom2.Plane (energy_sampleSize)
+tablespace caom_index
+;
+
+--create index Plane_time_i1
+--      on caom.Plane using gist (time_bounds)
+--tablespace caom_index
+--;
+-- width(interval) == width(box) == height(box)
+create index Plane_time_i2
+        on caom2.Plane (time_bounds_width)
+tablespace caom_index
+;
+create index Plane_time_i3
+        on caom2.Plane (time_bounds_cval1,time_bounds_cval2)
+tablespace caom_index
+;
+
+create index Plane_polar_i1
+        on caom2.Plane (polarization_states)
+tablespace caom_index
+;
