@@ -100,7 +100,7 @@ public class DynamicTableData implements TableData
 
     public DynamicTableData(Job job, LinkQuery query, ArtifactProcessor ap)
     {
-        List<String> args = ParameterUtil.findParameterValues("uri", job.getParameterList());
+        List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
         this.argIter = args.iterator();
         this.query = query;
         this.ap = ap;

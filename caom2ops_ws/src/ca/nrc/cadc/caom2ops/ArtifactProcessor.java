@@ -156,10 +156,12 @@ public class ArtifactProcessor
             try
             {
                 URL download = getDownloadURL(a);
-                DataLink dl = new DataLink(uri, download, DOWNLOAD);
-                findProductTypes(a, dl.productTypes);
+                DataLink dl = new DataLink(uri, download);
+                dl.serviceType = DOWNLOAD;
+                // semantics
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
+                findProductTypes(a, dl.productTypes);
                 ret.add(dl);
             }
             catch(MalformedURLException ex)
@@ -174,10 +176,11 @@ public class ArtifactProcessor
                     URL cutout = getCutoutURL(a);
                     if (cutout != null)
                     {
-                        DataLink dl = new DataLink(uri, cutout, CUTOUT);
-                        findProductTypes(a, dl.productTypes);
-                        dl.contentType = a.contentType; // unchanged?
+                        DataLink dl = new DataLink(uri, cutout);
+                        dl.serviceType = CUTOUT;
+                        dl.contentType = a.contentType; // unchanged
                         dl.contentLength = null; // unknown
+                        findProductTypes(a, dl.productTypes);
                         ret.add(dl);
                     }
                     else
