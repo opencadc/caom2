@@ -2,8 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-
-<!--#include virtual="/cadc/skin/htmlHead" -->
+<link rel="stylesheet" href="caom.css">
 <title>
 	Common Archive Observation Model
 </title>
@@ -11,10 +10,7 @@
 
 <body>
 
-<!--#include virtual="/cadc/skin/quickHeader" -->
-
 <div class="main">
-<!--#include virtual="/cadc/resources/ack.html" -->
 
 <h1>Common Archive Observation Model (CAOM-2.0)</h1>
 
@@ -33,7 +29,7 @@ that is available through all applications.
 
 <p>
     While the previous version (CAOM-1.0) was very successful in enabling the CADC to serve a wide variety of data, some particular
-    data strutures were awkward to describe in a meaningful way. CAOM-2.0 has been developed to address such issues and cover new
+    data structures were awkward to describe in a meaningful way. CAOM-2.0 has been developed to address such issues and cover new
     scenarios for data products.
 </p>
 
@@ -45,46 +41,46 @@ that is available through all applications.
         <th>resource</th><th>description</th>
     </tr>
     <tr>
-        <td><a href="/tap/">Table&nbsp;Access&nbsp;Protocol&nbsp;(TAP)</a></td>
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/">Table&nbsp;Access&nbsp;Protocol&nbsp;(TAP)</a></td>
         <td>a web service for ad-hoc querying, including both CAOM-2.0 and the IVOA ObsCore-1.0 Data Model</td>
     </tr>
     <tr class="even">
-        <td><a href="/sia/">Simple&nbsp;Image&nbsp;Access&nbsp;(SIA)</a></td>
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/">Simple&nbsp;Image&nbsp;Access&nbsp;(SIA)</a></td>
         <td> a web service for finding calibrated images (uses TAP and CAOM-2.0)</td>
     </tr>
     <tr class="odd">
-        <td><a href="/AdvancedSearch/">AdvancedSearch</a></td>
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/AdvancedSearch/">AdvancedSearch</a></td>
         <td>a user interface for querying CAOM (uses TAP)</td>
     </tr>
     
     <tr class="even">
-        <td><a href="/caom2repo/">CAOM-2.0 observation repository</a></td>
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2repo/">CAOM-2.0 observation repository</a></td>
         <td>web service to support ingestion of data to CAOM-2.0 at CADC (requires authentication)</td>
     </tr>
     
     <tr class="odd">
         <td><b>caom2</b></td>
         <td>java library for manipulating CAOM-2.0 observations, including reading and writing XML documents
-            <br><a href="http://code.google.com/p/opencadc/">source code</a></td>
+            <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
     <tr class="even">
         <td><b>fits2caom2</b></td>
         <td>java command-line tool for extracting metadata from FITS files, reads FITS file(s) and writes an XML document
-            <br><a href="http://code.google.com/p/opencadc/">source code</a></td>
+            <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
     <tr class="odd">
         <td><b>pyCAOM2</b></td>
         <td>python library for manipulating CAOM-2.0 observations, including reading and writing XML documents
-            <br><a href="http://code.google.com/p/opencadc/">source code</a></td>
+            <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
     <tr class="even">
         <td><b>caom2repoClient</b></td>
         <td>python command-line tool for interacting with the CAOM-2.0 observation repository, supports
             get, put, update, delete (requires authentication)
-            <br><a href="http://code.google.com/p/opencadc/">source code</a></td>
+            <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
     <tr class="odd">
@@ -130,7 +126,10 @@ methods should also be stored for efficient querying (for example, by the TAP se
 <h3>Changes</h3>
 
 <ul>
-    <li>2013-06-18: added CATALOG, NOISE, and WEIGHT as additional ProductTYpe literals (used to all be classified as AUXILIARY)
+    <li>2013-09-08 (red outline): added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
+        POLA (linear polarized angle), EPOLI (elliptical polarized intensity), CPOLI (circular polarized intensity), 
+        and NPOLI (non-polarized intensity)
+    <li>2013-06-18: added CATALOG, NOISE, and WEIGHT as additional ProductType literals (used to all be classified as AUXILIARY)
     <li>2012-11-20: added timesys, trefpos, and mjdref to TemporalWCS (from the draft FITS TimeWCS paper); time values
         in the CoordAxis1D are still restricted to MJD only as they are numbers and and we would need another field to allow JD; if
         mjdref is null, the values are absolute (otherwise they are relative to mjdref)
@@ -439,9 +438,10 @@ DataLink service.
 <h3>Changes</h3>
 
 <ul>
-    <li>
-    2012-02-15: made Location contain coordinates rather than be a subclass for symmetry
-    </li>
+    <li>2013-09-08 (red outline): added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
+        POLA (linear polarized angle), EPOLI (elliptical polarized intensity), CPOLI (circular polarized intensity), 
+        and NPOLI (non-polarized intensity)</li>
+    <li>2012-02-15: made Location contain coordinates rather than be a subclass for symmetry</li>
     <li>added Box datatype</li>
     <li>changed some fields to methods to correctly specify required and immutable state</li>
 </ul>
@@ -457,10 +457,79 @@ DataLink service.
 </p>
 <a href="uml/CAOM3wcs.png">  <img src="uml/CAOM3wcs.png" alt="core CAOM model"></a>
 
+<p>
+The PolarizationState enumeration that describes polarization of a Plane is computed from the FITS WCS description
+of the axis (CTYPEi=STOKES). The numeric values used in the FITS WCS representation are related to the string values
+following FITS WCS Paper 1 (Table 7) and some extensions extracted from a fits mailing list discusssion (ref?). The
+mapping is as follows:
+</p>
+
+<div class="table">
+<table class="content">
+    <tr>
+        <th>PolarizationState</th><th>numeric value</th><th>description/source</th>
+    </tr>
+    <tr class="even">
+        <td>I</td><td>1</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>Q</td><td>2</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>U</td><td>3</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>V</td><td>4</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>POLI</td><td>5</td><td>linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS</td>
+    </tr>
+    <tr class="even">
+        <td>FPOLI</td><td>6</td><td>fractional linear polarization POLI/I, code used in AIPS</td>
+    </tr>
+    <tr class="even">
+        <td>POLA</td><td>7</td><td>linear polarization angle 1/2 arctan(U,Q), code used in AIPS</td>
+    </tr>
+    <tr class="even">
+        <td>EPOLI</td><td>8</td><td>elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)</td>
+    </tr>
+    <tr class="even">
+        <td>CPOLI</td><td>9</td><td>circular polarization intensity |V|</td>
+    </tr>
+    <tr class="even">
+        <td>NPOLI</td><td>10</td><td>unpolarized intensity I - EPOLI</td>
+    </tr>
+    <tr class="even">
+        <td>RR</td><td>-1</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>LL</td><td>-2</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>RL</td><td>-3</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>LR</td><td>-4</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>XX</td><td>-5</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>YY</td><td>-6</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>XY</td><td>-7</td><td>FITS WCS Paper 1</td>
+    </tr>
+    <tr class="even">
+        <td>YX</td><td>-8</td><td>FITS WCS Paper 1</td>
+    </tr>
+</table>
+</div>
+
 <h3>Changes</h3>
 
 <ul>
-    <li>2012-11-20 (red outline): added timesys and trefpos to TemporalWCS (from the draft FITS TimeWCS paper); time values
+    <li>2012-11-20: added timesys and trefpos to TemporalWCS (from the draft FITS TimeWCS paper); time values
         in the CoordAxis1D are still restricted to MJD only as they are numbers and and we would need a boolean to allow JD;
         example usage from draft paper: CTYPE=TIME and TIMESYS=UTC is equivalent to CTYPE=UTC and TIMESYS=null
     <li>2012-03-15: changed Slice to have methods that reflect immutable state<br/>

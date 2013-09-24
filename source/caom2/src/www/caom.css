@@ -1,0 +1,349 @@
+body
+{
+  color: black;
+  background: white;
+
+  font-family: sans-serif;
+  font-size: smaller; /* default looks very large in most browsers */
+
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* PAGE LAYOUT */
+div.header
+{
+  /*
+  background: inherit;
+  color: inherit;
+  */
+  background: white;
+  color: black;
+  margin: 0.5em;
+  padding-left: 0;
+  padding-right: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+}
+
+div.main
+{
+  background: white;
+  color: black;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+}
+
+div.footer
+{
+  background: white;
+  color: black;
+  margin: 0.5em;
+  padding: 1em 0 0;
+}
+
+table
+{
+  background: inherit;
+  color: inherit;
+  font-size: inherit;
+  border: 0 none;
+  padding: 0;
+  margin: 0;
+}
+
+div
+{
+  color: inherit;
+  background: inherit;
+}
+
+div.box
+{
+  margin: 1em 1em 0;
+}
+
+div.form
+{
+  padding: 1em;
+}
+
+div.table
+{
+  margin: 2em;
+}
+
+div.hide
+{
+  display: none;
+}
+
+h1
+{
+  font-size: 140%;
+  font-weight: bold;
+  color: inherit;
+  background: inherit;
+  padding-top: 1em;
+  padding-left: 1em;
+}
+
+h2
+{
+  font-size: 100%;
+  color: inherit;
+  background: inherit;
+  padding-top: 1em;
+  padding-left: 2em;
+}
+
+h3
+{
+  font-size: 100%;
+  color: inherit;
+  background: inherit;
+  padding-top: 1em;
+  padding-left: 2em;
+}
+
+/* paragraph styles */
+p
+{
+  color: inherit;
+  background: inherit;
+  padding: 1em 2em 0;
+  margin: 0;
+}
+
+pre
+{
+  color: inherit;
+  background: inherit;
+  font-family: fixed,sans-serif;
+  padding-left: 2em;
+  margin-left: 0;
+}
+
+p.warn
+{
+  color: #800;
+  background: inherit;
+  font-weight: bold;
+  padding: 1em 6em;
+}
+
+p.quote
+{
+  color: inherit;
+  background: inherit;
+  margin-left: 8em;
+  margin-right: 8em;
+  font-family: inherit;
+  font-style: italic;
+  text-align: center;
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+
+ul
+{
+  margin-left: 3em;
+}
+
+ol
+{
+  margin-left: 3em;
+}
+
+li
+{
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+
+}
+
+li.warn
+{
+  color: #800;
+  background: inherit;
+}
+
+li.deprecated
+{
+  color: inherit;
+  background: #eee;
+}
+
+li.proposed
+{
+  color: inherit;
+  background: #eee;
+}
+
+li.new
+{
+  color: inherit;
+  background: #eee;
+}
+
+/* input fields */
+input.args
+{
+  color: inherit;
+  background: #fbb;
+  border: 2px black;
+}
+
+hr
+{
+  padding: 0;
+  margin: 0;
+}
+
+table
+{
+}
+
+th
+{
+  text-align: center;
+}
+
+td
+{
+  text-align: left;
+}
+
+td.primary
+{
+  font-weight: bold;
+}
+
+td.value
+{
+}
+
+table.content
+{
+  font-family: monospace;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid black;
+  padding-left: 0;
+  padding-right: 0;
+  empty-cells: show;
+}
+
+table.content th
+{
+  background: #bfccd9;
+  color: black;
+  text-align: center;
+  border: 1px solid black;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+table.content td
+{
+  border: 0 solid;
+  vertical-align: top;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+tr.odd_b td
+{
+  border: 1px solid;
+  vertical-align: top;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+tr.even_b td
+{
+  border: 1px solid;
+  vertical-align: top;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+table.content tr.odd
+{
+  background: white;
+}
+
+table.content tr.even
+{
+  background: #ddd;
+}
+
+table.content tr.subhead
+{
+  background: #bfccd9;
+}
+
+table.content tr.odd_b
+{
+  background: white;
+}
+
+table.content tr.even_b
+{
+  background: #ddd;
+}
+
+table.content tr.subhead
+{
+  background: #bfccd9;
+}
+
+img
+{
+  border: 0 none;
+}
+
+a:link
+{
+  color: #008;
+  background: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+a:visited
+{
+  color: #008;
+  background: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+a:active
+{
+  color: #008;
+  background: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+a:hover
+{
+  /*text-decoration: underline;*/
+  color: #33f;
+}
+
+/* special link style that looks like a rectangular button */
+a.button
+{
+  background: inherit;
+  color: inherit;
+  font-size: inherit;
+  border: 1px solid black;
+  padding: 2px;
+}
+

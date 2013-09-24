@@ -157,6 +157,73 @@ public class PolarizationUtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testIllegalValues()
+    {
+        try
+        {
+            Plane plane = getTestPlane(ProductType.SCIENCE);
+            // ouch :-)
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+
+            double lowErr = -9.0;
+            double highErr = 11.0;
+            double zeroErr = 0.0;
+            RefCoord c1, c2;
+            
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
+            PolarizationWCS w = new PolarizationWCS(axis);
+            c.polarization = w;
+            
+            c1 = new RefCoord(0.5, zeroErr);
+            c2 = new RefCoord(1.5, zeroErr);
+            w.getAxis().range = new CoordRange1D(c1, c2);
+            
+            try
+            {
+                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+                Assert.fail("zeroErr -- expected IllegalArgumentException, got: " + actual);
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("zeroErr -- caught expected: " + expected);
+            }
+            
+            c1 = new RefCoord(0.5, lowErr);
+            c2 = new RefCoord(1.5, lowErr);
+            w.getAxis().range = new CoordRange1D(c1, c2);
+            
+            try
+            {
+                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+                Assert.fail("lowErr -- expected IllegalArgumentException, got: " + actual);
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("lowErr -- caught expected: " + expected);
+            }
+            
+            c1 = new RefCoord(0.5, highErr);
+            c2 = new RefCoord(1.5, highErr);
+            w.getAxis().range = new CoordRange1D(c1, c2);
+            
+            try
+            {
+                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+                Assert.fail("highErr -- expected IllegalArgumentException, got: " + actual);
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("lowErr -- caught expected: " + expected);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testSingleValueRange()
