@@ -164,7 +164,60 @@ public class FitsMappingTest
     {
         Map<String,String> config = Util.loadConfig("config/fits2caom2.config");   
         FitsMapping mapping = new FitsMapping(config, null, null);
+        
+        mapping.extension = new Integer(0);
 
+        mapping.primary = new Header();
+        mapping.primary.addValue("NAXIS", "0", "");
+        mapping.primary.addValue("NAXIS1", "3", "");
+        mapping.primary.addValue("NAXIS2", "1", "");
+        mapping.primary.addValue("BITPIX", "8", "");
+        mapping.primary.addValue("CRPIX1", "1.0", "");
+        
+        mapping.header = new Header();
+        mapping.header.addValue("NAXIS", "0", "");
+        mapping.header.addValue("NAXIS1", "3", "");
+        mapping.header.addValue("BITPIX", "8", "");
+        mapping.header.addValue("CRPIX1", "1.0", "");
+        
+        String value = mapping.getKeywordValue("NAXIS");
+        Assert.assertEquals("NAXIS", "0", value);
+        
+        value = mapping.getKeywordValue("NAXIS1");
+        Assert.assertEquals("NAXIS1", "3", value);
+        
+        value = mapping.getKeywordValue("NAXIS2");
+        Assert.assertEquals("NAXIS2", "1", value);
+        
+        value = mapping.getKeywordValue("BITPIX");
+        Assert.assertEquals("BITPIX", "8", value);
+        
+        value = mapping.getKeywordValue("CRPIX1");
+        Assert.assertEquals("CRPIX1", "1.0", value);
+        
+        mapping.extension = new Integer(1);
+        
+        mapping.header = new Header();
+        mapping.header.addValue("NAXIS", "1", "");
+        mapping.header.addValue("NAXIS1", "4", "");
+        mapping.header.addValue("BITPIX", "2", "");
+        mapping.header.addValue("CRPIX1", "2.0", "");
+        
+        value = mapping.getKeywordValue("NAXIS");
+        Assert.assertEquals("NAXIS", "1", value);
+        
+        value = mapping.getKeywordValue("NAXIS1");
+        Assert.assertEquals("NAXIS1", "4", value);
+        
+        value = mapping.getKeywordValue("NAXIS2");
+        Assert.assertNull("NAXIS2", value);
+        
+        value = mapping.getKeywordValue("BITPIX");
+        Assert.assertEquals("BITPIX", "2", value);
+        
+        value = mapping.getKeywordValue("CRPIX1");
+        Assert.assertEquals("CRPIX1", "2.0", value);
+        
         mapping.primary = new Header();
         mapping.primary.addValue("NAXIS", "0", "");
         mapping.primary.addValue("NAXIS1", "3", "");
@@ -175,11 +228,11 @@ public class FitsMappingTest
         mapping.header.addValue("NAXIS2", "4", "");
         mapping.header.addValue("CRPIX1", "1.0", "");
         
-        String value = mapping.getKeywordValue("NAXIS");
+        value = mapping.getKeywordValue("NAXIS");
         Assert.assertEquals("NAXIS", "2", value);
         
         value = mapping.getKeywordValue("NAXIS1");
-        Assert.assertNull("NAXIS1", value);
+        Assert.assertNull("NAXIS1" + value, value);
         
         value = mapping.getKeywordValue("NAXIS2");
         Assert.assertEquals("NAXIS2", "4", value);
@@ -189,6 +242,7 @@ public class FitsMappingTest
         
         value = mapping.getKeywordValue("CRPIX1");
         Assert.assertEquals("CRPIX1", "1.0", value);
+        
     }
     
 }

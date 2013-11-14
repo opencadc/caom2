@@ -92,6 +92,8 @@ public class FitsMapping
     public static final String POLARIZATION_AXIS = "polarizationAxis";
     public static final String TIME_AXIS = "timeAxis";
     
+    public static final Number EXTENSION_0 = new Integer(0);
+    
     public static final List<String> EXTENSIONS_ONLY_KEYWORDS = new ArrayList<String>();
     static
     {
@@ -269,19 +271,16 @@ public class FitsMapping
         //    log.debug("header: is null for " + uri + "[" + extension + "]");
 
         // Check the fits primary for the keyword value.
-        if (primary != null) // && primary.containsKey(keyword))
+        if (primary != null && processPrimary(keyword)) // && primary.containsKey(keyword))
         {
-            if (!isExtensionOnlyKeyword(keyword))
+            HeaderCard card = primary.findCard(keyword);
+            if (card != null)
             {
-                HeaderCard card = primary.findCard(keyword);
-                if (card != null)
+                caomValue = card.getValue();
+                if (caomValue != null)
                 {
-                    caomValue = card.getValue();
-                    if (caomValue != null)
-                    {
-                        //log.debug("primary: " + keyword + " = "+ caomValue + " in " + uri);
-                        return caomValue;
-                    }
+                    //log.debug("primary: " + keyword + " = "+ caomValue + " in " + uri);
+                    return caomValue;
                 }
             }
             //else
@@ -387,16 +386,25 @@ public class FitsMapping
         return ret;
     }
     
-    protected boolean isExtensionOnlyKeyword(String keyword)
+    protected boolean processPrimary(String keyword)
     {
-        for (String s : EXTENSIONS_ONLY_KEYWORDS)
+        // Check should fail if processing first extension.
+        if (extension instanceof Integer)
         {
-            if (keyword.startsWith(s))
+            if (((Integer) extension).equals(EXTENSION_0))
             {
                 return true;
             }
         }
-        return false;
+        
+        for (String s : EXTENSIONS_ONLY_KEYWORDS)
+        {
+            if (keyword.startsWith(s))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
