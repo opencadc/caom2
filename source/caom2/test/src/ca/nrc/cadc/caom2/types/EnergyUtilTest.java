@@ -139,6 +139,10 @@ public class EnergyUtilTest
             Assert.assertNull(nrg.resolvingPower);
             Assert.assertNull(nrg.sampleSize);
             Assert.assertNull(nrg.transition);
+            
+            Assert.assertNull(nrg.getFreqWidth());
+            Assert.assertNull(nrg.getFreqSampleSize());
+            
         }
         catch(Exception unexpected)
         {
@@ -281,6 +285,9 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            
+            Assert.assertNotNull(actual.getFreqWidth());
+            Assert.assertNotNull(actual.getFreqSampleSize());
 
         }
         catch(Exception unexpected)
