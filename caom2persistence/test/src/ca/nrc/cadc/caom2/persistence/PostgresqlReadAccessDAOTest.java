@@ -72,9 +72,14 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.util.Log4jInit;
+import java.lang.reflect.Constructor;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
@@ -98,5 +103,29 @@ public class PostgresqlReadAccessDAOTest extends DatabaseReadAccessDAOTest
             PlaneMetaReadAccess.class,
             PlaneDataReadAccess.class
         };
+    }
+    
+    @Test
+    public void testGetList()
+    {
+        try
+        {
+            ReadAccess ra;
+            Class c = ObservationMetaReadAccess.class;
+            Constructor ctor = c.getConstructor(Long.class, Long.class);
+            for (int i=0; i<3; i++)
+            {
+                ra = (ReadAccess) ctor.newInstance(1000L+i, 2000L+i);
+                dao.put(ra);
+            }
+            List<ReadAccess> ras = dao.getList(c, null, null, null);
+            Assert.assertNotNull(ras);
+            Assert.assertEquals(3, ras.size());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

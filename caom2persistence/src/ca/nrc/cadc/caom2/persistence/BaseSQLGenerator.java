@@ -32,6 +32,7 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
@@ -179,7 +180,8 @@ public class BaseSQLGenerator implements SQLGenerator
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
             "target_name", "target_type", "target_standard",
-            "target_redshift", "target_keywords",
+            "target_redshift", "target_moving", "target_keywords",
+            "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
             "telescope_name", "telescope_geoLocationX", "telescope_geoLocationY", "telescope_geoLocationZ", "telescope_keywords",
             "instrument_name", "instrument_keywords",
             "environment_seeing", "environment_humidity", "environment_elevation",
@@ -792,6 +794,7 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetString(sb, ps, col++, null);
                 safeSetBoolean(sb, ps, col++, obs.target.standard);
                 safeSetDouble(sb, ps, col++, obs.target.redshift);
+                safeSetBoolean(sb, ps, col++, obs.target.moving);
                 safeSetString(sb, ps, col++, Util.encodeListString(obs.target.getKeywords()));
             }
             else
@@ -800,7 +803,18 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, null);
                 safeSetBoolean(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
+                safeSetBoolean(sb, ps, col++, null);
                 safeSetString(sb, ps, col++, null);
+            }
+            if (obs.targetPosition != null)
+            {
+                safeSetDouble(sb, ps, col++, obs.targetPosition.getCoordinates().cval1);
+                safeSetDouble(sb, ps, col++, obs.targetPosition.getCoordinates().cval2);
+            }
+            else
+            {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
             }
             if (obs.telescope != null)
             {
@@ -2310,20 +2324,27 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found target.name = " + targ);
             if (targ != null)
             {
-                
                 o.target = new Target(targ);
                 String tt = rs.getString(col++);
                 if (tt != null)
                     o.target.type = TargetType.toValue(tt);
                 o.target.standard = Util.getBoolean(rs, col++);
                 o.target.redshift = Util.getDouble(rs, col++);
+                o.target.moving = Util.getBoolean(rs, col++);
                 Util.decodeListString(rs.getString(col++), o.target.getKeywords());
                 log.debug("found: " + o.target);
             }
             else
             {
-                skipAndLog(rs, col, 4);
-                col += 4; // skip
+                skipAndLog(rs, col, 5);
+                col += 5; // skip
+            }
+            Double tpos_cval1 = Util.getDouble(rs, col++);
+            Double tpos_cval2 = Util.getDouble(rs, col++);
+            if (tpos_cval1 != null)
+            {
+                o.targetPosition = new TargetPosition(new Point(tpos_cval1, tpos_cval2));
+                log.debug("found: " + o.targetPosition);
             }
 
             String tn = rs.getString(col++);

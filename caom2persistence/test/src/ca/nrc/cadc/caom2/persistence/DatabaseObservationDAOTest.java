@@ -108,9 +108,11 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.dao.TransactionManager;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -1252,9 +1254,12 @@ public abstract class DatabaseObservationDAOTest
             o.target = new Target("Pony 51");
             o.target.type = TargetType.OBJECT;
             o.target.getKeywords().addAll(TEST_KEYWORDS);
-            o.target.standard = null;
+            o.target.standard = Boolean.TRUE;
             o.target.redshift = new Double(0.0);
+            o.target.moving = Boolean.FALSE;
 
+            o.targetPosition = new TargetPosition(new Point(1.0, 2.0));
+            
             o.telescope = new Telescope("BothEyes");
             o.telescope.getKeywords().addAll(TEST_KEYWORDS);
             o.telescope.geoLocationX = 100.0;

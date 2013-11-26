@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import java.lang.reflect.Constructor;
 import java.util.Date;
@@ -201,7 +202,7 @@ public class DatabaseReadAccessDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     // for comparing lastModified: Sybase isn't reliable to ms accuracy when using UTC
     protected void testEqual(String s, Date expected, Date actual)
     {
