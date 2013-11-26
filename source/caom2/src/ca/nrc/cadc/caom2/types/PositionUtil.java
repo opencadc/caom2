@@ -155,8 +155,6 @@ public final class PositionUtil
     {
         if (s instanceof Polygon)
             return Polygon.encode((Polygon) s);
-        if (s instanceof Location)
-            return Location.encode((Location) s);
         if (s instanceof Circle)
             return Circle.encode((Circle) s);
         if (s instanceof Box)
@@ -178,7 +176,6 @@ public final class PositionUtil
         switch(magic)
         {
             case Shape.MAGIC_CIRCLE: return Circle.decode(encoded);
-            case Shape.MAGIC_LOCATION: return Location.decode(encoded);
             case Shape.MAGIC_POLYGON: return Polygon.decode(encoded);
             case Shape.MAGIC_BOX: return Box.decode(encoded);
         }

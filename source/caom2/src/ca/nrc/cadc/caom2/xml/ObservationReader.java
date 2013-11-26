@@ -91,8 +91,10 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -242,7 +244,7 @@ public class ObservationReader implements Serializable
         throws ObservationParsingException, IOException
     {
         if (in == null)
-            throw new IOException("stream must not be null");
+            throw new IllegalArgumentException("stream must not be null");
         try
         {
             return read(new InputStreamReader(in, "UTF-8"));
@@ -350,6 +352,7 @@ public class ObservationReader implements Serializable
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root, namespace, false);
         obs.proposal = getProposal(root, namespace, dateFormat);
         obs.target = getTarget(root, namespace, dateFormat);
+        obs.targetPosition = getTargetPosition(root, namespace, dateFormat);
         obs.telescope = getTelescope(root, namespace, dateFormat);
         obs.instrument = getInstrument(root, namespace, dateFormat);
         obs.environment = getEnvironment(root, namespace, dateFormat);
@@ -466,9 +469,36 @@ public class ObservationReader implements Serializable
 
         target.standard = getChildTextAsBoolean("standard", element, namespace, false);
         target.redshift =  getChildTextAsDouble("redshift", element, namespace, false);
+        target.moving = getChildTextAsBoolean("moving", element, namespace, false);
         addChildTextToStringList("keywords", target.getKeywords(), element, namespace, false);
         
         return target;
+    }
+    
+    /**
+     * Build a TargetPosition from a JDOM representation of an targetPosition element.
+     * 
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param dateFormat  IVOA DateFormat.
+     * @return a TargetPosition, or null if the document doesn't contain an targetPosition element.
+     * @throws ObservationParsingException 
+     */
+    protected TargetPosition getTargetPosition(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("targetPosition", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        Element coords = getChildElement("coordinates", element, namespace, true);
+        double cval1 = getChildTextAsDouble("cval1", coords, namespace, true);
+        double cval2 = getChildTextAsDouble("cval2", coords, namespace, true);
+        
+
+       TargetPosition tpos = new TargetPosition(new Point(cval1, cval2));
+        
+        return tpos;
     }
     
     /**

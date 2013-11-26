@@ -111,13 +111,12 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
             return false;
         if (this == o)
             return true;
-        if (this.getClass().equals(o.getClass())) // only exact class match
-        {
-            ReadAccess ra = (ReadAccess) o;
-            return this.groupID.equals(ra.groupID)
-                    && this.assetID.equals(ra.assetID);
-        }
-        return false;
+        if ( !this.getClass().equals(o.getClass()) ) // only exact class match
+            return false;
+
+        ReadAccess ra = (ReadAccess) o;
+        return this.groupID.equals(ra.groupID)
+                && this.assetID.equals(ra.assetID);
     }
 
     public int compareTo(ReadAccess o)

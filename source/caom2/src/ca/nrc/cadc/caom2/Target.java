@@ -89,6 +89,7 @@ public class Target implements Serializable
     public TargetType type;
     public Boolean standard;
     public Double redshift;
+    public Boolean moving;
 
     // mutable content
     private final List<String> keywords = new ArrayList<String>();

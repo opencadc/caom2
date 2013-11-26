@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -323,6 +324,7 @@ public class ObservationWriter implements Serializable
             addElement("intent", obs.intent.getValue(), element);
         addProposalElement(obs.proposal, element, dateFormat);
         addTargetElement(obs.target, element, dateFormat);
+        addTargetPositionElement(obs.targetPosition, element, dateFormat);
         addTelescopeElement(obs.telescope, element, dateFormat);
         addInstrumentElement(obs.instrument, element, dateFormat);
         addEnvironmentElement(obs.environment, element, dateFormat);
@@ -396,7 +398,29 @@ public class ObservationWriter implements Serializable
             addElement("type", target.type.getValue(), element);
         addBooleanElement("standard", target.standard, element);
         addNumberElement("redshift", target.redshift, element);
+        addBooleanElement("moving", target.moving, element);
         addStringListElement("keywords", target.getKeywords(), element);
+        parent.addContent(element);
+    }
+    
+    /**
+     * Builds a JDOM representation of an TargetPosition and adds it to the
+     * parent element.
+     *
+     * @param target The Target to add to the parent.
+     * @param parent The parent element for this child element.
+     * @param the IVOA DateFormat.
+     */
+    protected void addTargetPositionElement(TargetPosition targetPosition, Element parent, DateFormat dateFormat)
+    {
+        if (targetPosition == null)
+            return;
+        
+        Element element = getCaom2Element("targetPosition");
+        Element coords = getCaom2Element("coordinates");
+        addNumberElement("cval1", targetPosition.getCoordinates().cval1, coords);
+        addNumberElement("cval2", targetPosition.getCoordinates().cval2, coords);
+        element.addContent(coords);
         parent.addContent(element);
     }
     

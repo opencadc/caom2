@@ -98,6 +98,7 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     public Telescope telescope;
     public Instrument instrument;
     public Target target;
+    public TargetPosition targetPosition;
     public Environment environment;
     public Date metaRelease;
 

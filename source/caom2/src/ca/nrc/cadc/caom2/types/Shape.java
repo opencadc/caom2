@@ -77,7 +77,7 @@ import java.io.Serializable;
  */
 public interface Shape extends Serializable
 {
-    public static final int MAGIC_LOCATION  = 1;
+    //public static final int MAGIC_UNUSED  = 1; // used to be MAGIC_LOCATION
     public static final int MAGIC_CIRCLE    = 2;
     public static final int MAGIC_ELLIPSE   = 3;
     public static final int MAGIC_POLYGON   = 4;

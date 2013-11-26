@@ -67,13 +67,39 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.util;
+package ca.nrc.cadc.caom2;
+
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import java.io.Serializable;
 
 /**
- *
+ * 
  * @author pdowler
  */
-public final class CaomUtil
+public class TargetPosition  implements Serializable
 {
-    private CaomUtil() { }
+    private static final long serialVersionUID = 201311261000L;
+
+    // immutable state
+    private Point coordinates;
+
+    private TargetPosition() { }
+    
+    public TargetPosition(Point coordinates)
+    {
+        CaomValidator.assertNotNull(getClass(), "coordinates", coordinates);
+        this.coordinates = coordinates;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + "[" + coordinates + "]";
+    }
+
+    public Point getCoordinates()
+    {
+        return coordinates;
+    }
 }

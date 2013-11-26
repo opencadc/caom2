@@ -111,8 +111,33 @@ public class ReadAccessTest
         try
         {
             ReadAccess ra = new ObservationMetaReadAccess(assetID, groupID);
+            ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
             Assert.assertEquals(groupID, ra.getGroupID());
+            
+            Assert.assertEquals(ra, ra);
+            Assert.assertEquals(0, ra.compareTo(ra));
+            
+            ReadAccess raeq = new ObservationMetaReadAccess(assetID, groupID);
+            Assert.assertEquals(ra, raeq);
+            Assert.assertEquals(0, ra.compareTo(raeq));
+            
+            ReadAccess rane = new ObservationMetaReadAccess(assetID, groupID+1L);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new ObservationMetaReadAccess(assetID+1L, groupID);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new PlaneMetaReadAccess(assetID, groupID); // diff class
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane)); // obs < plane
+            
+            rane = null;
+            Assert.assertFalse(ra.equals(rane));
+            
+            
         }
         catch(Exception unexpected)
         {
@@ -127,8 +152,31 @@ public class ReadAccessTest
         try
         {
             ReadAccess ra = new PlaneMetaReadAccess(assetID, groupID);
+            ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
             Assert.assertEquals(groupID, ra.getGroupID());
+            
+            Assert.assertEquals(ra, ra);
+            Assert.assertEquals(0, ra.compareTo(ra));
+            
+            ReadAccess raeq = new PlaneMetaReadAccess(assetID, groupID);
+            Assert.assertEquals(ra, raeq);
+            Assert.assertEquals(0, ra.compareTo(raeq));
+            
+            ReadAccess rane = new PlaneMetaReadAccess(assetID, groupID+1L);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new PlaneMetaReadAccess(assetID+1L, groupID);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(1, ra.compareTo(rane)); // plane > obs
+            
+            rane = null;
+            Assert.assertFalse(ra.equals(rane));
         }
         catch(Exception unexpected)
         {
@@ -143,8 +191,31 @@ public class ReadAccessTest
         try
         {
             ReadAccess ra = new PlaneDataReadAccess(assetID, groupID);
+            ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
             Assert.assertEquals(groupID, ra.getGroupID());
+            
+            Assert.assertEquals(ra, ra);
+            Assert.assertEquals(0, ra.compareTo(ra));
+            
+            ReadAccess raeq = new PlaneDataReadAccess(assetID, groupID);
+            Assert.assertEquals(ra, raeq);
+            Assert.assertEquals(0, ra.compareTo(raeq));
+            
+            ReadAccess rane = new PlaneDataReadAccess(assetID, groupID+1L);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new PlaneDataReadAccess(assetID+1L, groupID);
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(-1, ra.compareTo(rane));
+            
+            rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
+            Assert.assertFalse(ra.equals(rane));
+            Assert.assertEquals(1, ra.compareTo(rane)); // plane > obs
+            
+            rane = null;
+            Assert.assertFalse(ra.equals(rane));
         }
         catch(Exception unexpected)
         {

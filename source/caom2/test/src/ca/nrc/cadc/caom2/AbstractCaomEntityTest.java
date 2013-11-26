@@ -138,8 +138,8 @@ public class AbstractCaomEntityTest
         }
     }
 
-    static int[] expectedStateFields = { 12, 13, 7, 5, 2, 13 };
-    static int[] expectedStateFieldsWithTrans = { 12, 13, 11, 5, 2, 13 };
+    static int[] expectedStateFields = { 13, 14, 7, 5, 2, 13 };
+    static int[] expectedStateFieldsWithTrans = { 13, 14, 11, 5, 2, 13 };
     static int[] expectedChildFields = { 1, 1, 1, 1, 1, 0 };
 
     //@Test
@@ -263,91 +263,6 @@ public class AbstractCaomEntityTest
             p.metrics = new Metrics();
             actual = p.getStateCode();
             Assert.assertEquals("empty Metrics code", expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    //@Test
-    public void testGetMaxLastModified()
-    {
-        try
-        {
-            Date t0 = new Date(100000L);
-            
-            SimpleObservation observation = new SimpleObservation("stuff", "thing");
-            Plane plane = new Plane("foo");
-            Artifact artifact = new Artifact(new URI("ad", "foo/bar.fits", null));
-            Part part = new Part("x");
-            Chunk chunk = new Chunk();
-
-            observation.getPlanes().add(plane);
-            plane.getArtifacts().add(artifact);
-            artifact.getParts().add(part);
-            part.getChunks().add(chunk);
-
-            Date d1 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t1 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d1);
-            Assert.assertTrue("t0 < d1", t0.getTime() < d1.getTime());
-            Assert.assertTrue("d1 < t1", d1.getTime() < t1.getTime());
-
-            observation.instrument = new Instrument("instr");
-            Date d2 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t2 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d2);
-            Assert.assertTrue("t1 < d2", t1.getTime() < d2.getTime());
-            Assert.assertTrue("d2 < t2", d2.getTime() < t2.getTime());
-
-            plane.calibrationLevel = CalibrationLevel.CALIBRATED;
-            Date d3 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t3 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d3);
-            Assert.assertTrue("t2 < d3", t2.getTime() < d3.getTime());
-            Assert.assertTrue("d3 < t3", d3.getTime() < t3.getTime());
-
-            artifact.productType = ProductType.SCIENCE;
-            Date d4 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t4 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d4);
-            Assert.assertTrue("t3 < d4", t3.getTime() < d4.getTime());
-            Assert.assertTrue("d4 < t4", d4.getTime() < t4.getTime());
-
-            part.productType = ProductType.PREVIEW;
-            Date d5 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t5 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d5);
-            Assert.assertTrue("t4 < d5", t4.getTime() < d5.getTime());
-            Assert.assertTrue("d5 < t5", d5.getTime() < t5.getTime());
-
-            chunk.productType = ProductType.INFO;
-            Date d6 = observation.getMaxLastModified();
-            Thread.sleep(10L);
-            Date t6 = new Date();
-            Thread.sleep(10L);
-
-            Assert.assertNotNull(d6);
-            Assert.assertTrue("t5 < d6", t5.getTime() < d6.getTime());
-            Assert.assertTrue("d6 < t6", d6.getTime() < t6.getTime());
-
         }
         catch(Exception unexpected)
         {

@@ -105,6 +105,8 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.InputStream;
+import java.io.Reader;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.log4j.Level;
@@ -126,6 +128,43 @@ public class ObservationReaderWriterTest
     
     public ObservationReaderWriterTest() { }
 
+    //@Test
+    public void testTemplate()
+    {
+        try
+        {
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testReadNull()
+    {
+        try
+        {
+            ObservationReader r = new ObservationReader();
+            
+            try { r.read((String) null); }
+            catch(IllegalArgumentException expected) { }
+            
+            try { r.read((InputStream) null); }
+            catch(IllegalArgumentException expected) { }
+            
+            try { r.read((Reader) null); }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     @Test
     public void testMinimalSimple()
     {

@@ -126,7 +126,8 @@ methods should also be stored for efficient querying (for example, by the TAP se
 <h3>Changes</h3>
 
 <ul>
-    <li>2013-09-08 (red outline): added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
+    <li>2013-11-26 (red outline): added moving flag to Target class, added TargetPosition class
+    <li>2013-09-08: added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
         POLA (linear polarized angle), EPOLI (elliptical polarized intensity), CPOLI (circular polarized intensity), 
         and NPOLI (non-polarized intensity)
     <li>2013-06-18: added CATALOG, NOISE, and WEIGHT as additional ProductType literals (used to all be classified as AUXILIARY)
@@ -438,7 +439,9 @@ DataLink service.
 <h3>Changes</h3>
 
 <ul>
-    <li>2013-09-08 (red outline): added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
+    <li>2012-11-26 (red outline): removed Location as it provides nothing beyond Point and we do not intent it as a
+        valid value for Plane.position.bounds</li>
+    <li>2013-09-08: added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
         POLA (linear polarized angle), EPOLI (elliptical polarized intensity), CPOLI (circular polarized intensity), 
         and NPOLI (non-polarized intensity)</li>
     <li>2012-02-15: made Location contain coordinates rather than be a subclass for symmetry</li>
@@ -460,8 +463,9 @@ DataLink service.
 <p>
 The PolarizationState enumeration that describes polarization of a Plane is computed from the FITS WCS description
 of the axis (CTYPEi=STOKES). The numeric values used in the FITS WCS representation are related to the string values
-following FITS WCS Paper 1 (Table 7) and some extensions extracted from a fits mailing list discusssion (ref?). The
-mapping is as follows:
+following FITS WCS Paper 1 (Table 7) and some extensions extracted from a 
+<a href="http://listmgr.cv.nrao.edu/pipermail/fitswcs/2008-March/000408.html">fits mailing list discusssion</a>.
+The mapping is as follows:
 </p>
 
 <div class="table">

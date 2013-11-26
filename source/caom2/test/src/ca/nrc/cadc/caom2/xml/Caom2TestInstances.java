@@ -88,8 +88,10 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -183,6 +185,7 @@ public class Caom2TestInstances
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
             observation.target = getTarget();
+            observation.targetPosition = getTargetPosition();
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -206,6 +209,7 @@ public class Caom2TestInstances
             observation.setAlgorithm(getAlgorithm());
             observation.proposal = getProposal();
             observation.target = getTarget();
+            observation.targetPosition = getTargetPosition();
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -240,8 +244,14 @@ public class Caom2TestInstances
         target.type = TargetType.OBJECT;
         target.standard = Boolean.FALSE;
         target.redshift = 1.5;
+        target.moving = Boolean.FALSE;
         target.getKeywords().addAll(keywords);
         return target;
+    }
+    
+    protected TargetPosition getTargetPosition()
+    {
+        return new TargetPosition(new Point(1.0, 2.0));
     }
     
     protected Telescope getTelescope()

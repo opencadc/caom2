@@ -67,71 +67,110 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.HexUtil;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.Position;
+import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class Location implements Shape
+public class CaomValidatorTest 
 {
-    private static final long serialVersionUID = 201202081100L;
+    private static final Logger log = Logger.getLogger(CaomValidatorTest.class);
+
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
+
+    //@Test
+    public void testTemplate()
+    {
+        try
+        {
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
     
-    private Point coordinates;
-
-    public Location(Point coordinates)
+    @Test
+    public void testAssertNotNull()
     {
-        CaomValidator.assertNotNull(Location.class, "coordinates", coordinates);
-        this.coordinates = coordinates;
+        try
+        {
+            CaomValidator.assertNotNull(this.getClass(), "test", "value");
+            
+            try 
+            { 
+                CaomValidator.assertNotNull(this.getClass(), "test", null); 
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-    public double getArea()
+    
+    @Test
+    public void testAssertPositive()
     {
-        return 0.0;
+        try
+        {
+            CaomValidator.assertPositive(this.getClass(), "test", 1.0);
+            
+            try 
+            { 
+                CaomValidator.assertPositive(this.getClass(), "test", -1.0); 
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertPositive(this.getClass(), "test", 0.0); 
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-    public Point getCenter()
+    
+    @Test
+    public void testValidate()
     {
-        return coordinates;
-    }
-
-    public double getSize()
-    {
-        return 0.0;
-    }
-
-    @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + coordinates + "]";
-    }
-
-    public static byte[] encode(Location p)
-    {
-        byte[] ret = new byte[21];
-        byte[] b = HexUtil.toBytes(MAGIC_LOCATION);
-        System.arraycopy(b, 0, ret, 0, 4);
-        b = HexUtil.toBytes(Double.doubleToLongBits(p.coordinates.cval1));
-        System.arraycopy(b, 0, ret, 4, 8);
-        b = HexUtil.toBytes(Double.doubleToLongBits(p.coordinates.cval2));
-        System.arraycopy(b, 0, ret, 12, 8);
-        ret[ret.length-1] = (byte) 1; // trailing 1 so some broken DBs don't truncate
-        return ret;
-    }
-
-    public static Location decode(byte[] encoded)
-    {
-        int magic = HexUtil.toInt(encoded, 0);
-        if (magic != MAGIC_LOCATION)
-            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_LOCATION");
-        if (encoded.length != 21)
-            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 21");
-
-        double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
-        double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 12));
-        return new Location(new Point(x, y));
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            Plane p = new Plane("baz");
+            o.getPlanes().add(p);
+            CaomValidator.validate(o);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
