@@ -69,77 +69,103 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.PolygonUtil;
-import ca.nrc.cadc.caom2.types.Shape;
+import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.util.Log4jInit;
+import java.lang.reflect.Field;
+import java.util.Comparator;
+import java.util.Date;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public final class CaomValidator
+public class ComparatorTest 
 {
-    private CaomValidator() { }
-    
-    public static void assertNotNull(Class caller, String name, Object test)
-        throws IllegalArgumentException
+    private static final Logger log = Logger.getLogger(ComparatorTest.class);
+
+    static
     {
-        if (test == null)
-            throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    /**
-     * A valid path component has no space ( ), slash (/), escape (\), or percent (%) characters.
-     * 
-     * @param caller
-     * @param name
-     * @param test
-     */
-    public static void assertValidPathComponent(Class caller, String name, String test)
+    //@Test
+    public void testTemplate()
     {
-        assertNotNull(caller, name, test);
-        boolean space = (test.indexOf(' ') >= 0);
-        boolean slash = (test.indexOf('/') >= 0);
-        boolean escape = (test.indexOf('\\') >= 0);
-        boolean percent = (test.indexOf('%') >= 0);
-
-        if (!space && !slash && !escape && !percent)
-            return;
-        throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name
-                + ": may not contain space ( ), slash (/), escape (\\), or percent (%)");
-    }
-
-    public static void assertPositive(Class caller, String name, double test)
-    {
-        if (test <= 0.0)
-            throw new IllegalArgumentException(caller.getSimpleName() + ": " + name + " must be > 0.0");
-    }
-
-    public static void validate(Observation obs)
-    {
-        for (Plane p : obs.getPlanes())
+        try
         {
-            try
-            {
-                p.clearTransientState();
-                p.computeTransientState();
-                Shape s = p.getPosition().bounds;
-                if (s != null)
-                {
-                    Polygon poly = PolygonUtil.toPolygon(s);
-                    PolygonUtil.getOuterHull(poly);
-                }
-            }
-            catch(Error er)
-            {
-                throw new RuntimeException("failed to compute metadata for plane " + p.getURI(obs.getURI()), er);
-            }
-            catch(Exception ex)
-            {
-                throw new IllegalArgumentException("failed to compute metadata for plane " + p.getURI(obs.getURI()), ex);
-            }
+
         }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testLastModifiedComparator()
+    {
+        try
+        {
+            Comparator cmp = new LastModifiedComparator();
+            
+            TestEntity e1 = new TestEntity(new Date(1000L), new Date(1100L));
+            TestEntity e2 = new TestEntity(new Date(2000L), e1.getMaxLastModified());
+            
+            Assert.assertEquals(-1, cmp.compare(e1, e2));
+            Assert.assertEquals(0, cmp.compare(e1, e1));
+            Assert.assertEquals(1, cmp.compare(e2, e1));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testMaxLastModifiedComparator()
+    {
+        try
+        {
+            Comparator cmp = new MaxLastModifiedComparator();
+            
+            TestEntity e1 = new TestEntity(new Date(1000L), new Date(1100L));
+            TestEntity e2 = new TestEntity(e1.getLastModified(), new Date(2100L));
+            
+            Assert.assertEquals(-1, cmp.compare(e1, e2));
+            Assert.assertEquals(0, cmp.compare(e1, e1));
+            Assert.assertEquals(1, cmp.compare(e2, e1));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    private class TestEntity extends AbstractCaomEntity
+    {
+        TestEntity(Date lm, Date mlm)
+        {
+            super();
+            assignLastModified(this, lm, "lastModified");
+            assignLastModified(this, mlm, "maxLastModified");
+        }
+    }
+    private void assignLastModified(Object ce, Date d, String fieldName)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            f.set(ce, d);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
 }

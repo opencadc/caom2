@@ -71,53 +71,22 @@ package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.Comparator;
-import java.util.Date;
 
 /**
- *
+ * Comparator that orders by maxLastModified timestamp.
+ * 
  * @author pdowler
  */
 public class MaxLastModifiedComparator implements Comparator<AbstractCaomEntity>, Serializable
 {
-    private static final long serialVersionUID = 201206211200L;
+    private static final long serialVersionUID = 201311261300L;
 
-    private boolean fast;
+    public MaxLastModifiedComparator() { }
 
-    public MaxLastModifiedComparator() { } // fast===false aka correct
-
-    public MaxLastModifiedComparator(boolean fast)
-    {
-        this.fast = fast;
-    }
-    
     public int compare(AbstractCaomEntity o1, AbstractCaomEntity o2)
     {
-        if (fast)
-        {
-            // this is fast by using reflection to get at the fields
-            try
-            {
-                Field f = AbstractCaomEntity.class.getDeclaredField("maxLastModified");
-                f.setAccessible(true);
-                Date d1 = (Date) f.get(o1);
-                Date d2 = (Date) f.get(o2);
-                return d1.compareTo(d2);
-            }
-            catch(Exception bug)
-            {
-                throw new RuntimeException("BUG - cannot find/access AbstractCaomEntity.maxLastModified field", bug);
-            }
-
-        }
-
-        // this is correct BUT is forces a recomputation of the
-        // stateCode aka hashCode of every data field in order to
-        // determine timestamps
         return o1.getMaxLastModified().compareTo(o2.getMaxLastModified());
-
-        
     }
 
 }
