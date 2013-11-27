@@ -27,6 +27,7 @@
             <xs:element name="intent" type="caom2:ObservationIntentType" minOccurs="0"/>
             <xs:element name="proposal" type="caom2:Proposal" minOccurs="0"/>
             <xs:element name="target" type="caom2:Target" minOccurs="0"/>
+            <xs:element name="targetPosition" type="caom2:TargetPosition" minOccurs="0"/>
             <xs:element name="telescope" type="caom2:Telescope" minOccurs="0"/>
             <xs:element name="instrument" type="caom2:Instrument" minOccurs="0"/>
             <xs:element name="environment" type="caom2:Environment" minOccurs="0"/>
@@ -74,9 +75,23 @@
             <xs:element name="type" type="caom2:TargetType" minOccurs="0"/>
             <xs:element name="standard" type="xs:boolean"  minOccurs="0"/>
             <xs:element name="redshift" type="xs:double" minOccurs="0"/>
+            <xs:element name="moving" type="xs:boolean"  minOccurs="0"/>
             <xs:element name="keywords" type="caom2:Keywords" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="TargetPosition">
+        <xs:sequence>
+            <xs:element name="coordinates" type="caom2:Point" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Point">
+        <xs:sequence>
+            <xs:element name="cval1" type="xs:double" minOccurs="1"/>
+            <xs:element name="cval2" type="xs:double" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- TODO: circle, box, polygon, vertex, etc -->
     
     <xs:complexType name="Telescope">
         <xs:sequence>
@@ -196,6 +211,8 @@
             <xs:element name="transition" type="xs:string"/>
         </xs:sequence>
     </xs:complexType>
+    
+    
     
     <xs:complexType name="PlaneInputList">
         <xs:sequence>
