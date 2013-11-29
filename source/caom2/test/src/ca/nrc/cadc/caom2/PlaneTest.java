@@ -159,6 +159,86 @@ public class PlaneTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+            Plane plane = new Plane("foo");
+            Plane eq = new Plane("foo");
+            Plane neq = new Plane("bar");
+            
+            Assert.assertTrue( plane.equals(plane) );
+
+            log.debug("equals: " + plane + " == " + eq);
+            Assert.assertTrue( plane.equals(eq) );
+            
+            log.debug("equals: " + plane + " != " + neq);
+            Assert.assertFalse( plane.equals(neq) );
+            
+            Assert.assertFalse( plane.equals(null) );
+            Assert.assertFalse( plane.equals(new Integer(1)) ); // a different class
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetURI()
+    {
+        try
+        {
+            ObservationURI uri = new ObservationURI("FOO", "bar");
+            Plane plane = new Plane("foo");
+            
+            PlaneURI puri = plane.getURI(uri);
+            Assert.assertEquals("caom:FOO/bar/foo", puri.getURI().toASCIIString());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testCompute()
+    {
+        try
+        {
+            Plane plane = new Plane("foo");
+            
+            Position pos = plane.getPosition();
+            Position pos2 = plane.getPosition();
+            Assert.assertNotNull(pos);
+            Assert.assertTrue(pos == pos2); // same object both times
+            
+            Energy nrg = plane.getEnergy();
+            Energy nrg2 = plane.getEnergy();
+            Assert.assertNotNull(nrg);
+            Assert.assertTrue(nrg == nrg2); // same object both times
+            
+            Time tim = plane.getTime();
+            Time tim2 = plane.getTime();
+            Assert.assertNotNull(tim);
+            Assert.assertTrue(tim == tim2); // same object both times
+            
+            Polarization pol = plane.getPolarization();
+            Polarization pol2 = plane.getPolarization();
+            Assert.assertNotNull(pol);
+            Assert.assertTrue(pol == pol2); // same object both times
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testTransientState()
@@ -179,7 +259,7 @@ public class PlaneTest
             plane.clearTransientState();
             plane.computeTransientState();
             transientCode = plane.getStateCode(true);
-            Assert.assertEquals("null computed", defCode, nonTransientCode);
+            Assert.assertEquals("null computed", defCode, transientCode);
 
             plane.clearTransientState();
             assignPos(plane);

@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -109,6 +110,10 @@ public class PlaneURITest
         {
             ObservationURI o = new ObservationURI("foo", "bar");
             PlaneURI p = new PlaneURI(o, "ShinyNewProduct");
+            log.debug("created: " + p);
+            
+            Assert.assertEquals(o, p.getParent());
+            Assert.assertEquals("ShinyNewProduct", p.getProductID());
 
             try
             {
@@ -144,6 +149,29 @@ public class PlaneURITest
                 Assert.fail("expected IllegalArgumentException for illegal characters");
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            try
+            {
+                p = new PlaneURI(new URI("foo", "bar", null));
+                Assert.fail("expected IllegalArgumentException for illegal scheme");
+            }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            try
+            {
+                p = new PlaneURI(new URI("caom", "bar", null));
+                Assert.fail("expected IllegalArgumentException for too few path elements");
+            }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            try
+            {
+                p = new PlaneURI(new URI("caom", "bar/baz/bong", null));
+                Assert.fail("expected IllegalArgumentException for too many path elements");
+            }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+
         }
         catch(Exception unexpected)
         {
@@ -151,4 +179,33 @@ public class PlaneURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+            ObservationURI o = new ObservationURI("foo", "bar");
+            PlaneURI plane = new PlaneURI(o, "foo");
+            PlaneURI eq = new PlaneURI(o, "foo");
+            PlaneURI neq = new PlaneURI(o, "bar");
+            
+            Assert.assertTrue( plane.equals(plane) );
+
+            log.debug("equals: " + plane + " == " + eq);
+            Assert.assertTrue( plane.equals(eq) );
+            
+            log.debug("equals: " + plane + " != " + neq);
+            Assert.assertFalse( plane.equals(neq) );
+            
+            Assert.assertFalse( plane.equals(null) );
+            Assert.assertFalse( plane.equals(new Integer(1)) ); // a different class
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

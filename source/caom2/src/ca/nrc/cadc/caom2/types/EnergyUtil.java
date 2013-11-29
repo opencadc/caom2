@@ -37,7 +37,7 @@ public final class EnergyUtil
     private EnergyUtil() { }
 
     /**
-     * Compute all possible energy medata from the specified artifacts.
+     * Compute all possible energy metadata from the specified artifacts.
      * 
      * @param artifacts
      * @return

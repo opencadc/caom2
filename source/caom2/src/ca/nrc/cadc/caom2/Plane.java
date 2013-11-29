@@ -232,11 +232,6 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         {
             throw new IllegalArgumentException("failed to compute Plane.position", ex);
         }
-        finally
-        {
-            if (this.position == null)
-                this.position = new Position(); // empty placeholder so we skip recompute
-        }
     }
 
     protected void computeEnergy()
@@ -253,76 +248,15 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         {
             throw new IllegalArgumentException("failed to compute Plane.energy", ex);
         }
-        finally
-        {
-            if (this.energy == null)
-                this.energy = new Energy();
-        }
     }
 
     protected void computeTime()
     {
-        try
-        {
-            this.time = TimeUtil.compute(artifacts);
-        }
-        // TODO: handle checked exceptions here instead of inside
-        finally
-        {
-            if (this.time == null)
-                this.time = new Time();
-        }
+        this.time = TimeUtil.compute(artifacts);
     }
 
     protected void computePolarization()
     {
-        try
-        {
-            this.polarization = PolarizationUtil.compute(artifacts);
-        }
-        // TODO: handle checked exceptions here instead of inside
-        finally
-        {
-            if (this.polarization == null)
-                this.polarization = new Polarization();
-        }
-    }
-
-    /**
-     * Extract a list of chunks with the first matching ProductType. The ProductType
-     * may be set on the chunk or inherited from a parent (Part or Artifact).
-     * 
-     * @param artifacts
-     * @param pt
-     * @return
-     */
-    protected List<Chunk> getChunks(Set<Artifact> artifacts, ProductType ... ptypes)
-    {
-        List<Chunk> ret = new ArrayList<Chunk>();
-        for (ProductType pt : ptypes)
-        {
-            for (Artifact a : artifacts)
-            {
-                boolean ap = (a.productType != null);
-                boolean ak = (a.productType == null) || pt.equals(a.productType);
-                if (ak)
-                    for (Part p : a.getParts())
-                    {
-                        boolean pp = ap || (p.productType != null);
-                        boolean pk = (p.productType == null) || pt.equals(p.productType);
-                        if (pk)
-                            for (Chunk c : p.getChunks())
-                            {
-                                boolean cp = pp || (c.productType != null);
-                                boolean ck = (c.productType == null) || pt.equals(c.productType);
-                                if (ck && cp)
-                                    ret.add(c);
-                            }
-                    }
-            }
-            if ( !ret.isEmpty() )
-                return ret;
-        }
-        return ret;
+        this.polarization = PolarizationUtil.compute(artifacts);
     }
 }
