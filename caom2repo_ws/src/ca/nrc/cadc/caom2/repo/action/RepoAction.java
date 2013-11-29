@@ -210,7 +210,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         catch(IllegalArgumentException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 400, "invalid input: " + uri, true);
+            handleException(ex, 400, "invalid input: caom:" + path, true);
         }
         catch(CollectionNotFoundException ex)
         {
@@ -264,7 +264,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             syncOutput.setCode(code); // too large
             syncOutput.setHeader("Content-Type", ERROR_MIMETYPE);
             PrintWriter w = syncOutput.getWriter();
-            w.print(message);
+            w.println(message);
 
             if (showExceptions)
             {
