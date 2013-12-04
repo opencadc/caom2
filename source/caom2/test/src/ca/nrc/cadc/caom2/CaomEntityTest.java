@@ -86,12 +86,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * This tests the methods defined in the CaomEntity interface. The code is typically in
+ * the AbstractCaomEntity class.
+ * 
  * @author pdowler
  */
-public class AbstractCaomEntityTest 
+public class CaomEntityTest 
 {
-    private static final Logger log = Logger.getLogger(AbstractCaomEntityTest.class);
+    private static final Logger log = Logger.getLogger(CaomEntityTest.class);
 
     static
     {
@@ -100,7 +102,7 @@ public class AbstractCaomEntityTest
 
     AbstractCaomEntity[] entities;
 
-    public AbstractCaomEntityTest()
+    public CaomEntityTest()
     {
         try
         {

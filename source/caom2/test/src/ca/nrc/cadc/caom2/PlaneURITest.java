@@ -166,7 +166,7 @@ public class PlaneURITest
             
             try
             {
-                p = new PlaneURI(new URI("caom", "bar/baz/bong", null));
+                p = new PlaneURI(new URI("caom", "for/bar/baz/bong", null));
                 Assert.fail("expected IllegalArgumentException for too many path elements");
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
