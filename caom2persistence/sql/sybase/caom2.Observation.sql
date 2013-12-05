@@ -22,6 +22,8 @@ create table caom2_Observation
     target_moving int null,
     target_keywords text null,
 
+    targetPosition_coordsys varchar(16) null,
+    targetPosition_equinox double precision null,
     targetPosition_coordinates_cval1 double precision null,
     targetPosition_coordinates_cval2 double precision null,
 

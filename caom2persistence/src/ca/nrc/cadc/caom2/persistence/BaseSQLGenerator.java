@@ -181,7 +181,7 @@ public class BaseSQLGenerator implements SQLGenerator
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
             "target_name", "target_type", "target_standard",
             "target_redshift", "target_moving", "target_keywords",
-            "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
+            "targetPosition_coordsys","targetPosition_equinox", "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
             "telescope_name", "telescope_geoLocationX", "telescope_geoLocationY", "telescope_geoLocationZ", "telescope_keywords",
             "instrument_name", "instrument_keywords",
             "environment_seeing", "environment_humidity", "environment_elevation",
@@ -808,11 +808,15 @@ public class BaseSQLGenerator implements SQLGenerator
             }
             if (obs.targetPosition != null)
             {
+                safeSetString(sb, ps, col++, obs.targetPosition.getCoordsys());
+                safeSetDouble(sb, ps, col++, obs.targetPosition.equinox);
                 safeSetDouble(sb, ps, col++, obs.targetPosition.getCoordinates().cval1);
                 safeSetDouble(sb, ps, col++, obs.targetPosition.getCoordinates().cval2);
             }
             else
             {
+                safeSetString(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
             }
@@ -2339,11 +2343,15 @@ public class BaseSQLGenerator implements SQLGenerator
                 skipAndLog(rs, col, 5);
                 col += 5; // skip
             }
+            
+            String tpos_cs = rs.getString(col++);
+            Double tpos_eq = Util.getDouble(rs, col++);
             Double tpos_cval1 = Util.getDouble(rs, col++);
             Double tpos_cval2 = Util.getDouble(rs, col++);
-            if (tpos_cval1 != null)
+            if (tpos_cs != null)
             {
-                o.targetPosition = new TargetPosition(new Point(tpos_cval1, tpos_cval2));
+                o.targetPosition = new TargetPosition(tpos_cs, new Point(tpos_cval1, tpos_cval2));
+                o.targetPosition.equinox = tpos_eq;
                 log.debug("found: " + o.targetPosition);
             }
 

@@ -85,7 +85,7 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class PostgresqlReadAccessDAOTest extends DatabaseReadAccessDAOTest
+public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
 {
     static
     {

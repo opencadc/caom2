@@ -23,8 +23,10 @@ create table caom2.Observation
     target_moving integer,
     target_keywords text,
 
-    targetPosition_coordinates_cval1 double precision null,
-    targetPosition_coordinates_cval2 double precision null,
+    targetPosition_coordsys varchar(16),
+    targetPosition_equinox double precision,
+    targetPosition_coordinates_cval1 double precision,
+    targetPosition_coordinates_cval2 double precision,
 
     telescope_name varchar(64),
     telescope_geoLocationX double precision,
