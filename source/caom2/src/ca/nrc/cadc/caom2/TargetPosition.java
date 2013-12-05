@@ -82,24 +82,34 @@ public class TargetPosition  implements Serializable
     private static final long serialVersionUID = 201311261000L;
 
     // immutable state
+    private String coordsys;
     private Point coordinates;
+    
+    public Double equinox;
 
     private TargetPosition() { }
     
-    public TargetPosition(Point coordinates)
+    public TargetPosition(String coordsys, Point coordinates)
     {
+        CaomValidator.assertNotNull(getClass(), "coordsys", coordsys);
         CaomValidator.assertNotNull(getClass(), "coordinates", coordinates);
+        this.coordsys = coordsys;
         this.coordinates = coordinates;
     }
-    
-    @Override
-    public String toString()
+
+    public String getCoordsys()
     {
-        return getClass().getSimpleName() + "[" + coordinates + "]";
+        return coordsys;
     }
 
     public Point getCoordinates()
     {
         return coordinates;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + "[" + coordsys + "," + coordinates + "]";
     }
 }

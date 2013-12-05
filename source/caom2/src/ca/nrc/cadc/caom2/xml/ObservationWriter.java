@@ -417,6 +417,15 @@ public class ObservationWriter implements Serializable
             return;
         
         Element element = getCaom2Element("targetPosition");
+        Element coordsys = getCaom2Element("coordsys");
+        coordsys.addContent(targetPosition.getCoordsys());
+        element.addContent(coordsys);
+        if (targetPosition.equinox != null)
+        {
+            Element equinox = getCaom2Element("equinox");
+            equinox.addContent(targetPosition.equinox.toString());
+            element.addContent(equinox);
+        }
         Element coords = getCaom2Element("coordinates");
         addNumberElement("cval1", targetPosition.getCoordinates().cval1, coords);
         addNumberElement("cval2", targetPosition.getCoordinates().cval2, coords);

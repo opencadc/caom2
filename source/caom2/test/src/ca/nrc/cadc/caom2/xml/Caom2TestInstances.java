@@ -185,7 +185,7 @@ public class Caom2TestInstances
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
             observation.target = getTarget();
-            observation.targetPosition = getTargetPosition();
+            observation.targetPosition = getTargetPosition("ICRS", null);
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -209,7 +209,7 @@ public class Caom2TestInstances
             observation.setAlgorithm(getAlgorithm());
             observation.proposal = getProposal();
             observation.target = getTarget();
-            observation.targetPosition = getTargetPosition();
+            observation.targetPosition = getTargetPosition("FK5", 2000.0);
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -249,9 +249,11 @@ public class Caom2TestInstances
         return target;
     }
     
-    protected TargetPosition getTargetPosition()
+    protected TargetPosition getTargetPosition(String coordsys, Double equinox)
     {
-        return new TargetPosition(new Point(1.0, 2.0));
+        TargetPosition tp = new TargetPosition(coordsys, new Point(1.0, 2.0));
+        tp.equinox = equinox;
+        return tp;
     }
     
     protected Telescope getTelescope()

@@ -491,12 +491,15 @@ public class ObservationReader implements Serializable
         if (element == null || element.getContentSize() == 0)
             return null;
         
+        String coordsys = getChildText("coordsys", element, namespace, true);
+        Double equinox = getChildTextAsDouble("equinox", element, namespace, false);
         Element coords = getChildElement("coordinates", element, namespace, true);
         double cval1 = getChildTextAsDouble("cval1", coords, namespace, true);
         double cval2 = getChildTextAsDouble("cval2", coords, namespace, true);
         
 
-       TargetPosition tpos = new TargetPosition(new Point(cval1, cval2));
+       TargetPosition tpos = new TargetPosition(coordsys, new Point(cval1, cval2));
+       tpos.equinox = equinox;
         
         return tpos;
     }
