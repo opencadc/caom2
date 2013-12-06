@@ -69,15 +69,9 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.DeletedEntity;
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.access.ReadAccess;
 import java.lang.reflect.Constructor;
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -92,22 +86,20 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public abstract class DeletedEntityDAOTest
+public abstract class AbstractDatabaseReadAccessDAOTest
 {
     protected static Logger log;
 
-    DeletedEntityDAO dao;
-    Class[] entityClasses = { DeletedObservation.class,
-        DeletedObservationMetaReadAccess.class,
-        DeletedPlaneMetaReadAccess.class,
-        DeletedPlaneDataReadAccess.class
-    };
+    boolean deletionTrack;
+    DatabaseReadAccessDAO dao;
+    DatabaseTransactionManager txnManager;
 
-    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+    protected Class[] entityClasses;
 
-    public DeletedEntityDAOTest(Class genClass, String server, String database, String schema)
+    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
         throws Exception
     {
+        this.deletionTrack = deletionTrack;
         try
         {
             Map<String,Object> config = new TreeMap<String,Object>();
@@ -115,8 +107,9 @@ public abstract class DeletedEntityDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.dao = new DeletedEntityDAO();
+            this.dao = new DatabaseReadAccessDAO();
             dao.setConfig(config);
+            this.txnManager = new DatabaseTransactionManager(dao.getDataSource());
         }
         catch(Exception ex)
         {
@@ -135,93 +128,91 @@ public abstract class DeletedEntityDAOTest
         DataSource ds = dao.getDataSource();
         for (Class c : entityClasses)
         {
+            String cn = c.getSimpleName();
             String s = gen.getTable(c);
 
             String sql = "delete from " + s;
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
+            if (deletionTrack)
+            {
+                sql = sql.replace(cn, "Deleted"+cn);
+                log.debug("setup: " + sql);
+                ds.getConnection().createStatement().execute(sql);
+            }
         }
         log.debug("clearing old tables... OK");
     }
 
     @Test
-    public void testGetListDeletedObservation()
+    public void testGet()
     {
         try
         {
-
-            Long id1 = new Long(100L);
-            Long id2 = new Long(200L);
-            Long id3 = new Long(300L);
-            Long id4 = new Long(400L);
-            Long id5 = new Long(500L);
-
-            Date d1 = new Date();
-            Date d2 = new Date(d1.getTime() + 10L);
-            Date d3 = new Date(d2.getTime() + 10L);
-            Date d4 = new Date(d3.getTime() + 10L);
-            Date d5 = new Date(d4.getTime() + 10L);
-
-            Class c = entityClasses[0];
-            log.debug("creating test content: " + c.getSimpleName());
-            
-            Constructor<DeletedEntity> ctor = c.getConstructor(Long.class, Date.class);
-            DeletedEntity o1 = ctor.newInstance(id1, d1);
-            DeletedEntity o2 = ctor.newInstance(id2, d2);
-            DeletedEntity o3 = ctor.newInstance(id3, d3);
-            DeletedEntity o4 = ctor.newInstance(id4, d4);
-            DeletedEntity o5 = ctor.newInstance(id5, d5);
-
-            // manually insert list since it is normally maintained by triggers
-            DataSource ds = dao.getDataSource();
-            String s = dao.getSQLGenerator().getTable(c);
-
-            String sql = "insert into " + s + " (id,lastModified) values ( " + o1.id + ", '" + df.format(o1.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " + o2.id + ", '" + df.format(o2.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " + o3.id + ", '" + df.format(o3.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " + o4.id + ", '" + df.format(o4.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " + o5.id + ", '" + df.format(o5.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-
-            Date start = new Date(o1.lastModified.getTime() - 100L); // past
-            Date end = null;
-            Integer batchSize = new Integer(3);
-            List<DeletedEntity> dels;
-
-
-            // get first batch
-            dels = dao.getList(c, start, end, batchSize);
-            Assert.assertNotNull(dels);
-            Assert.assertEquals(3, dels.size());
-            Assert.assertEquals(o1.id, dels.get(0).id);
-            Assert.assertEquals(o2.id, dels.get(1).id);
-            Assert.assertEquals(o3.id, dels.get(2).id);
-
-            // get next batch
-            dels = dao.getList(c, o3.lastModified, end, batchSize);
-            Assert.assertNotNull(dels);
-            Assert.assertEquals(3, dels.size()); // o3 gets picked up by the >=
-            Assert.assertEquals(o3.id, dels.get(0).id);
-            Assert.assertEquals(o4.id, dels.get(1).id);
-            Assert.assertEquals(o5.id, dels.get(2).id);
+            Long id = new Long(666L);
+            for (int i=0; i<entityClasses.length; i++)
+            {
+                ReadAccess ra = dao.get(entityClasses[i], id);
+                Assert.assertNull(entityClasses[i].getSimpleName(), ra);
+            }
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+    }
+
+    protected void doPutGetDelete(ReadAccess expected)
+        throws Exception
+    {
+        String s = expected.getClass().getSimpleName();
+        dao.put(expected);
+        ReadAccess actual = dao.get(expected.getClass(), expected.getID());
+        Assert.assertNotNull(s, actual);
+        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
+        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
+        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
+        //Assert.assertEquals(s+".getStateCode", expected.getStateCode(), actual.getStateCode());
+
+        dao.delete(expected.getClass(), expected.getID());
+        actual = dao.get(expected.getClass(), expected.getID());
+        Assert.assertNull(actual);
+    }
+
+    @Test
+    public void testPutGetDelete()
+    {
+        try
+        {
+            Long assetID = new Long(666L);
+            Long groupID =  new Long(777L);
+            ReadAccess expected;
+
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, Long.class);
+                expected = (ReadAccess) ctor.newInstance(assetID, groupID);
+                doPutGetDelete(expected);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    // for comparing lastModified: Sybase isn't reliable to ms accuracy when using UTC
+    protected void testEqual(String s, Date expected, Date actual)
+    {
+        log.debug("testEqual(Date,Date): " + expected.getTime() + " vs " + actual.getTime());
+        if (expected == null)
+        {
+            Assert.assertNull(s, actual);
+            return;
+        }
+
+        Assert.assertTrue(s, Math.abs(expected.getTime() - actual.getTime()) < 3L);
     }
 }
