@@ -91,6 +91,7 @@ import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Parameter;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 
@@ -104,8 +105,6 @@ public class ColumnNameConverterTest
 {
     private static Logger log = Logger.getLogger(ColumnNameConverterTest.class);
     
-    public String _query;
-
     SelectListExtractor _en;
     ReferenceNavigator _rn;
     FromItemNavigator _fn;
@@ -119,8 +118,8 @@ public class ColumnNameConverterTest
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-        Log4jInit.setLevel("ca.nrc.cadc", org.apache.log4j.Level.INFO);
-        TAP_SCHEMA = TestUtil.loadDefaultTapSchema();
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        TAP_SCHEMA = TestUtil.loadTapSchema();
     }
 
     /**
@@ -147,10 +146,11 @@ public class ColumnNameConverterTest
     {
     }
 
-    private void doit()
+    private void doit(String adql, String expected)
     {
         Parameter para;
-        para = new Parameter("QUERY", _query);
+        log.debug(adql);
+        para = new Parameter("QUERY", adql);
         List<Parameter> paramList = new ArrayList<Parameter>();
         paramList.add(para);
         
@@ -158,58 +158,19 @@ public class ColumnNameConverterTest
         tapQuery.setTapSchema(TAP_SCHEMA);
         tapQuery.setExtraTables(null);
         tapQuery.setParameterList(paramList);
-        String sql = tapQuery.getSQL();
-        log.debug(_query);
-        log.debug(sql);
+        String actual = tapQuery.getSQL();
+        log.debug(actual);
 
-        boolean needConvertion = false;
-        String[] tokens = _query.split(",| ");
-        for (String token : tokens)
-        {
-            if (token.endsWith("position_bounds")) {
-                needConvertion = true;
-                break;
-            }
-
-            if (token.equalsIgnoreCase("FROM"))
-                break;
-        }
-        
-        if (needConvertion && sql.indexOf("position_encoded")<0)
-            Assert.fail("fail to convert position_bounds into position_encoded.");
-        
-        
-        tokens = sql.split(",| ");
-        for (String token : tokens)
-        {
-            if (token.endsWith("position_bounds"))
-                Assert.fail("fail to convert position_bounds");
-
-            if (token.equalsIgnoreCase("FROM"))
-                break;
-        }
+        if (expected != null)
+            Assert.assertEquals(expected, actual);
     }
 
 
     @Test
     public void testBasic()
     {
-        _query = "select obsid, plane.position_bounds from caom.plane"
-            + " where 0 = INTERSECTS(CIRCLE('ICRS GEOCENTER', 44.0, -7.6, 19.5), plane.position_bounds) ";
-        doit();
-    }
-
-    @Test
-    public void testAll()
-    {
-        _query = "select * from caom.plane";
-        doit();
-    }
-
-    @Test
-    public void testNone()
-    {
-        _query = "select obsid from caom.plane where plane.position_bounds is null";
-        doit();
+        String adql = "select * from caom.Observation";
+        String expected = null; // indeterminate due to expansion of * to list of cols in TAP_SCHEMA
+        doit(adql, expected);
     }
 }
