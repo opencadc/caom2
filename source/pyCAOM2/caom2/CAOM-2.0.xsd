@@ -81,6 +81,8 @@
     </xs:complexType>
     <xs:complexType name="TargetPosition">
         <xs:sequence>
+            <xs:element name="coordsys" type="xs:string" minOccurs="1"/>
+            <xs:element name="equinox" type="xs:double" minOccurs="0"/>
             <xs:element name="coordinates" type="caom2:Point" minOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
