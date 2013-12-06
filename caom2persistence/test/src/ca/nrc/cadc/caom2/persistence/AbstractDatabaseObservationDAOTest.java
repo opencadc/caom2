@@ -108,9 +108,11 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.dao.TransactionManager;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -138,7 +140,7 @@ import ca.nrc.cadc.util.Log4jInit;
  * 
  * @author pdowler
  */
-public abstract class DatabaseObservationDAOTest
+public abstract class AbstractDatabaseObservationDAOTest
 {
     protected static Logger log;
 
@@ -171,7 +173,7 @@ public abstract class DatabaseObservationDAOTest
         Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected DatabaseObservationDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
+    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
         throws Exception
     {
         this.deletionTrack = deletionTrack;
@@ -606,11 +608,11 @@ public abstract class DatabaseObservationDAOTest
             log.info("testGetObservationList");
             Integer batchSize = new Integer(3);
 
-            Observation o1 = new SimpleObservation(DatabaseObservationDAOTest.class.getSimpleName(), "obs1");
-            Observation o2 = new SimpleObservation(DatabaseObservationDAOTest.class.getSimpleName(), "obsA");
-            Observation o3 = new SimpleObservation(DatabaseObservationDAOTest.class.getSimpleName(), "obs2");
-            Observation o4 = new SimpleObservation(DatabaseObservationDAOTest.class.getSimpleName(), "obsB");
-            Observation o5 = new SimpleObservation(DatabaseObservationDAOTest.class.getSimpleName(), "obs3");
+            Observation o1 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1");
+            Observation o2 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA");
+            Observation o3 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2");
+            Observation o4 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB");
+            Observation o5 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3");
 
             txnManager.startTransaction();
             dao.put(o1);
@@ -1252,9 +1254,14 @@ public abstract class DatabaseObservationDAOTest
             o.target = new Target("Pony 51");
             o.target.type = TargetType.OBJECT;
             o.target.getKeywords().addAll(TEST_KEYWORDS);
-            o.target.standard = null;
+            o.target.standard = Boolean.TRUE;
             o.target.redshift = new Double(0.0);
+            o.target.moving = Boolean.FALSE;
 
+            o.targetPosition = new TargetPosition("FK5", new Point(1.0, 2.0));
+            if (sci)
+                o.targetPosition.equinox = 2000.0;
+            
             o.telescope = new Telescope("BothEyes");
             o.telescope.getKeywords().addAll(TEST_KEYWORDS);
             o.telescope.geoLocationX = 100.0;

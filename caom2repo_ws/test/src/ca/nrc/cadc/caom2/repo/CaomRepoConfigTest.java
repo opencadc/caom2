@@ -123,6 +123,7 @@ public class CaomRepoConfigTest
 
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("space", props);
             Assert.assertNotNull(it);
+            log.debug("found: " + it);
             Assert.assertEquals("space", it.getCollection());
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
@@ -133,6 +134,7 @@ public class CaomRepoConfigTest
 
             it = CaomRepoConfig.getItem("spaces", props);
             Assert.assertNotNull(it);
+            log.debug("found: " + it);
             Assert.assertEquals("spaces", it.getCollection());
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
@@ -143,6 +145,7 @@ public class CaomRepoConfigTest
 
             it = CaomRepoConfig.getItem("tabs", props);
             Assert.assertNotNull(it);
+            log.debug("found: " + it);
             Assert.assertEquals("tabs", it.getCollection());
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
@@ -152,7 +155,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
 
             it = CaomRepoConfig.getItem("mix", props);
-           Assert.assertNotNull(it);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
             Assert.assertEquals("mix", it.getCollection());
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
