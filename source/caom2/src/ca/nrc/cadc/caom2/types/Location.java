@@ -69,39 +69,69 @@
 
 package ca.nrc.cadc.caom2.types;
 
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.util.HexUtil;
 
 /**
  *
  * @author pdowler
  */
-public interface Shape extends Serializable
+public class Location implements Shape
 {
-    public static final int MAGIC_LOCATION  = 1;
-    public static final int MAGIC_CIRCLE    = 2;
-    public static final int MAGIC_ELLIPSE   = 3;
-    public static final int MAGIC_POLYGON   = 4;
-    public static final int MAGIC_BOX       = 5;
+    private static final long serialVersionUID = 201202081100L;
     
-    /**
-     * Get the central coordinates of this shape.
-     *
-     * @return
-     */
-    public Point getCenter();
+    private Point coordinates;
 
-    /**
-     * Get the area of this shape.
-     *
-     * @return area
-     */
-    public double getArea();
+    public Location(Point coordinates)
+    {
+        CaomValidator.assertNotNull(Location.class, "coordinates", coordinates);
+        this.coordinates = coordinates;
+    }
 
-    /**
-     * Get the size of this shape.  The size is the diameter of the minimum
-     * bounding circle
-     *
-     * @return area
-     */
-    public double getSize();
+    public double getArea()
+    {
+        return 0.0;
+    }
+
+    public Point getCenter()
+    {
+        return coordinates;
+    }
+
+    public double getSize()
+    {
+        return 0.0;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + coordinates + "]";
+    }
+
+    public static byte[] encode(Location p)
+    {
+        byte[] ret = new byte[21];
+        byte[] b = HexUtil.toBytes(MAGIC_LOCATION);
+        System.arraycopy(b, 0, ret, 0, 4);
+        b = HexUtil.toBytes(Double.doubleToLongBits(p.coordinates.cval1));
+        System.arraycopy(b, 0, ret, 4, 8);
+        b = HexUtil.toBytes(Double.doubleToLongBits(p.coordinates.cval2));
+        System.arraycopy(b, 0, ret, 12, 8);
+        ret[ret.length-1] = (byte) 1; // trailing 1 so some broken DBs don't truncate
+        return ret;
+    }
+
+    public static Location decode(byte[] encoded)
+    {
+        int magic = HexUtil.toInt(encoded, 0);
+        if (magic != MAGIC_LOCATION)
+            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_LOCATION");
+        if (encoded.length != 21)
+            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 21");
+
+        double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
+        double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 12));
+        return new Location(new Point(x, y));
+    }
 }
