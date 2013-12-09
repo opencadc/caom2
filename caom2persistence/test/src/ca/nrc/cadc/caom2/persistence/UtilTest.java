@@ -153,6 +153,17 @@ public class UtilTest
             Set<PlaneURI> uris2 = new TreeSet<PlaneURI>();
             Util.decodePlaneURIs(actual, uris2);
             Assert.assertTrue(uris2.isEmpty());
+            
+            ObservationURI ouri = new ObservationURI("FOO", "bar");
+            uris.add(new PlaneURI(ouri, "foo1"));
+            uris.add(new PlaneURI(ouri, "foo2"));
+            uris.add(new PlaneURI(ouri, "foo3"));
+            actual = Util.encodePlaneURIs(uris);
+            Assert.assertNotNull(actual);
+            Util.decodePlaneURIs(actual, uris2);
+            Assert.assertEquals(3, uris2.size());
+            Assert.assertTrue( uris.containsAll(uris2));
+            Assert.assertTrue( uris2.containsAll(uris));
         }
         catch(Exception unexpected)
         {

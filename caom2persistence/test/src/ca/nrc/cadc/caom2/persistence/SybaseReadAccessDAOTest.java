@@ -87,7 +87,7 @@ import org.junit.Assert;
  *
  * @author pdowler
  */
-public class SybaseReadAccessDAOTest extends DatabaseReadAccessDAOTest
+public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
 {
     static
     {
