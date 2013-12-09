@@ -147,9 +147,11 @@
     <property name="junit"          value="${ext.dev}/junit.jar" />
     
     <property name="testingJars"    value="${junit}:${xerces}" />
-
-    <target name="test" depends="test-app, test-lib" />
     
+    <target name="setup-test">
+        <copy overwrite="true" file="${env.CADC_PREFIX}/etc/proxy.pem" tofile="${build}/test/class/proxy.pem" />
+    </target>
+
     <target name="test-app" depends="build, config, compile-test">
         <junit printsummary="yes" haltonfailure="yes" fork="yes">
             <classpath>
@@ -185,6 +187,7 @@
             <test name="ca.nrc.cadc.caom2.fits.wcs.TimeTest"/>
             <test name="ca.nrc.cadc.caom2.fits.wcs.PolarizationTest"/>
             <test name="ca.nrc.cadc.ad.AdSchemeHandlerTest" />
+            <test name="ca.nrc.cadc.caom2.fits.wcs.ObservableTest" />
         </junit>
     </target>
 
