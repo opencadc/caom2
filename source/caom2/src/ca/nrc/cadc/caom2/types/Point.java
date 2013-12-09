@@ -82,6 +82,8 @@ public class Point implements Serializable
     public double cval1;
     public double cval2;
 
+    public static final String[] CTOR_UTYPES = { "cval1", "cval2" };
+    
     public Point() { }
 
     public Point(double cval1, double cval2)

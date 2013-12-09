@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.types.Polygon;
@@ -166,6 +167,7 @@ public class FitsMapperTest
             Proposal.class,
             Algorithm.class,
             Target.class,
+            TargetPosition.class,
             Telescope.class,
             Instrument.class,
             Plane.class,
@@ -177,7 +179,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 9, 3, 0, 3, 3, 0, 6, 5, 1, 4, 13
+            0, 0, 10, 3, 0, 4, 1, 3, 0, 6, 5, 1, 4, 13
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -197,6 +199,7 @@ public class FitsMapperTest
         Class[] classes = new Class[]
         {
             Target.class,
+            TargetPosition.class,
             Telescope.class,
             Instrument.class,
             Part.class,
@@ -207,7 +210,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            1, 1, 1, 1, 1, 1, 1
+            1, 2, 1, 1, 1, 1, 1, 1
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
