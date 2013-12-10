@@ -166,7 +166,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
                 List<T> ret = new ArrayList<T>(obs.size());
                 ret.addAll(obs);
                 // sort list by maxLastModified
-                Collections.sort(ret, new MaxLastModifiedComparator(true));
+                Collections.sort(ret, new MaxLastModifiedComparator());
                 return ret;
             }
             throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());

@@ -77,7 +77,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class PostgresqlDAOTest extends DatabaseObservationDAOTest
+public class PostgresqlDAOTest extends AbstractDatabaseObservationDAOTest
 {
     static
     {

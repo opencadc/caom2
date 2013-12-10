@@ -77,7 +77,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class PostgresqlDeletedEntityDAOTest extends DeletedEntityDAOTest
+public class PostgresqlDeletedEntityDAOTest extends AbstractDeletedEntityDAOTest
 {
     static
     {
