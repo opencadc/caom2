@@ -67,10 +67,9 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -80,9 +79,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class ObservationURITest 
+public class CartesianTransformTest 
 {
-    private static final Logger log = Logger.getLogger(ObservationURITest.class);
+    private static final Logger log = Logger.getLogger(CartesianTransformTest.class);
 
     static
     {
@@ -102,37 +101,85 @@ public class ObservationURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testConstructor()
+    public void testTransformVertex()
     {
         try
         {
-            ObservationURI o = new ObservationURI("Stuff", "Thing");
-            log.debug("created: " + o);
+            CartesianTransform trans = new CartesianTransform();
+            Vertex v1, v2, v3;
 
-            o =  new ObservationURI(new URI("caom", "Stuff/Thing", null));
-
-            try
+            // check null transforms are no-ops
+            v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
+            v2 = trans.transform(v1);
+            Assert.assertEquals(v1.cval1, v2.cval1, 0.01);
+            Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
+            Assert.assertEquals(v1.getType(), v2.getType());
+            v3 = trans.inverseTransform(v2);
+            Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
+            Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
+            Assert.assertEquals(v1.getType(), v3.getType());
+            
+            // check real transforms
+            trans.axis = CartesianTransform.Z;
+            for (double a=Math.PI/2.0; a <= Math.PI; a += Math.PI/2.0)
             {
-                o =  new ObservationURI("Stuff", null);
-                Assert.fail("excpected IllegalArgumentException from " + o);
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+                double increment = Math.toDegrees(a);
+                trans.a = a;
+                
+                v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
+                v2 = trans.transform(v1);
+                Assert.assertEquals(v1.cval1 + increment, v2.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v2.getType());
 
-            try
-            {
-                o =  new ObservationURI(null, "Thing");
-                Assert.fail("excpected IllegalArgumentException from " + o);
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+                v3 = trans.inverseTransform(v2);
+                Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v3.getType());
 
-            try
-            {
-                o =  new ObservationURI(new URI("caom", "foo/bar/baz", null));
-                Assert.fail("expected IllegalArgumentException from " + o);
+                v1 = new Vertex(2.0, 4.0, SegmentType.MOVE);
+                v2 = trans.transform(v1);
+                Assert.assertEquals(v1.cval1 + increment, v2.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v2.getType());
+
+                v3 = trans.inverseTransform(v2);
+                Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v3.getType());
+
+                v1 = new Vertex(2.0, 4.0, SegmentType.CLOSE);
+                v2 = trans.transform(v1);
+                // values not relevant
+                Assert.assertEquals(v1.getType(), v2.getType());
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            trans.axis = CartesianTransform.Y;
+            for (double a=Math.PI/4.0; a <= Math.PI/2.0; a += Math.PI/4.0)
+            {
+                trans.a = a;
+                
+                v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
+                v2 = trans.transform(v1);
+                v3 = trans.inverseTransform(v2);
+                Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v3.getType());
+
+                v1 = new Vertex(2.0, 4.0, SegmentType.MOVE);
+                v2 = trans.transform(v1);
+                v3 = trans.inverseTransform(v2);
+                Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
+                Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
+                Assert.assertEquals(v1.getType(), v3.getType());
+
+                v1 = new Vertex(2.0, 4.0, SegmentType.CLOSE);
+                v2 = trans.transform(v1);
+                // values not relevant
+                Assert.assertEquals(v1.getType(), v2.getType());
+            }
         }
         catch(Exception unexpected)
         {
@@ -140,45 +187,34 @@ public class ObservationURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testEquals()
+    public void testTransformPolygon()
     {
         try
         {
-            ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
-            ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
-            ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-
-            Assert.assertTrue(thing1.equals(thing1));
-            Assert.assertTrue(thing1.equals(thing2));
-
-            Assert.assertFalse(cat.equals(thing1));
-            Assert.assertFalse(thing1.equals(cat));
-
-            // TODO: verify that changing any other field does not effect equals()?
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testHashCode()
-    {
-        try
-        {
-            ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
-            ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
-            ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-
-            Assert.assertTrue(thing1.hashCode() == thing2.hashCode());
-
-            Assert.assertFalse(cat.hashCode() == thing1.hashCode());
-
-            // TODO: verify that changing any other field does not effect hashCode()?
+            CartesianTransform trans = new CartesianTransform();
+            trans.a = Math.PI/2.0; // +180
+            trans.axis = CartesianTransform.Z;
+            
+            Polygon p1 = new Polygon();
+            p1.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(4.0, 2.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            
+            Polygon p2 = trans.transform(p1);
+            Polygon p3 = trans.inverseTransform(p2);
+            
+            Assert.assertEquals(p1.getVertices().size(), p3.getVertices().size());
+            for (int i=0; i<p1.getVertices().size(); i++)
+            {
+                Vertex v1 = p1.getVertices().get(i);
+                Vertex v3 = p3.getVertices().get(i);
+                Assert.assertEquals("vertex longitude " + i, v1.cval1, v3.cval1, 0.01);
+                Assert.assertEquals("vertex  latitude " + i, v1.cval2, v3.cval2, 0.01);
+                Assert.assertEquals("vertex   segtype " + i, v1.getType(), v3.getType());
+            }
         }
         catch(Exception unexpected)
         {

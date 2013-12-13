@@ -95,10 +95,6 @@ public final class Util
             double dy = (range.getEnd().getCoord2().pix - range.getStart().getCoord2().pix);
             return Math.abs(dx*dy);
         }
-        else if (bounds != null)
-        {
-            throw new UnsupportedOperationException("get pixel scale from CoordBounds2D");
-        }
         else if (function != null)
         {
             double dx = function.getDimension().naxis1;
@@ -123,10 +119,6 @@ public final class Util
             ys = Math.abs(ys);
             //return Math.max(xs, ys); // maximum
             return (xs + ys)/2.0;      // average
-        }
-        else if (bounds != null)
-        {
-            throw new UnsupportedOperationException("get pixel scale from CoordBounds2D");
         }
         else if (function != null)
         {

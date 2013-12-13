@@ -111,15 +111,51 @@ public class ArtifactTest
             URI uri = new URI("ad", "Stuff/Thing/thing1", null);
 
             Artifact a = new Artifact(uri);
+            log.debug("created: " + a);
+            
             Assert.assertNotNull(a.getURI());
             Assert.assertEquals(uri, a.getURI());
-
+            
             try
             {
                 a = new Artifact(null);
-                Assert.fail("expected IllegalArgumentException for uri=null");
+                Assert.fail("expected IllegalArgumentException for uri=null, got: " + a);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+            Artifact o1 = new Artifact(new URI("ad", "FOO/bar1", null));
+            Artifact o2 = new Artifact(new URI("ad", "FOO/bar2", null));
+            Artifact o2d = new Artifact(new URI("ad", "FOO/bar2", null));
+            
+            Assert.assertTrue(o1.equals(o1));
+            
+            Assert.assertFalse(o1.equals(null));
+            
+            Assert.assertFalse(o1.equals("foo"));
+            
+            Assert.assertFalse(o1.equals(o2));
+            
+            Assert.assertTrue(o2.equals(o2d));
+            
+            // test hashCode consistent
+            Assert.assertTrue(o1.hashCode() == o1.hashCode());
+            
+            Assert.assertFalse(o1.hashCode() == o2.hashCode());
+            
+            Assert.assertTrue(o2.hashCode() == o2d.hashCode());
+            
         }
         catch(Exception unexpected)
         {

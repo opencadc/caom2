@@ -163,8 +163,9 @@ public final class PolygonUtil
         Polygon pt2 = trans.transform(p2);
 
         Polygon inter = doIntersectCAG(pt1, pt2);
-
-        inter = trans.inverseTransform(inter);
+        
+        if (inter != null)
+            inter = trans.inverseTransform(inter);
 
         return inter;
     }
@@ -842,6 +843,8 @@ public final class PolygonUtil
         Area a2 = toArea(p2);
         a1.intersect(a2);
         Polygon ret = toPolygon(a1);
+        if (ret.getVertices().isEmpty())
+            return null;
         return ret;
     }
 

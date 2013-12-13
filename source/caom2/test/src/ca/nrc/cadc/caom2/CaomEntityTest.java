@@ -157,6 +157,101 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+            // only Chunk does not override equals/compareTo/hasCode
+            Chunk o1 = new Chunk();
+            Chunk o2 = new Chunk();
+            
+            Assert.assertTrue(o1.equals(o1));
+            
+            Assert.assertFalse(o1.equals(null));
+            
+            Assert.assertFalse(o1.equals("foo"));
+            
+            Assert.assertFalse(o1.equals(o2));
+            
+            // simulate serialize/deserialize so different object with same numeric id
+            assignID(o2, o1.getID());
+            Assert.assertTrue(o1.equals(o2));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    private static void assignID(Object ce, Long id)
+    {
+        try
+        {
+            Field f = AbstractCaomEntity.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(ce, id);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+    
+    @Test
+    public void testDateFieldInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            int cs1 = o.getStateCode();
+            o.metaRelease = new Date();
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testCaomEnumInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.target = new Target("foo");
+            int cs1 = o.getStateCode();
+            o.target.type = TargetType.OBJECT;
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testKeywordsInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.telescope = new Telescope("fooscope");
+            int cs1 = o.getStateCode();
+            o.telescope.getKeywords().add("foo=2");
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testMaxDate()

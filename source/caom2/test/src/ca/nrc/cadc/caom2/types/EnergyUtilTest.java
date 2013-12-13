@@ -648,6 +648,7 @@ public class EnergyUtilTest
     private SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
+        log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         if (complete)
         {
@@ -660,12 +661,13 @@ public class EnergyUtilTest
         RefCoord c1 = new RefCoord(px, sx);
         RefCoord c2 = new RefCoord(px+nx, sx + nx*ds);
         wcs.getAxis().range = new CoordRange1D(c1, c2);
-        
+        log.debug("test range: " + axis.range);
         return wcs;
     }
     private SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
+        log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         if (complete)
         {
@@ -682,12 +684,13 @@ public class EnergyUtilTest
         wcs.getAxis().bounds = new CoordBounds1D();
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
-
+        log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
     private SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
+        log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         if (complete)
         {
@@ -699,12 +702,13 @@ public class EnergyUtilTest
 
         RefCoord c1 = new RefCoord(px, sx);
         wcs.getAxis().function = new CoordFunction1D((long) nx, ds, c1);
-        
+        log.debug("test function: " + axis.function);
         return wcs;
     }
     private SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
+        log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         if (complete)
         {
@@ -716,13 +720,14 @@ public class EnergyUtilTest
 
         RefCoord c1 = new RefCoord(px, sx);
         wcs.getAxis().function = new CoordFunction1D((long) nx, ds, c1);
-
+        log.debug("test function: " + axis.function);
         return wcs;
     }
 
     private SpectralWCS getInvalidFunction()
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
+        log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         wcs.bandpassName = BANDPASS_NAME;
         wcs.restwav = 6563.0;
@@ -732,7 +737,7 @@ public class EnergyUtilTest
         Double delta = 0.05;
         RefCoord c1 = new RefCoord(0.5, 2000.0);
         wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
-
+        log.debug("test function: " + axis.function);
         return wcs;
     }
 

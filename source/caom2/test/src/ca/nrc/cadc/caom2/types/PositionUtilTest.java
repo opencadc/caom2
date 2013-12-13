@@ -84,10 +84,12 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -246,19 +248,45 @@ public class PositionUtilTest
             CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
             SpatialWCS wcs = new SpatialWCS(axis);
             wcs.equinox = null;
-            Coord2D cen = new Coord2D(new RefCoord(256, 10), new RefCoord(256, 20));
+            ValueCoord2D cen = new ValueCoord2D(2.0, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
             
             Polygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
-                log.debug("testCoordCircleToPolygon: " + v);
+                log.info("testCoordCircleToPolygon: " + v);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
-
-        }
-        catch(UnsupportedOperationException expected)
-        {
-            log.debug("testCoordCircleToPolygon: expected " + expected);
+            //double expected = Math.PI*0.25; // triangulated
+            double area = 1.0; // bounding box 
+            Assert.assertEquals("area", area, poly.getArea(), 0.01);
+            
+            // make sure it works when overlapping meridian
+            cen = new ValueCoord2D(0.0, 3.0);
+            axis.bounds = new CoordCircle2D(cen, 0.5);
+            
+            poly = PositionUtil.toPolygon(wcs);
+            for (Vertex v : poly.getVertices())
+                log.info("testCoordCircleToPolygon: " + v);
+            Assert.assertNotNull(poly);
+            Assert.assertEquals(5, poly.getVertices().size());
+            //double expected = Math.PI*0.25; // triangulated
+            area = 1.0; // bounding box 
+            Assert.assertEquals("area", area, poly.getArea(), 0.01);
+            
+            
+            // circle at the pole
+            cen = new ValueCoord2D(30.0, 89.0);
+            axis.bounds = new CoordCircle2D(cen, 0.5);
+            try
+            {
+                poly = PositionUtil.toPolygon(wcs);
+                Assert.fail("expected UnsupportedOperationException, got: " + poly);
+            }
+            catch(UnsupportedOperationException expected)
+            {
+                log.debug("caught expected exception: " + expected);
+            }
+            
         }
         catch(Exception unexpected)
         {
@@ -278,10 +306,10 @@ public class PositionUtilTest
             SpatialWCS wcs = new SpatialWCS(axis);
             wcs.equinox = null;
             CoordPolygon2D cp = new CoordPolygon2D();
-            cp.getVertices().add(new Coord2D(new RefCoord(0.5, 10), new RefCoord(0.5, 20)));
-            cp.getVertices().add(new Coord2D(new RefCoord(512.5, 11), new RefCoord(0.5, 20)));
-            cp.getVertices().add(new Coord2D(new RefCoord(512.5, 11), new RefCoord(512.5, 21)));
-            cp.getVertices().add(new Coord2D(new RefCoord(0.5, 10), new RefCoord(512.5, 21)));
+            cp.getVertices().add(new ValueCoord2D(10, 20));
+            cp.getVertices().add(new ValueCoord2D(11, 20));
+            cp.getVertices().add(new ValueCoord2D(11, 21));
+            cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
             Polygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
@@ -498,7 +526,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRangeBounds(plane.getArtifacts(), ProductType.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeDimension] dim="+dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(1000L, dim.naxis1, 1L);
@@ -509,7 +537,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRangeBounds(plane.getArtifacts(), ProductType.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeDimension] dim="+dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(2000L, dim.naxis1, 1L);
@@ -520,7 +548,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRangeBounds(plane.getArtifacts(), ProductType.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeDimension] dim="+dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(3000L, dim.naxis1, 1L);
@@ -531,7 +559,7 @@ public class PositionUtilTest
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRangeBounds(plane.getArtifacts(), ProductType.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeDimension] dim="+dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(4000L, dim.naxis1, 1L);
@@ -550,7 +578,22 @@ public class PositionUtilTest
     {
         try
         {
+            Plane plane;
+            Polygon poly;
+            Double sz;
+            double expectedSize = 0.03; // weighted average of the two chunks
 
+            plane = getTestSetFunction(1, 1, 2);
+            Iterator<Chunk> iter = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator();
+            Chunk c = iter.next();
+            c.position.resolution = 0.02; // arcsec
+            c = iter.next();
+            c.position.resolution = 0.04; // arcsec
+            sz = PositionUtil.computeResolution(plane.getArtifacts(), ProductType.SCIENCE);
+            log.debug("[testComputeResolution] sz="+sz);
+            Assert.assertNotNull(sz);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
         }
         catch(Exception unexpected)
         {
@@ -564,7 +607,24 @@ public class PositionUtilTest
     {
         try
         {
+            Plane plane;
+            Polygon poly;
+            Double sz;
+            double expectedSize = 3600.0 * 1.0e-3; // arcsec
 
+            plane = getTestSetFunction(1, 1, 1);
+            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), ProductType.SCIENCE);
+            log.debug("[testComputeSampleSize] sz="+sz);
+            Assert.assertNotNull(sz);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
+            
+            plane = getTestSetRange(1, 1, 1);
+            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), ProductType.SCIENCE);
+            log.debug("[testComputeSampleSize] sz="+sz);
+            Assert.assertNotNull(sz);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
+            Assert.assertEquals(expectedSize, sz, 1.0e-6);
         }
         catch(Exception unexpected)
         {
@@ -578,7 +638,20 @@ public class PositionUtilTest
     {
         try
         {
-
+            Plane plane = getTestSetFunction(1, 1, 2);
+            Iterator<Chunk> iter = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator();
+            Chunk c = iter.next();
+            Boolean td;
+                    
+            td = PositionUtil.computeTimeDependent(plane.getArtifacts(), ProductType.SCIENCE);
+            log.debug("[testComputeResolution] timeDep=" + td);
+            Assert.assertNull(td);
+            
+            c.position.coordsys = "GAPPT";
+            td = PositionUtil.computeTimeDependent(plane.getArtifacts(), ProductType.SCIENCE);
+            log.debug("[testComputeResolution] timeDep=" + td);
+            Assert.assertNotNull(td);
+            Assert.assertTrue(td);
         }
         catch(Exception unexpected)
         {
@@ -745,13 +818,14 @@ public class PositionUtilTest
         Axis axis1 = new Axis("RA", "deg");
         Axis axis2 = new Axis("DEC", "deg");
         CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+        log.debug("test axis: " + axis);
         SpatialWCS wcs = new SpatialWCS(axis);
         wcs.equinox = null;
 
         Coord2D start = new Coord2D(new RefCoord(px, sx), new RefCoord(py, sy));
         Coord2D end = new Coord2D(new RefCoord(px+dp, sx+ds), new RefCoord(py+dp, sy+ds));
         axis.range = new CoordRange2D(start, end);
-
+        log.debug("test range: " + axis.range);
         return wcs;
     }
 
@@ -765,6 +839,7 @@ public class PositionUtilTest
             axis2 = new Axis("GLAT", "deg");
         }
         CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+        log.debug("test axis: " + axis);
         SpatialWCS wcs = new SpatialWCS(axis);
         wcs.coordsys = "ICRS";
         if (gal)
@@ -774,7 +849,7 @@ public class PositionUtilTest
         Dimension2D dim = new Dimension2D(1000, 1000); // 1000 x 1.0e-3 = 1 deg
         Coord2D ref = new Coord2D(new RefCoord(px, sx), new RefCoord(py, sy));
         axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-
+        log.debug("test function: " + axis.function);
         return wcs;
     }
 }

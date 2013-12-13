@@ -81,10 +81,10 @@ public class CoordCircle2D implements CoordBounds2D, Serializable
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
-    private Coord2D center;
+    private ValueCoord2D center;
     private Double radius;
 
-    public CoordCircle2D(Coord2D center, Double radius)
+    public CoordCircle2D(ValueCoord2D center, Double radius)
     {
         CaomValidator.assertNotNull(getClass(), "center", center);
         CaomValidator.assertNotNull(getClass(), "radius", radius);
@@ -92,7 +92,7 @@ public class CoordCircle2D implements CoordBounds2D, Serializable
         this.radius = radius;
     }
 
-    public Coord2D getCenter()
+    public ValueCoord2D getCenter()
     {
         return center;
     }
@@ -102,5 +102,9 @@ public class CoordCircle2D implements CoordBounds2D, Serializable
         return radius;
     }
 
-
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + center + "," + radius + "]";
+    }
 }

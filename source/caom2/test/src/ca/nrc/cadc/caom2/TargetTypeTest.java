@@ -70,6 +70,8 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -79,9 +81,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class EnergyTest 
+public class TargetTypeTest 
 {
-    private static final Logger log = Logger.getLogger(EnergyTest.class);
+    private static final Logger log = Logger.getLogger(TargetTypeTest.class);
 
     static
     {
@@ -101,13 +103,31 @@ public class EnergyTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testGetFreqWidth()
+    public void testRoundtrip()
     {
         try
         {
-
+            for (TargetType c : TargetType.values())
+            {
+                log.debug("testing: " + c);
+                String s = c.getValue();
+                TargetType c2 = TargetType.toValue(s);
+                Assert.assertEquals(c, c2);
+            }
+            
+            try 
+            {
+                TargetType c = TargetType.toValue("NoSuchType");
+                Assert.fail("expected IllegalArgumentException, got: " + c);
+            } 
+            catch(IllegalArgumentException expected) 
+            {
+                log.debug("caught expected exception: " + expected);
+            }
+            
+            
         }
         catch(Exception unexpected)
         {
@@ -115,13 +135,21 @@ public class EnergyTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testGetFreqSampleSize()
+    public void testChecksum()
     {
         try
         {
-
+            // correctness is a 100% duplicate of the enum code itself, but
+            // we can test uniqueness
+            Set<Integer> values = new TreeSet<Integer>();
+            for (TargetType c : TargetType.values())
+            {
+                int i = c.checksum();
+                boolean added = values.add(i);
+                Assert.assertTrue("added " + i, added);
+            }
         }
         catch(Exception unexpected)
         {
@@ -129,6 +157,4 @@ public class EnergyTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-
 }

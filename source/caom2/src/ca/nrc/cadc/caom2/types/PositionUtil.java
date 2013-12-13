@@ -74,7 +74,6 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
@@ -83,6 +82,7 @@ import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.caom2.wcs.WCSWrapper;
 import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.wcs.Transform;
@@ -128,7 +128,7 @@ public final class PositionUtil
         {
             Polygon poly = computeBounds(artifacts, productType);
             p.bounds = poly;
-            p.dimension = computeDimensionsFromRangeBounds(artifacts, productType);
+            p.dimension = computeDimensionsFromRange(artifacts, productType);
             if (p.dimension == null)
                 p.dimension = computeDimensionsFromWCS(poly, artifacts, productType);
             p.resolution = computeResolution(artifacts, productType);
@@ -330,7 +330,7 @@ public final class PositionUtil
         return new Dimension2D(ix, iy);
     }
 
-    static Dimension2D computeDimensionsFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
+    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType)
     {
         // assume all the WCS come from a single data array, find min/max pixel values
         double x1 = Double.MAX_VALUE;
@@ -364,22 +364,6 @@ public final class PositionUtil
                                 y2 = Math.max(y2, range.getEnd().getCoord2().pix);
                                 found = true;
                             }
-                            else if (bounds != null && bounds instanceof CoordPolygon2D)
-                            {
-                                CoordPolygon2D cp = (CoordPolygon2D) bounds;
-                                for (Coord2D c2 : cp.getVertices())
-                                {
-                                    x1 = Math.min(x1, c2.getCoord1().pix);
-                                    x2 = Math.max(x2, c2.getCoord1().pix);
-
-                                    y1 = Math.min(y1, c2.getCoord2().pix);
-                                    y2 = Math.max(y2, c2.getCoord2().pix);
-                                }
-                                found = true;
-                                // for CoordCircle2D we rely on function since circle does not
-                                // have a RefCoord to determine number of pixels inside circle
-                                // by itself
-                            }
                         }
                     }
                 }
@@ -408,8 +392,10 @@ public final class PositionUtil
                         {
                             CoordAxis2D axis = c.position.getAxis();
                             double num = Util.getNumPixels(axis);
-                            totSampleSize += Util.getPixelScale(axis) * num;
+                            double scale = Util.getPixelScale(axis);
+                            totSampleSize += scale * num;
                             numPixels += num;
+                            log.debug("[computeSampleSize] num=" + num + " scale="+scale);
                         }
                     }
                 }
@@ -492,37 +478,34 @@ public final class PositionUtil
         CoordFunction2D function = wcs.getAxis().function;
         
         Polygon poly = new Polygon();
-        if (range != null)
-        {
-            double x1 = range.getStart().getCoord1().val;
-            double x2 = range.getEnd().getCoord1().val;
-            double y1 = range.getStart().getCoord2().val;
-            double y2 = range.getEnd().getCoord2().val;
-            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-        }
-        else if(bounds != null)
+        if(bounds != null)
         {
             if (bounds instanceof CoordCircle2D)
             {
                 CoordCircle2D cc = (CoordCircle2D) bounds;
-                // TODO: triangulate circle to polygon, taking care with meridian and poles
-                throw new UnsupportedOperationException("CoordCircle2D -> Polygon");
+                if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
+                    throw new UnsupportedOperationException("cannot convert CoordCircld2D -> Polygon near the pole ("+cc+")");
+                double x = cc.getCenter().coord1;
+                double y = cc.getCenter().coord2;
+                double dy = cc.getRadius();
+                double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
             }
             else if (bounds instanceof CoordPolygon2D)
             {
                 CoordPolygon2D cp = (CoordPolygon2D) bounds;
-                Iterator<Coord2D> i = cp.getVertices().iterator();
+                Iterator<ValueCoord2D> i = cp.getVertices().iterator();
                 while ( i.hasNext() )
                 {
-                    Coord2D coord = i.next();
+                    ValueCoord2D coord = i.next();
                     if (poly.getVertices().isEmpty())
-                        poly.getVertices().add(new Vertex(coord.getCoord1().val, coord.getCoord2().val, SegmentType.MOVE));
+                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
                     else
-                        poly.getVertices().add(new Vertex(coord.getCoord1().val, coord.getCoord2().val, SegmentType.LINE));
+                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
                 }
                 poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             }
@@ -544,10 +527,41 @@ public final class PositionUtil
             List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
             poly.getVertices().addAll(skyCoords);
         }
+        else if (range != null)
+        {
+            double x1 = range.getStart().getCoord1().val;
+            double x2 = range.getEnd().getCoord1().val;
+            double y1 = range.getStart().getCoord2().val;
+            double y2 = range.getEnd().getCoord2().val;
+            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        }
 
         toICRS(coordsys, poly.getVertices());
 
         return poly;
+    }
+    
+    private static Vertex rangeReduce(Vertex v)
+    {
+        if (v.cval2 > 90.0)
+        {
+            v.cval1 += 180.0;
+            v.cval2 = 180.0 - v.cval2;
+        }
+        if (v.cval2 <  -90.0)
+        {
+            v.cval1 += 180.0;
+            v.cval2 = -180.0 - v.cval2;
+        }
+        if (v.cval1 < 0)
+            v.cval1 += 360.0;
+        if (v.cval1 > 360.0)
+            v.cval1 -= 360.0;
+        return v;
     }
 
     static class CoordSys implements Serializable
@@ -580,7 +594,7 @@ public final class PositionUtil
 
         if ( CoordSys.GAPPT.equals(ret.name) )
         {
-            ret.timeDependent = true;
+            ret.timeDependent = Boolean.TRUE;
             ret.supported = false;
         }
         else if((ctype1.startsWith("ELON") && ctype2.startsWith("ELAT"))
@@ -711,7 +725,7 @@ public final class PositionUtil
             }
         }
     }
-
+    
     /**
      * Find the pixel bounds that enclose the specified circle.
      *
@@ -771,13 +785,17 @@ public final class PositionUtil
         // convert wcs/footprint to sky coords
         log.debug("computing poly INTERSECT footprint");
         Polygon foot = toPolygon(wcs);
-
+        log.debug("input poly: " + poly);
+        log.debug("wcs poly: " + foot);
+        
         Polygon npoly = PolygonUtil.intersection(poly, foot);
         if (npoly == null)
         {
             log.debug("poly INTERSECT footprint == null");
             return null;
         }
+        //log.debug("intersection: " + npoly);
+        
 
         // npoly is in ICRS
         if (gal || fk4)

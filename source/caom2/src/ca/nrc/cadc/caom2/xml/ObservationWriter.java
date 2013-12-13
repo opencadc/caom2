@@ -108,6 +108,7 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.StringBuilderWriter;
 import ca.nrc.cadc.util.StringUtil;
@@ -884,6 +885,25 @@ public class ObservationWriter implements Serializable
     }
     
     /**
+     * Builds a JDOM representation of a ValueCoord2D and adds it to the
+     * parent element.
+     * 
+     * @param name The name of the element.
+     * @param coord The ValueCoord2D to add to the parent.
+     * @param parent The parent element for this child element.
+     */
+    protected void addValueCoord2DElement(String name, ValueCoord2D coord, Element parent)
+    {
+        if(coord == null)
+            return;
+        
+        Element element = getCaom2Element(name);
+        addNumberElement("coord1", coord.coord1, element);
+        addNumberElement("coord2", coord.coord2, element);
+        parent.addContent(element);
+    }
+    
+    /**
      * Builds a JDOM representation of a CoordAxis1D and adds it to the
      * parent element.
      * 
@@ -984,7 +1004,7 @@ public class ObservationWriter implements Serializable
             return;
         
         Element element = getCaom2Element(name);
-        addCoord2DElement("center", circle.getCenter(), element);
+        addValueCoord2DElement("center", circle.getCenter(), element);
         addNumberElement("radius", circle.getRadius(), element);
         parent.addContent(element);
     }
@@ -1065,14 +1085,13 @@ public class ObservationWriter implements Serializable
             return;
         
         Element element = getCaom2Element(name);
-        List<Coord2D> vertices = polygon.getVertices();
-        if (!vertices.isEmpty())
+        if (!polygon.getVertices().isEmpty())
         {
             Element verticesElement = getCaom2Element("vertices");
             element.addContent(verticesElement);
-            for (Coord2D vertex : vertices)
+            for (ValueCoord2D vertex : polygon.getVertices())
             {
-                addCoord2DElement("vertex", vertex, verticesElement);
+                addValueCoord2DElement("vertex", vertex, verticesElement);
             }
         }
         parent.addContent(element);

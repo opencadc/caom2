@@ -101,7 +101,7 @@ public enum EnergyBand implements CaomEnum
         return value.hashCode();
     }
     
-    public static EnergyBand getEnergyBand(String s)
+    public static EnergyBand toValue(String s)
     {
         for (EnergyBand eb : values())
             if (eb.value.equals(s))

@@ -108,6 +108,7 @@ public class ObservationTest
         try
         {
             Observation o = new SimpleObservation("Stuff", "Thing");
+            log.debug("created: " + o);
             Assert.assertEquals("Stuff", o.getCollection());
             Assert.assertEquals("Thing", o.getObservationID());
 
@@ -137,12 +138,17 @@ public class ObservationTest
             Observation cat = new SimpleObservation("Stuff", "CatInTheHat");
             Observation thing1 = new SimpleObservation("Stuff", "Thing");
             Observation thing2 = new SimpleObservation("Stuff", "Thing");
+            Observation dog = new SimpleObservation("Dog", "Thing");
 
             Assert.assertTrue(thing1.equals(thing1));
             Assert.assertTrue(thing1.equals(thing2));
             
             Assert.assertFalse(cat.equals(thing1));
             Assert.assertFalse(thing1.equals(cat));
+            
+            Assert.assertFalse(cat.equals(null));
+            Assert.assertFalse(cat.equals("foo"));
+            Assert.assertFalse(thing1.equals(dog));
 
             // TODO: verify that changing any other field does not effect equals()?
         }

@@ -67,32 +67,87 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.wcs;
+package ca.nrc.cadc.caom2.types;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
+public class CircleTest 
 {
-    private static final long serialVersionUID = 201202091500L;
+    private static final Logger log = Logger.getLogger(CircleTest.class);
 
-    // immutable state
-    private List<ValueCoord2D> vertices;
-
-    public CoordPolygon2D()
+    private Circle target;
+    private double expCenterX, expCenterY, expArea, expSize;
+    
+    static
     {
-        this.vertices = new ArrayList<ValueCoord2D>();
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public List<ValueCoord2D> getVertices()
+    public CircleTest()
     {
-        return vertices;
+        this.target = new Circle(new Point(2.0, 3.0), 0.5);
+        expCenterX = 2.0;
+        expCenterY = 3.0;
+        expArea = Math.PI * 0.25;
+        expSize = 1.0;
     }
-
-
+    
+    //@Test
+    public void testTemplate()
+    {
+        try
+        {
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testShapeInterface()
+    {
+        try
+        {
+            Assert.assertEquals(expCenterX, target.getCenter().cval1, 0.001);
+            Assert.assertEquals(expCenterY, target.getCenter().cval2, 0.001);
+            Assert.assertEquals(expArea, target.getArea(), 0.01);
+            Assert.assertEquals(expSize, target.getSize(), 0.01);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testEncodeDecode()
+    {
+        try
+        {
+            byte[] encoded = Circle.encode(target);
+            Circle decoded = Circle.decode(encoded);
+            Assert.assertNotNull(decoded);
+            Assert.assertEquals(target.getCenter().cval1, decoded.getCenter().cval1, 0.0);
+            Assert.assertEquals(target.getCenter().cval2, decoded.getCenter().cval2, 0.0);
+            Assert.assertEquals(target.getRadius(), decoded.getRadius(), 0.0);
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
