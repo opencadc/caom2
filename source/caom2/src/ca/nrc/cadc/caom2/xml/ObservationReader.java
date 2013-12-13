@@ -116,6 +116,7 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1053,7 +1054,7 @@ public class ObservationReader implements Serializable
      * @param parent the parent Element.
      * @param namespace of the document.
      * @param required is the element expected to be found.
-     * @return an Coord2D, or null if the document doesn't contain element named name.
+     * @return a Coord2D, or null if the document doesn't contain element named name.
      * @throws ObservationParsingException 
      */
     protected Coord2D getCoord2D(String name, Element parent, Namespace namespace, boolean required)
@@ -1066,6 +1067,28 @@ public class ObservationReader implements Serializable
         RefCoord coord1 = getRefCoord("coord1", element, namespace, true);
         RefCoord coord2 = getRefCoord("coord2", element, namespace, true);
         return new Coord2D(coord1, coord2);
+    }
+    /**
+     * Build an ValueCoord2D from a JDOM representation of an element named name.
+     * 
+     * @param name the name of the Element.
+     * @param parent the parent Element.
+     * @param namespace of the document.
+     * @param required is the element expected to be found.
+     * @return a ValueCoord2D, or null if the document doesn't contain element named name.
+     * @throws ObservationParsingException 
+     */
+    protected ValueCoord2D getValueCoord2D(String name, Element parent, Namespace namespace, boolean required)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement(name, parent, namespace, required);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        
+        double coord1 = getChildTextAsDouble("coord1", element, namespace, true);
+        double coord2 = getChildTextAsDouble("coord2", element, namespace, true);
+        return new ValueCoord2D(coord1, coord2);
     }
     
     /**
@@ -1199,7 +1222,7 @@ public class ObservationReader implements Serializable
             return null;
         
         // Look for a CoordCircle2D which has a center and a radius.
-        Coord2D center = getCoord2D("center", element, namespace, true);
+        ValueCoord2D center = getValueCoord2D("center", element, namespace, true);
         Double radius = getChildTextAsDouble("radius", element, namespace, true);
         return new CoordCircle2D(center, radius);
     }
@@ -1306,9 +1329,9 @@ public class ObservationReader implements Serializable
         while (it.hasNext())
         {
             Element vertexElement = (Element) it.next();
-            RefCoord coord1 = getRefCoord("coord1", vertexElement, namespace, true);
-            RefCoord coord2 = getRefCoord("coord2", vertexElement, namespace, true);
-            polygon.getVertices().add(new Coord2D(coord1, coord2));
+            double coord1 = getChildTextAsDouble("coord1", vertexElement, namespace, true);
+            double coord2 = getChildTextAsDouble("coord2", vertexElement, namespace, true);
+            polygon.getVertices().add(new ValueCoord2D(coord1, coord2));
         }
         return polygon;
     }

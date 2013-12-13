@@ -79,7 +79,7 @@ package ca.nrc.cadc.caom2;
  * 
  * @author pdowler
  */
-public enum PolarizationState
+public enum PolarizationState implements CaomEnum
 {
     I(1),
     Q(2),
@@ -162,5 +162,10 @@ public enum PolarizationState
             case -8: return YX;
         }
         throw new IllegalArgumentException("invalid polarization code: " + val);
+    }
+
+    public int checksum()
+    {
+        return value;
     }
 }

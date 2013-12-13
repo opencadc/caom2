@@ -126,54 +126,25 @@ public class PartTest
         }
     }
 
-    /* pdd: removed getProductType logic from core classes
     @Test
-    public void testGetProductType()
+    public void testEquals()
     {
         try
         {
-            // add some chunks
-            Chunk sci1 = new Chunk();
-            sci1.productType = ProductType.SCIENCE;
-            Chunk sci2 = new Chunk();
-            sci2.productType = ProductType.SCIENCE;
-            Chunk aux = new Chunk();
-            aux.productType = ProductType.AUXILIARY;
-            Chunk info = new Chunk();
-            info.productType = ProductType.INFO;
-            Chunk prev = new Chunk();
-            prev.productType = ProductType.PREVIEW;
+            Part p1 = new Part("foo");
+            Part eq = new Part("foo");
+            Part neq = new Part("bar");
+            
+            Assert.assertTrue( p1.equals(p1) );
 
-            // test set type
-            Part p = new Part("x");
-            p.productType = ProductType.SCIENCE;
-            Assert.assertEquals(ProductType.SCIENCE, p.getProductType());
-            p.getChunks().add(aux);
-            Assert.assertEquals(1, p.getChunks().size());
-            Assert.assertEquals(ProductType.SCIENCE, p.getProductType()); // still science
-
-            // test computed type
-            p = new Part("x");
-            Assert.assertNull(p.getProductType());
-            p.getChunks().add(sci1);
-            Assert.assertEquals(1, p.getChunks().size());
-            Assert.assertEquals(ProductType.SCIENCE, p.getProductType());
-            p.getChunks().add(sci2);
-            Assert.assertEquals(2, p.getChunks().size());
-            Assert.assertEquals(ProductType.SCIENCE, p.getProductType());
-            p.getChunks().add(aux);
-            Assert.assertEquals(3, p.getChunks().size());
-            Assert.assertNull(p.getProductType()); // no common type
-            p.getChunks().add(info);
-            Assert.assertEquals(4, p.getChunks().size());
-            Assert.assertNull(p.getProductType()); // no common type
-            p.getChunks().add(prev);
-            Assert.assertEquals(5, p.getChunks().size());
-            Assert.assertNull(p.getProductType()); // no common type
-
-            p.getChunks().clear();
-            Assert.assertEquals(0, p.getChunks().size());
-            Assert.assertNull(p.getProductType()); // no type at all
+            log.debug("equals: " + p1 + " == " + eq);
+            Assert.assertTrue( p1.equals(eq) );
+            
+            log.debug("equals: " + p1 + " != " + neq);
+            Assert.assertFalse( p1.equals(neq) );
+            
+            Assert.assertFalse( p1.equals(null) );
+            Assert.assertFalse( p1.equals(new Integer(1)) ); // a different class
         }
         catch(Exception unexpected)
         {
@@ -181,5 +152,4 @@ public class PartTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    */
 }

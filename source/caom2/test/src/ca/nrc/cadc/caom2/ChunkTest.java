@@ -67,32 +67,62 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.wcs;
+package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
+public class ChunkTest 
 {
-    private static final long serialVersionUID = 201202091500L;
+    private static final Logger log = Logger.getLogger(ChunkTest.class);
 
-    // immutable state
-    private List<ValueCoord2D> vertices;
-
-    public CoordPolygon2D()
+    static
     {
-        this.vertices = new ArrayList<ValueCoord2D>();
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public List<ValueCoord2D> getVertices()
+    //@Test
+    public void testTemplate()
     {
-        return vertices;
+        try
+        {
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+            Chunk p1 = new Chunk();
+            Chunk neq = new Chunk();
+            
+            Assert.assertTrue( p1.equals(p1) );
+            Assert.assertEquals(0, p1.compareTo(p1) ); // not checked in any other test
 
+            log.debug("equals: " + p1 + " != " + neq);
+            Assert.assertFalse( p1.equals(neq) );
+            
+            Assert.assertFalse( p1.equals(null) );
+            Assert.assertFalse( p1.equals(new Integer(1)) ); // a different class
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }

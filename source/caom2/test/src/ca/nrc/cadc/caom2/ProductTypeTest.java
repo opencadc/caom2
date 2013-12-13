@@ -67,32 +67,94 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.wcs;
+package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.util.Log4jInit;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
+public class ProductTypeTest 
 {
-    private static final long serialVersionUID = 201202091500L;
+    private static final Logger log = Logger.getLogger(ProductTypeTest.class);
 
-    // immutable state
-    private List<ValueCoord2D> vertices;
-
-    public CoordPolygon2D()
+    static
     {
-        this.vertices = new ArrayList<ValueCoord2D>();
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public List<ValueCoord2D> getVertices()
+    //@Test
+    public void testTemplate()
     {
-        return vertices;
+        try
+        {
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-
+    
+    @Test
+    public void testRoundtrip()
+    {
+        try
+        {
+            for (ProductType c : ProductType.values())
+            {
+                log.debug("testing: " + c);
+                String s = c.getValue();
+                ProductType c2 = ProductType.toValue(s);
+                Assert.assertEquals(c, c2);
+            }
+            
+            try 
+            {
+                ProductType c = ProductType.toValue("NoSuchType");
+                Assert.fail("expected IllegalArgumentException, got: " + c);
+            } 
+            catch(IllegalArgumentException expected) 
+            {
+                log.debug("caught expected exception: " + expected);
+            }
+            
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testChecksum()
+    {
+        try
+        {
+            // correctness is a 100% duplicate of the enum code itself, but
+            // we can test uniqueness
+            Set<Integer> values = new TreeSet<Integer>();
+            for (ProductType c : ProductType.values())
+            {
+                int i = c.checksum();
+                boolean added = values.add(i);
+                Assert.assertTrue("added " + i, added);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }

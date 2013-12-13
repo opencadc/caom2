@@ -104,6 +104,7 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.InputStream;
 import java.io.Reader;
@@ -794,6 +795,15 @@ public class ObservationReaderWriterTest
         assertEquals(expected.getCunit(), actual.getCunit());
     }
     
+    protected void compareValueCoord2(ValueCoord2D expected, ValueCoord2D actual)
+    {
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        assertEquals(expected.coord1, actual.coord1, 0.0);
+        assertEquals(expected.coord2, actual.coord2, 0.0);
+    }
+    
     protected void compareCoord2D(Coord2D expected, Coord2D actual)
     {
         assertNotNull(expected);
@@ -871,7 +881,7 @@ public class ObservationReaderWriterTest
         
         assertNotNull(actual.getCenter());
         assertNotNull(actual.getRadius());
-        compareCoord2D(expected.getCenter(), actual.getCenter());
+        compareValueCoord2(expected.getCenter(), actual.getCenter());
         assertEquals(expected.getRadius(), actual.getRadius());
     }
     
@@ -926,13 +936,13 @@ public class ObservationReaderWriterTest
         assertNotNull(actual.getVertices());
         assertEquals(expected.getVertices().size(), actual.getVertices().size());
         
-        Iterator actualIter = expected.getVertices().iterator();
-        Iterator expectedIter = actual.getVertices().iterator();
+        Iterator<ValueCoord2D> actualIter = expected.getVertices().iterator();
+        Iterator<ValueCoord2D> expectedIter = actual.getVertices().iterator();
         while (expectedIter.hasNext())
         {
-            Coord2D expectedCoord2D = (Coord2D) expectedIter.next();
-            Coord2D actualCoord2D = (Coord2D) actualIter.next();
-            compareCoord2D(expectedCoord2D, actualCoord2D);
+            ValueCoord2D expectedCoord2D = expectedIter.next();
+            ValueCoord2D actualCoord2D = actualIter.next();
+            compareValueCoord2(expectedCoord2D, actualCoord2D);
         }
     }
     

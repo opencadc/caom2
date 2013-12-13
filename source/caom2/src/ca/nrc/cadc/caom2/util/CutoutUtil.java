@@ -104,6 +104,17 @@ public class CutoutUtil implements Serializable
     public List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
         throws NoSuchKeywordException
     {
+        if (a == null)
+            throw new IllegalArgumentException("null Artifact");
+        Circle circle = null;
+        if (shape != null)
+        {
+            if (shape instanceof Circle)
+                circle = (Circle) shape;
+            else
+                throw new IllegalArgumentException("Only Circle is currently supported.");
+        }
+        
         if (log.isDebugEnabled()) // costly string conversions here
         {
             StringBuilder sb = new StringBuilder();
@@ -115,15 +126,6 @@ public class CutoutUtil implements Serializable
             log.debug(sb.toString());
         }
 
-        Circle circle = null;
-        if (shape != null)
-        {
-            if (shape instanceof Circle)
-                circle = (Circle) shape;
-            else
-                throw new IllegalArgumentException("Only Circle is currently supported.");
-        }
-        
          // for each chunk, we make a [part][chunk] cutout aka [extno][<pix range>,...]
         List<String> ret = new ArrayList<String>();
         for (Part p : a.getParts()) // currently, only FITS files have parts and chunks
@@ -275,10 +277,10 @@ public class CutoutUtil implements Serializable
         
         boolean posCutout = canPositionCutout(c);
         boolean energyCutout = canEnergyCutout(c);
-        //boolean timeCutout = canTimeCutout(c);
-        //boolean polCutout = canPolarizationCutout(c);
+        boolean timeCutout = canTimeCutout(c);
+        boolean polCutout = canPolarizationCutout(c);
 
-        return posCutout || energyCutout;
+        return posCutout || energyCutout || timeCutout || polCutout;
     }
 
     // check if spatial cutout is possible (currently function only)
@@ -294,14 +296,6 @@ public class CutoutUtil implements Serializable
     // check if energy cutout is possible (currently function only)
     protected static boolean canEnergyCutout(Chunk c)
     {
-        log.debug("Chunk " + c.getID());
-        log.debug("\tnaxis: " + c.naxis + " energyAxis: " + c.energyAxis);
-        if (c.energy != null)
-        {
-            log.debug("\tenergy.axis: " + c.energy.getAxis() + " " + c.energy.getSpecsys());
-            log.debug("\tenergy.axis.function: " + c.energy.getAxis().function);
-        }
-
         boolean energyCutout = (c.naxis != null && c.naxis.intValue() >= 1
                     && c.energy != null && c.energy.getAxis().function != null
                     && c.energyAxis != null && c.energyAxis.intValue() <= c.naxis.intValue());
@@ -311,18 +305,20 @@ public class CutoutUtil implements Serializable
     // check if time cutout is possible (currently function only)
     protected static boolean canTimeCutout(Chunk c)
     {
-        boolean timeCutout = (c.naxis != null && c.naxis.intValue() >= 1
-                    && c.time != null && c.time.getAxis().function != null
-                    && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
+        boolean timeCutout = false;
+        //(c.naxis != null && c.naxis.intValue() >= 1
+        //            && c.time != null && c.time.getAxis().function != null
+        //            && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
         return timeCutout;
     }
 
     // check if polarization cutout is possible (currently function only)
     protected static boolean canPolarizationCutout(Chunk c)
     {
-        boolean polarizationCutout = (c.naxis != null && c.naxis.intValue() >= 1
-                    && c.polarization != null && c.polarization.getAxis().function != null
-                    && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
+        boolean polarizationCutout = false;
+        //(c.naxis != null && c.naxis.intValue() >= 1
+        //            && c.polarization != null && c.polarization.getAxis().function != null
+        //            && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
         return polarizationCutout;
     }
 }

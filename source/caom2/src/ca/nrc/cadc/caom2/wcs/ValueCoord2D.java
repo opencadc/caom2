@@ -70,29 +70,29 @@
 package ca.nrc.cadc.caom2.wcs;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
+public class ValueCoord2D implements Serializable
 {
-    private static final long serialVersionUID = 201202091500L;
+    private static final long serialVersionUID = 201312111230L;
 
-    // immutable state
-    private List<ValueCoord2D> vertices;
+    public double coord1;
+    public double coord2;
 
-    public CoordPolygon2D()
+    public static final String[] CTOR_UTYPES = { "coord1", "coord2" };
+    
+    public ValueCoord2D(double coord1, double coord2)
     {
-        this.vertices = new ArrayList<ValueCoord2D>();
+        this.coord1 = coord1;
+        this.coord2 = coord2;
     }
 
-    public List<ValueCoord2D> getVertices()
+    @Override
+    public String toString()
     {
-        return vertices;
+        return getClass().getSimpleName() + "[" + coord1 + "," + coord2 + "]";
     }
-
-
 }

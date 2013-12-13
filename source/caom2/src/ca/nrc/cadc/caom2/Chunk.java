@@ -117,8 +117,8 @@ public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
 
     public int compareTo(Chunk o)
     {
-        int lhs = hashCode();
-        int rhs = o.hashCode();
+        long lhs = getID();
+        long rhs = o.getID();
         if (lhs < rhs)
             return -1;
         if (lhs > rhs)
@@ -126,7 +126,7 @@ public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
         return 0; // same hashCode == same object
     }
 
-    // the java.lang.Object implementations of equals() and hashCode() are sufficient
+    // the AbstractCaomEntity implementations of equals() and hashCode() are sufficient
 
 
 }

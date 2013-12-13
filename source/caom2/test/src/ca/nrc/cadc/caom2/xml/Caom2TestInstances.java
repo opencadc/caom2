@@ -112,6 +112,7 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.util.ArrayList;
@@ -540,7 +541,7 @@ public class Caom2TestInstances
             
             if (boundsIsCircle)
             {
-                Coord2D center = new Coord2D(new RefCoord(15.0, 15.5), new RefCoord(16.0, 16.5));
+                ValueCoord2D center = new ValueCoord2D(15.5, 16.5);
                 Double radius = 17.0;
                 CoordCircle2D circle = new CoordCircle2D(center, radius);
                 coordAxis2D.bounds = circle;
@@ -548,9 +549,9 @@ public class Caom2TestInstances
             else
             {
                 CoordPolygon2D polygon = new CoordPolygon2D();
-                polygon.getVertices().add(new Coord2D(new RefCoord(15.0, 15.5), new RefCoord(16.0, 16.5)));
-                polygon.getVertices().add(new Coord2D(new RefCoord(17.0, 17.5), new RefCoord(18.0, 18.5)));
-                polygon.getVertices().add(new Coord2D(new RefCoord(190, 19.5), new RefCoord(20.0, 20.5)));
+                polygon.getVertices().add(new ValueCoord2D(15.5,16.5));
+                polygon.getVertices().add(new ValueCoord2D(17.5,18.5));
+                polygon.getVertices().add(new ValueCoord2D(19.5,20.5));
                 coordAxis2D.bounds = polygon;
             }
         }

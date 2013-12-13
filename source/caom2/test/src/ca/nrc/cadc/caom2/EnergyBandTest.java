@@ -69,8 +69,10 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -80,9 +82,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class ObservationURITest 
+public class EnergyBandTest 
 {
-    private static final Logger log = Logger.getLogger(ObservationURITest.class);
+    private static final Logger log = Logger.getLogger(EnergyBandTest.class);
 
     static
     {
@@ -102,37 +104,33 @@ public class ObservationURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testConstructor()
+    public void testRoundtrip()
     {
         try
         {
-            ObservationURI o = new ObservationURI("Stuff", "Thing");
-            log.debug("created: " + o);
-
-            o =  new ObservationURI(new URI("caom", "Stuff/Thing", null));
-
-            try
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+            for (EnergyBand c : EnergyBand.values())
             {
-                o =  new ObservationURI("Stuff", null);
-                Assert.fail("excpected IllegalArgumentException from " + o);
+                log.debug("testing: " + c);
+                String s = c.getValue();
+                EnergyBand c2 = EnergyBand.toValue(s);
+                Assert.assertEquals(c, c2);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-
-            try
+            
+            try 
             {
-                o =  new ObservationURI(null, "Thing");
-                Assert.fail("excpected IllegalArgumentException from " + o);
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-
-            try
+                EnergyBand c = EnergyBand.toValue("NoSuchEnergyBand");
+                Assert.fail("expected IllegalArgumentException, got: " + c);
+            } 
+            catch(IllegalArgumentException expected) 
             {
-                o =  new ObservationURI(new URI("caom", "foo/bar/baz", null));
-                Assert.fail("expected IllegalArgumentException from " + o);
+                log.debug("caught expected exception: " + expected);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            
         }
         catch(Exception unexpected)
         {
@@ -140,23 +138,21 @@ public class ObservationURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testEquals()
+    public void testChecksum()
     {
         try
         {
-            ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
-            ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
-            ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-
-            Assert.assertTrue(thing1.equals(thing1));
-            Assert.assertTrue(thing1.equals(thing2));
-
-            Assert.assertFalse(cat.equals(thing1));
-            Assert.assertFalse(thing1.equals(cat));
-
-            // TODO: verify that changing any other field does not effect equals()?
+            // correctness is a 100% duplicate of the enum code itself, but
+            // we can test uniqueness
+            Set<Integer> values = new TreeSet<Integer>();
+            for (EnergyBand c : EnergyBand.values())
+            {
+                int i = c.checksum();
+                boolean added = values.add(i);
+                Assert.assertTrue("added " + i, added);
+            }
         }
         catch(Exception unexpected)
         {
@@ -164,21 +160,58 @@ public class ObservationURITest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testHashCode()
+    public void testFromNullInterval()
     {
         try
         {
-            ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
-            ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
-            ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-
-            Assert.assertTrue(thing1.hashCode() == thing2.hashCode());
-
-            Assert.assertFalse(cat.hashCode() == thing1.hashCode());
-
-            // TODO: verify that changing any other field does not effect hashCode()?
+            Interval inter = null;
+            EnergyBand e = EnergyBand.getEnergyBand(inter);
+            Assert.assertNull(e);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testFromNoOverlap()
+    {
+        try
+        {
+            Interval inter = new Interval(-20.0, -10.0);
+            EnergyBand e = EnergyBand.getEnergyBand(inter);
+            Assert.assertNull(e);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testFromPartialOverlapInterval()
+    {
+        try
+        {
+            Interval inter = new Interval(-20.0, -10.0);
+            EnergyBand e = EnergyBand.getEnergyBand(inter);
+            Assert.assertNull(e);
+            
+            inter = new Interval(200e-9, 900e-9); // 6/7 overlap of optical, below
+            e = EnergyBand.getEnergyBand(inter);
+            Assert.assertNotNull(e);
+            Assert.assertEquals(EnergyBand.OPTICAL, e);
+            
+            inter = new Interval(400e-9, 1100e-9); // 6/7 overlap of optical, above
+            e = EnergyBand.getEnergyBand(inter);
+            Assert.assertNotNull(e);
+            Assert.assertEquals(EnergyBand.OPTICAL, e);
+            
         }
         catch(Exception unexpected)
         {

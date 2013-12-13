@@ -67,32 +67,39 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.wcs;
+package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
+public class EnvironmentTest 
 {
-    private static final long serialVersionUID = 201202091500L;
+    private static final Logger log = Logger.getLogger(EnvironmentTest.class);
 
-    // immutable state
-    private List<ValueCoord2D> vertices;
-
-    public CoordPolygon2D()
+    static
     {
-        this.vertices = new ArrayList<ValueCoord2D>();
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public List<ValueCoord2D> getVertices()
+    @Test
+    public void testToStringWithNulls()
     {
-        return vertices;
+        try
+        {
+            Environment e = new Environment();
+            log.debug("created: " + e);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-
 }
