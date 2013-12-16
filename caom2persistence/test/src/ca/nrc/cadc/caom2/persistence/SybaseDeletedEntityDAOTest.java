@@ -77,7 +77,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseDeletedEntityDAOTest extends DeletedEntityDAOTest
+public class SybaseDeletedEntityDAOTest extends AbstractDeletedEntityDAOTest
 {
     static
     {

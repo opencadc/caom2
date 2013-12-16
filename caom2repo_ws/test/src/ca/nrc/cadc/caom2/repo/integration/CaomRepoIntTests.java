@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package ca.nrc.cadc.caom2.repo.integration;
 
 import java.io.File;
 import java.io.InputStream;
@@ -107,9 +107,11 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.cred.client.pub.CredPublicClient;
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Integration tests for caom2repo_ws
@@ -133,6 +135,7 @@ public class CaomRepoIntTests
     // subject3 has not read or write permission on the TEST collection
     private static Subject SUBJECT3;
     
+    private static URL AVAIL_URL;
     private static String BASE_HTTP_URL;
     private static String BASE_HTTPS_URL;
     
@@ -160,6 +163,7 @@ public class CaomRepoIntTests
             RegistryClient rc = new RegistryClient();
 
             URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
+            AVAIL_URL = rc.getServiceURL(serviceURI, "http", "/availability");
             BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http", "/pub").toExternalForm();
             BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
             log.info("test service URL: " + BASE_HTTP_URL);
@@ -204,6 +208,23 @@ public class CaomRepoIntTests
     }
     
     @Test
+    public void testAvailability()
+    {
+        try
+        {
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            HttpDownload dl = new HttpDownload(AVAIL_URL, buf);
+            dl.run();
+            Assert.assertEquals(200, dl.getResponseCode());
+            Assert.assertEquals("text/xml", dl.getContentType());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    @Test
     public void testGetSuccess() throws Throwable
     {
         String observationID = "testGetSuccess";
@@ -247,6 +268,28 @@ public class CaomRepoIntTests
         String uri = SCHEME + path;
         
         getObservation(uri, SUBJECT2, 404, "not found: " + uri);
+    }
+    
+    @Test
+    public void testCollectionNotFound() throws Throwable
+    {
+        String collection = "NoSuchCollection";
+        String observationID = "testGetNotFound";
+        String path =  collection + "/" + observationID;
+        String uri = SCHEME + path;
+        
+        getObservation(uri, SUBJECT2, 404, "collection not found: " + collection);
+    }
+    
+    @Test
+    public void testInvalidURI() throws Throwable
+    {
+        String collection = TEST_COLLECTION;
+        String observationID = "testGetNotFound";
+        String path =  collection + "/" + observationID + "/extraElementsInPath";
+        String uri = SCHEME + path;
+        
+        getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
     }
     
     @Test
@@ -516,7 +559,7 @@ public class CaomRepoIntTests
     }
     
     private HttpURLConnection openConnection(Subject subject, String urlPath)
-            throws Throwable
+            throws Exception
     {
         HttpURLConnection conn;
         URL url;
@@ -664,7 +707,13 @@ public class CaomRepoIntTests
     }
     
     private Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
-            throws Throwable
+            throws Exception
+    {
+        return getObservation(uri, subject, expectedResponse, expectedMessage, true);
+    }
+    
+    private Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch)
+            throws Exception
     {
         log.debug("start get on " + uri);
         
@@ -689,7 +738,10 @@ public class CaomRepoIntTests
         if (expectedMessage != null)
         {
             Assert.assertNotNull(message);
-            Assert.assertEquals("Wrong response message", expectedMessage, message);
+            if (exactMatch)
+                Assert.assertEquals("Wrong response message", expectedMessage, message);
+            else
+                Assert.assertTrue("Wrong response message (startsWith)", message.startsWith(expectedMessage));
         }
         
         if (response == 200)
