@@ -361,6 +361,13 @@
         </xs:sequence>
     </xs:complexType>
     
+    <xs:complexType name="ValueCoord2D">
+        <xs:sequence>
+            <xs:element name="coord1" type="xs:double"/>
+            <xs:element name="coord2" type="xs:double"/>
+        </xs:sequence>
+    </xs:complexType>
+    
     <xs:complexType name="Coord2D">
         <xs:sequence>
             <xs:element name="coord1" type="caom2:RefCoord"/>
@@ -407,7 +414,7 @@
     
     <xs:complexType name="CoordCircle2D">
         <xs:sequence>
-            <xs:element name="center" type="caom2:Coord2D"/>
+            <xs:element name="center" type="caom2:ValueCoord2D"/>
             <xs:element name="radius" type="xs:double"/>
         </xs:sequence>
     </xs:complexType>
@@ -446,7 +453,7 @@
     
     <xs:complexType name="Vertices">
         <xs:sequence>
-            <xs:element name="vertex" type="caom2:Coord2D"  minOccurs="3" maxOccurs="unbounded"/>
+            <xs:element name="vertex" type="caom2:ValueCoord2D"  minOccurs="3" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     
