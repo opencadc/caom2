@@ -22,6 +22,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.Slice;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.fits2caom2.Util;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.List;
@@ -254,10 +255,8 @@ public class WcsTest
     public void testGetCoordBounds2D()
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
-        mapping.setArgumentProperty("utype.center.coord1.pix", "1.0");
-        mapping.setArgumentProperty("utype.center.coord1.val", "2.0");
-        mapping.setArgumentProperty("utype.center.coord2.pix", "3.0");
-        mapping.setArgumentProperty("utype.center.coord2.val", "4.0");
+        mapping.setArgumentProperty("utype.center.coord1", "1.0");
+        mapping.setArgumentProperty("utype.center.coord2", "2.0");
         mapping.setArgumentProperty("utype.radius", "5.0");
 
         CoordBounds2D coordBounds2D = Wcs.getCoordBounds2D("utype", mapping);
@@ -266,10 +265,8 @@ public class WcsTest
         Assert.assertTrue(coordBounds2D instanceof CoordCircle2D);
         
         CoordCircle2D coordCircle2D = (CoordCircle2D) coordBounds2D;
-        Assert.assertEquals(1.0, coordCircle2D.getCenter().getCoord1().pix, 0.0);
-        Assert.assertEquals(2.0, coordCircle2D.getCenter().getCoord1().val, 0.0);
-        Assert.assertEquals(3.0, coordCircle2D.getCenter().getCoord2().pix, 0.0);
-        Assert.assertEquals(4.0, coordCircle2D.getCenter().getCoord2().val, 0.0);
+        Assert.assertEquals(1.0, coordCircle2D.getCenter().coord1, 0.0);
+        Assert.assertEquals(2.0, coordCircle2D.getCenter().coord2, 0.0);
         Assert.assertEquals(5.0, coordCircle2D.getRadius(), 0.0);
     }
 
@@ -280,21 +277,31 @@ public class WcsTest
     public void testGetCoordCircle2D()
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
-        mapping.setArgumentProperty("utype.center.coord1.pix", "1.0");
-        mapping.setArgumentProperty("utype.center.coord1.val", "2.0");
-        mapping.setArgumentProperty("utype.center.coord2.pix", "3.0");
-        mapping.setArgumentProperty("utype.center.coord2.val", "4.0");
+        mapping.setArgumentProperty("utype.center.coord1", "1.0");
+        mapping.setArgumentProperty("utype.center.coord2", "2.0");
         mapping.setArgumentProperty("utype.radius", "5.0");
 
         CoordCircle2D coordCircle2D = Wcs.getCoordCircle2D("utype", mapping);
         
         Assert.assertNotNull(coordCircle2D);
         Assert.assertNotNull(coordCircle2D.getCenter());
-        Assert.assertEquals(1.0, coordCircle2D.getCenter().getCoord1().pix, 0.0);
-        Assert.assertEquals(2.0, coordCircle2D.getCenter().getCoord1().val, 0.0);
-        Assert.assertEquals(3.0, coordCircle2D.getCenter().getCoord2().pix, 0.0);
-        Assert.assertEquals(4.0, coordCircle2D.getCenter().getCoord2().val, 0.0);
+        Assert.assertEquals(1.0, coordCircle2D.getCenter().coord1, 0.0);
+        Assert.assertEquals(2.0, coordCircle2D.getCenter().coord2, 0.0);
         Assert.assertEquals(5.0, coordCircle2D.getRadius(), 0.0);
+    }
+    
+    @Test
+    public void testgetCoordPolygon2D()
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.vertices", "1.0 1.0 3.0 1.0 2.0 2.0");
+        
+        try
+        {
+            CoordPolygon2D coordPolygon2D = Wcs.getCoordPolygon2D("utype", mapping);
+            Assert.fail("expected unsupportedOperationException, got: " + coordPolygon2D);
+        }
+        catch(UnsupportedOperationException expected) { }
     }
 
     /**
@@ -527,6 +534,20 @@ public class WcsTest
         Assert.assertEquals(2, dimension2D.naxis2, 0.0);
     }
 
+    @Test
+    public void testGetValueCoord()
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.coord1", "1.0");
+        mapping.setArgumentProperty("utype.coord2", "2.0");
+        
+        ValueCoord2D val = Wcs.getValueCoord2D("utype", mapping);
+        
+        Assert.assertNotNull(val);
+        Assert.assertEquals(1.0, val.coord1, 0.0);
+        Assert.assertEquals(2.0, val.coord2, 0.0);
+    }
+    
     /**
      * Test of getRefCoord method, of class Wcs.
      */
@@ -609,8 +630,15 @@ public class WcsTest
     public void testGetVertices()
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
-        List<Coord2D> vertices = Wcs.getVertices("utype", mapping);
+        List<ValueCoord2D> vertices = Wcs.getVertices("utype.vertices", mapping);
         Assert.assertNull(vertices);
+        try
+        {
+            mapping.setArgumentProperty("utype.vertices", "any string content will fail");
+            vertices = Wcs.getVertices("utype.vertices", mapping);
+            Assert.fail("expected unsupportedOperationException, got: " + vertices);
+        }
+        catch(UnsupportedOperationException expected) { }
     }
 
     /**
@@ -620,7 +648,15 @@ public class WcsTest
     public void testGetSamples()
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
-        List<CoordRange1D> samples = Wcs.getSamples("utype", mapping);
+        List<CoordRange1D> samples = Wcs.getSamples("utype.samples", mapping);
         Assert.assertNull(samples);
+        
+        try
+        {
+            mapping.setArgumentProperty("utype.samples", "any string content will fail");
+            samples = Wcs.getSamples("utype.samples", mapping);
+            Assert.fail("expected unsupportedOperationException, got: " + samples);
+        }
+        catch(UnsupportedOperationException expected) { }
     }
 }
