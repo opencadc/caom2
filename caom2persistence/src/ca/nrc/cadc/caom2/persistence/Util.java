@@ -26,6 +26,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -366,13 +367,9 @@ public class Util
         {
             CoordCircle2D circ = (CoordCircle2D) cr;
             sb.append("C/");
-            sb.append(circ.getCenter().getCoord1().pix);
+            sb.append(circ.getCenter().coord1);
             sb.append("/");
-            sb.append(circ.getCenter().getCoord1().val);
-            sb.append("/");
-            sb.append(circ.getCenter().getCoord2().pix);
-            sb.append("/");
-            sb.append(circ.getCenter().getCoord2().val);
+            sb.append(circ.getCenter().coord2);
             sb.append("/");
             sb.append(circ.getRadius());
         }
@@ -380,17 +377,13 @@ public class Util
         {
             CoordPolygon2D poly = (CoordPolygon2D) cr;
             sb.append("P/");
-            Iterator<Coord2D> i = poly.getVertices().iterator();
+            Iterator<ValueCoord2D> i = poly.getVertices().iterator();
             while ( i.hasNext() )
             {
-                Coord2D c = i.next();
-                sb.append(c.getCoord1().pix);
+                ValueCoord2D c = i.next();
+                sb.append(c.coord1);
                 sb.append(",");
-                sb.append(c.getCoord1().val);
-                sb.append(",");
-                sb.append(c.getCoord2().pix);
-                sb.append(",");
-                sb.append(c.getCoord2().val);
+                sb.append(c.coord2);
                 if (i.hasNext())
                     sb.append("/");
             }
@@ -409,10 +402,10 @@ public class Util
         {
             try
             {
-                RefCoord c1 = new RefCoord(Double.parseDouble(c[1]), Double.parseDouble(c[2]));
-                RefCoord c2 = new RefCoord(Double.parseDouble(c[3]), Double.parseDouble(c[4]));
-                Double rad = Double.parseDouble(c[5]);
-                return new CoordCircle2D(new Coord2D(c1, c2), rad);
+                double c1 = Double.parseDouble(c[1]);
+                double c2 = Double.parseDouble(c[2]);
+                double rad = Double.parseDouble(c[3]);
+                return new CoordCircle2D(new ValueCoord2D(c1, c2), rad);
             }
             catch(NumberFormatException bug)
             {
@@ -427,9 +420,9 @@ public class Util
                 String[] cc = c[i].split(",");
                 try
                 {
-                    RefCoord c1 = new RefCoord(Double.parseDouble(cc[0]), Double.parseDouble(cc[1]));
-                    RefCoord c2 = new RefCoord(Double.parseDouble(cc[2]), Double.parseDouble(cc[3]));
-                    poly.getVertices().add(new Coord2D(c1, c2));
+                    double c1 = Double.parseDouble(cc[0]);
+                    double c2 = Double.parseDouble(cc[1]);
+                    poly.getVertices().add(new ValueCoord2D(c1, c2));
                 }
                 catch(Exception bug)
                 {
