@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.Slice;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -292,7 +293,9 @@ public class Wcs
             return null;
         CoordBounds1D bounds = new CoordBounds1D();
         for (CoordRange1D range : samples)
+        {
             bounds.getSamples().add(range);
+        }
         return bounds;
     }
     
@@ -313,7 +316,7 @@ public class Wcs
     
     public static CoordCircle2D getCoordCircle2D(String utype, FitsMapping mapping)
     {
-        Coord2D center = getCoord2D(utype + ".center", mapping);
+        ValueCoord2D center = getValueCoord2D(utype + ".center", mapping);
         Double radius = getDoubleValue(utype + ".radius", mapping);
         if (center == null && radius == null)
             return null;
@@ -426,12 +429,14 @@ public class Wcs
     
     public static CoordPolygon2D getCoordPolygon2D(String utype, FitsMapping mapping)
     {
-        List<Coord2D> vertices = getVertices(utype + ".vertices", mapping);
+        List<ValueCoord2D> vertices = getVertices(utype + ".vertices", mapping);
         if (vertices == null)
             return null;
         CoordPolygon2D polygon = new CoordPolygon2D();
-        for (Coord2D vertex : vertices)
+        for (ValueCoord2D vertex : vertices)
+        {
             polygon.getVertices().add(vertex);
+        }
         return polygon;
     }
     
@@ -468,6 +473,23 @@ public class Wcs
                                                ".naxis1, but not for " + utype + ".naxis2 in "
                                                + mapping.uri + "[" + mapping.extension + "]");
         return new Dimension2D(naxis1, naxis2);
+    }
+    
+    public static ValueCoord2D getValueCoord2D(String utype, FitsMapping mapping)
+    {
+        Double c1 = getDoubleValue(utype + ".coord1", mapping);
+        Double c2 = getDoubleValue(utype + ".coord2", mapping);
+        if (c1 == null && c2 == null)
+            return null;
+        if (c1 == null && c2 != null)
+            throw new IllegalArgumentException("Value found for " + utype + 
+                                               ".coord2, but not for " + utype + ".coord1 in "
+                                               + mapping.uri + "[" + mapping.extension + "]");
+        if (c1 != null && c2 == null)
+            throw new IllegalArgumentException("Value found for " + utype + 
+                                               ".coord1, but not for " + utype + ".coord2 in "
+                                               + mapping.uri + "[" + mapping.extension + "]");
+        return new ValueCoord2D(c1, c2);
     }
     
     public static RefCoord getRefCoord(String utype, FitsMapping mapping)
@@ -538,16 +560,20 @@ public class Wcs
         }
     }
     
-    protected static List<Coord2D> getVertices(String utype, FitsMapping mapping)
+    protected static List<ValueCoord2D> getVertices(String utype, FitsMapping mapping)
     {
-        return null;
-//        throw new UnsupportedOperationException("not yet implemented");
+        String value = mapping.getMapping(utype);
+        if (value == null)
+            return null;
+        throw new UnsupportedOperationException("not yet implemented");
     }
     
     protected static List<CoordRange1D> getSamples(String utype, FitsMapping mapping)
     {
-        return null;
-//        throw new UnsupportedOperationException("not yet implemented");
+        String value = mapping.getMapping(utype);
+        if (value == null)
+            return null;
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
 }
