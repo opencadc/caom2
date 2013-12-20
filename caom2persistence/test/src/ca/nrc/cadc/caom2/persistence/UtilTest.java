@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Iterator;
 import java.util.Random;
@@ -274,9 +275,9 @@ public class UtilTest
         {
             double dx = rnd.nextDouble(); // add random factor so we get lots of digits
             CoordPolygon2D poly = new CoordPolygon2D();
-            poly.getVertices().add(new Coord2D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(4.0+dx, 5.0+dx)));
-            poly.getVertices().add(new Coord2D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(40.0+dx, 50.0+dx)));
-            poly.getVertices().add(new Coord2D(new RefCoord(20.0+dx, 30.0+dx), new RefCoord(4.0+dx, 5.0+dx)));
+            poly.getVertices().add(new ValueCoord2D(2.0+dx, 3.0+dx));
+            poly.getVertices().add(new ValueCoord2D(2.0+dx, 4.0+dx));
+            poly.getVertices().add(new ValueCoord2D(3.0+dx, 3.0+dx));
 
             CoordBounds2D expected = poly;
             String s = Util.encodeCoordBounds2D(expected);
@@ -284,7 +285,7 @@ public class UtilTest
             CoordBounds2D actual = Util.decodeCoordBounds2D(s);
             testEqual(expected, actual);
 
-            expected = new CoordCircle2D(new Coord2D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(4.0+dx, 5.0+dx)), 1.0+dx);
+            expected = new CoordCircle2D(new ValueCoord2D(2.0+dx, 3.0+dx), 1.0+dx);
             s = Util.encodeCoordBounds2D(expected);
             log.debug("testCoordBounds2D - encoded: " + s.length() + " " + s);
             actual = Util.decodeCoordBounds2D(s);
@@ -366,8 +367,8 @@ public class UtilTest
         {
             CoordCircle2D ex = (CoordCircle2D) expected;
             CoordCircle2D ac = (CoordCircle2D) actual;
-            Assert.assertTrue("bounds.center.pix", ex.getCenter().getCoord1().pix == ac.getCenter().getCoord1().pix);
-            Assert.assertTrue("bounds.center.val",  ex.getCenter().getCoord1().val == ac.getCenter().getCoord1().val);
+            Assert.assertTrue("bounds.center.coord1", ex.getCenter().coord1 == ac.getCenter().coord1);
+            Assert.assertTrue("bounds.center.coord2",  ex.getCenter().coord2 == ac.getCenter().coord2);
             Assert.assertTrue("bounds.center.radius", ex.getRadius().equals(ac.getRadius()));
         }
         else
@@ -375,16 +376,14 @@ public class UtilTest
             CoordPolygon2D ex = (CoordPolygon2D) expected;
             CoordPolygon2D ac = (CoordPolygon2D) actual;
             Assert.assertEquals("bounds.vertices.size", ex.getVertices().size(), ac.getVertices().size());
-            Iterator<Coord2D> exi = ex.getVertices().iterator();
-            Iterator<Coord2D> aci = ac.getVertices().iterator();
+            Iterator<ValueCoord2D> exi = ex.getVertices().iterator();
+            Iterator<ValueCoord2D> aci = ac.getVertices().iterator();
             while ( exi.hasNext() )
             {
-                Coord2D e = exi.next();
-                Coord2D a = aci.next();
-                Assert.assertTrue(e.getCoord1().pix == a.getCoord1().pix);
-                Assert.assertTrue(e.getCoord1().val == a.getCoord1().val);
-                Assert.assertTrue(e.getCoord2().pix == a.getCoord2().pix);
-                Assert.assertTrue(e.getCoord2().val == a.getCoord2().val);
+                ValueCoord2D e = exi.next();
+                ValueCoord2D a = aci.next();
+                Assert.assertTrue(e.coord1 == a.coord1);
+                Assert.assertTrue(e.coord2 == a.coord2);
             }
 
         }
