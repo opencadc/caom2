@@ -234,11 +234,15 @@ public class IngestableFile
             // use VOSpace API to get the URL
             url = getFromVOSpace();
         }
-        else
+        else if (uri.getScheme().equalsIgnoreCase("ad"))
         {
             // Anonymous HTTP download
             schemeHandler = new AdSchemeHandler();
             url = schemeHandler.getURL(uri, false);
+        }
+        else
+        {
+            url = uri.toURL();
         }
         
         log.debug(op + uri + " -- trying " + url);
