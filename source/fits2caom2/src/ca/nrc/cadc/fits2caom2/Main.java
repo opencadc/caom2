@@ -196,6 +196,8 @@ public class Main
         ingest.setMapping(fm);
 
         File[] localFiles = Util.argumentFileToArray(argsMap.getValue(Argument.LOCAL));
+        if (localFiles != null && localFiles.length != uris.length)
+            throw new IllegalArgumentException("number of --uri and --local arguments do not match");
         ingest.setLocalFiles(localFiles);
 
         File in = null;
