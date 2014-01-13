@@ -378,7 +378,48 @@ public class EnergyUtilTest
     }
 
     @Test
-    public void testGetBoundsWave()
+    public void testGetBoundsWaveBounds()
+    {
+        try
+        {
+            SpectralWCS wcs = getTestBounds(false, 0.5, 400, 2000.0, 0.1); // [400,600] in two samples [400,466][534,600]
+            Interval all = new Interval(300e-9, 800e-9);
+            Interval none = new Interval(700e-9, 900e-9);
+            Interval gap = new Interval(480e-9, 520e-9);
+            Interval cut = new Interval(420e-9, 440e-9);
+            Interval clip = new Interval(300e-9, 500e-9);
+
+            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            Assert.assertNotNull(allPix);
+            Assert.assertEquals("long[0]", 0, allPix.length);
+
+            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            Assert.assertNull(noPix);
+            
+            long[] gapPix =  EnergyUtil.getBounds(wcs, gap);
+            Assert.assertNull(gapPix);
+
+            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            Assert.assertNotNull(cutPix);
+            Assert.assertEquals("long[2]", 2, cutPix.length);
+            Assert.assertEquals("cut LB", 0, cutPix[0], 1);
+            Assert.assertEquals("cut LB", 660, cutPix[1], 1);
+            
+            long[] clipPix = EnergyUtil.getBounds(wcs, clip);
+            Assert.assertNotNull(clipPix);
+            Assert.assertEquals("long[2]", 2, clipPix.length);
+            Assert.assertEquals("clip LB", 0, clipPix[0], 1);
+            Assert.assertEquals("clip LB", 660, clipPix[1], 1);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetBoundsWaveFunc()
     {
         try
         {
@@ -408,7 +449,38 @@ public class EnergyUtilTest
     }
 
     @Test
-    public void testGetBoundsFreq()
+    public void testGetBoundsFreqBounds()
+    {
+        try
+        {
+            SpectralWCS wcs = getTestFreqBounds(false, 0.5, 10.0, 1000.0, 0.1); // [10-110] MHz in [1,333][666,1000]
+            Interval all = new Interval(2.5, 60.0);
+            Interval none = new Interval(1.0, 2.0);
+            Interval cut = new Interval(2.8, 3.2);
+
+            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            Assert.assertNotNull(allPix);
+            Assert.assertEquals("long[0]", 0, allPix.length);
+
+            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            Assert.assertNull(noPix);
+
+            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            Assert.assertNotNull(cutPix);
+            Assert.assertEquals("long[2]", 2, cutPix.length);
+            log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
+            Assert.assertEquals("cut LB", 660, cutPix[0], 1); // short wave end is in the upper sub-interval
+            Assert.assertEquals("cut UB", 1000, cutPix[1], 1);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetBoundsFreqFunc()
     {
         try
         {
@@ -678,8 +750,8 @@ public class EnergyUtilTest
         }
         // divide into 2 samples with a gap between
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px+nx*0.33, sx + nx*0.33);
-        RefCoord c3 = new RefCoord(px+nx*0.66, sx + nx*0.66);
+        RefCoord c2 = new RefCoord(px+nx*0.33, sx + nx*0.33*ds);
+        RefCoord c3 = new RefCoord(px+nx*0.66, sx + nx*0.66*ds);
         RefCoord c4 = new RefCoord(px+nx, sx + nx*ds);
         wcs.getAxis().bounds = new CoordBounds1D();
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
@@ -703,6 +775,30 @@ public class EnergyUtilTest
         RefCoord c1 = new RefCoord(px, sx);
         wcs.getAxis().function = new CoordFunction1D((long) nx, ds, c1);
         log.debug("test function: " + axis.function);
+        return wcs;
+    }
+    private SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
+    {
+        CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
+        log.debug("test axis: " + axis);
+        SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
+        if (complete)
+        {
+            wcs.bandpassName = BANDPASS_NAME;
+            wcs.restwav = 656.3;
+            wcs.resolvingPower = 33000.0;
+            wcs.transition = TRANSITION;
+        }
+
+        // divide into 2 samples with a gap between
+        RefCoord c1 = new RefCoord(px, sx);
+        RefCoord c2 = new RefCoord(px+nx*0.33, sx + nx*0.33*ds);
+        RefCoord c3 = new RefCoord(px+nx*0.66, sx + nx*0.66*ds);
+        RefCoord c4 = new RefCoord(px+nx, sx + nx*ds);
+        wcs.getAxis().bounds = new CoordBounds1D();
+        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
+        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
+        log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
     private SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)

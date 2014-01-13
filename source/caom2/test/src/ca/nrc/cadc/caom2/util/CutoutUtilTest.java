@@ -138,18 +138,16 @@ public class CutoutUtilTest
     {
         try
         {
-            CutoutUtil cu = new CutoutUtil();
-            
             try 
             { 
-                cu.computeCutout(null, new Circle(new Point(12, 34), 1), null, null, null); 
+                CutoutUtil.computeCutout(null, new Circle(new Point(12, 34), 1), null, null, null); 
                 Assert.fail("expected IllegalArgumentException for null artifact");
             }
             catch(IllegalArgumentException expected) { }
             
             try 
             { 
-                cu.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Location(new Point(1.0, 2.0)), null, null, null); 
+                CutoutUtil.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Location(new Point(1.0, 2.0)), null, null, null); 
                 Assert.fail("expected IllegalArgumentException for null artifact");
             }
             catch(IllegalArgumentException expected) { }
@@ -163,7 +161,7 @@ public class CutoutUtilTest
             
             try 
             { 
-                cu.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Polygon(), null, null, null); 
+                CutoutUtil.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Polygon(), null, null, null); 
                 Assert.fail("expected IllegalArgumentException for null artifact");
             }
             catch(IllegalArgumentException expected) { }
@@ -215,7 +213,6 @@ public class CutoutUtilTest
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
-            CutoutUtil cu = new CutoutUtil();
             List<String> cus;
             
             String tmpl = "[0][STAR]";
@@ -227,7 +224,7 @@ public class CutoutUtilTest
                     cur += ",";
                 cur += "*";
                 String expected = tmpl.replace("STAR", cur);
-                cus = cu.computeCutout(a, null, null, null, null);
+                cus = CutoutUtil.computeCutout(a, null, null, null, null);
                 Assert.assertNotNull(cus);
                 Assert.assertTrue(cus.size() == 1);
                 String cutout = cus.get(0);
@@ -309,18 +306,17 @@ public class CutoutUtilTest
             Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-4);
             Circle outside = new Circle(new Point(10.0, 10.0), 1.0);
             
-            CutoutUtil cu = new CutoutUtil();
-            List<String> cus = cu.computeCutout(a, miss, null, null, null);
+            List<String> cus = CutoutUtil.computeCutout(a, miss, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.isEmpty());
             
-            cus = cu.computeCutout(a, inside, null, null, null);
+            cus = CutoutUtil.computeCutout(a, inside, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             Assert.assertEquals("[0][128:128,128:128]", cutout); // one pixel in the middle of part [0]
             
-            cus = cu.computeCutout(a, outside, null, null, null);
+            cus = CutoutUtil.computeCutout(a, outside, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);
@@ -366,18 +362,17 @@ public class CutoutUtilTest
             Circle inside = new Circle(new Point(262.89, -15.21), 1.0e-4); // 10,10 in gal ~~ 262,-15 in ICRS
             Circle outside = new Circle(new Point(262.89, -15.21), 1.0);
             
-            CutoutUtil cu = new CutoutUtil();
-            List<String> cus = cu.computeCutout(a, miss, null, null, null);
+            List<String> cus = CutoutUtil.computeCutout(a, miss, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.isEmpty());
             
-            cus = cu.computeCutout(a, inside, null, null, null);
+            cus = CutoutUtil.computeCutout(a, inside, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             Assert.assertEquals("[0][125:125,129:129]", cutout); // one pixel approximately in the middle of part [0]
             
-            cus = cu.computeCutout(a, outside, null, null, null);
+            cus = CutoutUtil.computeCutout(a, outside, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);
@@ -405,22 +400,39 @@ public class CutoutUtilTest
             c.energy.getAxis().range = new CoordRange1D(new RefCoord(0.5, 300.0), new RefCoord(256.5, 550.0));
             Assert.assertFalse(CutoutUtil.canCutout(c));
             
-            c.energy.getAxis().bounds = new CoordBounds1D();
-            c.energy.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 300.0), new RefCoord(40.0, 350.0)));
-            c.energy.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(80.0, 400.0), new RefCoord(120.0, 450.0)));
-            c.energy.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(220.0, 500.0), new RefCoord(256.5, 550.0)));
-            Assert.assertFalse(CutoutUtil.canCutout(c)); // TODO: could be true if we implement it
-            
-            c.energy.getAxis().function = new CoordFunction1D(2500L, 0.1, new RefCoord(0.5, 300.0));
+            CoordBounds1D bounds = new CoordBounds1D();
+            bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 300.0), new RefCoord(40.0, 350.0)));
+            bounds.getSamples().add(new CoordRange1D(new RefCoord(80.0, 400.0), new RefCoord(120.0, 450.0)));
+            bounds.getSamples().add(new CoordRange1D(new RefCoord(220.0, 500.0), new RefCoord(256.5, 550.0)));
             Assert.assertFalse(CutoutUtil.canCutout(c));
             
-            // axis is meta only
+            CoordFunction1D function = new CoordFunction1D(2500L, 0.1, new RefCoord(0.5, 300.0));
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+            
+            c.energyAxis = 1;
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+            
+            // bounds cutout
+            c.energy.getAxis().function = null;
+            c.energy.getAxis().bounds = bounds;
+            Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
+            
+            // function cutout
+            c.energy.getAxis().function = function;
+            c.energy.getAxis().bounds = null;
+            Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
+            
+            // metadata only
+            c.energyAxis = null;
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+            
             c.energyAxis = 2;
             Assert.assertFalse(CutoutUtil.canCutout(c));
-
+            
+            // restore working structure
             c.energyAxis = 1;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
-
+            
             // cleanup so these don't effect cutouts
             c.energy.getAxis().range = null;
             c.energy.getAxis().bounds = null;
@@ -435,19 +447,18 @@ public class CutoutUtilTest
             Interval inside = new Interval(440.0e-9, 480.0e-9);
             Interval outside = new Interval(200.0e-9, 900.0e-9);
             
-            CutoutUtil cu = new CutoutUtil();
-            List<String> cus = cu.computeCutout(a, null, miss, null, null);
+            List<String> cus = CutoutUtil.computeCutout(a, null, miss, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.isEmpty());
             
-            cus = cu.computeCutout(a, null, inside, null, null);
+            cus = CutoutUtil.computeCutout(a, null, inside, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             log.debug("energy cutout: " + cutout);
             Assert.assertEquals("[0][1400:1800]", cutout);
             
-            cus = cu.computeCutout(a, null, outside, null, null);
+            cus = CutoutUtil.computeCutout(a, null, outside, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);

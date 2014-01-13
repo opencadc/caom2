@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,10 +85,8 @@ import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
-public class CutoutUtil implements Serializable
+public final class CutoutUtil
 {
-	private static final long serialVersionUID = -9042392160991055157L;
-
 	private static final Logger log = Logger.getLogger(CutoutUtil.class);
 
     private static final String POS1_CUT = "px";
@@ -99,9 +96,11 @@ public class CutoutUtil implements Serializable
     private static final String POL_CUT = "pp";
     private static final String OBS_CUT = "oo";
     private static final int CUT_LEN = 2;
+    
+    private CutoutUtil() { }
 
     // impl is for spatial cutout with a circle only
-    public List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
+    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
         throws NoSuchKeywordException
     {
         if (a == null)
@@ -297,8 +296,14 @@ public class CutoutUtil implements Serializable
     protected static boolean canEnergyCutout(Chunk c)
     {
         boolean energyCutout = (c.naxis != null && c.naxis.intValue() >= 1
-                    && c.energy != null && c.energy.getAxis().function != null
-                    && c.energyAxis != null && c.energyAxis.intValue() <= c.naxis.intValue());
+                    && c.energy != null
+                    && c.energyAxis != null && c.energyAxis.intValue() <= c.naxis.intValue()
+                    && ( 
+                            c.energy.getAxis().bounds != null 
+                            || 
+                            c.energy.getAxis().function != null
+                        )
+                );
         return energyCutout;
     }
 
