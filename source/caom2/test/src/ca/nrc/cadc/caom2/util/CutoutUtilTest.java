@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.util;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.types.Box;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Location;
@@ -181,23 +180,23 @@ public class CutoutUtilTest
         {
             Chunk c = new Chunk();
             c.position = new SpatialWCS(new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg")));
-        c.position.coordsys = "ICRS";
-        c.position.getAxis().function = new CoordFunction2D(
-                new Dimension2D(256, 256), 
-                new Coord2D(new RefCoord(128.5, 10.0), new RefCoord(128.5, 10.0)),
-                1.0e-3, 0.0, 0.0, 1.0e-3);
+            c.position.coordsys = "ICRS";
+            c.position.getAxis().function = new CoordFunction2D(
+                    new Dimension2D(256, 256), 
+                    new Coord2D(new RefCoord(128.5, 10.0), new RefCoord(128.5, 10.0)),
+                    1.0e-3, 0.0, 0.0, 1.0e-3);
 
-        c.energy = new SpectralWCS(new CoordAxis1D(new Axis("WAVE", "nm")),"TOPOCENT");
-        c.energy.getAxis().function = new CoordFunction1D(2500L, 0.1, new RefCoord(0.5, 300.0));  // 300-550 nm
+            c.energy = new SpectralWCS(new CoordAxis1D(new Axis("WAVE", "nm")),"TOPOCENT");
+            c.energy.getAxis().function = new CoordFunction1D(2500L, 0.1, new RefCoord(0.5, 300.0));  // 300-550 nm
 
-        c.time = new TemporalWCS(new CoordAxis1D(new Axis("TIME", "d")));
-        c.time.timesys = "UTC";
-        c.time.getAxis().function = new CoordFunction1D(100L, 1.0, new RefCoord(0.5, 55000.0));   // 55000 to 55100 days
+            c.time = new TemporalWCS(new CoordAxis1D(new Axis("TIME", "d")));
+            c.time.timesys = "UTC";
+            c.time.getAxis().function = new CoordFunction1D(100L, 1.0, new RefCoord(0.5, 55000.0));   // 55000 to 55100 days
 
-        c.polarization = new PolarizationWCS(new CoordAxis1D(new Axis("STOKES", null)));
-        c.polarization.getAxis().function = new CoordFunction1D(3L, 1.0, new RefCoord(0.5, 1.0)); // IQU
+            c.polarization = new PolarizationWCS(new CoordAxis1D(new Axis("STOKES", null)));
+            c.polarization.getAxis().function = new CoordFunction1D(3L, 1.0, new RefCoord(0.5, 1.0)); // IQU
 
-        c.observable = new ObservableAxis(new Slice(new Axis("stuff", "quatloobs"), 1L));
+            c.observable = new ObservableAxis(new Slice(new Axis("stuff", "quatloobs"), 1L));
             
             // axes are not bound to specific dimensions 1-5
             Assert.assertFalse(CutoutUtil.canCutout(c));
@@ -492,6 +491,40 @@ public class CutoutUtilTest
         try
         {
 
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testCanCutoutObservable()
+    {
+        try
+        {
+            Chunk c = new Chunk();
+            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
+            
+            Slice s1 = new Slice(new Axis("foo", "m"), 1L);
+            Slice s2 = new Slice(new Axis("bar", "s"), 2L);
+            
+            c.observable = new ObservableAxis(s1);
+            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
+            
+            c.naxis = 1;
+            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
+            
+            c.observableAxis = 2;
+            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
+            
+            c.observableAxis = 1;
+            Assert.assertTrue(CutoutUtil.canObservableCutout(c));
+            
+            c.observable.independent = s2;
+            Assert.assertTrue(CutoutUtil.canObservableCutout(c));
+            
         }
         catch(Exception unexpected)
         {
