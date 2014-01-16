@@ -226,7 +226,7 @@ public final class CutoutUtil
                         }
                         else
                         {
-                            log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no position overlap");
+                            log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no energy overlap");
                             doCut = false;
                         }
                     }
