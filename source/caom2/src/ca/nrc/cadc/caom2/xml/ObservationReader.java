@@ -68,7 +68,6 @@
 */
 package ca.nrc.cadc.caom2.xml;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
@@ -95,6 +94,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -125,7 +125,6 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -264,11 +263,11 @@ public class ObservationReader implements Serializable
         try
         {
             Long id = new Long(aid.getLongValue());
-            assignID(ce, id);
+            CaomUtil.assignID(ce, id);
             if (alastModified != null)
             {
                 Date lastModified = df.parse(alastModified.getValue());
-                assignLastModified(ce, lastModified);
+                CaomUtil.assignLastModified(ce, lastModified, "lastModified");
             }
         }
         catch(DataConversionException ex)
@@ -1574,53 +1573,5 @@ public class ObservationReader implements Serializable
             throw new ObservationParsingException(error);
         }
         return children;
-    }
-
-    static void assignID(Object ce, Long id)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("id");
-            f.setAccessible(true);
-            f.set(ce, id);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-    static void assignLastModified(Object ce, Date value)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("lastModified");
-            f.setAccessible(true);
-            f.set(ce, value);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-    static void assignStateCode(Object ce, Integer sc)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
-            f.setAccessible(true);
-            f.set(ce, sc);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-    static int getStateCode(Object ce)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
-            f.setAccessible(true);
-            Integer val = (Integer) f.get(ce);
-            if (val == null)
-                return -1;
-            return val.intValue();
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
 }

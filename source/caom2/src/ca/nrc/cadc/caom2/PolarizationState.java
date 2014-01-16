@@ -69,6 +69,9 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.io.Serializable;
+import java.util.Comparator;
+
 /**
  * Standard polarization codes for FITS WCS STOKES axis. We have added some additional codes
  * for values outside the original FITS WCS paper from the discussion at
@@ -105,7 +108,7 @@ public enum PolarizationState implements CaomEnum
     private PolarizationState(int value) { this.value = value; }
 
     public int getValue() { return value; }
-
+    
     public String stringValue()
     {
         switch(value)
@@ -167,5 +170,22 @@ public enum PolarizationState implements CaomEnum
     public int checksum()
     {
         return value;
+    }
+    
+    public static class PolStateComparator implements Comparator<PolarizationState>, Serializable
+    {
+        private static final long serialVersionUID = 201401131450L;
+        
+        public int compare(PolarizationState lhs, PolarizationState rhs)
+        {
+            // Java 1.7:
+            //return Integer.compare(lhs.value, rhs.value);
+            if (lhs.value < rhs.value)
+                return -1;
+            if (lhs.value > rhs.value)
+                return 1;
+            return 0;
+        }
+        
     }
 }

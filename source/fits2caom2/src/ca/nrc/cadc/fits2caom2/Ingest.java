@@ -99,6 +99,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -308,8 +309,12 @@ public class Ingest implements Runnable
         throws MapperException, FitsException, URISyntaxException, IOException, RuntimeException, InterruptedException
     {
         FitsMapper fitsMapper = new FitsMapper(mapping);
-        for (IngestableFile ingestFile : ingestFiles)
+        ListIterator<IngestableFile> iter = ingestFiles.listIterator();
+        while ( iter.hasNext() )
         {                
+            IngestableFile ingestFile = iter.next();
+            iter.remove(); // allow garbage collection when done with this file
+            
             // Update the mapping with the URI.
             mapping.uri = ingestFile.getURI().toString();
 
@@ -395,9 +400,16 @@ public class Ingest implements Runnable
             setContentType(artifact, ingestFile);
 
             // If FITS file, get details about parts and chunks
+            // TODO: we maye have to combine this with the read loop to avoid excessive
+            // memory usage
             Integer extension = 0;
-            for (Header header : headers)
-            {                        
+            ListIterator<Header> hiter = headers.listIterator();
+            while ( hiter.hasNext() )
+            {                       
+                Header header = hiter.next();
+                hiter.remove(); // allow garbage collection asap
+                
+                
                 // Update the mapping with the extension.
                 mapping.extension = extension;
                 log.debug("ingest: " + artifact.getURI() + "[" + extension + "]");
