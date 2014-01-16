@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,10 +85,8 @@ import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
-public class CutoutUtil implements Serializable
+public final class CutoutUtil
 {
-	private static final long serialVersionUID = -9042392160991055157L;
-
 	private static final Logger log = Logger.getLogger(CutoutUtil.class);
 
     private static final String POS1_CUT = "px";
@@ -99,9 +96,11 @@ public class CutoutUtil implements Serializable
     private static final String POL_CUT = "pp";
     private static final String OBS_CUT = "oo";
     private static final int CUT_LEN = 2;
+    
+    private CutoutUtil() { }
 
     // impl is for spatial cutout with a circle only
-    public List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
+    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
         throws NoSuchKeywordException
     {
         if (a == null)
@@ -132,6 +131,7 @@ public class CutoutUtil implements Serializable
         {
             for (Chunk c : p.getChunks())
             {
+                boolean doCutObservable = false;
                 boolean doCut = true;
 
                 StringBuilder sb = new StringBuilder();
@@ -179,6 +179,7 @@ public class CutoutUtil implements Serializable
                                 sb.replace(i1, i1+CUT_LEN, cutX);
                                 int i2 = sb.indexOf(POS2_CUT);
                                 sb.replace(i2, i2+CUT_LEN, cutY);
+                                doCutObservable = true;
                             }
                             else
                             {
@@ -214,6 +215,7 @@ public class CutoutUtil implements Serializable
                             if (cut.length == 2)
                             {
                                 sb.replace(i, i+CUT_LEN, cut[0] + ":" + cut[1]);
+                                doCutObservable = true;
                             }
                             else
                             {
@@ -236,7 +238,29 @@ public class CutoutUtil implements Serializable
                 
                 // polarization cutout: not supported
                 
-                // observable cutout: not supported -- should be added as bin:bin with any other cutout?
+                // observable cutout
+                if ( doCut && doCutObservable )
+                {
+                    log.debug("observable: " + c.observable);
+                    if ( canObservableCutout(c) )
+                    {
+                        long o1 = c.observable.getDependent().getBin();
+                        long o2 = c.observable.getDependent().getBin();
+                        int i = sb.indexOf(OBS_CUT);
+                        if (c.observable.independent != null)
+                        {
+                            if (o1 < c.observable.independent.getBin())
+                                o2 = c.observable.independent.getBin();
+                            else
+                                o1 = c.observable.independent.getBin();
+                        }
+                        sb.replace(i, i+CUT_LEN, o1+":"+o2);
+                        String cs = sb.toString();
+                        log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+                    }
+                    else
+                        log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
+                }
 
 
                 // for any axis in the data but not in the cutout: keep all pixels
@@ -297,8 +321,14 @@ public class CutoutUtil implements Serializable
     protected static boolean canEnergyCutout(Chunk c)
     {
         boolean energyCutout = (c.naxis != null && c.naxis.intValue() >= 1
-                    && c.energy != null && c.energy.getAxis().function != null
-                    && c.energyAxis != null && c.energyAxis.intValue() <= c.naxis.intValue());
+                    && c.energy != null
+                    && c.energyAxis != null && c.energyAxis.intValue() <= c.naxis.intValue()
+                    && ( 
+                            c.energy.getAxis().bounds != null 
+                            || 
+                            c.energy.getAxis().function != null
+                        )
+                );
         return energyCutout;
     }
 
@@ -320,5 +350,14 @@ public class CutoutUtil implements Serializable
         //            && c.polarization != null && c.polarization.getAxis().function != null
         //            && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
         return polarizationCutout;
+    }
+    
+    // check if polarization cutout is possible (currently function only)
+    protected static boolean canObservableCutout(Chunk c)
+    {
+        boolean observableCutout = (c.naxis != null && c.naxis.intValue() >= 1
+                    && c.observable != null
+                    && c.observableAxis != null && c.observableAxis.intValue() <= c.naxis.intValue());
+        return observableCutout;
     }
 }
