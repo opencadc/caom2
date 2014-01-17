@@ -69,9 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
@@ -80,15 +77,8 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.util.Log4jInit;
 import java.util.Iterator;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -100,77 +90,13 @@ import org.junit.Test;
 public class UtilTest 
 {
     private static final Logger log = Logger.getLogger(UtilTest.class);
-
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
-    }
-
-    Random rnd = new Random();
     
-    //@Test
+    @Test
     public void testTemplate()
     {
         try
         {
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testObservationURI()
-    {
-        try
-        {
-            Set<ObservationURI> uris = new TreeSet<ObservationURI>();
-            String actual = Util.encodeObservationURIs(uris);
-            Assert.assertNull(actual);
-            Set<ObservationURI> uris2 = new TreeSet<ObservationURI>();
-            Util.decodeObservationURIs(actual, uris2);
-            Assert.assertTrue(uris2.isEmpty());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testPlaneURI()
-    {
-        try
-        {
-            try
-        {
-            Set<PlaneURI> uris = new TreeSet<PlaneURI>();
-            String actual = Util.encodePlaneURIs(uris);
-            Assert.assertNull(actual);
-            Set<PlaneURI> uris2 = new TreeSet<PlaneURI>();
-            Util.decodePlaneURIs(actual, uris2);
-            Assert.assertTrue(uris2.isEmpty());
             
-            ObservationURI ouri = new ObservationURI("FOO", "bar");
-            uris.add(new PlaneURI(ouri, "foo1"));
-            uris.add(new PlaneURI(ouri, "foo2"));
-            uris.add(new PlaneURI(ouri, "foo3"));
-            actual = Util.encodePlaneURIs(uris);
-            Assert.assertNotNull(actual);
-            Util.decodePlaneURIs(actual, uris2);
-            Assert.assertEquals(3, uris2.size());
-            Assert.assertTrue( uris.containsAll(uris2));
-            Assert.assertTrue( uris2.containsAll(uris));
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
         }
         catch(Exception unexpected)
         {
@@ -178,155 +104,8 @@ public class UtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-    @Test
-    public void testCoordRange1D()
-    {
-        log.debug("testCoordRange1D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordRange1D expected = new CoordRange1D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(4.0+dx, 5.0+dx));
-            String s = Util.encodeCoordRange1D(expected);
-            log.debug("testCoordRange1D - encoded: " + s.length() + " " + s);
-            CoordRange1D actual = Util.decodeCoordRange1D(s);
-            testEqual("range", expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    @Test
-    public void testCoordBounds1D()
-    {
-        log.debug("testCoordBounds1D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordBounds1D expected = new CoordBounds1D();
-            expected.getSamples().add(new CoordRange1D(new RefCoord(2.0+dx, 0.0+dx), new RefCoord(4.0+dx, 20.0+dx)));
-            expected.getSamples().add(new CoordRange1D(new RefCoord(5.0+dx, 30.0+dx), new RefCoord(8.0+dx, 50.0+dx)));
-            expected.getSamples().add(new CoordRange1D(new RefCoord(9.0+dx, 60.0+dx), new RefCoord(10.0+dx, 80.0+dx)));
-            String s = Util.encodeCoordBounds1D(expected);
-            log.debug("testCoordBounds1D - encoded: " + s.length() + " " + s);
-            CoordBounds1D actual = Util.decodeCoordBounds1D(s);
-            testEqual("bounds", expected, actual);
-
-            // empty samples list
-            expected = new CoordBounds1D();
-            s = Util.encodeCoordBounds1D(expected);
-            actual = Util.decodeCoordBounds1D(s);
-            testEqual("bounds", expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    @Test
-    public void testCoordFunction1D()
-    {
-        log.debug("testCoordFunction1D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordFunction1D expected = new CoordFunction1D(1024L, 0.1+dx, new RefCoord(2.0+dx, 0.0+dx));
-            String s = Util.encodeCoordFunction1D(expected);
-            log.debug("testCoordFunction1D - encoded: " + s.length() + " " + s);
-            CoordFunction1D actual = Util.decodeCoordFunction1D(s);
-            testEqual("function", expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testCoordRange2D()
-    {
-        log.debug("testCoordRange2D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordRange2D expected = new CoordRange2D(
-                    new Coord2D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(4.0+dx, 5.0+dx)),
-                    new Coord2D(new RefCoord(20.0+dx, 30.0+dx), new RefCoord(40.0+dx, 50.0+dx)));
-            String s = Util.encodeCoordRange2D(expected);
-            log.debug("testCoordRange2D - encoded: " + s.length() + " " + s);
-            CoordRange2D actual = Util.decodeCoordRange2D(s);
-            testEqual(expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    @Test
-    public void testCoordBounds2D()
-    {
-        log.debug("testCoordBounds2D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordPolygon2D poly = new CoordPolygon2D();
-            poly.getVertices().add(new ValueCoord2D(2.0+dx, 3.0+dx));
-            poly.getVertices().add(new ValueCoord2D(2.0+dx, 4.0+dx));
-            poly.getVertices().add(new ValueCoord2D(3.0+dx, 3.0+dx));
-
-            CoordBounds2D expected = poly;
-            String s = Util.encodeCoordBounds2D(expected);
-            log.debug("testCoordBounds2D - encoded: " + s.length() + " " + s);
-            CoordBounds2D actual = Util.decodeCoordBounds2D(s);
-            testEqual(expected, actual);
-
-            expected = new CoordCircle2D(new ValueCoord2D(2.0+dx, 3.0+dx), 1.0+dx);
-            s = Util.encodeCoordBounds2D(expected);
-            log.debug("testCoordBounds2D - encoded: " + s.length() + " " + s);
-            actual = Util.decodeCoordBounds2D(s);
-            testEqual(expected, actual);
-
-            // empty vertex list
-            expected = new CoordPolygon2D();
-            s = Util.encodeCoordBounds2D(expected);
-            log.debug("testCoordBounds2D - encoded: " + s.length() + " " + s);
-            actual = Util.decodeCoordBounds2D(s);
-            testEqual(expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    @Test
-    public void testCoordFunction2D()
-    {
-        log.debug("testCoordFunction2D - START");
-        try
-        {
-            double dx = rnd.nextDouble(); // add random factor so we get lots of digits
-            CoordFunction2D expected = new CoordFunction2D(new Dimension2D(123456,123456),
-                    new Coord2D(new RefCoord(2.0+dx, 3.0+dx), new RefCoord(4.0+dx, 5.0+dx)),
-                    dx*1.0e-3, dx*1.0e-6, dx*1.0e-6, dx*1.0e-3);
-            String s = Util.encodeCoordFunction2D(expected);
-            log.debug("testCoordFunction2D - encoded: " + s.length() + " " + s);
-            CoordFunction2D actual = Util.decodeCoordFunction2D(s);
-            testEqual(expected, actual);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-
+    
+    // TODO: this is identical to code in CaomUtilTest (module caom2)
     static void testEqual(String s, CoordRange1D expected, CoordRange1D actual)
     {
         Assert.assertTrue(s+".start.pix", expected.getStart().pix == actual.getStart().pix);

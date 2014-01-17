@@ -1,41 +1,23 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.wcs.Coord2D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
-import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
-import java.lang.reflect.Field;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
@@ -44,12 +26,11 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class Util
+public  class Util extends CaomUtil
 {
+    private static final long serialVersionUID = 201401131515L;
+    
     private static Logger log = Logger.getLogger(Util.class);
-
-    static final String STRING_SET_SEPARATOR = " ";
-    static final String POL_STATE_SEPARATOR = "/"; // IVOA ObsCore-1.0 Data Model, B.6.6
 
     public static String formatSQL(String[] sql)
     {
@@ -108,379 +89,7 @@ public class Util
         return sb.toString();
     }
 
-    // IVOA ObsCore-1.0 Data Model, B.6.6
-    public static String encodeStates(List<PolarizationState> states)
-    {
-        if (states == null || states.isEmpty())
-            return null;
-        StringBuilder sb = new StringBuilder();
-        Iterator<PolarizationState> i = states.iterator();
-        sb.append(POL_STATE_SEPARATOR); // leading
-        while ( i.hasNext() )
-        {
-            PolarizationState s = i.next();
-            sb.append(s.stringValue());
-            sb.append(POL_STATE_SEPARATOR); // trailing
-        }
-        return sb.toString();
-    }
     
-    public static String encodeListString(List<String> strs)
-    {
-        StringBuilder sb = new StringBuilder();
-        Iterator<String> i = strs.iterator();
-        while ( i.hasNext() )
-        {
-            sb.append(i.next());
-            if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
-        }
-        return sb.toString();
-    }
-    public static void decodeListString(String val, List<String> out)
-    {
-        if (val == null)
-            return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
-        for (String s : ss)
-            out.add(s);
-    }
-
-    public static String encodeObservationURIs(Set<ObservationURI> set)
-    {
-        if (set.isEmpty())
-            return null;
-        StringBuilder sb = new StringBuilder();
-        Iterator<ObservationURI> i = set.iterator();
-        while ( i.hasNext() )
-        {
-            sb.append(i.next().getURI().toASCIIString());
-            if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
-        }
-        return sb.toString();
-    }
-    public static void decodeObservationURIs(String val, Set<ObservationURI> out)
-        throws SQLException
-    {
-        if (val == null)
-            return;
-        val = val.trim();
-        if (val.length() == 0)
-            return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
-        for (String s : ss)
-        {
-            if (s.length() > 0)
-                try
-                {
-                    URI uri = new URI(s);
-                    ObservationURI puri = new ObservationURI(uri);
-                    out.add(puri);
-                }
-                catch(URISyntaxException ex)
-                {
-                    throw new RuntimeException("failed to decode URI: " + s, ex);
-                }
-        }
-    }
-    public static String encodePlaneURIs(Set<PlaneURI> set)
-    {
-        if (set.isEmpty())
-           return null;
-        StringBuilder sb = new StringBuilder();
-        Iterator<PlaneURI> i = set.iterator();
-        while ( i.hasNext() )
-        {
-            sb.append(i.next().getURI().toASCIIString());
-            if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
-        }
-        return sb.toString();
-    }
-    public static void decodePlaneURIs(String val, Set<PlaneURI> out)
-        throws SQLException
-    {
-        if (val == null)
-            return;
-        val = val.trim();
-        if (val.length() == 0)
-            return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
-        for (String s : ss)
-        {
-            try
-            {
-                URI uri = new URI(s);
-                PlaneURI puri = new PlaneURI(uri);
-                out.add(puri);
-            }
-            catch(URISyntaxException ex)
-            {
-                throw new RuntimeException("failed to decode URI: " + s, ex);
-            }
-        }
-    }
-
-    public static String encodeCoordRange1D(CoordRange1D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        sb.append(cr.getStart().pix);
-        sb.append("/");
-        sb.append(cr.getStart().val);
-        sb.append("/");
-        sb.append(cr.getEnd().pix);
-        sb.append("/");
-        sb.append(cr.getEnd().val);
-        return sb.toString();
-    }
-    public static CoordRange1D decodeCoordRange1D(String s)
-    {
-        if (s == null)
-            return null;
-        String[] c = s.split("/");
-        try
-        {
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]), Double.parseDouble(c[1]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
-            return new CoordRange1D(c1, c2);
-        }
-        catch(NumberFormatException bug)
-        {
-            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
-        }
-    }
-    public static String encodeCoordBounds1D(CoordBounds1D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        Iterator<CoordRange1D> i = cr.getSamples().iterator();
-        while ( i.hasNext() )
-        {
-            String s = encodeCoordRange1D(i.next());
-            sb.append(s);
-            if ( i.hasNext() )
-                sb.append(",");
-        }
-        return sb.toString();
-    }
-    public static CoordBounds1D decodeCoordBounds1D(String s)
-    {
-        if (s == null)
-            return null;
-        s = s.trim();
-        
-        CoordBounds1D ret = new CoordBounds1D();
-        if (s.length() == 0)
-            return ret; // empty sample list
-        
-        String[] c = s.split(",");
-        for (String r : c)
-        {
-            CoordRange1D cr = decodeCoordRange1D(r);
-            ret.getSamples().add(cr);
-        }
-        return ret;
-    }
-    public static String encodeCoordFunction1D(CoordFunction1D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        sb.append(cr.getNaxis());
-        sb.append("/");
-        sb.append(cr.getDelta());
-        sb.append("/");
-        sb.append(cr.getRefCoord().pix);
-        sb.append("/");
-        sb.append(cr.getRefCoord().val);
-        sb.append("/");
-        return sb.toString();
-    }
-    public static CoordFunction1D decodeCoordFunction1D(String s)
-    {
-        if (s == null)
-            return null;
-        String[] c = s.split("/");
-        try
-        {
-            Long naxis = Long.parseLong(c[0]);
-            Double delta = Double.parseDouble(c[1]);
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
-            return new CoordFunction1D(naxis, delta, c2);
-        }
-        catch(NumberFormatException bug)
-        {
-            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
-        }
-    }
-
-    public static String encodeCoordRange2D(CoordRange2D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        sb.append(cr.getStart().getCoord1().pix);
-        sb.append("/");
-        sb.append(cr.getStart().getCoord1().val);
-        sb.append("/");
-        sb.append(cr.getStart().getCoord2().pix);
-        sb.append("/");
-        sb.append(cr.getStart().getCoord2().val);
-        sb.append("/");
-        sb.append(cr.getEnd().getCoord1().pix);
-        sb.append("/");
-        sb.append(cr.getEnd().getCoord1().val);
-        sb.append("/");
-        sb.append(cr.getEnd().getCoord2().pix);
-        sb.append("/");
-        sb.append(cr.getEnd().getCoord2().val);
-        return sb.toString();
-    }
-    public static CoordRange2D decodeCoordRange2D(String s)
-    {
-        if (s == null)
-            return null;
-        String[] c = s.split("/");
-        try
-        {
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]), Double.parseDouble(c[1]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
-            RefCoord c3 = new RefCoord(Double.parseDouble(c[4]), Double.parseDouble(c[5]));
-            RefCoord c4 = new RefCoord(Double.parseDouble(c[6]), Double.parseDouble(c[7]));
-            return new CoordRange2D(new Coord2D(c1, c2), new Coord2D(c3, c4));
-        }
-        catch(NumberFormatException bug)
-        {
-            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
-        }
-    }
-    public static String encodeCoordBounds2D(CoordBounds2D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        if (cr instanceof CoordCircle2D)
-        {
-            CoordCircle2D circ = (CoordCircle2D) cr;
-            sb.append("C/");
-            sb.append(circ.getCenter().coord1);
-            sb.append("/");
-            sb.append(circ.getCenter().coord2);
-            sb.append("/");
-            sb.append(circ.getRadius());
-        }
-        else
-        {
-            CoordPolygon2D poly = (CoordPolygon2D) cr;
-            sb.append("P/");
-            Iterator<ValueCoord2D> i = poly.getVertices().iterator();
-            while ( i.hasNext() )
-            {
-                ValueCoord2D c = i.next();
-                sb.append(c.coord1);
-                sb.append(",");
-                sb.append(c.coord2);
-                if (i.hasNext())
-                    sb.append("/");
-            }
-        }
-        return sb.toString();
-    }
-    public static CoordBounds2D decodeCoordBounds2D(String s)
-    {
-        if (s == null)
-            return null;
-        s = s.trim();
-
-        String[] c = s.split("/");
-
-        if ("C".equals(c[0]))
-        {
-            try
-            {
-                double c1 = Double.parseDouble(c[1]);
-                double c2 = Double.parseDouble(c[2]);
-                double rad = Double.parseDouble(c[3]);
-                return new CoordCircle2D(new ValueCoord2D(c1, c2), rad);
-            }
-            catch(NumberFormatException bug)
-            {
-                throw new RuntimeException("BUG: failed to decode CoordCircle2D from " + s, bug);
-            }
-        }
-        if ("P".equals(c[0]))
-        {
-            CoordPolygon2D poly = new CoordPolygon2D();
-            for (int i=1; i<c.length; i++)
-            {
-                String[] cc = c[i].split(",");
-                try
-                {
-                    double c1 = Double.parseDouble(cc[0]);
-                    double c2 = Double.parseDouble(cc[1]);
-                    poly.getVertices().add(new ValueCoord2D(c1, c2));
-                }
-                catch(Exception bug)
-                {
-                    throw new RuntimeException("BUG: failed to decode CoordPolygon2D from " + s, bug);
-                }
-            }
-            return poly;
-        }
-        throw new RuntimeException("BUG: failed to decode CoordBounds2D from " + s);
-    }
-    public static String encodeCoordFunction2D(CoordFunction2D cr)
-    {
-        if (cr == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        sb.append(cr.getDimension().naxis1);
-        sb.append("/");
-        sb.append(cr.getDimension().naxis2);
-        sb.append("/");
-        sb.append(cr.getRefCoord().getCoord1().pix);
-        sb.append("/");
-        sb.append(cr.getRefCoord().getCoord1().val);
-        sb.append("/");
-        sb.append(cr.getRefCoord().getCoord2().pix);
-        sb.append("/");
-        sb.append(cr.getRefCoord().getCoord2().val);
-        sb.append("/");
-        sb.append(cr.getCd11());
-        sb.append("/");
-        sb.append(cr.getCd12());
-        sb.append("/");
-        sb.append(cr.getCd21());
-        sb.append("/");
-        sb.append(cr.getCd22());
-
-        return sb.toString();
-    }
-    public static CoordFunction2D decodeCoordFunction2D(String s)
-    {
-        if (s == null)
-            return null;
-        String[] c = s.split("/");
-        try
-        {
-            Dimension2D dim = new Dimension2D(Long.parseLong(c[0]), Long.parseLong(c[1]));
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[4]), Double.parseDouble(c[5]));
-            Coord2D rc = new Coord2D(c1, c2);
-            return new CoordFunction2D(dim, rc,
-                    Double.parseDouble(c[6]), Double.parseDouble(c[7]),
-                    Double.parseDouble(c[8]), Double.parseDouble(c[9]));
-        }
-        catch(NumberFormatException bug)
-        {
-            throw new RuntimeException("BUG: failed to decode CoordFunction2D from " + s, bug);
-        }
-
-    }
 
     public static URI getURI(ResultSet rs, int col)
         throws SQLException
@@ -688,7 +297,6 @@ public class Util
         throws SQLException
     {
         Object o = rs.getObject(col);
-        log.debug("getInterval: col=" + col + ", value=" + o);
         if (o == null)
             return null;
        
@@ -737,61 +345,6 @@ public class Util
         }
     }
     
-    // methods to assign to private field in AbstractCaomEntity
-    public static void assignID(Object ce, Long id)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("id");
-            f.setAccessible(true);
-            f.set(ce, id);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-
-    /*
-    public static void assignStateCode(Object ce, Integer sc)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
-            f.setAccessible(true);
-            f.set(ce, sc);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-    */
-    
-    public static void assignLastModified(Object ce, Date d, String fieldName)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            f.set(ce, d);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-
-    public static Date getLastModified(Object ce)
-    {
-        return getLastModified(ce, "lastModified");
-    }
-    public static Date getLastModified(Object ce, String fieldName)
-    {
-        try
-        {
-            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            return (Date) f.get(ce);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-
     public static Plane findPlane(Set<Plane> set, Long id)
     {
         for (Plane e : set)
@@ -799,6 +352,7 @@ public class Util
                 return e;
         return null;
     }
+    
     public static PlaneSkeleton findPlaneSkel(List<PlaneSkeleton> set, Long id)
     {
         for (PlaneSkeleton e : set)
@@ -814,6 +368,7 @@ public class Util
                 return e;
         return null;
     }
+    
     public static ArtifactSkeleton findArtifactSkel(List<ArtifactSkeleton> set, Long id)
     {
         for (ArtifactSkeleton e : set)
@@ -829,6 +384,7 @@ public class Util
                 return e;
         return null;
     }
+    
     public static PartSkeleton findPartSkel(List<PartSkeleton> set, Long id)
     {
         for (PartSkeleton e : set)
@@ -844,6 +400,7 @@ public class Util
                 return e;
         return null;
     }
+    
     public static ChunkSkeleton findChunkSkel(List<ChunkSkeleton> set, Long id)
     {
         for (ChunkSkeleton e : set)
