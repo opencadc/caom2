@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.types.EnergyUtil;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
+import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
 public final class CutoutUtil
@@ -129,171 +130,261 @@ public final class CutoutUtil
         List<String> ret = new ArrayList<String>();
         for (Part p : a.getParts()) // currently, only FITS files have parts and chunks
         {
+            boolean doCutObservable = false;
+            boolean doCut = true;
+            long[] posCut = null;
+            long[] nrgCut = null;
+            long[] timCut = null;
+            long[] polCut = null;
+            long[] obsCut = null;
             for (Chunk c : p.getChunks())
             {
-                boolean doCutObservable = false;
-                boolean doCut = true;
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("[").append(p.getName()).append("]");
-
-                // create template cutout for each axis in the data array in the right order
-                sb.append("[");
-                for (int i=1; i <= c.naxis.intValue(); i++)
-                {
-                    if (i > 1)
-                        sb.append(",");
-                    if (c.positionAxis1 != null && i == c.positionAxis1.intValue())
-                        sb.append(POS1_CUT);
-                    else if (c.positionAxis2 != null && i == c.positionAxis2.intValue())
-                        sb.append(POS2_CUT);
-                    else if (c.energyAxis != null && i == c.energyAxis.intValue())
-                        sb.append(NRG_CUT);
-                    else if (c.timeAxis != null && i == c.timeAxis.intValue())
-                        sb.append(TIM_CUT);
-                    else if (c.polarizationAxis != null && i == c.polarizationAxis.intValue())
-                        sb.append(POL_CUT);
-                    else if (c.observableAxis != null && i == c.observableAxis.intValue())
-                        sb.append(OBS_CUT);
-                }
-                sb.append("]");
-                log.debug("cutout template: " + sb.toString());
-
                 // check if spatial axes are part of the actual data array
-                if ( doCut && circle != null )
+                if (circle != null )
                 {
                     if ( canPositionCutout(c) )
                     {
+                        // cut.length==0 means circle contains all pixels
+                        // cut.length==4 means circle picks a subset of pixels
                         long[] cut = PositionUtil.getBounds(c.position, circle);
-                        if (cut != null)
+                        if (posCut == null)
+                            posCut = cut;
+                        else if (posCut.length == 4 && cut != null) // subset
                         {
-                            // cut.length==0 means circle contains all pixels
-                            // cut.length==4 means circle picks a subset of pixels
-
-                            if (cut.length == 4)
+                            if (cut.length == 0)
+                                posCut = cut;
+                            else // both are length 4
                             {
-                                String cutX = cut[0] + ":" + cut[1];
-                                String cutY = cut[2] + ":" + cut[3];
-                                log.debug("cutout: " + cut[0] + "," + cut[1] + "," + cut[2] + "," + cut[3] + " -> " + cutX + "," + cutY);
-                                int i1 = sb.indexOf(POS1_CUT);
-                                sb.replace(i1, i1+CUT_LEN, cutX);
-                                int i2 = sb.indexOf(POS2_CUT);
-                                sb.replace(i2, i2+CUT_LEN, cutY);
-                                doCutObservable = true;
+                                posCut[0] = Math.min(posCut[0], cut[0]);
+                                posCut[1] = Math.max(posCut[1], cut[1]);
+                                posCut[2] = Math.min(posCut[2], cut[2]);
+                                posCut[3] = Math.max(posCut[3], cut[3]);
                             }
-                            else
-                            {
-                                int i1 = sb.indexOf(POS1_CUT);
-                                sb.replace(i1, i1+CUT_LEN, "*");
-                                int i2 = sb.indexOf(POS2_CUT);
-                                sb.replace(i2, i2+CUT_LEN, "*");
-                            }
-                            String cs = sb.toString();
-                            log.debug("position cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
-                        }
-                        else
-                        {
-                            log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no position overlap");
-                            doCut = false;
                         }
                     }
-                    else
-                        log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no SpatialWCS axes or function");
                 }
-                
                 // energy cutout
-                if ( doCut && energyInter != null )
+                if (energyInter != null )
                 {
                     if ( canEnergyCutout(c) )
                     {
                         long[] cut = EnergyUtil.getBounds(c.energy, energyInter);
-                        if (cut != null)
+                        if (nrgCut == null)
+                            nrgCut = cut;
+                        else if (nrgCut.length == 2 && cut != null) // subset
                         {
-                            // cut.length==0 means circle contains all pixels
-                            // cut.length==2 means interval picks a subset of pixels
-                            int i = sb.indexOf(NRG_CUT);
-                            if (cut.length == 2)
+                            if (cut.length == 0)
+                                nrgCut = cut;
+                            else // both are length 4
                             {
-                                sb.replace(i, i+CUT_LEN, cut[0] + ":" + cut[1]);
-                                doCutObservable = true;
+                                nrgCut[0] = Math.min(nrgCut[0], cut[0]);
+                                nrgCut[1] = Math.max(nrgCut[1], cut[1]);
                             }
-                            else
-                            {
-                                sb.replace(i, i+CUT_LEN, "*");
-                            }
-                            String cs = sb.toString();
-                            log.debug("energy cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
-                        }
-                        else
-                        {
-                            log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no position overlap");
-                            doCut = false;
                         }
                     }
-                    else
-                        log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no SpectralWCS axes or function");
                 }
-
-                // time cutout: not supported
-                
-                // polarization cutout: not supported
-                
-                // observable cutout
-                if ( doCut && doCutObservable )
+                // no time cutout
+                // no polarizatrion cutout
+                // no input observable cutout, but merge
+                if ( canObservableCutout(c) )
                 {
-                    log.debug("observable: " + c.observable);
-                    if ( canObservableCutout(c) )
+                    long[] cut = getObservableCutout(c.observable);
+                    log.debug("checking chunk " + c.getID() + " obs cut: " + toString(cut));
+                    if (obsCut == null)
                     {
-                        long o1 = c.observable.getDependent().getBin();
-                        long o2 = c.observable.getDependent().getBin();
-                        int i = sb.indexOf(OBS_CUT);
-                        if (c.observable.independent != null)
-                        {
-                            if (o1 < c.observable.independent.getBin())
-                                o2 = c.observable.independent.getBin();
-                            else
-                                o1 = c.observable.independent.getBin();
-                        }
-                        sb.replace(i, i+CUT_LEN, o1+":"+o2);
-                        String cs = sb.toString();
-                        log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+                        log.debug("observable cut: " + toString(obsCut) + " -> " + toString(cut));
+                        obsCut = cut;
                     }
-                    else
-                        log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
+                    else if (obsCut.length == 2 && cut != null) 
+                    {
+                        if (cut.length == 0)
+                        {
+                            log.debug("observable cut: " + toString(obsCut) + " -> " + toString(cut));
+                            obsCut = cut;
+                        }
+                        else // both are length 2
+                        {
+                            log.debug("observable cut merge before: " + toString(obsCut));
+                            obsCut[0] = Math.min(obsCut[0], cut[0]);
+                            obsCut[1] = Math.max(obsCut[1], cut[1]);
+                            log.debug("observable cut merge after: " + toString(obsCut));
+                        }
+                    }
                 }
-
-
-                // for any axis in the data but not in the cutout: keep all pixels
-                int i;
-                i = sb.indexOf(POS1_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-
-                i = sb.indexOf(POS2_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-
-                i = sb.indexOf(NRG_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-
-                i = sb.indexOf(TIM_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-
-                i = sb.indexOf(POL_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-                
-                i = sb.indexOf(OBS_CUT);
-                if (i > 0)
-                    sb.replace(i, i+CUT_LEN, "*");
-
-                if (doCut)
-                    ret.add(sb.toString());
             }
+            
+            // now inject the pixel ranges into the cutout spec
+            StringBuilder sb = initCutout(p.getName(), p);
+            if (posCut != null)
+            {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==4 means circle picks a subset of pixels
+                if (posCut.length == 4)
+                {
+                    String cutX = posCut[0] + ":" + posCut[1];
+                    String cutY = posCut[2] + ":" + posCut[3];
+                    int i1 = sb.indexOf(POS1_CUT);
+                    sb.replace(i1, i1+CUT_LEN, cutX);
+                    int i2 = sb.indexOf(POS2_CUT);
+                    sb.replace(i2, i2+CUT_LEN, cutY);
+                    doCutObservable = true;
+                }
+                else
+                {
+                    int i1 = sb.indexOf(POS1_CUT);
+                    sb.replace(i1, i1+CUT_LEN, "*");
+                    int i2 = sb.indexOf(POS2_CUT);
+                    sb.replace(i2, i2+CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("position cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+            }
+            else if (circle != null)
+            {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no position overlap");
+                doCut = false;
+            }
+                    
+            if (nrgCut != null)
+            {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==2 means interval picks a subset of pixels
+                int i = sb.indexOf(NRG_CUT);
+                if (nrgCut.length == 2)
+                {
+                    sb.replace(i, i+CUT_LEN, nrgCut[0] + ":" + nrgCut[1]);
+                    doCutObservable = true;// cut.length==0 means circle contains all pixels
+                }
+                else
+                {
+                    sb.replace(i, i+CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("energy cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+            }
+            else if (energyInter != null)
+            {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no energy overlap");
+                doCut = false;
+            }
+
+            // time cutout: not supported
+                
+            // polarization cutout: not supported
+                
+            if (obsCut != null)
+            {
+                int i = sb.indexOf(OBS_CUT);
+                sb.replace(i, i+CUT_LEN, obsCut[0]+":"+obsCut[1]);
+                String cs = sb.toString();
+                log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+            }
+            else
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
+
+            // for any axis in the data but not in the cutout: keep all pixels
+            int i;
+            i = sb.indexOf(POS1_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            i = sb.indexOf(POS2_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            i = sb.indexOf(NRG_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            i = sb.indexOf(TIM_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            i = sb.indexOf(POL_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            i = sb.indexOf(OBS_CUT);
+            if (i > 0)
+                sb.replace(i, i+CUT_LEN, "*");
+
+            if (doCut)
+                ret.add(sb.toString());
         }
         return ret;
+    }
+    
+    private static String toString(long[] cut)
+    {
+        if (cut == null)
+            return null;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (long v : cut)
+        {
+            sb.append(v);
+            sb.append(",");
+        }
+        sb.setCharAt(sb.length() - 1, ']');
+        return sb.toString();
+    }
+    private static long[] getObservableCutout(ObservableAxis o)
+    {
+        
+        long o1 = o.getDependent().getBin();
+        long o2 = o.getDependent().getBin();
+
+        if (o.independent != null)
+        {
+            if (o1 < o.independent.getBin())
+                o2 = o.independent.getBin();
+            else
+                o1 = o.independent.getBin();
+        }
+        return new long[] { o1, o2 };
+    }
+    
+    private static StringBuilder initCutout(String partName, Part p)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[").append(partName).append("]");
+        // create template cutout for each axis in the data array in the right order
+        sb.append("[");
+        boolean pos1 = false;
+        boolean pos2 =  false;
+        boolean nrg = false;
+        boolean tim = false;
+        boolean pol = false;
+        boolean obs = false;
+        int naxis = 0;
+        for (Chunk c : p.getChunks())
+        {
+            naxis = Math.max(naxis, c.naxis);
+            for (int i=1; i <= c.naxis.intValue(); i++)
+            {
+                pos1 = pos1 || (c.positionAxis1 != null && i == c.positionAxis1.intValue());
+                pos2 = pos2 || (c.positionAxis2 != null && i == c.positionAxis2.intValue());
+                nrg = nrg || (c.energyAxis != null && i == c.energyAxis.intValue());
+                tim = tim || (c.timeAxis != null && i == c.timeAxis.intValue());
+                pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis.intValue());
+                obs = obs || (c.observableAxis != null && i == c.observableAxis.intValue());
+            }
+        }
+        if (pos1)
+            sb.append(POS1_CUT).append(",");
+        if (pos2)
+            sb.append(POS2_CUT).append(",");
+        if (nrg)
+            sb.append(NRG_CUT).append(",");
+        if (tim)
+            sb.append(TIM_CUT).append(",");
+        if (pol)
+            sb.append(POL_CUT).append(",");
+        if (obs)
+            sb.append(OBS_CUT).append(",");
+        sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+        log.debug("cutout template: " + sb.toString());
+        return sb;
     }
 
     public static boolean canCutout(Chunk c)
