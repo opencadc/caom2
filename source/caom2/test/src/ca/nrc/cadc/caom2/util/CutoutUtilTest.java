@@ -173,7 +173,7 @@ public class CutoutUtilTest
         }
     }
     
-    @Test
+    //@Test
     public void testComputeCutoutAll()
     {
         try
@@ -305,13 +305,15 @@ public class CutoutUtilTest
             Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-4);
             Circle outside = new Circle(new Point(10.0, 10.0), 1.0);
             
-            List<String> cus = CutoutUtil.computeCutout(a, miss, null, null, null);
+            List<String> cus;
+            
+            cus = CutoutUtil.computeCutout(a, miss, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.isEmpty());
             
             cus = CutoutUtil.computeCutout(a, inside, null, null, null);
             Assert.assertNotNull(cus);
-            Assert.assertTrue(cus.size() == 1);
+            Assert.assertEquals(1, cus.size());
             String cutout = cus.get(0);
             Assert.assertEquals("[0][128:128,128:128]", cutout); // one pixel in the middle of part [0]
             
