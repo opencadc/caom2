@@ -101,6 +101,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsUtil;
@@ -443,14 +445,13 @@ public class Ingest implements Runnable
                     Chunk chunk = new Chunk();
                     if (!part.getChunks().isEmpty())
                     {
-                        // Should only be a single chunk.
+                        chunk = part.getChunks().iterator().next();
+                        
+                        // If more than one Chunk, clear the set.
                         if (part.getChunks().size() > 1)
                         {
-                            String error = "Multiple Chunks found for Part " +
-                                            part + " in " + artifact;
-                            throw new IngestException(error);
+                            part.getChunks().clear();
                         }
-                        chunk = part.getChunks().iterator().next();
                     }
                     populateChunk(chunk, mapping);
                     insert = part.getChunks().add(chunk);
@@ -517,10 +518,12 @@ public class Ingest implements Runnable
         chunk.energyAxis = null;
         chunk.timeAxis = null;
         chunk.polarizationAxis = null;
+        chunk.observableAxis = null;
         chunk.position = null;
         chunk.energy = null;
         chunk.time = null;
         chunk.polarization = null;
+        chunk.observable = null;
         
         // ProductType.
         String value = mapping.getMapping("Chunk.productType");
