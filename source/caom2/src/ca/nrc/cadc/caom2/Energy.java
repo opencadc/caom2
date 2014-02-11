@@ -94,6 +94,8 @@ public class Energy implements Serializable
     public EnergyBand emBand;
 
     public EnergyTransition transition;
+    
+    public Double restwav;
 
     @Override
     public String toString()
@@ -113,6 +115,8 @@ public class Energy implements Serializable
         sb.append(emBand);
         sb.append(",t=");
         sb.append(transition);
+        sb.append(",w=");
+        sb.append(restwav);
         sb.append("]");
         return sb.toString();
     }

@@ -71,13 +71,13 @@ package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -109,6 +109,7 @@ public class EnergyUtilTest
 
     String BANDPASS_NAME= "H-Alpha-narrow";
     EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
+    EnergyConverter econv = new EnergyConverter();
 
     //@Test
     public void testTemplate()
@@ -184,6 +185,8 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertNotNull(actual.restwav);
+            Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
 
             plane = getTestSetRange(1, 3, 1);
             actual = EnergyUtil.compute(plane.getArtifacts());
@@ -203,6 +206,8 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertNotNull(actual.restwav);
+            Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
         }
         catch(Exception unexpected)
         {
@@ -244,6 +249,8 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertNotNull(actual.restwav);
+            Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
         }
         catch(Exception unexpected)
         {
@@ -285,6 +292,8 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertNotNull(actual.restwav);
+            Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
             
             Assert.assertNotNull(actual.getFreqWidth());
             Assert.assertNotNull(actual.getFreqSampleSize());
@@ -310,13 +319,14 @@ public class EnergyUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
             SpectralWCS spec = new SpectralWCS(axis, "TOPOCENT");
+            spec.restfrq = econv.toHz(6563.0e-10, "m");
 
             RefCoord c1 = new RefCoord(0.5, 2.0);
             RefCoord c2 = new RefCoord(1024.5, 20.0);
             spec.getAxis().range = new CoordRange1D(c1, c2); //[2,20] MHz
             log.debug("testComputeFromFreqRange: " + spec.getAxis().range + " " + spec.getAxis().getAxis().getCunit());
 
-            // use this to create teh objects, then replace the single SpectralWCS with above
+            // use this to create the objects, then replace the single SpectralWCS with above
             Plane plane = getTestSetRange(1,1,1);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -335,6 +345,8 @@ public class EnergyUtilTest
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+            Assert.assertNotNull(actual.restwav);
+            Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
         }
         catch(Exception unexpected)
         {
@@ -725,7 +737,7 @@ public class EnergyUtilTest
         if (complete)
         {
             wcs.bandpassName = BANDPASS_NAME;
-            wcs.restwav = 656.3;
+            wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
@@ -744,7 +756,7 @@ public class EnergyUtilTest
         if (complete)
         {
             wcs.bandpassName = BANDPASS_NAME;
-            wcs.restwav = 656.3;
+            wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
@@ -767,7 +779,7 @@ public class EnergyUtilTest
         if (complete)
         {
             wcs.bandpassName = BANDPASS_NAME;
-            wcs.restwav = 656.3;
+            wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
@@ -785,7 +797,7 @@ public class EnergyUtilTest
         if (complete)
         {
             wcs.bandpassName = BANDPASS_NAME;
-            wcs.restwav = 656.3;
+            wcs.restfrq = econv.toHz(6536.0e-10, "m");
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
@@ -809,7 +821,7 @@ public class EnergyUtilTest
         if (complete)
         {
             wcs.bandpassName = BANDPASS_NAME;
-            wcs.restwav = 656.3;
+            wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
@@ -826,7 +838,7 @@ public class EnergyUtilTest
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
         wcs.bandpassName = BANDPASS_NAME;
-        wcs.restwav = 6563.0;
+        wcs.restwav = 6563.0e-10; // meters
         wcs.resolvingPower = 33000.0;
         wcs.transition = TRANSITION;
 

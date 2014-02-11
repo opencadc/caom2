@@ -62,6 +62,7 @@ public final class EnergyUtil
             e.bandpassName = computeBandpassName(artifacts, productType);
             e.transition = computeTransition(artifacts, productType);
             e.emBand = EnergyBand.getEnergyBand(e.bounds);
+            e.restwav = computeRestWav(artifacts, productType);
         }
 
         return e;
@@ -296,11 +297,11 @@ public final class EnergyUtil
     }
     
     /**
-     * Compute the mean resolution per chunk, weighted by the number of pixels.
+     * Compute the mean resolving power per chunk, weighted by the number of pixels.
      * in the chunk.
      *
      * @param wcs
-     * @return exposure time in seconds
+     * @return resolving power
      */
     static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
     {
@@ -390,6 +391,58 @@ public final class EnergyUtil
             }
         }
         return ret;
+    }
+    
+    /**
+     * Compute the mean rest wavelength per chunk, weighted by the number of pixels.
+     * in the chunk.
+     *
+     * @param wcs
+     * @return rest wavelength in meters
+     */
+    static Double computeRestWav(Set<Artifact> artifacts, ProductType productType)
+    {
+        double minW = Double.MAX_VALUE;
+        double maxW = 0.0;
+        boolean found = false;
+        for (Artifact a : artifacts)
+        {
+            for (Part p : a.getParts())
+            {
+                for (Chunk c : p.getChunks())
+                {
+                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    {
+                        Double rw = getRestWav(c.energy);
+                        if (rw != null)
+                        {
+                            minW = Math.min(minW, rw);
+                            maxW = Math.max(maxW, rw);
+                            found = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (found)
+        {
+            double delta = Math.abs(maxW - minW);
+            Double ret = minW + delta/2.0;
+            if (delta/ret < 0.01)
+                return ret;
+        }
+        return null;
+    }
+    
+    private static Double getRestWav(SpectralWCS w)
+    {
+        if (w == null)
+            return null;
+        if (w.restwav != null)
+            return w.restwav;
+        if (w.restfrq != null)
+            return conv.toMeters(w.restfrq, EnergyConverter.BASE_UNIT_FREQ);
+        return null;
     }
 
     private static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r)

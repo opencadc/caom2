@@ -141,7 +141,7 @@ public class CaomEntityTest
     }
 
     static int[] expectedStateFields = { 13, 14, 7, 5, 2, 13 };
-    static int[] expectedStateFieldsWithTrans = { 13, 14, 11, 5, 2, 13 };
+    static int[] expectedStateFieldsWithTrans = { 13, 14, 11, 6, 3, 14 };
     static int[] expectedChildFields = { 1, 1, 1, 1, 1, 0 };
 
     //@Test
