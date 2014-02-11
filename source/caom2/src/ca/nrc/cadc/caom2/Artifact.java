@@ -99,6 +99,9 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
     public Long contentLength;
     public ProductType productType;
     public boolean alternative;
+    
+    // computed state
+    public transient Date metaRelease;
 
     public Artifact(URI uri)
     {

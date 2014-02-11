@@ -130,6 +130,19 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         this.energy = null;
         this.time = null;
         this.polarization = null;
+        // clear metaRelease to children
+        for (Artifact a : artifacts)
+        {
+            a.metaRelease = null;
+            for (Part p : a.getParts())
+            {
+                p.metaRelease = null;
+                for (Chunk c : p.getChunks())
+                {
+                    c.metaRelease = null;
+                }
+            }
+        }
     }
 
     /**
@@ -141,6 +154,19 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         computeEnergy();
         computeTime();
         computePolarization();
+        // propagate metaRelease to children
+        for (Artifact a : artifacts)
+        {
+            a.metaRelease = metaRelease;
+            for (Part p : a.getParts())
+            {
+                p.metaRelease = metaRelease;
+                for (Chunk c : p.getChunks())
+                {
+                    c.metaRelease = metaRelease;
+                }
+            }
+        }
     }
 
     public PlaneURI getURI(ObservationURI parentURI)

@@ -106,6 +106,9 @@ public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
     public SpectralWCS energy;
     public TemporalWCS time;
     public PolarizationWCS polarization;
+    
+    // computed state
+    public transient Date metaRelease;
 
     public Chunk() { }
 

@@ -45,6 +45,8 @@ public class EnergyConverter implements Serializable
     public static final String CORE_SPECSYS = "BARYCENT";
     public static final String CORE_CTYPE = "WAVE";
 	public static final String CORE_UNIT = "m";
+    
+    public static final String BASE_UNIT_FREQ = "Hz";
 
     private static final double c = 2.9979250e8; 	// m/sec
 	private static final double h = 6.62620e-27; 	// erg/sec
