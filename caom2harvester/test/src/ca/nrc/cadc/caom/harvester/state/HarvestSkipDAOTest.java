@@ -144,6 +144,7 @@ public class HarvestSkipDAOTest
             Long id3 = new Long(777L);
 
             HarvestSkip skip;
+            Date start = null;
             
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id1);
             dao.put(skip);
@@ -152,7 +153,7 @@ public class HarvestSkipDAOTest
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id3);
             dao.put(skip);
 
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName());
+            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
             Assert.assertEquals("skips size", 3, skips.size());
             Assert.assertEquals(id1, skips.get(0).skipID);
             Assert.assertEquals(id2, skips.get(1).skipID);

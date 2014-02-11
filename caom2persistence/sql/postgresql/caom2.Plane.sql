@@ -55,6 +55,7 @@ create table caom2.Plane
     energy_transition_transition varchar(32),
     energy_freqWidth         double precision,
     energy_freqSampleSize    double precision,
+    energy_restwav           double precision,
 
 -- time
     time_bounds_cval1       double precision,

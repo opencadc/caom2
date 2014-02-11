@@ -51,17 +51,17 @@ public class HarvestSkipDAO
     public HarvestSkip get(String source, String cname, Long skipID)
     {
         SelectStatementCreator sel = new SelectStatementCreator();
-        sel.setValues(source, cname, skipID, null);
+        sel.setValues(source, cname, skipID, null, null);
         List result = jdbc.query(sel, extractor);
         if (result.isEmpty())
             return null;
         return (HarvestSkip) result.get(0);
     }
     
-    public List<HarvestSkip> get(String source, String cname)
+    public List<HarvestSkip> get(String source, String cname, Date start)
     {
         SelectStatementCreator sel = new SelectStatementCreator();
-        sel.setValues(source, cname, null, batchSize);
+        sel.setValues(source, cname, null, batchSize, start);
         List result = jdbc.query(sel, extractor);
         List<HarvestSkip> ret = new ArrayList<HarvestSkip>(result.size());
         for (Object o : result)
@@ -98,14 +98,16 @@ public class HarvestSkipDAO
         private String cname;
         private Integer batchSize;
         private Long skipID;
+        private Date start;
 
         public SelectStatementCreator() { }
 
-        public void setValues(String source, String cname, Long skipID, Integer batchSize)
+        public void setValues(String source, String cname, Long skipID, Integer batchSize, Date start)
         {
             this.source = source;
             this.cname = cname;
             this.batchSize = batchSize;
+            this.start = start;
             this.skipID = skipID;
         }
 
@@ -116,8 +118,10 @@ public class HarvestSkipDAO
             sb.append(" WHERE source = ? AND cname = ?");
             if (skipID != null)
                 sb.append(" AND skipID = ?");
-            else
-                sb.append(" ORDER BY lastModified");
+            else if (start != null)
+            {
+                sb.append(" AND lastModified >= ? ORDER BY lastModified");
+            }
             
             if (batchSize != null && batchSize.intValue() > 0)
                 sb.append(" LIMIT ").append(batchSize.toString());
@@ -135,6 +139,8 @@ public class HarvestSkipDAO
             ps.setString(2, cname);
             if (skipID != null)
                 ps.setLong(3, skipID);
+            else
+                ps.setTimestamp(4, new Timestamp(start.getTime()), CAL);
         }
     }
 

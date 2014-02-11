@@ -286,13 +286,13 @@ public class DeletionHarvester extends Harvester implements Runnable
             if (ret.found < expectedNum)
             {
                 ret.done = true;
-                if (state != null && state.curLastModified != null)
+                if (state != null && state.curLastModified != null && ret.found > 0)
                 {
-                    // tweak HarvestState so we don't keep picking up the same batch
-                    Date d = new Date(System.currentTimeMillis() - 5*60000L);  // 5 min ago
+                    // tweak HarvestState so we don't keep picking up the same one
                     Date n = new Date(state.curLastModified.getTime() + 1L);   // 1 ms ahead
-                    if (n.getTime() < d.getTime()) // the last timestamp is old, jump forward by a full second
-                        n = new Date(state.curLastModified.getTime() + 1000L);   // 1 sec ahead
+                    Date now = new Date();
+                    if ( now.getTime() - n.getTime() > 600*1000L) // 10 minutes aka very old
+                        n = new Date(state.curLastModified.getTime() + 100L);   // 100 ms ahead
                     state.curLastModified = n;
                     log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
                     harvestState.put(state);

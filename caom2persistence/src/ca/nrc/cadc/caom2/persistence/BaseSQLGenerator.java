@@ -127,6 +127,9 @@ public class BaseSQLGenerator implements SQLGenerator
     protected boolean persistTransientState = false; // persist computed plane metadata
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
+    protected int numComputedArtifactColumns;
+    protected int numComputedPartColumns;
+    protected int numComputedChunkColumns;
 
     // map of Class to the table that stores instances
     protected final Map<Class,String> tableMap = new TreeMap<Class,String>(new ClassComp());
@@ -241,7 +244,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 "energy_freqWidth", "energy_freqSampleSize",
                 "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
                 "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
-                
+                "energy_restwav",
 
                 // time
                 "time_bounds_cval1", "time_bounds_cval2", "time_bounds_width",
@@ -267,25 +270,58 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] artifactColumns = new String[]
         {
             "planeID", "obsID",
-            "metaRelease", 
             "uri", "productType", "contentType", "contentLength", "alternative",
             "lastModified", "maxLastModified", "stateCode", "artifactID"
         };
+        if (persistComputedValues)
+        {
+            String[] computedColumns = new String[]
+            {
+                "metaRelease"
+            };
+            this.numComputedArtifactColumns = computedColumns.length;
+            int n = artifactColumns.length + computedColumns.length;
+            String[] allCols = new String[n];
+
+            // insert the computed columns before the CaomEntity columns and PK (last 4)
+            System.arraycopy(artifactColumns, 0, allCols, 0, artifactColumns.length - 4);
+            int num = artifactColumns.length - 4;
+            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
+            num += computedColumns.length;
+            System.arraycopy(artifactColumns, artifactColumns.length - 4, allCols, num, 4);
+            artifactColumns = allCols;
+        }
         columnMap.put(Artifact.class, artifactColumns);
 
         String[] partColumns = new String[]
         {
             "artifactID", "planeID", "obsID",
-            "metaRelease", 
             "name", "productType",
             "lastModified", "maxLastModified", "stateCode", "partID"
         };
+        if (persistComputedValues)
+        {
+            String[] computedColumns = new String[]
+            {
+                "metaRelease"
+            };
+            this.numComputedPartColumns = computedColumns.length;
+            int n = partColumns.length + computedColumns.length;
+            String[] allCols = new String[n];
+
+            // insert the computed columns before the CaomEntity columns and PK (last 4)
+            System.arraycopy(partColumns, 0, allCols, 0, partColumns.length - 4);
+            int num = partColumns.length - 4;
+            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
+            num += computedColumns.length;
+            System.arraycopy(partColumns, partColumns.length - 4, allCols, num, 4);
+            partColumns = allCols;
+        }
         columnMap.put(Part.class, partColumns);
 
         String[] chunkColumns = new String[]
         {
             "partID", "artifactID", "planeID", "obsID",
-            "metaRelease", 
             "productType", "naxis", 
             "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "observableAxis",
             
@@ -353,6 +389,24 @@ public class BaseSQLGenerator implements SQLGenerator
 
             "lastModified", "maxLastModified", "stateCode", "chunkID"
         };
+        if (persistComputedValues)
+        {
+            String[] computedColumns = new String[]
+            {
+                "metaRelease"
+            };
+            this.numComputedChunkColumns = computedColumns.length;
+            int n = chunkColumns.length + computedColumns.length;
+            String[] allCols = new String[n];
+
+            // insert the computed columns before the CaomEntity columns and PK (last 4)
+            System.arraycopy(chunkColumns, 0, allCols, 0, chunkColumns.length - 4);
+            int num = chunkColumns.length - 4;
+            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
+            num += computedColumns.length;
+            System.arraycopy(chunkColumns, chunkColumns.length - 4, allCols, num, 4);
+            chunkColumns = allCols;
+        }
         columnMap.put(Chunk.class, chunkColumns);
 
         String[] metaReadAccessCols = new String[]
@@ -1058,7 +1112,8 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetString(sb, ps, col++, null);
                     safeSetString(sb, ps, col++, null);
                 }
-
+                safeSetDouble(sb, ps, col++, nrg.restwav);
+                
                 //time
                 Time tim = plane.getTime();
                 if (tim.bounds != null)
@@ -1136,7 +1191,6 @@ public class BaseSQLGenerator implements SQLGenerator
             int col = 1;
             safeSetLong(sb, ps, col++, plane.getID());
             safeSetLong(sb, ps, col++, obs.getID());
-            safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
             
             safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
             if (artifact.productType != null)
@@ -1146,6 +1200,9 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetString(sb, ps, col++, artifact.contentType);
             safeSetLong(sb, ps, col++, artifact.contentLength);
             safeSetBoolean(sb, ps, col++, artifact.alternative);
+            
+            if (persistTransientState)
+                safeSetDate(sb, ps, col++, Util.truncate(artifact.metaRelease), UTC_CAL);
 
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
@@ -1203,7 +1260,6 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLong(sb, ps, col++, artifact.getID()); 
             safeSetLong(sb, ps, col++, plane.getID());
             safeSetLong(sb, ps, col++, obs.getID());
-            safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
             
             safeSetString(sb, ps, col++, part.getName());
 
@@ -1211,6 +1267,9 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, part.productType.getValue());
             else
                 safeSetString(sb, ps, col++, null);
+            
+            if (persistTransientState)
+                safeSetDate(sb, ps, col++, Util.truncate(part.metaRelease), UTC_CAL);
 
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
@@ -1269,7 +1328,6 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLong(sb, ps, col++, artifact.getID());
             safeSetLong(sb, ps, col++, plane.getID());
             safeSetLong(sb, ps, col++, obs.getID());
-            safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
             
             if (chunk.productType != null)
                 safeSetString(sb, ps, col++, chunk.productType.getValue());
@@ -1544,6 +1602,9 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetLong(sb, ps, col++, null);
             }
 
+            if (persistTransientState)
+                safeSetDate(sb, ps, col++, Util.truncate(chunk.metaRelease), UTC_CAL);
+            
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, chunk.getStateCode());
@@ -2590,7 +2651,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (planeID == null)
                 return null;
             
-            col += 2; // skip ancestor(s) and metaRelease
+            col += 1; // skip ancestor(s)
 
             URI uri = Util.getURI(rs, col++);
             log.debug("found a.uri = " + uri);
@@ -2607,6 +2668,9 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found a.contentLength = " + a.contentLength);
             a.alternative = rs.getBoolean(col++);
             log.debug("found a.alternative = " + a.alternative);
+            
+            if (persistTransientState)
+                col += numComputedArtifactColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found artifact.lastModified = " + lastModified);
@@ -2656,7 +2720,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (artifactID == null)
                 return null;
             
-            col += 3; // skip ancestor(s) and metaRelease
+            col += 2; // skip ancestor(s)
 
             String name = rs.getString(col++);
             Part p = new Part(name);
@@ -2667,6 +2731,8 @@ public class BaseSQLGenerator implements SQLGenerator
             if (pt != null)
                 p.productType = ProductType.toValue(pt);
 
+            if (persistTransientState)
+                col += numComputedPartColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: part.lastModified = " + lastModified);
@@ -2716,7 +2782,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (partID == null)
                 return null;
             
-            col += 4; // skip ancestor(s) and metaRelease
+            col += 3; // skip ancestor(s)
             
             Chunk c = new Chunk();
 
@@ -2937,6 +3003,9 @@ public class BaseSQLGenerator implements SQLGenerator
                     c.observable.independent = new Slice(new Axis(oia, oiu), oib);
             }
 
+            if (persistTransientState)
+                col += numComputedChunkColumns;
+            
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: chunk.lastModified = " + lastModified);
             Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);

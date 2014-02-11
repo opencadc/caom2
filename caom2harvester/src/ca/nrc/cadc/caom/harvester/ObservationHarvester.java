@@ -133,6 +133,8 @@ public class ObservationHarvester extends Harvester
         public String toString() { return found + " ingested: " + ingested + " failed: " + failed; }
     }
 
+    private Date startDate;
+    
     private Progress doit()
     {
         log.info("batch: " + Observation.class.getSimpleName());
@@ -148,10 +150,7 @@ public class ObservationHarvester extends Harvester
         long t = System.currentTimeMillis();
         long tState = -1;
         long tQuery = -1;
-        long tCollision = -1;
         long tTransaction = -1;
-        
-        Observation cur = null; // for use in the catch clause
         
         int expectedNum = Integer.MAX_VALUE;
         if (batchSize != null)
@@ -166,18 +165,21 @@ public class ObservationHarvester extends Harvester
             tState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
-            Date start = state.curLastModified;
             if (full)
-                start = null;
+                startDate = null;
+            else if (!skipped)
+                startDate = state.curLastModified;
+            //else: skipped: keep startDate across multiple batches since we don't persist harvest state
+            
             List<ObservationWrapper> entityList = null;
             
             if (skipped)
-                entityList = getSkipped(start);
+                entityList = getSkipped(startDate);
             else
             {
                 Date end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
-                log.info("harvest window: " + format(start) + " :: " + format(end));
-                List<Observation> tmp = srcObservationDAO.getList(Observation.class, start, end, batchSize);
+                log.info("harvest window: " + format(startDate) + " :: " + format(end));
+                List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
                 entityList = wrap(tmp);
             }
 
@@ -185,7 +187,7 @@ public class ObservationHarvester extends Harvester
                 detectLoop(entityList);
             
             // avoid re-processing the last successful one stored in HarvestState
-            if ( !entityList.isEmpty() )
+            if ( !entityList.isEmpty() && !skipped )
             {
                 ListIterator<ObservationWrapper> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().obs;
@@ -210,7 +212,6 @@ public class ObservationHarvester extends Harvester
             {
                 ObservationWrapper ow = iter.next();
                 Observation o = ow.obs;
-                cur = o; // for use in catch
                 HarvestSkip hs = ow.skip;
                 iter.remove(); // allow garbage collection during loop
                 
@@ -231,9 +232,11 @@ public class ObservationHarvester extends Harvester
                         state.curID = o.getID();
 
                         destObservationDAO.put(o);
-                        harvestState.put(state);
-                        if (hs != null)
+                        
+                        if (hs != null) // success in redo mode
                             harvestSkip.delete(hs);
+                        else // success in normal mode
+                            harvestState.put(state);
 
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
@@ -242,10 +245,6 @@ public class ObservationHarvester extends Harvester
                     ok = true;
                     ret.ingested++;
                 }
-                //catch(CollisionException cex) // found entities with same CaomEntity.getID but different source.hashCode
-                //{
-                //    lastMsg = "ID collision: " + cex.getMessage();
-                //}
                 catch(Throwable oops)
                 {
                     lastMsg = "unexpected: " + oops.getMessage();
@@ -274,7 +273,7 @@ public class ObservationHarvester extends Harvester
                         if (str.contains("duplicate key value violates unique constraint \"i_observationURI\""))
                         {
                             log.error("CONTENT PROBLEM - duplicate observation: "
-                                    + cur.getCollection() + "," + cur.getObservationID());
+                                    + o.getCollection() + "," + o.getObservationID());
                         }
                         else
                             log.error("unexpected exception", oops);
@@ -284,7 +283,7 @@ public class ObservationHarvester extends Harvester
                         if (str.contains("spherepoly_from_array: a line segment overlaps"))
                         {
                             log.error("UNDETECTED illegal polygon: "
-                                    + cur.getCollection() + "," + cur.getObservationID());
+                                    + o.getCollection() + "," + o.getObservationID());
                         }
                         else
                             log.error("unexpected exception", oops);
@@ -300,35 +299,36 @@ public class ObservationHarvester extends Harvester
                         lastMsg = null;
                         destObservationDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
-                        tTransaction = System.currentTimeMillis() - t;
+                        tTransaction += System.currentTimeMillis() - t;
                         
-                        // track failures
-                        try
-                        {
-                            log.debug("starting HarvestSkip transaction");
-                            HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
-                            if (skip == null)
-                                skip = new HarvestSkip(source, cname, o.getID());
-                            log.info(skip);
+                        // track failures in normal mode, just ignore in skipped mode
+                        if (!skipped)
+                            try
+                            {
+                                log.debug("starting HarvestSkip transaction");
+                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
+                                if (skip == null)
+                                    skip = new HarvestSkip(source, cname, o.getID());
+                                log.info(skip);
 
-                            destObservationDAO.getTransactionManager().startTransaction();
-                            // track the harvest state progress
-                            harvestState.put(state);
-                            // track the fail
-                            harvestSkip.put(skip);
-                            // TBD: delete previous version of obs?
-                            //destObservationDAO.delete(o.getID());
-                            log.debug("committing HarvestSkip transaction");
-                            destObservationDAO.getTransactionManager().commitTransaction();
-                            log.debug("commit HarvestSkip: OK");
-                        }
-                        catch(Throwable oops)
-                        {
-                            log.warn("failed to insert HarvestSkip", oops);
-                            destObservationDAO.getTransactionManager().rollbackTransaction();
-                            log.warn("rollback HarvestSkip: OK");
-                            ret.abort = true;
-                        }
+                                destObservationDAO.getTransactionManager().startTransaction();
+                                // track the harvest state progress
+                                harvestState.put(state);
+                                // track the fail
+                                harvestSkip.put(skip);
+                                // TBD: delete previous version of obs?
+                                //destObservationDAO.delete(o.getID());
+                                log.debug("committing HarvestSkip transaction");
+                                destObservationDAO.getTransactionManager().commitTransaction();
+                                log.debug("commit HarvestSkip: OK");
+                            }
+                            catch(Throwable oops)
+                            {
+                                log.warn("failed to insert HarvestSkip", oops);
+                                destObservationDAO.getTransactionManager().rollbackTransaction();
+                                log.warn("rollback HarvestSkip: OK");
+                                ret.abort = true;
+                            }
                         ret.failed++;
                     }
 
@@ -411,7 +411,7 @@ public class ObservationHarvester extends Harvester
     private List<ObservationWrapper> getSkipped(Date start)
     {
         
-        List<HarvestSkip> skip = harvestSkip.get(source, cname);
+        List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
         List<ObservationWrapper> ret = new ArrayList<ObservationWrapper>(skip.size());
         log.warn("getSkipped: found " + skip.size());
         for (HarvestSkip hs : skip)
