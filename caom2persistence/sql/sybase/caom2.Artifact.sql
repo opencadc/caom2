@@ -25,3 +25,7 @@ create clustered index plane2artifact on caom2_Artifact (planeID)
 
 create index lastModified on caom2_Artifact (lastModified)
 ;
+
+-- special index to support caom2_isPublic and caom2_getAuth lookup by uri
+create index uri_md5 on caom2_Artifact( hash(uri, 'md5') )
+;
