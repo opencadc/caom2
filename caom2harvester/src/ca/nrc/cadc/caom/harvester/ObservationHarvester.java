@@ -36,6 +36,7 @@ public class ObservationHarvester extends Harvester
     private DatabaseObservationDAO destObservationDAO;
     
     private boolean skipped;
+    private Date maxDate;
 
     private ObservationHarvester() { }
     
@@ -54,6 +55,11 @@ public class ObservationHarvester extends Harvester
     public void setInteractive(boolean enabled)
     {
         this.interactive = enabled;
+    }
+    
+    public void setMaxDate(Date maxDate)
+    {
+        this.maxDate = maxDate;
     }
 
     private void init()
@@ -177,7 +183,10 @@ public class ObservationHarvester extends Harvester
                 entityList = getSkipped(startDate);
             else
             {
-                Date end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+                Date end = maxDate;
+                if (end == null)
+                    end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
+                
                 log.info("harvest window: " + format(startDate) + " :: " + format(end));
                 List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
                 entityList = wrap(tmp);

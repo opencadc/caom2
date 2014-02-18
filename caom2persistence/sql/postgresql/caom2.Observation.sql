@@ -61,6 +61,10 @@ create unique index i_observationURI on caom2.Observation (collection, observati
 tablespace caom_index
 ;
 
+-- harvesting index for recompute mode of caom2harvester
+create index maxLastModified on caom2.Observation (maxLastModified)
+;
+
 -- member join support
 create table caom2.Observation_members
 (

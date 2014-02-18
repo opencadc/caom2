@@ -11,7 +11,7 @@ create table caom2_ObservationMetaReadAccess
     lastmod           datetime not null,
 
     readAccessID      bigint identity primary key nonclustered,
-    stateCode int not null
+    stateCode         int null
 )
 lock datarows
 with identity_gap = 512
@@ -31,7 +31,7 @@ create table caom2_PlaneMetaReadAccess
     lastmod           datetime not null,
 
     readAccessID      bigint identity primary key nonclustered,
-    stateCode int not null
+    stateCode         int null
 )
 lock datarows
 with identity_gap = 512
@@ -51,7 +51,7 @@ create table caom2_PlaneDataReadAccess
     lastmod           datetime not null,
 
     readAccessID      bigint identity primary key nonclustered,
-    stateCode int     null
+    stateCode         int null
 )
 lock datarows
 with identity_gap = 512

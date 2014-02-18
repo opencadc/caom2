@@ -141,6 +141,12 @@ create index Plane_energy_i4
 tablespace caom_index
 ;
 
+create index Plane_energy_i5
+        on caom2.Plane (energy_restwav)
+tablespace caom_index
+where energy_restwav is not null
+;
+
 --create index Plane_time_i1
 --      on caom.Plane using gist (time_bounds)
 --tablespace caom_index
