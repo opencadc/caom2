@@ -21,6 +21,7 @@ public class Main
     
     private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
     private static final Integer DEFAULT_BATCH_FACTOR = new Integer(2500);
+    private static int exitValue = 0;
     
     public static void main(String[] args)
     {
@@ -168,18 +169,35 @@ public class Main
             catch(IOException ioex)
             {
                 log.error("failed to init: " + ioex.getMessage());
-                System.exit(-1);
+                exitValue = -1;
+                System.exit(exitValue);
             }
+            
+            exitValue = 2; // in case we get killed
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
             ch.run();
+            exitValue = 0; // finished cleanly
         }
         catch(Throwable t)
         {
             log.error("uncaught exception", t);
-            System.exit(-1);
+            exitValue = -1;
+            System.exit(exitValue);
         }
-        System.exit(0);
+        System.exit(exitValue);
     }
     
+    private static class ShutdownHook implements Runnable
+    {
+        ShutdownHook() { }
+        
+        public void run()
+        {
+            if (exitValue != 0)
+                log.error("terminating with exit status " + exitValue);
+        }
+        
+    }
     private static void usage()
     {
         StringBuilder sb = new StringBuilder();
@@ -195,8 +213,6 @@ public class Main
         sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");
         sb.append("\n     --dryrun : check for work but don't do anything");
-        //sb.append("\n     --interactive : pause and wait for input after each observation (observation harvesting only)");
-
         log.warn(sb.toString());
     }
 }
