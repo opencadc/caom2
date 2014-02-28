@@ -144,6 +144,43 @@ public class ObservationReaderWriterTest
     }
     
     @Test
+    public void testCleanWhitespace()
+    {
+        try
+        {
+            ObservationReader r = new ObservationReader();
+            
+            String actual;
+            
+            actual = r.cleanWhitespace(null);
+            assertNull(actual);
+            
+            actual = r.cleanWhitespace("");
+            assertEquals("", actual);
+            
+            actual = r.cleanWhitespace("foo");
+            assertEquals("foo", actual);
+            
+            actual = r.cleanWhitespace("  trimmed  ");
+            assertEquals("trimmed", actual);
+            
+            actual = r.cleanWhitespace("  trim outside only  ");
+            assertEquals("trim outside only", actual);
+            
+            actual = r.cleanWhitespace("  trim  multiple \t inside  ");
+            assertEquals("trim multiple inside", actual);
+            
+            actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
+            assertEquals("trim junk inside phrase", actual);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testReadNull()
     {
         try
@@ -158,6 +195,37 @@ public class ObservationReaderWriterTest
             
             try { r.read((Reader) null); }
             catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testCleanWhitespaceRoundTrip()
+    {
+        try
+        {
+            ObservationReader r = new ObservationReader();
+            SimpleObservation observation = new SimpleObservation("FOO", "bar");
+            observation.telescope = new Telescope("bar\tbaz\n1.0");
+            StringBuilder sb = new StringBuilder();
+            ObservationWriter writer = new ObservationWriter();
+            writer.setWriteEmptyCollections(false);
+            writer.write(observation, sb);
+            log.debug(sb.toString());
+
+            // do not validate the XML.
+            ObservationReader reader = new ObservationReader(false);
+            Observation returned = reader.read(sb.toString());
+            
+            assertEquals("FOO", returned.getCollection());
+            assertEquals("bar", returned.getObservationID());
+            assertNotNull("has telescope", returned.telescope);
+            assertEquals("bar baz 1.0", returned.telescope.getName());
+
         }
         catch(Exception unexpected)
         {

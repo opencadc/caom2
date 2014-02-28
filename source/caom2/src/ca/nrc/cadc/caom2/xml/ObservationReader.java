@@ -1474,7 +1474,7 @@ public class ObservationReader implements Serializable
     {
         Element child = getChildElement(name, element, ns, required);
         if (child != null)
-            return child.getText();
+            return cleanWhitespace(child.getText());
         return null;
     }
     
@@ -1525,7 +1525,8 @@ public class ObservationReader implements Serializable
         for (int i = 0; i < tokens.length; i++)
         {
             String token = tokens[i];
-            if (!token.trim().isEmpty())
+            token = cleanWhitespace(token);
+            if (!token.isEmpty())
                 list.add(token);
         }
     }
@@ -1573,5 +1574,14 @@ public class ObservationReader implements Serializable
             throw new ObservationParsingException(error);
         }
         return children;
+    }
+    
+    protected String cleanWhitespace(String s)
+    {
+        if (s == null)
+             return null;
+        s = s.trim();
+        s = s.replaceAll("\\s+", " ");
+        return s;
     }
 }
