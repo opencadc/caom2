@@ -9,6 +9,7 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import java.io.IOException;
+import java.util.Date;
 import org.apache.log4j.Logger;
 
 /**
@@ -68,6 +69,13 @@ public class CaomHarvester implements Runnable
             this.planeDataDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
             this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
         }
+    }
+    
+    public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
+        throws IOException
+    {
+        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
+        obsHarvester.setMaxDate(maxDate);
     }
 
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 

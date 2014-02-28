@@ -139,7 +139,7 @@ public class HarvestSkipDAO
             ps.setString(2, cname);
             if (skipID != null)
                 ps.setLong(3, skipID);
-            else
+            else if (start != null)
                 ps.setTimestamp(4, new Timestamp(start.getTime()), CAL);
         }
     }

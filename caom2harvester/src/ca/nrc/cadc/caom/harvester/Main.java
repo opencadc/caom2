@@ -1,9 +1,13 @@
 
 package ca.nrc.cadc.caom.harvester;
 
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -16,7 +20,8 @@ public class Main
     private static Logger log = Logger.getLogger(Main.class);
     
     private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
-    private static final Integer DEFAULT_BATCH_FACTOR = new Integer(10);
+    private static final Integer DEFAULT_BATCH_FACTOR = new Integer(2500);
+    private static int exitValue = 0;
     
     public static void main(String[] args)
     {
@@ -46,6 +51,7 @@ public class Main
             }
 
             boolean test = am.isSet("test");
+            boolean recomp = am.isSet("recompute");
             boolean full = am.isSet("full");
             boolean skip = am.isSet("skip");
             boolean dryrun = am.isSet("dryrun");
@@ -55,18 +61,32 @@ public class Main
                 usage();
                 log.warn("cannot specify both --full and --skip");
             }
+            
+            if (recomp && skip)
+            {
+                usage();
+                log.warn("cannot specify both --discovery and --skip");
+            }
 
             String src = am.getValue("source");
             String dest = am.getValue("destination");
             boolean nosrc = (src == null || src.trim().length() == 0);
             boolean nodest = (dest == null || dest.trim().length() == 0);
-            if (nosrc || nodest)
+            if (recomp && nodest)
+            {
+                usage();
+                log.warn("missing required argument: --destination");
+                System.exit(1);
+            }
+            if (!recomp && (nosrc || nodest))
             {
                 usage();
                 if (nosrc)  log.warn("missing required argument: --source");
                 if (nodest) log.warn("missing required argument: --destination");
                 System.exit(1);
             }
+            if (recomp)
+                src = dest;
             String[] srcDS = src.split("[.]");
             String[] destDS = dest.split("[.]");
             if (srcDS.length != 3 || destDS.length != 3)
@@ -119,48 +139,80 @@ public class Main
             }
             log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
             
+            Date maxDate = null;
+            String maxDateStr = am.getValue("maxDate");
+            if (maxDateStr != null && maxDateStr.trim().length() > 0)
+            {
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                try
+                {
+                    maxDate = df.parse(maxDateStr);
+                }
+                catch(ParseException ex)
+                {
+                    log.error("invalid maxDate: " + maxDateStr + " reason: " + ex);
+                    usage();
+                    System.exit(1);
+                }
+            }
+            
             CaomHarvester ch = null;
             try
             {
                 if (test)
                     ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full);
+                else if (recomp)
+                    ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
                 else
                     ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip);
-                //ch.setInteractive(am.isSet("interactive"));
-                
             }
             catch(IOException ioex)
             {
                 log.error("failed to init: " + ioex.getMessage());
-                System.exit(-1);
+                exitValue = -1;
+                System.exit(exitValue);
             }
+            
+            exitValue = 2; // in case we get killed
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
             ch.run();
+            exitValue = 0; // finished cleanly
         }
         catch(Throwable t)
         {
             log.error("uncaught exception", t);
-            System.exit(-1);
+            exitValue = -1;
+            System.exit(exitValue);
         }
-        System.exit(0);
+        System.exit(exitValue);
     }
     
+    private static class ShutdownHook implements Runnable
+    {
+        ShutdownHook() { }
+        
+        public void run()
+        {
+            if (exitValue != 0)
+                log.error("terminating with exit status " + exitValue);
+        }
+        
+    }
     private static void usage()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caomHarvester [-v|--verbose|-d|--debug]");
+        sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug]");
         sb.append("\n           --source=<server.database.schema>");
         sb.append("\n           --destination=<server.database.schema>" );
-        sb.append("\n           [--full |--skip] [--batchSize=<int>]" );
         sb.append("\n\nOptions:");
         sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
         sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
+        sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)" );
         sb.append("\n\nOptional modifiers:");
-        sb.append("\n     --batchSize=<number of observations per batch> (default: 10000)");
-        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: 10)");
+        sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");
         sb.append("\n     --dryrun : check for work but don't do anything");
-        //sb.append("\n     --interactive : pause and wait for input after each observation (observation harvesting only)");
-
         log.warn(sb.toString());
     }
 }
