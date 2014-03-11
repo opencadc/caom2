@@ -70,12 +70,20 @@
 package ca.nrc.cadc.datalink;
 
 import ca.nrc.cadc.dali.tables.TableData;
-import ca.nrc.cadc.dali.tables.TableModel;
 import ca.nrc.cadc.dali.tables.TableWriter;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableField;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.dali.util.DefaultFormat;
+import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.dali.util.FormatFactory;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.URI;
+import java.io.Writer;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
@@ -85,7 +93,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class ManifestWriter implements TableWriter<TableModel>
+public class ManifestWriter implements TableWriter<VOTableDocument>
 {
     private static final Logger log = Logger.getLogger(ManifestWriter.class);
 
@@ -93,11 +101,13 @@ public class ManifestWriter implements TableWriter<TableModel>
 
     private int uriCol;
     private int urlCol;
+    private int errCol;
 
-    public ManifestWriter(int uriColumn, int urlColumn)
+    public ManifestWriter(int uriColumn, int urlColumn, int errCol)
     {
         this.uriCol = uriColumn;
         this.urlCol = urlColumn;
+        this.errCol = errCol;
     }
     
     public String getContentType()
@@ -110,13 +120,31 @@ public class ManifestWriter implements TableWriter<TableModel>
         return "txt";
     }
 
-    public void write(TableModel tm, OutputStream out)
-        throws IOException
+    public void setFormatFactory(FormatFactory ff)
     {
-        write(tm, out, null);
+        // no-op: hard-coded behaviour only relying on DataLink class
     }
 
-    public void write(TableModel tab, OutputStream out, Long maxrec)
+    public void write(VOTableDocument vot, OutputStream out) 
+        throws IOException
+    {
+        write(vot, out, null);
+    }
+    
+    public void write(VOTableDocument vot, OutputStream out, Long maxrec) 
+        throws IOException
+    {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+        write(vot, writer, maxrec);
+    }
+    
+    public void write(VOTableDocument vot, Writer out)
+        throws IOException
+    {
+        write(vot, out, null);
+    }
+
+    public void write(VOTableDocument vot, Writer out, Long maxrec)
         throws IOException
     {
         log.debug("write: START maxrec=" + maxrec);
@@ -125,26 +153,38 @@ public class ManifestWriter implements TableWriter<TableModel>
         long maxRows = Long.MAX_VALUE;
         if (maxrec != null)
             maxRows = maxrec.longValue();
-        TableData data = tab.getTableData();
+        
+        // find the TableData object in the VOTable
+        VOTableResource vr = vot.getResourceByType("results");
+        VOTableTable vt = vr.getTable();
+        TableData td = vt.getTableData();
+        List<VOTableField> fields = vt.getFields();
+        TableData data = vt.getTableData();
         Iterator<List<Object>> iter = data.iterator();
+        Format fmt = new DefaultFormat();
         while ( iter.hasNext() && rows < maxRows )
         {
             List<Object> row = iter.next();
             Object oURI = row.get(uriCol);
-            if (oURI == null)
-                break;
-            URI uri = (URI) oURI;
             Object oURL = row.get(urlCol);
+            Object oErr = row.get(errCol);
             try
             {
-                URL url = (URL) oURL;
-                writer.print("OK\t");
-                writer.println(url.toExternalForm());
+                if (oURL != null)
+                {
+                    writer.print("OK\t");
+                    writer.println(fmt.format(oURL));
+                }
+                else
+                {
+                    writer.print("ERROR\t");
+                    writer.println(fmt.format(oErr));
+                }
             }
             catch(Exception ex)
             {
                 writer.print("ERROR\t");
-                writer.print(uri.toASCIIString());
+                writer.print(fmt.format(oURI));
                 writer.print(": ");
                 writer.println(ex.getMessage());
             }

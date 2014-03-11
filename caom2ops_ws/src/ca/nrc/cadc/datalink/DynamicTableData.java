@@ -168,7 +168,9 @@ public class DynamicTableData implements TableData
                             log.debug("adding: " + dl);
                             List<Object> r = new ArrayList<Object>(dl.size());
                             for (Object o : dl)
+                            {
                                 r.add(o);
+                            }
                             rows.add(r);
                         }
                         curIter = rows.iterator();

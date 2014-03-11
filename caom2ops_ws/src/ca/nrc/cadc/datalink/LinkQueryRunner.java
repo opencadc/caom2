@@ -69,24 +69,13 @@
 
 package ca.nrc.cadc.datalink;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.cert.CertificateException;
-import java.util.Date;
-import java.util.List;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.dali.tables.TableWriter;
-import ca.nrc.cadc.dali.tables.votable.VOTable;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.datalink.util.AuthMethod;
 import ca.nrc.cadc.log.WebServiceLogInfo;
@@ -97,11 +86,19 @@ import ca.nrc.cadc.uws.ErrorType;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
-import ca.nrc.cadc.uws.server.JobNotFoundException;
 import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.cert.CertificateException;
+import java.util.Date;
+import javax.security.auth.Subject;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -177,11 +174,18 @@ public class LinkQueryRunner implements JobRunner
 
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
 
-            VOTable tab = new VOTable();
-            tab.getColumns().addAll(DataLink.getFields());
+            VOTableDocument vot = new VOTableDocument();
+            VOTableResource vr = new VOTableResource("results");
+            vot.getResources().add(vr);
+            VOTableTable tab = new VOTableTable();
+            vr.setTable(tab);
+            tab.getFields().addAll(DataLink.getFields());
 
-            LinkQuery query = new LinkQuery(job.getRunID(), tapURL);
-            ArtifactProcessor ap = new ArtifactProcessor(job.getRunID(), reg);
+            String runID = job.getID();
+            if (job.getRunID() != null)
+                runID = job.getRunID();
+            LinkQuery query = new LinkQuery(runID, tapURL);
+            ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
             if ( "https".equals(job.getProtocol()) )
                 ap.setAuthMethod(AuthMethod.CERT);
             tab.setTableData(new DynamicTableData(job, query, ap));
@@ -196,7 +200,7 @@ public class LinkQueryRunner implements JobRunner
             else if ( ManifestWriter.CONTENT_TYPE.equals(fmt) )
             {
                 ap.setDownloadOnly(true);
-                writer = new ManifestWriter(0, 1); // these values rely on column order in DataLink.iterator
+                writer = new ManifestWriter(0, 1, 7); // these values rely on column order in DataLink.iterator
                 syncOutput.setHeader("Content-Type", ManifestWriter.CONTENT_TYPE);
             }
             else
@@ -205,7 +209,7 @@ public class LinkQueryRunner implements JobRunner
             }
 
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
-            writer.write(tab, syncOutput.getOutputStream());
+            writer.write(vot, syncOutput.getOutputStream());
             
             // set final phase, only sync so no results
             log.debug(job.getID() + ": EXECUTING -> COMPLETED...");
