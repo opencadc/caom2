@@ -101,6 +101,10 @@ create table caom2.Plane_inputs
 tablespace caom_data
 ;
 
+create unique index i_planeURI on caom2.Plane(planeURI)
+tablespace caom_index
+;
+
 create unique index i_output2input on caom2.Plane_inputs (outputID,inputID)
 tablespace caom_index
 ;
