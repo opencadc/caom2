@@ -164,7 +164,7 @@ public class Main
                 else if (recomp)
                     ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
                 else
-                    ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip);
+                    ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
             }
             catch(IOException ioex)
             {

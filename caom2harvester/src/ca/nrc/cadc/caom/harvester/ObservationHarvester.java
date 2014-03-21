@@ -179,10 +179,12 @@ public class ObservationHarvester extends Harvester
             
             Date end = maxDate;
             Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
+            
             if (end == null)
                 end = fiveMinAgo;
             else
             {
+                log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
                 if (end.getTime() > fiveMinAgo.getTime())
                     end = fiveMinAgo;
             }
