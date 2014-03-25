@@ -47,13 +47,14 @@ public class CaomHarvester implements Runnable
      * @throws java.io.IOException
      */
     public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, Integer batchFactor,
-        boolean full, boolean skip)
+        boolean full, boolean skip, Date maxDate)
         throws IOException
     {
         Integer entityBatchSize = new Integer(batchSize*batchFactor);
         
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
+        obsHarvester.setMaxDate(maxDate);
 
         if (!skip) // these don't have redo-skip mode yet
         {
@@ -82,7 +83,7 @@ public class CaomHarvester implements Runnable
             Integer batchSize, Integer batchFactor, boolean full)
         throws IOException
     {
-        CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, false);
+        CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, false, null);
         //ret.obsHarvester.setSkipped(true);
         
         //ret.obsHarvester = null;
@@ -106,12 +107,24 @@ public class CaomHarvester implements Runnable
     
     public void run()
     {
+        // make sure access control tuples are harvested before observations
+        if (observationMetaHarvester != null)
+            observationMetaHarvester.run();
+        if (planeDataHarvester != null)
+            planeDataHarvester.run();
+        if (planeMetaHarvester != null)
+            planeMetaHarvester.run();
+        
+        // delete observations before harvest to avoid observationURI conflicts 
+        // from delete+create
         if (obsDeleter != null)
             obsDeleter.run();
 
         if (obsHarvester != null)
             obsHarvester.run();
 
+        // clean up old access control tuples, should not have conflict issue 
+        // like observations but that is due to how accessControlDA is implemented
         if (observationMetaDeleter != null)
             observationMetaDeleter.run();
         if (planeDataDeleter != null)
@@ -119,11 +132,6 @@ public class CaomHarvester implements Runnable
         if (planeMetaDeleter != null)
             planeMetaDeleter.run();
         
-        if (observationMetaHarvester != null)
-            observationMetaHarvester.run();
-        if (planeDataHarvester != null)
-            planeDataHarvester.run();
-        if (planeMetaHarvester != null)
-            planeMetaHarvester.run();
+        
     }
 }

@@ -177,23 +177,43 @@ public class ObservationHarvester extends Harvester
                 startDate = state.curLastModified;
             //else: skipped: keep startDate across multiple batches since we don't persist harvest state
             
-            List<ObservationWrapper> entityList = null;
+            Date end = maxDate;
+            Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
             
+            if (end == null)
+                end = fiveMinAgo;
+            else
+            {
+                log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                if (end.getTime() > fiveMinAgo.getTime())
+                    end = fiveMinAgo;
+            }
+                
+            List<ObservationWrapper> entityList = null;
             if (skipped)
                 entityList = getSkipped(startDate);
             else
             {
-                Date end = maxDate;
-                if (end == null)
-                    end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
-                
-                log.info("harvest window: " + format(startDate) + " :: " + format(end));
+                log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
                 List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
                 entityList = wrap(tmp);
             }
 
-            if (entityList.size() == expectedNum)
-                detectLoop(entityList);
+            if (entityList.size() >= expectedNum)
+            {
+                try
+                {
+                    detectLoop(entityList);
+                }
+                catch(RuntimeException rex)
+                {
+                    Integer tmpBatchSize = entityList.size() + 1;
+                    log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
+                    List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
+                    entityList = wrap(tmp);
+                    detectLoop(entityList);
+                }
+            }
             
             // avoid re-processing the last successful one stored in HarvestState
             if ( !entityList.isEmpty() && !skipped )
