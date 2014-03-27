@@ -166,7 +166,9 @@ public class ObservationHarvester extends Harvester
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-            HarvestState state = harvestState.get(source, Observation.class.getSimpleName());
+            HarvestState state = null;
+            if (!skipped)
+                state = harvestState.get(source, Observation.class.getSimpleName());
             
             tState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -177,23 +179,23 @@ public class ObservationHarvester extends Harvester
                 startDate = state.curLastModified;
             //else: skipped: keep startDate across multiple batches since we don't persist harvest state
             
-            Date end = maxDate;
-            Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
             
-            if (end == null)
-                end = fiveMinAgo;
-            else
-            {
-                log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
-                if (end.getTime() > fiveMinAgo.getTime())
-                    end = fiveMinAgo;
-            }
-                
+            Date end = maxDate;
             List<ObservationWrapper> entityList = null;
             if (skipped)
                 entityList = getSkipped(startDate);
             else
             {
+                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
+                if (end == null)
+                    end = fiveMinAgo;
+                else
+                {
+                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                    if (end.getTime() > fiveMinAgo.getTime())
+                        end = fiveMinAgo;
+                }
+            
                 log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
                 List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
                 entityList = wrap(tmp);
@@ -207,11 +209,16 @@ public class ObservationHarvester extends Harvester
                 }
                 catch(RuntimeException rex)
                 {
-                    Integer tmpBatchSize = entityList.size() + 1;
-                    log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
-                    List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
-                    entityList = wrap(tmp);
-                    detectLoop(entityList);
+                    if (!skipped)
+                    {
+                        Integer tmpBatchSize = entityList.size() + 1;
+                        log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
+                        List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
+                        entityList = wrap(tmp);
+                        detectLoop(entityList);
+                    }
+                    else
+                        throw rex;
                 }
             }
             
@@ -254,18 +261,34 @@ public class ObservationHarvester extends Harvester
                 boolean ok = false;
                 try
                 {
-                    log.info("put: " + o.getClass().getSimpleName() + " " + o.getID() + " " + format(o.getMaxLastModified()));
+                    // o could be null in skip mode cleanup
+                    if (o != null)
+                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getID() + " " + format(o.getMaxLastModified()));
                     if (!dryrun) 
                     {
-                        state.curLastModified = o.getMaxLastModified();
-                        state.curID = o.getID();
+                        if (skipped)
+                            startDate = hs.lastModified;
+                        if (o != null)
+                        {
+                            if (state != null)
+                            {
+                                state.curLastModified = o.getMaxLastModified();
+                                state.curID = o.getID();
+                            }
 
-                        destObservationDAO.put(o);
+                            destObservationDAO.put(o);
+                        }
                         
                         if (hs != null) // success in redo mode
+                        {
+                            log.info("delete: " + hs + " " + format(hs.lastModified));
                             harvestSkip.delete(hs);
-                        else // success in normal mode
+                        }
+                        else
                             harvestState.put(state);
+                        
+                        if (skipped)
+                            startDate = hs.lastModified;
 
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
@@ -278,7 +301,17 @@ public class ObservationHarvester extends Harvester
                 {
                     lastMsg = "unexpected: " + oops.getMessage();
                     String str = oops.toString();
-                    if (oops instanceof BadSqlGrammarException)
+                    if (oops instanceof Error)
+                    {
+                        log.error("FATAL - probably installation or environment", oops);
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof NullPointerException)
+                    {
+                        log.error("BUG", oops);
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof BadSqlGrammarException)
                     {
                         log.error("BUG", oops);
                         BadSqlGrammarException bad = (BadSqlGrammarException) oops;
@@ -299,7 +332,7 @@ public class ObservationHarvester extends Harvester
                     }
                     else if (oops instanceof DataIntegrityViolationException)
                     {
-                        if (str.contains("duplicate key value violates unique constraint \"i_observationURI\""))
+                        if (str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
                         {
                             log.error("CONTENT PROBLEM - duplicate observation: "
                                     + o.getCollection() + "," + o.getObservationID());
@@ -409,6 +442,13 @@ public class ObservationHarvester extends Harvester
             return;
         ObservationWrapper start = entityList.get(0);
         ObservationWrapper end = entityList.get(entityList.size() - 1);
+        if (skipped)
+        {
+            if (start.skip.lastModified.equals(end.skip.lastModified))
+                throw new RuntimeException("detected infinite harvesting loop: "
+                    + HarvestSkip.class.getSimpleName() + " at " + format(start.skip.lastModified));
+            return;
+        }
         if (start.obs.getMaxLastModified().equals(end.obs.getMaxLastModified()))
         {
             throw new RuntimeException("detected infinite harvesting loop: "
@@ -440,14 +480,13 @@ public class ObservationHarvester extends Harvester
     private List<ObservationWrapper> getSkipped(Date start)
     {
         
+        log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]");
         List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
         List<ObservationWrapper> ret = new ArrayList<ObservationWrapper>(skip.size());
-        log.warn("getSkipped: found " + skip.size());
         for (HarvestSkip hs : skip)
         {
             Observation o = srcObservationDAO.get(hs.getSkipID());
-            if (o != null)
-                ret.add(new ObservationWrapper(o, hs));
+            ret.add(new ObservationWrapper(o, hs));
         }
         return ret;
     }

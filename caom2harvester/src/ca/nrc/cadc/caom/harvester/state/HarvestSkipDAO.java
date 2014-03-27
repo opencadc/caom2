@@ -120,8 +120,9 @@ public class HarvestSkipDAO
                 sb.append(" AND skipID = ?");
             else if (start != null)
             {
-                sb.append(" AND lastModified >= ? ORDER BY lastModified");
+                sb.append(" AND lastModified >= ?");
             }
+            sb.append(" ORDER BY lastModified ASC");
             
             if (batchSize != null && batchSize.intValue() > 0)
                 sb.append(" LIMIT ").append(batchSize.toString());
@@ -140,7 +141,7 @@ public class HarvestSkipDAO
             if (skipID != null)
                 ps.setLong(3, skipID);
             else if (start != null)
-                ps.setTimestamp(4, new Timestamp(start.getTime()), CAL);
+                ps.setTimestamp(3, new Timestamp(start.getTime()), CAL);
         }
     }
 
