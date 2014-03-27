@@ -71,14 +71,15 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.dali.tables.ListTableData;
 import ca.nrc.cadc.dali.tables.TableData;
-import ca.nrc.cadc.dali.tables.votable.ArrayListTableData;
-import ca.nrc.cadc.dali.tables.votable.TableField;
-import ca.nrc.cadc.dali.tables.votable.VOTable;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableField;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
@@ -86,7 +87,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -169,9 +169,9 @@ public class LinkQueryTest
     	{
     		boolean alternative = false;
     		LinkQuery query = getLinkQuery();
-    		VOTable votable = buildVOTable();
+    		VOTableDocument votable = buildVOTable();
     		
-    		Method buildArtifacts = query.getClass().getDeclaredMethod("buildArtifacts", VOTable.class);
+    		Method buildArtifacts = query.getClass().getDeclaredMethod("buildArtifacts", VOTableDocument.class);
             buildArtifacts.setAccessible(true);
             
             int i = 1;
@@ -219,81 +219,76 @@ public class LinkQueryTest
         }
     }
     
-    private VOTable buildVOTable()
+    private VOTableDocument buildVOTable()
     {
-    	VOTable votable = new VOTable();
-    	try
-    	{
-    		votable = new VOTable();
-    		votable.getColumns().addAll(buildTableFields());
-    		votable.setTableData(buildTableData());    		
-    	}
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    	VOTableDocument votable = new VOTableDocument();
+        VOTableResource vr = new VOTableResource("results");
+        votable.getResources().add(vr);
+    	VOTableTable vtab = new VOTableTable();
+        vr.setTable(vtab);
+    	vtab.getFields().addAll(buildVOTableFields());
+    	vtab.setTableData(buildTableData());    		
     	
     	return votable;
     }
     
-    private List<TableField> buildArtifactFields()
+    private List<VOTableField> buildArtifactFields()
     {
-    	List<TableField> fields = new ArrayList<TableField>();
+    	List<VOTableField> fields = new ArrayList<VOTableField>();
 
     	try
         {
-            TableField planeIdField = new TableField("planeID", "long");
+            VOTableField planeIdField = new VOTableField("planeID", "long");
             planeIdField.utype = "caom2:Plane.id";
             planeIdField.xtype = "adql:BIGINT";
             fields.add(planeIdField);
 
-            TableField idField = new TableField("artifactID", "long");
+            VOTableField idField = new VOTableField("artifactID", "long");
             idField.utype = "caom2:Artifact.id";
             idField.xtype = "adql:BIGINT";
             fields.add(idField);
             
-            TableField  uriField = new TableField("uri", "char");
-            uriField.arraysize = 128;
-            uriField.variableSize = true;
+            VOTableField  uriField = new VOTableField("uri", "char");
+            uriField.setArraysize(128);
+            uriField.setVariableSize(true);
             uriField.utype = "caom2:Artifact.uri";
             uriField.xtype = "adql:VARCHAR";
             fields.add(uriField);
             
-            TableField ptField = new TableField("productType", "char");
-            ptField.arraysize = 32;
-            ptField.variableSize = true;
+            VOTableField ptField = new VOTableField("productType", "char");
+            ptField.setArraysize(32);
+            ptField.setVariableSize(true);
             ptField.utype = "caom2:Artifact.productType";
             ptField.xtype = "adql:VARCHAR";
             fields.add(ptField);
             
-            TableField ctField = new TableField("contentType", "char");
-            ctField.arraysize = 128;
-            ctField.variableSize = true;
+            VOTableField ctField = new VOTableField("contentType", "char");
+            ctField.setArraysize(128);
+            ctField.setVariableSize(true);
             ctField.utype = "caom2:Artifact.contentType";
             ctField.xtype = "adql:VARCHAR";
             fields.add(ctField);
             
-            TableField clField = new TableField("contentLength", "long");
+            VOTableField clField = new VOTableField("contentLength", "long");
             clField.utype = "caom2:Artifact.contentLength";
             clField.xtype = "adql:BIGINT";
             fields.add(clField);
             
-            TableField aField = new TableField("alternative", "int");
+            VOTableField aField = new VOTableField("alternative", "int");
             aField.utype = "caom2:Artifact.alternative";
             aField.xtype = "adql:INTEGER";
             fields.add(aField);
             
-            TableField lmField = new TableField("lastModified", "char");
-            lmField.arraysize = 64;
-            lmField.variableSize = true;
+            VOTableField lmField = new VOTableField("lastModified", "char");
+            lmField.setArraysize(64);
+            lmField.setVariableSize(true);
             lmField.utype = "caom2:Artifact.lastModified";
             lmField.xtype = "adql:TIMESTAMP";
             fields.add(lmField);
             
-            TableField mlmField = new TableField("maxLastModified", "char");
-            mlmField.arraysize = 64;
-            mlmField.variableSize = true;
+            VOTableField mlmField = new VOTableField("maxLastModified", "char");
+            mlmField.setArraysize(64);
+            mlmField.setVariableSize(true);
             mlmField.utype = "caom2:Artifact.maxLastModified";
             mlmField.xtype = "adql:TIMESTAMP";
             fields.add(mlmField);
@@ -307,46 +302,46 @@ public class LinkQueryTest
     	return fields;
     }
     
-    private List<TableField> buildPartFields()
+    private List<VOTableField> buildPartFields()
     {
-    	List<TableField> fields = new ArrayList<TableField>();
+    	List<VOTableField> fields = new ArrayList<VOTableField>();
 
     	try
         {
-            TableField artifactIdField = new TableField("artifactID", "long");
+            VOTableField artifactIdField = new VOTableField("artifactID", "long");
             artifactIdField.utype = "caom2:Artifact.id";
             artifactIdField.xtype = "adql:BIGINT";
             fields.add(artifactIdField);
             
-            TableField idField = new TableField("partID", "long");
+            VOTableField idField = new VOTableField("partID", "long");
             idField.utype = "caom2:Part.id";
             idField.xtype = "adql:BIGINT";
             fields.add(idField);
             
-            TableField nameField = new TableField("name", "char");
-            nameField.arraysize = 128;
-            nameField.variableSize = true;
+            VOTableField nameField = new VOTableField("name", "char");
+            nameField.setArraysize(128);
+            nameField.setVariableSize(true);
             nameField.utype = "caom2:Part.name";
             nameField.xtype = "adql:VARCHAR";
             fields.add(nameField);
             
-            TableField ptField = new TableField("pProductType", "char");
-            ptField.arraysize = 32;
-            ptField.variableSize = true;
+            VOTableField ptField = new VOTableField("pProductType", "char");
+            ptField.setArraysize(32);
+            ptField.setVariableSize(true);
             ptField.utype = "caom2:Part.productType";
             ptField.xtype = "adql:VARCHAR";
             fields.add(ptField);
             
-            TableField lmField = new TableField("lastModified", "char");
-            lmField.arraysize = 64;
-            lmField.variableSize = true;
+            VOTableField lmField = new VOTableField("lastModified", "char");
+            lmField.setArraysize(64);
+            lmField.setVariableSize(true);
             lmField.utype = "caom2:Part.lastModified";
             lmField.xtype = "adql:TIMESTAMP";
             fields.add(lmField);
             
-            TableField mlmField = new TableField("maxLastModified", "char");
-            mlmField.arraysize = 64;
-            mlmField.variableSize = true;
+            VOTableField mlmField = new VOTableField("maxLastModified", "char");
+            mlmField.setArraysize(64);
+            mlmField.setVariableSize(true);
             mlmField.utype = "caom2:Part.maxLastModified";
             mlmField.xtype = "adql:TIMESTAMP";
             fields.add(mlmField);
@@ -360,9 +355,9 @@ public class LinkQueryTest
     	return fields;
     }
     
-    private List<TableField> buildTableFields()
+    private List<VOTableField> buildVOTableFields()
     {
-    	List<TableField> fields = new ArrayList<TableField>();
+    	List<VOTableField> fields = new ArrayList<VOTableField>();
     	
         try
         {
@@ -419,7 +414,7 @@ public class LinkQueryTest
     
     private TableData buildTableData()
     {
-    	ArrayListTableData data = new ArrayListTableData();
+    	ListTableData data = new ListTableData();
 
         try
         {

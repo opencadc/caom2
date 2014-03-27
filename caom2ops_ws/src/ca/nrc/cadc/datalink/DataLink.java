@@ -70,7 +70,7 @@
 package ca.nrc.cadc.datalink;
 
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.dali.tables.votable.TableField;
+import ca.nrc.cadc.dali.tables.votable.VOTableField;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -136,9 +136,9 @@ public class DataLink implements Iterable<Object>
                 cur++;
                 switch(n)
                 {
-                    case 0: return id;
-                    case 1: return url;
-                    case 2: return serviceType;
+                    case 0: return id.toASCIIString();
+                    case 1: return safeToString(url);
+                    case 2: return safeToString(serviceType);
                     case 3: return semantics;
                     case 4: return description;
                     case 5: return contentType;
@@ -156,6 +156,19 @@ public class DataLink implements Iterable<Object>
         };
     }
 
+    String safeToString(URI uri)
+    {
+        if (uri == null)
+            return null;
+        return uri.toASCIIString();
+    }
+    String safeToString(URL url)
+    {
+        if (url == null)
+            return null;
+        return url.toExternalForm();
+    }
+    
     private String toProductTypeMask(List<ProductType> productTypes)
     {
         StringBuilder sb = new StringBuilder();
@@ -174,54 +187,54 @@ public class DataLink implements Iterable<Object>
      * 
      * @return
      */
-    public static List<TableField> getFields()
+    public static List<VOTableField> getFields()
     {
-        List<TableField> fields = new ArrayList<TableField>();
-        TableField f;
+        List<VOTableField> fields = new ArrayList<VOTableField>();
+        VOTableField f;
 
-        f = new TableField("ID", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("ID", "char");
+        f.setVariableSize(true);
         f.ucd = "meta.id";
         f.utype = "datalink:Datalink.ID";
         fields.add(f);
 
-        f = new TableField("accessURL", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("accessURL", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.accessURL";
         fields.add(f);
 
-        f = new TableField("serviceType", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("serviceType", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.serviceType";
         fields.add(f);
         
-        f = new TableField("description", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("description", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.description";
         fields.add(f);
         
-        f = new TableField("semantics", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("semantics", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.semantics";
         fields.add(f);
 
-        f = new TableField("contentType", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("contentType", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.contentType";
         fields.add(f);
 
-        f = new TableField("contentLength", "long");
+        f = new VOTableField("contentLength", "long");
         f.unit = "byte";
         f.utype = "datalink:Datalink.contentLength";
         fields.add(f);
 
-        f = new TableField("errorMessage", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("errorMessage", "char");
+        f.setVariableSize(true);
         f.utype = "datalink:Datalink.error";
         fields.add(f);
         
-        f = new TableField("productType", "char");
-        f.variableSize = Boolean.TRUE;
+        f = new VOTableField("productType", "char");
+        f.setVariableSize(true);
         f.utype = "caom:Artifact.productType";
         fields.add(f);
         
