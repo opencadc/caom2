@@ -80,6 +80,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -110,14 +111,14 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
 
             Date d;
             Integer sc;
-            Long id;
+            UUID id;
             int col = 1;
 
             if (ret.id == null) // first row
             {
                 d = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
-                id = rs.getLong(col++);
+                id = Util.getUUID(rs, col++);
 
                 ret.id = id;
                 ret.lastModified = d;
@@ -129,7 +130,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
             // plane
             d = Util.getDate(rs, col++, CAL);
             sc = Util.getInteger(rs, col++);
-            id = rs.getLong(col++);
+            id = Util.getUUID(rs, col++);
             if (id != null)
             {
                 if (curPlane == null || !curPlane.id.equals(id)) // start
@@ -145,7 +146,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                 // artifact
                 d = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
-                id = rs.getLong(col++);
+                id = Util.getUUID(rs, col++);
                 if (id != null)
                 {
                     if (curArtifact == null || !curArtifact.id.equals(id)) // start
@@ -161,7 +162,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                     // part
                     d = Util.getDate(rs, col++, CAL);
                     sc = Util.getInteger(rs, col++);
-                    id = rs.getLong(col++);
+                    id = Util.getUUID(rs, col++);
                     if (id != null)
                     {
                         if (curPart == null || !curPart.id.equals(id)) // start
@@ -177,7 +178,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                         // chunk
                         d = Util.getDate(rs, col++, CAL);
                         sc = Util.getInteger(rs, col++);
-                        id = rs.getLong(col++);
+                        id = Util.getUUID(rs, col++);
                         if (id != null)
                         {
                             curChunk = new ChunkSkeleton();

@@ -5,17 +5,16 @@ import ca.nrc.cadc.caom.harvester.state.HarvestSkip;
 import ca.nrc.cadc.caom.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
-import ca.nrc.cadc.date.DateUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -368,9 +367,9 @@ public class ObservationHarvester extends Harvester
                             try
                             {
                                 log.debug("starting HarvestSkip transaction");
-                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
+                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID().getLeastSignificantBits()); // backwards compat
                                 if (skip == null)
-                                    skip = new HarvestSkip(source, cname, o.getID());
+                                    skip = new HarvestSkip(source, cname, o.getID().getLeastSignificantBits()); // backwards compat
                                 log.info(skip);
 
                                 destObservationDAO.getTransactionManager().startTransaction();
@@ -485,7 +484,8 @@ public class ObservationHarvester extends Harvester
         List<ObservationWrapper> ret = new ArrayList<ObservationWrapper>(skip.size());
         for (HarvestSkip hs : skip)
         {
-            Observation o = srcObservationDAO.get(hs.getSkipID());
+            UUID obsID = new UUID(0L, hs.getSkipID()); // backwards compat
+            Observation o = srcObservationDAO.get(obsID);
             ret.add(new ObservationWrapper(o, hs));
         }
         return ret;

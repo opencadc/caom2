@@ -76,6 +76,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -149,7 +150,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         try
         {
-            Long id = new Long(666L);
+            UUID id = UUID.randomUUID();
             for (int i=0; i<entityClasses.length; i++)
             {
                 ReadAccess ra = dao.get(entityClasses[i], id);

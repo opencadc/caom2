@@ -13,7 +13,7 @@ create index i_do_lastModified on caom2_DeletedObservation (lastModified)
 
 create table caom2_DeletedObservationMetaReadAccess
 (
-    id bigint primary key nonclustered,
+    id binary(16) primary key nonclustered,
     lastModified datetime not null
 )
 lock datarows
@@ -25,7 +25,7 @@ create index i_domra_lastModified on caom2_DeletedObservationMetaReadAccess (las
 
 create table caom2_DeletedPlaneMetaReadAccess
 (
-    id bigint primary key nonclustered,
+    id binary(16) primary key nonclustered,
     lastModified datetime not null
 )
 lock datarows
@@ -37,7 +37,7 @@ create index i_dpmra_lastModified on caom2_DeletedPlaneMetaReadAccess (lastModif
 
 create table caom2_DeletedPlaneDataReadAccess
 (
-    id bigint primary key nonclustered,
+    id binary(16) primary key nonclustered,
     lastModified datetime not null
 )
 lock datarows

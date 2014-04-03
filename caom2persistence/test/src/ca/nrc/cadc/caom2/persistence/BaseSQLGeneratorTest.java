@@ -86,6 +86,7 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -192,7 +193,7 @@ public class BaseSQLGeneratorTest
     {
         try
         {
-            Long id = new Long(666L);
+            UUID id = new UUID(0L, 666L);
             for (int i=5; i<=7; i++)
             {
                 String sql = gen.getSelectSQL(clz[i], id);
@@ -213,7 +214,7 @@ public class BaseSQLGeneratorTest
     {
         try
         {
-            Long id = new Long(666L);
+            UUID id = new UUID(0L, 666L);
             for (int i=7; i<=10; i++)
             {
                 String sql = gen.getSelectSQL(clz[i], id);
@@ -236,9 +237,10 @@ public class BaseSQLGeneratorTest
         
         try
         {
+            UUID id = new UUID(0L, 666L);
             for (int i=0; i<clz.length; i++)
             {
-                String sql = gen.getDeleteSQL(clz[i], new Long(666L), true);
+                String sql = gen.getDeleteSQL(clz[i], id, true);
                 Assert.assertNotNull(sql);
                 log.debug("SQL [" + sql.length() + "] " + sql);
                 Assert.assertTrue("contains PK column", sql.contains(pk[i]));
@@ -266,9 +268,10 @@ public class BaseSQLGeneratorTest
 
         try
         {
+            UUID id = new UUID(0L, 666L);
             try
             {
-                String sql = gen.getDeleteSQL(Observation.class, new Long(666L), false);
+                String sql = gen.getDeleteSQL(Observation.class, id, false);
                 Assert.fail("expected IllegalArgumentException, got: " + sql);
             }
             catch(IllegalArgumentException expected)
@@ -278,7 +281,7 @@ public class BaseSQLGeneratorTest
             for (int i=5; i<clz.length; i++)
                 try
                 {
-                    String sql = gen.getDeleteSQL(clz[i], new Long(666L), false);
+                    String sql = gen.getDeleteSQL(clz[i], id, false);
                     Assert.fail("expected IllegalArgumentException, got: " + sql);
                 }
                 catch(IllegalArgumentException expected)
@@ -287,7 +290,7 @@ public class BaseSQLGeneratorTest
                 }
             for (int i=1; i<5; i++)
             {
-                String sql = gen.getDeleteSQL(clz[i], new Long(666L), false);
+                String sql = gen.getDeleteSQL(clz[i], id, false);
                 Assert.assertNotNull(sql);
                 log.debug("SQL [" + sql.length() + "] " + sql);
                 Assert.assertTrue("contains FK column", sql.contains(fk[i]));

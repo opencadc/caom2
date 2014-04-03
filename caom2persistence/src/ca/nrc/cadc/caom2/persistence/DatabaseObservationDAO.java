@@ -92,6 +92,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.LinkedList;
+import java.util.UUID;
 
 /**
  * Persistence layer operations.
@@ -133,7 +134,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     }
 
     @Override
-    public Observation get(Long id)
+    public Observation get(UUID id)
     {
         if (id == null)
             throw new IllegalArgumentException("id cannot be null");
@@ -154,7 +155,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         return get(uri, null, SQLGenerator.MAX_DEPTH);
     }
 
-    private Observation get(ObservationURI uri, Long id, int depth)
+    private Observation get(ObservationURI uri, UUID id, int depth)
     {
         checkInit();
         if (uri == null && id == null)
@@ -308,7 +309,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
     }
 
-    public void delete(Long id)
+    public void delete(UUID id)
     {
         if (readOnly)
             throw new UnsupportedOperationException("put in readOnly mode");

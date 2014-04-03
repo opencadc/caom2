@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.util.HexUtil;
+import java.util.UUID;
 
 /**
  *
@@ -104,5 +106,20 @@ public class SybaseSQLGenerator extends BaseSQLGenerator
         if (batchSize == null)
             return null;
         return "TOP " + batchSize;
+    }
+    
+    @Override
+    protected String literal(UUID value)
+    {
+        // backwards compat with Long id valued in main CAOM tables
+        if (value.getMostSignificantBits() == 0L)
+            return Long.toString(value.getLeastSignificantBits());
+        
+        // in sybase, UUID is a binary(16)
+        StringBuilder sb = new StringBuilder();
+        sb.append("0x");
+        sb.append( HexUtil.toHex(value.getMostSignificantBits()) );
+        sb.append( HexUtil.toHex(value.getLeastSignificantBits()) );
+        return sb.toString();
     }
 }

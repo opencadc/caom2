@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom.harvester.state;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  *
@@ -79,7 +80,7 @@ public class HarvestState
 {
     // mutable
     public Date curLastModified;
-    public Long curID;
+    public UUID curID;
     
     // internal
     String source;

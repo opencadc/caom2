@@ -10,7 +10,7 @@ create table caom2_ObservationMetaReadAccess
     group_id          bigint not null,
     lastmod           datetime not null,
 
-    readAccessID      bigint identity primary key nonclustered,
+    readAccessID      binary(16) default newid() primary key nonclustered ,
     stateCode         int null
 )
 lock datarows
@@ -30,7 +30,7 @@ create table caom2_PlaneMetaReadAccess
     group_id          bigint not null,
     lastmod           datetime not null,
 
-    readAccessID      bigint identity primary key nonclustered,
+    readAccessID      binary(16) default newid() primary key nonclustered,
     stateCode         int null
 )
 lock datarows
@@ -50,7 +50,7 @@ create table caom2_PlaneDataReadAccess
     group_id          bigint not null,
     lastmod           datetime not null,
 
-    readAccessID      bigint identity primary key nonclustered,
+    readAccessID      binary(16) default newid() primary key nonclustered,
     stateCode         int null
 )
 lock datarows

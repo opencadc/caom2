@@ -79,6 +79,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -92,7 +93,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
     static
     {
         log = Logger.getLogger(SybaseReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
@@ -132,11 +133,15 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         String sql = sb.toString();
         log.debug("manual INSERT: " + sql);
         Statement st = dao.getDataSource().getConnection().createStatement();
-        st.execute(sql, Statement.RETURN_GENERATED_KEYS);
-        ResultSet rs = st.getGeneratedKeys();
+        st.execute(sql);
+        st = dao.getDataSource().getConnection().createStatement();
+        sql = "select readAccessID from " + dao.getSQLGenerator().getTable(expected.getClass());
+        log.debug("manual SELECT: " + sql);
+        ResultSet rs = st.executeQuery(sql);
         if (rs.next())
         {
-            Long id = rs.getLong(1);
+            UUID id = Util.getUUID(rs, 1);
+            log.debug("generated ID: " + id);
             Assert.assertNotNull("generated id", id);
             Util.assignID(expected, id);
         }

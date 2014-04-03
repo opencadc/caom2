@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.postgresql.util.PGobject;
 
@@ -99,6 +100,17 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
         if (batchSize == null)
             return null;
         return "LIMIT " + batchSize;
+    }
+    
+    @Override
+    protected String literal(UUID value)
+    {
+        // backwards compat with Long id valued in main CAOM tables
+        if (value.getMostSignificantBits() == 0L)
+            return Long.toString(value.getLeastSignificantBits());
+        
+        // uuid datatype accepts a string with the standard hex string format
+        return "'" + value.toString() + "'";
     }
 
     @Override

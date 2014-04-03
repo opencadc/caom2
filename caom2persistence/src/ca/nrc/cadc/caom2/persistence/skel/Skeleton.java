@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.persistence.skel;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Simple class to capture the internal IDs, lastModified timestamops, and parent-child
@@ -79,7 +80,7 @@ import java.util.Date;
  */
 public class Skeleton
 {
-    public Long id;
+    public UUID id;
     public Date lastModified;
     public Integer stateCode;
     public Class targetClass;

@@ -74,7 +74,6 @@ import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.date.DateUtil;
 import java.lang.reflect.Constructor;
 import java.text.DateFormat;
@@ -82,6 +81,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -97,7 +97,9 @@ public abstract class AbstractDeletedEntityDAOTest
     protected static Logger log;
 
     DeletedEntityDAO dao;
-    Class[] entityClasses = { DeletedObservation.class,
+    Class[] entityClasses = 
+    { 
+        DeletedObservation.class,
         DeletedObservationMetaReadAccess.class,
         DeletedPlaneMetaReadAccess.class,
         DeletedPlaneDataReadAccess.class
@@ -150,11 +152,11 @@ public abstract class AbstractDeletedEntityDAOTest
         try
         {
 
-            Long id1 = new Long(100L);
-            Long id2 = new Long(200L);
-            Long id3 = new Long(300L);
-            Long id4 = new Long(400L);
-            Long id5 = new Long(500L);
+            UUID id1 = new UUID(0L, 100L);
+            UUID id2 = new UUID(0L, 200L);
+            UUID id3 = new UUID(0L, 300L);
+            UUID id4 = new UUID(0L, 400L);
+            UUID id5 = new UUID(0L, 500L);
 
             Date d1 = new Date();
             Date d2 = new Date(d1.getTime() + 10L);
@@ -165,7 +167,7 @@ public abstract class AbstractDeletedEntityDAOTest
             Class c = entityClasses[0];
             log.debug("creating test content: " + c.getSimpleName());
             
-            Constructor<DeletedEntity> ctor = c.getConstructor(Long.class, Date.class);
+            Constructor<DeletedEntity> ctor = c.getConstructor(UUID.class, Date.class);
             DeletedEntity o1 = ctor.newInstance(id1, d1);
             DeletedEntity o2 = ctor.newInstance(id2, d2);
             DeletedEntity o3 = ctor.newInstance(id3, d3);
@@ -176,23 +178,28 @@ public abstract class AbstractDeletedEntityDAOTest
             DataSource ds = dao.getDataSource();
             String s = dao.getSQLGenerator().getTable(c);
 
-            String sql = "insert into " + s + " (id,lastModified) values ( " + o1.id + ", '" + df.format(o1.lastModified) + "')";
+            String sql = "insert into " + s + " (id,lastModified) values ( " 
+                    + dao.gen.literal(o1.id) + ", '" + df.format(o1.lastModified) + "')";
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
             
-            sql = "insert into " + s + " (id,lastModified) values ( " + o2.id + ", '" + df.format(o2.lastModified) + "')";
+            sql = "insert into " + s + " (id,lastModified) values ( " 
+                    + dao.gen.literal(o2.id) + ", '" + df.format(o2.lastModified) + "')";
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
             
-            sql = "insert into " + s + " (id,lastModified) values ( " + o3.id + ", '" + df.format(o3.lastModified) + "')";
+            sql = "insert into " + s + " (id,lastModified) values ( " 
+                    + dao.gen.literal(o3.id) + ", '" + df.format(o3.lastModified) + "')";
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
             
-            sql = "insert into " + s + " (id,lastModified) values ( " + o4.id + ", '" + df.format(o4.lastModified) + "')";
+            sql = "insert into " + s + " (id,lastModified) values ( " 
+                    + dao.gen.literal(o4.id) + ", '" + df.format(o4.lastModified) + "')";
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
             
-            sql = "insert into " + s + " (id,lastModified) values ( " + o5.id + ", '" + df.format(o5.lastModified) + "')";
+            sql = "insert into " + s + " (id,lastModified) values ( " 
+                    + dao.gen.literal(o5.id) + ", '" + df.format(o5.lastModified) + "')";
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
 

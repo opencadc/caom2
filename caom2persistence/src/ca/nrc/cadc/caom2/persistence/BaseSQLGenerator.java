@@ -53,6 +53,7 @@ import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
 import ca.nrc.cadc.caom2.types.PositionUtil;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -73,6 +74,7 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.HexUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.sql.Connection;
@@ -88,6 +90,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -125,6 +128,7 @@ public class BaseSQLGenerator implements SQLGenerator
     protected String schema;
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistTransientState = false; // persist computed plane metadata
+    
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
     protected int numComputedArtifactColumns;
@@ -477,7 +481,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
         return sb.toString();
     }
-    public String getSelectSQL(Long id, int depth, boolean skeleton)
+    public String getSelectSQL(UUID id, int depth, boolean skeleton)
     {
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(ObservationSkeleton.class);
@@ -650,7 +654,7 @@ public class BaseSQLGenerator implements SQLGenerator
         return null;
     }
 
-    public String getSelectSQL(Class clz, Long id)
+    public String getSelectSQL(Class clz, UUID id)
     {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -671,7 +675,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
 
-    public String getDeleteSQL(Class c, Long id, boolean primaryKey)
+    public String getDeleteSQL(Class c, UUID id, boolean primaryKey)
     {
         if (Observation.class.isAssignableFrom(c))
             c = Observation.class;
@@ -937,7 +941,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, obs.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, obs.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, obs.getStateCode());
-            safeSetLong(sb, ps, col++, obs.getID());
+            safeSetLongUUID(sb, ps, col++, obs.getID());
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -980,7 +984,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLong(sb, ps, col++, obs.getID()); // obsID
+            safeSetLongUUID(sb, ps, col++, obs.getID()); // obsID
             
             safeSetString(sb, ps, col++, plane.getProductID());
             safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
@@ -1142,7 +1146,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, plane.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, plane.getStateCode());
-            safeSetLong(sb, ps, col++, plane.getID());
+            safeSetLongUUID(sb, ps, col++, plane.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1189,8 +1193,8 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLong(sb, ps, col++, plane.getID());
-            safeSetLong(sb, ps, col++, obs.getID());
+            safeSetLongUUID(sb, ps, col++, plane.getID());
+            safeSetLongUUID(sb, ps, col++, obs.getID());
             
             safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
             if (artifact.productType != null)
@@ -1207,7 +1211,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, artifact.getStateCode());
-            safeSetLong(sb, ps, col++, artifact.getID());
+            safeSetLongUUID(sb, ps, col++, artifact.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1257,9 +1261,9 @@ public class BaseSQLGenerator implements SQLGenerator
 
             int col = 1;
             
-            safeSetLong(sb, ps, col++, artifact.getID()); 
-            safeSetLong(sb, ps, col++, plane.getID());
-            safeSetLong(sb, ps, col++, obs.getID());
+            safeSetLongUUID(sb, ps, col++, artifact.getID()); 
+            safeSetLongUUID(sb, ps, col++, plane.getID());
+            safeSetLongUUID(sb, ps, col++, obs.getID());
             
             safeSetString(sb, ps, col++, part.getName());
 
@@ -1274,7 +1278,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, part.getStateCode());
-            safeSetLong(sb, ps, col++, part.getID());
+            safeSetLongUUID(sb, ps, col++, part.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1324,10 +1328,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLong(sb, ps, col++, part.getID());
-            safeSetLong(sb, ps, col++, artifact.getID());
-            safeSetLong(sb, ps, col++, plane.getID());
-            safeSetLong(sb, ps, col++, obs.getID());
+            safeSetLongUUID(sb, ps, col++, part.getID());
+            safeSetLongUUID(sb, ps, col++, artifact.getID());
+            safeSetLongUUID(sb, ps, col++, plane.getID());
+            safeSetLongUUID(sb, ps, col++, obs.getID());
             
             if (chunk.productType != null)
                 safeSetString(sb, ps, col++, chunk.productType.getValue());
@@ -1608,7 +1612,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, chunk.getStateCode());
-            safeSetLong(sb, ps, col++, chunk.getID());
+            safeSetLongUUID(sb, ps, col++, chunk.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1751,7 +1755,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLong(sb, ps, col++, ra.getGroupID());
             safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, ra.getStateCode());
-            safeSetLong(sb, ps, col++, ra.getID());
+            safeSetUUID(sb, ps, col++, ra.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1798,6 +1802,29 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(val);
             sb.append(",");
         }
+    }
+    
+     protected void safeSetUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
+        throws SQLException
+    {
+        // null UUID is always a bug
+        //String hex = HexUtil.toHex(val.getMostSignificantBits())
+        //    + HexUtil.toHex(val.getLeastSignificantBits());
+        ps.setObject(col, val);
+        if (sb != null)
+        {
+            sb.append(val);
+            sb.append(",");
+        }
+    }
+     
+    protected void safeSetLongUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
+        throws SQLException
+    {
+        Long tval = null;
+        if (val != null)
+            tval = CaomUtil.uuidToLong(val);
+        safeSetLong(sb, ps, col, tval);
     }
     
     protected void safeSetLong(StringBuilder sb, PreparedStatement ps, int col, Long val)
@@ -1900,6 +1927,9 @@ public class BaseSQLGenerator implements SQLGenerator
         if (obj instanceof String)
             return "'" + obj + "'";
 
+        if (obj instanceof UUID)
+            return literal((UUID) obj);
+        
         throw new IllegalArgumentException("unsupported literal: " + obj.getClass().getName());
     }
 
@@ -1927,7 +1957,16 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         return Long.toString(value);
     }
-
+    
+    protected String literal(UUID value)
+    {
+        // backwards compat with Long id valued in main CAOM tables
+        if (value.getMostSignificantBits() == 0L)
+            return Long.toString(value.getLeastSignificantBits());
+        
+        return value.toString();
+    }
+    
     protected Class getClassFromUtype(String utype)
         throws ClassNotFoundException
     {
@@ -2488,7 +2527,7 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: observation.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: observation.stateCode = " + stateCode);
-            Long id = Util.getLong(rs, col++);
+            UUID id = Util.getUUID(rs, col++);
             log.debug("found: observation.id = " + id);
 
             Util.assignID(o, id);
@@ -2609,7 +2648,7 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: plane.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: plane.stateCode = " + stateCode);
-            Long id = Util.getLong(rs, col++);
+            UUID id = Util.getUUID(rs, col++);
             log.debug("found: plane.id = " + id);
 
             Util.assignID(p, id);
@@ -2678,7 +2717,7 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: artifact.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: artifact.stateCode = " + stateCode);
-            Long id = Util.getLong(rs, col++);
+            UUID id = Util.getUUID(rs, col++);
             log.debug("found artifact.id = " + id);
             
             Util.assignID(a, id);
@@ -2740,7 +2779,7 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: part.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: part.stateCode = " + stateCode);
-            Long id = Util.getLong(rs, col++);
+            UUID id = Util.getUUID(rs, col++);
             log.debug("found: part.id = " + id);
             
             Util.assignID(p, id);
@@ -3012,7 +3051,7 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: chunk.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: chunk.stateCode = " + stateCode);
-            Long id = Util.getLong(rs, col++);
+            UUID id = Util.getUUID(rs, col++);
             log.debug("found: chunk.id = " + id);
 
             Util.assignID(c, id);
@@ -3039,9 +3078,9 @@ public class BaseSQLGenerator implements SQLGenerator
             {
                 int col = 1;
                 Date lastModified = Util.getDate(rs, col++, UTC_CAL);
-                Long id = Util.getLong(rs, col++);
+                UUID id = Util.getUUID(rs, col++);
                 
-                Constructor<? extends DeletedEntity> ctor = c.getConstructor(Long.class, Date.class);
+                Constructor<? extends DeletedEntity> ctor = c.getConstructor(UUID.class, Date.class);
                 DeletedEntity ret = ctor.newInstance(id, lastModified);
                 log.debug("found: " + ret);
                 return ret;
@@ -3078,7 +3117,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 log.debug("found: ra.lastModified = " + lastModified);
                 Integer stateCode = Util.getInteger(rs, col++);
                 log.debug("found: ra.stateCode = " + stateCode);
-                Long id = Util.getLong(rs, col++);
+                UUID id = Util.getUUID(rs, col++);
                 log.debug("found: ra.id = " + id);
 
                 Util.assignID(ret, id);
@@ -3119,7 +3158,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 Skeleton ret = c.newInstance();
                 ret.lastModified = Util.getDate(rs, col++, UTC_CAL);
                 ret.stateCode = Util.getInteger(rs, col++);
-                ret.id = Util.getLong(rs, col++);
+                ret.id = Util.getUUID(rs, col++);
                 log.debug("found: " + ret);
                 return ret;
             }

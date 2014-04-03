@@ -6,19 +6,17 @@ import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.ResultSetExtractor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.Date;
 import java.util.Calendar;
+import java.util.Date;
 import javax.sql.DataSource;
+import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 /**
  * Queries to manage state in the harvest table.
@@ -153,9 +151,9 @@ public class HarvestStateDAO
             else
                 ps.setNull(col++, Types.TIMESTAMP);
             if (state.curID != null)
-                ps.setLong(col++, state.curID);
+                ps.setObject(col++, state.curID);
             else
-                ps.setNull(col++, Types.BIGINT);
+                ps.setNull(col++, Types.OTHER);
 
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
             ps.setLong(col++, state.id);
@@ -181,7 +179,7 @@ public class HarvestStateDAO
                 ret.code = rs.getInt(col++);
                 ret.cname = rs.getString(col++);
                 ret.curLastModified = Util.getDate(rs, col++, CAL);
-                ret.curID = Util.getLong(rs, col++);
+                ret.curID = Util.getUUID(rs, col++);
                 
                 ret.lastModified = Util.getDate(rs, col++, CAL);
                 ret.id = Util.getLong(rs, col++);

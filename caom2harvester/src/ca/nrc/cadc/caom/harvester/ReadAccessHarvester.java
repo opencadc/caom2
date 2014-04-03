@@ -184,7 +184,8 @@ public class ReadAccessHarvester extends Harvester
                         destAccessDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
 
-                        // track failures where possible
+                        // track failures where possible??
+                        /*
                         try
                         {
                             log.debug("starting harvestSkip transaction");
@@ -207,6 +208,7 @@ public class ReadAccessHarvester extends Harvester
                             destAccessDAO.getTransactionManager().rollbackTransaction();
                             log.warn("rollback harvestSkip: OK");
                         }
+                        */
                         ret.failed++;
                     }
                 }
