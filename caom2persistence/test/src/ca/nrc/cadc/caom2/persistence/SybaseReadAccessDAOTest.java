@@ -93,7 +93,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
     static
     {
         log = Logger.getLogger(SybaseReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
@@ -120,7 +120,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO ");
         sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
-        sb.append(" (gr_permission_id,asset_id,group_id,lastmod,stateCode) VALUES (");
+        sb.append(" (gr_permission_id,assetID,groupID,lastModified,stateCode) VALUES (");
         sb.append("555,");
         sb.append(expected.getAssetID().toString());
         sb.append(",");

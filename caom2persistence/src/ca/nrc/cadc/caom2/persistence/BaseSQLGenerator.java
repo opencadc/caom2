@@ -144,7 +144,7 @@ public class BaseSQLGenerator implements SQLGenerator
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class,String> aliasMap = new TreeMap<Class,String>(new ClassComp());
 
-    protected final Map<Class,String> alternateLastModifiedColumn = new TreeMap<Class,String>(new ClassComp());
+    //protected final Map<Class,String> alternateLastModifiedColumn = new TreeMap<Class,String>(new ClassComp());
 
     protected DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     
@@ -563,9 +563,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String top = getTopConstraint(batchSize);
         String limit = getLimitConstraint(batchSize);
 
-        String lastModifiedColumn = alternateLastModifiedColumn.get(c);
-        if (lastModifiedColumn == null)
-            lastModifiedColumn = "lastModified";
+        String lastModifiedColumn = "lastModified";
         
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(c);
