@@ -4,6 +4,7 @@ package ca.nrc.cadc.caom2ops;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -19,6 +20,17 @@ public class Util extends CaomUtil
         if (o == null)
             return null;
         return (String) o;
+    }
+    public static UUID getUUID(List<Object> data, Integer col)
+    {
+        if (col == null)
+            return null;
+        Object o = data.get(col);
+        if (o == null)
+            return null;
+        Long lsb = (Long) o;
+        // backwards compatibility of Long ID values
+        return new UUID(0L, lsb);
     }
     public static Long getLong(List<Object> data, Integer col)
     {
