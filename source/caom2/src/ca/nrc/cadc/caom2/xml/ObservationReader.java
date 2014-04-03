@@ -135,6 +135,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -263,7 +264,8 @@ public class ObservationReader implements Serializable
         try
         {
             Long id = new Long(aid.getLongValue());
-            CaomUtil.assignID(ce, id);
+            UUID uuid = new UUID(0L, id);
+            CaomUtil.assignID(ce, uuid);
             if (alastModified != null)
             {
                 Date lastModified = df.parse(alastModified.getValue());

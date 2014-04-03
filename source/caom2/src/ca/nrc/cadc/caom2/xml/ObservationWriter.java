@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -290,7 +291,7 @@ public class ObservationWriter implements Serializable
 
     private void addEntityAttributes(CaomEntity ce, Element el, DateFormat df)
     {
-        el.setAttribute("id", ce.getID().toString(), caom2Namespace);
+        el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
         if (ce.getLastModified() != null)
             el.setAttribute("lastModified", df.format(ce.getLastModified()), el.getNamespace());
     }

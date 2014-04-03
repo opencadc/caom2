@@ -88,6 +88,7 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
 
     public ReadAccess(Long assetID, Long groupID)
     {
+        super(true);
         CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
         CaomValidator.assertNotNull(this.getClass(), "groupID", groupID);
         this.assetID = assetID;

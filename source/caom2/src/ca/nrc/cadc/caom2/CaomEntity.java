@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Base interface for CAOM entities. Entities are objects stored in and
@@ -85,7 +86,7 @@ public interface CaomEntity
      *
      * @return unique ID for this entity, possibly null
      */
-    public Long getID();
+    public UUID getID();
 
     /**
      * Get the timestamp of the last modification of the state of

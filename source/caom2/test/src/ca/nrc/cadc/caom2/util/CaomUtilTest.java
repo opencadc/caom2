@@ -101,6 +101,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -140,7 +141,7 @@ public class CaomUtilTest
     {
         try
         {
-            Long id = new Long(666L);
+            UUID id = new UUID(0L, 666L);
             
             CaomEntity ce = new SimpleObservation("FOO", "bar");
             CaomUtil.assignID(ce, id);
