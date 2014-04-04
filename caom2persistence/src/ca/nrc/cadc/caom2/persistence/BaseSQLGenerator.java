@@ -484,7 +484,7 @@ public class BaseSQLGenerator implements SQLGenerator
     public String getSelectSQL(UUID id, int depth, boolean skeleton)
     {
         StringBuilder sb = new StringBuilder();
-        String alias = getAlias(ObservationSkeleton.class);
+        String alias = getAlias(Observation.class);
         if (skeleton)
             alias = getAlias(ObservationSkeleton.class);
         sb.append("SELECT ");

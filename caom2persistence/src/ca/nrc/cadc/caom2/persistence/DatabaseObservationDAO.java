@@ -169,7 +169,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             if (uri != null)
                 sql = gen.getSelectSQL(uri, depth);
             else
-                sql = gen.getSelectSQL(Observation.class, id);
+                sql = gen.getSelectSQL(id, depth, false);
             
             if (log.isDebugEnabled())
                 log.debug("GET: " + Util.formatSQL(sql));
