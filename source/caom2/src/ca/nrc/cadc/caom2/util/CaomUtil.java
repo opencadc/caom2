@@ -96,6 +96,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
@@ -116,8 +117,16 @@ public class CaomUtil implements Serializable
     // TODO: decide if this is a good idea or not and refactor if necessary
     protected CaomUtil() { }
     
+    public static Long uuidToLong(UUID id)
+    {
+        if (id.getMostSignificantBits() == 0)
+            return id.getLeastSignificantBits();
+        throw new IllegalArgumentException("lossy conversion from UUID to Long: " + id);
+                
+    }
+    
     // methods to assign to private field in AbstractCaomEntity
-    public static void assignID(Object ce, Long id)
+    public static void assignID(Object ce, UUID id)
     {
         try
         {

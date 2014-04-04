@@ -80,6 +80,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -185,7 +186,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    private static void assignID(Object ce, Long id)
+    private static void assignID(Object ce, UUID id)
     {
         try
         {

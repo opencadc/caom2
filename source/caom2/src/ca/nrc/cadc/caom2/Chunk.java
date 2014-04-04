@@ -120,13 +120,7 @@ public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
 
     public int compareTo(Chunk o)
     {
-        long lhs = getID();
-        long rhs = o.getID();
-        if (lhs < rhs)
-            return -1;
-        if (lhs > rhs)
-            return 1;
-        return 0; // same hashCode == same object
+        return getID().compareTo(o.getID());
     }
 
     // the AbstractCaomEntity implementations of equals() and hashCode() are sufficient
