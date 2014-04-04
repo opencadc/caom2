@@ -69,14 +69,15 @@
 
 package ca.nrc.cadc.datalink;
 
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.dali.tables.votable.VOTableField;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.dali.tables.votable.VOTableField;
 
 /**
  * A single result output by the data link service.
@@ -85,21 +86,21 @@ import java.util.NoSuchElementException;
  */
 public class DataLink implements Iterable<Object>
 {
-    public static final String DOWNLOAD = "ivo://ivoa.net/std/DataLink/v1.0#DOWNLOAD";
-    public static final String CUTOUT = "ivo://ivoa.net/std/CutoutService/v1.0";
+    public static final String CUTOUT = "cutout";
 
     // standard DataLink fields
     private URI id;
     private URL url;
-    public URI serviceType;
+    public String serviceDef;
     public String description;
     public String semantics;
     public String contentType;
     public Long contentLength;
     public String errorMessage;
-    
-    // custom CADC field
+
+    // custom CADC fields
     public List<ProductType> productTypes = new ArrayList<ProductType>();
+    public String fileURI;
 
     public DataLink(URI id, URL url)
     {
@@ -117,19 +118,22 @@ public class DataLink implements Iterable<Object>
         return url;
     }
 
-    public int size() { return 9; } // number of fields
+    public int size() { return 10; } // number of fields
 
     // order: uri, productType, contentType, contentLength, URL
+    @Override
     public Iterator<Object> iterator()
     {
         return new Iterator<Object>()
         {
             int cur = 0;
+            @Override
             public boolean hasNext()
             {
                 return (cur < size());
             }
 
+            @Override
             public Object next()
             {
                 int n = cur;
@@ -138,17 +142,19 @@ public class DataLink implements Iterable<Object>
                 {
                     case 0: return id.toASCIIString();
                     case 1: return safeToString(url);
-                    case 2: return safeToString(serviceType);
+                    case 2: return serviceDef;
                     case 3: return semantics;
                     case 4: return description;
                     case 5: return contentType;
                     case 6: return contentLength;
                     case 7: return errorMessage;
                     case 8: return toProductTypeMask(productTypes);
+                    case 9: return fileURI;
                 }
                 throw new NoSuchElementException();
             }
 
+            @Override
             public void remove()
             {
                 throw new UnsupportedOperationException();
@@ -162,13 +168,14 @@ public class DataLink implements Iterable<Object>
             return null;
         return uri.toASCIIString();
     }
+
     String safeToString(URL url)
     {
         if (url == null)
             return null;
         return url.toExternalForm();
     }
-    
+
     private String toProductTypeMask(List<ProductType> productTypes)
     {
         StringBuilder sb = new StringBuilder();
@@ -184,7 +191,7 @@ public class DataLink implements Iterable<Object>
 
     /**
      * Get list of table fields that matches the iteration order of the DataLink.
-     * 
+     *
      * @return
      */
     public static List<VOTableField> getFields()
@@ -195,52 +202,48 @@ public class DataLink implements Iterable<Object>
         f = new VOTableField("ID", "char");
         f.setVariableSize(true);
         f.ucd = "meta.id";
-        f.utype = "datalink:Datalink.ID";
         fields.add(f);
 
-        f = new VOTableField("accessURL", "char");
+        f = new VOTableField("access_url", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.accessURL";
         fields.add(f);
 
-        f = new VOTableField("serviceType", "char");
+        f = new VOTableField("service_def", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.serviceType";
         fields.add(f);
-        
+
         f = new VOTableField("description", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.description";
         fields.add(f);
-        
+
         f = new VOTableField("semantics", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.semantics";
         fields.add(f);
 
-        f = new VOTableField("contentType", "char");
+        f = new VOTableField("content_type", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.contentType";
         fields.add(f);
 
-        f = new VOTableField("contentLength", "long");
+        f = new VOTableField("content_length", "long");
         f.unit = "byte";
-        f.utype = "datalink:Datalink.contentLength";
         fields.add(f);
 
-        f = new VOTableField("errorMessage", "char");
+        f = new VOTableField("error_message", "char");
         f.setVariableSize(true);
-        f.utype = "datalink:Datalink.error";
         fields.add(f);
-        
-        f = new VOTableField("productType", "char");
+
+        f = new VOTableField("product_type", "char");
         f.setVariableSize(true);
-        f.utype = "caom:Artifact.productType";
         fields.add(f);
-        
+
+        f = new VOTableField("file_uri", "char");
+        f.id = "fileURIRef";
+        f.setVariableSize(true);
+        fields.add(f);
+
         return fields;
     }
-    
+
     @Override
     public String toString()
     {

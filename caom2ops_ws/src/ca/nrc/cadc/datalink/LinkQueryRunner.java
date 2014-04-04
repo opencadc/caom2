@@ -69,11 +69,26 @@
 
 package ca.nrc.cadc.datalink;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.cert.CertificateException;
+import java.util.Date;
+import java.util.MissingResourceException;
+
+import javax.security.auth.Subject;
+
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
@@ -90,15 +105,6 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.cert.CertificateException;
-import java.util.Date;
-import javax.security.auth.Subject;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -108,6 +114,7 @@ public class LinkQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
+    private static final String SERVICES_RESOURCE = "datalinkMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
 
 
@@ -118,29 +125,33 @@ public class LinkQueryRunner implements JobRunner
 
     public LinkQueryRunner() { }
 
+    @Override
     public void setJob(Job job)
     {
         this.job = job;
     }
 
+    @Override
     public void setJobUpdater(JobUpdater ju)
     {
         this.jobUpdater = ju;
     }
 
+    @Override
     public void setSyncOutput(SyncOutput so)
     {
         this.syncOutput = so;
     }
-    
+
+    @Override
     public void run()
     {
         logInfo = new JobLogInfo(job);
         log.info(logInfo.start());
         long start = System.currentTimeMillis();
-        
+
         doIt();
-        
+
         logInfo.setElapsedTime(System.currentTimeMillis() - start);
         log.info(logInfo.end());
     }
@@ -176,6 +187,9 @@ public class LinkQueryRunner implements JobRunner
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");
+
+            // add fileURIRef to the document
+
             vot.getResources().add(vr);
             VOTableTable tab = new VOTableTable();
             vr.setTable(tab);
@@ -190,7 +204,19 @@ public class LinkQueryRunner implements JobRunner
                 ap.setAuthMethod(AuthMethod.CERT);
             tab.setTableData(new DynamicTableData(job, query, ap));
 
-            TableWriter writer;
+            // Add the service descriptions resource
+            InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
+            if (is == null)
+            {
+                throw new MissingResourceException(
+                        "Resource not found: " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), SERVICES_RESOURCE);
+            }
+            VOTableReader reader = new VOTableReader();
+            VOTableDocument serviceDocument = reader.read(is);
+            VOTableResource metaResource = serviceDocument.getResourceByType("meta");
+            vot.getResources().add(metaResource);
+
+            TableWriter<VOTableDocument> writer;
             String fmt = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
             if (fmt == null || VOTableWriter.CONTENT_TYPE.equals(fmt) )
             {
@@ -210,7 +236,7 @@ public class LinkQueryRunner implements JobRunner
 
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
             writer.write(vot, syncOutput.getOutputStream());
-            
+
             // set final phase, only sync so no results
             log.debug(job.getID() + ": EXECUTING -> COMPLETED...");
             ep = jobUpdater.setPhase(job.getID(), ExecutionPhase.EXECUTING, ExecutionPhase.COMPLETED, new Date());
@@ -262,12 +288,12 @@ public class LinkQueryRunner implements JobRunner
             log.error("EPIC FAIL", t);
         sendError(t, "unexpected failure: " + t.toString(), code);
     }
-    
+
     private void sendError(Throwable t, String s, int code)
-    {    	
+    {
     	logInfo.setSuccess(false);
         logInfo.setMessage(s);
-    	
+
         try
         {
             ErrorSummary err = new ErrorSummary(s, ErrorType.FATAL);

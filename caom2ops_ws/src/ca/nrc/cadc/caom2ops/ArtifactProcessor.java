@@ -69,6 +69,15 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
@@ -81,25 +90,17 @@ import ca.nrc.cadc.datalink.util.SchemeHandler;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  * Convert Artifacts to DataLinks.
- * 
+ *
  * @author pdowler
  */
 public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
 
-    private static URI DOWNLOAD;
-    private static URI CUTOUT;
+    private static String CUTOUT = "cutout";
 
     private static URI CUTOUT_SERVICE;
 
@@ -107,8 +108,6 @@ public class ArtifactProcessor
     {
         try
         {
-            DOWNLOAD = new URI(DataLink.DOWNLOAD);
-            CUTOUT = new URI(DataLink.CUTOUT);
             CUTOUT_SERVICE = new URI("ivo://cadc.nrc.ca/cutout");
         }
         catch(URISyntaxException bug)
@@ -135,12 +134,12 @@ public class ArtifactProcessor
         this.authMethod = authMethod;
         schemeHandler.setAuthMethod(authMethod);
     }
-    
+
     /**
      * Force DataLink generation to only include file download links. This is used
      * when passing the output off to the ManifestWriter instead of creating all the
      * links and having the writer filter them.
-     * 
+     *
      * @param downloadOnly
      */
     public void setDownloadOnly(boolean downloadOnly)
@@ -158,8 +157,8 @@ public class ArtifactProcessor
             {
                 URL download = getDownloadURL(a);
                 DataLink dl = new DataLink(uri, download);
-                dl.serviceType = DOWNLOAD;
                 // semantics
+                // serviceDef is null for non-cutouts
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
                 findProductTypes(a, dl.productTypes);
@@ -171,6 +170,7 @@ public class ArtifactProcessor
             }
 
             if (!downloadOnly)
+            {
                 // service links
                 try
                 {
@@ -178,11 +178,13 @@ public class ArtifactProcessor
                     if (cutout != null)
                     {
                         DataLink dl = new DataLink(uri, cutout);
-                        dl.serviceType = CUTOUT;
+                        dl.serviceDef = CUTOUT;
                         dl.contentType = a.contentType; // unchanged
                         dl.contentLength = null; // unknown
+                        dl.fileURI = a.getURI().toString();
                         findProductTypes(a, dl.productTypes);
                         ret.add(dl);
+                        log.debug("added cutout service def");
                     }
                     else
                         log.debug(a.getURI() + ": no cutout URL");
@@ -192,6 +194,9 @@ public class ArtifactProcessor
                 {
                     throw new RuntimeException("failed to generate cutout URL for " + a.getURI(), ex);
                 }
+            }
+            else
+                log.debug("Download only");
         }
         return ret;
     }
@@ -236,7 +241,7 @@ public class ArtifactProcessor
         return url;
     }
 
-    
+
 
     protected URL getCutoutURL(Artifact a)
         throws MalformedURLException
