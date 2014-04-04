@@ -80,6 +80,13 @@ public class ObservationHarvester extends Harvester
         // TODO
     }
     
+    private String format(UUID id)
+    {
+        if (id == null)
+            return "null";
+        return Long.toString(id.getLeastSignificantBits());
+    }
+    
     public void run()
     {
         log.info("START: " + Observation.class.getSimpleName());
@@ -226,8 +233,8 @@ public class ObservationHarvester extends Harvester
             {
                 ListIterator<ObservationWrapper> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().obs;
-                log.info("currentBatch: " + curBatchLeader.getID() + " " + curBatchLeader.getMaxLastModified());
-                log.info("harvestState: " + state.curID + " " + state.curLastModified);
+                log.info("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
+                log.info("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
                 if (curBatchLeader.getID().equals(state.curID)                                 // same obs as last time
                         && curBatchLeader.getMaxLastModified().equals(state.curLastModified) ) // not modified since
                 {
@@ -262,7 +269,7 @@ public class ObservationHarvester extends Harvester
                 {
                     // o could be null in skip mode cleanup
                     if (o != null)
-                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getID() + " " + format(o.getMaxLastModified()));
+                        log.info("put: " + o.getClass().getSimpleName() + " " + format(o.getID()) + " " + format(o.getMaxLastModified()));
                     if (!dryrun) 
                     {
                         if (skipped)
@@ -333,8 +340,10 @@ public class ObservationHarvester extends Harvester
                     {
                         if (str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
                         {
-                            log.error("CONTENT PROBLEM - duplicate observation: "
-                                    + o.getCollection() + "," + o.getObservationID());
+                            log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
+                                    + o.getURI().getURI().toASCIIString());
+                            // TODO: this is caused by a missed deletion, so we should delete the current observation
+                            // with this URI and insert the new one
                         }
                         else
                             log.error("unexpected exception", oops);
