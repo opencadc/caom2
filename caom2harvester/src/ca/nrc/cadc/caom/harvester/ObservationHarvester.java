@@ -350,7 +350,7 @@ public class ObservationHarvester extends Harvester
                     }
                     else if  (oops instanceof UncategorizedSQLException)
                     {
-                        if (str.contains("spherepoly_from_array: a line segment overlaps"))
+                        if (str.contains("spherepoly_from_array"))
                         {
                             log.error("UNDETECTED illegal polygon: "
                                     + o.getCollection() + "," + o.getObservationID());
