@@ -74,10 +74,12 @@ import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Date;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -93,23 +95,29 @@ public class HarvestStateDAOTest
         Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
     }
 
-    DataSource dataSource;
-    String database;
-    String schema;
+    static DataSource dataSource;
+    static String database;
+    static String schema;
 
     public HarvestStateDAOTest()
         throws Exception
+    {
+        
+    }
+    
+    @BeforeClass
+    public static void cleanup()
     {
         try
         {
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
-            this.dataSource = DBUtil.getDataSource(cc);
-            this.database = "cadctest";
-            this.schema = System.getProperty("user.name");
+            dataSource = DBUtil.getDataSource(cc);
+            database = "cadctest";
+            schema = System.getProperty("user.name");
 
             String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
-            log.debug("cleanup: " + sql);
+            log.info("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
         }
         catch(Exception ex)
@@ -162,7 +170,7 @@ public class HarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new Long(666L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
@@ -213,7 +221,7 @@ public class HarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new Long(666L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
@@ -221,7 +229,7 @@ public class HarvestStateDAOTest
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
 
-            s.curID = new Long(777L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s3 = dao.get("testUpdateID", Integer.class.getName());

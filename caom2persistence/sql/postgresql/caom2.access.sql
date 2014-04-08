@@ -7,7 +7,7 @@ create table caom2.ObservationMetaReadAccess
     assetID         bigint not null,
     groupID         bigint not null,
 
-    readAccessID    bigint not null primary key using index tablespace caom_index,
+    readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,
     stateCode int not null
 )
@@ -32,7 +32,7 @@ create table caom2.PlaneMetaReadAccess
     assetID         bigint not null,
     groupID         bigint not null,
 
-    readAccessID    bigint not null primary key using index tablespace caom_index,
+    readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,
     stateCode int not null
 )
@@ -55,7 +55,7 @@ create table caom2.PlaneDataReadAccess
     assetID         bigint not null,
     groupID         bigint not null,
 
-    readAccessID    bigint not null primary key using index tablespace caom_index,
+    readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,
     stateCode int not null
 )

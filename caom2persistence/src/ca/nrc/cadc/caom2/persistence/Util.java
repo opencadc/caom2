@@ -13,6 +13,7 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.HexUtil;
 import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
@@ -178,6 +180,28 @@ public  class Util extends CaomUtil
         if (o instanceof Number)
             return new Long(((Number)o).longValue());
         throw new UnsupportedOperationException("converting " + o.getClass().getName() + " " + o + " to Long");
+    }
+    
+    public static UUID getUUID(ResultSet rs, int col)
+        throws SQLException
+    {
+        Object o = rs.getObject(col);
+        if (o == null)
+            return null;
+        if (o instanceof UUID)
+            return (UUID) o;
+        if (o instanceof Long)
+            return new UUID(0L, (Long) o);
+        if (o instanceof Number)
+            return new UUID(0L, new Long(((Number)o).longValue()));
+        if (o instanceof byte[])
+        {
+            byte[] b = (byte[]) o;
+            long msb = HexUtil.toLong(b, 0);
+            long lsb = HexUtil.toLong(b, 8);
+            return new UUID(msb, lsb);
+        }
+        throw new UnsupportedOperationException("converting " + o.getClass().getName() + " " + o + " to UUID");
     }
     
     public static Float getFloat(ResultSet rs, int col)
@@ -345,7 +369,7 @@ public  class Util extends CaomUtil
         }
     }
     
-    public static Plane findPlane(Set<Plane> set, Long id)
+    public static Plane findPlane(Set<Plane> set, UUID id)
     {
         for (Plane e : set)
             if (e.getID().equals(id))
@@ -353,7 +377,7 @@ public  class Util extends CaomUtil
         return null;
     }
     
-    public static PlaneSkeleton findPlaneSkel(List<PlaneSkeleton> set, Long id)
+    public static PlaneSkeleton findPlaneSkel(List<PlaneSkeleton> set, UUID id)
     {
         for (PlaneSkeleton e : set)
             if (e.id.equals(id))
@@ -361,7 +385,7 @@ public  class Util extends CaomUtil
         return null;
     }
 
-    public static Artifact findArtifact(Set<Artifact> set, Long id)
+    public static Artifact findArtifact(Set<Artifact> set, UUID id)
     {
         for (Artifact e : set)
             if (e.getID().equals(id))
@@ -369,7 +393,7 @@ public  class Util extends CaomUtil
         return null;
     }
     
-    public static ArtifactSkeleton findArtifactSkel(List<ArtifactSkeleton> set, Long id)
+    public static ArtifactSkeleton findArtifactSkel(List<ArtifactSkeleton> set, UUID id)
     {
         for (ArtifactSkeleton e : set)
             if (e.id.equals(id))
@@ -377,7 +401,7 @@ public  class Util extends CaomUtil
         return null;
     }
 
-    public static Part findPart(Set<Part> set, Long id)
+    public static Part findPart(Set<Part> set, UUID id)
     {
         for (Part e : set)
             if (e.getID().equals(id))
@@ -385,7 +409,7 @@ public  class Util extends CaomUtil
         return null;
     }
     
-    public static PartSkeleton findPartSkel(List<PartSkeleton> set, Long id)
+    public static PartSkeleton findPartSkel(List<PartSkeleton> set, UUID id)
     {
         for (PartSkeleton e : set)
             if (e.id.equals(id))
@@ -393,7 +417,7 @@ public  class Util extends CaomUtil
         return null;
     }
 
-    public static Chunk findChunk(Set<Chunk> set, Long id)
+    public static Chunk findChunk(Set<Chunk> set, UUID id)
     {
         for (Chunk e : set)
             if (e.getID().equals(id))
@@ -401,7 +425,7 @@ public  class Util extends CaomUtil
         return null;
     }
     
-    public static ChunkSkeleton findChunkSkel(List<ChunkSkeleton> set, Long id)
+    public static ChunkSkeleton findChunkSkel(List<ChunkSkeleton> set, UUID id)
     {
         for (ChunkSkeleton e : set)
             if (e.id.equals(id))

@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -87,7 +88,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
 
     public DatabaseReadAccessDAO() { }
 
-    public ReadAccess get(Class<? extends ReadAccess> c, Long id)
+    public ReadAccess get(Class<? extends ReadAccess> c, UUID id)
     {
         checkInit();
         if (c == null || id == null)
@@ -158,7 +159,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         }
     }
 
-    public void delete(Class<? extends ReadAccess> c, Long id)
+    public void delete(Class<? extends ReadAccess> c, UUID id)
     {
         checkInit();
         if (c == null || id == null)

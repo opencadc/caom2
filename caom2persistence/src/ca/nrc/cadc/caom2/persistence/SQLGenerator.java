@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.Date;
+import java.util.UUID;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -114,10 +115,10 @@ public interface SQLGenerator
      * @param skeleton
      * @return
      */
-    String getSelectSQL(Long id, int depth, boolean skeleton);
+    String getSelectSQL(UUID id, int depth, boolean skeleton);
 
     
-    String getSelectSQL(Class c, Long id);
+    String getSelectSQL(Class c, UUID id);
     
     String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
@@ -140,7 +141,7 @@ public interface SQLGenerator
     
     EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate);
 
-    String getDeleteSQL(Class c, Long id, boolean primaryKey);
+    String getDeleteSQL(Class c, UUID id, boolean primaryKey);
 
     
     String literal(Object o);

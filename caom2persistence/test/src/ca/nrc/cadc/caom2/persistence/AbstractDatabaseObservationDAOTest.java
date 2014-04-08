@@ -276,11 +276,16 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.assertTrue(dao.exists(orig.getURI()));
             txnManager.commitTransaction();
 
-            // GET
+            // GET by URI
             Observation retrieved = dao.get(orig.getURI());
-            Assert.assertNotNull("found", retrieved);
+            Assert.assertNotNull("found by URI", retrieved);
             testEqual(orig, retrieved);
 
+            // GET by ID
+            retrieved = dao.get(orig.getID());
+            Assert.assertNotNull("found by ID", retrieved);
+            testEqual(orig, retrieved);
+            
             // DELETE by ID
             txnManager.startTransaction();
             dao.delete(orig.getID());

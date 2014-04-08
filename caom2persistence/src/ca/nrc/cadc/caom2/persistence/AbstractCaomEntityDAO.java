@@ -80,6 +80,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -109,7 +110,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
         this.computeLastModified = computeLastModified;
     }
 
-    public T get(Long id)
+    public T get(UUID id)
     {
         throw new UnsupportedOperationException();
     }
