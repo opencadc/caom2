@@ -179,7 +179,7 @@ public class LinkQueryTest
             Assert.assertEquals(ARTIFACT_SIZE, artifacts.size() );
             for (Artifact artifact : artifacts)
             {
-            	Assert.assertEquals(Long.parseLong(ARTIFACT_ID) + i, artifact.getID().longValue());
+            	Assert.assertEquals(Long.parseLong(ARTIFACT_ID) + i, artifact.getID().getLeastSignificantBits());
             	Assert.assertEquals(ARTIFACT_URI, artifact.getURI().toString());
             	Assert.assertEquals(ARTIFACT_CONTENT_TYPE, artifact.contentType);
             	Assert.assertEquals(ARTIFACT_CONTENT_LENGTH.longValue(), artifact.contentLength.longValue());
@@ -197,7 +197,7 @@ public class LinkQueryTest
             	Assert.assertEquals(PART_SIZE, parts.size());
             	for (Part part : parts)
             	{
-            		Assert.assertEquals(Long.parseLong(PART_ID) + j, part.getID().longValue());
+            		Assert.assertEquals(Long.parseLong(PART_ID) + j, part.getID().getLeastSignificantBits());
             		Assert.assertEquals(PART_NAME + j, part.getName());
             		Assert.assertEquals(null, part.productType);
             		expectedLM = dateFormat.parse(PART_LASTMODIFIED).toString();
