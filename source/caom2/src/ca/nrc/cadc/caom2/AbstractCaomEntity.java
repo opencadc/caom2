@@ -84,13 +84,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public  class AbstractCaomEntity implements CaomEntity, Serializable
+public abstract class AbstractCaomEntity implements CaomEntity, Serializable
 {
     private static final long serialVersionUID = 201202141220L;
     private static final Logger log = Logger.getLogger(AbstractCaomEntity.class);
@@ -98,20 +99,28 @@ public  class AbstractCaomEntity implements CaomEntity, Serializable
     private static final boolean SC_DEBUG = false;
     
     // state
-    private Long id;
+    private UUID id;
     private Date lastModified;
     private Date maxLastModified;
     
     protected AbstractCaomEntity()
     {
-        this.id = CaomIDGenerator.getInstance().generateID();
+        // default: 64-bit consistent with CAOM-2.0 use of Long
+        this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+    }
+    protected AbstractCaomEntity(boolean fullUUID)
+    {
+        if (fullUUID)
+            this.id = UUID.randomUUID();
+        else
+            this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
     }
 
     /**
      * Get the unique persistent numeric identifier for this object.
      * @return
      */
-    public final Long getID()
+    public final UUID getID()
     {
         return id;
     }
