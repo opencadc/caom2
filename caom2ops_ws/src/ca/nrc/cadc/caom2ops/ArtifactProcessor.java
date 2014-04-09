@@ -87,7 +87,6 @@ import ca.nrc.cadc.datalink.DataLink;
 import ca.nrc.cadc.datalink.util.AuthMethod;
 import ca.nrc.cadc.datalink.util.CaomSchemeHandler;
 import ca.nrc.cadc.datalink.util.SchemeHandler;
-import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
 
@@ -254,8 +253,7 @@ public class ArtifactProcessor
             StringBuilder sb = new StringBuilder();
             sb.append("?");
             if (runID != null)
-                sb.append("runid=").append(runID).append("&");
-            sb.append("uri=").append( NetUtil.encode(a.getURI().toASCIIString()));
+                sb.append("runid=").append(runID);
             URL ret = registryClient.getServiceURL(CUTOUT_SERVICE, proto, sb.toString());
             return ret;
         }
