@@ -212,7 +212,7 @@ public class Main
         sb.append("\n     --endDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
-        sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");
+        //sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");
         sb.append("\n     --dryrun : check for work but don't do anything");
         log.warn(sb.toString());
     }

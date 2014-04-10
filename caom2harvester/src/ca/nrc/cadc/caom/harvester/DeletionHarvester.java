@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
@@ -121,15 +122,15 @@ public class DeletionHarvester extends Harvester implements Runnable
             try
             {
                 if (targetClass != null)
-                    this.deleteMethod = dao.getClass().getMethod("delete", Class.class, Long.class);
+                    this.deleteMethod = dao.getClass().getMethod("delete", Class.class, UUID.class);
                 else
-                    this.deleteMethod = dao.getClass().getMethod("delete", Long.class);
+                    this.deleteMethod = dao.getClass().getMethod("delete", UUID.class);
             }
             catch(NoSuchMethodException bug)  { throw new RuntimeException("BUG", bug); }
             log.debug("created wrapper to call " + dao.getClass().getSimpleName() + ".delete(Long)");
         }
         
-        public void delete(Long id)
+        public void delete(UUID id)
         {
             log.debug("invoking " + deleteMethod + " with id=" + id);
             try

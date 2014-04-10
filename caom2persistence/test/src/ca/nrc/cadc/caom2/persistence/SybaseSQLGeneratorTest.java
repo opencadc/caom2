@@ -148,12 +148,12 @@ public class SybaseSQLGeneratorTest
         try
         {
             String start = "select top 10 ";
-            String end = " order by observationmetareadaccess.lastmod";
+            String end = " order by observationmetareadaccess.lastmodified";
             Date d1 = new Date();
             Date d2 = null;
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-            String exp1 = "observationmetareadaccess.lastmod >= '" + df.format(d1) + "'";
+            String exp1 = "observationmetareadaccess.lastmodified >= '" + df.format(d1) + "'";
 
             String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, d2, batchSize);
             log.debug("SQL: " + sql);

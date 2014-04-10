@@ -9,7 +9,7 @@ tablespace caom_data
 
 create table caom2.DeletedObservationMetaReadAccess
 (
-    id bigint not null,
+    id uuid not null,
     lastModified timestamp not null
 )
 tablespace caom_data
@@ -17,7 +17,7 @@ tablespace caom_data
 
 create table caom2.DeletedPlaneMetaReadAccess
 (
-    id bigint not null,
+    id uuid not null,
     lastModified timestamp not null
 )
 tablespace caom_data
@@ -25,7 +25,7 @@ tablespace caom_data
 
 create table caom2.DeletedPlaneDataReadAccess
 (
-    id bigint not null,
+    id uuid not null,
     lastModified timestamp not null
 )
 tablespace caom_data

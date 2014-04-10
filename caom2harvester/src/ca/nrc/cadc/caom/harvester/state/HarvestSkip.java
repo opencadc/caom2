@@ -81,7 +81,7 @@ public class HarvestSkip
     public String cname;
     public Long skipID;
 
-    Date lastModified;
+    public Date lastModified;
     Long id;
 
     HarvestSkip() { }

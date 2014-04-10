@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  *
@@ -78,10 +79,10 @@ import java.util.Date;
 public class DeletedEntity 
 {
     public Class entityClass;
-    public Long id;
+    public UUID id;
     public Date lastModified;
 
-    DeletedEntity(Class entityClass, Long id, Date lastModified)
+    DeletedEntity(Class entityClass, UUID id, Date lastModified)
     {
         this.entityClass = entityClass;
         this.id = id;

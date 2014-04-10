@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  *
@@ -77,7 +78,7 @@ import java.util.Date;
  */
 public class DeletedObservation extends DeletedEntity
 {
-    public DeletedObservation(Long id, Date lastModified)
+    public DeletedObservation(UUID id, Date lastModified)
     {
         super(Observation.class, id, lastModified);
     }

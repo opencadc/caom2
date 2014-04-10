@@ -79,6 +79,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -119,7 +120,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO ");
         sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
-        sb.append(" (gr_permission_id,asset_id,group_id,lastmod,stateCode) VALUES (");
+        sb.append(" (gr_permission_id,assetID,groupID,lastModified,stateCode) VALUES (");
         sb.append("555,");
         sb.append(expected.getAssetID().toString());
         sb.append(",");
@@ -132,11 +133,15 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         String sql = sb.toString();
         log.debug("manual INSERT: " + sql);
         Statement st = dao.getDataSource().getConnection().createStatement();
-        st.execute(sql, Statement.RETURN_GENERATED_KEYS);
-        ResultSet rs = st.getGeneratedKeys();
+        st.execute(sql);
+        st = dao.getDataSource().getConnection().createStatement();
+        sql = "select readAccessID from " + dao.getSQLGenerator().getTable(expected.getClass());
+        log.debug("manual SELECT: " + sql);
+        ResultSet rs = st.executeQuery(sql);
         if (rs.next())
         {
-            Long id = rs.getLong(1);
+            UUID id = Util.getUUID(rs, 1);
+            log.debug("generated ID: " + id);
             Assert.assertNotNull("generated id", id);
             Util.assignID(expected, id);
         }
