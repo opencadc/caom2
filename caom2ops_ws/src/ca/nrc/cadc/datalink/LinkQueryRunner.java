@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
@@ -116,7 +117,7 @@ public class LinkQueryRunner implements JobRunner
 
     private static final String SERVICES_RESOURCE = "datalinkMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
-
+    private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
 
     private Job job;
     private JobUpdater jobUpdater;
@@ -209,11 +210,35 @@ public class LinkQueryRunner implements JobRunner
             if (is == null)
             {
                 throw new MissingResourceException(
-                        "Resource not found: " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), SERVICES_RESOURCE);
+                    "Resource not found: " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), SERVICES_RESOURCE);
             }
             VOTableReader reader = new VOTableReader();
             VOTableDocument serviceDocument = reader.read(is);
             VOTableResource metaResource = serviceDocument.getResourceByType("meta");
+
+            // set the access URL
+            RegistryClient regClient = new RegistryClient();
+            URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI));
+            VOTableParam accessURLParam = null;
+            for (VOTableParam param :  metaResource.getParams())
+            {
+                if (param.getName().equals("accessURL"))
+                {
+                    accessURLParam = param;
+                }
+            }
+
+            if (accessURLParam == null)
+                throw new MissingResourceException(
+                    "accessURL parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "accessURL");
+
+            VOTableParam newAccessURL = new VOTableParam(
+                    accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),
+                    accessURLParam.isVariableSize(), cutoutServiceURL.toString());
+            metaResource.getParams().remove(accessURLParam);
+            metaResource.getParams().add(newAccessURL);
+
+            // add the meta resource to the votable
             vot.getResources().add(metaResource);
 
             TableWriter<VOTableDocument> writer;

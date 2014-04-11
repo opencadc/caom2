@@ -201,39 +201,47 @@ public class DataLink implements Iterable<Object>
 
         f = new VOTableField("ID", "char");
         f.setVariableSize(true);
-        f.ucd = "meta.id";
+        f.ucd = "meta.id;meta.main";
         fields.add(f);
 
         f = new VOTableField("access_url", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.ref.url";
         fields.add(f);
 
         f = new VOTableField("service_def", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.ref";
         fields.add(f);
 
         f = new VOTableField("description", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.note";
         fields.add(f);
 
         f = new VOTableField("semantics", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.code";
         fields.add(f);
 
         f = new VOTableField("content_type", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.code.mime";
         fields.add(f);
 
         f = new VOTableField("content_length", "long");
         f.unit = "byte";
+        f.ucd = "phys.size;meta.file";
         fields.add(f);
 
         f = new VOTableField("error_message", "char");
         f.setVariableSize(true);
+        f.ucd = "meta.code.error";
         fields.add(f);
 
         f = new VOTableField("product_type", "char");
         f.setVariableSize(true);
+        f.utype = "caom:Artifact.productType";
         fields.add(f);
 
         f = new VOTableField("file_uri", "char");
