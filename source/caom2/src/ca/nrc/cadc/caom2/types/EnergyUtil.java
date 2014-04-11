@@ -628,8 +628,13 @@ public final class EnergyUtil
             x1 = 1;
         if (x2 > len)
             x2 = len;
-
+        log.debug("doClipCheck: " + x1 + "," + x2 + " " + len);
+        
         // validity check
+        if (len == 1 && x1 == 1 && x2 == 1)
+        {
+            return new long[0]; // the single pixel is included
+        }
         if (x1 >= len || x2 <= 1) // no pixels included
         {
             return null;
