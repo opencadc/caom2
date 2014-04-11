@@ -541,6 +541,12 @@ public final class PositionUtil
         }
 
         toICRS(coordsys, poly.getVertices());
+        
+        PolygonUtil.validateSegments(poly);
+        Point c = poly.getCenter();
+        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
+            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+        
 
         return poly;
     }

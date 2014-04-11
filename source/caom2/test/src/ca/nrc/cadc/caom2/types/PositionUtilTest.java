@@ -324,6 +324,65 @@ public class PositionUtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testInvalidCoordPolygonToPolygon()
+    {
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            CoordPolygon2D cp = new CoordPolygon2D();
+            // polygon with zero area
+            cp.getVertices().add(new ValueCoord2D(10, 20));
+            cp.getVertices().add(new ValueCoord2D(11, 21));
+            cp.getVertices().add(new ValueCoord2D(11, 21));
+            cp.getVertices().add(new ValueCoord2D(10, 20));
+            axis.bounds = cp;
+            Polygon poly = PositionUtil.toPolygon(wcs);
+            Assert.fail("expected IllegalPolygonException, got: " + poly);
+        }
+        catch(IllegalPolygonException expected)
+        {
+            log.debug("caught expected: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
+        // bow-tie
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            CoordPolygon2D cp = new CoordPolygon2D();
+            // polygon with zero area
+            cp.getVertices().add(new ValueCoord2D(10, 20));
+            cp.getVertices().add(new ValueCoord2D(11, 21));
+            cp.getVertices().add(new ValueCoord2D(11, 20));
+            cp.getVertices().add(new ValueCoord2D(10, 21));
+            axis.bounds = cp;
+            Polygon poly = PositionUtil.toPolygon(wcs);
+            Assert.fail("expected IllegalPolygonException, got: " + poly);
+        }
+        catch(IllegalPolygonException expected)
+        {
+            log.debug("caught expected: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testCoordFunctionToPolygon()
