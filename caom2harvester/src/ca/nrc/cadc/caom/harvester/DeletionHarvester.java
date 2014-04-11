@@ -156,8 +156,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         catch(Throwable oops)
         {
-            log.error("failed to init connections and state", oops);
-            return;
+            throw new RuntimeException("failed to init connections and state", oops);
         }
         boolean go = true;
         while (go)

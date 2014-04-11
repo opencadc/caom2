@@ -104,7 +104,7 @@ for src in $SOURCES; do
             db=$(echo $src | awk -F '.' '{print $2}')
             if [ $db == $ac ]; then
                 for ARC in ${!ac}; do
-                    $CADC_ROOT/scripts/accessControlDA --mode=asset --archive=$ARC --log=$ACLOG
+                    $CADC_ROOT/scripts/accessControlDA --mode=asset --archive=$ARC &>> $ACLOG
                 done
             fi
         done
