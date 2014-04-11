@@ -689,7 +689,7 @@ public final class PolygonUtil
     }
 
     // validate a simple polygon (single loop) for intersecting segments
-    private static void validateSegments(Polygon poly)
+    static void validateSegments(Polygon poly)
         throws IllegalPolygonException
     {
         CartesianTransform trans = CartesianTransform.getTransform(poly);
