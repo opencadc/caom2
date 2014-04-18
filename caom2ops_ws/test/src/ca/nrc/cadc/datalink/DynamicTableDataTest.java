@@ -132,7 +132,7 @@ public class DynamicTableDataTest
             
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
             
             Assert.assertFalse( iter.hasNext() );
@@ -155,7 +155,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             Assert.assertFalse( iter.hasNext() );
@@ -178,7 +178,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 1);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             // 2x1 results
@@ -208,7 +208,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 2);
-            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             // 2x2 results
@@ -243,7 +243,7 @@ public class DynamicTableDataTest
         }
 
         @Override
-        public List<Artifact> performQuery(PlaneURI planeURI)
+        public List<Artifact> performQuery(PlaneURI planeURI, boolean artifactOnly)
         {
             List<Artifact> ret = new ArrayList<Artifact>();
             try

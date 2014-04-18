@@ -81,34 +81,51 @@ public class LinkQueryGenerator
 {
     private static final Logger log = Logger.getLogger(LinkQueryGenerator.class);
 
-    private static final String ADQL_SELECT = "SELECT Artifact.*, Part.*, Chunk.*";
-    private static final String FROM_PLANE_URI =
+    private static final String SELECT_ARTIFACT2CHUNK = "SELECT Artifact.*, Part.*, Chunk.*";
+    private static final String SELECT_ARTIFACT = "SELECT Artifact.*";
+    
+    private static final String FROM_PLANE2CHUNK =
         " FROM caom2.Plane AS Plane "
         + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
         + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
         + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    private static final String FROM_ARTIFACT_URI =
+    private static final String FROM_PLANE2ARTIFACT =
+        " FROM caom2.Plane AS Plane "
+        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
+    
+    private static final String FROM_ARTIFACT2CHUNK =
         " FROM caom2.Artifact AS Artifact "
         + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
         + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
         
-    public String getADQL(final PlaneURI puri)
+    // used by datalink
+    public String getADQL(final PlaneURI puri, boolean artifactOnly)
     {
         StringBuilder sb = new StringBuilder();
-        sb.append(ADQL_SELECT);
-        sb.append(FROM_PLANE_URI);
+        if (artifactOnly)
+        {
+            sb.append(SELECT_ARTIFACT);
+            sb.append(FROM_PLANE2ARTIFACT);
+        }
+        else
+        {
+            sb.append(SELECT_ARTIFACT2CHUNK);
+            sb.append(FROM_PLANE2CHUNK);
+        }
         sb.append(" WHERE Plane.planeURI = '");
         sb.append(puri.toString());
         sb.append("'");
-        sb.append(" ORDER BY Artifact.artifactID, Part.partID");
+        if (!artifactOnly)
+            sb.append(" ORDER BY Artifact.artifactID, Part.partID");
         return sb.toString();
     }
 
+    // used by cutout
     public String getArtifactADQL(final URI artifactURI)
     {
         StringBuilder sb = new StringBuilder();
-        sb.append(ADQL_SELECT);
-        sb.append(FROM_ARTIFACT_URI);
+        sb.append(SELECT_ARTIFACT2CHUNK);
+        sb.append(FROM_ARTIFACT2CHUNK);
         sb.append(" WHERE Artifact.uri = '");
         sb.append(artifactURI.toString());
         sb.append("'");

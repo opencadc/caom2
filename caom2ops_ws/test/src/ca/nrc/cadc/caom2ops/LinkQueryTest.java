@@ -162,14 +162,20 @@ public class LinkQueryTest
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testBuildArtifacts()
+    {
+        doBuildTest(false);
+        
+        doBuildTest(true);
+    }
+    
+    private void doBuildTest(boolean artifactsOnly)
     {
     	try
     	{
     		boolean alternative = false;
     		LinkQuery query = getLinkQuery();
-    		VOTableDocument votable = buildVOTable();
+    		VOTableDocument votable = buildVOTable(artifactsOnly);
     		
     		Method buildArtifacts = query.getClass().getDeclaredMethod("buildArtifacts", VOTableDocument.class);
             buildArtifacts.setAccessible(true);
@@ -193,21 +199,26 @@ public class LinkQueryTest
             	Assert.assertEquals(expectedMLM, actualMLM);
             	
             	int j = 1;
-            	Set<Part> parts = (Set<Part>) artifact.getParts();
-            	Assert.assertEquals(PART_SIZE, parts.size());
-            	for (Part part : parts)
-            	{
-            		Assert.assertEquals(Long.parseLong(PART_ID) + j, part.getID().getLeastSignificantBits());
-            		Assert.assertEquals(PART_NAME + j, part.getName());
-            		Assert.assertEquals(null, part.productType);
-            		expectedLM = dateFormat.parse(PART_LASTMODIFIED).toString();
-            		actualLM = part.getLastModified().toString();
-                	Assert.assertEquals(expectedLM, actualLM);
-                	expectedMLM = dateFormat.parse(PART_MAXLASTMODIFIED).toString();
-                	actualMLM = part.getMaxLastModified().toString();
-                	Assert.assertEquals(expectedMLM, actualMLM);
-                	j++;
-            	}
+            	Set<Part> parts = artifact.getParts();
+                if (artifactsOnly)
+                    Assert.assertTrue( parts.isEmpty());
+                else
+                {
+                    Assert.assertEquals(PART_SIZE, parts.size());
+                    for (Part part : parts)
+                    {
+                        Assert.assertEquals(Long.parseLong(PART_ID) + j, part.getID().getLeastSignificantBits());
+                        Assert.assertEquals(PART_NAME + j, part.getName());
+                        Assert.assertEquals(null, part.productType);
+                        expectedLM = dateFormat.parse(PART_LASTMODIFIED).toString();
+                        actualLM = part.getLastModified().toString();
+                        Assert.assertEquals(expectedLM, actualLM);
+                        expectedMLM = dateFormat.parse(PART_MAXLASTMODIFIED).toString();
+                        actualMLM = part.getMaxLastModified().toString();
+                        Assert.assertEquals(expectedMLM, actualMLM);
+                        j++;
+                    }
+                }
             	
             	i++;
             }
@@ -219,15 +230,15 @@ public class LinkQueryTest
         }
     }
     
-    private VOTableDocument buildVOTable()
+    private VOTableDocument buildVOTable(boolean artifactsOnly)
     {
     	VOTableDocument votable = new VOTableDocument();
         VOTableResource vr = new VOTableResource("results");
         votable.getResources().add(vr);
     	VOTableTable vtab = new VOTableTable();
         vr.setTable(vtab);
-    	vtab.getFields().addAll(buildVOTableFields());
-    	vtab.setTableData(buildTableData());    		
+    	vtab.getFields().addAll(buildVOTableFields(artifactsOnly));
+    	vtab.setTableData(buildTableData(artifactsOnly));    		
     	
     	return votable;
     }
@@ -355,14 +366,17 @@ public class LinkQueryTest
     	return fields;
     }
     
-    private List<VOTableField> buildVOTableFields()
+    private List<VOTableField> buildVOTableFields(boolean artifactsOnly)
     {
     	List<VOTableField> fields = new ArrayList<VOTableField>();
     	
         try
         {
             fields.addAll(buildArtifactFields());
-            fields.addAll(buildPartFields());
+            if (!artifactsOnly)
+            {
+                fields.addAll(buildPartFields());
+            }
         }
         catch(Exception unexpected)
         {
@@ -412,7 +426,7 @@ public class LinkQueryTest
         }
     }
     
-    private TableData buildTableData()
+    private TableData buildTableData(boolean artifactsOnly)
     {
     	ListTableData data = new ListTableData();
 
@@ -424,7 +438,10 @@ public class LinkQueryTest
                 {
                 	List<Object> row = new ArrayList<Object>();  
                 	buildArtifactData(row, i);
-                	buildPartData(row, i, j);
+                    if (!artifactsOnly)
+                    {
+                        buildPartData(row, i, j);
+                    }
                     data.getArrayList().add(row);
                 }                
             }

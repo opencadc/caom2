@@ -94,15 +94,17 @@ public class DynamicTableData implements TableData
     
     private Iterator<String> argIter;
     private LinkQuery query;
+    private boolean artifactOnly;
     private ArtifactProcessor ap;
 
     private Iterator<List<Object>> curIter;
 
-    public DynamicTableData(Job job, LinkQuery query, ArtifactProcessor ap)
+    public DynamicTableData(Job job, LinkQuery query, boolean artifactOnly, ArtifactProcessor ap)
     {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
         this.argIter = args.iterator();
         this.query = query;
+        this.artifactOnly = artifactOnly;
         this.ap = ap;
     }
 
@@ -156,7 +158,7 @@ public class DynamicTableData implements TableData
                     URI uri = new URI(s);
                     PlaneURI planeURI = new PlaneURI(uri);
                     log.debug("getBatchIterator: " + planeURI);
-                    List<Artifact> artifacts = query.performQuery(planeURI);
+                    List<Artifact> artifacts = query.performQuery(planeURI, artifactOnly);
                     log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
                     List<DataLink> links = ap.process(uri, artifacts);
                     log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");

@@ -86,6 +86,7 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.dali.RequestValidator;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
@@ -106,6 +107,8 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -119,6 +122,10 @@ public class LinkQueryRunner implements JobRunner
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
 
+    private static final String GETLINKS = "getLinks";
+    private static final String GETDOWNLOAD = "getDownloadLinks";
+    private static final List<String> REQUEST_VALUES = Arrays.asList(GETLINKS, GETDOWNLOAD);
+    
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
@@ -173,6 +180,13 @@ public class LinkQueryRunner implements JobRunner
                 return;
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
+            
+            RequestValidator rv = new RequestValidator(REQUEST_VALUES);
+            rv.validate(job.getParameterList());
+            String request = rv.getRequest();
+            boolean artifactOnly = false;
+            if (GETDOWNLOAD.equalsIgnoreCase(request))
+                artifactOnly = true;
 
             RegistryClient reg = new RegistryClient();
             CredUtil cred = new CredUtil(reg);
@@ -203,7 +217,7 @@ public class LinkQueryRunner implements JobRunner
             ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
             if ( "https".equals(job.getProtocol()) )
                 ap.setAuthMethod(AuthMethod.CERT);
-            tab.setTableData(new DynamicTableData(job, query, ap));
+            tab.setTableData(new DynamicTableData(job, query, artifactOnly, ap));
 
             // Add the service descriptions resource
             InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
