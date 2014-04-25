@@ -202,9 +202,6 @@ public class LinkQueryRunner implements JobRunner
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");
-
-            // add fileURIRef to the document
-
             vot.getResources().add(vr);
             VOTableTable tab = new VOTableTable();
             vr.setTable(tab);
@@ -260,7 +257,8 @@ public class LinkQueryRunner implements JobRunner
             if (fmt == null || VOTableWriter.CONTENT_TYPE.equals(fmt) )
             {
                 writer = new VOTableWriter();
-                syncOutput.setHeader("Content-Type", VOTableWriter.CONTENT_TYPE);
+                String contentType = VOTableWriter.CONTENT_TYPE + ";content=datalink";
+                syncOutput.setHeader("Content-Type", contentType);
             }
             else if ( ManifestWriter.CONTENT_TYPE.equals(fmt) )
             {
