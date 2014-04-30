@@ -118,7 +118,7 @@ public class LinkQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
-    private static final String SERVICES_RESOURCE = "datalinkMetaResource.xml";
+    private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
 
