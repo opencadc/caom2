@@ -195,6 +195,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         {
             this.uri = getURI(path);
             log.debug("URI: " + uri);
+            logInfo.setSuccess(false);
             doAction();
             logInfo.setSuccess(true);
         }
@@ -237,7 +238,10 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             String err = ex.toString();
             String lowerr = err.toLowerCase();
             if (lowerr.contains("attempt to insert duplicate key"))
-                handleException(ex, 400, "duplicate entity in: " + uri, true);
+            {
+                logInfo.setSuccess(true);
+                handleException(ex, 400, "duplicate entity: " + uri, true);
+            }
             else
                 handleException(ex, 500, "unexpected failure: " + path, true);
         }
@@ -256,7 +260,6 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     private void handleException(Throwable ex, int code, String message, boolean showExceptions)
             throws IOException
     {
-        logInfo.setSuccess(false);
         logInfo.setMessage(message);
         log.debug(message, ex);
         if (!syncOutput.isOpen())
