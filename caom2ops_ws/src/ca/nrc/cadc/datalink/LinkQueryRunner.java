@@ -181,9 +181,7 @@ public class LinkQueryRunner implements JobRunner
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
-            RequestValidator rv = new RequestValidator(REQUEST_VALUES);
-            rv.validate(job.getParameterList());
-            String request = rv.getRequest();
+            String request = ParameterUtil.findParameterValue("REQUEST", job.getParameterList());
             boolean artifactOnly = false;
             if (GETDOWNLOAD.equalsIgnoreCase(request))
                 artifactOnly = true;
