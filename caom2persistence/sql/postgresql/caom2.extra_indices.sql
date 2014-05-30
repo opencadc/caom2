@@ -86,6 +86,12 @@ create index Plane_i_provenance_keywords_lower_pattern
     where provenance_keywords is not null
 ;
 
+create index Plane_i_dataRelease
+    on caom2.Plane ( dataRelease )
+    tablespace caom_index
+    where dataRelease is not null
+;
+
 create index Artifact_i_uri
     on caom2.Artifact ( uri )
     tablespace caom_index
