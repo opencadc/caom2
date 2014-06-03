@@ -103,6 +103,7 @@ for src in $SOURCES; do
         for ac in $ACDA; do
             db=$(echo $src | awk -F '.' '{print $2}')
             if [ $db == $ac ]; then
+## tricksy bash: ${!ac} is the value of a variable named $ac
                 for ARC in ${!ac}; do
                     $CADC_ROOT/scripts/accessControlDA --mode=asset --archive=$ARC &>> $ACLOG
                 done
