@@ -105,14 +105,14 @@ for src in $SOURCES; do
             if [ $db == $ac ]; then
 ## tricksy bash: ${!ac} is the value of a variable named $ac
                 for ARC in ${!ac}; do
-                    $CADC_ROOT/scripts/accessControlDA -q --mode=asset --archive=$ARC --log=$ACLOG &>> /dev/null
+                    $CADC_ROOT/scripts/accessControlDA -q --mode=asset --archive=$ARC --log=$ACLOG &> /dev/null
                 done
             fi
         done
         
         BATCH_SIZE=10
         BATCH_FACTOR=20000
-        $CADC_ROOT/scripts/caom2harvester -v --maxDate=$CUR_UTC --batchSize=$BATCH_SIZE --batchFactor=$BATCH_FACTOR --source=$SOURCE --destination=$DEST &>> $LOG
+        $CADC_ROOT/scripts/caom2harvester -v --maxDate=$CUR_UTC --batchSize=$BATCH_SIZE --batchFactor=$BATCH_FACTOR --source=$SOURCE --destination=$DEST &> $LOG
 
         if [ $? == 0 ]; then
             rm $LOGDIR/$SOURCE.run
