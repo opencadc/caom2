@@ -722,12 +722,9 @@ public final class PositionUtil
             for (int i=0; i<vertices.size(); i++)
             {
                 Vertex v = (Vertex) vertices.get(i);
-                if ( SegmentType.CLOSE.equals(v.getType()) )
-                {
-                    double tmp = v.cval1;
-                    v.cval1 = v.cval2;
-                    v.cval2 = tmp;
-                }
+                double tmp = v.cval1;
+                v.cval1 = v.cval2;
+                v.cval2 = tmp;
             }
         }
     }
