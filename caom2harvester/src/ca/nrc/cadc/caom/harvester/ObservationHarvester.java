@@ -3,7 +3,11 @@ package ca.nrc.cadc.caom.harvester;
 
 import ca.nrc.cadc.caom.harvester.state.HarvestSkip;
 import ca.nrc.cadc.caom.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -269,7 +273,11 @@ public class ObservationHarvester extends Harvester
                 {
                     // o could be null in skip mode cleanup
                     if (o != null)
-                        log.info("put: " + o.getClass().getSimpleName() + " " + format(o.getID()) + " " + format(o.getMaxLastModified()));
+                    {
+                        String treeSize = computeTreeSize(o);
+                        log.info("put: " + o.getClass().getSimpleName() + " " + format(o.getID()) 
+                                + " " + format(o.getMaxLastModified()) + " " + treeSize);
+                    }
                     if (!dryrun) 
                     {
                         if (skipped)
@@ -281,21 +289,37 @@ public class ObservationHarvester extends Harvester
                                 state.curLastModified = o.getMaxLastModified();
                                 state.curID = o.getID();
                             }
-
+                            
+                            // try to avoid DataIntegrityViolationException due to missed deletion of an observation
+                            UUID curID = destObservationDAO.getID(o.getURI());
+                            if ( curID != null && !curID.equals(o.getID()) )
+                            {
+                                ObservationURI oldSrc = srcObservationDAO.getURI(curID); // still in src?
+                                if (oldSrc == null)
+                                {
+                                    // missed harvesting a deletion
+                                    log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) 
+                                        + " (ObservationURI conflict avoided)");
+                                    destObservationDAO.delete(curID);
+                                }
+                                //else: the put below with throw a valid exception because source is not enforcing
+                                // unique ID and URI
+                            }
+                            
                             destObservationDAO.put(o);
-                        }
+                      
                         
-                        if (hs != null) // success in redo mode
-                        {
-                            log.info("delete: " + hs + " " + format(hs.lastModified));
-                            harvestSkip.delete(hs);
+                            if (hs != null) // success in redo mode
+                            {
+                                log.info("delete: " + hs + " " + format(hs.lastModified));
+                                harvestSkip.delete(hs);
+                            }
+                            else
+                                harvestState.put(state);
                         }
-                        else
-                            harvestState.put(state);
-                        
+
                         if (skipped)
                             startDate = hs.lastModified;
-
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
@@ -336,17 +360,11 @@ public class ObservationHarvester extends Harvester
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
                     }
-                    else if (oops instanceof DataIntegrityViolationException)
+                    else if (oops instanceof DataIntegrityViolationException
+                            && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
                     {
-                        if (str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
-                        {
-                            log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
-                                    + o.getURI().getURI().toASCIIString());
-                            // TODO: this is caused by a missed deletion, so we should delete the current observation
-                            // with this URI and insert the new one
-                        }
-                        else
-                            log.error("unexpected exception", oops);
+                        log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
+                                + o.getURI().getURI().toASCIIString());
                     }
                     else if  (oops instanceof UncategorizedSQLException)
                     {
@@ -444,6 +462,31 @@ public class ObservationHarvester extends Harvester
         return ret;
     }
 
+    private String computeTreeSize(Observation o)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        int numA = 0;
+        int numP = 0;
+        int numC = 0;
+        for (Plane p : o.getPlanes())
+        {
+            numA += p.getArtifacts().size();
+            for (Artifact a : p.getArtifacts())
+            {
+                numP += a.getParts().size();
+                for (Part pa : a.getParts())
+                {
+                    numC += pa.getChunks().size();
+                }
+            }
+        }
+        sb.append(o.getPlanes().size()).append(",");
+        sb.append(numA).append(",");
+        sb.append(numP).append(",");
+        sb.append(numC).append("]");
+        return sb.toString();
+    }
     private void detectLoop(List<ObservationWrapper> entityList)
     {
         if (entityList.size() < 2)

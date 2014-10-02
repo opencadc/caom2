@@ -133,6 +133,22 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         return observation != null;
     }
 
+    public UUID getID(ObservationURI uri) 
+    {
+        Observation observation = get(uri, null, 1);
+        if (observation != null)
+            return observation.getID();
+        return null;
+    }
+
+    public ObservationURI getURI(UUID id) 
+    {
+        Observation observation = get(null, id, 1);
+        if (observation != null)
+            return observation.getURI();
+        return null;
+    }
+
     @Override
     public Observation get(UUID id)
     {

@@ -92,6 +92,7 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
@@ -132,6 +133,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.UUID;
 
 /**
  *
@@ -221,7 +223,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    ////@Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -235,7 +237,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetDeleteNonExistentObservation()
     {
         try
@@ -243,7 +245,17 @@ public abstract class AbstractDatabaseObservationDAOTest
             ObservationURI uri = new ObservationURI("TEST", "NonExistentObservation");
             Observation obs = dao.get(uri);
             Assert.assertNull(uri.toString(), obs);
-
+            
+            UUID notFound = dao.getID(uri);
+            Assert.assertNull(uri.toString(), notFound);
+            
+            Long id = CaomIDGenerator.getInstance().generateID();
+            UUID uuid = new UUID(0L, id); // obsID is currently long == LSB of uuid
+            ObservationURI nuri = dao.getURI(uuid);
+            Assert.assertNull(id.toString(), nuri);
+            Observation nobs = dao.get(uuid);
+            Assert.assertNull(id.toString(), nobs);
+            
             // should return without failing
             dao.delete(uri);
         }
