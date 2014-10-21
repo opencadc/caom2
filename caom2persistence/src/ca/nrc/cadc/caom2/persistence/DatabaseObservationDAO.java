@@ -93,6 +93,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.LinkedList;
 import java.util.UUID;
+import org.springframework.dao.DataAccessException;
 
 /**
  * Persistence layer operations.
@@ -235,8 +236,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         log.debug("PUT: " + obs.getURI() + ", planes: " + obs.getPlanes().size());
         long t = System.currentTimeMillis();
 
+        boolean txnOpen = false;
         try
         {
+            log.debug("starting transaction");
+            getTransactionManager().startTransaction();
+            txnOpen = true;
+            
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
@@ -283,9 +289,28 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             parents.push(obs);
             for (Pair<Plane> p : pairs)
                 planeDAO.put(p.cur, p.val, parents, jdbc);
+            
+            log.debug("committing transaction");
+            getTransactionManager().commitTransaction();
+            log.debug("commit: OK");
+            txnOpen = false;
+        }
+        catch(DataAccessException e)
+        {
+            log.debug("failed to insert " + obs + ": ", e);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw e;
         }
         finally
         {
+            if (txnOpen)
+            {
+                log.error("BUG - open transaction in finally");
+                getTransactionManager().rollbackTransaction();
+                log.error("rollback: OK");
+            }
             long dt = System.currentTimeMillis() - t;
             log.debug("PUT: " + obs.getURI() + " " + dt + "ms");
         }
@@ -307,8 +332,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         log.debug("DELETE: " + uri);
         long t = System.currentTimeMillis();
 
+        boolean txnOpen = false;
         try
         {
+            log.debug("starting transaction");
+            getTransactionManager().startTransaction();
+            txnOpen = true;
+            
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             String sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
             log.debug("DELETE: " + sql);
@@ -317,9 +347,28 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 delete(skel, jdbc);
             else
                 log.debug("DELETE: not found: " + uri);
+            
+            log.debug("committing transaction");
+            getTransactionManager().commitTransaction();
+            log.debug("commit: OK");
+            txnOpen = false;
+        }
+        catch(DataAccessException e)
+        {
+            log.debug("failed to delete " + uri + ": ", e);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw e;
         }
         finally
         {
+            if (txnOpen)
+            {
+                log.error("BUG - open transaction in finally");
+                getTransactionManager().rollbackTransaction();
+                log.error("rollback: OK");
+            }
             long dt = System.currentTimeMillis() - t;
             log.debug("DELETE: " + uri + " " + dt + "ms");
         }
@@ -335,8 +384,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         log.debug("DELETE: " + id);
         long t = System.currentTimeMillis();
 
+        boolean txnOpen = false;
         try
         {
+            log.debug("starting transaction");
+            getTransactionManager().startTransaction();
+            txnOpen = true;
+            
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
             log.debug("DELETE: " + sql);
@@ -345,9 +399,28 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 delete(skel, jdbc);
             else
                 log.debug("DELETE: not found: " + id);
+            
+            log.debug("committing transaction");
+            getTransactionManager().commitTransaction();
+            log.debug("commit: OK");
+            txnOpen = false;
+        }
+        catch(DataAccessException e)
+        {
+            log.debug("failed to delete " + id + ": ", e);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw e;
         }
         finally
         {
+            if (txnOpen)
+            {
+                log.error("BUG - open transaction in finally");
+                getTransactionManager().rollbackTransaction();
+                log.error("rollback: OK");
+            }
             long dt = System.currentTimeMillis() - t;
             log.debug("DELETE: " + id + " " + dt + "ms");
         }

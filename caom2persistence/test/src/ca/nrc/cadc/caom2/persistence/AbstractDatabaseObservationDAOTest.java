@@ -134,6 +134,7 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
@@ -236,6 +237,55 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testNestedTransaction()
+    {
+        // the ObservationDAO class uses a txn inside the put and delete methods
+        // this verifies that it it fails and does a rollback that an outer txn
+        // can still proceed -- eg it is really nested
+        try
+        {
+            Observation obs1 = new SimpleObservation("FOO", "bar");
+            dao.put(obs1);
+            Assert.assertTrue(dao.exists(obs1.getURI()));
+            log.info("created: " + obs1);
+            
+            
+            Observation dupe = new SimpleObservation("FOO", "bar");
+            Observation obs2 = new SimpleObservation("FOO", "bar2");
+            
+            txnManager.startTransaction(); // outer txn
+            try
+            {
+                dao.put(dupe); // nested txn
+                Assert.fail("expected exception, successfully put duplicate observation");
+            }
+            catch(DataIntegrityViolationException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            dao.put(obs2); // another nested txn
+            log.info("created: " + obs2);
+            
+            txnManager.commitTransaction(); // outer txn
+            
+            Observation check1 = dao.get(obs1.getURI());
+            Assert.assertNotNull(check1);
+            Assert.assertEquals(obs1.getID(), check1.getID());
+            
+            Observation check2 = dao.get(obs2.getURI());
+            Assert.assertNotNull(check2);
+            Assert.assertEquals(obs2.getID(), check2.getID());
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testGetDeleteNonExistentObservation()
@@ -307,7 +357,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             txnManager.startTransaction();
             Assert.assertFalse(dao.exists(orig.getURI()));
             txnManager.commitTransaction();
-
+            
+            Assert.assertFalse("open transaction", txnManager.isOpen());
         }
         catch(Exception unexpected)
         {

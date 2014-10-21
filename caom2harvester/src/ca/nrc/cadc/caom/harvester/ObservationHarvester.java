@@ -265,6 +265,8 @@ public class ObservationHarvester extends Harvester
                 
                 if (!dryrun)
                 {
+                    if (destObservationDAO.getTransactionManager().isOpen())
+                        throw new RuntimeException("BUG: found open trasnaction at start of next observation");
                     log.debug("starting transaction");
                     destObservationDAO.getTransactionManager().startTransaction();
                 }
