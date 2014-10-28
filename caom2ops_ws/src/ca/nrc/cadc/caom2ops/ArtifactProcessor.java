@@ -151,16 +151,16 @@ public class ArtifactProcessor
         List<DataLink> ret = new ArrayList<DataLink>(artifacts.size());
         for (Artifact a : artifacts)
         {
-            String sem = DataLink.THIS;
+            DataLink.Term sem = DataLink.Term.THIS;
             if (ProductType.PREVIEW.equals(a.productType))
-                sem = DataLink.PREVIEW;
+                sem = DataLink.Term.PREVIEW;
             else if (ProductType.CATALOG.equals(a.productType))
-                sem = DataLink.DERIVED;
+                sem = DataLink.Term.DERIVATION;
             else if (ProductType.AUXILIARY.equals(a.productType)
                     || ProductType.WEIGHT.equals(a.productType)
                     || ProductType.NOISE.equals(a.productType)
                     || ProductType.INFO.equals(a.productType))
-                sem = DataLink.AUX;
+                sem = DataLink.Term.AUXILIARY;
             //else: THIS
                         
             // direct download links
@@ -185,7 +185,7 @@ public class ArtifactProcessor
                 boolean cutout = canCutout(a);
                 if (cutout)
                 {
-                    DataLink cut = new DataLink(uri, DataLink.CUTOUT);
+                    DataLink cut = new DataLink(uri, DataLink.Term.CUTOUT);
                     cut.serviceDef = CUTOUT;
                     cut.contentType = a.contentType; // unchanged
                     cut.contentLength = null; // unknown

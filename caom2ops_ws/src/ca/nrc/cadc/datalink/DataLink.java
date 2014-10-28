@@ -86,18 +86,27 @@ import ca.nrc.cadc.dali.tables.votable.VOTableField;
  */
 public class DataLink implements Iterable<Object>
 {
-    public static final String THIS = "#this";
-    public static final String AUX = "#auxiliary";
-    public static final String PREVIEW = "#preview";
-    public static final String DERIVED = "#derived";
-
-    public static final String PROC = "#proc";
-    public static final String CUTOUT = "#cutout";
-    
+    /**
+     * Terms from the http://www.ivoa.net/rdf/datalink/core vocabulary.
+     */
+    public enum Term
+    {
+        THIS("#this"),
+        AUXILIARY("#auxiliary"),
+        PREVIEW("#preview"),
+        PROGENITOR("#progenitor"),
+        DERIVATION("#derivation"),
+        PROC("#proc"),
+        CUTOUT("#cutout");
+        
+        private final String value;
+        private Term(String value) { this.value = value; }
+        public String getValue() { return value; }
+    }
 
     // standard DataLink fields
-    private URI id;
-    private String semantics;
+    private final URI id;
+    private final Term semantics;
     
     public URL url;
     public String serviceDef;
@@ -111,7 +120,7 @@ public class DataLink implements Iterable<Object>
     public List<ProductType> productTypes = new ArrayList<ProductType>();
     public String fileURI;
 
-    public DataLink(URI id, String semantics)
+    public DataLink(URI id, Term semantics)
     {
         this.id = id;
         this.semantics = semantics;
@@ -122,7 +131,7 @@ public class DataLink implements Iterable<Object>
         return id;
     }
 
-    public String getSemantics()
+    public Term getSemantics()
     {
         return semantics;
     }
@@ -153,7 +162,7 @@ public class DataLink implements Iterable<Object>
                     case 1: return safeToString(url);
                     case 2: return serviceDef;
                     case 3: return errorMessage;
-                    case 4: return semantics;
+                    case 4: return semantics.getValue();
                     case 5: return description;
                     case 6: return contentType;
                     case 7: return contentLength;
