@@ -85,6 +85,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
+import ca.nrc.cadc.caom2ops.DefaultFault;
 import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
@@ -288,7 +289,7 @@ public class LinkQueryRunner implements JobRunner
         }
         catch(IllegalArgumentException ex)
         {
-            sendError(ex, "invalid input: " + ex.getMessage(), 400);
+            sendError(ex, ex.getMessage(), 400);
         }
         catch(UnsupportedOperationException ex)
         {
@@ -324,7 +325,7 @@ public class LinkQueryRunner implements JobRunner
     {
     	logInfo.setSuccess(false);
         logInfo.setMessage(s);
-
+        log.debug("sendError", t);
         try
         {
             ErrorSummary err = new ErrorSummary(s, ErrorType.FATAL);
@@ -348,6 +349,7 @@ public class LinkQueryRunner implements JobRunner
             VOTableWriter writer = new VOTableWriter();
             syncOutput.setHeader("Content-Type", VOTableWriter.CONTENT_TYPE);
             syncOutput.setResponseCode(code);
+            DefaultFault df = new DefaultFault(t.getMessage(), t);
             writer.write(t, syncOutput.getOutputStream());
         }
         catch(Exception ex)

@@ -166,7 +166,7 @@ public class ArtifactProcessor
             // direct download links
             try
             {
-                DataLink dl = new DataLink(uri, sem);
+                DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.url = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
@@ -175,7 +175,7 @@ public class ArtifactProcessor
             }
             catch(MalformedURLException ex)
             {
-                DataLink dl = new DataLink(uri, sem);
+                DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FataLFault: failed to generate download URL: " + ex.toString();
             }
 
@@ -185,7 +185,7 @@ public class ArtifactProcessor
                 boolean cutout = canCutout(a);
                 if (cutout)
                 {
-                    DataLink cut = new DataLink(uri, DataLink.Term.CUTOUT);
+                    DataLink cut = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
                     cut.serviceDef = CUTOUT;
                     cut.contentType = a.contentType; // unchanged
                     cut.contentLength = null; // unknown

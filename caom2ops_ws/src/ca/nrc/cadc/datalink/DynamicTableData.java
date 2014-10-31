@@ -69,16 +69,17 @@
 
 package ca.nrc.cadc.datalink;
 
+import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.caom2ops.LinkQuery;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -102,6 +103,8 @@ public class DynamicTableData implements TableData
     public DynamicTableData(Job job, LinkQuery query, boolean artifactOnly, ArtifactProcessor ap)
     {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
+        if (args == null || args.isEmpty())
+            throw new UsageFault("missing required parameter ID");
         this.argIter = args.iterator();
         this.query = query;
         this.artifactOnly = artifactOnly;
@@ -153,17 +156,53 @@ public class DynamicTableData implements TableData
             while (!done && argIter.hasNext())
             {
                 String s = argIter.next();
+                PlaneURI planeURI = null;
                 try
                 {
-                    URI uri = new URI(s);
-                    PlaneURI planeURI = new PlaneURI(uri);
-                    log.debug("getBatchIterator: " + planeURI);
-                    List<Artifact> artifacts = query.performQuery(planeURI, artifactOnly);
-                    log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
-                    List<DataLink> links = ap.process(uri, artifacts);
-                    log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
-                    if (!links.isEmpty())
+                    List<DataLink> links = null;
+                    try
                     {
+                        URI uri = new URI(s);
+                        planeURI = new PlaneURI(uri);
+                    }
+                    catch(Exception ex)
+                    {
+                        links = new ArrayList<DataLink>(1);
+                        DataLink usage = new DataLink(s, DataLink.Term.THIS);
+                        usage.errorMessage = "UsageFault: invalid ID: " + s;
+                        links.add(usage);
+                    }
+                    if (planeURI != null)
+                    {
+                        log.debug("getBatchIterator: " + planeURI);
+                        try
+                        {
+                            List<Artifact> artifacts = query.performQuery(planeURI, artifactOnly);
+                            if (artifacts.isEmpty())
+                            {
+                                links = new ArrayList<DataLink>(1);
+                                DataLink notFound = new DataLink(s, DataLink.Term.THIS);
+                                notFound.errorMessage = "NotFoundFault: s";
+                                links.add(notFound);
+                            }
+                            else
+                            {
+                                log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
+                                links = ap.process(planeURI.getURI(), artifacts);
+                            }
+                        }
+                        catch(TransientFault f)
+                        {
+                            links = new ArrayList<DataLink>(1);
+                            DataLink fail = new DataLink(s, DataLink.Term.THIS);
+                            fail.errorMessage = f.toString();
+                            links.add(fail);
+                        }
+                    }
+                    
+                    if (links != null && !links.isEmpty())
+                    {
+                        log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
                         List<List<Object>> rows = new ArrayList<List<Object>>();
                         for (DataLink dl : links)
                         {
@@ -178,10 +217,6 @@ public class DynamicTableData implements TableData
                         curIter = rows.iterator();
                         done = true;
                     }
-                }
-                catch(URISyntaxException ex)
-                {
-                    throw new IllegalArgumentException("invalid URI: " + s);
                 }
                 catch(IOException ex)
                 {

@@ -105,7 +105,7 @@ public class DataLink implements Iterable<Object>
     }
 
     // standard DataLink fields
-    private final URI id;
+    private final String id;
     private final Term semantics;
     
     public URL url;
@@ -120,13 +120,13 @@ public class DataLink implements Iterable<Object>
     public List<ProductType> productTypes = new ArrayList<ProductType>();
     public String fileURI;
 
-    public DataLink(URI id, Term semantics)
+    public DataLink(String id, Term semantics)
     {
         this.id = id;
         this.semantics = semantics;
     }
 
-    public URI getID()
+    public String getID()
     {
         return id;
     }
@@ -158,7 +158,7 @@ public class DataLink implements Iterable<Object>
                 cur++;
                 switch(n)
                 {
-                    case 0: return id.toASCIIString();
+                    case 0: return id;
                     case 1: return safeToString(url);
                     case 2: return serviceDef;
                     case 3: return errorMessage;

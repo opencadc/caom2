@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
@@ -137,6 +138,10 @@ public class DynamicTableDataTest
             
             Assert.assertFalse( iter.hasNext() );
         }
+        catch(UsageFault expected)
+        {
+            log.debug("caught expected exception: " + expected);
+        }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
@@ -158,6 +163,13 @@ public class DynamicTableDataTest
             DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
+            Assert.assertTrue(iter.hasNext());
+            List<Object> row1 = iter.next();
+            Assert.assertNotNull(row1.get(3)); // see DataLinkerror message 
+            Assert.assertTrue(iter.hasNext());
+            List<Object> row2 = iter.next();
+            Assert.assertNotNull(row2.get(3)); // see DataLinkerror message 
+            
             Assert.assertFalse( iter.hasNext() );
         }
         catch(Exception unexpected)

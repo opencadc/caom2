@@ -163,7 +163,7 @@ public class ArtifactProcessorTest
             {
                 log.debug("testNoFilter: " + dl);
                 Assert.assertNotNull(dl);
-                Assert.assertEquals(uri, dl.getID());
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.url);
                 
                 String query = dl.url.getQuery();
@@ -201,7 +201,7 @@ public class ArtifactProcessorTest
             {
                 log.debug("testNoRUNID: " + dl);
                 Assert.assertNotNull(dl);
-                Assert.assertEquals(uri, dl.getID());
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.url);
                 String query = dl.url.getQuery();
                 Assert.assertNull(query); // no runid
