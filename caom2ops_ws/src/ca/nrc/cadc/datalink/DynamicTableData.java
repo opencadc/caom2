@@ -182,7 +182,7 @@ public class DynamicTableData implements TableData
                             {
                                 links = new ArrayList<DataLink>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
-                                notFound.errorMessage = "NotFoundFault: s";
+                                notFound.errorMessage = "NotFoundFault: " + s;
                                 links.add(notFound);
                             }
                             else

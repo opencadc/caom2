@@ -83,4 +83,10 @@ public class DefaultFault extends Exception
     {
         super(s, cause);
     }
+    
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + ": " + getMessage();
+    }
 }
