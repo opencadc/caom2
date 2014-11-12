@@ -84,9 +84,10 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
+import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.LinkQuery;
-import ca.nrc.cadc.dali.RequestValidator;
+import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
@@ -107,8 +108,9 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
-import java.util.Arrays;
-import java.util.List;
+import java.io.IOException;
+import java.security.cert.X509Certificate;
+import java.util.Set;
 
 /**
  *
@@ -124,7 +126,6 @@ public class LinkQueryRunner implements JobRunner
 
     private static final String GETLINKS = "getLinks";
     private static final String GETDOWNLOAD = "getDownloadLinks";
-    private static final List<String> REQUEST_VALUES = Arrays.asList(GETLINKS, GETDOWNLOAD);
     
     private Job job;
     private JobUpdater jobUpdater;
@@ -292,11 +293,15 @@ public class LinkQueryRunner implements JobRunner
         }
         catch(IllegalArgumentException ex)
         {
-            sendError(ex, "invalid input: " + ex.getMessage(), 400);
+            sendError(ex, ex.getMessage(), 400);
         }
         catch(UnsupportedOperationException ex)
         {
             sendError(ex, "unsupported operation: " + ex.getMessage(), 400);
+        }
+        catch(TransientFault ex)
+        {
+            sendError(ex, ex.getMessage(), ex.getResponseCode());
         }
         catch(Throwable t)
         {
@@ -328,7 +333,7 @@ public class LinkQueryRunner implements JobRunner
     {
     	logInfo.setSuccess(false);
         logInfo.setMessage(s);
-
+        log.debug("sendError", t);
         try
         {
             ErrorSummary err = new ErrorSummary(s, ErrorType.FATAL);
@@ -354,7 +359,7 @@ public class LinkQueryRunner implements JobRunner
             syncOutput.setResponseCode(code);
             writer.write(t, syncOutput.getOutputStream());
         }
-        catch(Exception ex)
+        catch(IOException ex)
         {
             log.debug("write error failed", ex);
         }
