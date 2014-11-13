@@ -1,0 +1,21 @@
+obs.metaRelease = 2012-02-26 17:15:40.000PST
+
+plane.metaRelease = 2012-02-26 17:15:40.000
+plane.dataRelease = 2012-02-26 17:15:40.000
+plane.dataProductType = image
+plane.calibrationLevel = 3
+
+artifact.contentType =
+artifact.contentLength = 1
+artifact.productType = science
+artifact.alternative = true
+
+part.productType = science
+
+chunk.productType = science
+
+position.resolution = 2.0
+position.range.start.coord1.pix = 19.0
+position.range.start.coord1.val = 20.0
+position.range.end.coord1.pix = 23.0
+position.range.end.coord1.val = 24.0
