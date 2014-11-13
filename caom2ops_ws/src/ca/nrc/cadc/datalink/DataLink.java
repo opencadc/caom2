@@ -86,14 +86,32 @@ import ca.nrc.cadc.dali.tables.votable.VOTableField;
  */
 public class DataLink implements Iterable<Object>
 {
-    public static final String CUTOUT = "cutout";
+    /**
+     * Terms from the http://www.ivoa.net/rdf/datalink/core vocabulary.
+     */
+    public enum Term
+    {
+        THIS("#this"),
+        AUXILIARY("#auxiliary"),
+        PREVIEW("#preview"),
+        PROGENITOR("#progenitor"),
+        DERIVATION("#derivation"),
+        PROC("#proc"),
+        CUTOUT("#cutout");
+        
+        private final String value;
+        private Term(String value) { this.value = value; }
+        public String getValue() { return value; }
+    }
 
     // standard DataLink fields
-    private URI id;
-    private URL url;
+    private final String id;
+    private final Term semantics;
+    
+    public URL url;
     public String serviceDef;
     public String description;
-    public String semantics;
+    
     public String contentType;
     public Long contentLength;
     public String errorMessage;
@@ -102,20 +120,20 @@ public class DataLink implements Iterable<Object>
     public List<ProductType> productTypes = new ArrayList<ProductType>();
     public String fileURI;
 
-    public DataLink(URI id, URL url)
+    public DataLink(String id, Term semantics)
     {
         this.id = id;
-        this.url = url;
+        this.semantics = semantics;
     }
 
-    public URI getID()
+    public String getID()
     {
         return id;
     }
 
-    public URL getURL()
+    public Term getSemantics()
     {
-        return url;
+        return semantics;
     }
 
     public int size() { return 10; } // number of fields
@@ -140,14 +158,14 @@ public class DataLink implements Iterable<Object>
                 cur++;
                 switch(n)
                 {
-                    case 0: return id.toASCIIString();
+                    case 0: return id;
                     case 1: return safeToString(url);
                     case 2: return serviceDef;
-                    case 3: return semantics;
-                    case 4: return description;
-                    case 5: return contentType;
-                    case 6: return contentLength;
-                    case 7: return errorMessage;
+                    case 3: return errorMessage;
+                    case 4: return semantics.getValue();
+                    case 5: return description;
+                    case 6: return contentType;
+                    case 7: return contentLength;
                     case 8: return toProductTypeMask(productTypes);
                     case 9: return fileURI;
                 }
@@ -213,15 +231,20 @@ public class DataLink implements Iterable<Object>
         f.setVariableSize(true);
         f.ucd = "meta.ref";
         fields.add(f);
-
-        f = new VOTableField("description", "char");
+        
+        f = new VOTableField("error_message", "char");
         f.setVariableSize(true);
-        f.ucd = "meta.note";
+        f.ucd = "meta.code.error";
         fields.add(f);
-
+        
         f = new VOTableField("semantics", "char");
         f.setVariableSize(true);
         f.ucd = "meta.code";
+        fields.add(f);
+        
+        f = new VOTableField("description", "char");
+        f.setVariableSize(true);
+        f.ucd = "meta.note";
         fields.add(f);
 
         f = new VOTableField("content_type", "char");
@@ -234,10 +257,7 @@ public class DataLink implements Iterable<Object>
         f.ucd = "phys.size;meta.file";
         fields.add(f);
 
-        f = new VOTableField("error_message", "char");
-        f.setVariableSize(true);
-        f.ucd = "meta.code.error";
-        fields.add(f);
+        
 
         f = new VOTableField("product_type", "char");
         f.setVariableSize(true);
