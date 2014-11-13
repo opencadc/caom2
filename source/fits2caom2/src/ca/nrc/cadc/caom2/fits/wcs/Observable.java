@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.Slice;
@@ -79,17 +80,18 @@ import ca.nrc.cadc.caom2.wcs.Slice;
  */
 public class Observable
 {
-    public static ObservableAxis getObservableAxis(String utype, FitsMapping mapping)
-    {
-        Slice dependent = Wcs.getSlice(utype + ".dependent", mapping);
-        if (dependent == null)
-            return null;
-        ObservableAxis observable = new ObservableAxis(dependent);
-        observable.independent = Wcs.getSlice(utype + ".independent", mapping);
-        return observable;
-    }
+//    public static ObservableAxis getObservableAxis(String utype, FitsMapping mapping)
+//    {
+//        Slice dependent = Wcs.getSlice(utype + ".dependent", mapping);
+//        if (dependent == null)
+//            return null;
+//        ObservableAxis observable = new ObservableAxis(dependent);
+//        observable.independent = Wcs.getSlice(utype + ".independent", mapping);
+//        return observable;
+//    }
     
     public static ObservableAxis getObservable(String utype, FitsMapping mapping)
+        throws PartialWCSException
     {    
         if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.observable")) )
             return null;
@@ -99,7 +101,7 @@ public class Observable
             String ctype = mapping.getKeywordValue("CTYPE" + mapping.observableAxis);
             String cunit = mapping.getKeywordValue("CUNIT" + mapping.observableAxis);
             String bin = mapping.getKeywordValue("CRPIX" + mapping.observableAxis);
-            
+
             if (ctype == null || cunit == null || bin == null)
                 return null;
 
@@ -110,7 +112,7 @@ public class Observable
         }
         catch(IllegalArgumentException ex)
         {
-            throw new IllegalArgumentException("failed to create Observable: " + ex.getMessage(), ex);
+            throw new PartialWCSException("failed to create Observable: " + ex.getMessage(), ex);
         }
     }
     

@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 
@@ -82,6 +83,7 @@ public class Position
     private static final String DEFAULT_CUNIT = "deg";
     
     public static SpatialWCS getPosition(String utype, FitsMapping mapping)
+        throws PartialWCSException
     {
         if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")) )
             return null;
@@ -106,7 +108,6 @@ public class Position
 
             // do not check cunit for spatial axes since wcslib will assume deg by default and lots
             // of fits files probably take advantage of that :-(
-            
             SpatialWCS position = new SpatialWCS(axis);
             position.coordsys = Wcs.getStringValue(utype + ".coordsys", mapping);
             position.equinox = Wcs.getDoubleValue(utype + ".equinox", mapping);
@@ -115,7 +116,7 @@ public class Position
         }
         catch(IllegalArgumentException ex)
         {
-            throw new IllegalArgumentException("failed to create SpatialWCS: " + ex.getMessage(), ex);
+            throw new PartialWCSException("failed to create SpatialWCS: " + ex.getMessage(), ex);
         }
     }
     

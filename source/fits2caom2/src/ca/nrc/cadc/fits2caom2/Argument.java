@@ -84,7 +84,8 @@ public abstract class Argument
     public static final String DEFAULT = "default";
     public static final String DUMPCONFIG = "dumpconfig";
     //public static final String GEN = "gen";
-    
+
+    public static final String IGNORE_PARTIAL_WCS = "ignorePartialWCS";
     public static final String IN = "in";
     public static final String KEEP = "keep";
     public static final String LOCAL = "local";
@@ -113,7 +114,8 @@ public abstract class Argument
     public static final String[] ARGUMENTS = 
     {
         COLLECTION, CONFIG, DEBUG, DEFAULT,
-        DUMPCONFIG, H, HELP, IN, KEEP, LOCAL, NETRC_SHORT, NETRC, LOG,
+        DUMPCONFIG, H, HELP, IGNORE_PARTIAL_WCS, IN,
+        KEEP, LOCAL, NETRC_SHORT, NETRC, LOG,
         OBSERVATION_ID, OUT, OVERRIDE, PRODUCT_ID,
         TEST, TEMP, URI,
         LOG_DEBUG_SHORT, LOG_QUIET, LOG_QUIET_SHORT, 
@@ -148,6 +150,7 @@ public abstract class Argument
         sb.append("\t--").append(Argument.OVERRIDE).append("=\t\t < file with override values for keywords >").append(NEWLINE);
         sb.append("\t--").append(Argument.LOCAL).append("=\t\t\t < list of files in local filesystem > (same order as ").append(Argument.URI).append(")").append(NEWLINE);
         sb.append("\t--").append(Argument.LOG).append("=\t\t\t < log file name > (instead of console)").append(NEWLINE);
+        sb.append("\t--").append(Argument.IGNORE_PARTIAL_WCS).append("\t\t do not stop and exit upon finding partial WCS").append(NEWLINE);
         sb.append("\t--").append(Argument.TEST).append("\t\t\t test mode, do not persist to database").append(NEWLINE);
         sb.append("\t--").append(Argument.VERSION).append("\t\t output the version number of fits2caom2 and included jars").append(NEWLINE);
         sb.append("\t").append(CertCmdArgUtil.getCertArgUsage()).append(NEWLINE);

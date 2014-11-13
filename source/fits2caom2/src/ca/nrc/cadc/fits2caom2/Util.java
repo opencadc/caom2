@@ -73,22 +73,13 @@ import ca.nrc.cadc.caom2.fits.FitsValuesMap;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
+
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -271,7 +262,7 @@ public abstract class Util
     public static URI[] argumentUriToArray(String argument)
         throws URISyntaxException, IllegalArgumentException
     {
-        if (argument == null || argument.length() == 0)
+        if (argument == null || argument.isEmpty())
             return null;
         String[] values = argument.split(",");
         URI[] array = new URI[values.length];
@@ -288,7 +279,7 @@ public abstract class Util
 
     public static File[] argumentFileToArray(String argument)
     {
-        if (argument == null || argument.length() == 0)
+        if (argument == null || argument.isEmpty())
             return null;
         String[] value = argument.split(",");
         File[] array = new File[value.length];
@@ -297,6 +288,82 @@ public abstract class Util
             array[i] = new File(value[i]);
         }
         return array;
+    }
+
+    public static UriLocal argumentUriToUriLocal(String argument)
+            throws URISyntaxException, FileNotFoundException
+    {
+        UriLocal uriLocal = new UriLocal();
+        if (argument == null || argument.isEmpty())
+            return uriLocal;
+
+        if (argument.startsWith("@"))
+        {
+            String filename = argument.substring(1);
+            File file = new File(filename);
+            if (!file.exists())
+            {
+                throw new FileNotFoundException(filename + " not found");
+            }
+
+            List<URI> uris = new ArrayList<URI>();
+            List<File> locals = new ArrayList<File>();
+            BufferedReader br = null;
+            try
+            {
+                String line;
+                br = new BufferedReader(new FileReader(file));
+                while ((line = br.readLine()) != null)
+                {
+                    if (line.startsWith("#"))
+                        continue;
+                    String[] tokens = line.trim().split("\\s+");
+                    if (tokens.length >= 1)
+                    {
+                        URI uri = new URI(tokens[0].trim());
+                        if (uri.getScheme() == null)
+                            throw new IllegalArgumentException("Missing scheme in uri " + tokens[0]);
+                        uris.add(uri);
+                    }
+                    if (tokens.length >= 2)
+                    {
+                        locals.add(new File(tokens[1].trim()));
+                    }
+                }
+
+                if (!uris.isEmpty() && !locals.isEmpty() &&
+                    (uris.size() != locals.size()))
+                {
+                    throw new IllegalArgumentException("number of uri and local arguments in " +
+                            filename + " do not match");
+                }
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException("Error reading from " + filename +
+                                           " because " + e.getMessage());
+            }
+            finally
+            {
+                if (br != null)
+                {
+                    try
+                    {
+                        br.close();
+                    }
+                    catch(Throwable t) {}
+                }
+            }
+            if (uris.size() > 0)
+                uriLocal.uri = uris.toArray(new URI[uris.size()]);
+            if (locals.size() > 0)
+                uriLocal.local = locals.toArray(new File[locals.size()]);
+        }
+        else
+        {
+            uriLocal.uri = argumentUriToArray(argument);
+        }
+        return uriLocal;
     }
     
     /**
@@ -378,5 +445,13 @@ public abstract class Util
 
         return level;
     }
-    
+
+    public static class UriLocal
+    {
+        public URI[] uri = null;
+        public File[] local = null;
+
+        UriLocal() {}
+    }
+
 }

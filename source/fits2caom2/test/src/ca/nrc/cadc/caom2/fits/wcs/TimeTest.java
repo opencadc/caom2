@@ -5,6 +5,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.fits2caom2.Util;
@@ -16,6 +17,7 @@ import nom.tam.fits.Header;
 import org.apache.log4j.Level;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -42,7 +44,7 @@ public class TimeTest extends Time
     /**
      * Test of getTime method, of class Time.
      */
-//    @Test
+    @Test
     public void testGetTime() throws Exception
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
@@ -108,7 +110,7 @@ public class TimeTest extends Time
         Assert.assertEquals(56085.452431, time.getAxis().range.getEnd().val, 0.000001); 
     }
     
-//    @Test
+    @Test
     public void testGetMJDTime() throws Exception
     {
         // Not mapping and null exposure.
@@ -211,7 +213,7 @@ public class TimeTest extends Time
         Assert.assertEquals(50001.0, time.getAxis().range.getEnd().val, 0.0); 
     }
     
-//    @Test
+    @Test
     public void testGetEXPTime() throws Exception
     {
         // Not mapping and null exposure.
@@ -264,7 +266,7 @@ public class TimeTest extends Time
         Assert.assertEquals(50001.0, time.getAxis().range.getEnd().val, 0.0); 
     }
         
-//    @Test
+    @Test
     public void testGetDATETime() throws Exception
     {
         // Not mapping and null exposure.
@@ -371,7 +373,7 @@ public class TimeTest extends Time
         Assert.assertEquals(56085.452431, time.getAxis().range.getEnd().val, 0.000001);
     }
     
-//    @Test
+    @Test
     public void testGetExposureTime() throws Exception
     {
         // Exposure from utype
@@ -408,7 +410,7 @@ public class TimeTest extends Time
         Assert.assertEquals(3.5, exposure, 0.0);
     }
     
-//    @Test
+    @Test
     public void testGetModifiedJulianDate() throws Exception
     {
         // null parameter
@@ -438,7 +440,7 @@ public class TimeTest extends Time
         Assert.assertNull(mjd);
     }
     
-//    @Test
+    @Test
     public void testParseDateTimeFormats() throws Exception
     {
         // IVOA date
@@ -493,7 +495,7 @@ public class TimeTest extends Time
         Assert.assertEquals(123, cal.get(Calendar.MILLISECOND));
     }
     
-//    @Test
+    @Test
     public void testParseDateFormats() throws Exception
     {
         // yyyy-MM-dd date format
@@ -523,7 +525,7 @@ public class TimeTest extends Time
         Assert.assertEquals(13, cal.get(Calendar.DAY_OF_MONTH));
     }
     
-//    @Test
+    @Test
     public void testParseTimeFormats() throws Exception
     {
         // HH:mm:ss date format
@@ -555,7 +557,7 @@ public class TimeTest extends Time
     }
 
     @Test
-    public void testNullCunit() throws Exception
+    public void testPartialWCSException() throws Exception
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
         mapping.setArgumentProperty("utype.axis.axis.ctype", "ctype");
@@ -570,9 +572,9 @@ public class TimeTest extends Time
         try
         {
             time = Time.getTime("utype", mapping);
-            Assert.fail("null cunit should've thrown IllegalArgumentException");
+            Assert.fail("null cunit should've thrown PartialWCSException");
         }
-        catch (IllegalArgumentException e)
+        catch (PartialWCSException e)
         {
             Assert.assertNull(time);
         }

@@ -111,7 +111,6 @@ public class SimpleFitsTest extends AbstractTest
                 "--default=test/config/fits2caom2/simplefits.default"
             };
 
-            cleanup();
             doTest(args);
             doTest(args, "build/test/SimpleFitsTest.xml");
 
@@ -122,7 +121,6 @@ public class SimpleFitsTest extends AbstractTest
             Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
-            cleanup();
 
             log.info("testSimpleFits passed.");
         }

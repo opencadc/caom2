@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 
@@ -81,6 +82,7 @@ public class Polarization
     private static final boolean DESCRIBED = true;
     
     public static PolarizationWCS getPolarization(String utype, FitsMapping mapping)
+        throws PartialWCSException
     {
         if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.polarization")) )
             return null;
@@ -104,7 +106,7 @@ public class Polarization
         }
         catch(IllegalArgumentException ex)
         {
-            throw new IllegalArgumentException("failed to create PolarizationWCS: " + ex.getMessage(), ex);
+            throw new PartialWCSException("failed to create PolarizationWCS: " + ex.getMessage(), ex);
         }
     }
     

@@ -164,6 +164,7 @@
 
             <test name="ca.nrc.cadc.fits2caom2.MainTest"/>
             <test name="ca.nrc.cadc.fits2caom2.IngestTest"/>
+            <test name="ca.nrc.cadc.fits2caom2.UtilTest"/>
         </junit>
     </target>
     
@@ -192,7 +193,7 @@
         </junit>
     </target>
 
-    <target name="int-test" depends="config, compile-test">
+    <target name="int-test" depends="config, compile-test, setup-test">
         <junit printsummary="yes" haltonfailure="yes" fork="yes">
             <classpath>
                 <pathelement path="build/test/class" />
@@ -212,6 +213,8 @@
             <test name="ca.nrc.cadc.fits2caom2.integration.VOSUriTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.ImageFileTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.GZFileTest"/>
+            <test name="ca.nrc.cadc.fits2caom2.integration.PartialWCSTest" />
+            <test name="ca.nrc.cadc.fits2caom2.integration.UriAndLocalFromFileTest" />
         </junit>
     </target>
 

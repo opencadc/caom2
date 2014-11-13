@@ -5,6 +5,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.fits2caom2.Util;
 import ca.nrc.cadc.util.Log4jInit;
@@ -13,6 +14,8 @@ import org.apache.log4j.Level;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -39,7 +42,7 @@ public class EnergyTest
      * Test of getEnergy method, of class Energy.
      */
     @Test
-    public void testGetEnergy()
+    public void testGetEnergy() throws Exception
     {
         FitsMapping mapping = new FitsMapping(config, null, null);
         mapping.setArgumentProperty("utype.axis.axis.cunit", "cunit");
@@ -89,5 +92,27 @@ public class EnergyTest
         Assert.assertEquals("bandpassName", spectralWCS.bandpassName);
         Assert.assertEquals(6.0, spectralWCS.resolvingPower, 0.0);
     }
-    
+
+    @Test
+    public void testPartialWCSException()
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.axis.axis.cunit", "cunit");
+        mapping.setArgumentProperty("utype.axis.axis.ctype", "ctype");
+        mapping.setArgumentProperty("utype.axis.range.start.pix", "1.0");
+        mapping.setArgumentProperty("utype.axis.range.start.val", "2.0");
+        mapping.setArgumentProperty("utype.axis.range.end.pix", "3.0");
+        mapping.setArgumentProperty("utype.axis.range.end.val", "4.0");
+        mapping.setArgumentProperty("utype.specsys", "specsys");
+        mapping.setArgumentProperty("utype.restfrq", "foo");
+
+        try
+        {
+            SpectralWCS spectralWCS = Energy.getEnergy("utype", mapping);
+            fail("partail WCS should throw PartialWCSException");
+        }
+        catch (PartialWCSException expected) {}
+
+    }
+
 }
