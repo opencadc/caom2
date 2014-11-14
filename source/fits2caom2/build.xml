@@ -215,6 +215,7 @@
             <test name="ca.nrc.cadc.fits2caom2.integration.GZFileTest"/>
             <test name="ca.nrc.cadc.fits2caom2.integration.PartialWCSTest" />
             <test name="ca.nrc.cadc.fits2caom2.integration.UriAndLocalFromFileTest" />
+            <test name="ca.nrc.cadc.fits2caom2.integration.CompressedImageTest" />
         </junit>
     </target>
 

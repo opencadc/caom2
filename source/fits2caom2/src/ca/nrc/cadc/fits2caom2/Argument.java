@@ -152,7 +152,7 @@ public abstract class Argument
         sb.append("\t--").append(Argument.LOG).append("=\t\t\t < log file name > (instead of console)").append(NEWLINE);
         sb.append("\t--").append(Argument.IGNORE_PARTIAL_WCS).append("\t\t do not stop and exit upon finding partial WCS").append(NEWLINE);
         sb.append("\t--").append(Argument.TEST).append("\t\t\t test mode, do not persist to database").append(NEWLINE);
-        sb.append("\t--").append(Argument.VERSION).append("\t\t output the version number of fits2caom2 and included jars").append(NEWLINE);
+//        sb.append("\t--").append(Argument.VERSION).append("\t\t output the version number of fits2caom2 and included jars").append(NEWLINE);
         sb.append("\t").append(CertCmdArgUtil.getCertArgUsage()).append(NEWLINE);
         return sb.toString();
     }

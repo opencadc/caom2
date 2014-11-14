@@ -675,6 +675,17 @@ public class Ingest implements Runnable
 
     protected boolean hasData(FitsMapping mapping)
     {
+        // Only want to process cfitsio compressed images.
+        String xtension = mapping.getKeywordValue("XTENSION");
+        if (xtension != null && xtension.equals("BINTABLE"))
+        {
+            String zimage = mapping.getKeywordValue("ZIMAGE");
+            if (zimage == null || (zimage != null && !zimage.equals("T")))
+            {
+                return false;
+            }
+        }
+
         long naxis = stringToNum(mapping.getKeywordValue("NAXIS"), 0);
         if (naxis == 0)
         {
