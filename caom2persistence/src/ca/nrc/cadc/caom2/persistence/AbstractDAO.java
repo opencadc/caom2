@@ -104,9 +104,17 @@ public class AbstractDAO
      * 
      * @return the DataSource
      */
-    public DataSource getDataSource() { return dataSource; }
+    public DataSource getDataSource() 
+    { 
+        checkInit();
+        return dataSource; 
+    }
 
-    SQLGenerator getSQLGenerator() { return gen; }
+    SQLGenerator getSQLGenerator() 
+    {
+        checkInit();
+        return gen; 
+    }
 
     /**
      * Get the TransactionManager that controls transactions using this DAOs DataSource.
@@ -115,8 +123,7 @@ public class AbstractDAO
      */
     public TransactionManager getTransactionManager()
     {
-        if (dataSource == null)
-            throw new IllegalStateException("cannot create TransactionManager before setConfig is called");
+        checkInit();
         if (txnManager == null)
             this.txnManager = new DatabaseTransactionManager(dataSource);
         return txnManager;
@@ -128,7 +135,6 @@ public class AbstractDAO
         // TODO: these two are alternatives... how to convey that?
         ret.put("jndiDataSourceName", String.class);
         ret.put("server", String.class);
-
         ret.put("database", String.class);
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
@@ -170,17 +176,14 @@ public class AbstractDAO
         if (force != null)
             this.forceUpdate = force.booleanValue();
 
-        if (genClass != null)
+        try
         {
-            try
-            {
-                Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
-                this.gen = (SQLGenerator) ctor.newInstance(database, schema);
-            }
-            catch(Exception ex)
-            {
-                throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
-            }
+            Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
+            this.gen = (SQLGenerator) ctor.newInstance(database, schema);
+        }
+        catch(Exception ex)
+        {
+            throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
         }
     }
 

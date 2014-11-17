@@ -70,9 +70,13 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.dao.TransactionManager;
+import java.sql.SQLException;
+import java.util.Deque;
+import java.util.LinkedList;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
@@ -86,8 +90,9 @@ public class DatabaseTransactionManager implements TransactionManager
     private static final Logger log = Logger.getLogger(DatabaseTransactionManager.class);
     
     private DataSourceTransactionManager writeTxnManager;
-    private DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-    private TransactionStatus txn;
+    private final TransactionDefinition def = new DefaultTransactionDefinition();
+    private final TransactionDefinition nested = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_NESTED);
+    private final Deque<TransactionStatus> txn = new LinkedList<TransactionStatus>();
 
     private DatabaseTransactionManager() { }
     
@@ -98,36 +103,48 @@ public class DatabaseTransactionManager implements TransactionManager
 
     public boolean isOpen()
     {
-        return (txn != null);
+        return (!txn.isEmpty());
     }
     
     public void startTransaction()
     {
-        if (txn != null)
-            throw new IllegalStateException("transaction already in progress");
-        log.debug("startTransaction");
-        this.txn = writeTxnManager.getTransaction(def);
+        TransactionStatus ts;
+        if (txn.isEmpty())
+        {
+            ts = writeTxnManager.getTransaction(def);
+            log.debug("startTransaction: default");
+        }
+        else
+        {
+            // on sybase, this will fail if no statements have been executed since the
+            // outer txn was started...
+            try { writeTxnManager.getDataSource().getConnection().getCatalog(); }
+            catch(SQLException oops) { log.warn("getCatalog failed while creating nested transaction"); }
+            
+            ts = writeTxnManager.getTransaction(nested);
+            log.debug("startTransaction: nested");
+        }
+        txn.push(ts);
         log.debug("startTransaction: OK");
     }
 
     public void commitTransaction()
     {
-        if (txn == null)
+        if (txn.isEmpty())
             throw new IllegalStateException("no transaction in progress");
         log.debug("commitTransaction");
-        writeTxnManager.commit(txn);
-        this.txn = null;
+        TransactionStatus ts = txn.pop();
+        writeTxnManager.commit(ts);
         log.debug("commit: OK");
     }
 
     public void rollbackTransaction()
     {
-        if (txn == null)
+        if (txn.isEmpty())
             throw new IllegalStateException("no transaction in progress");
         log.debug("rollbackTransaction");
-        writeTxnManager.rollback(txn);
-        this.txn = null;
+        TransactionStatus ts = txn.pop();
+        writeTxnManager.rollback(ts);
         log.debug("rollback: OK");
-
     }
 }
