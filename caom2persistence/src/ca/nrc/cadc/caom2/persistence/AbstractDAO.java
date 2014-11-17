@@ -132,9 +132,8 @@ public class AbstractDAO
     public Map<String, Class> getParams()
     {
         Map<String,Class> ret = new TreeMap<String,Class>();
-        // TODO: these two are alternatives... how to convey that?
         ret.put("jndiDataSourceName", String.class);
-        ret.put("server", String.class);
+        ret.put("server", String.class); // fallback if no jndiDataSourceName
         ret.put("database", String.class);
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
@@ -147,6 +146,7 @@ public class AbstractDAO
         String jndiDataSourceName = (String) config.get("jndiDataSourceName");
         String server = (String) config.get("server");
         String database = (String) config.get("database");
+        
         String schema = (String) config.get("schema");
         Boolean force = (Boolean) config.get("forceUpdate");
         Class<?> genClass = (Class<?>) config.get(SQLGenerator.class.getName());
@@ -155,12 +155,13 @@ public class AbstractDAO
         try
         {
             if (jndiDataSourceName != null)
-                this.dataSource = DBUtil.getDataSource(jndiDataSourceName);
+                this.dataSource = new DataSourceWrapper(database, DBUtil.getDataSource(jndiDataSourceName));
             else
             {
                 DBConfig dbrc = new DBConfig();
                 ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
-                this.dataSource = DBUtil.getDataSource(cc);
+                // for some reason, we need to suppress close when wrapping with delegating DS
+                this.dataSource =  new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
             }
         }
         catch(NamingException ex)

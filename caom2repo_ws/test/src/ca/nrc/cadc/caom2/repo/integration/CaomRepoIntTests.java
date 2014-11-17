@@ -147,18 +147,13 @@ public class CaomRepoIntTests
         {
             Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
             
-            File SSL_CERT1 = new File("build/test/class/proxy1.crt");
-            File SSL_KEY1 = new File("build/test/class/proxy1.key");
+            File SSL_CERT1 = new File("build/test/class/proxy1.pem");
+            File SSL_CERT2 = new File("build/test/class/proxy2.pem");
+            File SSL_CERT3 = new File("build/test/class/proxy3.pem");
             
-            File SSL_CERT2 = new File("build/test/class/proxy2.crt");
-            File SSL_KEY2 = new File("build/test/class/proxy2.key");
-            
-            File SSL_CERT3 = new File("build/test/class/proxy3.crt");
-            File SSL_KEY3 = new File("build/test/class/proxy3.key");
-            
-            SUBJECT1 = SSLUtil.createSubject(SSL_CERT1, SSL_KEY1);
-            SUBJECT2 = SSLUtil.createSubject(SSL_CERT2, SSL_KEY2);
-            SUBJECT3 = SSLUtil.createSubject(SSL_CERT3, SSL_KEY3);
+            SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
+            SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
+            SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
             
             RegistryClient rc = new RegistryClient();
 
@@ -224,6 +219,7 @@ public class CaomRepoIntTests
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     @Test
     public void testGetSuccess() throws Throwable
     {

@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,89 +62,49 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.dao.TransactionManager;
+import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Deque;
-import java.util.LinkedList;
 import javax.sql.DataSource;
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.jdbc.datasource.DelegatingDataSource;
 
 /**
- * Simple class that wraps a DataSource and performs basic transaction operations.
+ * A simple DataSource wrapper that calls setCatalog on a Connection before returning
+ * it. This is usually necessary to avoid creating a cross-database transaction if the 
+ * DataSource is not connected to the target database already, such as when a connection
+ * pool that accesses multiple databases is used.
  * 
  * @author pdowler
  */
-public class DatabaseTransactionManager implements TransactionManager
+public class DataSourceWrapper  extends DelegatingDataSource 
 {
-    private static final Logger log = Logger.getLogger(DatabaseTransactionManager.class);
-    
-    private DataSourceTransactionManager writeTxnManager;
-    private final TransactionDefinition def = new DefaultTransactionDefinition();
-    private final TransactionDefinition nested = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_NESTED);
-    private final Deque<TransactionStatus> txn = new LinkedList<TransactionStatus>();
+    private final String catalogName;
 
-    private DatabaseTransactionManager() { }
-    
-    public DatabaseTransactionManager(DataSource ds)
+    public DataSourceWrapper(String catalogName, DataSource dataSource) 
     {
-        this.writeTxnManager = new DataSourceTransactionManager(ds);
+        super(dataSource);
+        this.catalogName = catalogName;
     }
 
-    public boolean isOpen()
+    @Override
+    public Connection getConnection() 
+        throws SQLException
     {
-        return (!txn.isEmpty());
-    }
-    
-    public void startTransaction()
-    {
-        TransactionStatus ts;
-        if (txn.isEmpty())
-        {
-            ts = writeTxnManager.getTransaction(def);
-            log.debug("startTransaction: default");
-        }
-        else
-        {
-            // on sybase, starting a nested transaction will fail if no statements 
-            // have been executed since the outer txn was started... so do something
-            try { writeTxnManager.getDataSource().getConnection().getCatalog(); }
-            catch(SQLException oops) { log.warn("getCatalog failed while creating nested transaction"); }
-            
-            ts = writeTxnManager.getTransaction(nested);
-            log.debug("startTransaction: nested");
-        }
-        txn.push(ts);
-        log.debug("startTransaction: OK");
+        Connection cnx = super.getConnection();
+        cnx.setCatalog(this.catalogName);
+        return cnx;
     }
 
-    public void commitTransaction()
+    public Connection getConnection(String un, String pw)
+        throws SQLException
     {
-        if (txn.isEmpty())
-            throw new IllegalStateException("no transaction in progress");
-        log.debug("commitTransaction");
-        TransactionStatus ts = txn.pop();
-        writeTxnManager.commit(ts);
-        log.debug("commit: OK");
-    }
-
-    public void rollbackTransaction()
-    {
-        if (txn.isEmpty())
-            throw new IllegalStateException("no transaction in progress");
-        log.debug("rollbackTransaction");
-        TransactionStatus ts = txn.pop();
-        writeTxnManager.rollback(ts);
-        log.debug("rollback: OK");
-    }
+        Connection cnx = super.getConnection(un, pw);
+        cnx.setCatalog(this.catalogName);
+        return cnx;    }
 }
