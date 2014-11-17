@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -69,85 +69,36 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.net.URI;
-import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Logger;
-
 /**
- * An artifact is a single physical (stored) result. This is normally a file, but
- * could also be a table in a database or a resource available on the internet
- * (such as a web page).
  *
  * @author pdowler
  */
-public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
+public enum Status implements CaomEnum
 {
-    private static final long serialVersionUID = 201110261400L;
-    private static final Logger log = Logger.getLogger(Artifact.class);
+    FAIL("fail");
 
-    // immutable state
-    private final URI uri;
+    private final String value;
 
-    // mutable contents
-    private final Set<Part> parts = new TreeSet<Part>();
+    private Status(String value) { this.value = value; }
 
-    // mutable state
-    public String contentType;
-    public Long contentLength;
-    public ProductType productType;
-    public boolean alternative;
-    
-    // computed state
-    public transient Date metaRelease;
-
-    public Artifact(URI uri)
+    public static Status toValue(String s)
     {
-        CaomValidator.assertNotNull(Artifact.class, "uri", uri);
-        this.uri = uri;
+        for (Status d : values())
+            if (d.value.equals(s))
+                return d;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
+
+    public int checksum()
+    {
+        return value.hashCode();
+    }
+
+    public String getValue() { return value; }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + uri + "]";
-    }
-
-    public URI getURI()
-    {
-        return uri;
-    }
-
-    public Set<Part> getParts()
-    {
-        return parts;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
-            return false;
-        if (this == o)
-            return true;
-        if (o instanceof Artifact)
-        {
-            Artifact a = (Artifact) o;
-            return ( this.hashCode() == a.hashCode() );
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode()
-    {
-       return uri.hashCode();
-    }
-
-    public int compareTo(Artifact a)
-    {
-        return this.uri.compareTo(a.uri);
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

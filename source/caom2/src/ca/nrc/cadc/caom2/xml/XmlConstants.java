@@ -75,7 +75,9 @@ package ca.nrc.cadc.caom2.xml;
  */
 public final class XmlConstants
 {
-    public static final String CAOM2_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0";
+    public static final String CAOM2_0_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0";
+    
+    public static final String CAOM2_1_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.1";
 
     public static final String XMLSCHEMA = "http://www.w3.org/2001/XMLSchema-instance";
 

@@ -75,6 +75,8 @@ import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -88,7 +90,9 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
@@ -152,7 +156,8 @@ public class ObservationReader implements Serializable
 {
     private static final long serialVersionUID = 201209071030L;
     
-    private static final String CAOM2_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
+    private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
+    private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
     
     private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
 
@@ -187,19 +192,25 @@ public class ObservationReader implements Serializable
         {
             if (enableSchemaValidation)
             {
-                String caom2SchemaUrl = XmlUtil.getResourceUrlString(CAOM2_SCHEMA_RESOURCE, ObservationReader.class);
-                log.debug("caom2SchemaUrl: " + caom2SchemaUrl);
+                String caom2SchemaUrl = XmlUtil.getResourceUrlString(CAOM20_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.0 schema URL: " + caom2SchemaUrl);
+                
+                String caom21SchemaUrl = XmlUtil.getResourceUrlString(CAOM21_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.1 schema URL: " + caom21SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(XLINK_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("xlinkSchemaUrl: " + xlinkSchemaUrl);
 
                 if (caom2SchemaUrl == null)
-                    throw new RuntimeException("failed to load " + CAOM2_SCHEMA_RESOURCE + " from classpath");
+                    throw new RuntimeException("failed to load " + CAOM20_SCHEMA_RESOURCE + " from classpath");
+                if (caom21SchemaUrl == null)
+                    throw new RuntimeException("failed to load " + CAOM21_SCHEMA_RESOURCE + " from classpath");
                 if (xlinkSchemaUrl == null)
                     throw new RuntimeException("failed to load " + XLINK_SCHEMA_RESOURCE + " from classpath");
 
                 schemaMap = new HashMap<String, String>();
-                schemaMap.put(XmlConstants.CAOM2_NAMESPACE, caom2SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_0_NAMESPACE, caom2SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_1_NAMESPACE, caom21SchemaUrl);
                 schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
                 log.debug("schema validation enabled");
             }
@@ -259,12 +270,21 @@ public class ObservationReader implements Serializable
     private void assignEntityAttributes(Element e, CaomEntity ce, DateFormat df)
         throws ObservationParsingException
     {
+        boolean expectUUID = true;
+        if ( XmlConstants.CAOM2_0_NAMESPACE.equals(e.getNamespaceURI()) )
+            expectUUID = false;
         Attribute aid = e.getAttribute("id", e.getNamespace());
         Attribute alastModified = e.getAttribute("lastModified", e.getNamespace());
         try
         {
-            Long id = new Long(aid.getLongValue());
-            UUID uuid = new UUID(0L, id);
+            UUID uuid;
+            if (expectUUID)
+                uuid = UUID.fromString(aid.getValue());
+            else
+            {
+                Long id = new Long(aid.getLongValue());
+                uuid = new UUID(0L, id);
+            }
             CaomUtil.assignID(ce, uuid);
             if (alastModified != null)
             {
@@ -355,6 +375,7 @@ public class ObservationReader implements Serializable
         obs.proposal = getProposal(root, namespace, dateFormat);
         obs.target = getTarget(root, namespace, dateFormat);
         obs.targetPosition = getTargetPosition(root, namespace, dateFormat);
+        obs.requirements = getRequirements(root, namespace, dateFormat);
         obs.telescope = getTelescope(root, namespace, dateFormat);
         obs.instrument = getInstrument(root, namespace, dateFormat);
         obs.environment = getEnvironment(root, namespace, dateFormat);
@@ -507,6 +528,27 @@ public class ObservationReader implements Serializable
     }
     
     /**
+     * 
+     * @param parent
+     * @param namespace
+     * @param dateFormat
+     * @return
+     * @throws ObservationParsingException 
+     */
+    protected Requirements getRequirements(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("requirements", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String flag = getChildText("flag", element, namespace, true);
+        Requirements req = new Requirements(Status.toValue(flag));
+
+        return req;
+    }
+    
+    /**
      * Build an Telescope from a JDOM representation of an telescope element.
      * 
      * @param parent the parent Element.
@@ -635,6 +677,8 @@ public class ObservationReader implements Serializable
             
             plane.provenance = getProvenance(planeElement, namespace, dateFormat);
             plane.metrics = getMetrics(planeElement, namespace, dateFormat);
+            plane.quality = getQuality(planeElement, namespace, dateFormat);
+
             addArtifacts(plane.getArtifacts(), planeElement, namespace, dateFormat);
 
             assignEntityAttributes(planeElement, plane, dateFormat);
@@ -704,6 +748,27 @@ public class ObservationReader implements Serializable
         return metrics;
     }
 
+    /**
+     * 
+     * @param parent
+     * @param namespace
+     * @param dateFormat
+     * @return
+     * @throws ObservationParsingException 
+     */
+    protected DataQuality getQuality(Element parent, Namespace namespace, DateFormat dateFormat)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("quality", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return null;
+        
+        String flag = getChildText("flag", element, namespace, true);
+        DataQuality ret = new DataQuality(Quality.toValue(flag));
+        
+        return ret;
+    }
+    
     protected EnergyTransition getTransition(Element parent, Namespace namespace, DateFormat dateFormat)
         throws ObservationParsingException
     {

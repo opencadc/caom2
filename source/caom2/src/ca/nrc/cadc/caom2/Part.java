@@ -70,8 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -91,7 +89,7 @@ public class Part extends AbstractCaomEntity implements Comparable<Part>
     private static final Logger log = Logger.getLogger(Part.class);
 
     // immutable state
-    private String name;
+    private final String name;
 
     // mutable state
     public ProductType productType;
@@ -102,18 +100,14 @@ public class Part extends AbstractCaomEntity implements Comparable<Part>
     // mutable contents
     private final Set<Chunk> chunks = new TreeSet<Chunk>();;
 
-    private Part() { }
-    
     public Part(String name)
     {
-        this();
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name;
     }
 
     public Part(Integer name)
     {
-        this();
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name.toString();
     }

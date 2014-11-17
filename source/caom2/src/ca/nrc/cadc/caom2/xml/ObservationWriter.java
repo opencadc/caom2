@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -84,6 +85,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
@@ -147,20 +149,25 @@ public class ObservationWriter implements Serializable
     private String stylesheetURL;
     private boolean writeEmptyCollections;
 
-    private String caom2NamespacePrefix;
     protected transient Namespace caom2Namespace;
     protected transient Namespace xsiNamespace;
-    private transient boolean initDone = false;
+    private final int outputVersion;
 
     /**
-     * Default constructor. This uses a standard prefix <code>caom2</code> and does
-     * not include empty elements for empty collections.
+     * Default constructor. This uses a standard prefix <code>caom2</code>, does
+     * not include empty elements for empty collections, and defaults 
+     * to the most recent target namespace.
      */
     public ObservationWriter()
     {
-        this("caom2", false);
+        this("caom2", null, false);
     }
 
+    public ObservationWriter(String caom2prefix, boolean writeEmptyCollections)
+    {
+        this(caom2prefix, null, writeEmptyCollections);
+    }
+    
     /**
      * Constructor. This uses the specified CAOM namespace prefix (null is not allowed).
      * If writeEmptyCollections is true, empty elements will be included for any collections
@@ -168,24 +175,29 @@ public class ObservationWriter implements Serializable
      * testing.
      *
      * @param caom2NamespacePrefix
+     * @param namespace a valid CAOM-2.x target namespace
      * @param writeEmptyCollections
      */
-    public ObservationWriter(String caom2NamespacePrefix, boolean writeEmptyCollections)
+    public ObservationWriter(String caom2NamespacePrefix, String namespace, boolean writeEmptyCollections)
     {
         this.writeEmptyCollections = writeEmptyCollections;
-        this.caom2NamespacePrefix = caom2NamespacePrefix;
         if ( !StringUtil.hasText(caom2NamespacePrefix))
             throw new IllegalArgumentException("null or 0-length namespace prefix is not allowed: " + caom2NamespacePrefix);
-    }
-
-    private void init()
-    {
-        if (!initDone)
+        
+        if (namespace == null || XmlConstants.CAOM2_1_NAMESPACE.equals(namespace))
         {
-            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_NAMESPACE);
-            this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
-            this.initDone = true;
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_1_NAMESPACE);
+            outputVersion = 21;
         }
+        else if (XmlConstants.CAOM2_0_NAMESPACE.equals(namespace))
+        {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_0_NAMESPACE);
+            outputVersion = 20;
+        }
+        else
+            throw new IllegalArgumentException("invalid namespace: " + namespace);
+            
+        this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
     }
     
     /**
@@ -266,7 +278,6 @@ public class ObservationWriter implements Serializable
     public void write(Observation obs, Writer writer)
         throws IOException
     {
-        init();
         long start = System.currentTimeMillis();
         Element root = getRootElement(obs);
         write(root, writer);
@@ -291,7 +302,11 @@ public class ObservationWriter implements Serializable
 
     private void addEntityAttributes(CaomEntity ce, Element el, DateFormat df)
     {
-        el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
+        if (outputVersion == 20)
+            el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
+        else
+            el.setAttribute("id", ce.getID().toString(), caom2Namespace);
+            
         if (ce.getLastModified() != null)
             el.setAttribute("lastModified", df.format(ce.getLastModified()), el.getNamespace());
     }
@@ -327,6 +342,7 @@ public class ObservationWriter implements Serializable
         addProposalElement(obs.proposal, element, dateFormat);
         addTargetElement(obs.target, element, dateFormat);
         addTargetPositionElement(obs.targetPosition, element, dateFormat);
+        addRequirements(obs.requirements, element, dateFormat);
         addTelescopeElement(obs.telescope, element, dateFormat);
         addInstrumentElement(obs.instrument, element, dateFormat);
         addEnvironmentElement(obs.environment, element, dateFormat);
@@ -432,6 +448,26 @@ public class ObservationWriter implements Serializable
         addNumberElement("cval1", targetPosition.getCoordinates().cval1, coords);
         addNumberElement("cval2", targetPosition.getCoordinates().cval2, coords);
         element.addContent(coords);
+        parent.addContent(element);
+    }
+    
+    /**
+     * Add a JDOM representation of Requirements.
+     * 
+     * @param req
+     * @param parent
+     * @param dateFormat 
+     */
+    protected void addRequirements(Requirements req, Element parent, DateFormat dateFormat)
+    {
+        if (outputVersion < 21)
+            return; // Requirements added in CAOM-2.1
+        if (req == null)
+            return;
+        Element element = getCaom2Element("requirements");
+        Element flag = getCaom2Element("flag");
+        flag.addContent(req.getFlag().getValue());
+        element.addContent(flag);
         parent.addContent(element);
     }
     
@@ -552,6 +588,7 @@ public class ObservationWriter implements Serializable
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
             addMetricsElement(plane.metrics, planeElement, dateFormat);
+            addQuaility(plane.quality, planeElement, dateFormat);
             addArtifactsElement(plane.getArtifacts(), planeElement, dateFormat);
             element.addContent(planeElement);
         }
@@ -595,6 +632,26 @@ public class ObservationWriter implements Serializable
         addNumberElement("backgroundStddev", metrics.backgroundStddev, element);
         addNumberElement("fluxDensityLimit", metrics.fluxDensityLimit, element);
         addNumberElement("magLimit", metrics.magLimit, element);
+        parent.addContent(element);
+    }
+    
+    /**
+     * Add a JDOM representation of DaatQuality.
+     * 
+     * @param dq
+     * @param parent
+     * @param dateFormat 
+     */
+    protected void addQuaility(DataQuality dq, Element parent, DateFormat dateFormat)
+    {
+        if (outputVersion < 21)
+            return; // DataQuality added in CAOM-2.1
+        if (dq == null)
+            return;
+        Element element = getCaom2Element("quality");
+        Element flag = getCaom2Element("flag");
+        flag.addContent(dq.getFlag().getValue());
+        element.addContent(flag);
         parent.addContent(element);
     }
 

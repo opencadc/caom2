@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.xml;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -80,9 +81,12 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -106,6 +110,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Iterator;
@@ -135,6 +140,58 @@ public class ObservationReaderWriterTest
         try
         {
             
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidLongID()
+    {
+        try
+        {
+            Observation obs = new SimpleObservation("FOO", "bar");
+            ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            w.write(obs, bos);
+            String str = bos.toString();
+            String invalid = str.replace("caom2:id=\"", "caom2:id=\"x");
+            log.debug("invalid XML: " + invalid);
+            ObservationReader r = new ObservationReader();
+            Observation obs2 = r.read(invalid);
+        }
+        catch(ObservationParsingException expected)
+        {
+            log.debug("caught expected exception: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidUUID()
+    {
+        try
+        {
+            Observation obs = new SimpleObservation("FOO", "bar");
+            ObservationWriter w = new ObservationWriter();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            w.write(obs, bos);
+            String str = bos.toString();
+            String invalid = str.replace("0000", "xxxx");
+            log.debug("invalid XML: " + invalid);
+            ObservationReader r = new ObservationReader();
+            Observation obs2 = r.read(invalid);
+        }
+        catch(ObservationParsingException expected)
+        {
+            log.debug("caught expected exception: " + expected);
         }
         catch(Exception unexpected)
         {
@@ -300,8 +357,9 @@ public class ObservationReaderWriterTest
             }
 
             SimpleObservation observation = getCompleteSimple(5, true);
-            testObservation(observation, false, true, "c2"); // custom ns prefix
+            testObservation(observation, false, "c2", null); // custom ns prefix, default namespace
 
+            testObservation(observation, false, null, XmlConstants.CAOM2_0_NAMESPACE); // compat mode
         }
         catch(Exception unexpected)
         {
@@ -425,16 +483,16 @@ public class ObservationReaderWriterTest
     protected void testObservation(Observation observation, boolean writeEmptyCollections)
         throws Exception
     {
-        testObservation(observation, writeEmptyCollections, false, null);
+        testObservation(observation, writeEmptyCollections, null, null);
     }
 
-    protected void testObservation(Observation observation, boolean writeEmptyCollections, boolean customPrefix, String nsPrefix)
+    protected void testObservation(Observation observation, boolean writeEmptyCollections, String nsPrefix, String forceNS)
         throws Exception
     {
         StringBuilder sb = new StringBuilder();
         ObservationWriter writer = new ObservationWriter();
-        if (customPrefix)
-            writer = new ObservationWriter(nsPrefix, writeEmptyCollections);
+        if (nsPrefix != null)
+            writer = new ObservationWriter(nsPrefix, forceNS, writeEmptyCollections);
         writer.setWriteEmptyCollections(writeEmptyCollections);
         writer.write(observation, sb);
         log.debug(sb.toString());
@@ -475,6 +533,8 @@ public class ObservationReaderWriterTest
         assertEquals(expected.metaRelease, actual.metaRelease);
         compareProposal(expected.proposal, actual.proposal);
         compareTarget(expected.target, actual.target);
+        compareTargetPosition(expected.targetPosition, actual.targetPosition);
+        compareRequirements(expected.requirements, actual.requirements);
         compareTelescope(expected.telescope, actual.telescope);
         compareInstrument(expected.instrument, actual.instrument);
         compareEnvironment(expected.environment, actual.environment);
@@ -524,6 +584,30 @@ public class ObservationReaderWriterTest
         {
             assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
         }
+    }
+    
+    protected void compareTargetPosition(TargetPosition expected, TargetPosition actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        assertEquals(expected.getCoordsys(), actual.getCoordsys());
+        comparePoint(expected.getCoordinates(), actual.getCoordinates());
+        assertEquals(expected.equinox, actual.equinox);
+    }
+    
+    protected void comparePoint(Point expected, Point actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        assertEquals(expected.cval1, actual.cval1, 0.0);
+        assertEquals(expected.cval2, actual.cval2, 0.0);
     }
     
     protected void compareTelescope(Telescope expected, Telescope actual)
@@ -633,9 +717,32 @@ public class ObservationReaderWriterTest
             assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
             assertEquals(expectedPlane.calibrationLevel, actualPlane.calibrationLevel);
             
+            compareDataQuality(expectedPlane.quality, actualPlane.quality);
             compareProvenance(expectedPlane.provenance, actualPlane.provenance);
             compareArtifacts(expectedPlane.getArtifacts(), actualPlane.getArtifacts());
         }
+    }
+    
+    protected void compareRequirements(Requirements expected, Requirements actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        assertEquals(expected.getFlag(), actual.getFlag());
+    }
+    
+    protected void compareDataQuality(DataQuality expected, DataQuality actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        assertEquals(expected.getFlag(), actual.getFlag());
     }
     
     protected void compareProvenance(Provenance expected, Provenance actual)

@@ -76,9 +76,7 @@ import ca.nrc.cadc.caom2.types.TimeUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.log4j.Logger;
@@ -96,7 +94,7 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     private static final Logger log = Logger.getLogger(Plane.class);
     
     // immutable state
-    private String productID;
+    private final String productID;
     
     // mutable contents
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
@@ -108,6 +106,7 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     public CalibrationLevel calibrationLevel;
     public Provenance provenance;
     public Metrics metrics;
+    public DataQuality quality;
 
     // computed state
     private transient Position position;

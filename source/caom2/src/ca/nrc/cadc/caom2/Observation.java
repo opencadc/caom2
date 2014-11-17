@@ -85,8 +85,8 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
-    private String collection;
-    private String observationID;
+    private final String collection;
+    private final String observationID;
 
     // mutable state
     private Algorithm algorithm;
@@ -99,13 +99,12 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     public Instrument instrument;
     public Target target;
     public TargetPosition targetPosition;
+    public Requirements requirements;
     public Environment environment;
     public Date metaRelease;
 
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
-
-    private Observation() { }
 
     /**
      * Constructor with required arguments.

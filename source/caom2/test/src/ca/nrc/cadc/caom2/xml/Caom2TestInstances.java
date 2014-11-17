@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -86,7 +87,10 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
@@ -187,6 +191,7 @@ public class Caom2TestInstances
             observation.proposal = getProposal();
             observation.target = getTarget();
             observation.targetPosition = getTargetPosition("ICRS", null);
+            observation.requirements = new Requirements(Status.FAIL);
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -211,6 +216,7 @@ public class Caom2TestInstances
             observation.proposal = getProposal();
             observation.target = getTarget();
             observation.targetPosition = getTargetPosition("FK5", 2000.0);
+            observation.requirements = new Requirements(Status.FAIL);
             observation.telescope = getTelescope();
             observation.instrument = getInstrument();
             observation.environment = getEnvironment();
@@ -309,6 +315,7 @@ public class Caom2TestInstances
             plane.calibrationLevel = CalibrationLevel.PRODUCT;
             plane.provenance = getProvenance();
             plane.metrics = getMetrics();
+            plane.quality = new DataQuality(Quality.JUNK);
         }
         if (depth > 2)
             plane.getArtifacts().addAll(getArtifacts());

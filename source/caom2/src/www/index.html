@@ -126,7 +126,9 @@ methods should also be stored for efficient querying (for example, by the TAP se
 <h3>Changes</h3>
 
 <ul>
-    <li>2014-02-10 (red outline): added restwav (observed rest wavelength) to computed plane energy metadata
+	<li>2014-11-18 (red outline): added Observation.requirements with a Status flag; added Plane.qualityFlag; moved 
+		all vocabularies (enumerations) a separate diagram (below)
+    <li>2014-02-10: added restwav (observed rest wavelength) to computed plane energy metadata
     <li>2013-11-26: added moving flag to Target class, added TargetPosition class
     <li>2013-09-08: added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
         POLA (linear polarized angle), EPOLI (elliptical polarized intensity), CPOLI (circular polarized intensity), 
@@ -171,6 +173,19 @@ methods should also be stored for efficient querying (for example, by the TAP se
     
 </ul>
 
+<p>
+All the mini-vocabularies defined in the CAOM model are shown below. More detailed definitions and actual
+literal values used when stored or serialised follow.
+</p>
+
+<a href="uml.CAOM5vocabularies.png"> <img src="uml/CAOM5vocabularies.png" alt="CAOM vocabularies"></a>
+
+<h3>Changes</h3>
+<ul>
+	<li>2014-11-18 (red outline): separate vocabulary (enumerations) diagram, added Status and Quality; 
+        removed ProductType.CATALOG value</li>
+</ul>
+
 <h3>Observation</h3>
 
 <p>
@@ -213,13 +228,20 @@ are a few exceptions where numeric values or mixed-case strings from an external
     <tr>
         <td></td><td>FIELD</td><td>field</td><td></td>
     </tr>
+	<tr class="even">
+        <td>Status</td>
+        <td/><td/><td>flag to characterise the satisfaction of requirements</td>
+    </tr>
+    <tr>
+        <td></td><td>FAIL</td><td>fail</td><td></td>
+    </tr>
 </table>
 </div>
 
 <h3>Plane</h3>
 
 <p>
-A plane is one (of several) data products that are created as part of an observation. Each
+A plane is one (of several) data product(s) that are created as part of an observation. Each
 simple observation typically has one <em>raw</em> plane created by the observing process itself and may
 have one or more additional planes that are produced by subsequent data processing. The metadata
 for a plane characterises the data product: the coverage and sampling in position, energy, time,
@@ -301,6 +323,13 @@ This metadata is generally computed from the artifact metadata and is used prima
     <tr>
         <td></td><td>GAMMARAY</td><td>Gamma-ray</td><td>energy &gt; 120keV</td>
     </tr>
+	<tr class="even">
+        <td>Quality</td>
+        <td/><td/><td>flag data quality</td>
+    </tr>
+    <tr>
+        <td></td><td>JUNK</td><td>junk</td><td>this data is bad for everything</td>
+    </tr>
 </table>
 </div>
 
@@ -338,9 +367,6 @@ with that science data only; normally science and calibration files are part of 
     </tr>
     <tr>
         <td></td><td>PREVIEW</td><td>preview</td><td>non-science quality rendition of the data for preview</td>
-    </tr>
-     <tr>
-        <td></td><td>CATALOG</td><td>catalog</td><td>associated catalog files extracted from the science data</td>
     </tr>
      <tr>
         <td></td><td>NOISE</td><td>noise</td><td>associated noise files needed for analysis</td>
@@ -561,9 +587,8 @@ The mapping is as follows:
 <p>
     Once of the goals for CAOM is to enable instances of observations to be harvested to
     alternate databases. To support this, all CAOM <i>entities</i> have a unique identifier to
-    support fine-grained updating of existing records and a a last-modified timestamp to support
-    both optimisations (only update when needed) and incremental harvesting (normally only detect
-    and harvest changed entities).
+    support fine-grained updating of existing records and a last-modified timestamp to support
+    incremental harvesting (normally only detect and harvest changed entities).
 </p>
 
 <a href="uml/CAOM4entities.png">  <img src="uml/CAOM4entities.png" alt="core CAOM model"></a>
