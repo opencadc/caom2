@@ -34,6 +34,8 @@ create table caom2.Observation
     telescope_geoLocationZ double precision,
     telescope_keywords text,
 
+    requirements_flag varchar(16),
+
     instrument_name varchar(64),
     instrument_keywords text,
 

@@ -96,6 +96,7 @@ import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
@@ -107,7 +108,10 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
@@ -1330,6 +1334,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             if (sci)
                 o.targetPosition.equinox = 2000.0;
             
+            o.requirements = new Requirements(Status.FAIL);
+            
             o.telescope = new Telescope("BothEyes");
             o.telescope.getKeywords().addAll(TEST_KEYWORDS);
             o.telescope.geoLocationX = 100.0;
@@ -1383,6 +1389,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             p.metrics.backgroundStddev = 0.3;
             p.metrics.fluxDensityLimit = null;
             p.metrics.magLimit = null;
+            
+            p.quality = new DataQuality(Quality.JUNK);
         }
         if (depth <= 2)
             return p;

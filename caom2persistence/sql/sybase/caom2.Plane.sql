@@ -24,6 +24,8 @@ create table caom2_Plane
     metrics_fluxDensityLimit double precision null,
     metrics_magLimit double precision null,
 
+    quality_flag varchar(16) null,
+
 -- internal
     obsID bigint not null references caom2_Observation (obsID),
     planeID bigint not null  primary key nonclustered,
