@@ -160,6 +160,56 @@ public class CaomEntityTest
     }
     
     @Test
+    public void testUUID()
+    {
+        try
+        {
+            UUID id;
+                    
+            id = new UUID(0L, 0L);
+            log.debug("[0,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(0L, 1L);
+            log.debug("[0,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(1L, 0L);
+            log.debug("[1,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(1L, 1L);
+            log.debug("[1,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(0L, -1L);
+            log.debug("[0,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(-1L, 0L);
+            log.debug("[-1,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(1L, -1L);
+            log.debug("[1,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(-1L, 1L);
+            log.debug("[-1,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(-1L, -1L);
+            log.debug("[-1,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testEquals()
     {
         try
