@@ -155,7 +155,7 @@ public class CaomRepoIntTests
             File SSL_CERT1 = new File("build/test/class/proxy1.pem");
             File SSL_CERT2 = new File("build/test/class/proxy2.pem");
             File SSL_CERT3 = new File("build/test/class/proxy3.pem");
-            
+
             SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
             SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
             SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
