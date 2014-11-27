@@ -49,7 +49,7 @@
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
 *  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ1
 *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero

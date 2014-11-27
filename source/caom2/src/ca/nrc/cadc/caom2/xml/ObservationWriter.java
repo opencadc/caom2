@@ -272,7 +272,7 @@ public class ObservationWriter implements Serializable
     /**
      * Write an Observation to a Writer.
      * @param obs Observation to write.
-     * @param builder Writer to write to.
+     * @param writer Writer to write to.
      * @throws IOException if the writer fails to write.
      */
     public void write(Observation obs, Writer writer)
@@ -363,7 +363,7 @@ public class ObservationWriter implements Serializable
      *
      * @param algorithm The Algorithm to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addAlgorithmElement(Algorithm algorithm, Element parent, DateFormat dateFormat)
     {
@@ -381,7 +381,7 @@ public class ObservationWriter implements Serializable
      *
      * @param proposal The Proposal to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addProposalElement(Proposal proposal, Element parent, DateFormat dateFormat)
     {
@@ -403,7 +403,7 @@ public class ObservationWriter implements Serializable
      *
      * @param target The Target to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addTargetElement(Target target, Element parent, DateFormat dateFormat)
     {
@@ -425,9 +425,9 @@ public class ObservationWriter implements Serializable
      * Builds a JDOM representation of an TargetPosition and adds it to the
      * parent element.
      *
-     * @param target The Target to add to the parent.
+     * @param targetPosition The Target to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addTargetPositionElement(TargetPosition targetPosition, Element parent, DateFormat dateFormat)
     {
@@ -477,7 +477,7 @@ public class ObservationWriter implements Serializable
      *
      * @param telescope The Telescope to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addTelescopeElement(Telescope telescope, Element parent, DateFormat dateFormat)
     {
@@ -499,7 +499,7 @@ public class ObservationWriter implements Serializable
      *
      * @param instrument The Instrument to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addInstrumentElement(Instrument instrument, Element parent, DateFormat dateFormat)
     {
@@ -518,7 +518,7 @@ public class ObservationWriter implements Serializable
      *
      * @param environment The Environment to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addEnvironmentElement(Environment environment, Element parent, DateFormat dateFormat)
     {
@@ -542,7 +542,7 @@ public class ObservationWriter implements Serializable
      *
      * @param members The Set of ObservationURI to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addMembersElement(Set<ObservationURI> members, Element parent, DateFormat dateFormat)
     {        
@@ -563,7 +563,7 @@ public class ObservationWriter implements Serializable
      *
      * @param planes The Set of Plane's to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addPlanesElement(Set<Plane> planes, Element parent, DateFormat dateFormat)
     {
@@ -599,9 +599,9 @@ public class ObservationWriter implements Serializable
      * Builds a JDOM representation of an Telescope and adds it to the
      * parent element.
      *
-     * @param telescope The Telescope to add to the parent.
+     * @param provenance The Provenance to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addProvenanceElement(Provenance provenance, Element parent, DateFormat dateFormat)
     {
@@ -670,9 +670,9 @@ public class ObservationWriter implements Serializable
      * Builds a JDOM representation of a Set of PlaneURI and adds it to the
      * parent element.
      *
-     * @param members The Set of PlaneURI to add to the parent.
+     * @param inputs The Set of PlaneURI to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addInputsElement(Set<PlaneURI> inputs, Element parent, DateFormat dateFormat)
     {
@@ -693,7 +693,7 @@ public class ObservationWriter implements Serializable
      *
      * @param artifacts The Set of Artifact's to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat IVOA DateFormat.
      */
     protected void addArtifactsElement(Set<Artifact> artifacts, Element parent, DateFormat dateFormat)
     {
@@ -725,7 +725,7 @@ public class ObservationWriter implements Serializable
      *
      * @param parts The Set of Part's to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addPartsElement(Set<Part> parts, Element parent, DateFormat dateFormat)
     {
@@ -754,7 +754,7 @@ public class ObservationWriter implements Serializable
      *
      * @param chunks The Set of Chunk's to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addChunksElement(Set<Chunk> chunks, Element parent, DateFormat dateFormat)
     {
@@ -795,7 +795,7 @@ public class ObservationWriter implements Serializable
      *
      * @param observable The ObservableAxis to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addObservableAxisElement(ObservableAxis observable, Element parent, DateFormat dateFormat)
     {
@@ -815,7 +815,7 @@ public class ObservationWriter implements Serializable
      *
      * @param position The SpatialWCS to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addSpatialWCSElement(SpatialWCS position, Element parent, DateFormat dateFormat)
     {
@@ -836,7 +836,7 @@ public class ObservationWriter implements Serializable
      *
      * @param energy The SpectralWCS to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addSpectralWCSElement(SpectralWCS energy, Element parent, DateFormat dateFormat)
     {
@@ -865,7 +865,7 @@ public class ObservationWriter implements Serializable
      *
      * @param time The TemporalWCS to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addTemporalWCSElement(TemporalWCS time, Element parent, DateFormat dateFormat)
     {
@@ -888,7 +888,7 @@ public class ObservationWriter implements Serializable
      *
      * @param polarization The PolarizationWCS to add to the parent.
      * @param parent The parent element for this child element.
-     * @param the IVOA DateFormat.
+     * @param dateFormat The IVOA DateFormat.
      */
     protected void addPolarizationWCSElement(PolarizationWCS polarization, Element parent, DateFormat dateFormat)
     {
