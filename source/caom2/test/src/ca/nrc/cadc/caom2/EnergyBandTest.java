@@ -178,6 +178,22 @@ public class EnergyBandTest
     }
     
     @Test
+    public void testZeroWavelength()
+    {
+        try
+        {
+            Interval i = new Interval(0.0, Double.MIN_VALUE);
+            EnergyBand eb = EnergyBand.getEnergyBand(i);
+            Assert.assertNull(eb);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testFromNoOverlap()
     {
         try

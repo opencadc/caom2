@@ -167,8 +167,8 @@ public enum EnergyBand implements CaomEnum
         // xray: 0.12-120 keV
         energyBands.add(new EnergyBandWrapper(EnergyBand.XRAY, ec.convert(0.12, "ENER", "keV"), ec.convert(120.0, "ENER", "keV")));
 
-        // gamma: 120-1e6 keV ~ 120 keV to 0 wavelength
-        energyBands.add(new EnergyBandWrapper(EnergyBand.GAMMARAY, ec.convert(120.0, "ENER", "keV"), 0.0));
+        // gamma: 120-1e6 keV
+        energyBands.add(new EnergyBandWrapper(EnergyBand.GAMMARAY, ec.convert(120.0, "ENER", "keV"), ec.convert(1.0e6, "ENER", "keV")));
     }
 
     private static final class EnergyBandWrapper implements Serializable
