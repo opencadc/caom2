@@ -1,0 +1,3 @@
+ad:CFHT/700000o
+ ad:CFHT/700000p
+ad:CFHT/700000q

@@ -66,58 +66,129 @@
 *
 ************************************************************************
 */
-package ca.nrc.cadc.caom2.fits.wcs;
+package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.fits.FitsMapping;
-import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.FileReader;
+import java.util.Set;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class Position
-{   
-    private static final boolean DESCRIBED = true;
-    private static final String DEFAULT_CUNIT = "deg";
-    
-    public static SpatialWCS getPosition(String utype, FitsMapping mapping)
-        throws PartialWCSException
+public class CompressedImageTest extends AbstractTest
+{
+    private static final Logger log = Logger.getLogger(CompressedImageTest.class);
+    static
     {
-        if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")) )
-            return null;
-        
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
+    }
+
+    public CompressedImageTest()
+    {
+        super();
+    }
+
+//    @Test
+    public void testCompressedImage()
+    {
         try
         {
-            // If cunit isn't set, update the mapping cunit to deg.
-            if (mapping.getMapping(utype + ".axis.axis1.cunit") == null)
-                mapping.setArgumentProperty(utype + ".axis.axis1.cunit", DEFAULT_CUNIT);
-            if (mapping.getMapping(utype + ".axis.axis2.cunit") == null)
-                mapping.setArgumentProperty(utype + ".axis.axis2.cunit", DEFAULT_CUNIT);
-            
-            CoordAxis2D axis = Wcs.getCoordAxis2D(utype + ".axis", mapping);
-            if (axis == null)
-                return null;
+            log.debug("testCompressedImage");
 
-            if (DESCRIBED)
+            String[] args = new String[]
             {
-                if (axis.bounds == null && axis.function == null && axis.range == null)
-                    return null;
+                "--collection=TEST",
+                "--observationID=1247354o",
+                "--productID=productID",
+                "--uri=ad:CFHT/1247354o"
+            };
+
+            doTest(args);
+            doTest(args, "build/test/IsCompressedImageTest.xml");
+
+            // check that CDi_j worked
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(new FileReader("build/test/CompressedImageTest.xml"));
+            Assert.assertNotNull(o);
+            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
+            Assert.assertNotNull("parts", parts);
+            Assert.assertTrue("number parts", parts.size() == 5);
+
+            int count = 0;
+            for (Part part : parts)
+            {
+                Set<Chunk> chunks = part.getChunks();
+                Assert.assertNotNull("chunks", chunks);
+                if (count == 0)
+                {
+                    Assert.assertTrue("number chunks", chunks.size() == 0);
+                }
+                else
+                {
+                    Assert.assertTrue("number chunks", chunks.size() == 1);
+                }
+                count++;
             }
 
-            // do not check cunit for spatial axes since wcslib will assume deg by default and lots
-            // of fits files probably take advantage of that :-(
-            SpatialWCS position = new SpatialWCS(axis);
-            position.coordsys = Wcs.getStringValue(utype + ".coordsys", mapping);
-            position.equinox = Wcs.getDoubleValue(utype + ".equinox", mapping);
-            position.resolution = Wcs.getDoubleValue(utype + ".resolution", mapping);
-            return position;
+            log.info("testCompressedImage passed.");
         }
-        catch(IllegalArgumentException ex)
+        catch (Exception unexpected)
         {
-            throw new PartialWCSException("failed to create SpatialWCS: " + ex.getMessage(), ex);
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
+    @Test
+    public void testNotCompressedImage()
+    {
+        try
+        {
+            log.debug("testNotCompressedImage");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=icr3a1040_drz",
+                "--productID=productID",
+                "--uri=ad:HSTCA/icr3a1040_drz"
+            };
+
+            doTest(args);
+            doTest(args, "build/test/NotCompressedImageTest.xml");
+
+            // check that CDi_j worked
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(new FileReader("build/test/NotCompressedImageTest.xml"));
+            Assert.assertNotNull(o);
+            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
+            Assert.assertNotNull("parts", parts);
+            Assert.assertTrue("number parts", parts.size() == 5);
+
+            int count = 0;
+            for (Part part : parts)
+            {
+                count += part.getChunks().size();
+            }
+            Assert.assertTrue("number chunks", count == 3);
+
+            log.info("testNotCompressedImage passed.");
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

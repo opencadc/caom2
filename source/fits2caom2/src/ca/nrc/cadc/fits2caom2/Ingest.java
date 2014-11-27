@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.IngestableFile;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.caom2.fits.exceptions.MapperException;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.fits.wcs.Energy;
 import ca.nrc.cadc.caom2.fits.wcs.Observable;
 import ca.nrc.cadc.caom2.fits.wcs.Polarization;
@@ -134,6 +135,7 @@ public class Ingest implements Runnable
     private boolean dryrun;
     private boolean keepFiles;
     private boolean strictFitsParse = false;
+    private boolean ignorePartialWCS = false;
     
     public Ingest(String collection, String observationID, String productID, URI[] uris, Map<String, String> config)
     {
@@ -192,6 +194,11 @@ public class Ingest implements Runnable
     public void setSSLEnabled(boolean sslEnabled)
     {
         this.sslEnabled = sslEnabled;
+    }
+
+    public void setIgnorePartialWCS(boolean ignorePartialWCS)
+    {
+        this.ignorePartialWCS = ignorePartialWCS;
     }
 
     /**
@@ -569,16 +576,95 @@ public class Ingest implements Runnable
         mapping.observableAxis = chunk.observableAxis;
         
         // Populate the WCS.
-        log.debug("ingest: chunk.position for " + mapping.uri + "[" + mapping.extension + "]");
-        chunk.position = Position.getPosition("Chunk.position", mapping);
-        log.debug("ingest: chunk.energy for " + mapping.uri + "[" + mapping.extension + "]");
-        chunk.energy = Energy.getEnergy("Chunk.energy", mapping);
-        log.debug("ingest: chunk.time for " + mapping.uri + "[" + mapping.extension + "]");
-        chunk.time = Time.getTime("Chunk.time", mapping);
-        log.debug("ingest: chunk.polarization for " + mapping.uri + "[" + mapping.extension + "]");
-        chunk.polarization = Polarization.getPolarization("Chunk.polarization", mapping);
-        log.debug("ingest: chunk.observable for " + mapping.uri + "[" + mapping.extension + "]");
-        chunk.observable = Observable.getObservable("Chunk.observable", mapping);
+        try
+        {
+            log.debug("ingest: chunk.position for " + mapping.uri + "[" + mapping.extension + "]");
+            chunk.position = Position.getPosition("Chunk.position", mapping);
+        }
+        catch (PartialWCSException e)
+        {
+            if (ignorePartialWCS)
+            {
+                chunk.position = null;
+                log.info("ignoring partial Position WCS");
+            }
+            else
+            {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        try
+        {
+            log.debug("ingest: chunk.energy for " + mapping.uri + "[" + mapping.extension + "]");
+            chunk.energy = Energy.getEnergy("Chunk.energy", mapping);
+        }
+        catch (PartialWCSException e)
+        {
+            if (ignorePartialWCS)
+            {
+                chunk.energy = null;
+                log.info("ignoring partial Energy WCS");
+            }
+            else
+            {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        try
+        {
+            log.debug("ingest: chunk.time for " + mapping.uri + "[" + mapping.extension + "]");
+            chunk.time = Time.getTime("Chunk.time", mapping);
+        }
+        catch (PartialWCSException e)
+        {
+            if (ignorePartialWCS)
+            {
+                chunk.time = null;
+                log.info("ignoring partial Time WCS");
+            }
+            else
+            {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        try
+        {
+            log.debug("ingest: chunk.polarization for " + mapping.uri + "[" + mapping.extension + "]");
+            chunk.polarization = Polarization.getPolarization("Chunk.polarization", mapping);
+        }
+        catch (PartialWCSException e)
+        {
+            if (ignorePartialWCS)
+            {
+                chunk.polarization = null;
+                log.info("ignoring partial Polarization WCS");
+            }
+            else
+            {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        try
+        {
+            log.debug("ingest: chunk.observable for " + mapping.uri + "[" + mapping.extension + "]");
+            chunk.observable = Observable.getObservable("Chunk.observable", mapping);
+        }
+        catch (PartialWCSException e)
+        {
+            if (ignorePartialWCS)
+            {
+                chunk.observable = null;
+                log.info("ignoring partial Observable WCS");
+            }
+            else
+            {
+                throw new IllegalArgumentException(e);
+            }
+        }
         log.debug("ingest: chunk DONE");
     }
     
@@ -589,6 +675,17 @@ public class Ingest implements Runnable
 
     protected boolean hasData(FitsMapping mapping)
     {
+        // Only want to process cfitsio compressed images.
+        String xtension = mapping.getKeywordValue("XTENSION");
+        if (xtension != null && xtension.equals("BINTABLE"))
+        {
+            String zimage = mapping.getKeywordValue("ZIMAGE");
+            if (zimage == null || (zimage != null && !zimage.equals("T")))
+            {
+                return false;
+            }
+        }
+
         long naxis = stringToNum(mapping.getKeywordValue("NAXIS"), 0);
         if (naxis == 0)
         {

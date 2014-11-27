@@ -85,7 +85,7 @@ public class AbstractTest
     private static final Logger log = Logger.getLogger(AbstractTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
     public AbstractTest() { }
@@ -93,15 +93,27 @@ public class AbstractTest
     protected Integer doTest(String[] args)
         throws Exception
     {
-        return doTest(args, "build/test/int-test-output.xml");
+        return doTest(args, 0, "build/test/int-test-output.xml");
+    }
+
+    protected Integer doTest(String[] args, int expectedExitValue)
+        throws Exception
+    {
+        return doTest(args, expectedExitValue, "build/test/int-test-output.xml");
     }
 
     protected Integer doTest(String[] args, String outFilename)
         throws Exception
     {
+        return doTest(args, 0, outFilename);
+    }
+
+    protected Integer doTest(String[] args, int expectedExitValue, String outFilename)
+        throws Exception
+    {
         String[] exec = new String[args.length + 3];
         exec[0] = "./scripts/fits2caom2";
-        exec[1] = "-v";
+        exec[1] = "-d";
         exec[2] = "--out="+outFilename;
 
         System.arraycopy(args, 0, exec, 3, args.length);
@@ -127,7 +139,7 @@ public class AbstractTest
 
         log.debug("Exit value: " + exitValue);
         log.debug(output);
-        Assert.assertEquals("exit value", 0, exitValue);
+        Assert.assertEquals("exit value", expectedExitValue, exitValue);
         return exitValue;
     }
     

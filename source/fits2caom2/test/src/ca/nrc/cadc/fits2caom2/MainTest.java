@@ -125,6 +125,7 @@ public class MainTest
             "--" + Argument.DEFAULT + "=test/config/fits2caom2/fits2caom2-simple.default",
             "--" + Argument.OVERRIDE + "=test/config/fits2caom2/fits2caom2.override",
             "--" + Argument.TEMP + "=/tmp",
+            "--" + Argument.IGNORE_PARTIAL_WCS,
             "-"  + Argument.NETRC_SHORT,
             "--" + Argument.NETRC,
             "--" + Argument.KEEP,
@@ -194,12 +195,37 @@ public class MainTest
     @Test
     public void testAllValidArguments()
     {
-
         ArgumentMap argsMap = new ArgumentMap(allArguments);
         try
         {
             Ingest ing = Main.createIngest(argsMap);
         }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidArguments()
+    {
+        String[] args = new String[]
+        {
+            "--" + Argument.COLLECTION + "=arg.collection",
+            "--" + Argument.OBSERVATION_ID + "=arg.observationID",
+            "--" + Argument.PRODUCT_ID + "=arg.productID",
+            "--" + Argument.URI + "=@test/config/fits2caom2/uriAndLocal.txt",
+            "--" + Argument.OUT + "=test/config/fits2caom2/out.xml",
+            "--" + Argument.LOCAL + "=foo"
+        };
+        ArgumentMap argsMap = new ArgumentMap(args);
+        try
+        {
+            Ingest ing = Main.createIngest(argsMap);
+            Assert.fail("expected IllegalArgumentException for invalid arguments");
+        }
+        catch(IllegalArgumentException expected) { }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);

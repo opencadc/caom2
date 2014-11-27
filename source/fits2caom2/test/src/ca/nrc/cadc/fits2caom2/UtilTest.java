@@ -113,4 +113,31 @@ public class UtilTest
         Assert.assertNotNull(value);
         Assert.assertEquals("myUserConfigValue", value);
     }
+
+    @Test
+    public void testUriAsFilename() throws Exception
+    {
+        Util.UriLocal uriLocal;
+        String argument = "@test/config/fits2caom2/uriAndLocalArguments.bad";
+        try
+        {
+            uriLocal = Util.argumentUriToUriLocal(argument);
+            Assert.fail("different number of uri and local arguments should throw IllegalArgumentException");
+        }
+        catch (IllegalArgumentException expected) {}
+
+        argument = "@test/config/fits2caom2/uriNoLocalArguments.txt";
+        uriLocal = Util.argumentUriToUriLocal(argument);
+        Assert.assertNotNull(uriLocal);
+        Assert.assertNotNull(uriLocal.uri);
+        Assert.assertEquals(3, uriLocal.uri.length);
+        Assert.assertNull(uriLocal.local);
+
+        argument = "@test/config/fits2caom2/uriAndLocalArguments.good";
+        uriLocal = Util.argumentUriToUriLocal(argument);
+        Assert.assertNotNull(uriLocal);
+        Assert.assertNotNull(uriLocal.uri);
+        Assert.assertNotNull(uriLocal.local);
+        Assert.assertEquals(uriLocal.uri.length, uriLocal.local.length);
+    }
 }

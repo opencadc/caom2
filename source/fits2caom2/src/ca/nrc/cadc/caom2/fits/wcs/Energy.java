@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 
@@ -81,6 +82,7 @@ public class Energy
     private static final boolean DESCRIBED = true;
     
     public static SpectralWCS getEnergy(String utype, FitsMapping mapping)
+        throws PartialWCSException
     {
         if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.energy")) )
             return null;
@@ -116,7 +118,7 @@ public class Energy
         }
         catch(IllegalArgumentException ex)
         {
-            throw new IllegalArgumentException("failed to create SpectralWCS: " + ex.getMessage(), ex);
+            throw new PartialWCSException("failed to create SpectralWCS: " + ex.getMessage(), ex);
         }
     }
     

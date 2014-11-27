@@ -175,7 +175,9 @@ public class Main
         String collection = argsMap.getValue(Argument.COLLECTION);
         String observationID = argsMap.getValue(Argument.OBSERVATION_ID);
         String productID = argsMap.getValue(Argument.PRODUCT_ID);
-        URI[] uris = Util.argumentUriToArray(argsMap.getValue(Argument.URI));
+        Util.UriLocal uriLocal = Util.argumentUriToUriLocal(argsMap.getValue(Argument.URI));
+        URI[] uris = uriLocal.uri;
+        File[] localFiles = uriLocal.local;
 
         Map<String,String> config = Util.loadConfig(argsMap.getValue(Argument.CONFIG));
 
@@ -188,6 +190,7 @@ public class Main
         // Optional command line arguments.
         ingest.setKeepFiles(argsMap.isSet(Argument.KEEP));
         ingest.setDryrun(argsMap.isSet(Argument.TEST));
+        ingest.setIgnorePartialWCS(argsMap.isSet(Argument.IGNORE_PARTIAL_WCS));
         
         // always set this option
         ingest.setStructFitsParse(true);
@@ -195,7 +198,14 @@ public class Main
         FitsMapping fm = Util.getFitsMapping(config, argsMap.getValue(Argument.DEFAULT), argsMap.getValue(Argument.OVERRIDE));
         ingest.setMapping(fm);
 
-        File[] localFiles = Util.argumentFileToArray(argsMap.getValue(Argument.LOCAL));
+        if (localFiles != null && argsMap.isSet(Argument.LOCAL))
+        {
+            throw new IllegalArgumentException("--uri with @filename and --local cannot be used togeather");
+        }
+        if (localFiles == null)
+        {
+            localFiles = Util.argumentFileToArray(argsMap.getValue(Argument.LOCAL));
+        }
         if (localFiles != null && localFiles.length != uris.length)
             throw new IllegalArgumentException("number of --uri and --local arguments do not match");
         ingest.setLocalFiles(localFiles);

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2014.                            (c) 2014.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,58 +66,81 @@
 *
 ************************************************************************
 */
-package ca.nrc.cadc.caom2.fits.wcs;
 
-import ca.nrc.cadc.caom2.fits.FitsMapping;
-import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+package ca.nrc.cadc.fits2caom2.integration;
 
-/**
- *
- * @author jburke
- */
-public class Position
-{   
-    private static final boolean DESCRIBED = true;
-    private static final String DEFAULT_CUNIT = "deg";
-    
-    public static SpatialWCS getPosition(String utype, FitsMapping mapping)
-        throws PartialWCSException
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+
+public class PartialWCSTest extends AbstractTest
+{
+    private static final Logger log = Logger.getLogger(PartialWCSTest.class);
+    static
     {
-        if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")) )
-            return null;
-        
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
+    }
+
+    public PartialWCSTest()
+    {
+        super();
+    }
+
+    @Test
+    public void testAllowPartialWCS()
+    {
         try
         {
-            // If cunit isn't set, update the mapping cunit to deg.
-            if (mapping.getMapping(utype + ".axis.axis1.cunit") == null)
-                mapping.setArgumentProperty(utype + ".axis.axis1.cunit", DEFAULT_CUNIT);
-            if (mapping.getMapping(utype + ".axis.axis2.cunit") == null)
-                mapping.setArgumentProperty(utype + ".axis.axis2.cunit", DEFAULT_CUNIT);
-            
-            CoordAxis2D axis = Wcs.getCoordAxis2D(utype + ".axis", mapping);
-            if (axis == null)
-                return null;
+            log.debug("testAllowPartialWCS");
 
-            if (DESCRIBED)
+            String[] args = new String[]
             {
-                if (axis.bounds == null && axis.function == null && axis.range == null)
-                    return null;
-            }
+                "--collection=TEST",
+                "--observationID=AllowPartialWCS",
+                "--productID=productID",
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=test/config/fits2caom2/partialWCS.default"
+            };
 
-            // do not check cunit for spatial axes since wcslib will assume deg by default and lots
-            // of fits files probably take advantage of that :-(
-            SpatialWCS position = new SpatialWCS(axis);
-            position.coordsys = Wcs.getStringValue(utype + ".coordsys", mapping);
-            position.equinox = Wcs.getDoubleValue(utype + ".equinox", mapping);
-            position.resolution = Wcs.getDoubleValue(utype + ".resolution", mapping);
-            return position;
+            doTest(args, 1);
+
+            log.info("testAllowPartialWCS passed.");
         }
-        catch(IllegalArgumentException ex)
+        catch (Exception unexpected)
         {
-            throw new PartialWCSException("failed to create SpatialWCS: " + ex.getMessage(), ex);
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
+    @Test
+    public void testIgnorePartialWCS()
+    {
+        try
+        {
+            log.debug("testIgnorePartialWCS");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=AllowPartialWCS",
+                "--productID=productID",
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=test/config/fits2caom2/partialWCS.default",
+                "--ignorePartialWCS"
+            };
+
+            doTest(args);
+
+            log.info("testIgnorePartialWCS passed.");
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

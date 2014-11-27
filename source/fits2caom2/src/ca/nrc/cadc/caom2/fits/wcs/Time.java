@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.fits.wcs;
 
 import ca.nrc.cadc.caom2.fits.FitsMapping;
+import ca.nrc.cadc.caom2.fits.exceptions.PartialWCSException;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -97,6 +98,7 @@ public class Time
     private static final boolean DESCRIBED = true;
      
     public static TemporalWCS getTime(String utype, FitsMapping mapping)
+        throws PartialWCSException
     {
         if ( FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.time")) )
             return null;
@@ -150,7 +152,7 @@ public class Time
         }
         catch(IllegalArgumentException ex)
         {
-            throw new IllegalArgumentException("failed to create TemporalWCS: " + ex.getMessage(), ex);
+            throw new PartialWCSException("failed to create TemporalWCS: " + ex.getMessage(), ex);
         }
     }
     
