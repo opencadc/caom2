@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.dao.ObservationDAO;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountWriter;
 import org.apache.log4j.Logger;
 
@@ -101,7 +102,9 @@ public class GetAction extends RepoAction
         if (obs == null)
             throw new ObservationNotFoundException(uri);
 
-        ObservationWriter ow = new ObservationWriter();
+        // explicitly write with CAOM-2.0 schema
+        ObservationWriter ow = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
+        
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
         ow.write(obs, bc);

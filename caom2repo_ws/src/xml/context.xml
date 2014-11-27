@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+    <ResourceLink name="jdbc/caom2repo"
+        global="jdbc/caom2repo-dev"
+        type="javax.sql.DataSource" />
+
+    <ResourceLink name="jdbc/caom2repo-prod"
+        global="jdbc/caom2repo-prod"
+        type="javax.sql.DataSource" />        
+</Context>

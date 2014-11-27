@@ -65,7 +65,7 @@ public class Main
             if (recomp && skip)
             {
                 usage();
-                log.warn("cannot specify both --discovery and --skip");
+                log.warn("cannot specify both --recompute and --skip");
             }
 
             String src = am.getValue("source");
