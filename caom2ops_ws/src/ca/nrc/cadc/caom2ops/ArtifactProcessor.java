@@ -151,13 +151,23 @@ public class ArtifactProcessor
         List<DataLink> ret = new ArrayList<DataLink>(artifacts.size());
         for (Artifact a : artifacts)
         {
+            DataLink.Term sem = DataLink.Term.THIS;
+            if (ProductType.PREVIEW.equals(a.productType))
+                sem = DataLink.Term.PREVIEW;
+            else if (ProductType.CATALOG.equals(a.productType))
+                sem = DataLink.Term.DERIVATION;
+            else if (ProductType.AUXILIARY.equals(a.productType)
+                    || ProductType.WEIGHT.equals(a.productType)
+                    || ProductType.NOISE.equals(a.productType)
+                    || ProductType.INFO.equals(a.productType))
+                sem = DataLink.Term.AUXILIARY;
+            //else: THIS
+                        
             // direct download links
             try
             {
-                URL download = getDownloadURL(a);
-                DataLink dl = new DataLink(uri, download);
-                // semantics
-                // serviceDef is null for non-cutouts
+                DataLink dl = new DataLink(uri.toASCIIString(), sem);
+                dl.url = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
                 findProductTypes(a, dl.productTypes);
@@ -165,37 +175,28 @@ public class ArtifactProcessor
             }
             catch(MalformedURLException ex)
             {
-                throw new RuntimeException("failed to generate download URL for " + a.getURI(), ex);
+                DataLink dl = new DataLink(uri.toASCIIString(), sem);
+                dl.errorMessage = "FataLFault: failed to generate download URL: " + ex.toString();
             }
 
             if (!downloadOnly)
             {
                 // service links
-                try
+                boolean cutout = canCutout(a);
+                if (cutout)
                 {
-                    URL cutout = getCutoutURL(a);
-                    if (cutout != null)
-                    {
-                        DataLink dl = new DataLink(uri, cutout);
-                        dl.serviceDef = CUTOUT;
-                        dl.contentType = a.contentType; // unchanged
-                        dl.contentLength = null; // unknown
-                        dl.fileURI = a.getURI().toString();
-                        findProductTypes(a, dl.productTypes);
-                        ret.add(dl);
-                        log.debug("added cutout service def");
-                    }
-                    else
-                        log.debug(a.getURI() + ": no cutout URL");
+                    DataLink cut = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    cut.serviceDef = CUTOUT;
+                    cut.contentType = a.contentType; // unchanged
+                    cut.contentLength = null; // unknown
+                    cut.fileURI = a.getURI().toString();
+                    findProductTypes(a, cut.productTypes);
+                    ret.add(cut);
+                }
+                else
+                    log.debug(a.getURI() + ": no cutout URL");
 
-                }
-                catch(MalformedURLException ex)
-                {
-                    throw new RuntimeException("failed to generate cutout URL for " + a.getURI(), ex);
-                }
             }
-            else
-                log.debug("Download only");
         }
         return ret;
     }
@@ -220,8 +221,9 @@ public class ArtifactProcessor
      * Convert a URI to a URL. TBD: This method fails if the SchemeHandler returns multiple URLs,
      * but in principle we could make multiple DataLinks out of it.
      *
-     * @param uri
-     * @return url
+     * @param a 
+     * @return u
+     * @throws MalformedURLException
      */
     protected URL getDownloadURL(Artifact a)
         throws MalformedURLException

@@ -143,7 +143,7 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testWithArtifacts()
+    public void testWithRUNID()
     {
         log.debug("testNoFilter START");
         try
@@ -163,10 +163,10 @@ public class ArtifactProcessorTest
             {
                 log.debug("testNoFilter: " + dl);
                 Assert.assertNotNull(dl);
-                Assert.assertEquals(uri, dl.getID());
-                Assert.assertNotNull(dl.getURL());
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
+                Assert.assertNotNull(dl.url);
                 
-                String query = dl.getURL().getQuery();
+                String query = dl.url.getQuery();
                 Assert.assertNotNull("query string", query);
                 String expected = "runid="+RUNID;
                 String actual = query.toLowerCase();
@@ -181,9 +181,9 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testNoRunID()
+    public void testNoRUNID()
     {
-        log.debug("testRunID START");
+        log.debug("testNoRUNID START");
         try
         {
             URI uri = new URI(PLANE_URI);
@@ -199,12 +199,12 @@ public class ArtifactProcessorTest
 
             for (DataLink dl : links)
             {
-                log.debug("testRunID: " + dl);
+                log.debug("testNoRUNID: " + dl);
                 Assert.assertNotNull(dl);
-                Assert.assertEquals(uri, dl.getID());
-                Assert.assertNotNull(dl.getURL());
-                String query = dl.getURL().getQuery();
-                Assert.assertNull(query);
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
+                Assert.assertNotNull(dl.url);
+                String query = dl.url.getQuery();
+                Assert.assertNull(query); // no runid
             }
         }
         catch(Exception unexpected)
