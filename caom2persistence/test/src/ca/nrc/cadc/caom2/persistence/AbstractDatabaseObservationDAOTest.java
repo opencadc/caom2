@@ -92,9 +92,11 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
@@ -106,7 +108,10 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
@@ -132,6 +137,8 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
@@ -221,7 +228,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    ////@Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -234,8 +241,57 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testNestedTransaction()
+    {
+        // the ObservationDAO class uses a txn inside the put and delete methods
+        // this verifies that it it fails and does a rollback that an outer txn
+        // can still proceed -- eg it is really nested
+        try
+        {
+            Observation obs1 = new SimpleObservation("FOO", "bar");
+            dao.put(obs1);
+            Assert.assertTrue(dao.exists(obs1.getURI()));
+            log.info("created: " + obs1);
+            
+            
+            Observation dupe = new SimpleObservation("FOO", "bar");
+            Observation obs2 = new SimpleObservation("FOO", "bar2");
+            
+            txnManager.startTransaction(); // outer txn
+            try
+            {
+                dao.put(dupe); // nested txn
+                Assert.fail("expected exception, successfully put duplicate observation");
+            }
+            catch(DataIntegrityViolationException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            dao.put(obs2); // another nested txn
+            log.info("created: " + obs2);
+            
+            txnManager.commitTransaction(); // outer txn
+            
+            Observation check1 = dao.get(obs1.getURI());
+            Assert.assertNotNull(check1);
+            Assert.assertEquals(obs1.getID(), check1.getID());
+            
+            Observation check2 = dao.get(obs2.getURI());
+            Assert.assertNotNull(check2);
+            Assert.assertEquals(obs2.getID(), check2.getID());
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
-    //@Test
+    @Test
     public void testGetDeleteNonExistentObservation()
     {
         try
@@ -243,7 +299,17 @@ public abstract class AbstractDatabaseObservationDAOTest
             ObservationURI uri = new ObservationURI("TEST", "NonExistentObservation");
             Observation obs = dao.get(uri);
             Assert.assertNull(uri.toString(), obs);
-
+            
+            UUID notFound = dao.getID(uri);
+            Assert.assertNull(uri.toString(), notFound);
+            
+            Long id = CaomIDGenerator.getInstance().generateID();
+            UUID uuid = new UUID(0L, id); // obsID is currently long == LSB of uuid
+            ObservationURI nuri = dao.getURI(uuid);
+            Assert.assertNull(id.toString(), nuri);
+            Observation nobs = dao.get(uuid);
+            Assert.assertNull(id.toString(), nobs);
+            
             // should return without failing
             dao.delete(uri);
         }
@@ -295,7 +361,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             txnManager.startTransaction();
             Assert.assertFalse(dao.exists(orig.getURI()));
             txnManager.commitTransaction();
-
+            
+            Assert.assertFalse("open transaction", txnManager.isOpen());
         }
         catch(Exception unexpected)
         {
@@ -1267,6 +1334,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             if (sci)
                 o.targetPosition.equinox = 2000.0;
             
+            o.requirements = new Requirements(Status.FAIL);
+            
             o.telescope = new Telescope("BothEyes");
             o.telescope.getKeywords().addAll(TEST_KEYWORDS);
             o.telescope.geoLocationX = 100.0;
@@ -1320,6 +1389,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             p.metrics.backgroundStddev = 0.3;
             p.metrics.fluxDensityLimit = null;
             p.metrics.magLimit = null;
+            
+            p.quality = new DataQuality(Quality.JUNK);
         }
         if (depth <= 2)
             return p;

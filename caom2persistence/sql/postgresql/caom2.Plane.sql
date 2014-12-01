@@ -29,6 +29,8 @@ create table caom2.Plane
     metrics_fluxDensityLimit double precision,
     metrics_magLimit double precision,
 
+    quality_flag varchar(16),
+
 -- position
     position_bounds          spoly,
     position_bounds_center   spoint,

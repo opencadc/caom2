@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,97 +62,49 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
+package ca.nrc.cadc.caom2.persistence;
 
-import java.util.Map;
-
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
-import java.util.UUID;
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.DelegatingDataSource;
 
 /**
- *
+ * A simple DataSource wrapper that calls setCatalog on a Connection before returning
+ * it. This is usually necessary to avoid creating a cross-database transaction if the 
+ * DataSource is not connected to the target database already, such as when a connection
+ * pool that accesses multiple databases is used.
+ * 
  * @author pdowler
  */
-public interface ObservationDAO
+public class DataSourceWrapper  extends DelegatingDataSource 
 {
-    /**
-     * Get a suitable transaction manager for use with the DAO.
-     * @return
-     */
-    TransactionManager getTransactionManager();
+    private final String catalogName;
 
-    /**
-     * Get a map of configuration parameters for the implementation.
-     * The names and types are used to provide configuration via the
-     * setConfig method.
-     * 
-     * @return
-     */
-    Map<String,Class> getParams();
+    public DataSourceWrapper(String catalogName, DataSource dataSource) 
+    {
+        super(dataSource);
+        this.catalogName = catalogName;
+    }
 
-    /**
-     * Set the configuration for this implementation. The content of this
-     * map is assumed to match the names and types returned by getParams.
-     * @param config
-     */
-    void setConfig(Map<String,Object> config);
-    
-    /**
-     * Check for observation existence.
-     * 
-     * @param uri Identifies the observation
-     * @return True if the observation identified by uri exists.
-     */
-    boolean exists(ObservationURI uri);
+    @Override
+    public Connection getConnection() 
+        throws SQLException
+    {
+        Connection cnx = super.getConnection();
+        cnx.setCatalog(this.catalogName);
+        return cnx;
+    }
 
-    /**
-     * Get unique identifier for the specified URI.
-     * @param uri
-     * @return UUID
-     */
-    UUID getID(ObservationURI uri);
-    
-    /**
-     * Get URI from unique ID.
-     * 
-     * @param id
-     * @return 
-     */
-    ObservationURI getURI(UUID id);
-    
-    /**
-     * Get a stored observation by UUID.
-     * 
-     * @param id
-     * @return 
-     */
-    Observation get(UUID id);
-    
-    /**
-     * Get a stored observation by URI.
-     *
-     * @param uri
-     * @return the complete observation
-     */
-    Observation get(ObservationURI uri);
-
-    /**
-     * Store an observation.
-     *
-     * @param ce
-     */
-    void put(Observation ce);
-
-    /**
-     * Delete a stored observation by URI.
-     *
-     * @param uri
-     */
-    void delete(ObservationURI uri);
+    public Connection getConnection(String un, String pw)
+        throws SQLException
+    {
+        Connection cnx = super.getConnection(un, pw);
+        cnx.setCatalog(this.catalogName);
+        return cnx;    }
 }

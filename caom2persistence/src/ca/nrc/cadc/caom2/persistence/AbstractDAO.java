@@ -104,9 +104,17 @@ public class AbstractDAO
      * 
      * @return the DataSource
      */
-    public DataSource getDataSource() { return dataSource; }
+    public DataSource getDataSource() 
+    { 
+        checkInit();
+        return dataSource; 
+    }
 
-    SQLGenerator getSQLGenerator() { return gen; }
+    SQLGenerator getSQLGenerator() 
+    {
+        checkInit();
+        return gen; 
+    }
 
     /**
      * Get the TransactionManager that controls transactions using this DAOs DataSource.
@@ -115,8 +123,7 @@ public class AbstractDAO
      */
     public TransactionManager getTransactionManager()
     {
-        if (dataSource == null)
-            throw new IllegalStateException("cannot create TransactionManager before setConfig is called");
+        checkInit();
         if (txnManager == null)
             this.txnManager = new DatabaseTransactionManager(dataSource);
         return txnManager;
@@ -125,10 +132,8 @@ public class AbstractDAO
     public Map<String, Class> getParams()
     {
         Map<String,Class> ret = new TreeMap<String,Class>();
-        // TODO: these two are alternatives... how to convey that?
         ret.put("jndiDataSourceName", String.class);
-        ret.put("server", String.class);
-
+        ret.put("server", String.class); // fallback if no jndiDataSourceName
         ret.put("database", String.class);
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
@@ -141,6 +146,7 @@ public class AbstractDAO
         String jndiDataSourceName = (String) config.get("jndiDataSourceName");
         String server = (String) config.get("server");
         String database = (String) config.get("database");
+        
         String schema = (String) config.get("schema");
         Boolean force = (Boolean) config.get("forceUpdate");
         Class<?> genClass = (Class<?>) config.get(SQLGenerator.class.getName());
@@ -149,12 +155,13 @@ public class AbstractDAO
         try
         {
             if (jndiDataSourceName != null)
-                this.dataSource = DBUtil.getDataSource(jndiDataSourceName);
+                this.dataSource = new DataSourceWrapper(database, DBUtil.getDataSource(jndiDataSourceName));
             else
             {
                 DBConfig dbrc = new DBConfig();
                 ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
-                this.dataSource = DBUtil.getDataSource(cc);
+                // for some reason, we need to suppress close when wrapping with delegating DS
+                this.dataSource =  new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
             }
         }
         catch(NamingException ex)
@@ -170,17 +177,14 @@ public class AbstractDAO
         if (force != null)
             this.forceUpdate = force.booleanValue();
 
-        if (genClass != null)
+        try
         {
-            try
-            {
-                Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
-                this.gen = (SQLGenerator) ctor.newInstance(database, schema);
-            }
-            catch(Exception ex)
-            {
-                throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
-            }
+            Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
+            this.gen = (SQLGenerator) ctor.newInstance(database, schema);
+        }
+        catch(Exception ex)
+        {
+            throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
         }
     }
 

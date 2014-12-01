@@ -69,13 +69,13 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
+import ca.nrc.cadc.auth.RunnableAction;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.security.PrivilegedExceptionAction;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -94,6 +94,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -106,11 +107,12 @@ import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.cred.client.pub.CredPublicClient;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 /**
@@ -141,6 +143,9 @@ public class CaomRepoIntTests
     
     private static final String SCHEME = "caom:";
     
+    // service should be written to output documents with this version
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_0_NAMESPACE;
+    
     static
     {
         try
@@ -150,6 +155,7 @@ public class CaomRepoIntTests
             File SSL_CERT1 = new File("build/test/class/proxy1.pem");
             File SSL_CERT2 = new File("build/test/class/proxy2.pem");
             File SSL_CERT3 = new File("build/test/class/proxy3.pem");
+
             SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
             SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
             SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
@@ -162,35 +168,6 @@ public class CaomRepoIntTests
             BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
             log.info("test service URL: " + BASE_HTTP_URL);
             log.info("test service URL: " + BASE_HTTPS_URL);
-            
-            // delegate the certificates of the three test users
-            final URL credURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/cred"), "https");
-            log.info("delegating credentials: " + credURL);
-            Subject.doAs(SUBJECT1, new PrivilegedExceptionAction<Object>() {
-                public Object run() throws Exception
-                {
-                    CredPublicClient credPubClient = new CredPublicClient(credURL);
-                    credPubClient.delegate(null, 2);
-                    return null;
-                }
-            });
-            Subject.doAs(SUBJECT2, new PrivilegedExceptionAction<Object>() {
-                public Object run() throws Exception
-                {
-                    CredPublicClient credPubClient = new CredPublicClient(credURL);
-                    credPubClient.delegate(null, 2);
-                    return null;
-                }
-            });
-            Subject.doAs(SUBJECT3, new PrivilegedExceptionAction<Object>() {
-                public Object run() throws Exception
-                {
-                    CredPublicClient credPubClient = new CredPublicClient(credURL);
-                    credPubClient.delegate(null, 2);
-                    return null;
-                }
-            });
-            log.info("delegating credentials: done");
         }
         catch (Throwable t)
         {
@@ -218,10 +195,11 @@ public class CaomRepoIntTests
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     @Test
-    public void testGetSuccess() throws Throwable
+    public void testCleanPutGetSuccess() throws Throwable
     {
-        String observationID = "testGetSuccess";
+        String observationID = "testCleanPutGetSuccess";
         String observationURI = SCHEME + TEST_COLLECTION + "/" + observationID;
         
         // delete any previous run (ok to fail)
@@ -232,7 +210,7 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // get the observation using subject2
-        Observation ret = getObservation(observationURI, SUBJECT2, 200, "OK");
+        Observation ret = getObservation(observationURI, SUBJECT2, 200, null);
         Assert.assertEquals("wrong observation", observation, ret);
     }
     
@@ -286,21 +264,6 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
     }
     
-    @Test
-    public void testPutSuccess() throws Throwable
-    {   
-        String observationID = "testPutSuccess";
-        String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
-        
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
-        
-        // put an observation using subject1
-        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 200, "OK", null);
-    }
-
     @Test
     public void testPutSuccessWCS() throws Throwable
     {
@@ -712,25 +675,28 @@ public class CaomRepoIntTests
         log.debug("start get on " + uri);
         
         // extract the path from the uri
-        String urlPath = uri.substring(uri.indexOf(SCHEME) + SCHEME.length());
-        
+        URI ouri = new URI(uri);
+        String surl = BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
+        if (subject != null)
+            surl = BASE_HTTPS_URL + "/" + ouri.getSchemeSpecificPart();
+        URL url = new URL(surl);
         ObservationReader reader = new ObservationReader();
         
-        HttpURLConnection conn = openConnection(subject, urlPath);
-        conn.setRequestMethod("GET");
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        HttpDownload get = new HttpDownload(url, bos);
+        //HttpURLConnection conn = openConnection(subject, urlPath);
+        //conn.setRequestMethod("GET");
         
-        int response = conn.getResponseCode();
-        String message = conn.getResponseMessage();
-        if (response != 200)
-            message = NetUtil.getErrorBody(conn).trim();
+        Subject.doAs(subject, new RunnableAction(get));
         
-        log.debug("get response: " + message + " (" + response + ")");
+        int response = get.getResponseCode();
         
         if (expectedResponse != null)
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
         
         if (expectedMessage != null)
         {
+            String message = bos.toString().trim();
             Assert.assertNotNull(message);
             if (exactMatch)
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
@@ -740,11 +706,16 @@ public class CaomRepoIntTests
         
         if (response == 200)
         {
-        
-            InputStream in = conn.getInputStream();
+            //InputStream in = conn.getInputStream();
+            if (EXPECTED_CAOM_VERSION != null)
+            {
+                String doc = bos.toString();
+                Assert.assertTrue("document namespace="+EXPECTED_CAOM_VERSION, doc.contains(EXPECTED_CAOM_VERSION));
+            }
+            InputStream in = new ByteArrayInputStream(bos.toByteArray());
             Observation observation = reader.read(in);
             
-            conn.disconnect();
+            //conn.disconnect();
             
             return observation;
             

@@ -27,6 +27,8 @@ create table caom2_Observation
     targetPosition_coordinates_cval1 double precision null,
     targetPosition_coordinates_cval2 double precision null,
 
+    requirements_flag varchar(16) null,
+
     telescope_name varchar(64) null,
     telescope_geoLocationX double precision null,
     telescope_geoLocationY double precision null,

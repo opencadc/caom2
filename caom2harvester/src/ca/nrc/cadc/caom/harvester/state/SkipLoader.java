@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,97 +62,92 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
-
-import java.util.Map;
+package ca.nrc.cadc.caom.harvester.state;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
-import java.util.UUID;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.FileReader;
+import java.io.LineNumberReader;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
  * @author pdowler
  */
-public interface ObservationDAO
+public class SkipLoader
 {
-    /**
-     * Get a suitable transaction manager for use with the DAO.
-     * @return
-     */
-    TransactionManager getTransactionManager();
-
-    /**
-     * Get a map of configuration parameters for the implementation.
-     * The names and types are used to provide configuration via the
-     * setConfig method.
-     * 
-     * @return
-     */
-    Map<String,Class> getParams();
-
-    /**
-     * Set the configuration for this implementation. The content of this
-     * map is assumed to match the names and types returned by getParams.
-     * @param config
-     */
-    void setConfig(Map<String,Object> config);
+    private static final Logger log = Logger.getLogger(SkipLoader.class);
     
-    /**
-     * Check for observation existence.
-     * 
-     * @param uri Identifies the observation
-     * @return True if the observation identified by uri exists.
-     */
-    boolean exists(ObservationURI uri);
-
-    /**
-     * Get unique identifier for the specified URI.
-     * @param uri
-     * @return UUID
-     */
-    UUID getID(ObservationURI uri);
-    
-    /**
-     * Get URI from unique ID.
-     * 
-     * @param id
-     * @return 
-     */
-    ObservationURI getURI(UUID id);
-    
-    /**
-     * Get a stored observation by UUID.
-     * 
-     * @param id
-     * @return 
-     */
-    Observation get(UUID id);
-    
-    /**
-     * Get a stored observation by URI.
-     *
-     * @param uri
-     * @return the complete observation
-     */
-    Observation get(ObservationURI uri);
-
-    /**
-     * Store an observation.
-     *
-     * @param ce
-     */
-    void put(Observation ce);
-
-    /**
-     * Delete a stored observation by URI.
-     *
-     * @param uri
-     */
-    void delete(ObservationURI uri);
+    public static void main(String[] args)
+    {
+        try
+        {
+            Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
+            ArgumentMap am = new ArgumentMap(args);
+            String server = am.getValue("server");
+            String source = am.getValue("source");
+            String database = am.getValue("database");
+            String schema = am.getValue("schema");
+            if (database == null)
+                database = "cadctest";
+            if (schema == null)
+                schema = "pdowler";
+                    
+            String fname = am.getValue("fname");
+            if (server == null || source == null || fname == null)
+            {
+                log.error("usage: skipLoader --server=<pg server> --source=<SYBASE.cfht.dbo> --fname=<input file>");
+                System.exit(1);
+            }
+            Map<String,Object> config = new HashMap<String,Object>();
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
+            DataSource ds = DBUtil.getDataSource(cc);
+            
+            HarvestSkipDAO dao = new HarvestSkipDAO(ds, database, schema, 10);
+            
+            LineNumberReader r = new LineNumberReader(new FileReader(fname));
+            String s = r.readLine();
+            while (s != null)
+            {   
+                String[] parts = s.split(" ");
+                Long id = new Long(parts[0]);
+                Thread.sleep(1L); // make sure timestamps are spread out
+                HarvestSkip h = new HarvestSkip(source, Observation.class.getSimpleName(), id);
+                try
+                {
+                    dao.put(h);
+                    log.info("put: " + h);
+                }
+                catch(DataIntegrityViolationException ex)
+                {
+                    log.warn("put: " + h + " duplicate: skip");
+                }
+                
+                s = r.readLine();
+            }
+        }
+        catch(Exception ex)
+        {
+            log.error("unexpected fail", ex);
+        }
+        finally
+        {
+            log.info("DONE");
+        }
+    }
 }
