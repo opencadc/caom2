@@ -10,6 +10,7 @@ import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
@@ -30,7 +31,10 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
@@ -189,6 +193,7 @@ public class BaseSQLGenerator implements SQLGenerator
             "target_name", "target_type", "target_standard",
             "target_redshift", "target_moving", "target_keywords",
             "targetPosition_coordsys","targetPosition_equinox", "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
+            "requirements_flag",
             "telescope_name", "telescope_geoLocationX", "telescope_geoLocationY", "telescope_geoLocationZ", "telescope_keywords",
             "instrument_name", "instrument_keywords",
             "environment_seeing", "environment_humidity", "environment_elevation",
@@ -228,6 +233,7 @@ public class BaseSQLGenerator implements SQLGenerator
             "provenance_inputs", "provenance_keywords",
             "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
             "metrics_fluxDensityLimit", "metrics_magLimit",
+            "quality_flag",
 
             "lastModified", "maxLastModified", "stateCode", "planeID"
         };
@@ -876,6 +882,11 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
             }
+            if (obs.requirements != null)
+                safeSetString(sb, ps, col++, obs.requirements.getFlag().getValue());
+            else
+                safeSetString(sb, ps, col++, null);
+            
             if (obs.telescope != null)
             {
                 safeSetString(sb, ps, col++, obs.telescope.getName());
@@ -1041,6 +1052,11 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, null);
             }
 
+            if (plane.quality != null)
+                safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
+            else
+                safeSetString(sb, ps, col++, null);
+            
             if (persistTransientState)
             {
                 // planeURI
@@ -2453,6 +2469,12 @@ public class BaseSQLGenerator implements SQLGenerator
                 log.debug("found: " + o.targetPosition);
             }
 
+            String rflag = rs.getString(col++);
+            if (rflag != null)
+            {
+                o.requirements = new Requirements(Status.toValue(rflag));
+            }
+            
             String tn = rs.getString(col++);
             log.debug("found o.telescope.name = " + tn);
             if (tn != null)
@@ -2633,6 +2655,12 @@ public class BaseSQLGenerator implements SQLGenerator
                     || m.fluxDensityLimit != null || m.magLimit != null)
                 p.metrics = m;
 
+            String qflag = rs.getString(col++);
+            if (qflag != null)
+            {
+                p.quality = new DataQuality(Quality.toValue(qflag));
+            }
+            
             if (persistTransientState)
             {
                  // skip them on read: wasteful but simpler code for now
