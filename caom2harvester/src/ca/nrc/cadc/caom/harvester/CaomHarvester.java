@@ -8,6 +8,7 @@ import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.wcs.Transform;
 import java.io.IOException;
 import java.util.Date;
 import org.apache.log4j.Logger;
@@ -111,6 +112,13 @@ public class CaomHarvester implements Runnable
     
     public void run()
     {
+        // make sure wcslib can be loaded
+        try { Class.forName("ca.nrc.cadc.wcs.WCSLib"); }
+        catch(Throwable t)
+        {
+            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+        }
+        
         // make sure access control tuples are harvested before observations
         if (observationMetaHarvester != null)
             observationMetaHarvester.run();
