@@ -166,6 +166,10 @@ create index Plane_time_i3
         on caom2.Plane (time_bounds_cval1,time_bounds_cval2)
 tablespace caom_index
 ;
+create index Plane_time_i4
+        on caom2.Plane (time_bounds_cval2,time_bounds_cval1)
+tablespace caom_index
+;
 
 create index Plane_polar_i1
         on caom2.Plane (polarization_states)
