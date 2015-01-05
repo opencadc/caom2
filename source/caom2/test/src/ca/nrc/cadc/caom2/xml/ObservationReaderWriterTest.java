@@ -149,6 +149,50 @@ public class ObservationReaderWriterTest
     }
     
     @Test
+    public void testSupportAllVersions()
+    {
+        try
+        {
+            Observation obs = new SimpleObservation("FOO", "bar");
+            
+            ObservationWriter w20 = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            w20.write(obs, bos);
+            String caom20 = bos.toString();
+            log.debug("caom-2.0 XML: " + caom20);
+            assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
+            ObservationReader r = new ObservationReader();
+            Observation obs20 = r.read(caom20);
+            
+            ObservationWriter w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w21.write(obs, bos);
+            String caom21 = bos.toString();
+            log.debug("caom-2.1 XML: " + caom21);
+            assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
+            Observation obs21 = r.read(caom21);
+            
+            // new reader
+            w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w21.write(obs, bos);
+            caom21 = bos.toString();
+            log.debug("caom-2.1 XML: " + caom21);
+            assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
+            obs21 = r.read(caom21);
+        }
+        catch(ObservationParsingException expected)
+        {
+            log.debug("caught expected exception: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testInvalidLongID()
     {
         try
