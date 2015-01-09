@@ -103,7 +103,7 @@ public class GetAction extends RepoAction
             throw new ObservationNotFoundException(uri);
 
         // explicitly write with CAOM-2.0 schema
-        ObservationWriter ow = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
+        ObservationWriter ow = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
         
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());

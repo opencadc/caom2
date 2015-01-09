@@ -94,7 +94,6 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -111,9 +110,11 @@ import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.UUID;
 
 /**
  * Integration tests for caom2repo_ws
@@ -129,32 +130,35 @@ public class CaomRepoIntTests
     private static final String TEST_COLLECTION = "TEST";
     
     // subject1 has read/write privilege on the TEST collection
-    private static Subject SUBJECT1;
+    private Subject SUBJECT1;
     
     // subject2 has read privilege on the TEST collection
-    private static Subject SUBJECT2;
+    private Subject SUBJECT2;
     
     // subject3 has not read or write permission on the TEST collection
-    private static Subject SUBJECT3;
+    private Subject SUBJECT3;
     
-    private static URL AVAIL_URL;
-    private static String BASE_HTTP_URL;
-    private static String BASE_HTTPS_URL;
+    private URL AVAIL_URL;
+    private String BASE_HTTP_URL;
+    private String BASE_HTTPS_URL;
     
     private static final String SCHEME = "caom:";
     
     // service should be written to output documents with this version
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_0_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_1_NAMESPACE;
     
     static
     {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
+    
+    public CaomRepoIntTests() 
+    { 
         try
         {
-            Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-            
-            File SSL_CERT1 = new File("build/test/class/proxy1.pem");
-            File SSL_CERT2 = new File("build/test/class/proxy2.pem");
-            File SSL_CERT3 = new File("build/test/class/proxy3.pem");
+            File SSL_CERT1 = FileUtil.getFileFromResource("proxy1.pem", CaomRepoIntTests.class);
+            File SSL_CERT2 = FileUtil.getFileFromResource("proxy2.pem", CaomRepoIntTests.class);
+            File SSL_CERT3 = FileUtil.getFileFromResource("proxy3.pem", CaomRepoIntTests.class);
 
             SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
             SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
@@ -166,8 +170,8 @@ public class CaomRepoIntTests
             AVAIL_URL = rc.getServiceURL(serviceURI, "http", "/availability");
             BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http", "/pub").toExternalForm();
             BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
-            log.info("test service URL: " + BASE_HTTP_URL);
-            log.info("test service URL: " + BASE_HTTPS_URL);
+            log.debug("test service URL: " + BASE_HTTP_URL);
+            log.debug("test service URL: " + BASE_HTTPS_URL);
         }
         catch (Throwable t)
         {
@@ -175,9 +179,12 @@ public class CaomRepoIntTests
             log.fatal(message, t);
             throw new ExceptionInInitializerError(message);
         }
-        
     }
     
+    public String generateObservationID(String base)
+    {
+        return base + "-" + UUID.randomUUID().toString();
+    }
     @Test
     public void testAvailability()
     {
@@ -199,30 +206,28 @@ public class CaomRepoIntTests
     @Test
     public void testCleanPutGetSuccess() throws Throwable
     {
-        String observationID = "testCleanPutGetSuccess";
-        String observationURI = SCHEME + TEST_COLLECTION + "/" + observationID;
+        String observationID = generateObservationID("testCleanPutGetSuccess");
         
-        // delete any previous run (ok to fail)
-        deleteObservation(observationURI, SUBJECT1, null, null);
+        String uri = SCHEME + TEST_COLLECTION + "/" + observationID;
         
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // get the observation using subject2
-        Observation ret = getObservation(observationURI, SUBJECT2, 200, null);
+        Observation ret = getObservation(uri, SUBJECT2, 200, null);
         Assert.assertEquals("wrong observation", observation, ret);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testGetNoReadPermission() throws Throwable
     {
-        String observationID = "testGetNoReadPermission";
+        String observationID = generateObservationID("testGetNoReadPermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
-        
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
         
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -230,12 +235,15 @@ public class CaomRepoIntTests
         
         // get the observation using subject3
         getObservation(uri, SUBJECT3, 403, "permission denied: " + uri);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testGetNotFound() throws Throwable
     {
-        String observationID = "testGetNotFound";
+        String observationID = generateObservationID("testGetNotFound");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -246,7 +254,7 @@ public class CaomRepoIntTests
     public void testCollectionNotFound() throws Throwable
     {
         String collection = "NoSuchCollection";
-        String observationID = "testGetNotFound";
+        String observationID = generateObservationID("testGetNotFound");
         String path =  collection + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -257,7 +265,7 @@ public class CaomRepoIntTests
     public void testInvalidURI() throws Throwable
     {
         String collection = TEST_COLLECTION;
-        String observationID = "testGetNotFound";
+        String observationID = generateObservationID("testGetNotFound");
         String path =  collection + "/" + observationID + "/extraElementsInPath";
         String uri = SCHEME + path;
         
@@ -267,12 +275,9 @@ public class CaomRepoIntTests
     @Test
     public void testPutSuccessWCS() throws Throwable
     {
-        String observationID = "testPutSuccessWCS";
+        String observationID = generateObservationID("testPutSuccessWCS");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
-
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
 
         // put an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -288,12 +293,15 @@ public class CaomRepoIntTests
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
         putObservation(observation, SUBJECT1, 200, "OK", null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
 
     @Test
     public void testPutNoWritePermission() throws Throwable
     {
-        String observationID = "testPutNoWritePermission";
+        String observationID = generateObservationID("testPutNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -305,7 +313,7 @@ public class CaomRepoIntTests
     @Test
     public void testPutByteLimitExceeded() throws Throwable
     {
-        String observationID = "testPutByteLimitExceeded";
+        String observationID = generateObservationID("testPutByteLimitExceeded");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -317,19 +325,19 @@ public class CaomRepoIntTests
     @Test
     public void testPutURIsDontMatch() throws Throwable
     {
-        String observationID = "testPutURIsDontMatch";
+        String observationID = generateObservationID("testPutURIsDontMatch");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
         // create an observation using subject1 but with a different path on the url
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 400, "invalid input: " + uri, TEST_COLLECTION + "/testPutURIsDontMatch2");
+        putObservation(observation, SUBJECT1, 400, "invalid input: " + uri +"-alt", path + "-alt");
     }
     
     @Test
     public void testPutURIAlreadyExists() throws Throwable
     {
-        String observationID = "testPutURIAlreadyExists";
+        String observationID = generateObservationID("testPutURIAlreadyExists");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -339,18 +347,18 @@ public class CaomRepoIntTests
         
         // create it again to see the conflict
         putObservation(observation, SUBJECT1, 409, "already exists: " + uri, null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testPutValidationFails() throws Throwable
     {
-        String observationID = "testPutValidationFails";
+        String observationID = generateObservationID("testPutValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
-        // temporary
-        this.deleteObservation(uri, SUBJECT1, null, null);
-        
         // create an observation using subject1
         Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
         putObservation(observation, SUBJECT1, 400, "invalid input: " + uri, null);
@@ -359,12 +367,9 @@ public class CaomRepoIntTests
     @Test
     public void testPostSuccess() throws Throwable
     {
-        String observationID = "testPostSuccess";
+        String observationID = generateObservationID("testPostSuccess");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
-        
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
         
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -379,17 +384,17 @@ public class CaomRepoIntTests
         
         // overwrite the observation with a post
         postObservation(observation, SUBJECT1, 200, "OK", null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testPostNoWritePermission() throws Throwable
     {
-        String observationID = "testPostNoWritePermission";
+        String observationID = generateObservationID("testPostNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
-        
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
         
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -397,12 +402,15 @@ public class CaomRepoIntTests
         
         // overwrite the observation with a post
         postObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testPostByteLimitExceeded() throws Throwable
     {
-        String observationID = "testPostByteLimitExceeded";
+        String observationID = generateObservationID("testPostByteLimitExceeded");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -417,7 +425,7 @@ public class CaomRepoIntTests
     @Test
     public void testPostURIsDontMatch() throws Throwable
     {   
-        String observationID = "testPostURIsDontMatch";
+        String observationID = generateObservationID("testPostURIsDontMatch");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -430,13 +438,16 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // post an observation using subject1 but with a different path on the url
-        postObservation(observation, SUBJECT1, 400, "invalid input: " + uri + "2", path + "2");
+        postObservation(observation, SUBJECT1, 400, "invalid input: " + uri + "-alt", path + "-alt");
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testPostURIDoesntExist() throws Throwable
     {
-        String observationID = "testPostURIDoesntExist";
+        String observationID = generateObservationID("testPostURIDoesntExist");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -448,7 +459,7 @@ public class CaomRepoIntTests
     @Test
     public void testPostValidationFails() throws Throwable
     {
-        String observationID = "testPostValidationFails";
+        String observationID = generateObservationID("testPostValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -460,12 +471,15 @@ public class CaomRepoIntTests
         
         // create an observation using subject1
         postObservation(observation, SUBJECT1, 400, "invalid input: " + uri, null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test
     public void testDeleteSuccess() throws Throwable
     {
-        String observationID = "testDeleteSuccess";
+        String observationID = generateObservationID("testDeleteSuccess");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -484,23 +498,23 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
-    @Test
+    //@Test
     public void testDeleteNoWritePermission() throws Throwable
     {   
-        String observationID = "testDeleteNoWritePermission";
+        String observationID = generateObservationID("testDeleteNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        
-        // delete any previous run (ok to fail)
-        deleteObservation(uri, SUBJECT1, null, null);
         
         // create an observation using subject1
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // delete the observation using subject 2 
         putObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
+        
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
     }
     
     @Test

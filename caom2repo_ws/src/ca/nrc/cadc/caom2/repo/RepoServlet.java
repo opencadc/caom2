@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2.repo.action.PostAction;
 import ca.nrc.cadc.caom2.repo.action.PutAction;
 import ca.nrc.cadc.caom2.repo.action.RepoAction;
 import ca.nrc.cadc.log.ServletLogInfo;
+import java.security.AccessControlException;
 
 /**
  *
@@ -112,7 +113,15 @@ public class RepoServlet extends HttpServlet
 
         try
         {
-            Subject subject = AuthenticationUtil.getSubject(request);
+            Subject subject = null;
+            try { subject = AuthenticationUtil.getSubject(request); }
+            catch(AccessControlException ex)
+            {
+                log.debug("caught: " + ex);
+                logInfo.setSuccess(true);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
             logInfo.setSubject(subject);
 
             action.setPath(request.getPathInfo());
@@ -140,11 +149,6 @@ public class RepoServlet extends HttpServlet
                         throw new RuntimeException(pex.getCause());
                 }
             }
-        }
-        catch(IOException ex)
-        {
-            log.debug("caught: " + ex);
-            throw ex;
         }
         catch(Throwable t)
         {
