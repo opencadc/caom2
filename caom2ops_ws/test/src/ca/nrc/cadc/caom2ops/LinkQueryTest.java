@@ -120,7 +120,7 @@ public class LinkQueryTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.datalink", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     //@Test
