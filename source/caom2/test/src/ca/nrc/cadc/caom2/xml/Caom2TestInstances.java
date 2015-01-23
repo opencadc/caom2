@@ -441,7 +441,7 @@ public class Caom2TestInstances
         SpatialWCS position = new SpatialWCS(coordAxis2D);
         if (complete)
         {
-            position.coordsys = "position coordsys";
+            position.coordsys = "ICRS";
             position.equinox = 2000.0;
             position.resolution = 0.5;
         }
@@ -451,7 +451,7 @@ public class Caom2TestInstances
     protected SpectralWCS getSpectralWCS()
         throws Exception
     {
-        CoordAxis1D axis = getCoordAxis1D();
+        CoordAxis1D axis = getCoordAxis1D(true);
         SpectralWCS energy = new SpectralWCS(axis, "energy specsys");
         if (complete)
         {    
@@ -472,7 +472,7 @@ public class Caom2TestInstances
     protected TemporalWCS getTemporalWCS()
         throws Exception
     {
-        CoordAxis1D axis = getCoordAxis1D();
+        CoordAxis1D axis = getCoordAxis1D(false);
         TemporalWCS time = new TemporalWCS(axis);
         if (complete)
         { 
@@ -509,9 +509,13 @@ public class Caom2TestInstances
         return new Slice(axis, 1L);
     }
     
-    protected CoordAxis1D getCoordAxis1D()
+    protected CoordAxis1D getCoordAxis1D(boolean nrg)
     {
-        Axis axis = new Axis("axisCtype", "axisCunit");
+        Axis axis;
+        if (nrg)
+            axis = new Axis("WAV", "m");
+        else
+            axis = new Axis("TIME", "d");
         CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
         if (complete)
         {
@@ -529,8 +533,8 @@ public class Caom2TestInstances
     
     protected CoordAxis2D getCoordAxis2D()
     {
-        Axis axis1 = new Axis("axis1Ctype", "axis1Cunit");
-        Axis axis2 = new Axis("axis2Ctype", "axis2Cunit");
+        Axis axis1 = new Axis("RA", "deg");
+        Axis axis2 = new Axis("DEC", "deg");
         
         CoordAxis2D coordAxis2D = new CoordAxis2D(axis1, axis2);
         if (complete)

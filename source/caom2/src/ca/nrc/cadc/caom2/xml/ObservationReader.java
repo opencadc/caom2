@@ -76,6 +76,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
@@ -87,6 +89,9 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
@@ -97,7 +102,12 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -133,6 +143,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -340,7 +351,6 @@ public class ObservationReader implements Serializable
         // Simple or Composite
         Attribute type = root.getAttribute("type", xsiNamespace);
         String tval = type.getValue();
-        tval = tval.substring(namespace.getPrefix().length() + 1); // strip off ns:
         
         // collection and observationID.
         String collection = getChildText("collection", root, namespace, true);
@@ -351,12 +361,14 @@ public class ObservationReader implements Serializable
             
         // Create the Observation.
         Observation obs;
-        if ( SimpleObservation.class.getSimpleName().equals(tval) )
+        String simple = namespace.getPrefix() + ":" +  SimpleObservation.class.getSimpleName();
+        String comp = namespace.getPrefix() + ":" +  CompositeObservation.class.getSimpleName();
+        if ( simple.equals(tval) )
         {
             obs = new SimpleObservation(collection, observationID);
             obs.setAlgorithm(algorithm);
         }
-        else if ( CompositeObservation.class.getSimpleName().equals(tval) )
+        else if ( comp.equals(tval) )
         {
             obs = new CompositeObservation(collection, observationID, algorithm);
         }
@@ -678,6 +690,11 @@ public class ObservationReader implements Serializable
             plane.provenance = getProvenance(planeElement, namespace, dateFormat);
             plane.metrics = getMetrics(planeElement, namespace, dateFormat);
             plane.quality = getQuality(planeElement, namespace, dateFormat);
+            
+            plane.position = getPosition(planeElement, namespace);
+            plane.energy = getEnergy(planeElement, namespace);
+            plane.time = getTime(planeElement, namespace);
+            plane.polarization = getPolarization(planeElement, namespace);
 
             addArtifacts(plane.getArtifacts(), planeElement, namespace, dateFormat);
 
@@ -687,6 +704,202 @@ public class ObservationReader implements Serializable
         }
     }
     
+    protected Position getPosition(Element parent, Namespace namespace)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("position", parent, namespace, false);
+        if (element == null)
+            return null;
+            
+        Position pos = new Position();
+        Element cur = getChildElement("bounds", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                Polygon poly = new Polygon();
+                for (Element ve : cur.getChildren()) // only vertex
+                {
+                    double cval1 = getChildTextAsDouble("cval1", ve, namespace, true);
+                    double cval2 = getChildTextAsDouble("cval2", ve, namespace, true);
+                    int sv = getChildTextAsInteger("type", ve, namespace, true);
+                    poly.getVertices().add(new Vertex(cval1, cval1, SegmentType.toValue(sv)));
+                }
+                pos.bounds = poly;
+            }
+            else
+                throw new ObservationParsingException("unsupported bounds type: " + tval);
+        }
+        
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Dimension2D.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                long naxis1 = getChildTextAsLong("naxis1", cur, namespace, true);
+                long naxis2 = getChildTextAsLong("naxis2", cur, namespace, true);
+                pos.dimension = new Dimension2D(naxis1, naxis2);
+            }
+            else
+                throw new ObservationParsingException("unsupported dimension type: " + tval);
+        }
+        
+        pos.resolution = getChildTextAsDouble("resolution", element, namespace, false);
+        pos.sampleSize = getChildTextAsDouble("sampleSize", element, namespace, false);
+        pos.timeDependent = getChildTextAsBoolean("timeDependent", element, namespace, false);
+        
+        return pos;
+    }
+    
+    protected Energy getEnergy(Element parent, Namespace namespace)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("energy", parent, namespace, false);
+        if (element == null)
+            return null;
+            
+        Energy nrg = new Energy();
+        Element cur = getChildElement("bounds", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                double lb = getChildTextAsDouble("lower", cur, namespace, true);
+                double ub = getChildTextAsDouble("upper", cur, namespace, true);
+                nrg.bounds = new Interval(lb, ub);
+            }
+            else
+                throw new ObservationParsingException("unsupported bounds type: " + tval);
+        }
+        
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                nrg.dimension = getChildTextAsLong("dimension", element, namespace, true);
+            }
+            else
+                throw new ObservationParsingException("unsupported dimension type: " + tval);
+        }
+        
+        nrg.resolvingPower = getChildTextAsDouble("resolvingPower", element, namespace, false);
+        
+        nrg.sampleSize = getChildTextAsDouble("sampleSize", element, namespace, false);
+        
+        nrg.bandpassName = getChildText("bandpassName", element, namespace, false);
+        
+        String emb = getChildText("emBand", element, namespace, false);
+        if (emb != null)
+            nrg.emBand = EnergyBand.toValue(emb);
+        nrg.restwav = getChildTextAsDouble("restwav", element, namespace, false);
+        
+        cur = getChildElement("transition", element, namespace, false);
+        if (cur != null)
+        {
+            String species = getChildText("species", cur, namespace, true);
+            String trans = getChildText("transition", cur, namespace, true);
+            nrg.transition = new EnergyTransition(species, trans);
+        }
+        return nrg;
+    }
+    
+    protected Time getTime(Element parent, Namespace namespace)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("time", parent, namespace, false);
+        if (element == null)
+            return null;
+            
+        Time tim = new Time();
+        Element cur = getChildElement("bounds", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                double lb = getChildTextAsDouble("lower", cur, namespace, true);
+                double ub = getChildTextAsDouble("upper", cur, namespace, true);
+                tim.bounds = new Interval(lb, ub);
+            }
+            else
+                throw new ObservationParsingException("unsupported bounds type: " + tval);
+        }
+        
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                tim.dimension = getChildTextAsLong("dimension", element, namespace, true);
+            }
+            else
+                throw new ObservationParsingException("unsupported dimension type: " + tval);
+        }
+        
+        tim.resolution = getChildTextAsDouble("resolution", element, namespace, false);
+        
+        tim.sampleSize = getChildTextAsDouble("sampleSize", element, namespace, false);
+        
+        tim.exposure = getChildTextAsDouble("exposure", element, namespace, false);
+        
+        return tim;        
+    }
+    
+    protected Polarization getPolarization(Element parent, Namespace namespace)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("polarization", parent, namespace, false);
+        if (element == null)
+            return null;
+            
+        Polarization pol = new Polarization();
+        Element cur = getChildElement("states", element, namespace, false);
+        if (cur != null)
+        {
+            List<Element> ces = cur.getChildren();
+            pol.states = new ArrayList<PolarizationState>(ces.size());
+            for (Element e : ces)
+            {
+                String ss = e.getTextTrim();
+                PolarizationState ps = PolarizationState.valueOf(ss);
+                pol.states.add(ps);
+            }
+        }
+        
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null)
+        {
+            Attribute type = cur.getAttribute("type", xsiNamespace);
+            String tval = type.getValue();
+            String extype = namespace.getPrefix() + ":" + Integer.class.getSimpleName();
+            if ( extype.equals(tval) )
+            {
+                pol.dimension = getChildTextAsInteger("dimension", element, namespace, true);
+            }
+            else
+                throw new ObservationParsingException("unsupported dimension type: " + tval);
+        }
+        
+        return pol;
+    }
     /**
      * Build a Provenance from a JDOM representation of an Provenance.
      * 

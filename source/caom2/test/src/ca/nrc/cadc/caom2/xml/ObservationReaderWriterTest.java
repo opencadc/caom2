@@ -72,6 +72,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -79,6 +80,9 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
@@ -86,6 +90,7 @@ import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -117,6 +122,7 @@ import java.util.Iterator;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -129,7 +135,7 @@ public class ObservationReaderWriterTest
     private static Logger log = Logger.getLogger(ObservationReaderWriterTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.DEBUG);
     }
     
     public ObservationReaderWriterTest() { }
@@ -401,9 +407,9 @@ public class ObservationReaderWriterTest
             }
 
             SimpleObservation observation = getCompleteSimple(5, true);
-            testObservation(observation, false, "c2", null); // custom ns prefix, default namespace
+            testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
 
-            testObservation(observation, false, null, XmlConstants.CAOM2_0_NAMESPACE); // compat mode
+            testObservation(observation, false, null, XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }
         catch(Exception unexpected)
         {
@@ -484,6 +490,48 @@ public class ObservationReaderWriterTest
         }
     }
     
+    @Test
+    public void testComputedSimple()
+    {
+        try
+        {
+            log.debug("testComputedSimple");
+            int i = 5; // need chunks for compute
+            SimpleObservation observation = getCompleteSimple(i, false); // CoordBounds2D as CoordPolygon2D
+
+            // Write empty elements.
+            testObservation(observation, true);
+
+            // Do not write empty elements.
+            testObservation(observation, false);
+
+            for (Plane p : observation.getPlanes())
+            {
+                p.computeTransientState();
+                Assert.assertNotNull("Plane.position", p.position);
+                Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
+
+                Assert.assertNotNull("Plane.energy", p.energy);
+                Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
+
+                Assert.assertNotNull("Plane.time", p.time);
+                Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
+
+                Assert.assertNotNull("Plane.polarization", p.polarization);
+                Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
+                Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
+            }
+
+            // must force CAOM-2.2 to write transient metadata
+            testObservation(observation, false, "caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     protected SimpleObservation getMinimalSimple(int depth, boolean boundsIsCircle)
         throws Exception
     {        
@@ -527,10 +575,10 @@ public class ObservationReaderWriterTest
     protected void testObservation(Observation observation, boolean writeEmptyCollections)
         throws Exception
     {
-        testObservation(observation, writeEmptyCollections, null, null);
+        testObservation(observation, writeEmptyCollections, null, null, true);
     }
 
-    protected void testObservation(Observation observation, boolean writeEmptyCollections, String nsPrefix, String forceNS)
+    protected void testObservation(Observation observation, boolean writeEmptyCollections, String nsPrefix, String forceNS, boolean schemaVal)
         throws Exception
     {
         StringBuilder sb = new StringBuilder();
@@ -546,6 +594,9 @@ public class ObservationReaderWriterTest
         Observation returned = reader.read(sb.toString());
 
         compareObservations(observation, returned);
+        
+        if (!schemaVal)
+            return;
         
         // validate the XML.
         reader = new ObservationReader(true);
@@ -761,6 +812,8 @@ public class ObservationReaderWriterTest
             assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
             assertEquals(expectedPlane.calibrationLevel, actualPlane.calibrationLevel);
             
+            compareComputed(expectedPlane, actualPlane);
+            
             compareDataQuality(expectedPlane.quality, actualPlane.quality);
             compareProvenance(expectedPlane.provenance, actualPlane.provenance);
             compareArtifacts(expectedPlane.getArtifacts(), actualPlane.getArtifacts());
@@ -776,6 +829,120 @@ public class ObservationReaderWriterTest
         assertNotNull(actual);
         
         assertEquals(expected.getFlag(), actual.getFlag());
+    }
+    
+    protected void compareComputed(Plane expected, Plane actual)
+    {
+        compare(expected.position, actual.position);
+        compare(expected.energy, actual.energy);
+        compare(expected.time, actual.time);
+        compare(expected.polarization, actual.polarization);
+    }
+    protected void compare(Position expected, Position actual)
+    {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        if (expected.bounds == null)
+            Assert.assertNull(actual.bounds);
+        //else
+        //    throw new UnsupportedOperationException("compare: non-null Position.bounds");
+        
+        if (expected.dimension == null)
+            Assert.assertNull(actual.dimension);
+        else
+        {
+            Assert.assertEquals(expected.dimension.naxis1, actual.dimension.naxis1);
+            Assert.assertEquals(expected.dimension.naxis2, actual.dimension.naxis2);
+        }
+        if (expected.resolution == null)
+            Assert.assertNull(actual.resolution);
+        else
+            Assert.assertEquals(expected.resolution, actual.resolution);
+        if (expected.sampleSize == null)
+            Assert.assertNull(actual.sampleSize);
+        else
+            Assert.assertEquals(expected.sampleSize, actual.sampleSize);
+        if (expected.timeDependent == null)
+            Assert.assertNull(actual.timeDependent);
+        else
+            Assert.assertEquals(expected.timeDependent, actual.timeDependent);
+    }
+    protected void compare(Energy expected, Energy actual)
+    {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        if (expected.bounds == null)
+            Assert.assertNull(actual.bounds);
+        else
+        {
+            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
+            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
+            // TODO: compare samples when read/write includes them
+        }
+        
+        Assert.assertEquals(expected.dimension, actual.dimension);
+        Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
+        Assert.assertEquals(expected.sampleSize, actual.sampleSize);
+        Assert.assertEquals(expected.bandpassName, actual.bandpassName);
+        Assert.assertEquals(expected.emBand, actual.emBand);
+        Assert.assertEquals(expected.restwav, actual.restwav);
+        if (expected.transition == null)
+            Assert.assertNull(actual.transition);
+        else
+        {
+            Assert.assertEquals(expected.transition.getSpecies(), actual.transition.getSpecies());
+            Assert.assertEquals(expected.transition.getTransition(), actual.transition.getTransition());
+        }
+    }
+    protected void compare(Time expected, Time actual)
+    {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        if (expected.bounds == null)
+            Assert.assertNull(actual.bounds);
+        else
+        {
+            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
+            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
+            // TODO: compare samples when read/write includes them
+        }
+        
+        Assert.assertEquals(expected.dimension, actual.dimension);
+        Assert.assertEquals(expected.resolution, actual.resolution);
+        Assert.assertEquals(expected.sampleSize, actual.sampleSize);
+        Assert.assertEquals(expected.exposure, actual.exposure);
+    }
+    
+    protected void compare(Polarization expected, Polarization actual)
+    {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        if (expected.states == null)
+            Assert.assertNull(actual.states);
+        else
+        {
+            Assert.assertEquals(expected.dimension, actual.dimension);
+            Assert.assertEquals(expected.states.size(), actual.states.size());
+            // states is in canonical order already
+            Iterator<PolarizationState> ei = expected.states.iterator();
+            Iterator<PolarizationState> ai = actual.states.iterator();
+            while ( ei.hasNext() )
+            {
+                Assert.assertEquals(ei.next(), ai.next());
+            }
+        }
     }
     
     protected void compareDataQuality(DataQuality expected, DataQuality actual)

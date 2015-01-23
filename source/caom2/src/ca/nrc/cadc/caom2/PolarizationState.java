@@ -166,6 +166,16 @@ public enum PolarizationState implements CaomEnum
         }
         throw new IllegalArgumentException("invalid polarization code: " + val);
     }
+    
+     public static PolarizationState toValue(String s)
+    {
+        for (PolarizationState ps : values())
+        {
+            if ( ps.stringValue().equals(s))
+                return ps;
+        }
+        throw new IllegalArgumentException("invalid value: " + s);
+    }
 
     public int checksum()
     {

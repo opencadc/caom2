@@ -89,7 +89,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -190,6 +189,18 @@ public class CaomUtil implements Serializable
         return sb.toString();
     }
     
+    public static void decodeStates(String val, List<PolarizationState> out)
+    {
+        if (val == null)
+            return;
+        String[] ss = val.split(POL_STATE_SEPARATOR);
+        for (String s : ss)
+        {
+            PolarizationState ps = PolarizationState.toValue(s);
+            out.add(ps);
+        }
+    }
+    
     public static String encodeListString(List<String> strs)
     {
         if (strs == null || strs.isEmpty())
@@ -230,7 +241,6 @@ public class CaomUtil implements Serializable
         return sb.toString();
     }
     public static void decodeObservationURIs(String val, Set<ObservationURI> out)
-        throws SQLException
     {
         if (val == null)
             return;
@@ -268,7 +278,6 @@ public class CaomUtil implements Serializable
         return sb.toString();
     }
     public static void decodePlaneURIs(String val, Set<PlaneURI> out)
-        throws SQLException
     {
         if (val == null)
             return;

@@ -108,11 +108,30 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     public Metrics metrics;
     public DataQuality quality;
 
-    // computed state
-    private transient Position position;
-    private transient Energy energy;
-    private transient Time time;
-    private transient Polarization polarization;
+    /**
+     * Computed position metadata. Computed state is always qualified as transient
+     * since it does not (always) need to be stored or serialised.
+     * @see computeTransientState()
+     */
+    public transient Position position;
+    /**
+     * Computed energy metadata. Computed state is always qualified as transient
+     * since it does not (always) need to be stored or serialised.
+     * @see computeTransientState()
+     */
+    public transient Energy energy;
+    /**
+     * Computed time metadata. Computed state is always qualified as transient
+     * since it does not (always) need to be stored or serialised.
+     * @see computeTransientState()
+     */
+    public transient Time time;
+    /**
+     * Computed polarization metadata. Computed state is always qualified as transient
+     * since it does not (always) need to be stored or serialised.
+     * @see computeTransientState()
+     */
+    public transient Polarization polarization;
 
     public Plane(String productID)
     {
@@ -153,19 +172,8 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         computeEnergy();
         computeTime();
         computePolarization();
-        // propagate metaRelease to children
-        for (Artifact a : artifacts)
-        {
-            a.metaRelease = metaRelease;
-            for (Part p : a.getParts())
-            {
-                p.metaRelease = metaRelease;
-                for (Chunk c : p.getChunks())
-                {
-                    c.metaRelease = metaRelease;
-                }
-            }
-        }
+        
+        propagateMetaRelease();
     }
 
     public PlaneURI getURI(ObservationURI parentURI)
@@ -189,34 +197,50 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return artifacts;
     }
 
+    /**
+     * Get the computed position metadata. Note that computeTransientState must 
+     * be called first (no lazy computation triggered here).
+     * @return 
+     * @deprecated field is now public
+     */
     public Position getPosition()
     {
-        if (position == null)
-            computePosition();
         return position;
     }
 
+    /**
+     * Get the computed energy metadata. Note that computeTransientState must 
+     * be called first (no lazy computation triggered here).
+     * @return 
+     * @deprecated field is public
+     */
     public Energy getEnergy()
     {
-        if (energy == null)
-            computeEnergy();
         return energy;
     }
 
+    /**
+     * Get the computed time metadata. Note that computeTransientState must be 
+     * called first (no lazy computation triggered here).
+     * @return 
+     * @deprecated field is now public
+     */
     public Time getTime()
     {
-        if (time == null)
-            computeTime();
         return time;
     }
 
+    /**
+     * Get the computed polarization metadata. Note that computeTransientState 
+     * must be called first (no lazy computation triggered here).
+     * @return 
+     * @deprecated field is now public
+     */
     public Polarization getPolarization()
     {
-        if (polarization == null)
-            computePolarization();
         return polarization;
     }
-
+    
     @Override
     public boolean equals(Object o)
     {
@@ -284,4 +308,22 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     {
         this.polarization = PolarizationUtil.compute(artifacts);
     }
+
+    protected void propagateMetaRelease()
+    {
+        // propagate metaRelease to children of the plane
+        for (Artifact a : artifacts)
+        {
+            a.metaRelease = metaRelease;
+            for (Part p : a.getParts())
+            {
+                p.metaRelease = metaRelease;
+                for (Chunk c : p.getChunks())
+                {
+                    c.metaRelease = metaRelease;
+                }
+            }
+        }
+    }
+
 }

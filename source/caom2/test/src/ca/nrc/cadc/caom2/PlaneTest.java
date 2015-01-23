@@ -207,40 +207,6 @@ public class PlaneTest
     }
     
     @Test
-    public void testCompute()
-    {
-        try
-        {
-            Plane plane = new Plane("foo");
-            
-            Position pos = plane.getPosition();
-            Position pos2 = plane.getPosition();
-            Assert.assertNotNull(pos);
-            Assert.assertTrue(pos == pos2); // same object both times
-            
-            Energy nrg = plane.getEnergy();
-            Energy nrg2 = plane.getEnergy();
-            Assert.assertNotNull(nrg);
-            Assert.assertTrue(nrg == nrg2); // same object both times
-            
-            Time tim = plane.getTime();
-            Time tim2 = plane.getTime();
-            Assert.assertNotNull(tim);
-            Assert.assertTrue(tim == tim2); // same object both times
-            
-            Polarization pol = plane.getPolarization();
-            Polarization pol2 = plane.getPolarization();
-            Assert.assertNotNull(pol);
-            Assert.assertTrue(pol == pol2); // same object both times
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testTransientState()
     {
         try
@@ -310,29 +276,29 @@ public class PlaneTest
 
     private void assignPos(Plane p)
     {
-        Position pos = p.getPosition();
-        Assert.assertNotNull(pos);
-        pos.resolution = new Double(0.01);
+        p.position = new Position();
+        p.position.resolution = 0.01;
     }
 
     private void assignEnergy(Plane p)
     {
-        Energy nrg = p.getEnergy();
-        nrg.bandpassName = "foo123";
+        p.energy = new Energy();
+        p.energy.bandpassName = "foo123";
     }
 
     private void assignTime(Plane p)
     {
-        Time tim = p.getTime();
-        tim.exposure = new Double(123.0);
+        p.time = new Time();
+        p.time.exposure = new Double(123.0);
     }
 
     private void assignPol(Plane p)
     {
-        Polarization pol = p.getPolarization();
+        Polarization pol = new Polarization();
         pol.states = new ArrayList<PolarizationState>();
         pol.states.add(PolarizationState.I);
         pol.dimension = new Integer(1);
+        p.polarization = pol;
     }
 
 }

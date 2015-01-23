@@ -203,12 +203,20 @@ public class SerializableTest
     {
         String cn = c.getName();
         Assert.assertTrue(cn + " is Serializable", Serializable.class.isAssignableFrom(c));
-        Field sv = c.getDeclaredField("serialVersionUID");
-        int m = sv.getModifiers();
-        Class fc = sv.getType();
-        Assert.assertTrue(cn + ".serialVersionUID is private", Modifier.isPrivate(m));
-        Assert.assertTrue(cn + ".serialVersionUID is static", Modifier.isStatic(m));
-        Assert.assertTrue(cn + ".serialVersionUID is final", Modifier.isFinal(m));
-        Assert.assertEquals(cn + ".serialVersionUID is long", "long", fc.getName());
+        try
+        {
+            Field sv = c.getDeclaredField("serialVersionUID");
+            int m = sv.getModifiers();
+            Class fc = sv.getType();
+            Assert.assertTrue(cn + ".serialVersionUID is private", Modifier.isPrivate(m));
+            Assert.assertTrue(cn + ".serialVersionUID is static", Modifier.isStatic(m));
+            Assert.assertTrue(cn + ".serialVersionUID is final", Modifier.isFinal(m));
+            Assert.assertEquals(cn + ".serialVersionUID is long", "long", fc.getName());
+        }
+        catch(NoSuchFieldException ex)
+        {
+            log.error("Serializable class missing serialVersionUID: " + cn, ex);
+            Assert.fail("Serializable class " + cn + " without serialVersionUID: " + ex);
+        }
     }
 }
