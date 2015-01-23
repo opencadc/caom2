@@ -70,7 +70,7 @@
 package ca.nrc.cadc.datalink;
 
 import ca.nrc.cadc.caom2ops.UsageFault;
-import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
@@ -94,13 +94,13 @@ public class DynamicTableData implements TableData
     private static final Logger log = Logger.getLogger(DynamicTableData.class);
     
     private Iterator<String> argIter;
-    private LinkQuery query;
+    private CaomTapQuery query;
     private boolean artifactOnly;
     private ArtifactProcessor ap;
 
     private Iterator<List<Object>> curIter;
 
-    public DynamicTableData(Job job, LinkQuery query, boolean artifactOnly, ArtifactProcessor ap)
+    public DynamicTableData(Job job, CaomTapQuery query, boolean artifactOnly, ArtifactProcessor ap)
     {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
         if (args == null || args.isEmpty())

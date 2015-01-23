@@ -67,25 +67,80 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2ops.mapper;
+
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2ops.Util;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.log4j.Logger;
 
 /**
- * Exception to indicate that query response from the TAP quwery returned unexpected content.
- * 
- * @author pdowler
- */
-public class UnexpectedContentException extends RuntimeException
+*
+* @author pdowler
+*/
+public class ArtifactMapper implements VOTableRowMapper<Artifact>
 {
-    private static final long serialVersionUID = 201211071100L;
+    private static final Logger log = Logger.getLogger(ArtifactMapper.class);
     
-    public UnexpectedContentException(String message, Throwable cause)
+    private Map<String,Integer> map;
+
+    public ArtifactMapper(Map<String,Integer> map)
     {
-        super(message, cause);
+            this.map = map;
     }
 
-    public UnexpectedContentException(String message)
+    /**
+     * Map columns from the current row into an Artifact, starting at the 
+     * specified column offset.
+     * 
+     * @param data
+     * @return
+     * @throws URISyntaxException 
+     * @throws ParseException 
+     */
+    public Artifact mapRow(List<Object> data, DateFormat dateFormat)
     {
-        super(message);
-    }
+        log.debug("mapping Artifact");
+        UUID id = Util.getUUID(data, map.get("caom2:Artifact.id"));
+        if (id == null)
+            return null;
 
+        String suri = Util.getString(data, map.get("caom2:Artifact.uri"));
+        try
+        {
+            URI uri = new URI(suri);
+
+            Artifact artifact = new Artifact(uri);
+
+            String pType = Util.getString(data, map.get("caom2:Artifact.productType"));
+            if (pType != null)
+                artifact.productType = ProductType.toValue(pType);
+
+            artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
+            artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
+            Integer alt = Util.getInteger(data, map.get("caom2:Artifact.alternative"));
+            artifact.alternative = (alt != null && alt.intValue() == 1); // TAP: 1===true
+
+            Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
+            Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));
+
+            Util.assignLastModified(artifact, lastModified, "lastModified");
+            Util.assignLastModified(artifact, maxLastModified, "maxLastModified");
+            Util.assignID(artifact, id);
+
+            return artifact;
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new UnexpectedContentException("invalid Artifact URI: " + suri);
+        }
+    }
 }

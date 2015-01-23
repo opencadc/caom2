@@ -18,9 +18,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class LinkQueryGeneratorTest
+public class AdqlQueryGeneratorTest
 {
-    private static final Logger log = Logger.getLogger(LinkQueryGeneratorTest.class);
+    private static final Logger log = Logger.getLogger(AdqlQueryGeneratorTest.class);
     
     static
     {
@@ -47,7 +47,7 @@ public class LinkQueryGeneratorTest
         try
         {
             URI uri = new URI("ad:FOO/bar.fits");
-            LinkQueryGenerator gen = new LinkQueryGenerator();
+            AdqlQueryGenerator gen = new AdqlQueryGenerator();
             String adql = gen.getArtifactADQL(uri);
             log.info("testArtifactQuery:\n" + adql);
             
@@ -66,7 +66,7 @@ public class LinkQueryGeneratorTest
         try
         {
             PlaneURI uri = new PlaneURI(new URI("caom:FOO/bar123/bar.fits"));
-            LinkQueryGenerator gen = new LinkQueryGenerator();
+            AdqlQueryGenerator gen = new AdqlQueryGenerator();
             String adql = gen.getADQL(uri, false);
             log.info("testArtifactListQuery:\n" + adql);
             
@@ -85,7 +85,7 @@ public class LinkQueryGeneratorTest
         try
         {
             ObservationURI uri = new ObservationURI("FOO", "bar123");
-            LinkQueryGenerator gen = new LinkQueryGenerator();
+            AdqlQueryGenerator gen = new AdqlQueryGenerator();
             String adql = gen.getADQL(uri);
             log.info("testObservationQuery:\n" + adql);
             

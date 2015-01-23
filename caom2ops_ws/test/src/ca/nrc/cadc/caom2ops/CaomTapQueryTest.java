@@ -96,9 +96,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class LinkQueryTest 
+public class CaomTapQueryTest 
 {
-    private static final Logger log = Logger.getLogger(LinkQueryTest.class);
+    private static final Logger log = Logger.getLogger(CaomTapQueryTest.class);
     private static final int ARTIFACT_SIZE = 2;
     private static final int PART_SIZE = 2;
     private static final String ARTIFACT_ID = "-635063708241084595";
@@ -120,7 +120,7 @@ public class LinkQueryTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.DEBUG);
     }
 
     //@Test
@@ -142,14 +142,12 @@ public class LinkQueryTest
     {
         try
         {
-        	// test normal construction of LinkQuery
-            LinkQuery query = getLinkQuery();
-            URL tapURL = query.getTapURL();
+            CaomTapQuery query = getLinkQuery();
             String jobID = query.getRunID();
 
             try
             {
-                query = new LinkQuery(jobID, null);
+                query = new CaomTapQuery(null, "foo");
                 Assert.fail("expected IllegalArgumentException for tapURL=null");
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
@@ -173,11 +171,11 @@ public class LinkQueryTest
     {
     	try
     	{
-    		boolean alternative = false;
-    		LinkQuery query = getLinkQuery();
-    		VOTableDocument votable = buildVOTable(artifactsOnly);
-    		
-    		Method buildArtifacts = query.getClass().getDeclaredMethod("buildArtifacts", VOTableDocument.class);
+            boolean alternative = false;
+            CaomTapQuery query = getLinkQuery();
+            VOTableDocument votable = buildVOTable(artifactsOnly);
+
+            Method buildArtifacts = query.getClass().getDeclaredMethod("buildArtifacts", VOTableDocument.class);
             buildArtifacts.setAccessible(true);
             
             int i = 1;
@@ -219,7 +217,6 @@ public class LinkQueryTest
                         j++;
                     }
                 }
-            	
             	i++;
             }
     	}
@@ -250,7 +247,7 @@ public class LinkQueryTest
     	try
         {
             VOTableField planeIdField = new VOTableField("planeID", "long");
-            planeIdField.utype = "caom2:Plane.id";
+            //planeIdField.utype = "caom2:Plane.id";  // FK has no utype
             planeIdField.xtype = "adql:BIGINT";
             fields.add(planeIdField);
 
@@ -320,7 +317,7 @@ public class LinkQueryTest
     	try
         {
             VOTableField artifactIdField = new VOTableField("artifactID", "long");
-            artifactIdField.utype = "caom2:Artifact.id";
+            //artifactIdField.utype = "caom2:Artifact.id"; // FK has no utype
             artifactIdField.xtype = "adql:BIGINT";
             fields.add(artifactIdField);
             
@@ -455,19 +452,19 @@ public class LinkQueryTest
         return data;
     }
     
-    private LinkQuery getLinkQuery()
+    private CaomTapQuery getLinkQuery()
     {
-    	LinkQuery query = null;
+    	CaomTapQuery query = null;
     	
     	try
     	{
-	    	String jobID = "testJobID";
+	    	String runID = "testJobID";
 	    	String tapProto = "http";
 	    	RegistryClient reg = new RegistryClient();
 	    	URL tapURL = new URL(reg.getServiceURL(new URI(TAP_URI), tapProto) + "/sync");
 	    	
-	        query = new LinkQuery(jobID, tapURL);    	
-	        Assert.assertEquals(jobID, query.getRunID());
+	        query = new CaomTapQuery(tapURL, runID);    	
+	        Assert.assertEquals(runID, query.getRunID());
 	        Assert.assertEquals(tapURL, query.getTapURL());
     	}
         catch(Exception unexpected)
