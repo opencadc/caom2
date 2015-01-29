@@ -113,7 +113,6 @@ public class MetaQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
-    private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     
     private Job job;

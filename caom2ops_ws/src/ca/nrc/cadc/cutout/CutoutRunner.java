@@ -69,59 +69,20 @@
 
 package ca.nrc.cadc.cutout;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import javax.servlet.http.HttpServletResponse;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.uws.server.JobRunner;
 
 /**
- *
+ * This JobRunner is incomplete and not configured for use.
+ * 
+ * TODO: implement general purpose code to perform sync and async cutout requests.
+ * - sync cutouts will support a single URI 
+ * - async cutouts will support multiple URIs and stage the result in WEBTMP
+ * - share code with CutoutAction as necessary
+ * - DataLink should tell people about sync and async cutouts (this)
+ * 
  * @author pdowler
  */
-public class SyncOutput
+public abstract class CutoutRunner implements JobRunner
 {
-    private static final Logger log = Logger.getLogger(SyncOutput.class);
-    
-    protected HttpServletResponse response;
-    protected PrintWriter writer;
 
-    public SyncOutput(HttpServletResponse response)
-    {
-        this.response = response;
-    }
-
-    public boolean isOpen()
-    {
-        return (writer != null);
-    }
-    
-    public void setCode(int code)
-    {
-        if (writer != null)
-            return;
-
-        response.setStatus(code);
-    }
-
-    public void setHeader(String key, Object value)
-    {
-        if (writer != null)
-            return;
-        
-        if (value == null)
-            response.setHeader(key, null);
-        else
-            response.setHeader(key, value.toString());
-    }
-
-    public PrintWriter getWriter()
-        throws IOException
-    {
-        if (writer == null)
-        {
-            log.debug("opening writer");
-            writer = response.getWriter();
-        }
-        return writer;
-    }
 }

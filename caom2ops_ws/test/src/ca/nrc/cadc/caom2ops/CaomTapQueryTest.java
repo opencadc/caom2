@@ -120,7 +120,7 @@ public class CaomTapQueryTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     //@Test
