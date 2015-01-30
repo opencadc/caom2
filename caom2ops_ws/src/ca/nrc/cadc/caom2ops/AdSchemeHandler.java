@@ -26,10 +26,10 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.ad;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.datalink.util.AuthMethod;
-import ca.nrc.cadc.datalink.util.SchemeHandler;
+import ca.nrc.cadc.rest.AuthMethod;
+import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;

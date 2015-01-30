@@ -67,25 +67,51 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.meta;
+
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
+import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
+import ca.nrc.cadc.uws.server.JobExecutor;
+import ca.nrc.cadc.uws.server.SimpleJobManager;
+import ca.nrc.cadc.uws.server.SyncJobExecutor;
+import org.apache.log4j.Logger;
 
 /**
- * Exception to indicate that query response from the TAP quwery returned unexpected content.
- * 
+ *
  * @author pdowler
  */
-public class UnexpectedContentException extends RuntimeException
+public class MetaQueryJobManager extends SimpleJobManager
 {
-    private static final long serialVersionUID = 201211071100L;
-    
-    public UnexpectedContentException(String message, Throwable cause)
+    private static final Logger log = Logger.getLogger(MetaQueryJobManager.class);
+
+    private static final Long MAX_EXEC_DURATION = 10L;
+    private static final Long MAX_DESTRUCTION = 60L; 
+    private static final Long MAX_QUOTE = 10L;
+
+    private final JobSchema config;
+
+    public MetaQueryJobManager()
     {
-        super(message, cause);
+        super();
+
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
+        
+        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
+        //jobPersist.setJobCleaner(30000L);
+        //this.config = null;
+
+        JobExecutor jobExec = new SyncJobExecutor(jobPersist, MetaQueryRunner.class);
+
+        super.setJobPersistence(jobPersist);
+        super.setJobExecutor(jobExec);
+        super.setMaxExecDuration(MAX_EXEC_DURATION);
+        super.setMaxDestruction(MAX_DESTRUCTION);
+        super.setMaxQuote(MAX_QUOTE);
     }
 
-    public UnexpectedContentException(String message)
+    public JobSchema getConfig()
     {
-        super(message);
+        return config;
     }
-
 }

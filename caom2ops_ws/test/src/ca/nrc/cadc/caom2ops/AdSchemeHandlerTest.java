@@ -67,9 +67,9 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.ad;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.datalink.util.AuthMethod;
+import ca.nrc.cadc.rest.AuthMethod;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;

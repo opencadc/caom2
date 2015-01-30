@@ -67,14 +67,19 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.vos;
+package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.datalink.util.AuthMethod;
-import ca.nrc.cadc.datalink.util.SchemeHandler;
+import ca.nrc.cadc.rest.AuthMethod;
+import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
+import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.net.MalformedURLException;
