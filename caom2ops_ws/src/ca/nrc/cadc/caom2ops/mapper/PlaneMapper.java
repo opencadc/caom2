@@ -154,8 +154,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 poly.getVertices().add(Vertex.CLOSE);
                 plane.position.bounds = poly;
                 
-                Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension1"));
-                Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension2"));
+                Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
+                Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis2"));
                 if (dim1 != null && dim2 != null)
                     plane.position.dimension = new Dimension2D(dim1, dim2);
                 plane.position.resolution = Util.getDouble(data, map.get("caom2:Plane.position.resolution"));
@@ -163,8 +163,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
             }
             
-            Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.cval1"));
-            Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.cval2"));
+            Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
+            Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
             if (nrgBounds1 != null && nrgBounds2 != null)
             {
                 plane.energy = new Energy();
@@ -183,8 +183,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     plane.energy.transition = new EnergyTransition(spec, trans);
             }
             
-            Double tBounds1 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.cval1"));
-            Double tBounds2 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.cval2"));
+            Double tBounds1 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.lower"));
+            Double tBounds2 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.upper"));
             if (tBounds1 != null && tBounds2 != null)
             {
                 plane.time = new Time();
@@ -196,7 +196,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 
             }
 
-            String polStates = Util.getString(data, map.get("caom2:Plane.polarization.values"));
+            String polStates = Util.getString(data, map.get("caom2:Plane.polarization.states"));
             if (polStates != null)
             {
                 plane.polarization = new Polarization();

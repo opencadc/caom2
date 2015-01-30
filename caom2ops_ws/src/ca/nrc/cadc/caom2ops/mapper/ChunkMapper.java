@@ -275,8 +275,8 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             tfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
 
         String timesys = Util.getString(data, map.get("caom2:Chunk.time.timesys"));
-        String trefpos = Util.getString(data, map.get("caom2:Chunk.time.trefrpos"));
-        Double mjdref = Util.getDouble(data, map.get("caom2:Chunk.time.trefrpos"));
+        String trefpos = Util.getString(data, map.get("caom2:Chunk.time.trepos"));
+        Double mjdref = Util.getDouble(data, map.get("caom2:Chunk.time.mjdref"));
         Double exposure = Util.getDouble(data, map.get("caom2:Chunk.time.exposure"));
         Double tres = Util.getDouble(data, map.get("caom2:Chunk.time.resolution"));
         if (tctype != null)
@@ -298,8 +298,8 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
         // polarization
         String pctype = Util.getString(data, map.get("caom2:Chunk.polarization.axis.axis.ctype"));
         String pcunit = Util.getString(data, map.get("caom2:Chunk.polarization.axis.axis.cunit"));
-        Double pes = Util.getDouble(data, map.get("caom2:Chunk.polarization.error.syser"));
-        Double per = Util.getDouble(data, map.get("caom2:Chunk.polarization.error.rnder"));
+        Double pes = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.error.syser"));
+        Double per = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.error.rnder"));
         CoordRange1D prange = null; // Util.decodeCoordRange1D( Util.getString(data, map.get("caom2:Chunk.polarization.range")) );
         pix1 = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.range.start.pix"));
         val1 = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.range.start.val"));
@@ -308,7 +308,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
         if (pix1 != null)
             prange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
 
-        CoordBounds1D pbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.polarization.bounds")) );
+        CoordBounds1D pbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.polarization.axis.bounds")) );
         CoordFunction1D pfunction = null; // Util.decodeCoordFunction1D( Util.getString(data, map.get("caom2:Chunk.polarization.function")) );
         naxis = Util.getLong(data, map.get("caom2:Chunk.polarization.axis.function.naxis"));
         pix = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.refCoord.pix"));

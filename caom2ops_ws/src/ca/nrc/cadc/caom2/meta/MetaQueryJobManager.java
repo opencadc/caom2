@@ -69,11 +69,9 @@
 
 package ca.nrc.cadc.caom2.meta;
 
-import ca.nrc.cadc.auth.CadcIdentityManager;
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
 import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
 import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.MemoryJobPersistence;
-import ca.nrc.cadc.uws.server.RandomStringGenerator;
 import ca.nrc.cadc.uws.server.SimpleJobManager;
 import ca.nrc.cadc.uws.server.SyncJobExecutor;
 import org.apache.log4j.Logger;
@@ -96,12 +94,12 @@ public class MetaQueryJobManager extends SimpleJobManager
     {
         super();
 
-        //PostgresJobPersistence jobPersist = new PostgresJobPersistence();
-        //this.config = jobPersist.getJobSchema();
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
         
-        MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        jobPersist.setJobCleaner(30000L);
-        this.config = null;
+        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
+        //jobPersist.setJobCleaner(30000L);
+        //this.config = null;
 
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, MetaQueryRunner.class);
 

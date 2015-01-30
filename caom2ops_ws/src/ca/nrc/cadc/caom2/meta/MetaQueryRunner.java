@@ -171,9 +171,9 @@ public class MetaQueryRunner implements JobRunner
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
             // input parameter
-            String suri = ParameterUtil.findParameterValue("uri", job.getParameterList());
+            String suri = ParameterUtil.findParameterValue("ID", job.getParameterList());
             if (suri == null)
-                throw new IllegalArgumentException("missing required parameter: URI");
+                throw new IllegalArgumentException("missing required parameter: ID");
 
             ObservationURI uri = new ObservationURI(new URI(suri));
             
@@ -188,7 +188,7 @@ public class MetaQueryRunner implements JobRunner
                 tapProto = "https";
 
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
-
+            log.debug("TAP: " + tapURL.toExternalForm());
             
             
             String runID = job.getID();
@@ -206,6 +206,7 @@ public class MetaQueryRunner implements JobRunner
             ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
             
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
+            syncOutput.setHeader("Content-Type", "text/xml");
             writer.write(obs, syncOutput.getOutputStream());
 
             // set final phase, only sync so no results
