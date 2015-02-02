@@ -195,7 +195,11 @@ public class CaomTapQuery
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
         List<Artifact> artifacts = buildArtifacts(doc);
-        return artifacts.get(0);
+        if (artifacts.isEmpty())
+            return null;
+        Artifact a = artifacts.get(0);
+        log.debug("found: " + a.getURI());
+        return a;
     }
     
     private VOTableDocument execQuery(String uri, String adql)
