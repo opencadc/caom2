@@ -67,9 +67,8 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.meta;
 
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -77,25 +76,19 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.Date;
-import java.util.MissingResourceException;
 
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.auth.X509CertificateChain;
-import ca.nrc.cadc.caom2ops.ArtifactProcessor;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.dali.tables.TableWriter;
-import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
-import ca.nrc.cadc.dali.tables.votable.VOTableParam;
-import ca.nrc.cadc.dali.tables.votable.VOTableReader;
-import ca.nrc.cadc.dali.tables.votable.VOTableResource;
-import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
-import ca.nrc.cadc.rest.AuthMethod;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.ThrowableUtil;
@@ -109,30 +102,25 @@ import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
-import java.security.cert.X509Certificate;
-import java.util.Set;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 /**
  *
  * @author pdowler
  */
-public class LinkQueryRunner implements JobRunner
+public class MetaQueryRunner implements JobRunner
 {
-    private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
+    private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
-    private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
-    private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
-
-    private static final String GETLINKS = "getLinks";
-    private static final String GETDOWNLOAD = "getDownloadLinks";
     
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private WebServiceLogInfo logInfo;
 
-    public LinkQueryRunner() { }
+    public MetaQueryRunner() { }
 
     @Override
     public void setJob(Job job)
@@ -182,11 +170,13 @@ public class LinkQueryRunner implements JobRunner
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
-            String request = ParameterUtil.findParameterValue("REQUEST", job.getParameterList());
-            boolean artifactOnly = false;
-            if (GETDOWNLOAD.equalsIgnoreCase(request))
-                artifactOnly = true;
+            // input parameter
+            String suri = ParameterUtil.findParameterValue("ID", job.getParameterList());
+            if (suri == null)
+                throw new IllegalArgumentException("missing required parameter: ID");
 
+            ObservationURI uri = new ObservationURI(new URI(suri));
+            
             RegistryClient reg = new RegistryClient();
             CredUtil cred = new CredUtil(reg);
 
@@ -198,80 +188,26 @@ public class LinkQueryRunner implements JobRunner
                 tapProto = "https";
 
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
-
-            VOTableDocument vot = new VOTableDocument();
-            VOTableResource vr = new VOTableResource("results");
-            vot.getResources().add(vr);
-            VOTableTable tab = new VOTableTable();
-            vr.setTable(tab);
-            tab.getFields().addAll(DataLink.getFields());
-
+            log.debug("TAP: " + tapURL.toExternalForm());
+            
+            
             String runID = job.getID();
             if (job.getRunID() != null)
                 runID = job.getRunID();
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
-            ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
-            if ( "https".equals(job.getProtocol()) )
-                ap.setAuthMethod(AuthMethod.CERT);
-            tab.setTableData(new DynamicTableData(job, query, artifactOnly, ap));
-
-            // Add the service descriptions resource
-            InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
-            if (is == null)
+            Observation obs = query.performQUery(uri);
+            
+            if (obs == null)
             {
-                throw new MissingResourceException(
-                    "Resource not found: " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), SERVICES_RESOURCE);
+                throw new ObservationNotFoundException(uri);
             }
-            VOTableReader reader = new VOTableReader();
-            VOTableDocument serviceDocument = reader.read(is);
-            VOTableResource metaResource = serviceDocument.getResourceByType("meta");
-
-            // set the access URL
-            RegistryClient regClient = new RegistryClient();
-            URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI));
-            VOTableParam accessURLParam = null;
-            for (VOTableParam param :  metaResource.getParams())
-            {
-                if (param.getName().equals("accessURL"))
-                {
-                    accessURLParam = param;
-                }
-            }
-
-            if (accessURLParam == null)
-                throw new MissingResourceException(
-                    "accessURL parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "accessURL");
-
-            VOTableParam newAccessURL = new VOTableParam(
-                    accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),
-                    accessURLParam.isVariableSize(), cutoutServiceURL.toString());
-            metaResource.getParams().remove(accessURLParam);
-            metaResource.getParams().add(newAccessURL);
-
-            // add the meta resource to the votable
-            vot.getResources().add(metaResource);
-
-            TableWriter<VOTableDocument> writer;
-            String fmt = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
-            if (fmt == null || VOTableWriter.CONTENT_TYPE.equals(fmt) )
-            {
-                writer = new VOTableWriter();
-                String contentType = VOTableWriter.CONTENT_TYPE + ";content=datalink";
-                syncOutput.setHeader("Content-Type", contentType);
-            }
-            else if ( ManifestWriter.CONTENT_TYPE.equals(fmt) )
-            {
-                ap.setDownloadOnly(true);
-                writer = new ManifestWriter(0, 1, 7); // these values rely on column order in DataLink.iterator
-                syncOutput.setHeader("Content-Type", ManifestWriter.CONTENT_TYPE);
-            }
-            else
-            {
-                throw new UnsupportedOperationException("unknown format: " + fmt);
-            }
-
+                
+            // force CAOM-2.2 so we write out transient/computed fields
+            ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
-            writer.write(vot, syncOutput.getOutputStream());
+            syncOutput.setHeader("Content-Type", "text/xml");
+            writer.write(obs, syncOutput.getOutputStream());
 
             // set final phase, only sync so no results
             log.debug(job.getID() + ": EXECUTING -> COMPLETED...");
@@ -294,6 +230,10 @@ public class LinkQueryRunner implements JobRunner
         catch(IllegalArgumentException ex)
         {
             sendError(ex, ex.getMessage(), 400);
+        }
+        catch(ObservationNotFoundException ex)
+        {
+            sendError(ex, ex.getMessage(), 404);
         }
         catch(UnsupportedOperationException ex)
         {
@@ -322,6 +262,15 @@ public class LinkQueryRunner implements JobRunner
         }
     }
 
+    private class ObservationNotFoundException extends Exception
+    {
+
+        public ObservationNotFoundException(ObservationURI uri)
+        {
+            super("not found: " + uri.getURI().toASCIIString());
+        }
+        
+    }
     private void sendError(Throwable t, int code)
     {
         if (code >= 500)
@@ -354,10 +303,12 @@ public class LinkQueryRunner implements JobRunner
         // attempt to write VOTable eror output
         try
         {
-            VOTableWriter writer = new VOTableWriter();
             syncOutput.setHeader("Content-Type", VOTableWriter.CONTENT_TYPE);
             syncOutput.setResponseCode(code);
-            writer.write(t, syncOutput.getOutputStream());
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(syncOutput.getOutputStream()));
+            writer.println(s);
+            writer.flush();
+            writer.close();
         }
         catch(IOException ex)
         {

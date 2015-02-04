@@ -68,138 +68,30 @@
 */
 
 
-package ca.nrc.cadc.datalink.util;
+package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.rest.AuthMethod;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import org.apache.log4j.Logger;
 
 /**
- * Utility class to invoke the appropriate SchemeHandler to convert a URI to URL(s). 
- * If no SchemeHandler can be found, the URI.toURL() method is called as a fallback.
+ * Interface for handlers that convert a URI to a URL that allows retrieval.
  * 
  * @author pdowler
  */
-public class CaomSchemeHandler implements SchemeHandler
+public interface SchemeHandler
 {
-    private static final Logger log = Logger.getLogger(CaomSchemeHandler.class);
-
-    private static final String CACHE_FILENAME = CaomSchemeHandler.class.getSimpleName() + ".properties";
-
-    private final Map<String,SchemeHandler> handlers = new HashMap<String,SchemeHandler>();
-    
-    private AuthMethod authMethod;
-
     /**
-     * Create a MultiSchemeHandler from the default config. By default, a resource named
-     * MultiSchemeHandler.properties is found via the class loader that loaded this class.
-     */
-    public CaomSchemeHandler()
-    {
-        this(CaomSchemeHandler.class.getClassLoader().getResource(CACHE_FILENAME));
-    }
-
-    /**
-     * Create a MultiSchemeHandler with configuration loaded from the specified URL.
-     *
-     * The config resource has contains URIs (one per line, comments start line with #, blank lines
-     * are ignored) with a scheme and a class name of a class that implements the SchemeHandler
-     * interface for that particular scheme.
-     *
-     * @param url
-     */
-    public CaomSchemeHandler(URL url)
-    {
-        if (url == null)
-        {
-            log.debug("config URL is null: no custom scheme support");
-            return;
-        }
-        
-        try
-        {
-            Properties props = new Properties();
-            props.load(url.openStream());
-            Iterator<String> i = props.stringPropertyNames().iterator();
-            while ( i.hasNext() )
-            {
-                String scheme = i.next();
-                String cname = props.getProperty(scheme);
-                try
-                {
-                    log.debug("loading: " + cname);
-                    Class c = Class.forName(cname);
-                    log.debug("instantiating: " + c);
-                    SchemeHandler handler = (SchemeHandler) c.newInstance();
-                    log.debug("adding: " + scheme + "," + handler);
-                    handlers.put(scheme, handler);
-                    log.debug("success: " + scheme + " is supported");
-                }
-                catch(Exception fail)
-                {
-                    log.warn("failed to load " + cname + ", reason: " + fail);
-                }
-            }
-        }
-        catch(Exception ex)
-        {
-            log.error("failed to read config from " + url, ex);
-        }
-        finally
-        {
-            
-        }
-    }
-
-    public void setAuthMethod(AuthMethod authMethod)
-    {
-        this.authMethod = authMethod;
-        for (SchemeHandler sh : handlers.values())
-        {
-            sh.setAuthMethod(authMethod);
-        }
-    }
-    
-    /**
-     * Find and call a suitable SchemeHandler. This method gets the scheme from the 
-     * URI and uses it to find a configured SchemeHandler. If that is successful, the
-     * SchemeHandler is used to do the conversion. If no SchemeHandler can be found,
-     * the URI.toURL() method is called as a fallback, which is sufficient to handle
-     * URIs where the scheme is a known transport protocol (e.g. http).
+     * Convert the specified URI to one or more URL(s). 
      * 
-     * @param uri
-     * @return a URL to the identified resource; null if the uri was null
-     * @throws IllegalArgumentException if a URL cannot be generated
-     * @throws UnsupportedOperationException if there is no SchemeHandler for the URI scheme
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
      */
     public URL getURL(URI uri)
-        throws IllegalArgumentException, MalformedURLException
-    {
-        if (uri == null)
-            return null;
-        
-        SchemeHandler sh = (SchemeHandler) handlers.get(uri.getScheme());
-        if (sh != null)
-            return sh.getURL(uri);
-        
-        // fallback: hope for the best
-        return uri.toURL();
-    }
+        throws IllegalArgumentException, MalformedURLException;
     
-    /**
-     * Add a new SchemeHandler to the converter. If this handler has the same scheme as an
-     * existing handler, it will replace the previous one.
-     * 
-     * @param scheme
-     * @param handler
-     */
-    public void addSchemeHandler(String scheme, SchemeHandler handler)
-    {
-        handlers.put(scheme, handler);
-    }
+    public void setAuthMethod(AuthMethod am);
 }
