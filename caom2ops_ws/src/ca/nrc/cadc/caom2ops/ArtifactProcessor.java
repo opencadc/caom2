@@ -84,9 +84,7 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.util.CutoutUtil;
 import ca.nrc.cadc.datalink.DataLink;
-import ca.nrc.cadc.datalink.util.AuthMethod;
-import ca.nrc.cadc.datalink.util.CaomSchemeHandler;
-import ca.nrc.cadc.datalink.util.SchemeHandler;
+import ca.nrc.cadc.rest.AuthMethod;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
 

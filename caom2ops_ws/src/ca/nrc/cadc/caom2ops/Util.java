@@ -12,6 +12,13 @@ import java.util.UUID;
  */
 public class Util extends CaomUtil
 {
+    public static Object getObject(List<Object> data, Integer col)
+    {
+        if (col == null)
+            return null;
+        return data.get(col);
+    }
+    
     public static String getString(List<Object> data, Integer col)
     {
         if (col == null)
@@ -20,6 +27,22 @@ public class Util extends CaomUtil
         if (o == null)
             return null;
         return (String) o;
+    }
+    public static Boolean getBoolean(List<Object> data, Integer col)
+    {
+        if (col == null)
+            return null;
+        Object o = data.get(col);
+        if (o == null)
+            return null;
+        if (o instanceof Integer)
+        {
+            Integer i = (Integer) o;
+            if (i == 1)
+                return Boolean.TRUE;
+            return Boolean.FALSE;
+        }
+        return (Boolean) o;
     }
     public static UUID getUUID(List<Object> data, Integer col)
     {

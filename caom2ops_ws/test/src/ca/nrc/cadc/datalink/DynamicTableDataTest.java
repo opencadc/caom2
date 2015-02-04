@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
-import ca.nrc.cadc.caom2ops.LinkQuery;
+import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
@@ -132,7 +132,7 @@ public class DynamicTableDataTest
             Job job = new Job();
             
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
             
@@ -159,7 +159,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -189,7 +189,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 1);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -219,7 +219,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            LinkQuery query = new TestLinkQuery("123456", new URL("http://unused.url.com/tap"), 2);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 2);
             DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -245,12 +245,12 @@ public class DynamicTableDataTest
         }
     }
 
-    class TestLinkQuery extends LinkQuery
+    class TestCaomTapQuery extends CaomTapQuery
     {
         int num;
-        TestLinkQuery(String jobID, URL tapURL, int num)
+        TestCaomTapQuery(String jobID, URL tapURL, int num)
         {
-            super(jobID, tapURL);
+            super(tapURL, jobID);
             this.num = num;
         }
 
@@ -277,7 +277,7 @@ public class DynamicTableDataTest
             {
                 throw new RuntimeException("test setup failed", ex);
             }
-            log.debug("TestLinkQuery.getArtifacts: " + ret.size());
+            log.debug("TestCaomTapQuery.getArtifacts: " + ret.size());
             return  ret;
         }
     }

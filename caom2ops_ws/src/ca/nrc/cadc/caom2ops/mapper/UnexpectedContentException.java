@@ -67,61 +67,25 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.cutout;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import javax.servlet.http.HttpServletResponse;
-import org.apache.log4j.Logger;
+package ca.nrc.cadc.caom2ops.mapper;
 
 /**
- *
+ * Exception to indicate that query response from the TAP quwery returned unexpected content.
+ * 
  * @author pdowler
  */
-public class SyncOutput
+public class UnexpectedContentException extends RuntimeException
 {
-    private static final Logger log = Logger.getLogger(SyncOutput.class);
+    private static final long serialVersionUID = 201211071100L;
     
-    protected HttpServletResponse response;
-    protected PrintWriter writer;
-
-    public SyncOutput(HttpServletResponse response)
+    public UnexpectedContentException(String message, Throwable cause)
     {
-        this.response = response;
+        super(message, cause);
     }
 
-    public boolean isOpen()
+    public UnexpectedContentException(String message)
     {
-        return (writer != null);
-    }
-    
-    public void setCode(int code)
-    {
-        if (writer != null)
-            return;
-
-        response.setStatus(code);
+        super(message);
     }
 
-    public void setHeader(String key, Object value)
-    {
-        if (writer != null)
-            return;
-        
-        if (value == null)
-            response.setHeader(key, null);
-        else
-            response.setHeader(key, value.toString());
-    }
-
-    public PrintWriter getWriter()
-        throws IOException
-    {
-        if (writer == null)
-        {
-            log.debug("opening writer");
-            writer = response.getWriter();
-        }
-        return writer;
-    }
 }
