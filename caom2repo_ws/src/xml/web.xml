@@ -19,6 +19,7 @@
             <param-name>logLevelPackages</param-name>
             <param-value>
                 ca.nrc.cadc.caom2
+                ca.nrc.cadc.wcs
                 ca.nrc.cadc.auth
                 ca.nrc.cadc.gms
             </param-value>
