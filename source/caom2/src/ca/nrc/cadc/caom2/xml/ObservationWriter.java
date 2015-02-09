@@ -633,14 +633,17 @@ public class ObservationWriter implements Serializable
                 Element pe = getCaom2Element("bounds");
                 String xsiType = caom2Namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
                 pe.setAttribute("type", xsiType, xsiNamespace);
+                Element ves = getCaom2Element("vertices");
+                
                 for (Vertex v : poly.getVertices())
                 {
                     Element ve = getCaom2Element("vertex");
                     addNumberElement("cval1", v.cval1, ve);
                     addNumberElement("cval2", v.cval2, ve);
                     addNumberElement("type", v.getType().getValue(), ve);
-                    pe.addContent(ve);
+                    ves.addContent(ve);
                 }
+                pe.addContent(ves);
                 e.addContent(pe);
             }
             else
@@ -649,8 +652,8 @@ public class ObservationWriter implements Serializable
         if (comp.dimension != null)
         {
             Element ce = getCaom2Element("dimension");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Dimension2D.class.getSimpleName();
-            ce.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Dimension2D.class.getSimpleName();
+            //ce.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("naxis1", comp.dimension.naxis1, ce);
             addNumberElement("naxis2", comp.dimension.naxis2, ce);
             e.addContent(ce);
@@ -681,8 +684,8 @@ public class ObservationWriter implements Serializable
         if (comp.bounds != null)
         {
             Element pe = getCaom2Element("bounds");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            pe.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            //pe.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
@@ -690,8 +693,8 @@ public class ObservationWriter implements Serializable
         if (comp.dimension != null)
         {
             Element ce = getCaom2Element("dimension");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Long.class.getSimpleName();
-            ce.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            //ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
@@ -737,8 +740,8 @@ public class ObservationWriter implements Serializable
         if (comp.bounds != null)
         {
             Element pe = getCaom2Element("bounds");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            pe.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            //pe.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
@@ -746,8 +749,8 @@ public class ObservationWriter implements Serializable
         if (comp.dimension != null)
         {
             Element ce = getCaom2Element("dimension");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Long.class.getSimpleName();
-            ce.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            //ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
@@ -787,8 +790,8 @@ public class ObservationWriter implements Serializable
         if (comp.dimension != null)
         {
             Element ce = getCaom2Element("dimension");
-            String xsiType = caom2Namespace.getPrefix() + ":" + Integer.class.getSimpleName();
-            ce.setAttribute("type", xsiType, xsiNamespace);
+            //String xsiType = caom2Namespace.getPrefix() + ":" + Integer.class.getSimpleName();
+            //ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Integer.toString(comp.dimension));
             e.addContent(ce);
         }

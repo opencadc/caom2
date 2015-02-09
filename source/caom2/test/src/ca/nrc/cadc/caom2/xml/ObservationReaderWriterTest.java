@@ -135,7 +135,8 @@ public class ObservationReaderWriterTest
     private static Logger log = Logger.getLogger(ObservationReaderWriterTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
     }
     
     public ObservationReaderWriterTest() { }

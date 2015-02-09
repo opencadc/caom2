@@ -132,6 +132,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -721,7 +722,8 @@ public class ObservationReader implements Serializable
             if ( extype.equals(tval) )
             {
                 Polygon poly = new Polygon();
-                for (Element ve : cur.getChildren()) // only vertex
+                Element ves = cur.getChild("vertices", namespace);
+                for (Element ve : ves.getChildren()) // only vertex
                 {
                     double cval1 = getChildTextAsDouble("cval1", ve, namespace, true);
                     double cval2 = getChildTextAsDouble("cval2", ve, namespace, true);
@@ -737,17 +739,17 @@ public class ObservationReader implements Serializable
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Dimension2D.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Dimension2D.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 long naxis1 = getChildTextAsLong("naxis1", cur, namespace, true);
                 long naxis2 = getChildTextAsLong("naxis2", cur, namespace, true);
                 pos.dimension = new Dimension2D(naxis1, naxis2);
-            }
-            else
-                throw new ObservationParsingException("unsupported dimension type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported dimension type: " + tval);
         }
         
         pos.resolution = getChildTextAsDouble("resolution", element, namespace, false);
@@ -768,31 +770,31 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 double lb = getChildTextAsDouble("lower", cur, namespace, true);
                 double ub = getChildTextAsDouble("upper", cur, namespace, true);
                 nrg.bounds = new Interval(lb, ub);
-            }
-            else
-                throw new ObservationParsingException("unsupported bounds type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported bounds type: " + tval);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 nrg.dimension = getChildTextAsLong("dimension", element, namespace, true);
-            }
-            else
-                throw new ObservationParsingException("unsupported dimension type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported dimension type: " + tval);
         }
         
         nrg.resolvingPower = getChildTextAsDouble("resolvingPower", element, namespace, false);
@@ -827,31 +829,31 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 double lb = getChildTextAsDouble("lower", cur, namespace, true);
                 double ub = getChildTextAsDouble("upper", cur, namespace, true);
                 tim.bounds = new Interval(lb, ub);
-            }
-            else
-                throw new ObservationParsingException("unsupported bounds type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported bounds type: " + tval);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 tim.dimension = getChildTextAsLong("dimension", element, namespace, true);
-            }
-            else
-                throw new ObservationParsingException("unsupported dimension type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported dimension type: " + tval);
         }
         
         tim.resolution = getChildTextAsDouble("resolution", element, namespace, false);
@@ -887,15 +889,15 @@ public class ObservationReader implements Serializable
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null)
         {
-            Attribute type = cur.getAttribute("type", xsiNamespace);
-            String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":" + Integer.class.getSimpleName();
-            if ( extype.equals(tval) )
-            {
+            //Attribute type = cur.getAttribute("type", xsiNamespace);
+            //String tval = type.getValue();
+            //String extype = namespace.getPrefix() + ":" + Integer.class.getSimpleName();
+            //if ( extype.equals(tval) )
+            //{
                 pol.dimension = getChildTextAsInteger("dimension", element, namespace, true);
-            }
-            else
-                throw new ObservationParsingException("unsupported dimension type: " + tval);
+            //}
+            //else
+            //    throw new ObservationParsingException("unsupported dimension type: " + tval);
         }
         
         return pol;
