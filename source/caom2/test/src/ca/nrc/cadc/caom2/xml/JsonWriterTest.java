@@ -91,7 +91,7 @@ public class JsonWriterTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
     }
     
     public JsonWriterTest() { }
@@ -138,14 +138,20 @@ public class JsonWriterTest
             }
             
             JsonWriter jw = new JsonWriter();
-            StringBuilder sb = new StringBuilder("\n");
+            StringBuilder sb = new StringBuilder();
             jw.write(o, sb);
             String str = sb.toString();
             log.info(str);
             
             JSONObject doc = new JSONObject(str);
-            JSONObject obs = doc.getJSONObject("Observation");
-            Assert.assertNotNull(obs);
+            
+            String xmlns = doc.getString("@xmlns");
+            Assert.assertNotNull(xmlns);
+            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
+            
+            String otype = doc.getString("@type");
+            Assert.assertNotNull(otype);
+            Assert.assertEquals("caom2:SimpleObservation", otype);
         }
         catch(Exception unexpected)
         {
