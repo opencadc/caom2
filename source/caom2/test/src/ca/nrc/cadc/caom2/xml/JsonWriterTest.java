@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.xml;
 
 
+import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
@@ -159,6 +160,56 @@ public class JsonWriterTest
             fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testComposite()
+    {
+        try
+        {
+            int i = 5;
+            Observation o = getCompleteComposite(i, true);
+            if (i == 5)
+            {
+                for (Plane p : o.getPlanes())
+                {
+                    p.computeTransientState();
+                    Assert.assertNotNull("Plane.position", p.position);
+                    Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
+
+                    Assert.assertNotNull("Plane.energy", p.energy);
+                    Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
+
+                    Assert.assertNotNull("Plane.time", p.time);
+                    Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
+
+                    Assert.assertNotNull("Plane.polarization", p.polarization);
+                    Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
+                    Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
+                }
+            }
+            
+            JsonWriter jw = new JsonWriter();
+            StringBuilder sb = new StringBuilder();
+            jw.write(o, sb);
+            String str = sb.toString();
+            log.info(str);
+            
+            JSONObject doc = new JSONObject(str);
+            
+            String xmlns = doc.getString("@xmlns");
+            Assert.assertNotNull(xmlns);
+            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
+            
+            String otype = doc.getString("@type");
+            Assert.assertNotNull(otype);
+            Assert.assertEquals("caom2:CompositeObservation", otype);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
 
     protected SimpleObservation getCompleteSimple(int depth, boolean boundsIsCircle)
         throws Exception
@@ -168,5 +219,15 @@ public class JsonWriterTest
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
         return instances.getSimpleObservation();
+    }
+    
+    protected CompositeObservation getCompleteComposite(int depth, boolean boundsIsCircle)
+        throws Exception
+    {        
+        Caom2TestInstances instances = new Caom2TestInstances();
+        instances.setComplete(true);
+        instances.setDepth(depth);
+        instances.setBoundsIsCircle(boundsIsCircle);
+        return instances.getCompositeObservation();
     }
 }
