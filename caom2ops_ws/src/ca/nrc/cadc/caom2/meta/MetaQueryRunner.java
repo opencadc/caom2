@@ -178,7 +178,7 @@ public class MetaQueryRunner implements JobRunner
             if (suri == null)
                 throw new IllegalArgumentException("missing required parameter: ID");
 
-            String format = ParameterUtil.findParameterValue("FORMAT", job.getParameterList());
+            String format = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
             if (format == null)
                 format = DEFAULT_FORMAT;
             
