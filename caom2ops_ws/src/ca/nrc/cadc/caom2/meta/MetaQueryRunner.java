@@ -84,6 +84,7 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.xml.JsonWriter;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
@@ -114,6 +115,8 @@ public class MetaQueryRunner implements JobRunner
     private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    private static final String DEFAULT_FORMAT = VOTableWriter.CONTENT_TYPE;
+    private static final String JSON_FORMAT = "application/json";
     
     private Job job;
     private JobUpdater jobUpdater;
@@ -175,6 +178,10 @@ public class MetaQueryRunner implements JobRunner
             if (suri == null)
                 throw new IllegalArgumentException("missing required parameter: ID");
 
+            String format = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
+            if (format == null)
+                format = DEFAULT_FORMAT;
+            
             ObservationURI uri = new ObservationURI(new URI(suri));
             
             RegistryClient reg = new RegistryClient();
@@ -202,13 +209,21 @@ public class MetaQueryRunner implements JobRunner
                 throw new ObservationNotFoundException(uri);
             }
                 
-            // force CAOM-2.2 so we write out transient/computed fields
-            ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
-            
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
-            syncOutput.setHeader("Content-Type", "text/xml");
-            writer.write(obs, syncOutput.getOutputStream());
-
+            syncOutput.setHeader("Content-Type", format);
+            
+            if (JSON_FORMAT.equals(format))
+            {
+                JsonWriter writer = new JsonWriter();
+                writer.write(obs, syncOutput.getOutputStream());
+            }
+            else
+            {
+                // force CAOM-2.2 so we write out transient/computed fields
+                ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+                writer.write(obs, syncOutput.getOutputStream());
+            }
+            
             // set final phase, only sync so no results
             log.debug(job.getID() + ": EXECUTING -> COMPLETED...");
             ep = jobUpdater.setPhase(job.getID(), ExecutionPhase.EXECUTING, ExecutionPhase.COMPLETED, new Date());
