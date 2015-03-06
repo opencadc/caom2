@@ -53,6 +53,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneMetaReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
@@ -78,7 +79,6 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.util.HexUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.sql.Connection;
@@ -250,14 +250,14 @@ public class BaseSQLGenerator implements SQLGenerator
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
                 // energy
-                "energy_emBand", "energy_bounds_cval1", "energy_bounds_cval2", "energy_bounds_width",
+                "energy_emBand", "energy_bounds", "energy_bounds_cval1", "energy_bounds_cval2", "energy_bounds_width",
                 "energy_freqWidth", "energy_freqSampleSize",
                 "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
                 "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
                 "energy_restwav",
 
                 // time
-                "time_bounds_cval1", "time_bounds_cval2", "time_bounds_width",
+                "time_bounds", "time_bounds_cval1", "time_bounds_cval2", "time_bounds_width",
                 "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
 
                 // polarization
@@ -1063,7 +1063,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, plane.getURI(obs.getURI()).getURI().toASCIIString());
 
                 //position
-                Position pos = plane.getPosition();
+                Position pos = plane.position;
                 if (pos.bounds != null)
                 {
                     Polygon poly = PolygonUtil.toPolygon(pos.bounds);
@@ -1097,19 +1097,21 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetBoolean(sb, ps, col++, pos.timeDependent);
 
                 //energy
-                Energy nrg = plane.getEnergy();
+                Energy nrg = plane.energy;
                 if (nrg.emBand != null)
                     safeSetString(sb, ps, col++, nrg.emBand.getValue());
                 else
                     safeSetString(sb, ps, col++, null);
                 if (nrg.bounds != null)
                 {
+                    safeSetInterval(sb, ps, col++, nrg.bounds);
                     safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
                     safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
                     safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
                 }
                 else
                 {
+                    safeSetInterval(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
@@ -1133,15 +1135,17 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, nrg.restwav);
                 
                 //time
-                Time tim = plane.getTime();
+                Time tim = plane.time;
                 if (tim.bounds != null)
                 {
+                    safeSetInterval(sb, ps, col++, tim.bounds);
                     safeSetDouble(sb, ps, col++, tim.bounds.getLower());
                     safeSetDouble(sb, ps, col++, tim.bounds.getUpper());
                     safeSetDouble(sb, ps, col++, tim.bounds.getWidth());
                 }
                 else
                 {
+                    safeSetInterval(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
@@ -1152,7 +1156,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, tim.exposure);
 
                 //polarization
-                Polarization pol = plane.getPolarization();
+                Polarization pol = plane.polarization;
                 safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
                 safeSetInteger(sb, ps, col++, pol.dimension);
             }
@@ -1925,6 +1929,11 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
         throws SQLException
     {
         throw new UnsupportedOperationException();

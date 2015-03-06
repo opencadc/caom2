@@ -71,6 +71,8 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.text.DateFormat;
@@ -79,6 +81,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.postgresql.geometric.PGpolygon;
 
 /**
  *
@@ -93,7 +96,7 @@ public class PostgreSQLGeneratorTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    BaseSQLGenerator gen = new PostgreSQLGenerator("cadctest", "caom2");
+    PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", "caom2");
 
     //@Test
     public void testTemplate()
@@ -155,6 +158,29 @@ public class PostgreSQLGeneratorTest
 
             log.debug("look for: " + exp1);
             Assert.assertTrue(sql.contains(exp1));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    
+    
+    @Test
+    public void testGetPolygonFromInterval()
+    {
+        try
+        {
+            Interval i = new Interval(1.0, 3.0);
+            PGpolygon ip = gen.getPolygon2D(i);
+            log.info(i + " -> " + ip.getValue());
+            
+            i.getSamples().add(new SubInterval(1.0, 1.2));
+            i.getSamples().add(new SubInterval(2.8, 3.0));
+            ip = gen.getPolygon2D(i);
+            log.info(i + " -> " + ip.getValue());
         }
         catch(Exception unexpected)
         {
