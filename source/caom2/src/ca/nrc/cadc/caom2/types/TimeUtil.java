@@ -226,7 +226,7 @@ public final class TimeUtil
         double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
         
         log.debug("computeDimensionFromWCS: " + x1 + "," + x2);
-        return new Long((long) Math.abs(x2 - x1));
+        return new Long (Math.round(Math.abs(x2 - x1)));
     }
     
     /**

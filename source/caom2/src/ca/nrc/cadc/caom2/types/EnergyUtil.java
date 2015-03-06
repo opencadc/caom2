@@ -258,7 +258,8 @@ public final class EnergyUtil
         pix = trans.sky2pix( new double[] { bounds.getUpper() });
         double x2 = pix.coordinates[0];
         
-        return new Long((long) Math.abs(x2 - x1));
+        log.debug("computeDimensionFromWCS: " + x1 + "," + x2);
+        return new Long (Math.round(Math.abs(x2 - x1)));
     }
     
     /**
