@@ -1,5 +1,6 @@
 package ca.nrc.cadc.caom2.pkg;
 
-public class PackageTest {
+public class TarWriter
+{
 
 }
