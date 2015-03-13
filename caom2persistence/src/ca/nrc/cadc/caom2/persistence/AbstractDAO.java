@@ -98,6 +98,7 @@ public class AbstractDAO
 
     protected AbstractDAO() { }
     
+    
     /**
      * Get the DataSource in use by the DAO. This is intended so that applications can
      * include other SQL statements along with DAO operations in a single transaction.
@@ -137,6 +138,7 @@ public class AbstractDAO
         ret.put("database", String.class);
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
+        ret.put("disableHashJoin", Boolean.class);
         ret.put(SQLGenerator.class.getName(), Class.class);
         return ret;
     }
@@ -149,6 +151,9 @@ public class AbstractDAO
         
         String schema = (String) config.get("schema");
         Boolean force = (Boolean) config.get("forceUpdate");
+        Boolean disableHashJoin = (Boolean) config.get("disableHashJoin");
+        log.debug("disableHashJoin: " + disableHashJoin);
+        
         Class<?> genClass = (Class<?>) config.get(SQLGenerator.class.getName());
         if (genClass == null)
             throw new IllegalArgumentException(SQLGenerator.class.getName() + " must be specified in config");
@@ -161,7 +166,10 @@ public class AbstractDAO
                 DBConfig dbrc = new DBConfig();
                 ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
                 // for some reason, we need to suppress close when wrapping with delegating DS
-                this.dataSource =  new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
+                DataSourceWrapper dsw = new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
+                if (disableHashJoin != null)
+                    dsw.setDisableHashJoin(disableHashJoin);
+                this.dataSource =  dsw;
             }
         }
         catch(NamingException ex)
