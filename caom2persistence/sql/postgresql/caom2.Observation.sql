@@ -64,7 +64,8 @@ tablespace caom_index
 ;
 
 -- harvesting index for recompute mode of caom2harvester
-create index maxLastModified on caom2.Observation (maxLastModified)
+create index i_maxLastModified on caom2.Observation (maxLastModified)
+tablespace caom_index
 ;
 
 -- member join support
