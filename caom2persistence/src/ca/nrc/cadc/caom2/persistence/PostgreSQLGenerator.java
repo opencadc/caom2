@@ -260,14 +260,11 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
                 SubInterval si = iter.next();
                 if (prev != null)
                 {
-                    verts.add(new PGpoint(val.getUpper(), ym));
+                    verts.add(new PGpoint(prev.getLower(), ym));
+                    verts.add(new PGpoint(si.getUpper(), ym));
                 }
-                verts.add(new PGpoint(val.getUpper(), y2));
-                verts.add(new PGpoint(val.getLower(), y2));
-                if ( iter.hasNext() )
-                {
-                    verts.add(new PGpoint(val.getLower(), ym));
-                }
+                verts.add(new PGpoint(si.getUpper(), y2));
+                verts.add(new PGpoint(si.getLower(), y2));
                 prev = si;
             }
         }
