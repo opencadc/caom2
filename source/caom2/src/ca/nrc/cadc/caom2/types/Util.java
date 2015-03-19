@@ -15,6 +15,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
@@ -188,6 +189,7 @@ public final class Util
     // merge a SubInterval into a List of SubInterval
     static void mergeIntoList(SubInterval si, List<SubInterval> samples, double unionScale)
     {
+        //log.debug("[mergeIntoList] " + si.lower + "," + si.upper + " ->  " + samples.size());
         if (samples.size() > 0)
         {
             double f = unionScale*(si.getUpper() - si.getLower());
@@ -196,7 +198,7 @@ public final class Util
 
             ArrayList<SubInterval> tmp = new ArrayList<SubInterval>(samples.size());
 
-            // find intervals that overlap the new one
+            // find intervals that overlap the new one, move from samples -> tmp
             for (int i=0; i<samples.size(); i++)
             {
                 SubInterval s1 = (SubInterval) samples.get(i);
@@ -205,14 +207,14 @@ public final class Util
                 double d = s1.getUpper() + f;
 
                 // [a,b] U [c,d]
-                //System.out.println("[TimeUtil] " + a + "," + b + " U " + c + "," + d);
+                //System.out.println("[mergeIntoList] " + a + "," + b + " U " + c + "," + d);
                 if ( b < c || d < a ) // no overlap
                 {
-                    //System.out.println("[TimeUtil] no overlap: " + si + " and " + s1);
+                    //System.out.println("[mergeIntoList] no overlap: " + si + " and " + s1);
                 }
                 else
                 {
-                    //System.out.println("[TimeUtil] ** overlap: " + si + " and " + s1);
+                    //System.out.println("[mergeIntoList] ** overlap: " + si + " and " + s1);
                     tmp.add(s1);
                     samples.remove(s1);
                     i--;
@@ -228,6 +230,19 @@ public final class Util
                     si.upper = s.getUpper();
             }
         }
-        samples.add(si);
+        // insert new sub to preserve order
+        boolean added = false;
+        for (int i=0; i<samples.size(); i++)
+        {
+            SubInterval ss = samples.get(i);
+            if (si.getLower() < ss.getLower())
+            {
+                samples.add(i, si);
+                added = true;
+                break;
+            }
+        }
+        if (!added)
+            samples.add(si);
     }
 }

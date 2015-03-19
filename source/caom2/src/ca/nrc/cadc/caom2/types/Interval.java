@@ -109,7 +109,19 @@ public class Interval implements Serializable
     @Override
     public String toString()
     {
-        return "Interval[" + lower + "," + upper + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Interval[").append(lower).append(",").append(upper);
+        if (!samples.isEmpty())
+        {
+            sb.append(" samples[ ");
+            for (SubInterval si : samples)
+            {
+                sb.append("[").append(si.lower).append(",").append(si.upper).append("] ");
+            }
+            sb.append("]");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     public double getLower()
