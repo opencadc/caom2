@@ -303,12 +303,17 @@ public class CaomUtilTest
         try
         {
             List<PolarizationState> pol = new ArrayList<PolarizationState>();
+            List<PolarizationState> apol = new ArrayList<PolarizationState>();
             String actual = CaomUtil.encodeStates(pol);
             Assert.assertNull(actual);
             
             pol.add(PolarizationState.I);
             actual = CaomUtil.encodeStates(pol);
             Assert.assertEquals("/I/", actual);
+            
+            CaomUtil.decodeStates(actual, apol);
+            Assert.assertEquals(1, apol.size());
+            Assert.assertEquals(PolarizationState.I, apol.get(0));
             
             pol.add(PolarizationState.Q);
             pol.add(PolarizationState.U);

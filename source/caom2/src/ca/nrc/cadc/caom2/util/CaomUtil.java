@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -193,11 +194,15 @@ public class CaomUtil implements Serializable
     {
         if (val == null)
             return;
+        
         String[] ss = val.split(POL_STATE_SEPARATOR);
         for (String s : ss)
         {
-            PolarizationState ps = PolarizationState.toValue(s);
-            out.add(ps);
+            if (StringUtil.hasText(s)) // leading and trailing separators -> 0-length str?
+            {
+                PolarizationState ps = PolarizationState.toValue(s);
+                out.add(ps);
+            }
         }
     }
     
