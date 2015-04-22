@@ -37,7 +37,7 @@ public class Main
             else if (am.isSet("v") || am.isSet("verbose"))
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
             }
             else
             {
@@ -209,7 +209,7 @@ public class Main
         sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
         sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)" );
         sb.append("\n\nOptional modifiers:");
-        sb.append("\n     --endDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
+        sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         //sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");

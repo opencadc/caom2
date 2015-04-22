@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.AuthenticatorImpl;
 import ca.nrc.cadc.caom2.repo.action.RepoAction;
 import ca.nrc.cadc.vosi.AvailabilityStatus;
 import ca.nrc.cadc.vosi.WebService;
@@ -114,6 +115,9 @@ public class CaomRepoWebService implements WebService
                 return new AvailabilityStatus(false, null, null, null, RepoAction.READ_ONLY_MSG);
 
             // ReadWrite: proceed with live checks
+            
+            CheckResource cr = AuthenticatorImpl.getAvailabilityCheck();
+            cr.check();
             
             CaomRepoConfig rc = new CaomRepoConfig();
             

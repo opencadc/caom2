@@ -69,15 +69,23 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.postgresql.geometric.PGpoint;
+import org.postgresql.geometric.PGpolygon;
 import org.postgresql.util.PGobject;
 
 /**
@@ -197,5 +205,70 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
                 }
             }
         }
+    }
+    
+    @Override
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+        throws SQLException
+    {
+        if (val == null)
+        {
+            ps.setObject(col, null);
+            if (sb != null)
+                sb.append("null,");
+        }
+        else
+        {
+            log.debug("[safeSetInterval] in: " + val);
+            PGpolygon poly = getPolygon2D(val);
+            ps.setObject(col, poly);
+            if (sb != null)
+            {
+                sb.append(poly.getValue());
+                sb.append(",");
+            }
+        }
+    }
+    
+    PGpolygon getPolygon2D(Interval val)
+    {
+        // a query will be a point or line segment at y=0
+        double y1 = -2.0;  // bottom of comb
+        double ym = -1.0;  // bottom of teeth
+        double y2 = 1.0;   // top of teeth
+        
+        List<PGpoint> verts = new ArrayList<PGpoint>();
+        
+        // draw a 2D polygon that looks like a tooth-up-comb with each tooth having x-range that
+        // corresponds to one (sub) interval... it is a simple box for an Interval with no sub-samples
+        
+        verts.add(new PGpoint(val.getLower(), y1));
+        verts.add(new PGpoint(val.getUpper(), y1));
+
+        if (val.getSamples().isEmpty())
+        {
+            verts.add(new PGpoint(val.getUpper(), y2));
+            verts.add(new PGpoint(val.getLower(), y2));
+        }
+        else
+        {
+            LinkedList<SubInterval> samples = new LinkedList<SubInterval>(val.getSamples());
+            Iterator<SubInterval> iter = samples.descendingIterator();
+            SubInterval prev = null;
+            while ( iter.hasNext() )
+            {
+                SubInterval si = iter.next();
+                if (prev != null)
+                {
+                    verts.add(new PGpoint(prev.getLower(), ym));
+                    verts.add(new PGpoint(si.getUpper(), ym));
+                }
+                verts.add(new PGpoint(si.getUpper(), y2));
+                verts.add(new PGpoint(si.getLower(), y2));
+                prev = si;
+            }
+        }
+        
+        return new PGpolygon(verts.toArray(new PGpoint[verts.size()]));
     }
 }

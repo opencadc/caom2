@@ -71,7 +71,10 @@ public abstract class Harvester implements Runnable
         if (driver.contains(SYBASE) || driver.contains(JTDS))
             ret.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
         else if (cc.getDriver().contains(POSTGRESQL))
+        {
             ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            ret.put("disableHashJoin", Boolean.TRUE);
+        }
         else
             throw new IllegalArgumentException("unknown SQL dialect: " + desc[0]);
 
