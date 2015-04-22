@@ -226,7 +226,9 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.provenance.lastExecuted = Util.getDate(data, map.get("caom2:Plane.provenance.lastExecuted"));
                 plane.provenance.producer = Util.getString(data, map.get("caom2:Plane.provenance.producer"));
                 plane.provenance.project = Util.getString(data, map.get("caom2:Plane.provenance.project"));
-                plane.provenance.reference = new URI(Util.getString(data, map.get("caom2:Plane.provenance.reference")));
+                String sref = Util.getString(data, map.get("caom2:Plane.provenance.reference"));
+                if (sref != null)
+                    plane.provenance.reference = new URI(sref);
                 plane.provenance.runID = Util.getString(data, map.get("caom2:Plane.provenance.runID"));
                 plane.provenance.version = Util.getString(data, map.get("caom2:Plane.provenance.version"));
                 String inputs = Util.getString(data, map.get("caom2:Plane.provenance.inputs"));
