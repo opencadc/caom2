@@ -28,7 +28,6 @@
 
 package ca.nrc.cadc.caom.ac.dao;
 
-import ca.nrc.cadc.assetpermission.ArchiveProcess;
 import ca.nrc.cadc.caom.ac.ACProcess;
 import ca.nrc.cadc.caom.ac.server.ACProcessPersistence;
 
@@ -43,10 +42,12 @@ public class ACProcessDAOImpl implements ACProcessPersistence
         {
 
         }
-        catch(foo)
+        catch(Exception e)
         {
 
         }
+        
+        return null;
     }
 
     @Override
@@ -56,10 +57,12 @@ public class ACProcessDAOImpl implements ACProcessPersistence
         {
 
         }
-        catch(foo)
+        catch(Exception e)
         {
 
         }
+        
+        return null;
     }
 
     @Override
@@ -69,10 +72,12 @@ public class ACProcessDAOImpl implements ACProcessPersistence
         {
 
         }
-        catch(foo)
+        catch(Exception e)
         {
 
         }
+        
+        return null;
     }
 
     @Override
@@ -82,10 +87,12 @@ public class ACProcessDAOImpl implements ACProcessPersistence
         {
 
         }
-        catch(foo)
+        catch(Exception e)
         {
 
         }
+        
+        return null;
     }
 
     @Override
@@ -95,7 +102,7 @@ public class ACProcessDAOImpl implements ACProcessPersistence
         {
 
         }
-        catch(foo)
+        catch(Exception e)
         {
 
         }
