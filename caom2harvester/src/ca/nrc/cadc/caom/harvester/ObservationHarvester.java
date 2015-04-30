@@ -1,8 +1,8 @@
 
 package ca.nrc.cadc.caom.harvester;
 
-import ca.nrc.cadc.caom.harvester.state.HarvestSkip;
-import ca.nrc.cadc.caom.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;

@@ -1,7 +1,7 @@
 
 package ca.nrc.cadc.caom.harvester;
 
-import ca.nrc.cadc.caom.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;

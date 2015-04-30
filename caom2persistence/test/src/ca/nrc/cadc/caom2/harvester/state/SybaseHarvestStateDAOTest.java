@@ -67,39 +67,40 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.util.Date;
-import java.util.UUID;
-import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.sql.DataSource;
+import java.util.Date;
+import java.util.UUID;
+
 /**
  *
  * @author pdowler
  */
-public class HarvestStateDAOTest 
+public class SybaseHarvestStateDAOTest
 {
-    private static final Logger log = Logger.getLogger(HarvestStateDAOTest.class);
-    
+    private static final Logger log = Logger.getLogger(SybaseHarvestStateDAOTest.class);
+
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
     static DataSource dataSource;
     static String database;
     static String schema;
 
-    public HarvestStateDAOTest()
+    public SybaseHarvestStateDAOTest()
         throws Exception
     {
         
@@ -111,12 +112,12 @@ public class HarvestStateDAOTest
         try
         {
             DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
+            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_SYB_TEST", "cadctest");
             dataSource = DBUtil.getDataSource(cc);
-            database = "cadctest";
-            schema = System.getProperty("user.name");
+            database = null;
+            schema = "caom2";
 
-            String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
+            String sql = "DELETE FROM " + schema + "_HarvestState";
             log.info("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
         }
@@ -145,7 +146,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testGet", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertEquals("testGet", s.source);
@@ -165,12 +166,12 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertID", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = UUID.randomUUID();
+            s.curID = new UUID(0L, 666L);
             dao.put(s);
 
             HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
@@ -190,7 +191,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertEquals("testInsertDate", s.source);
             Assert.assertEquals("testInsertDate".hashCode(), s.code.intValue());
@@ -216,12 +217,12 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateID", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = UUID.randomUUID();
+            s.curID = new UUID(0L, 777L);
             dao.put(s);
 
             HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
@@ -229,7 +230,7 @@ public class HarvestStateDAOTest
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
 
-            s.curID = UUID.randomUUID();
+            s.curID = new UUID(0L, 888L);
             dao.put(s);
 
             HarvestState s3 = dao.get("testUpdateID", Integer.class.getName());
@@ -250,7 +251,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertEquals("testUpdateDate", s.source);
             Assert.assertEquals("testUpdateDate".hashCode(), s.code.intValue());

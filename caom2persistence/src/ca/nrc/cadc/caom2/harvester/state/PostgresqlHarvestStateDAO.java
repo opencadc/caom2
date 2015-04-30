@@ -2,7 +2,7 @@
  ************************************************************************
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  *
- * (c) 2014.                            (c) 2014.
+ * (c) 2015.                            (c) 2015.
  * National Research Council            Conseil national de recherches
  * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
  * All rights reserved                  Tous droits reserves
@@ -26,78 +26,42 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom.ac.dao;
+package ca.nrc.cadc.caom2.harvester.state;
 
-import ca.nrc.cadc.assetpermission.ArchiveProcess;
-import ca.nrc.cadc.caom.ac.ACProcess;
-import ca.nrc.cadc.caom.ac.server.ACProcessPersistence;
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.UUID;
 
-import java.util.Collection;
-
-public class ACProcessDAOImpl implements ACProcessPersistence
+public class PostgresqlHarvestStateDAO extends HarvestStateDAO
 {
-    @Override
-    public ACProcess getACProcess(ACProcess acProcess)
+    public PostgresqlHarvestStateDAO(DataSource dataSource, String database, String schema)
     {
-        try
-        {
-
-        }
-        catch(foo)
-        {
-
-        }
+        super(dataSource, database, schema);
+    }
+    // assuming database is null is sybase and not null is postgresql
+    protected String getTable(String database, String schema)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(database);
+        sb.append(".");
+        sb.append(schema);
+        sb.append(".");
+        sb.append("HarvestState");
+        return sb.toString();
     }
 
-    @Override
-    public Collection<ACProcess> getACProcesses()
+    protected void setUUID(PreparedStatement ps, int col, UUID uuid)
+        throws SQLException
     {
-        try
+        if (uuid != null)
         {
-
+            ps.setObject(col, uuid);
         }
-        catch(foo)
+        else
         {
-
-        }
-    }
-
-    @Override
-    public ACProcess addACProcess(ACProcess acProcess)
-    {
-        try
-        {
-
-        }
-        catch(foo)
-        {
-
-        }
-    }
-
-    @Override
-    public ACProcess updateACProcess(ACProcess acProcess)
-    {
-        try
-        {
-
-        }
-        catch(foo)
-        {
-
-        }
-    }
-
-    @Override
-    public void deleteACProcess(ACProcess acProcess)
-    {
-        try
-        {
-
-        }
-        catch(foo)
-        {
-
+            ps.setNull(col, Types.OTHER);
         }
     }
 

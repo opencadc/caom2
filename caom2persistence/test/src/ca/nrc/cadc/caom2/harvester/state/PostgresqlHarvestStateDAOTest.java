@@ -67,50 +67,57 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Date;
-import java.util.List;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class HarvestSkipDAOTest 
+public class PostgresqlHarvestStateDAOTest
 {
-    private static final Logger log = Logger.getLogger(HarvestSkipDAOTest.class);
-
+    private static final Logger log = Logger.getLogger(PostgresqlHarvestStateDAOTest.class);
+    
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
-    DataSource dataSource;
-    String database;
-    String schema;
+    static DataSource dataSource;
+    static String database;
+    static String schema;
 
-    public HarvestSkipDAOTest()
+    public PostgresqlHarvestStateDAOTest()
         throws Exception
+    {
+        
+    }
+    
+    @BeforeClass
+    public static void cleanup()
     {
         try
         {
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
-            this.dataSource = DBUtil.getDataSource(cc);
-            this.database = "cadctest";
-            this.schema = System.getProperty("user.name");
+            dataSource = DBUtil.getDataSource(cc);
+            database = "cadctest";
+            schema = System.getProperty("user.name");
 
-            String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
-            log.debug("cleanup: " + sql);
+            String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
+            log.info("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
         }
         catch(Exception ex)
@@ -134,30 +141,17 @@ public class HarvestSkipDAOTest
     }
 
     @Test
-    public void testInsert()
+    public void testGet()
     {
         try
         {
-            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            Long id1 = new Long(555L);
-            Long id2 = new Long(666L);
-            Long id3 = new Long(777L);
-
-            HarvestSkip skip;
-            Date start = null;
-            
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1);
-            dao.put(skip);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2);
-            dao.put(skip);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3);
-            dao.put(skip);
-
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
-            Assert.assertEquals("skips size", 3, skips.size());
-            Assert.assertEquals(id1, skips.get(0).skipID);
-            Assert.assertEquals(id2, skips.get(1).skipID);
-            Assert.assertEquals(id3, skips.get(2).skipID);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testGet", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertEquals("testGet", s.source);
+            Assert.assertEquals(Integer.class.getName(), s.cname);
+            Assert.assertEquals("testGet".hashCode(), s.code.intValue());
+            Assert.assertNull(s.curLastModified);
         }
         catch(Exception unexpected)
         {
@@ -167,35 +161,116 @@ public class HarvestSkipDAOTest
     }
 
     @Test
-    public void testUpdate()
+    public void testInsertID()
     {
         try
         {
-            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            Long id1 = new Long(888L);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testInsertID", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertNull(s.curLastModified);
 
-            HarvestSkip skip;
+            s.curID = UUID.randomUUID();
+            dao.put(s);
 
-            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1);
-            dao.put(skip);
+            HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
+            Assert.assertNotNull(s2);
+            Assert.assertNull(s2.curLastModified);
+            Assert.assertEquals(s.id, s2.id);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInsertDate()
+    {
+        try
+        {
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testInsertDate", Integer.class.getName());
+            Assert.assertEquals("testInsertDate", s.source);
+            Assert.assertEquals("testInsertDate".hashCode(), s.code.intValue());
+            Assert.assertNotNull(s);
+            Assert.assertNull(s.curLastModified);
+
+            s.curLastModified = new Date();
+            dao.put(s);
+
+            HarvestState s2 = dao.get("testInsertDate", Integer.class.getName());
+            Assert.assertNotNull(s2);
+            Assert.assertEquals(s.curLastModified, s2.curLastModified);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testUpdateID()
+    {
+        try
+        {
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testUpdateID", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertNull(s.curLastModified);
+
+            s.curID = UUID.randomUUID();
+            dao.put(s);
+
+            HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
+            Assert.assertNotNull(s2);
+            Assert.assertNull(s2.curLastModified);
+            Assert.assertEquals(s.id, s2.id);
+
+            s.curID = UUID.randomUUID();
+            dao.put(s);
+
+            HarvestState s3 = dao.get("testUpdateID", Integer.class.getName());
+            Assert.assertNotNull(s3);
+            Assert.assertNull(s3.curLastModified);
+            Assert.assertEquals(s.id, s3.id);
             
-            HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
-            Assert.assertNotNull(actual1);
-            Assert.assertEquals(id1, actual1.skipID);
-            Date d1 = actual1.lastModified;
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
-            Thread.sleep(100L);
+    @Test
+    public void testUpdateDate()
+    {
+        try
+        {
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
+            Assert.assertEquals("testUpdateDate", s.source);
+            Assert.assertEquals("testUpdateDate".hashCode(), s.code.intValue());
+            Assert.assertNotNull(s);
+            Assert.assertNull(s.curLastModified);
 
-            dao.put(actual1);
+            long t = System.currentTimeMillis();
+            s.curLastModified = new Date(t);
+            dao.put(s);
 
-            HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
-            Assert.assertNotNull(actual2);
-            Assert.assertEquals(id1, actual2.skipID);
+            HarvestState s2 = dao.get("testUpdateDate", Integer.class.getName());
+            Assert.assertNotNull(s2);
+            Assert.assertEquals(s.curLastModified, s2.curLastModified);
 
-            log.debug("skip.lastModified: " + skip.lastModified.getTime());
-            log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
-            Assert.assertTrue("lastModfified increased", skip.lastModified.getTime() < actual2.lastModified.getTime());
+            s.curLastModified = new Date(t + 10L);
+            dao.put(s);
 
+            HarvestState s3 = dao.get("testUpdateDate", Integer.class.getName());
+            Assert.assertNotNull(s3);
+            Assert.assertEquals(s.curLastModified, s3.curLastModified);
         }
         catch(Exception unexpected)
         {

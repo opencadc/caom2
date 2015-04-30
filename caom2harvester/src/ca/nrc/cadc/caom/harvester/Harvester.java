@@ -1,8 +1,9 @@
 
 package ca.nrc.cadc.caom.harvester;
 
-import ca.nrc.cadc.caom.harvester.state.HarvestSkipDAO;
-import ca.nrc.cadc.caom.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
@@ -93,7 +94,7 @@ public abstract class Harvester implements Runnable
         this.cname = c.getSimpleName();
         
         log.debug("creating HarvestState tracker: " + cname + " in " + dest[1] + "." + dest[2]);
-        this.harvestState = new HarvestStateDAO(ds, dest[1], dest[2]);
+        this.harvestState = new PostgresqlHarvestStateDAO(ds, dest[1], dest[2]);
         
         log.debug("creating HarvestSkip tracker: " + cname + " in " + dest[1] + "." + dest[2]);
         this.harvestSkip = new HarvestSkipDAO(ds, dest[1], dest[2], batchSize);
