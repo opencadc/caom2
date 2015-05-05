@@ -88,6 +88,7 @@ import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
+import ca.nrc.cadc.cred.AuthorizationException;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
@@ -109,6 +110,7 @@ import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
 
@@ -287,6 +289,10 @@ public class LinkQueryRunner implements JobRunner
             log.debug(job.getID() + ": EXECUTING -> COMPLETED [OK]");
 
         }
+        catch(AccessControlException ex)
+        {
+            sendError(ex, "permission denied -- reason: " + ex.getMessage(), 403);
+        }
         catch(CertificateException ex)
         {
             sendError(ex, "permission denied -- reason: invalid proxy certificate", 403);
@@ -305,6 +311,7 @@ public class LinkQueryRunner implements JobRunner
         }
         catch(Throwable t)
         {
+            
             if ( ThrowableUtil.isACause(t, InterruptedException.class) )
             {
                 try
@@ -317,6 +324,11 @@ public class LinkQueryRunner implements JobRunner
                 {
                     log.error("failed to check job phase after InterruptedException", ex2);
                 }
+            }
+            else if ( ThrowableUtil.isACause(t, AuthorizationException.class) ) // CredUtil + CredPrivateClient
+            {
+                sendError(t, "permission denied -- reason: " + t.getCause().getMessage(), 403);
+                return;
             }
             sendError(t, 500);
         }
