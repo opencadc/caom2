@@ -45,6 +45,7 @@ create table caom2.Plane
 
 -- energy
     energy_emband            varchar(32),
+    energy_bounds            polygon,
     energy_bounds_cval1      double precision,
     energy_bounds_cval2      double precision,
     energy_bounds_width      double precision,
@@ -60,6 +61,7 @@ create table caom2.Plane
     energy_restwav           double precision,
 
 -- time
+    time_bounds             polygon,
     time_bounds_cval1       double precision,
     time_bounds_cval2       double precision,
     time_bounds_width       double precision,
@@ -130,10 +132,10 @@ create index Plane_position_i3
 tablespace caom_index
 ;
 
---create index Plane_energy_i1
---      on caom.Plane using gist (energy_bounds)
---tablespace caom_index
---;
+create index Plane_energy_i1
+      on caom2.Plane using gist (energy_bounds)
+tablespace caom_index
+;
 create index Plane_energy_i2
         on caom2.Plane (energy_bounds_width)
 tablespace caom_index
@@ -153,11 +155,10 @@ tablespace caom_index
 where energy_restwav is not null
 ;
 
---create index Plane_time_i1
---      on caom.Plane using gist (time_bounds)
---tablespace caom_index
---;
--- width(interval) == width(box) == height(box)
+create index Plane_time_i1
+      on caom2.Plane using gist (time_bounds)
+tablespace caom_index
+;
 create index Plane_time_i2
         on caom2.Plane (time_bounds_width)
 tablespace caom_index

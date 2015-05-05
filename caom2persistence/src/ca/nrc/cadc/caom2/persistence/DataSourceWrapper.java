@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.persistence;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import org.apache.log4j.Logger;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 
 /**
@@ -84,7 +85,10 @@ import org.springframework.jdbc.datasource.DelegatingDataSource;
  */
 public class DataSourceWrapper  extends DelegatingDataSource 
 {
+    private static final Logger log = Logger.getLogger(DataSourceWrapper.class);
+    
     private final String catalogName;
+    private boolean disableHashJoin = false;
 
     public DataSourceWrapper(String catalogName, DataSource dataSource) 
     {
@@ -92,12 +96,24 @@ public class DataSourceWrapper  extends DelegatingDataSource
         this.catalogName = catalogName;
     }
 
+    public void setDisableHashJoin(boolean disableHashJoin)
+    {
+        this.disableHashJoin = disableHashJoin;
+    }
+
+    
     @Override
     public Connection getConnection() 
         throws SQLException
     {
         Connection cnx = super.getConnection();
         cnx.setCatalog(this.catalogName);
+        if (disableHashJoin)
+        {
+            String sql = "set enable_hashjoin = false";
+            log.debug("*****" + sql + " *****");
+            cnx.createStatement().execute(sql);
+        }
         return cnx;
     }
 
@@ -106,5 +122,12 @@ public class DataSourceWrapper  extends DelegatingDataSource
     {
         Connection cnx = super.getConnection(un, pw);
         cnx.setCatalog(this.catalogName);
-        return cnx;    }
+        if (disableHashJoin)
+        {
+            String sql = "set enable_hashjoin = false";
+            log.debug("*****" + sql + " *****");
+            cnx.createStatement().execute(sql);
+        }
+        return cnx;    
+    }
 }
