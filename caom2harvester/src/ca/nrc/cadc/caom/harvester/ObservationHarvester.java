@@ -40,6 +40,7 @@ public class ObservationHarvester extends Harvester
     
     private boolean skipped;
     private Date maxDate;
+    private boolean doCollisionCheck = false;
 
     private ObservationHarvester() { }
     
@@ -63,6 +64,11 @@ public class ObservationHarvester extends Harvester
     public void setMaxDate(Date maxDate)
     {
         this.maxDate = maxDate;
+    }
+
+    public void setDoCollisionCheck(boolean doCollisionCheck)
+    {
+        this.doCollisionCheck = doCollisionCheck;
     }
 
     private void init()
@@ -307,7 +313,16 @@ public class ObservationHarvester extends Harvester
                                 //else: the put below with throw a valid exception because source is not enforcing
                                 // unique ID and URI
                             }
-                            
+                            if (doCollisionCheck)
+                            {
+                                Observation cc = destObservationDAO.getShallow(o.getID());
+                                log.info("collision check: " + o.getURI() 
+                                    + " " + format(o.getMaxLastModified()) + " vs " 
+                                    + format(cc.getMaxLastModified()));
+                                if ( !cc.getMaxLastModified().equals(o.getMaxLastModified()) )
+                                    throw new IllegalStateException("detected harvesting collision: " + o.getURI() 
+                                            + " maxLastModified: " + format(o.getMaxLastModified()));
+                            }
                             destObservationDAO.put(o);
                       
                         
