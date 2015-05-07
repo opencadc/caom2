@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.access;
 
+import java.net.URI;
+
 /**
  *
  * @author pdowler
@@ -77,7 +79,7 @@ public class PlaneMetaReadAccess extends ReadAccess
 {
     private static final long serialVersionUID = 201202081620L;
     
-    public PlaneMetaReadAccess(Long assetID, Long groupID)
+    public PlaneMetaReadAccess(Long assetID, URI groupID)
     {
         super(assetID, groupID);
     }

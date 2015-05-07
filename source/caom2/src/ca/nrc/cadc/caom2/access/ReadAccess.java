@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.access;
 
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import java.net.URI;
 
 /**
  *
@@ -82,11 +83,11 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
     
     private Long assetID;
 
-    private Long groupID;
+    private URI groupID;
     
     private ReadAccess() { }
 
-    public ReadAccess(Long assetID, Long groupID)
+    public ReadAccess(Long assetID, URI groupID)
     {
         super(true);
         CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
@@ -100,7 +101,7 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
         return assetID;
     }
 
-    public Long getGroupID()
+    public URI getGroupID()
     {
         return groupID;
     }

@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.access;
 
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -89,7 +90,7 @@ public class ReadAccessTest
     }
 
     Long assetID = new Long(666L);
-    Long groupID = new Long(1000L);
+    String groupStr = "ivo://cadc.nrc.ca/gms?ABC";
 
     //@Test
     public void testTemplate()
@@ -110,6 +111,7 @@ public class ReadAccessTest
     {
         try
         {
+            URI groupID = new URI(groupStr);
             ReadAccess ra = new ObservationMetaReadAccess(assetID, groupID);
             ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
@@ -122,17 +124,17 @@ public class ReadAccessTest
             Assert.assertEquals(ra, raeq);
             Assert.assertEquals(0, ra.compareTo(raeq));
             
-            ReadAccess rane = new ObservationMetaReadAccess(assetID, groupID+1L);
+            ReadAccess rane = new ObservationMetaReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new ObservationMetaReadAccess(assetID+1L, groupID);
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new PlaneMetaReadAccess(assetID, groupID); // diff class
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane)); // obs < plane
+            Assert.assertTrue(ra.compareTo(rane) < 0); // obs < plane
             
             rane = null;
             Assert.assertFalse(ra.equals(rane));
@@ -151,6 +153,7 @@ public class ReadAccessTest
     {
         try
         {
+            URI groupID = new URI(groupStr);
             ReadAccess ra = new PlaneMetaReadAccess(assetID, groupID);
             ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
@@ -163,17 +166,17 @@ public class ReadAccessTest
             Assert.assertEquals(ra, raeq);
             Assert.assertEquals(0, ra.compareTo(raeq));
             
-            ReadAccess rane = new PlaneMetaReadAccess(assetID, groupID+1L);
+            ReadAccess rane = new PlaneMetaReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new PlaneMetaReadAccess(assetID+1L, groupID);
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(1, ra.compareTo(rane)); // plane > obs
+            Assert.assertTrue(ra.compareTo(rane) > 0); // plane > obs
             
             rane = null;
             Assert.assertFalse(ra.equals(rane));
@@ -190,6 +193,7 @@ public class ReadAccessTest
     {
         try
         {
+            URI groupID = new URI(groupStr);
             ReadAccess ra = new PlaneDataReadAccess(assetID, groupID);
             ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
@@ -202,17 +206,17 @@ public class ReadAccessTest
             Assert.assertEquals(ra, raeq);
             Assert.assertEquals(0, ra.compareTo(raeq));
             
-            ReadAccess rane = new PlaneDataReadAccess(assetID, groupID+1L);
+            ReadAccess rane = new PlaneDataReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new PlaneDataReadAccess(assetID+1L, groupID);
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(-1, ra.compareTo(rane));
+            Assert.assertTrue(ra.compareTo(rane) < 0);
             
             rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
             Assert.assertFalse(ra.equals(rane));
-            Assert.assertEquals(1, ra.compareTo(rane)); // plane > obs
+            Assert.assertTrue(ra.compareTo(rane) > 0); // plane > obs
             
             rane = null;
             Assert.assertFalse(ra.equals(rane));
