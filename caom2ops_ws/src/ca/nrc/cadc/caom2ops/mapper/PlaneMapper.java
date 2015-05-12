@@ -86,6 +86,7 @@ import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2ops.Util;
@@ -165,10 +166,19 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
             Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
+            List<Double> eSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.energy.bounds"));
             if (nrgBounds1 != null && nrgBounds2 != null)
             {
                 plane.energy = new Energy();
                 plane.energy.bounds = new Interval(nrgBounds1, nrgBounds2);
+                if (eSampleVals != null && eSampleVals.size() > 2) // actual sub-samples
+                {
+                    for (int i=0; i<eSampleVals.size(); i++)
+                    {
+                        plane.energy.bounds.getSamples().add(new SubInterval(eSampleVals.get(i), eSampleVals.get(i+1)));
+                        i++; // skip upper
+                    }
+                }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
                 plane.energy.dimension = Util.getLong(data, map.get("caom2:Plane.energy.dimension"));
                 String emBand = Util.getString(data, map.get("caom2:Plane.energy.emBand"));
@@ -185,10 +195,19 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Double tBounds1 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.lower"));
             Double tBounds2 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.upper"));
+            List<Double> tSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.time.bounds"));
             if (tBounds1 != null && tBounds2 != null)
             {
                 plane.time = new Time();
                 plane.time.bounds = new Interval(tBounds1, tBounds2);
+                if (tSampleVals != null && tSampleVals.size() > 2) // actual sub-samples
+                {
+                    for (int i=0; i<tSampleVals.size(); i++)
+                    {
+                        plane.time.bounds.getSamples().add(new SubInterval(tSampleVals.get(i), tSampleVals.get(i+1)));
+                        i++; // skip upper
+                    }
+                }
                 plane.time.dimension = Util.getLong(data, map.get("caom2:Plane.time.dimension"));
                 plane.time.resolution = Util.getDouble(data, map.get("caom2:Plane.time.resolution"));
                 plane.time.exposure = Util.getDouble(data, map.get("caom2:Plane.time.exposure"));
