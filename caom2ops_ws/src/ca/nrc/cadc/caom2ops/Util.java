@@ -2,6 +2,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -90,6 +91,19 @@ public class Util extends CaomUtil
         if (o == null)
             return null;
         return (Double) o;
+    }
+    public static List<Double> getDoubleList(List<Object> data, Integer col)
+    {
+        if (col == null)
+            return null;
+        Object o = data.get(col);
+        if (o == null)
+            return null;
+        double[] vals = (double[]) o;
+        List<Double> ret=  new ArrayList<Double>(vals.length);
+        for (double d : vals)
+            ret.add(d);
+        return ret;
     }
     public static Date getDate(List<Object> data, Integer col)
     {
