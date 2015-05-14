@@ -93,7 +93,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
     static
     {
         log = Logger.getLogger(SybaseReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
@@ -120,16 +120,17 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO ");
         sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
-        sb.append(" (gr_permission_id,assetID,groupID,lastModified,stateCode) VALUES (");
-        sb.append("555,");
+        sb.append(" (assetID,groupID,lastModified,stateCode,readAccessID) VALUES (");
         sb.append(expected.getAssetID().toString());
-        sb.append(",");
-        sb.append(expected.getGroupID().toString());
         sb.append(",'");
+        sb.append(expected.getGroupID().toASCIIString());
+        sb.append("','");
         sb.append(df.format(expected.getLastModified()));
         sb.append("',");
         sb.append(expected.getStateCode());
-        sb.append(") ");
+        sb.append(",'");
+        sb.append(expected.getID().toString());
+        sb.append("') ");
         String sql = sb.toString();
         log.debug("manual INSERT: " + sql);
         Statement st = dao.getDataSource().getConnection().createStatement();

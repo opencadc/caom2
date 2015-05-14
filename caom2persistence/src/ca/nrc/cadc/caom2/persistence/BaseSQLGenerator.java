@@ -1770,7 +1770,7 @@ public class BaseSQLGenerator implements SQLGenerator
 
             int col = 1;
             safeSetLong(sb, ps, col++, ra.getAssetID());
-            safeSetLong(sb, ps, col++, ra.getGroupID());
+            safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
             safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, ra.getStateCode());
             safeSetUUID(sb, ps, col++, ra.getID());
@@ -3142,9 +3142,9 @@ public class BaseSQLGenerator implements SQLGenerator
             {
                 int col = 1;
                 Long assetID = Util.getLong(rs, col++);
-                Long groupID = Util.getLong(rs, col++);
+                URI groupID = Util.getURI(rs, col++);
 
-                Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(Long.class, Long.class);
+                Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(Long.class, URI.class);
                 ReadAccess ret = ctor.newInstance(assetID, groupID);
                 log.debug("found: " + ret);
 

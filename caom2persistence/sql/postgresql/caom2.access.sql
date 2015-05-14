@@ -5,7 +5,7 @@ drop table if exists caom2.ObservationMetaReadAccess;
 create table caom2.ObservationMetaReadAccess
 (
     assetID         bigint not null,
-    groupID         bigint not null,
+    groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,
@@ -30,7 +30,7 @@ drop table if exists caom2.PlaneMetaReadAccess;
 create table caom2.PlaneMetaReadAccess
 (
     assetID         bigint not null,
-    groupID         bigint not null,
+    groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,
@@ -53,7 +53,7 @@ drop table if exists caom2.PlaneDataReadAccess;
 create table caom2.PlaneDataReadAccess
 (
     assetID         bigint not null,
-    groupID         bigint not null,
+    groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,
     lastModified    timestamp not null,

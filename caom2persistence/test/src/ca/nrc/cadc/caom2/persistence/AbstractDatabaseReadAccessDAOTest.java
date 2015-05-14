@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import java.lang.reflect.Constructor;
+import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -187,12 +188,12 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         try
         {
             Long assetID = new Long(666L);
-            Long groupID =  new Long(777L);
+            URI groupID =  new URI("777");
             ReadAccess expected;
 
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, Long.class);
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
