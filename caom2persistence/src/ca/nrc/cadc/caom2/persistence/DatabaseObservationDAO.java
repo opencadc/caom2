@@ -158,6 +158,14 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
     
+    // pdd: for harvester to get just the observation object and check timestamps
+    public Observation getShallow(UUID id)
+    {
+        if (id == null)
+            throw new IllegalArgumentException("id cannot be null");
+        return get(null, id, 1);
+    }
+    
     /**
      * Get a stored observation by URI.
      *

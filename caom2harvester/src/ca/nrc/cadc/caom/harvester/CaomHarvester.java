@@ -82,6 +82,7 @@ public class CaomHarvester implements Runnable
     {
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setMaxDate(maxDate);
+        obsHarvester.setDoCollisionCheck(true);
     }
 
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 
