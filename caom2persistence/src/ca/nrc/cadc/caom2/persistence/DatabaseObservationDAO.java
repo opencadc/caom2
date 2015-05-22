@@ -69,12 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import java.util.*;
-
-import ca.nrc.cadc.caom2.util.MaxLastModifiedComparator;
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
-
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
@@ -89,6 +83,15 @@ import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.dao.DataAccessException;
 
 /**

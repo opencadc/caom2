@@ -106,29 +106,29 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         };
     }
     
-    @Test
-    public void testGetList()
-    {
-        try
-        {
-            ReadAccess ra;
-            URI groupID;
-            Class c = ObservationMetaReadAccess.class;
-            Constructor ctor = c.getConstructor(Long.class, URI.class);
-            for (int i=0; i<3; i++)
-            {
-                groupID = new URI("2000" + i);
-                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
-                dao.put(ra);
-            }
-            List<ReadAccess> ras = dao.getList(c, null, null, null);
-            Assert.assertNotNull(ras);
-            Assert.assertEquals(3, ras.size());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+//    @Test
+//    public void testGetList()
+//    {
+//        try
+//        {
+//            ReadAccess ra;
+//            URI groupID;
+//            Class c = ObservationMetaReadAccess.class;
+//            Constructor ctor = c.getConstructor(Long.class, URI.class);
+//            for (int i=0; i<3; i++)
+//            {
+//                groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
+//                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
+//                dao.put(ra);
+//            }
+//            List<ReadAccess> ras = dao.getList(c, null, null, null);
+//            Assert.assertNotNull(ras);
+//            Assert.assertEquals(3, ras.size());
+//        }
+//        catch(Exception unexpected)
+//        {
+//            log.error("unexpected exception", unexpected);
+//            Assert.fail("unexpected exception: " + unexpected);
+//        }
+//    }
 }

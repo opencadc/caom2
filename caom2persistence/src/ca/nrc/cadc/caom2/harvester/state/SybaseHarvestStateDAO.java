@@ -46,7 +46,8 @@ public class SybaseHarvestStateDAO extends HarvestStateDAO
     protected String getTable(String database, String schema)
     {
         StringBuilder sb = new StringBuilder();
-        sb.append(schema);
+//        sb.append(schema);
+        sb.append("caom2");
         sb.append("_");
         sb.append("HarvestState");
         return sb.toString();

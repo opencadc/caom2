@@ -110,52 +110,52 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
         };
     }
 
-    @Override
-    protected void doPutGetDelete(ReadAccess expected)
-        throws Exception
-    {
-        Util.assignLastModified(expected, new Date(), "lastModified");
-        String s = expected.getClass().getSimpleName();
-        //dao.put(expected);
-        StringBuilder sb = new StringBuilder();
-        sb.append("INSERT INTO ");
-        sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
-        sb.append(" (assetID,groupID,lastModified,stateCode,readAccessID) VALUES (");
-        sb.append(expected.getAssetID().toString());
-        sb.append(",'");
-        sb.append(expected.getGroupID().toASCIIString());
-        sb.append("','");
-        sb.append(df.format(expected.getLastModified()));
-        sb.append("',");
-        sb.append(expected.getStateCode());
-        sb.append(",'");
-        sb.append(expected.getID().toString());
-        sb.append("') ");
-        String sql = sb.toString();
-        log.debug("manual INSERT: " + sql);
-        Statement st = dao.getDataSource().getConnection().createStatement();
-        st.execute(sql);
-        st = dao.getDataSource().getConnection().createStatement();
-        sql = "select readAccessID from " + dao.getSQLGenerator().getTable(expected.getClass());
-        log.debug("manual SELECT: " + sql);
-        ResultSet rs = st.executeQuery(sql);
-        if (rs.next())
-        {
-            UUID id = Util.getUUID(rs, 1);
-            log.debug("generated ID: " + id);
-            Assert.assertNotNull("generated id", id);
-            Util.assignID(expected, id);
-        }
-        
-        ReadAccess actual = dao.get(expected.getClass(), expected.getID());
-        Assert.assertNotNull(s, actual);
-        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
-        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
-        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
-        Assert.assertEquals(s+".getChecksum", expected.getStateCode(), actual.getStateCode());
-
-        dao.delete(expected.getClass(), expected.getID());
-        actual = dao.get(expected.getClass(), expected.getID());
-        Assert.assertNull(actual);
-    }
+//    @Override
+//    protected void doPutGetDelete(ReadAccess expected)
+//        throws Exception
+//    {
+//        Util.assignLastModified(expected, new Date(), "lastModified");
+//        String s = expected.getClass().getSimpleName();
+//        //dao.put(expected);
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("INSERT INTO ");
+//        sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
+//        sb.append(" (assetID,groupID,lastModified,stateCode,readAccessID) VALUES (");
+//        sb.append(expected.getAssetID().toString());
+//        sb.append(",'");
+//        sb.append(expected.getGroupID().toASCIIString());
+//        sb.append("','");
+//        sb.append(df.format(expected.getLastModified()));
+//        sb.append("',");
+//        sb.append(expected.getStateCode());
+//        sb.append(",'");
+//        sb.append(expected.getID().toString());
+//        sb.append("') ");
+//        String sql = sb.toString();
+//        log.debug("manual INSERT: " + sql);
+//        Statement st = dao.getDataSource().getConnection().createStatement();
+//        st.execute(sql);
+//        st = dao.getDataSource().getConnection().createStatement();
+//        sql = "select readAccessID from " + dao.getSQLGenerator().getTable(expected.getClass());
+//        log.debug("manual SELECT: " + sql);
+//        ResultSet rs = st.executeQuery(sql);
+//        if (rs.next())
+//        {
+//            UUID id = Util.getUUID(rs, 1);
+//            log.debug("generated ID: " + id);
+//            Assert.assertNotNull("generated id", id);
+//            Util.assignID(expected, id);
+//        }
+//        
+//        ReadAccess actual = dao.get(expected.getClass(), expected.getID());
+//        Assert.assertNotNull(s, actual);
+//        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
+//        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
+//        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
+//        Assert.assertEquals(s+".getChecksum", expected.getStateCode(), actual.getStateCode());
+//
+//        dao.delete(expected.getClass(), expected.getID());
+//        actual = dao.get(expected.getClass(), expected.getID());
+//        Assert.assertNull(actual);
+//    }
 }

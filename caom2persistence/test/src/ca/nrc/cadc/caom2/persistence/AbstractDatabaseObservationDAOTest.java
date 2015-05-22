@@ -891,7 +891,7 @@ public abstract class AbstractDatabaseObservationDAOTest
 
     private void debugStateCodes(CaomEntity expected, CaomEntity actual)
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
         log.warn("====================== EXPECTED");
         int esc = getStateCode(expected);
         log.warn("====================== ACTUAL");

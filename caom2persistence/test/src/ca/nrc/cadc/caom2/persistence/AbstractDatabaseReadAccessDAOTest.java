@@ -187,8 +187,8 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         try
         {
-            Long assetID = new Long(666L);
-            URI groupID =  new URI("777");
+            Long assetID = 666L;
+            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
             ReadAccess expected;
 
             for (Class c : entityClasses)
@@ -197,6 +197,32 @@ public abstract class AbstractDatabaseReadAccessDAOTest
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetList()
+    {
+        try
+        {
+            ReadAccess ra;
+            URI groupID;
+            Class c = ObservationMetaReadAccess.class;
+            Constructor ctor = c.getConstructor(Long.class, URI.class);
+            for (int i=0; i<3; i++)
+            {
+                groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
+                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
+                dao.put(ra);
+            }
+            List<ReadAccess> ras = dao.getList(c, null, null, null);
+            Assert.assertNotNull(ras);
+            Assert.assertEquals(3, ras.size());
         }
         catch(Exception unexpected)
         {
