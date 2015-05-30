@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
 import ca.nrc.cadc.uws.server.JobDAO.JobSchema;

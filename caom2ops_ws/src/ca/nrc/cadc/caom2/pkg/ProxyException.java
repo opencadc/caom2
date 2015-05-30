@@ -69,45 +69,20 @@
 
 package ca.nrc.cadc.caom2.pkg;
 
-import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
-import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
-import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.SimpleJobManager;
-import ca.nrc.cadc.uws.server.SyncJobExecutor;
+
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Wrapper around underlying exceptions when trying to proxy downloads.
+ * 
  * @author pdowler
  */
-public class PackagingJobManager extends SimpleJobManager
+public class ProxyException extends Exception 
 {
-    private static final Logger log = Logger.getLogger(PackagingJobManager.class);
+    private static final Logger log = Logger.getLogger(ProxyException.class);
 
-    private static final Long MAX_EXEC_DURATION = 10L;
-    private static final Long MAX_DESTRUCTION = 60L; 
-    private static final Long MAX_QUOTE = 10L;
-
-    private final JobSchema config;
-
-    public PackagingJobManager()
-    {
-        super();
-
-        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
-        this.config = jobPersist.getJobSchema();
-
-        JobExecutor jobExec = new SyncJobExecutor(jobPersist, PackagingRunner.class);
-
-        super.setJobPersistence(jobPersist);
-        super.setJobExecutor(jobExec);
-        super.setMaxExecDuration(MAX_EXEC_DURATION);
-        super.setMaxDestruction(MAX_DESTRUCTION);
-        super.setMaxQuote(MAX_QUOTE);
-    }
-
-    public JobSchema getConfig()
-    {
-        return config;
+    public ProxyException(String msg, Throwable cause) 
+    { 
+        super(msg, cause);
     }
 }

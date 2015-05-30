@@ -67,8 +67,10 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops;
+package ca.nrc.cadc.caom2.datalink;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -83,10 +85,12 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.util.CutoutUtil;
-import ca.nrc.cadc.datalink.DataLink;
-import ca.nrc.cadc.rest.AuthMethod;
+import ca.nrc.cadc.caom2.datalink.DataLink;
+import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
+import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
+import javax.security.auth.Subject;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -124,12 +128,6 @@ public class ArtifactProcessor
         this.runID = runID;
         this.registryClient = registryClient;
         this.schemeHandler = new CaomSchemeHandler();
-    }
-
-    public void setAuthMethod(AuthMethod authMethod)
-    {
-        this.authMethod = authMethod;
-        schemeHandler.setAuthMethod(authMethod);
     }
 
     /**

@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.rest.AuthMethod;
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -126,6 +126,7 @@ public class AdSchemeHandlerTest
             ash.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
             URL url = ash.getURL(uri);
+            Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
@@ -145,6 +146,7 @@ public class AdSchemeHandlerTest
             ash.setAuthMethod(AuthMethod.CERT);
             URI uri = new URI(FILE_URI);
             URL url = ash.getURL(uri);
+            Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());

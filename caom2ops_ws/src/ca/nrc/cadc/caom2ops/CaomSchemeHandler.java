@@ -70,8 +70,8 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2ops.SchemeHandler;
-import ca.nrc.cadc.rest.AuthMethod;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -156,6 +156,8 @@ public class CaomSchemeHandler implements SchemeHandler
         {
             
         }
+        // default
+        setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
     }
 
     public void setAuthMethod(AuthMethod authMethod)

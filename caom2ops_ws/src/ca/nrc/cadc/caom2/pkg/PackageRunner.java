@@ -69,25 +69,15 @@
 
 package ca.nrc.cadc.caom2.pkg;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.cert.CertificateException;
-import java.util.Date;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Artifact;
+import java.util.Date;
+import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.xml.JsonWriter;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.log.WebServiceLogInfo;
@@ -105,23 +95,31 @@ import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessControlException;
+import java.security.AccessController;
+import java.security.cert.CertificateException;
+import java.util.List;
+import javax.security.auth.Subject;
 
 /**
  *
  * @author pdowler
  */
-public class PackagingRunner implements JobRunner
+public class PackageRunner implements JobRunner
 {
-    private static final Logger log = Logger.getLogger(PackagingRunner.class);
+    private static final Logger log = Logger.getLogger(PackageRunner.class);
 
-    private static final String TAR_CONTENT_TYPE = "application/x-tar";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private WebServiceLogInfo logInfo;
 
-    public PackagingRunner() { }
+    public PackageRunner() { }
 
     @Override
     public void setJob(Job job)
@@ -158,6 +156,7 @@ public class PackagingRunner implements JobRunner
     {
 
         ExecutionPhase ep;
+        TarWriter w = null;
         try
         {
             ep = jobUpdater.setPhase(job.getID(), ExecutionPhase.QUEUED, ExecutionPhase.EXECUTING, new Date());
@@ -171,9 +170,54 @@ public class PackagingRunner implements JobRunner
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
-            //
-            // TODO: stream out the tar ball
-            //
+            RegistryClient reg = new RegistryClient();
+            CredUtil cred = new CredUtil(reg);
+
+            // obtain credentials fropm CDP if the user is authorized
+            String tapProto = "http";
+            AccessControlContext accessControlContext = AccessController.getContext();
+            Subject subject = Subject.getSubject(accessControlContext);
+            if ( cred.hasValidCredentials(subject) )
+                tapProto = "https";
+            
+            String runID = job.getID();
+            if (job.getRunID() != null)
+                runID = job.getRunID();
+            
+            List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
+
+            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
+            CaomTapQuery query = new CaomTapQuery(tapURL, runID);
+            
+            SchemeHandler sh = new CaomSchemeHandler();
+            
+            for (String suri : idList)
+            {
+                PlaneURI uri = new PlaneURI(new URI(suri));
+                List<Artifact> artifacts = query.performQuery(uri, true);
+                if (idList.size() == 1 && artifacts.size() == 1)
+                {
+                    // single file result: redirect
+                    Artifact a = artifacts.get(0);
+                    URL url = sh.getURL(a.getURI());
+                    log.debug("redirect: " + a.getURI() + " from " + url);
+                    syncOutput.setResponseCode(303);
+                    syncOutput.setHeader("Location", url.toExternalForm());
+                    return;
+                }
+                else
+                {
+                    // mutliple file result: package
+                    if (w == null)
+                        w = initTarResponse();
+                    for (Artifact a : artifacts)
+                    {
+                        URL url = sh.getURL(a.getURI());
+                        log.debug("write: " + a.getURI() + " from " + url);
+                        w.write(url);
+                    }
+                }
+            }
             
             // set final phase, only sync so no results
             log.debug(job.getID() + ": EXECUTING -> COMPLETED...");
@@ -189,18 +233,19 @@ public class PackagingRunner implements JobRunner
             log.debug(job.getID() + ": EXECUTING -> COMPLETED [OK]");
 
         }
-//        catch(CertificateException ex)
-//        {
-//            sendError(ex, "permission denied -- reason: invalid proxy certificate", 403);
-//        }
+        catch(ProxyException ex)
+        {
+            log.error("proxy error creating tar file", ex);
+            // response already committed
+        }
+        catch(CertificateException ex)
+        {
+            sendError(ex, "permission denied -- reason: invalid proxy certificate", 403);
+        }
         catch(IllegalArgumentException ex)
         {
             sendError(ex, ex.getMessage(), 400);
         }
-//        catch(ObservationNotFoundException ex)
-//        {
-//            sendError(ex, ex.getMessage(), 404);
-//        }
         catch(UnsupportedOperationException ex)
         {
             sendError(ex, "unsupported operation: " + ex.getMessage(), 400);
@@ -226,6 +271,21 @@ public class PackagingRunner implements JobRunner
             }
             sendError(t, 500);
         }
+        finally
+        {
+            if (w != null)
+                try { w.close(); }
+                catch(Exception ignore) { }
+        }
+    }
+    
+    private TarWriter initTarResponse()
+        throws IOException
+    {
+        syncOutput.setResponseCode(200);
+        syncOutput.setHeader("Content-Type", TarWriter.CONTENT_TYPE);
+        syncOutput.setHeader("Content-Disposition", "inline;filename=download-" + job.getID()+  ".tar");
+        return new TarWriter(syncOutput.getOutputStream());
     }
 
     private class ObservationNotFoundException extends Exception

@@ -67,11 +67,10 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
-import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2ops.TransientFault;

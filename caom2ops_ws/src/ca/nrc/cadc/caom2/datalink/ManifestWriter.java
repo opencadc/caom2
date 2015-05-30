@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.TableWriter;
