@@ -80,6 +80,7 @@ import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
+import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.ThrowableUtil;
@@ -117,6 +118,7 @@ public class PackageRunner implements JobRunner
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
+    private ByteCountOutputStream counter;
     private WebServiceLogInfo logInfo;
 
     public PackageRunner() { }
@@ -148,6 +150,10 @@ public class PackageRunner implements JobRunner
 
         doIt();
 
+        if (counter != null)
+        {
+            logInfo.setBytes(counter.getByteCount());
+        }
         logInfo.setElapsedTime(System.currentTimeMillis() - start);
         log.info(logInfo.end());
     }
@@ -208,8 +214,11 @@ public class PackageRunner implements JobRunner
                 else
                 {
                     // mutliple file result: package
+                    String name = null;
+                    if (idList.size() == 1)
+                        name = generatePackageName(uri);
                     if (w == null)
-                        w = initTarResponse();
+                        w = initTarResponse(name);
                     for (Artifact a : artifacts)
                     {
                         URL url = sh.getURL(a.getURI());
@@ -279,13 +288,32 @@ public class PackageRunner implements JobRunner
         }
     }
     
-    private TarWriter initTarResponse()
+    // used in an int-test
+    public static String generatePackageName(PlaneURI uri)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(uri.getParent().getCollection()).append("-");
+        sb.append(uri.getParent().getObservationID()).append("-");
+        sb.append(uri.getProductID());
+        sb.append(".tar");
+        return sb.toString();
+    }
+    
+    private TarWriter initTarResponse(String name)
         throws IOException
     {
+        StringBuilder cdisp = new StringBuilder();
+        cdisp.append("inline;filename=");
+        if (name != null)
+            cdisp.append(name);
+        else
+            cdisp.append("download-").append(job.getID()).append(".tar");
+        
         syncOutput.setResponseCode(200);
         syncOutput.setHeader("Content-Type", TarWriter.CONTENT_TYPE);
-        syncOutput.setHeader("Content-Disposition", "inline;filename=download-" + job.getID()+  ".tar");
-        return new TarWriter(syncOutput.getOutputStream());
+        syncOutput.setHeader("Content-Disposition", cdisp.toString());
+        this.counter = new ByteCountOutputStream(syncOutput.getOutputStream());
+        return new TarWriter(counter);
     }
 
     private class ObservationNotFoundException extends Exception
