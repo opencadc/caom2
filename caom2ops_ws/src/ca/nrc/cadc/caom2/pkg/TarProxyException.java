@@ -77,11 +77,11 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class ProxyException extends Exception 
+public class TarProxyException extends Exception 
 {
-    private static final Logger log = Logger.getLogger(ProxyException.class);
+    private static final Logger log = Logger.getLogger(TarProxyException.class);
 
-    public ProxyException(String msg, Throwable cause) 
+    public TarProxyException(String msg, Throwable cause) 
     { 
         super(msg, cause);
     }

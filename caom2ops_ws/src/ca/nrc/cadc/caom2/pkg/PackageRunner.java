@@ -213,17 +213,30 @@ public class PackageRunner implements JobRunner
                 }
                 else
                 {
-                    // mutliple file result: package
-                    String name = null;
-                    if (idList.size() == 1)
-                        name = generatePackageName(uri);
                     if (w == null)
-                        w = initTarResponse(name);
+                    {
+                        // generate package name
+                        String tname = generatePackageName();
+                        if (idList.size() == 1)
+                            tname = generatePackageName(uri);
+                        w = initTarResponse(tname);
+                    }
+                    // always generate subdir name for tar file from the current plane
+                    String pname = generatePackageName(uri);
                     for (Artifact a : artifacts)
                     {
                         URL url = sh.getURL(a.getURI());
                         log.debug("write: " + a.getURI() + " from " + url);
-                        w.write(url);
+                        try
+                        {
+                            w.write(pname, url);
+                        }
+                        catch(TarProxyException ex)
+                        {
+                            // TarWriter tracks these and appends a README, so continue
+                            log.debug("proxy failure", ex);
+                        }
+                        finally { }
                     }
                 }
             }
@@ -242,11 +255,7 @@ public class PackageRunner implements JobRunner
             log.debug(job.getID() + ": EXECUTING -> COMPLETED [OK]");
 
         }
-        catch(ProxyException ex)
-        {
-            log.error("proxy error creating tar file", ex);
-            // response already committed
-        }
+        
         catch(CertificateException ex)
         {
             sendError(ex, "permission denied -- reason: invalid proxy certificate", 403);
@@ -295,7 +304,13 @@ public class PackageRunner implements JobRunner
         sb.append(uri.getParent().getCollection()).append("-");
         sb.append(uri.getParent().getObservationID()).append("-");
         sb.append(uri.getProductID());
-        sb.append(".tar");
+        return sb.toString();
+    }
+    
+    String generatePackageName()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("cadc-download-").append(job.getID());
         return sb.toString();
     }
     
@@ -304,11 +319,9 @@ public class PackageRunner implements JobRunner
     {
         StringBuilder cdisp = new StringBuilder();
         cdisp.append("inline;filename=");
-        if (name != null)
-            cdisp.append(name);
-        else
-            cdisp.append("download-").append(job.getID()).append(".tar");
-        
+        cdisp.append(name);
+        cdisp.append(".tar");
+
         syncOutput.setResponseCode(200);
         syncOutput.setHeader("Content-Type", TarWriter.CONTENT_TYPE);
         syncOutput.setHeader("Content-Disposition", cdisp.toString());

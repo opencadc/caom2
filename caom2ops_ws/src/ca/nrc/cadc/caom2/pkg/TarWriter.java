@@ -75,8 +75,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -92,53 +97,116 @@ public class TarWriter
     
     public static final String CONTENT_TYPE = "application/x-tar";
     
-    private TarArchiveOutputStream tout;
+    private final TarArchiveOutputStream tout;
+    private final Map<String,List<TarContent>> map = new TreeMap<String,List<TarContent>>();
     
     public TarWriter(OutputStream ostream) 
     { 
         this.tout = new TarArchiveOutputStream(ostream);
-        //tout.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
-        //tout.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
+    }
+    
+    private class TarContent
+    {
+        URL url;
+        ArchiveEntry entry;
+        String contentMD5;
+        String emsg;
     }
     
     public void close()
         throws IOException
     {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String,List<TarContent>> me : map.entrySet())
+        {
+            for (TarContent tc : me.getValue())
+            {
+                if (tc.emsg != null)
+                    sb.append("ERROR: ").append(tc.url).append(" ").append(tc.emsg);
+               else
+                    sb.append("OK: ").append(tc.url).append(" ").append(tc.contentMD5).append(" ").append(tc.entry.getName());
+                sb.append("\n");
+            }
+            boolean openEntry = false;
+            try
+            {
+                String filename = me.getKey() + "/README";
+                tout.putArchiveEntry(new DynamicTarEntry(filename, sb.length(), new Date()));
+                openEntry = true;
+                PrintWriter pw = new PrintWriter(new TarStreamWrapper(tout));
+                pw.print(sb.toString());
+                pw.flush();
+                pw.close(); // safe
+            }
+            finally
+            {
+                if (openEntry)
+                    tout.closeArchiveEntry();
+            }
+        }
+        
         tout.finish();
         tout.close();
     }
     
-    public void write(URL url)
-        throws ProxyException, IOException
+    private void addItem(String path, TarContent tc)
     {
-        // HEAD to get entry metadata
-        ByteArrayOutputStream tmp = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, tmp);
-        get.setHeadOnly(true);
-        get.run();
-        if (get.getThrowable() != null)
+        List<TarContent> t = map.get(path);
+        if (t == null)
         {
-            throw new ProxyException("HEAD " + url.toExternalForm() + " failed", get.getThrowable());
+            t = new ArrayList<TarContent>();
+            map.put(path, t);
         }
-        String filename = get.getFilename();
-        long contentLength = get.getContentLength();
-        Date lastModified = get.getLastModified();
-
-        // create entry
-        log.debug("tar entry: " + filename + "," + contentLength + "," + lastModified);
-        ArchiveEntry e = new DynamicTarEntry(filename, contentLength, lastModified);
-        tout.putArchiveEntry(e);
-
-        // stream content
-        get = new HttpDownload(url, new TarStreamWrapper(tout)); // wrapper suppresses close() by HttpDownload
-        get.run();
-        if (get.getThrowable() != null)
+        t.add(tc);
+    }
+    
+    public void write(String path, URL url)
+        throws TarProxyException, IOException
+    {
+        TarContent item = new TarContent();
+        addItem(path, item);
+        item.url = url;
+        boolean openEntry = false;
+        
+        try
         {
-            throw new ProxyException("GET " + url.toExternalForm() + " failed", get.getThrowable());
-        }
-        log.debug("server response: " + get.getResponseCode() + "," + get.getContentLength());
+            // HEAD to get entry metadata
+            ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+            HttpDownload get = new HttpDownload(url, tmp);
+            get.setHeadOnly(true);
+            get.run();
+            if (get.getThrowable() != null)
+            {
+                item.emsg = "HEAD " + url.toExternalForm() + " failed, reason: " + get.getThrowable().getMessage();
+                throw new TarProxyException("HEAD " + url.toExternalForm() + " failed", get.getThrowable());
+            }
+            String filename =  path + "/" + get.getFilename();
+            long contentLength = get.getContentLength();
+            Date lastModified = get.getLastModified();
+            item.contentMD5 = get.getContentMD5();
 
-        tout.closeArchiveEntry();
+            // create entry
+            log.debug("tar entry: " + filename + "," + contentLength + "," + lastModified);
+            item.entry = new DynamicTarEntry(filename, contentLength, lastModified);
+
+            tout.putArchiveEntry(item.entry);
+            openEntry = true;
+
+            // stream content
+            get = new HttpDownload(url, new TarStreamWrapper(tout)); // wrapper suppresses close() by HttpDownload
+            get.run();
+            if (get.getThrowable() != null)
+            {
+                item.emsg = "GET " + url.toExternalForm() + " failed, reason: " + get.getThrowable().toString();
+                throw new TarProxyException("GET " + url.toExternalForm() + " failed", get.getThrowable());
+            }
+            log.debug("server response: " + get.getResponseCode() + "," + get.getContentLength());
+        }
+        finally
+        {
+            if (openEntry)
+                tout.closeArchiveEntry();
+        }
     }
     
     private class TarStreamWrapper extends FilterOutputStream
