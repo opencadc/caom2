@@ -84,23 +84,18 @@ public class LinkQueryJobManager extends SimpleJobManager
 {
     private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
-    private static final Long MAX_EXEC_DURATION = new Long(3600L); // 60 minutes
-    private static final Long MAX_DESTRUCTION = new Long(3600L);   // 60 minutes until MemoryJobPersistence deletes it
-    private static final Long MAX_QUOTE = new Long(3600L);
+    private static final Long MAX_EXEC_DURATION = 120L; // 2 minutes
+    private static final Long MAX_DESTRUCTION = 3600L;
+    private static final Long MAX_QUOTE = 120L;
 
-    private JobSchema config;
+    private final JobSchema config;
 
     public LinkQueryJobManager()
     {
         super();
-        // persist UWS jobs to Sybase
-        //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
         PostgresJobPersistence jobPersist = new PostgresJobPersistence();
         this.config = jobPersist.getJobSchema();
         
-        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        //jobPersist.setJobCleaner(30000L);
-
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
 
         super.setJobPersistence(jobPersist);

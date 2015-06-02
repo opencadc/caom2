@@ -84,7 +84,7 @@ public class PackageJobManager extends SimpleJobManager
 {
     private static final Logger log = Logger.getLogger(PackageJobManager.class);
 
-    private static final Long MAX_EXEC_DURATION = 3600L;
+    private static final Long MAX_EXEC_DURATION = 3600L; // proxied download
     private static final Long MAX_DESTRUCTION = 7200L; 
     private static final Long MAX_QUOTE = 3600L;
 
