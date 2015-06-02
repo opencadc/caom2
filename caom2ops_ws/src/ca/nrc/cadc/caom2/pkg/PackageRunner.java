@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.pkg;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import java.util.Date;
@@ -99,7 +101,6 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlContext;
-import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.List;
@@ -113,7 +114,7 @@ public class PackageRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(PackageRunner.class);
 
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
     
     private Job job;
     private JobUpdater jobUpdater;
@@ -183,8 +184,12 @@ public class PackageRunner implements JobRunner
             String tapProto = "http";
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
+            AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
             if ( cred.hasValidCredentials(subject) )
+            {
                 tapProto = "https";
+                authMethod = AuthMethod.CERT;
+            }
             
             String runID = job.getID();
             if (job.getRunID() != null)
@@ -192,10 +197,11 @@ public class PackageRunner implements JobRunner
             
             List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
 
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
+            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, authMethod);
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             
             SchemeHandler sh = new CaomSchemeHandler();
+            sh.setAuthMethod(authMethod); // override auth method for proxied calls
             
             for (String suri : idList)
             {
@@ -223,20 +229,28 @@ public class PackageRunner implements JobRunner
                     }
                     // always generate subdir name for tar file from the current plane
                     String pname = generatePackageName(uri);
-                    for (Artifact a : artifacts)
+                    if ( artifacts.isEmpty())
                     {
-                        URL url = sh.getURL(a.getURI());
-                        log.debug("write: " + a.getURI() + " from " + url);
-                        try
+                        // either the input ID was: not found, access-controlled, or has no artifacts
+                        w.addMessage(pname, "no files available for ID=" + suri);
+                    }
+                    else
+                    {
+                        for (Artifact a : artifacts)
                         {
-                            w.write(pname, url);
+                            URL url = sh.getURL(a.getURI());
+                            log.debug("write: " + a.getURI() + " from " + url);
+                            try
+                            {
+                                w.write(pname, url);
+                            }
+                            catch(TarProxyException ex)
+                            {
+                                // TarWriter tracks these and appends a README, so continue
+                                log.debug("proxy failure", ex);
+                            }
+                            finally { }
                         }
-                        catch(TarProxyException ex)
-                        {
-                            // TarWriter tracks these and appends a README, so continue
-                            log.debug("proxy failure", ex);
-                        }
-                        finally { }
                     }
                 }
             }

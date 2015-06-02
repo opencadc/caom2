@@ -103,6 +103,7 @@ public class TarWriter
     public TarWriter(OutputStream ostream) 
     { 
         this.tout = new TarArchiveOutputStream(ostream);
+        tout.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
     }
     
     private class TarContent
@@ -122,9 +123,9 @@ public class TarWriter
             for (TarContent tc : me.getValue())
             {
                 if (tc.emsg != null)
-                    sb.append("ERROR: ").append(tc.url).append(" ").append(tc.emsg);
+                    sb.append("ERROR ").append(tc.emsg);
                else
-                    sb.append("OK: ").append(tc.url).append(" ").append(tc.contentMD5).append(" ").append(tc.entry.getName());
+                    sb.append("OK ").append(tc.url).append(" ").append(tc.contentMD5).append(" ").append(tc.entry.getName());
                 sb.append("\n");
             }
             boolean openEntry = false;
@@ -147,6 +148,13 @@ public class TarWriter
         
         tout.finish();
         tout.close();
+    }
+    
+    public void addMessage(String path, String msg)
+    {
+        TarContent tc = new TarContent();
+        tc.emsg = msg;
+        addItem(path, tc);
     }
     
     private void addItem(String path, TarContent tc)
