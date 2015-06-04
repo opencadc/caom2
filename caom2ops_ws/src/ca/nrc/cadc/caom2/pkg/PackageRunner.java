@@ -215,7 +215,7 @@ public class PackageRunner implements JobRunner
                     log.debug("redirect: " + a.getURI() + " from " + url);
                     syncOutput.setResponseCode(303);
                     syncOutput.setHeader("Location", url.toExternalForm());
-                    return;
+                    break; // not really needed since nothing below the else
                 }
                 else
                 {

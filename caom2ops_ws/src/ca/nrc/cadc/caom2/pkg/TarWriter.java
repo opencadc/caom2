@@ -109,7 +109,7 @@ public class TarWriter
     private class TarContent
     {
         URL url;
-        ArchiveEntry entry;
+        String filename;
         String contentMD5;
         String emsg;
     }
@@ -125,7 +125,7 @@ public class TarWriter
                 if (tc.emsg != null)
                     sb.append("ERROR ").append(tc.emsg);
                else
-                    sb.append("OK ").append(tc.url).append(" ").append(tc.contentMD5).append(" ").append(tc.entry.getName());
+                    sb.append("OK ").append(tc.filename).append(" ").append(tc.contentMD5).append(" ").append(tc.url);
                 sb.append("\n");
             }
             boolean openEntry = false;
@@ -188,16 +188,17 @@ public class TarWriter
                 item.emsg = "HEAD " + url.toExternalForm() + " failed, reason: " + get.getThrowable().getMessage();
                 throw new TarProxyException("HEAD " + url.toExternalForm() + " failed", get.getThrowable());
             }
-            String filename =  path + "/" + get.getFilename();
+            item.filename = get.getFilename();
+            String filename =  path + "/" + item.filename;
             long contentLength = get.getContentLength();
             Date lastModified = get.getLastModified();
             item.contentMD5 = get.getContentMD5();
 
             // create entry
             log.debug("tar entry: " + filename + "," + contentLength + "," + lastModified);
-            item.entry = new DynamicTarEntry(filename, contentLength, lastModified);
+            ArchiveEntry e = new DynamicTarEntry(filename, contentLength, lastModified);
 
-            tout.putArchiveEntry(item.entry);
+            tout.putArchiveEntry(e);
             openEntry = true;
 
             // stream content
