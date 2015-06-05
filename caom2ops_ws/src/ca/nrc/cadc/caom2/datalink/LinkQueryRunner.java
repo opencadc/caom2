@@ -67,8 +67,10 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -85,7 +87,6 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.auth.X509CertificateChain;
-import ca.nrc.cadc.caom2ops.ArtifactProcessor;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.cred.AuthorizationException;
@@ -96,7 +97,6 @@ import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
-import ca.nrc.cadc.rest.AuthMethod;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.ThrowableUtil;
@@ -123,7 +123,7 @@ public class LinkQueryRunner implements JobRunner
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
     private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
     private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
 
     private static final String GETLINKS = "getLinks";
@@ -194,12 +194,16 @@ public class LinkQueryRunner implements JobRunner
 
             // obtain credentials fropm CDP if the user is authorized
             String tapProto = "http";
+            AuthMethod queryAuthMethod = AuthMethod.ANON;
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
             if ( cred.hasValidCredentials(subject) )
+            {
                 tapProto = "https";
+                queryAuthMethod = AuthMethod.CERT;
+            }
 
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
+            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");
@@ -213,8 +217,7 @@ public class LinkQueryRunner implements JobRunner
                 runID = job.getRunID();
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
-            if ( "https".equals(job.getProtocol()) )
-                ap.setAuthMethod(AuthMethod.CERT);
+            ap.setDownloadOnly(artifactOnly); 
             tab.setTableData(new DynamicTableData(job, query, artifactOnly, ap));
 
             // Add the service descriptions resource
@@ -229,8 +232,9 @@ public class LinkQueryRunner implements JobRunner
             VOTableResource metaResource = serviceDocument.getResourceByType("meta");
 
             // set the access URL
+            AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
             RegistryClient regClient = new RegistryClient();
-            URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI));
+            URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI), job.protocol, null, am);
             VOTableParam accessURLParam = null;
             for (VOTableParam param :  metaResource.getParams())
             {

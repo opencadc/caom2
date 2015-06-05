@@ -67,16 +67,21 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops;
+package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.datalink.DataLink;
+import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.uws.Job;
+import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -84,25 +89,21 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
  * @author pdowler
  */
-public class ArtifactProcessorTest 
+public class DynamicTableDataTest 
 {
-    private static final Logger log = Logger.getLogger(ArtifactProcessorTest.class);
+    private static final Logger log = Logger.getLogger(DynamicTableDataTest.class);
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
     }
-
-    static String PLANE_URI = "caom:FOO/bar/baz";
-    static String BASE_ARTIFACT_URI = "ad:FOO/bar_baz_";
+    
     static String RUNID = "abc123";
-
     RegistryClient registryClient;
 
-    public ArtifactProcessorTest()
+    public DynamicTableDataTest()
     {
         this.registryClient = new RegistryClient();
     }
@@ -122,18 +123,23 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testNoArtifacts()
+    public void testNoInputURI()
     {
-        log.debug("testEmptyList START");
+        log.debug("testNoInputURI - START");
         try
         {
-            URI uri = new URI(PLANE_URI);
+            Job job = new Job();
+            
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-
-            List<Artifact> artifacts = new ArrayList<Artifact>();
-            List<DataLink> links = ap.process(uri, artifacts);
-            Assert.assertNotNull(links);
-            Assert.assertTrue(links.isEmpty());
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            Iterator<List<Object>> iter = dtd.iterator();
+            
+            Assert.assertFalse( iter.hasNext() );
+        }
+        catch(UsageFault expected)
+        {
+            log.debug("caught expected exception: " + expected);
         }
         catch(Exception unexpected)
         {
@@ -143,35 +149,27 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testWithRUNID()
+    public void testNoResults()
     {
-        log.debug("testNoFilter START");
+        log.debug("testNoResults - START");
         try
         {
-            URI uri = new URI(PLANE_URI);
-            
-            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
-            Assert.assertEquals("test setup", 2, artifacts.size());
-
+            Job job = new Job();
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            
-            List<DataLink> links = ap.process(uri, artifacts);
-            Assert.assertNotNull(links);
-            Assert.assertEquals("num links", 2, links.size());
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            Iterator<List<Object>> iter = dtd.iterator();
 
-            for (DataLink dl : links)
-            {
-                log.debug("testNoFilter: " + dl);
-                Assert.assertNotNull(dl);
-                Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.url);
-                
-                String query = dl.url.getQuery();
-                Assert.assertNotNull("query string", query);
-                String expected = "runid="+RUNID;
-                String actual = query.toLowerCase();
-                Assert.assertTrue("runid", actual.contains(expected));
-            }
+            Assert.assertTrue(iter.hasNext());
+            List<Object> row1 = iter.next();
+            Assert.assertNotNull(row1.get(3)); // see DataLinkerror message 
+            Assert.assertTrue(iter.hasNext());
+            List<Object> row2 = iter.next();
+            Assert.assertNotNull(row2.get(3)); // see DataLinkerror message 
+            
+            Assert.assertFalse( iter.hasNext() );
         }
         catch(Exception unexpected)
         {
@@ -181,31 +179,27 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testNoRUNID()
+    public void testSingleInputURI()
     {
-        log.debug("testNoRUNID START");
+        log.debug("testSingleInputURI - START");
         try
         {
-            URI uri = new URI(PLANE_URI);
+            Job job = new Job();
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
+            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 1);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            Iterator<List<Object>> iter = dtd.iterator();
 
-            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
-            Assert.assertEquals("test setup", 2, artifacts.size());
+            // 2x1 results
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
 
-            ArtifactProcessor ap = new ArtifactProcessor(null, registryClient);
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
 
-            List<DataLink> links = ap.process(uri, artifacts);
-            Assert.assertNotNull(links);
-            Assert.assertEquals("num links", 2, links.size());
-
-            for (DataLink dl : links)
-            {
-                log.debug("testNoRUNID: " + dl);
-                Assert.assertNotNull(dl);
-                Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.url);
-                String query = dl.url.getQuery();
-                Assert.assertNull(query); // no runid
-            }
+            Assert.assertFalse( iter.hasNext() );
         }
         catch(Exception unexpected)
         {
@@ -214,29 +208,76 @@ public class ArtifactProcessorTest
         }
     }
 
-    
-
-    private List<Artifact> getTestArtifacts(int num, int depth, int productTypeLevel)
-        throws Exception
+    @Test
+    public void testMultipleInputURI()
     {
-        List<Artifact> ret = new ArrayList<Artifact>();
-        for (int i=0; i<num; i++)
+        log.debug("testMultipleInputURI - START");
+        try
         {
-            Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i));
-            if (productTypeLevel == 1)
-                a.productType = ProductType.SCIENCE;
-            ret.add(a);
-            if (depth > 1)
+            Job job = new Job();
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
+            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 2);
+            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            Iterator<List<Object>> iter = dtd.iterator();
+
+            // 2x2 results
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+            
+            Assert.assertFalse( iter.hasNext() );
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    class TestCaomTapQuery extends CaomTapQuery
+    {
+        int num;
+        TestCaomTapQuery(String jobID, URL tapURL, int num)
+        {
+            super(tapURL, jobID);
+            this.num = num;
+        }
+
+        @Override
+        public List<Artifact> performQuery(PlaneURI planeURI, boolean artifactOnly)
+        {
+            List<Artifact> ret = new ArrayList<Artifact>();
+            try
             {
-                for (int j=0; j<num; j++)
+                for (int i=0; i<num; i++)
                 {
-                    Part p = new Part(new Integer(j));
-                    if (productTypeLevel == 2)
-                        p.productType = ProductType.SCIENCE;
-                    a.getParts().add(p);
+                    Artifact a = new Artifact(
+                            new URI(
+                                "ad:FOO/" + planeURI.getParent().getObservationID() + "_" + planeURI.getProductID() + "_" + i
+                                )
+                            );
+                    a.productType = ProductType.SCIENCE;
+                    a.contentLength = 123L;
+                    a.contentType = "text/plain";
+                    ret.add(a);
                 }
             }
+            catch(Exception ex)
+            {
+                throw new RuntimeException("test setup failed", ex);
+            }
+            log.debug("TestCaomTapQuery.getArtifacts: " + ret.size());
+            return  ret;
         }
-        return ret;
     }
 }

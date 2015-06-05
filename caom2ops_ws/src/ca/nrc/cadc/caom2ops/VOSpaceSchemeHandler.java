@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.rest.AuthMethod;
-import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
@@ -105,7 +105,10 @@ public class VOSpaceSchemeHandler implements SchemeHandler
     
     private AuthMethod authMethod;
     
-    public VOSpaceSchemeHandler() { }
+    public VOSpaceSchemeHandler() 
+    { 
+        this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+    }
 
     public URL getURL(URI uri)
     {
@@ -131,6 +134,7 @@ public class VOSpaceSchemeHandler implements SchemeHandler
     {
         this.authMethod = authMethod;
     }
+
     
     private String createURL(URI uri)
     {
@@ -143,10 +147,14 @@ public class VOSpaceSchemeHandler implements SchemeHandler
             RegistryClient rc = new RegistryClient();
             CredUtil cr = new CredUtil(rc);
             String proto = "http";
+            AuthMethod wsAuth = AuthMethod.ANON;
             try
             {
                 if (cr.hasValidCredentials(subject))
+                {
                     proto = "https";
+                    wsAuth = AuthMethod.CERT;
+                }
             }
             catch (CertificateException ex)
             {

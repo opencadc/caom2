@@ -28,8 +28,8 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.rest.AuthMethod;
-import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -37,6 +37,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
@@ -55,13 +56,12 @@ public class AdSchemeHandler implements SchemeHandler
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
 
     private RegistryClient rc;
-    private AuthMethod authMethod;
     private URI dataURI;
+    private AuthMethod authMethod;
 
     public AdSchemeHandler()
     {
         this.rc = new RegistryClient();
-        this.authMethod = AuthMethod.ANON;
         try
         {
             this.dataURI = new URI(DATA_URI);
@@ -70,26 +70,21 @@ public class AdSchemeHandler implements SchemeHandler
         {
             throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
+        this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
     }
 
-    public void setAuthMethod(AuthMethod am)
-    {
-        this.authMethod = am;
-    }
-
-    
     public URL getURL(URI uri)
     {
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
-        String proto = "http";
+        String proto = "http"; // eventually this needs to be part of API
         if ( AuthMethod.CERT.equals(authMethod))
             proto = "https";
         try
         {
             String path = getPath(uri);
-            URL url = rc.getServiceURL(dataURI, proto, path);
+            URL url = rc.getServiceURL(dataURI, proto, path, authMethod);
             log.debug(uri + " --> " + url);
             return url;
         }
@@ -98,6 +93,12 @@ public class AdSchemeHandler implements SchemeHandler
             throw new RuntimeException("BUG", ex);
         }
     }
+
+    public void setAuthMethod(AuthMethod authMethod)
+    {
+        this.authMethod = authMethod;
+    }
+    
     
     private String getPath(URI uri)
     {
@@ -108,7 +109,7 @@ public class AdSchemeHandler implements SchemeHandler
         String fid = path[1];
 
         StringBuilder sb = new StringBuilder();
-        sb.append("/pub/");
+        sb.append("/");
         sb.append(encodeString(arc));
         sb.append("/");
         sb.append(encodeString(fid));

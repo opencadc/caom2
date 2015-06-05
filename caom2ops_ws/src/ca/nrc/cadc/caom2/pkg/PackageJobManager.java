@@ -67,22 +67,47 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.cutout;
+package ca.nrc.cadc.caom2.pkg;
 
-import ca.nrc.cadc.uws.server.JobRunner;
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
+import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
+import ca.nrc.cadc.uws.server.JobExecutor;
+import ca.nrc.cadc.uws.server.SimpleJobManager;
+import ca.nrc.cadc.uws.server.SyncJobExecutor;
+import org.apache.log4j.Logger;
 
 /**
- * This JobRunner is incomplete and not configured for use.
- * 
- * TODO: implement general purpose code to perform sync and async cutout requests.
- * - sync cutouts will support a single URI 
- * - async cutouts will support multiple URIs and stage the result in WEBTMP
- * - share code with CutoutAction as necessary
- * - DataLink should tell people about sync and async cutouts (this)
- * 
+ *
  * @author pdowler
  */
-public abstract class CutoutRunner implements JobRunner
+public class PackageJobManager extends SimpleJobManager
 {
+    private static final Logger log = Logger.getLogger(PackageJobManager.class);
 
+    private static final Long MAX_EXEC_DURATION = 3600L; // proxied download
+    private static final Long MAX_DESTRUCTION = 7200L; 
+    private static final Long MAX_QUOTE = 3600L;
+
+    private final JobSchema config;
+
+    public PackageJobManager()
+    {
+        super();
+
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
+
+        JobExecutor jobExec = new SyncJobExecutor(jobPersist, PackageRunner.class);
+
+        super.setJobPersistence(jobPersist);
+        super.setJobExecutor(jobExec);
+        super.setMaxExecDuration(MAX_EXEC_DURATION);
+        super.setMaxDestruction(MAX_DESTRUCTION);
+        super.setMaxQuote(MAX_QUOTE);
+    }
+
+    public JobSchema getConfig()
+    {
+        return config;
+    }
 }
