@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2ops.AdqlQueryGenerator;
-import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
@@ -78,17 +77,10 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2ops.ArgValidator;
-import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.caom2ops.mapper.ArtifactMapper;
 import ca.nrc.cadc.caom2ops.mapper.ArtifactMapper;
 import ca.nrc.cadc.caom2ops.mapper.ChunkMapper;
-import ca.nrc.cadc.caom2ops.mapper.ChunkMapper;
-import ca.nrc.cadc.caom2ops.mapper.ObservationMapper;
 import ca.nrc.cadc.caom2ops.mapper.ObservationMapper;
 import ca.nrc.cadc.caom2ops.mapper.PartMapper;
-import ca.nrc.cadc.caom2ops.mapper.PartMapper;
-import ca.nrc.cadc.caom2ops.mapper.PlaneMapper;
 import ca.nrc.cadc.caom2ops.mapper.PlaneMapper;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
@@ -97,7 +89,6 @@ import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
-import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
 import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
 import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
 import ca.nrc.cadc.date.DateUtil;

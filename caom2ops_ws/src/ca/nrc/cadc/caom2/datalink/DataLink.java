@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
 import java.net.URI;
 import java.net.URL;

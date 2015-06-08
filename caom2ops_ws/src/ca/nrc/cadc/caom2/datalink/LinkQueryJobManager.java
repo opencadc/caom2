@@ -67,134 +67,46 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops;
+package ca.nrc.cadc.caom2.datalink;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URL;
-import org.apache.log4j.Level;
+import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
+import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
+import ca.nrc.cadc.uws.server.JobExecutor;
+import ca.nrc.cadc.uws.server.SimpleJobManager;
+import ca.nrc.cadc.uws.server.SyncJobExecutor;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class AdSchemeHandlerTest 
+public class LinkQueryJobManager extends SimpleJobManager
 {
-    private static final Logger log = Logger.getLogger(AdSchemeHandlerTest.class);
+    private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
-    static
+    private static final Long MAX_EXEC_DURATION = 120L; // 2 minutes
+    private static final Long MAX_DESTRUCTION = 3600L;
+    private static final Long MAX_QUOTE = 120L;
+
+    private final JobSchema config;
+
+    public LinkQueryJobManager()
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        super();
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        this.config = jobPersist.getJobSchema();
+        
+        JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
+
+        super.setJobPersistence(jobPersist);
+        super.setJobExecutor(jobExec);
+        super.setMaxExecDuration(MAX_EXEC_DURATION);
+        super.setMaxDestruction(MAX_DESTRUCTION);
+        super.setMaxQuote(MAX_QUOTE);
     }
 
-    String FILE_URI = "ad:FOO/bar";
-    String FILE_PATH = "/data/pub/FOO/bar";
-    String INVALID_URI1 = "ad:FOO";
-    String INVALID_URI2 = "ad:FOO/bar/baz";
-
-
-    AdSchemeHandler ash = new AdSchemeHandler();
-    
-    public AdSchemeHandlerTest()
+    public JobSchema getConfig()
     {
-
-    }
-
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testFileHTTP()
-    {
-        try
-        {
-            ash.setAuthMethod(AuthMethod.ANON);
-            URI uri = new URI(FILE_URI);
-            URL url = ash.getURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testFileHTTPS()
-    {
-        try
-        {
-            ash.setAuthMethod(AuthMethod.CERT);
-            URI uri = new URI(FILE_URI);
-            URL url = ash.getURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("https", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidShortURI()
-    {
-        try
-        {
-            URI uri = new URI(INVALID_URI1);
-            URL url = ash.getURL(uri);
-            Assert.fail("expected RuntimeException, got " + url);
-        }
-        catch(IllegalArgumentException expected)
-        {
-            log.debug("expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidLongURI()
-    {
-        try
-        {
-            URI uri = new URI(INVALID_URI2);
-            URL url = ash.getURL(uri);
-            Assert.fail("expected RuntimeException, got " + url);
-        }
-        catch(IllegalArgumentException expected)
-        {
-            log.debug("expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+        return config;
     }
 }

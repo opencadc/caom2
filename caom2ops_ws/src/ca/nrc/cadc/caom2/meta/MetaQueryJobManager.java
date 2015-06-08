@@ -84,9 +84,9 @@ public class MetaQueryJobManager extends SimpleJobManager
 {
     private static final Logger log = Logger.getLogger(MetaQueryJobManager.class);
 
-    private static final Long MAX_EXEC_DURATION = 10L;
-    private static final Long MAX_DESTRUCTION = 60L; 
-    private static final Long MAX_QUOTE = 10L;
+    private static final Long MAX_EXEC_DURATION = 120L;
+    private static final Long MAX_DESTRUCTION = 3600L; 
+    private static final Long MAX_QUOTE = 120L;
 
     private final JobSchema config;
 
@@ -97,10 +97,6 @@ public class MetaQueryJobManager extends SimpleJobManager
         PostgresJobPersistence jobPersist = new PostgresJobPersistence();
         this.config = jobPersist.getJobSchema();
         
-        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        //jobPersist.setJobCleaner(30000L);
-        //this.config = null;
-
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, MetaQueryRunner.class);
 
         super.setJobPersistence(jobPersist);

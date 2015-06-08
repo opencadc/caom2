@@ -67,51 +67,132 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.datalink;
+package ca.nrc.cadc.caom2.datalink;
 
-import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
-import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
-import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.SimpleJobManager;
-import ca.nrc.cadc.uws.server.SyncJobExecutor;
+import ca.nrc.cadc.dali.tables.TableData;
+import ca.nrc.cadc.dali.tables.TableWriter;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableField;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.dali.util.DefaultFormat;
+import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.dali.util.FormatFactory;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class LinkQueryJobManager extends SimpleJobManager
+public class ManifestWriter implements TableWriter<VOTableDocument>
 {
-    private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
+    private static final Logger log = Logger.getLogger(ManifestWriter.class);
 
-    private static final Long MAX_EXEC_DURATION = new Long(3600L); // 60 minutes
-    private static final Long MAX_DESTRUCTION = new Long(3600L);   // 60 minutes until MemoryJobPersistence deletes it
-    private static final Long MAX_QUOTE = new Long(3600L);
+    public static final String CONTENT_TYPE = "application/x-download-manifest+txt";
 
-    private JobSchema config;
+    private int uriCol;
+    private int urlCol;
+    private int errCol;
 
-    public LinkQueryJobManager()
+    public ManifestWriter(int uriColumn, int urlColumn, int errCol)
     {
-        super();
-        // persist UWS jobs to Sybase
-        //SybaseJobPersistence jobPersist = new SybaseJobPersistence();
-        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
-        this.config = jobPersist.getJobSchema();
+        this.uriCol = uriColumn;
+        this.urlCol = urlColumn;
+        this.errCol = errCol;
+    }
+    
+    public String getContentType()
+    {
+        return CONTENT_TYPE;
+    }
+
+    public String getExtension()
+    {
+        return "txt";
+    }
+
+    public void setFormatFactory(FormatFactory ff)
+    {
+        // no-op: hard-coded behaviour only relying on DataLink class
+    }
+
+    public void write(VOTableDocument vot, OutputStream out) 
+        throws IOException
+    {
+        write(vot, out, null);
+    }
+    
+    public void write(VOTableDocument vot, OutputStream out, Long maxrec) 
+        throws IOException
+    {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+        write(vot, writer, maxrec);
+    }
+    
+    public void write(VOTableDocument vot, Writer out)
+        throws IOException
+    {
+        write(vot, out, null);
+    }
+
+    public void write(VOTableDocument vot, Writer out, Long maxrec)
+        throws IOException
+    {
+        log.debug("write: START maxrec=" + maxrec);
+        PrintWriter writer = new PrintWriter(out);
+        long rows = 0;
+        long maxRows = Long.MAX_VALUE;
+        if (maxrec != null)
+            maxRows = maxrec.longValue();
         
-        //MemoryJobPersistence jobPersist = new MemoryJobPersistence(new RandomStringGenerator(16), new CadcIdentityManager());
-        //jobPersist.setJobCleaner(30000L);
-
-        JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);
-
-        super.setJobPersistence(jobPersist);
-        super.setJobExecutor(jobExec);
-        super.setMaxExecDuration(MAX_EXEC_DURATION);
-        super.setMaxDestruction(MAX_DESTRUCTION);
-        super.setMaxQuote(MAX_QUOTE);
+        // find the TableData object in the VOTable
+        VOTableResource vr = vot.getResourceByType("results");
+        VOTableTable vt = vr.getTable();
+        TableData td = vt.getTableData();
+        List<VOTableField> fields = vt.getFields();
+        TableData data = vt.getTableData();
+        Iterator<List<Object>> iter = data.iterator();
+        Format fmt = new DefaultFormat();
+        while ( iter.hasNext() && rows < maxRows )
+        {
+            List<Object> row = iter.next();
+            Object oURI = row.get(uriCol);
+            Object oURL = row.get(urlCol);
+            Object oErr = row.get(errCol);
+            try
+            {
+                if (oURL != null)
+                {
+                    writer.print("OK\t");
+                    writer.println(fmt.format(oURL));
+                }
+                else
+                {
+                    writer.print("ERROR\t");
+                    writer.println(fmt.format(oErr));
+                }
+            }
+            catch(Exception ex)
+            {
+                writer.print("ERROR\t");
+                writer.print(fmt.format(oURI));
+                writer.print(": ");
+                writer.println(ex.getMessage());
+            }
+            rows++;
+            writer.flush();
+        }
+        writer.flush();
+        log.debug("write: DONE rows=" + rows);
     }
 
-    public JobSchema getConfig()
-    {
-        return config;
-    }
 }
