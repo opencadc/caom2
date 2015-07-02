@@ -1,5 +1,5 @@
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.persistence.Util;

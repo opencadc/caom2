@@ -67,95 +67,140 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.harvester.state;
 
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.text.DateFormat;
 import java.util.Date;
-import java.util.UUID;
+import java.util.List;
+import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
+public class PostgresqlHarvestSkipDAOTest
 {
+    private static final Logger log = Logger.getLogger(PostgresqlHarvestSkipDAOTest.class);
+
     static
     {
-        log = Logger.getLogger(SybaseReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
-    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-    
-    public SybaseReadAccessDAOTest()
+    DataSource dataSource;
+    String database;
+    String schema;
+
+    public PostgresqlHarvestSkipDAOTest()
         throws Exception
     {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
-        this.entityClasses = new Class[]
+        try
         {
-            ObservationMetaReadAccess.class,
-            PlaneMetaReadAccess.class,
-            PlaneDataReadAccess.class
-        };
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
+            this.dataSource = DBUtil.getDataSource(cc);
+            this.database = "cadctest";
+            this.schema = System.getProperty("user.name");
+
+            String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
+            log.debug("cleanup: " + sql);
+            dataSource.getConnection().createStatement().execute(sql);
+        }
+        catch(Exception ex)
+        {
+            log.error("failed to init DataSource", ex);
+        }
     }
 
-//    @Override
-//    protected void doPutGetDelete(ReadAccess expected)
-//        throws Exception
-//    {
-//        Util.assignLastModified(expected, new Date(), "lastModified");
-//        String s = expected.getClass().getSimpleName();
-//        //dao.put(expected);
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("INSERT INTO ");
-//        sb.append(dao.getSQLGenerator().getTable(expected.getClass()));
-//        sb.append(" (assetID,groupID,lastModified,stateCode,readAccessID) VALUES (");
-//        sb.append(expected.getAssetID().toString());
-//        sb.append(",'");
-//        sb.append(expected.getGroupID().toASCIIString());
-//        sb.append("','");
-//        sb.append(df.format(expected.getLastModified()));
-//        sb.append("',");
-//        sb.append(expected.getStateCode());
-//        sb.append(",'");
-//        sb.append(expected.getID().toString());
-//        sb.append("') ");
-//        String sql = sb.toString();
-//        log.debug("manual INSERT: " + sql);
-//        Statement st = dao.getDataSource().getConnection().createStatement();
-//        st.execute(sql);
-//        st = dao.getDataSource().getConnection().createStatement();
-//        sql = "select readAccessID from " + dao.getSQLGenerator().getTable(expected.getClass());
-//        log.debug("manual SELECT: " + sql);
-//        ResultSet rs = st.executeQuery(sql);
-//        if (rs.next())
-//        {
-//            UUID id = Util.getUUID(rs, 1);
-//            log.debug("generated ID: " + id);
-//            Assert.assertNotNull("generated id", id);
-//            Util.assignID(expected, id);
-//        }
-//        
-//        ReadAccess actual = dao.get(expected.getClass(), expected.getID());
-//        Assert.assertNotNull(s, actual);
-//        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
-//        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
-//        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
-//        Assert.assertEquals(s+".getChecksum", expected.getStateCode(), actual.getStateCode());
-//
-//        dao.delete(expected.getClass(), expected.getID());
-//        actual = dao.get(expected.getClass(), expected.getID());
-//        Assert.assertNull(actual);
-//    }
+    //@Test
+    public void testTemplate()
+    {
+        try
+        {
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInsert()
+    {
+        try
+        {
+            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
+            Long id1 = new Long(555L);
+            Long id2 = new Long(666L);
+            Long id3 = new Long(777L);
+
+            HarvestSkip skip;
+            Date start = null;
+            
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1);
+            dao.put(skip);
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2);
+            dao.put(skip);
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3);
+            dao.put(skip);
+
+            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
+            Assert.assertEquals("skips size", 3, skips.size());
+            Assert.assertEquals(id1, skips.get(0).skipID);
+            Assert.assertEquals(id2, skips.get(1).skipID);
+            Assert.assertEquals(id3, skips.get(2).skipID);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testUpdate()
+    {
+        try
+        {
+            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
+            Long id1 = new Long(888L);
+
+            HarvestSkip skip;
+
+            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1);
+            dao.put(skip);
+            
+            HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
+            Assert.assertNotNull(actual1);
+            Assert.assertEquals(id1, actual1.skipID);
+            Date d1 = actual1.lastModified;
+
+            Thread.sleep(100L);
+
+            dao.put(actual1);
+
+            HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
+            Assert.assertNotNull(actual2);
+            Assert.assertEquals(id1, actual2.skipID);
+
+            log.debug("skip.lastModified: " + skip.lastModified.getTime());
+            log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
+            Assert.assertTrue("lastModfified increased", skip.lastModified.getTime() < actual2.lastModified.getTime());
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }

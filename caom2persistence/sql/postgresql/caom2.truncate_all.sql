@@ -15,10 +15,10 @@ truncate table caom2.DeletedArtifact;
 truncate table caom2.DeletedPlane;
 truncate table caom2.DeletedObservation;
 
-truncate table caom2.ObservationMetaReadAccess;
-truncate table caom2.PlaneMetaReadAccess;
-truncate table caom2.PlaneDataReadAccess;
+truncate table caom2.ObservationMetaReadAccess_new;
+truncate table caom2.PlaneMetaReadAccess_new;
+truncate table caom2.PlaneDataReadAccess_new;
 
-truncate table caom2.DeletedObservationMetaReadAccess;
-truncate table caom2.DeletedPlaneMetaReadAccess;
-truncate table caom2.DeletedPlaneDataReadAccess;
+truncate table caom2.DeletedObservationMetaReadAccess_new;
+truncate table caom2.DeletedPlaneMetaReadAccess_new;
+truncate table caom2.DeletedPlaneDataReadAccess_new;

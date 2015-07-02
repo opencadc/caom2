@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import java.lang.reflect.Constructor;
+import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -186,16 +187,42 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         try
         {
-            Long assetID = new Long(666L);
-            Long groupID =  new Long(777L);
+            Long assetID = 666L;
+            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
             ReadAccess expected;
 
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, Long.class);
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetList()
+    {
+        try
+        {
+            ReadAccess ra;
+            URI groupID;
+            Class c = ObservationMetaReadAccess.class;
+            Constructor ctor = c.getConstructor(Long.class, URI.class);
+            for (int i=0; i<3; i++)
+            {
+                groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
+                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
+                dao.put(ra);
+            }
+            List<ReadAccess> ras = dao.getList(c, null, null, null);
+            Assert.assertNotNull(ras);
+            Assert.assertEquals(3, ras.size());
         }
         catch(Exception unexpected)
         {

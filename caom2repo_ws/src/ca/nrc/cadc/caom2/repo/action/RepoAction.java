@@ -69,6 +69,10 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.ac.AC;
+import ca.nrc.cadc.ac.UserNotFoundException;
+import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.auth.CredUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -81,7 +85,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.auth.GroupUtil;
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.dao.ObservationDAO;
@@ -97,7 +101,15 @@ import ca.nrc.cadc.io.ByteCountReader;
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.cert.CertificateException;
+import java.util.Iterator;
+import java.util.Set;
+import javax.security.auth.Subject;
+import javax.security.auth.x500.X500Principal;
 import org.springframework.dao.TransientDataAccessResourceException;
 
 /**
@@ -124,6 +136,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
     private URI CADC_GROUP_URI;
+    private GMSClient gmsClient;
+    private CredUtil credUtil;
 
     protected SyncInput syncInput;
     protected SyncOutput syncOutput;
@@ -131,21 +145,43 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     
     private String path;
     private ObservationURI uri;
-    
-    
+        
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
-
 
     protected RepoAction() 
     {
         try
         {
             CADC_GROUP_URI = new URI("ivo://cadc.nrc.ca/gms#CADC");
+            
+            final URI serviceURI = new URI(AC.GMS_SERVICE_URI);
+            RegistryClient regClient = new RegistryClient();
+            URL baseURL = regClient.getServiceURL(serviceURI, "https");
+            if (baseURL == null)
+            {
+                throw new RuntimeException(serviceURI.toString() + " not found in RegistryClient");
+            }
+            
+            gmsClient = new GMSClient(baseURL.toString());
+            
+            AccessControlContext accessControlContext = AccessController.getContext();
+            Subject subject = Subject.getSubject(accessControlContext);
+            if (subject == null || subject.getPrincipals().isEmpty())
+            {
+                throw new RuntimeException("Subject is null or contains no Principals");
+            }
+            gmsClient.setSSLSocketFactory(SSLUtil.getSocketFactory(subject));
+            
+            this.credUtil = new CredUtil(regClient);
         }
         catch(URISyntaxException bug)
         {
             throw new RuntimeException("BUG: failed to create CADC_GROUP_URI constant", bug);
+        }
+        catch (MalformedURLException bug)
+        {
+            throw new RuntimeException("BUG: failed to create AC base URL", bug);
         }
     }
 
@@ -337,9 +373,15 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      * 
      * @param uri
      * @throws AccessControlException
+     * @throws java.security.cert.CertificateException
+     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws java.io.IOException
+     * @throws ca.nrc.cadc.ac.UserNotFoundException
      */
     protected void checkReadPermission(ObservationURI uri)
-        throws AccessControlException, CertificateException, CollectionNotFoundException, IOException
+        throws AccessControlException, CertificateException, 
+               CollectionNotFoundException, IOException, 
+               UserNotFoundException
     {
         initState();
         if (!readable)
@@ -353,19 +395,19 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
         
-        GroupUtil gu = new GroupUtil(new RegistryClient());
-
+//        GroupUtil gu = new GroupUtil(new RegistryClient());
+        
         URI guri;
 
         guri = i.getReadWriteGroup();
-        if (gu.isMember(guri))
+        if (isMember(guri))
             return;
 
         guri = i.getReadOnlyGroup();
-        if (gu.isMember(guri))
+        if (isMember(guri))
             return;
         
-        if (gu.isMember(CADC_GROUP_URI))
+        if (isMember(CADC_GROUP_URI))
             return;
 
         throw new AccessControlException("read permission denied: " + getURI());
@@ -376,9 +418,15 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      *
      * @param uri
      * @throws AccessControlException
+     * @throws java.security.cert.CertificateException
+     * @throws ca.nrc.cadc.ac.UserNotFoundException
+     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws java.io.IOException
      */
     protected void checkWritePermission(ObservationURI uri)
-        throws AccessControlException, CertificateException, CollectionNotFoundException, IOException
+        throws AccessControlException, CertificateException, 
+               CollectionNotFoundException, IOException, 
+               UserNotFoundException
     {
         initState();
         if (!writable)
@@ -391,11 +439,9 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
-        
-        GroupUtil gu = new GroupUtil(new RegistryClient());
 
         URI guri = i.getReadWriteGroup();
-        if (gu.isMember(guri))
+        if (isMember(guri))
             return;
 
         throw new AccessControlException("write permission denied: " + getURI());
@@ -453,5 +499,43 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             return ret;
         }
         throw new IllegalArgumentException("unknown collection: " + collection);
+    }
+    
+    private boolean isMember(URI groupURI)
+        throws CertificateException, IOException, MalformedURLException, UserNotFoundException
+    {
+        try
+        {
+            AccessControlContext accessControlContext = AccessController.getContext();
+            Subject subject = Subject.getSubject(accessControlContext);
+            log.debug("isMember -- subject:" + subject);
+            if (subject != null)
+            {
+                Set<X500Principal> principals = subject.getPrincipals(X500Principal.class);
+                if (principals != null && principals.size() > 0)
+                {
+                    if (credUtil.hasValidCredentials(subject))
+                    {
+                        Iterator<X500Principal> pi = principals.iterator();
+                        while (pi.hasNext())
+                        {
+                            X500Principal p = pi.next();
+                            if (gmsClient.isMember(p, groupURI.getFragment()))
+                            {
+                                log.debug("found: " + p + " is a member of " + groupURI);
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        log.debug("isMember -- no credentials available for subject: " + subject);
+                    }
+                }
+            }
+        }
+        finally
+        {}
+        return false;
     }
 }

@@ -67,45 +67,75 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
-
-import java.util.Date;
+package ca.nrc.cadc.caom2.harvester.state;
 
 /**
  *
  * @author pdowler
  */
-public class HarvestSkip 
+public class SqlUtil 
 {
-    public String source;
-    public String cname;
-    public Long skipID;
-
-    public Date lastModified;
-    Long id;
-
-    HarvestSkip() { }
-    
-    public HarvestSkip(String source, String cname, Long skipID)
+    static String getSelectSQL(String[] cols, String tableName)
     {
-        this.source = source;
-        this.cname = cname;
-        this.skipID = skipID;
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("SELECT ");
+        for (int c=0; c<cols.length; c++)
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+        }
+        sb.append(" FROM ");
+        sb.append(tableName);
+        
+        return sb.toString();
     }
 
-    @Override
-    public String toString()
+    static String getInsertSQL(String[] cols, String tableName)
     {
-        return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("INSERT INTO ");
+        sb.append(tableName);
+        sb.append(" (");
+        for (int c=0; c<cols.length; c++)
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+        }
+        sb.append(" ) VALUES (");
+        for (int c=0; c<cols.length; c++)
+        {
+            if (c > 0)
+                sb.append(",?");
+            else
+                sb.append("?");
+        }
+        sb.append(")");
+
+        return sb.toString();
     }
 
-    public Long getSkipID()
+    static String getUpdateSQL(String[] cols, String tableName)
     {
-        return skipID;
-    }
+        StringBuilder sb = new StringBuilder();
 
-    public Long getID()
-    {
-        return skipID;
+        sb.append("UPDATE ");
+        sb.append(tableName);
+        sb.append(" SET ");
+        for (int c=0; c<cols.length - 1; c++) // PK is last
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+            sb.append(" = ?");
+        }
+        sb.append(" WHERE ");
+        sb.append(cols[cols.length - 1]);
+        sb.append(" = ?");
+
+        return sb.toString();
     }
 }
