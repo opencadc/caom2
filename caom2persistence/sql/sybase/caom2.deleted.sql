@@ -11,7 +11,7 @@ partition by roundrobin 16
 create index i_do_lastModified on caom2_DeletedObservation (lastModified)
 ;
 
-create table caom2_DeletedObservationMetaReadAccess
+create table caom2_DeletedObservationMetaReadAccess_new
 (
     id binary(16) primary key nonclustered,
     lastModified datetime not null
@@ -20,10 +20,10 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_domra_lastModified on caom2_DeletedObservationMetaReadAccess (lastModified)
+create index i_domra_lastModified on caom2_DeletedObservationMetaReadAccess_new (lastModified)
 ;
 
-create table caom2_DeletedPlaneMetaReadAccess
+create table caom2_DeletedPlaneMetaReadAccess_new
 (
     id binary(16) primary key nonclustered,
     lastModified datetime not null
@@ -32,10 +32,10 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_dpmra_lastModified on caom2_DeletedPlaneMetaReadAccess (lastModified)
+create index i_dpmra_lastModified on caom2_DeletedPlaneMetaReadAccess_new (lastModified)
 ;
 
-create table caom2_DeletedPlaneDataReadAccess
+create table caom2_DeletedPlaneDataReadAccess_new
 (
     id binary(16) primary key nonclustered,
     lastModified datetime not null
@@ -44,7 +44,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_dpdra_lastModified on caom2_DeletedPlaneDataReadAccess (lastModified)
+create index i_dpdra_lastModified on caom2_DeletedPlaneDataReadAccess_new (lastModified)
 ;
 
 
@@ -67,29 +67,29 @@ as
 	(select obsID from inserted)
 ;
 
-create trigger caom2_ObservationMetaReadAccess_delete
-on caom2_ObservationMetaReadAccess
+create trigger caom2_ObservationMetaReadAccess_new_delete
+on caom2_ObservationMetaReadAccess_new
 for delete
 as
-  insert caom2_DeletedObservationMetaReadAccess
+  insert caom2_DeletedObservationMetaReadAccess_new
   (id, lastModified)
   (select readAccessID, getdate() from deleted)
 ;
 
-create trigger caom2_PlaneMetaReadAccess_delete
-on caom2_PlaneMetaReadAccess
+create trigger caom2_PlaneMetaReadAccess_new_delete
+on caom2_PlaneMetaReadAccess_new
 for delete
 as
-  insert caom2_DeletedPlaneMetaReadAccess
+  insert caom2_DeletedPlaneMetaReadAccess_new
   (id, lastModified)
   (select readAccessID, getdate() from deleted)
 ;
 
-create trigger caom2_PlaneDataReadAccess_delete
-on caom2_PlaneDataReadAccess
+create trigger caom2_PlaneDataReadAccess_new_delete
+on caom2_PlaneDataReadAccess_new
 for delete
 as
-  insert caom2_DeletedPlaneDataReadAccess
+  insert caom2_DeletedPlaneDataReadAccess_new
   (id, lastModified)
   (select readAccessID, getdate() from deleted)
 ;
