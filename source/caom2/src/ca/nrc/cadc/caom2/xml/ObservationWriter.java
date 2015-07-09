@@ -94,8 +94,8 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -673,6 +673,13 @@ public class ObservationWriter implements Serializable
         parent.addContent(e);
     }
   
+    protected Element getSampleElement(SubInterval si)
+    {
+        Element s = getCaom2Element("sample");
+        addNumberElement("lower", si.getLower(), s);
+        addNumberElement("upper", si.getUpper(), s);
+        return s;
+    }
     protected void addEnergyElement(Energy comp, Element parent)
     {
         if (outputVersion < 22)
@@ -689,6 +696,16 @@ public class ObservationWriter implements Serializable
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
+            if (!comp.bounds.getSamples().isEmpty())
+            {
+                Element ses = getCaom2Element("samples");
+                for (SubInterval si : comp.bounds.getSamples())
+                {
+                    Element se = getSampleElement(si); 
+                    ses.addContent(se);
+                }
+                pe.addContent(ses);
+            }
         }
         if (comp.dimension != null)
         {
@@ -745,6 +762,16 @@ public class ObservationWriter implements Serializable
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
+            if (!comp.bounds.getSamples().isEmpty())
+            {
+                Element ses = getCaom2Element("samples");
+                for (SubInterval si : comp.bounds.getSamples())
+                {
+                    Element se = getSampleElement(si); 
+                    ses.addContent(se);
+                }
+                pe.addContent(ses);
+            }
         }
         if (comp.dimension != null)
         {
