@@ -28,10 +28,9 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
-import ca.nrc.cadc.caom2.util.CaomUtil;
-import ca.nrc.cadc.util.HexUtil;
-
 import javax.sql.DataSource;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -58,7 +57,14 @@ public class SybaseHarvestStateDAO extends HarvestStateDAO
     {
         if (uuid != null)
         {
-            ps.setBytes(col, HexUtil.toBytes(CaomUtil.uuidToLong(uuid)));
+//            ps.setBytes(col, HexUtil.toBytes(CaomUtil.uuidToLong(uuid)));
+            byte[] bytes = new byte[16];
+            ByteBuffer bb = ByteBuffer.wrap(bytes);
+//            bb.order(ByteOrder.LITTLE_ENDIAN);
+            bb.order(ByteOrder.BIG_ENDIAN);
+            bb.putLong(uuid.getMostSignificantBits());
+            bb.putLong(uuid.getLeastSignificantBits());
+            ps.setBytes(col, bytes);
         }
         else
         {
