@@ -171,13 +171,14 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new UUID(0L, 666L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
+            Assert.assertEquals(s.curID, s2.curID);
         }
         catch(Exception unexpected)
         {
@@ -203,7 +204,7 @@ public class SybaseHarvestStateDAOTest
 
             HarvestState s2 = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertNotNull(s2);
-            Assert.assertEquals(s.curLastModified, s2.curLastModified);
+            Assert.assertEquals(s.curLastModified.getTime(), s2.curLastModified.getTime(), 2.0);
         }
         catch(Exception unexpected)
         {
@@ -222,13 +223,14 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new UUID(0L, 777L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
+            Assert.assertEquals(s.curID, s2.curID);
 
             s.curID = new UUID(0L, 888L);
             dao.put(s);
@@ -237,6 +239,7 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s3);
             Assert.assertNull(s3.curLastModified);
             Assert.assertEquals(s.id, s3.id);
+            Assert.assertEquals(s.curID, s3.curID);
             
         }
         catch(Exception unexpected)
@@ -264,14 +267,14 @@ public class SybaseHarvestStateDAOTest
 
             HarvestState s2 = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertNotNull(s2);
-            Assert.assertEquals(s.curLastModified, s2.curLastModified);
+            Assert.assertEquals(s.curLastModified.getTime(), s2.curLastModified.getTime(), 2.0);
 
             s.curLastModified = new Date(t + 10L);
             dao.put(s);
 
             HarvestState s3 = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertNotNull(s3);
-            Assert.assertEquals(s.curLastModified, s3.curLastModified);
+            Assert.assertEquals(s.curLastModified.getTime(), s3.curLastModified.getTime(), 2.0);
         }
         catch(Exception unexpected)
         {
