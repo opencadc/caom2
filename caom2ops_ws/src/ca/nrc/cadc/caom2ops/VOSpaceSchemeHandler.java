@@ -179,7 +179,7 @@ public class VOSpaceSchemeHandler implements SchemeHandler
                     reqP = new Protocol(VOS.PROTOCOL_HTTPS_GET);
                 protocols.add(reqP);
                 
-                Transfer trans = new Transfer(vuri, Direction.pullFromVoSpace, protocols);
+                Transfer trans = new Transfer(uri, Direction.pullFromVoSpace, protocols);
                 ClientTransfer ct = vosClient.createTransfer(trans);
                 trans = ct.getTransfer();
                 for (Protocol p : trans.getProtocols())
