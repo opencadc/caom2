@@ -171,7 +171,7 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new UUID(0L, 666L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
@@ -223,7 +223,7 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
-            s.curID = new UUID(0L, 777L);
+            s.curID = UUID.randomUUID();
             dao.put(s);
 
             HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
