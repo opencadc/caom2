@@ -90,24 +90,18 @@ public class CaomHarvester implements Runnable
         throws IOException
     {
         CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, false, null);
-        //ret.obsHarvester.setSkipped(true);
         
         //ret.obsHarvester = null;
+        //ret.obsDeleter = null;
         
-        if (true)
-        {
-            ret.observationMetaHarvester = null;
-            ret.planeMetaHarvester = null;
-            ret.planeDataHarvester = null;
-        }
+        ret.observationMetaHarvester = null;
+        ret.planeMetaHarvester = null;
+        ret.planeDataHarvester = null;
+        
+        ret.observationMetaDeleter = null;
+        ret.planeMetaDeleter = null;
+        ret.planeDataDeleter = null;
 
-        if (true)
-        {
-            ret.obsDeleter = null;
-            ret.observationMetaDeleter = null;
-            ret.planeMetaDeleter = null;
-            ret.planeDataDeleter = null;
-        }
         return ret;
     }
     

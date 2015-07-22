@@ -1,8 +1,6 @@
 
 -- ObservationMetaReadAccess --
-drop table if exists caom2.ObservationMetaReadAccess_new;
-
-create table caom2.ObservationMetaReadAccess_new
+create table caom2.ObservationMetaReadAccess
 (
     assetID         bigint not null,
     groupID         varchar(128) not null,
@@ -14,15 +12,13 @@ create table caom2.ObservationMetaReadAccess_new
 tablespace caom_data
 ;
 
-create index i_omra_group
-    on caom2.ObservationMetaReadAccess_new (groupID)
+create index i_ObservationMetaReadAccess_group
+    on caom2.ObservationMetaReadAccess (groupID)
 tablespace caom_index
 ;
 
 -- PlaneMetaReadAccess --
-drop table if exists caom2.PlaneMetaReadAccess_new;
-
-create table caom2.PlaneMetaReadAccess_new
+create table caom2.PlaneMetaReadAccess
 (
     assetID         bigint not null,
     groupID         varchar(128) not null,
@@ -34,14 +30,13 @@ create table caom2.PlaneMetaReadAccess_new
 tablespace caom_data
 ;
 
-create index i_pmra_group
-    on caom2.PlaneMetaReadAccess_new (groupID)
+create index i_PlaneMetaReadAccess_group
+    on caom2.PlaneMetaReadAccess (groupID)
 tablespace caom_index
 ;
 
 -- PlaneDataReadAccess --
-drop table if exists caom2.PlaneDataReadAccess_new;
-create table caom2.PlaneDataReadAccess_new
+create table caom2.PlaneDataReadAccess
 (
     assetID         bigint not null,
     groupID         varchar(128) not null,
@@ -53,7 +48,7 @@ create table caom2.PlaneDataReadAccess_new
 tablespace caom_data
 ;
 
-create index i_pdra_group
-    on caom2.PlaneDataReadAccess_new (groupID)
+create index i_PlaneDataReadAccess_group
+    on caom2.PlaneDataReadAccess (groupID)
 tablespace caom_index
 ;
