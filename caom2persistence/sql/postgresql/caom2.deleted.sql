@@ -7,7 +7,7 @@ create table caom2.DeletedObservation
 tablespace caom_data
 ;
 
-create table caom2.DeletedObservationMetaReadAccess_new
+create table caom2.DeletedObservationMetaReadAccess
 (
     id uuid not null,
     lastModified timestamp not null
@@ -15,7 +15,7 @@ create table caom2.DeletedObservationMetaReadAccess_new
 tablespace caom_data
 ;
 
-create table caom2.DeletedPlaneMetaReadAccess_new
+create table caom2.DeletedPlaneMetaReadAccess
 (
     id uuid not null,
     lastModified timestamp not null
@@ -23,7 +23,7 @@ create table caom2.DeletedPlaneMetaReadAccess_new
 tablespace caom_data
 ;
 
-create table caom2.DeletedPlaneDataReadAccess_new
+create table caom2.DeletedPlaneDataReadAccess
 (
     id uuid not null,
     lastModified timestamp not null
