@@ -9,6 +9,6 @@ grant select on caom2.Observation to CVOPUB;
 grant select on caom2.Observation_members to CVOPUB;
 grant select on caom2.Plane_inputs to CVOPUB;
 
-grant select on caom2.PlaneMetaReadAccess_new to CVOPUB;
-grant select on caom2.PlaneDataReadAccess_new to CVOPUB;
-grant select on caom2.ObservationMetaReadAccess_new to CVOPUB;
+grant select on caom2.PlaneMetaReadAccess to CVOPUB;
+grant select on caom2.PlaneDataReadAccess to CVOPUB;
+grant select on caom2.ObservationMetaReadAccess to CVOPUB;
