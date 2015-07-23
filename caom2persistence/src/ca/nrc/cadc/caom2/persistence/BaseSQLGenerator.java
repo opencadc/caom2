@@ -162,18 +162,27 @@ public class BaseSQLGenerator implements SQLGenerator
         
         for (Class c : ENTITY_CLASSES)
         {
+            String s = c.getSimpleName();
             if (tablePrefix != null)
-                tableMap.put(c, tablePrefix + c.getSimpleName());
+            {
+                if (!s.startsWith("Deleted") && s.endsWith("ReadAccess"))
+                    s += "_new"; // temporary hack
+                tableMap.put(c, tablePrefix + s);
+            }
             else
-                tableMap.put(c, c.getSimpleName());
+                tableMap.put(c, s);
             aliasMap.put(c, c.getSimpleName());
         }
         for (Class c : SKELETON_CLASSES)
         {
             String s = c.getSimpleName();
-            s = s.replace("Skeleton", "");
+            s = s.replace("Skeleton", ""); // skeleton classes read from underlying tables
             if (tablePrefix != null)
+            {
+                if (s.endsWith("ReadAccess"))
+                    s += "_new"; // temporary hack
                 tableMap.put(c, tablePrefix + s);
+            }
             else
                 tableMap.put(c, s);
             aliasMap.put(c, c.getSimpleName());
