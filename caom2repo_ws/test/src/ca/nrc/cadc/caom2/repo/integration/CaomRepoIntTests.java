@@ -223,7 +223,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testGetNoReadPermission() throws Throwable
     {
         String observationID = generateObservationID("testGetNoReadPermission");
@@ -241,7 +241,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testGetNotFound() throws Throwable
     {
         String observationID = generateObservationID("testGetNotFound");
@@ -251,7 +251,7 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
-    //@Test
+    @Test
     public void testCollectionNotFound() throws Throwable
     {
         String collection = "NoSuchCollection";
@@ -262,7 +262,7 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 404, "collection not found: " + collection);
     }
     
-    //@Test
+    @Test
     public void testInvalidURI() throws Throwable
     {
         String collection = TEST_COLLECTION;
@@ -273,7 +273,7 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
     }
     
-    //@Test
+    @Test
     public void testPutSuccessWCS() throws Throwable
     {
         String observationID = generateObservationID("testPutSuccessWCS");
@@ -299,7 +299,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
 
-    //@Test
+    @Test
     public void testPutNoWritePermission() throws Throwable
     {
         String observationID = generateObservationID("testPutNoWritePermission");
@@ -311,7 +311,7 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
     }
     
-    //@Test
+    @Test
     public void testPutByteLimitExceeded() throws Throwable
     {
         String observationID = generateObservationID("testPutByteLimitExceeded");
@@ -323,7 +323,7 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
     }
     
-    //@Test
+    @Test
     public void testPutURIsDontMatch() throws Throwable
     {
         String observationID = generateObservationID("testPutURIsDontMatch");
@@ -335,7 +335,7 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT1, 400, "invalid input: " + uri +"-alt", path + "-alt");
     }
     
-    //@Test
+    @Test
     public void testPutURIAlreadyExists() throws Throwable
     {
         String observationID = generateObservationID("testPutURIAlreadyExists");
@@ -353,7 +353,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testPutValidationFails() throws Throwable
     {
         String observationID = generateObservationID("testPutValidationFails");
@@ -365,7 +365,7 @@ public class CaomRepoIntTests
         putObservation(observation, SUBJECT1, 400, "invalid input: " + uri, null);
     }
     
-    //@Test
+    @Test
     public void testPostSuccess() throws Throwable
     {
         String observationID = generateObservationID("testPostSuccess");
@@ -390,7 +390,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testPostNoWritePermission() throws Throwable
     {
         String observationID = generateObservationID("testPostNoWritePermission");
@@ -408,7 +408,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testPostByteLimitExceeded() throws Throwable
     {
         String observationID = generateObservationID("testPostByteLimitExceeded");
@@ -423,7 +423,7 @@ public class CaomRepoIntTests
         postObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
     }
     
-    //@Test
+    @Test
     public void testPostURIsDontMatch() throws Throwable
     {   
         String observationID = generateObservationID("testPostURIsDontMatch");
@@ -445,7 +445,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testPostURIDoesntExist() throws Throwable
     {
         String observationID = generateObservationID("testPostURIDoesntExist");
@@ -457,7 +457,7 @@ public class CaomRepoIntTests
         postObservation(observation, SUBJECT1, 404, "not found: " + uri, null);
     }
     
-    //@Test
+    @Test
     public void testPostValidationFails() throws Throwable
     {
         String observationID = generateObservationID("testPostValidationFails");
@@ -477,7 +477,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testDeleteSuccess() throws Throwable
     {
         String observationID = generateObservationID("testDeleteSuccess");
@@ -499,7 +499,7 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
-    ////@Test
+    //@Test
     public void testDeleteNoWritePermission() throws Throwable
     {   
         String observationID = generateObservationID("testDeleteNoWritePermission");
@@ -518,7 +518,7 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testDeleteNotFound() throws Throwable
     {
         
