@@ -619,7 +619,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     // select Observation(s) with maxLastmodified in [minLastModified,maxLastModified]
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified)
+    public String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth)
     {
         if (!Observation.class.equals(c))
             throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
@@ -629,7 +629,7 @@ public class BaseSQLGenerator implements SQLGenerator
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(Observation.class);
         sb.append("SELECT ");
-        sb.append(getObservationSelect(MAX_DEPTH, false));
+        sb.append(getObservationSelect(depth, false));
         boolean and = false;
         if (minLastModified != null)
         {
@@ -649,7 +649,7 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(df.format(maxLastModified));
             sb.append("'");
         }
-        String orderBy = getOrderColumns(MAX_DEPTH);
+        String orderBy = getOrderColumns(depth);
         if (orderBy != null)
         {
             sb.append(" ORDER BY ");
