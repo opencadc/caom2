@@ -173,12 +173,12 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
                 List mlm = (List) o;
                 if (mlm.isEmpty()) // no observations > minLastModified
                     return new ArrayList<T>(0);
-                if (mlm.size() >= batchSize.intValue())
+                if (mlm.size() >= batchSize)
                     endDate = (Date) mlm.get(mlm.size() - 1); // last == max value
             }
 
             // now query for the specified range of dates
-            sql = gen.getSelectSQL(c, minlastModified, endDate);
+            sql = gen.getObservationSelectSQL(c, minlastModified, endDate, depth);
             if (log.isDebugEnabled())
                 log.debug("GET SQL: " + Util.formatSQL(sql));
 
