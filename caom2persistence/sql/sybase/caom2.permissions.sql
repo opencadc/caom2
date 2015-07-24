@@ -15,6 +15,8 @@ grant select on caom2_DeletedObservationMetaReadAccess to public;
 grant select on caom2_DeletedPlaneMetaReadAccess to public;
 grant select on caom2_DeletedPlaneDataReadAccess to public;
 
+grant select on caom2_HarvestState to public;
+
 -- caom2 account used by caom2repo web service
 grant insert, update, delete on caom2_Chunk to caom2;
 grant insert, update, delete on caom2_Part to caom2;
