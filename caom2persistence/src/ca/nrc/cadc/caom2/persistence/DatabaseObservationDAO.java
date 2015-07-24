@@ -164,6 +164,23 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             throw new IllegalArgumentException("id cannot be null");
         return get(null, id, 1);
     }
+
+    /**
+     * Get list of observations to non-standard depth. This method will get observations (depth=1), 
+     * planes (depth=2), etc. Values from 1 to SQLGenerator.MAX_DEPTH (5) are valid.
+     * 
+     * @param c
+     * @param minlastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @param depth
+     * @return 
+     */
+    @Override
+    public List<Observation> getList(Class<Observation> c, Date minlastModified, Date maxLastModified, Integer batchSize, int depth)
+    {
+        return super.getList(c, minlastModified, maxLastModified, batchSize, depth);
+    }
     
     /**
      * Get a stored observation by URI.
