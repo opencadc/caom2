@@ -264,7 +264,7 @@ public class ObservationReaderWriterTest
             assertNull(actual);
             
             actual = r.cleanWhitespace("");
-            assertEquals("", actual);
+            assertNull(actual);
             
             actual = r.cleanWhitespace("foo");
             assertEquals("foo", actual);

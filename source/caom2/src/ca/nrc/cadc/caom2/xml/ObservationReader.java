@@ -469,6 +469,7 @@ public class ObservationReader implements Serializable
             return null;
         
         String id = getChildText("id", element, namespace, true);
+        // no check for null: Proposal will check and throw if illegal
         Proposal proposal = new Proposal(id);
 
         proposal.pi = getChildText("pi", element, namespace, false);
@@ -1863,6 +1864,8 @@ public class ObservationReader implements Serializable
         if (s == null)
              return null;
         s = s.trim();
+        if (s.isEmpty())
+            return null;
         s = s.replaceAll("\\s+", " ");
         return s;
     }
