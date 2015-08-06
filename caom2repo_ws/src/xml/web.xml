@@ -28,6 +28,10 @@
             <param-name>logAccessGroup</param-name>
             <param-value>CADC</param-value>
         </init-param>
+        <init-param>
+            <param-name>groupAuthorizer</param-name>
+            <param-value>ca.nrc.cadc.auth.CADCGroupAuthorizer</param-value>
+        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -58,11 +62,6 @@
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>logControl</servlet-name>
-        <url-pattern>/auth-logControl</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
         <servlet-name>AvailabilityServlet</servlet-name>
         <url-pattern>/availability</url-pattern>
     </servlet-mapping>
@@ -89,7 +88,7 @@
             <web-resource-name>auth</web-resource-name>
             <description/>
             <url-pattern>/auth/*</url-pattern>
-            <url-pattern>/auth-logControl/*</url-pattern>
+            <url-pattern>/logControl/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
             <http-method>HEAD</http-method>
