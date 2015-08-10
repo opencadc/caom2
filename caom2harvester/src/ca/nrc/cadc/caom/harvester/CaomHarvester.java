@@ -86,17 +86,17 @@ public class CaomHarvester implements Runnable
     }
 
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 
-            Integer batchSize, Integer batchFactor, boolean full)
+            Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxdate)
         throws IOException
     {
-        CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, false, null);
+        CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, skip, maxdate);
         
         //ret.obsHarvester = null;
         //ret.obsDeleter = null;
         
-        ret.observationMetaHarvester = null;
-        ret.planeMetaHarvester = null;
-        ret.planeDataHarvester = null;
+        //ret.observationMetaHarvester = null;
+        //ret.planeMetaHarvester = null;
+        //ret.planeDataHarvester = null;
         
         ret.observationMetaDeleter = null;
         ret.planeMetaDeleter = null;
