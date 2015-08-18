@@ -105,7 +105,7 @@ for src in $SOURCES; do
             if [ $db == $ac ]; then
 ## tricksy bash: ${!ac} is the value of a variable named $ac
                 for ARC in ${!ac}; do
-                    $CADC_ROOT/scripts/caom2AccessControlDA -v --archive=$ARC --source=$SOURCE --cert=$CADCOPS_PROXY_CERT --log=$ACLOG &> /dev/null
+                    $CADC_ROOT/scripts/caom2AccessControlDA -v --archive=$ARC --database=$SOURCE --cert=$CADCOPS_PROXY_CERT &> $ACLOG
                 done
             fi
         done
