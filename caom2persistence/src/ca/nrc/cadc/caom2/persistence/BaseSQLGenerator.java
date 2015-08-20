@@ -233,8 +233,8 @@ public class BaseSQLGenerator implements SQLGenerator
             String s = c.getSimpleName();
             if (tablePrefix != null)
             {
-                if (!s.startsWith("Deleted") && s.endsWith("ReadAccess"))
-                    s += "_new"; // temporary hack
+                //if (!s.startsWith("Deleted") && s.endsWith("ReadAccess"))
+                //    s += "_new"; // temporary hack
                 tableMap.put(c, tablePrefix + s);
             }
             else
@@ -247,8 +247,8 @@ public class BaseSQLGenerator implements SQLGenerator
             s = s.replace("Skeleton", ""); // skeleton classes read from underlying tables
             if (tablePrefix != null)
             {
-                if (s.endsWith("ReadAccess"))
-                    s += "_new"; // temporary hack
+                //if (s.endsWith("ReadAccess"))
+                //    s += "_new"; // temporary hack
                 tableMap.put(c, tablePrefix + s);
             }
             else
