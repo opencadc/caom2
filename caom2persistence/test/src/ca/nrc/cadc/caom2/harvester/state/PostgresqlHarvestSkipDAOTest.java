@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
@@ -85,20 +85,20 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class HarvestSkipDAOTest 
+public class PostgresqlHarvestSkipDAOTest
 {
-    private static final Logger log = Logger.getLogger(HarvestSkipDAOTest.class);
+    private static final Logger log = Logger.getLogger(PostgresqlHarvestSkipDAOTest.class);
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
     DataSource dataSource;
     String database;
     String schema;
 
-    public HarvestSkipDAOTest()
+    public PostgresqlHarvestSkipDAOTest()
         throws Exception
     {
         try

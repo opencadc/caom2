@@ -21,3 +21,5 @@ drop table if exists caom2.DeletedObservationMetaReadAccess;
 drop table if exists caom2.DeletedPlaneMetaReadAccess;
 drop table if exists caom2.DeletedPlaneDataReadAccess;
 
+drop table if exists caom2.HarvestState;
+drop table if exists caom2.HarvestSkip;

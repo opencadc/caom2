@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
@@ -86,20 +86,20 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class HarvestStateDAOTest 
+public class PostgresqlHarvestStateDAOTest
 {
-    private static final Logger log = Logger.getLogger(HarvestStateDAOTest.class);
+    private static final Logger log = Logger.getLogger(PostgresqlHarvestStateDAOTest.class);
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
     static DataSource dataSource;
     static String database;
     static String schema;
 
-    public HarvestStateDAOTest()
+    public PostgresqlHarvestStateDAOTest()
         throws Exception
     {
         
@@ -145,7 +145,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testGet", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertEquals("testGet", s.source);
@@ -165,7 +165,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertID", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
@@ -190,7 +190,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertEquals("testInsertDate", s.source);
             Assert.assertEquals("testInsertDate".hashCode(), s.code.intValue());
@@ -216,7 +216,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateID", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
@@ -250,7 +250,7 @@ public class HarvestStateDAOTest
     {
         try
         {
-            HarvestStateDAO dao = new HarvestStateDAO(dataSource, database, schema);
+            HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertEquals("testUpdateDate", s.source);
             Assert.assertEquals("testUpdateDate".hashCode(), s.code.intValue());

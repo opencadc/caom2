@@ -319,7 +319,7 @@ public class BaseSQLGeneratorTest
         {
             Date d2 = new Date();
             Date d1 = new Date(d2.getTime() - 3600*1000L); // one hour ago
-            String sql = gen.getSelectSQL(Observation.class, d1, d2);
+            String sql = gen.getObservationSelectSQL(Observation.class, d1, d2, SQLGenerator.MAX_DEPTH);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);

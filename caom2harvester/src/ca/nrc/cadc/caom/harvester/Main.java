@@ -160,7 +160,7 @@ public class Main
             try
             {
                 if (test)
-                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full);
+                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                 else if (recomp)
                     ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
                 else

@@ -1,15 +1,15 @@
 
-create table caom2_DeletedObservation
-(
-    id bigint primary key nonclustered,
-    lastModified datetime not null
-)
-lock datarows
-partition by roundrobin 16
-;
+--create table caom2_DeletedObservation
+--(
+--    id bigint primary key nonclustered,
+--    lastModified datetime not null
+--)
+--lock datarows
+--partition by roundrobin 16
+--;
 
-create index i_do_lastModified on caom2_DeletedObservation (lastModified)
-;
+--create index i_lastModified on caom2_DeletedObservation (lastModified)
+--;
 
 create table caom2_DeletedObservationMetaReadAccess
 (
@@ -20,7 +20,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_domra_lastModified on caom2_DeletedObservationMetaReadAccess (lastModified)
+create index i_lastModified on caom2_DeletedObservationMetaReadAccess (lastModified)
 ;
 
 create table caom2_DeletedPlaneMetaReadAccess
@@ -32,7 +32,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_dpmra_lastModified on caom2_DeletedPlaneMetaReadAccess (lastModified)
+create index i_lastModified on caom2_DeletedPlaneMetaReadAccess (lastModified)
 ;
 
 create table caom2_DeletedPlaneDataReadAccess
@@ -44,7 +44,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create index i_dpdra_lastModified on caom2_DeletedPlaneDataReadAccess (lastModified)
+create index i_lastModified on caom2_DeletedPlaneDataReadAccess (lastModified)
 ;
 
 

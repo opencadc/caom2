@@ -70,6 +70,8 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.util.HexUtil;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.UUID;
 
 /**
@@ -106,4 +108,20 @@ public class SybaseSQLGenerator extends BaseSQLGenerator
         sb.append( HexUtil.toHex(value.getLeastSignificantBits()) );
         return sb.toString();
     }
+    
+    @Override
+    protected void safeSetUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
+        throws SQLException
+    {
+        // null UUID is always a bug
+        String hex = HexUtil.toHex(val.getMostSignificantBits())
+            + HexUtil.toHex(val.getLeastSignificantBits());
+        ps.setBytes(col, HexUtil.toBytes(hex));
+        if (sb != null)
+        {
+            sb.append(val);
+            sb.append(",");
+        }
+    }
+     
 }

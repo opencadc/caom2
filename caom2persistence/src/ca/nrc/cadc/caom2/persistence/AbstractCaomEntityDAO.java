@@ -120,7 +120,8 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
      * performs a direct query and returns the specified number of instances.
      *
      * @param c
-     * @param minlastModified
+     * @param minLastModified
+     * @param maxLastModified
      * @param batchSize
      * @return
      */
@@ -137,12 +138,12 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
      
         throw new UnsupportedOperationException("unexpected class for getList: " + c.getName());
     }
-    
+
     /**
      * Get batch of Observations. This implementation finds a range of lastModified that
      * should yield the requested batchSize and then performs a date-range query
      * with the specified depth (if needed) to get the target instances.
-     * 
+     *
      * @param c
      * @param minlastModified
      * @param batchSize
@@ -155,7 +156,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
 
         log.debug("GET: " + batchSize);
         long t = System.currentTimeMillis();
-        
+
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
@@ -172,17 +173,17 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
                 List mlm = (List) o;
                 if (mlm.isEmpty()) // no observations > minLastModified
                     return new ArrayList<T>(0);
-                if (mlm.size() >= batchSize.intValue())
+                if (mlm.size() >= batchSize)
                     endDate = (Date) mlm.get(mlm.size() - 1); // last == max value
             }
 
             // now query for the specified range of dates
-            sql = gen.getSelectSQL(c, minlastModified, endDate);
+            sql = gen.getObservationSelectSQL(c, minlastModified, endDate, depth);
             if (log.isDebugEnabled())
                 log.debug("GET SQL: " + Util.formatSQL(sql));
 
             Object result = jdbc.query(sql, gen.getObservationExtractor());
-            
+
             if (result == null)
                 return new ArrayList<T>(0);
 

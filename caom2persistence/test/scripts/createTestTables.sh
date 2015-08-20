@@ -37,6 +37,7 @@ doitSYB()
     $RUNCMD -i $TMPSQL/caom2.access.sql
     $RUNCMD -i $TMPSQL/caom2.deleted.sql
 #    $RUNCMD -i $TMPSQL/caom2.permissions.sql
+    $RUNCMD -i $TMPSQL/caom2.HarvestState.sql
 }
 
 doitPG()
@@ -68,6 +69,8 @@ doitPG()
     $RUNCMD < $TMPSQL/caom2.access.sql
     $RUNCMD < $TMPSQL/caom2.deleted.sql
 #    $RUNCMD < $TMPSQL/caom2.permissions.sql
+    $RUNCMD < $TMPSQL/caom2.HarvestState.sql
+    $RUNCMD < $TMPSQL/caom2.HarvestSkip.sql
 }
 
 ## Sybase test setup

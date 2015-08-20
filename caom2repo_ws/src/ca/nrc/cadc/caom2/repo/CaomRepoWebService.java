@@ -119,6 +119,8 @@ public class CaomRepoWebService implements WebService
             CheckResource cr = AuthenticatorImpl.getAvailabilityCheck();
             cr.check();
             
+            // TODO: check that GMS service is available
+            
             CaomRepoConfig rc = new CaomRepoConfig();
             
             if (rc.isEmpty())

@@ -2,62 +2,58 @@
 -- note: indexes support harvesting by lastModfied only
 --
 
+-- temporary table names --
+
 -- ObservationMetaReadAccess --
-create table caom2_ObservationMetaReadAccess
+create table caom2_ObservationMetaReadAccess_new
 (
-    gr_permission_id  bigint not null,
     assetID           bigint not null,
-    groupID           bigint not null,
+    groupID           varchar(128) not null,
     lastModified      datetime not null,
 
-    readAccessID      binary(16) default newid() primary key nonclustered,
+    readAccessID      binary(16) primary key nonclustered,
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified1
-    on caom2_ObservationMetaReadAccess ( lastModified )
+create index i_lastModified
+    on caom2_ObservationMetaReadAccess_new ( lastModified )
 ;
 
 -- PlaneMetaReadAccess --
-create table caom2_PlaneMetaReadAccess
+create table caom2_PlaneMetaReadAccess_new
 (
-    gr_permission_id  bigint not null,
     assetID           bigint not null,
-    groupID           bigint not null,
+    groupID           varchar(128) not null,
     lastModified      datetime not null,
 
-    readAccessID      binary(16) default newid() primary key nonclustered,
+    readAccessID      binary(16) primary key nonclustered,
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified2
-    on caom2_PlaneMetaReadAccess ( lastModified )
+create index i_lastModified
+    on caom2_PlaneMetaReadAccess_new ( lastModified )
 ;
 
 -- PlaneDataReadAccess --
-create table caom2_PlaneDataReadAccess
+create table caom2_PlaneDataReadAccess_new
 (
-    gr_permission_id  bigint not null,
     assetID           bigint not null,
-    groupID           bigint not null,
+    groupID           varchar(128) not null,
     lastModified      datetime not null,
 
-    readAccessID      binary(16) default newid() primary key nonclustered,
+    readAccessID      binary(16) primary key nonclustered,
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified3
-    on caom2_PlaneDataReadAccess ( lastModified )
+create index i_lastModified
+    on caom2_PlaneDataReadAccess_new ( lastModified )
 ;

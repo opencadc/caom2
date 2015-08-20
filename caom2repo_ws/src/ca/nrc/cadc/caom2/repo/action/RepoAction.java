@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.auth.GroupUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -81,7 +82,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.auth.GroupUtil;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.dao.ObservationDAO;
@@ -97,7 +97,12 @@ import ca.nrc.cadc.io.ByteCountReader;
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.cert.CertificateException;
+import javax.security.auth.Subject;
 import org.springframework.dao.TransientDataAccessResourceException;
 
 /**
@@ -131,11 +136,9 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     
     private String path;
     private ObservationURI uri;
-    
-    
+        
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
-
 
     protected RepoAction() 
     {
@@ -337,9 +340,13 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      * 
      * @param uri
      * @throws AccessControlException
+     * @throws java.security.cert.CertificateException
+     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws java.io.IOException
      */
     protected void checkReadPermission(ObservationURI uri)
-        throws AccessControlException, CertificateException, CollectionNotFoundException, IOException
+        throws AccessControlException, CertificateException, 
+               CollectionNotFoundException, IOException
     {
         initState();
         if (!readable)
@@ -353,8 +360,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
         
-        GroupUtil gu = new GroupUtil(new RegistryClient());
-
+        GroupUtil gu = new GroupUtil();
+        
         URI guri;
 
         guri = i.getReadWriteGroup();
@@ -376,9 +383,13 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      *
      * @param uri
      * @throws AccessControlException
+     * @throws java.security.cert.CertificateException
+     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws java.io.IOException
      */
     protected void checkWritePermission(ObservationURI uri)
-        throws AccessControlException, CertificateException, CollectionNotFoundException, IOException
+        throws AccessControlException, CertificateException, 
+               CollectionNotFoundException, IOException
     {
         initState();
         if (!writable)
@@ -391,12 +402,13 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
-        
-        GroupUtil gu = new GroupUtil(new RegistryClient());
 
+        GroupUtil gu = new GroupUtil();
+        
         URI guri = i.getReadWriteGroup();
         if (gu.isMember(guri))
             return;
+
 
         throw new AccessControlException("write permission denied: " + getURI());
     }

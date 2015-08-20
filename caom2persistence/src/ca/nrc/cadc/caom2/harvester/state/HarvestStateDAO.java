@@ -1,5 +1,5 @@
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.persistence.Util;
@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,7 +25,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  * @version $Revision: 159 $
  * @author $Author: pdowler $
  */
-public class HarvestStateDAO
+public abstract class HarvestStateDAO
 {
     private static Logger log = Logger.getLogger(HarvestStateDAO.class);
 
@@ -43,7 +44,7 @@ public class HarvestStateDAO
     public HarvestStateDAO(DataSource dataSource, String database, String schema)
     {
         this.jdbc = new JdbcTemplate(dataSource);
-        this.tableName = database + "." +  schema + ".HarvestState";
+        this.tableName = getTable(database, schema);
         this.extractor = new StateExtractor();
     }
 
@@ -79,7 +80,13 @@ public class HarvestStateDAO
         put.setValue(state);
         jdbc.update(put);
     }
-    
+
+    protected abstract String getTable(String database, String schema);
+
+    protected abstract void setUUID(PreparedStatement ps, int col, UUID val)
+        throws SQLException;
+
+
     private class SelectStatementCreator  implements PreparedStatementCreator
     {
         private String source;
@@ -150,10 +157,7 @@ public class HarvestStateDAO
                 ps.setTimestamp(col++, new Timestamp(state.curLastModified.getTime()), CAL);
             else
                 ps.setNull(col++, Types.TIMESTAMP);
-            if (state.curID != null)
-                ps.setObject(col++, state.curID);
-            else
-                ps.setNull(col++, Types.OTHER);
+            setUUID(ps, col++, state.curID);
 
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
             ps.setLong(col++, state.id);

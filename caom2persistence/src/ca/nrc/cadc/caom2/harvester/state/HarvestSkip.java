@@ -67,31 +67,45 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom.harvester.state;
+package ca.nrc.cadc.caom2.harvester.state;
 
 import java.util.Date;
-import java.util.UUID;
 
 /**
  *
  * @author pdowler
  */
-public class HarvestState 
+public class HarvestSkip 
 {
-    // mutable
-    public Date curLastModified;
-    public UUID curID;
-    
-    // internal
-    String source;
-    Integer code;
-    String cname;
+    public String source;
+    public String cname;
+    public Long skipID;
 
-    Date lastModified;
+    public Date lastModified;
     Long id;
 
+    HarvestSkip() { }
+    
+    public HarvestSkip(String source, String cname, Long skipID)
+    {
+        this.source = source;
+        this.cname = cname;
+        this.skipID = skipID;
+    }
+
+    @Override
     public String toString()
     {
-        return "HarvestState[" + source + "," + code + "," + cname + ": " + curLastModified + "," + curID +  "]";
+        return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
+    }
+
+    public Long getSkipID()
+    {
+        return skipID;
+    }
+
+    public Long getID()
+    {
+        return skipID;
     }
 }
