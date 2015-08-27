@@ -185,10 +185,11 @@ public class PackageRunner implements JobRunner
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
             AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
+            AuthMethod proxyAuthMethod = authMethod;
             if ( cred.hasValidCredentials(subject) )
             {
                 tapProto = "https";
-                authMethod = AuthMethod.CERT;
+                proxyAuthMethod = AuthMethod.CERT;
             }
             
             String runID = job.getID();
@@ -197,11 +198,11 @@ public class PackageRunner implements JobRunner
             
             List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
 
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, authMethod);
+            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, proxyAuthMethod);
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             
             SchemeHandler sh = new CaomSchemeHandler();
-            sh.setAuthMethod(authMethod); // override auth method for proxied calls
+            sh.setAuthMethod(proxyAuthMethod); // override auth method for proxied calls
             
             for (String suri : idList)
             {
@@ -210,6 +211,7 @@ public class PackageRunner implements JobRunner
                 if (idList.size() == 1 && artifacts.size() == 1)
                 {
                     // single file result: redirect
+                    sh.setAuthMethod(authMethod); // original auth method for redirect
                     Artifact a = artifacts.get(0);
                     URL url = sh.getURL(a.getURI());
                     log.debug("redirect: " + a.getURI() + " from " + url);
