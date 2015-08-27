@@ -2,6 +2,8 @@
 -- note: indexes support harvesting by lastModfied only
 --
 
+-- temporary table names --
+
 -- ObservationMetaReadAccess --
 create table caom2_ObservationMetaReadAccess_new
 (
@@ -13,11 +15,10 @@ create table caom2_ObservationMetaReadAccess_new
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified1
+create index i_lastModified
     on caom2_ObservationMetaReadAccess_new ( lastModified )
 ;
 
@@ -32,11 +33,10 @@ create table caom2_PlaneMetaReadAccess_new
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified2
+create index i_lastModified
     on caom2_PlaneMetaReadAccess_new ( lastModified )
 ;
 
@@ -51,10 +51,9 @@ create table caom2_PlaneDataReadAccess_new
     stateCode         int null
 )
 lock datarows
-with identity_gap = 512
 partition by roundrobin 16
 ;
 
-create index i_lastModified3
+create index i_lastModified
     on caom2_PlaneDataReadAccess_new ( lastModified )
 ;
