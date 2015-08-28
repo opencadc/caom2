@@ -11,11 +11,14 @@ usage()
     echo "usage: caom2harvestAll <config>"
     echo
     echo "config format:"
-    echo 
+    echo
+    echo "GRCERT=/path/to/valid.pem" 
     echo "LOGDIR=/path/to/logs"
     echo "TARGET=<server>                    (e.g. cvodb0)"
     echo "SOURCES=<server>.<database> ...    (e.g. SYBASE.cfht)"   
     echo "ACDA=<server>.<database> ...       (e.g. SYBASE.cfht)"
+    echo
+    echo "GRCERT:  A proxy certficate for the owner of archive groups to be created."
     echo
     echo "LOGDIR:  This is the path to log files from the invoked applications."
     echo "         A subdirectory for the target cvodb server will be created if"
@@ -62,6 +65,16 @@ fi
 
 . "$CONFIG"
 
+if [ -z $GRCERT ]; then
+    echo "missing GRCERT from $CONFIG"
+    usage
+    exit 1
+elif [ ! -f $GRCERT ]; then
+    echo "certificate file not found: $GRCERT"
+    usage
+    exit 1
+fi
+
 if [ -z $LOGDIR ]; then
     echo "missing LOGDIR from $CONFIG"
     usage
@@ -105,7 +118,7 @@ for src in $SOURCES; do
             if [ $db == $ac ]; then
 ## tricksy bash: ${!ac} is the value of a variable named $ac
                 for ARC in ${!ac}; do
-                    $CADC_ROOT/scripts/accessControlDA -q --mode=asset --archive=$ARC --log=$ACLOG &> /dev/null
+                    $CADC_ROOT/scripts/caom2AccessControlDA -v --archive=$ARC --database=$SOURCE --cert=$GRCERT &> $ACLOG
                 done
             fi
         done

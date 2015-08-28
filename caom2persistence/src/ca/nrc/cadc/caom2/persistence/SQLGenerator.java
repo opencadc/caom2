@@ -109,7 +109,7 @@ public interface SQLGenerator
     String getSelectSQL(ObservationURI uri, int depth, boolean skeleton);
 
     /**
-     * Get SQL to select an Observation or ObseravtionSkeleton from the internal ID.
+     * Get SQL to select an Observation or ObservationSkeleton from the internal ID.
      * @param id
      * @param depth
      * @param skeleton
@@ -124,7 +124,7 @@ public interface SQLGenerator
 
     String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
-    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified);
+    String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth);
 
 
     ResultSetExtractor getObservationExtractor();
