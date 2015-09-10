@@ -125,10 +125,9 @@ public final class CaomValidator
             {
                 p.clearTransientState();
                 p.computeTransientState();
-                Shape s = p.getPosition().bounds;
-                if (s != null)
+                if (p.position != null && p.position.bounds != null)
                 {
-                    Polygon poly = PolygonUtil.toPolygon(s);
+                    Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
                     PolygonUtil.getOuterHull(poly);
                 }
             }

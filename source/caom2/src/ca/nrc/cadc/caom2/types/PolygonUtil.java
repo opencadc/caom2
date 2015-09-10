@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import org.apache.log4j.Logger;
 
 /**
@@ -105,11 +107,11 @@ public final class PolygonUtil
             return null;
 
         // deep copy
-        Polygon outer = new Polygon();
-        for (Vertex v : poly.getVertices())
-        {
-            outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
-        }
+        //Polygon outer = new Polygon();
+        //for (Vertex v : poly.getVertices())
+        //{
+        //    outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
+        //}
 
         // TODO: triangulate and find union of all triangles
         // technically just need to add triangles that have one vertex in one part and two in
@@ -196,12 +198,11 @@ public final class PolygonUtil
 
         removeHoles(poly, 1.0);
 
-        //smooth(poly, 1.0e-4);
-
         if (scale > 0.0)
             poly = unscalePolygon(poly, scaled);
 
-        smooth(poly, 0.01);
+        smooth(poly);
+        //smooth(poly, 1.0e-4);
 
         return poly;
     }
@@ -422,7 +423,155 @@ public final class PolygonUtil
         return hasHoles;
     }
 
+    private static void smooth(Polygon poly)
+    {
+        List<Polygon> parts = decompose(poly);
+        poly.getVertices().clear();
+        for (Polygon p : parts)
+        {
+            smoothSimpleAdjacentVertices(p);
+            smoothSimpleColinearSegments(p);
+            for (Vertex v : p.getVertices())
+            {
+                poly.getVertices().add(v);
+            }
+        }
+    }
+    
+    // currently unused by computeUnion
     private static void smooth(Polygon poly, double rat)
+    {
+        List<Polygon> parts = decompose(poly);
+        poly.getVertices().clear();
+        for (Polygon p : parts)
+        {
+            for (Vertex v : p.getVertices())
+            {
+                poly.getVertices().add(v);
+            }
+        }
+    }
+    
+    private static void smoothSimpleAdjacentVertices(Polygon poly)
+    {
+        log.debug("[smooth.adjacent] " + poly);
+        if (poly.getVertices().size() <= 4) // 3+close == triangle
+            return;
+        PolygonProperties pp = computePolygonProperties(poly);
+        
+        double tol = pp.maxVertexSeparation*1.0e-6;
+        
+        Iterator<Vertex> vi = poly.getVertices().iterator();
+        List<Segment> segs = new ArrayList<Segment>();
+        Vertex start = vi.next();
+        Vertex v1 = start;
+        while ( vi.hasNext() )
+        {
+            Vertex v2 = vi.next();
+            if (SegmentType.CLOSE.equals(v2.getType()))
+                v2 = start;
+            Segment s = new Segment(v1, v2);
+            segs.add(s);
+            v1 = v2;
+        }
+        
+        // use length of segments to identify vertices we can remove
+        for (int i=0; i<segs.size(); i++)
+        {
+            Segment ab = segs.get(i);
+            double dx = Math.abs(ab.v1.cval1 - ab.v2.cval1);
+            double dy = Math.abs(ab.v1.cval2 - ab.v2.cval2);
+            log.debug("[smooth.adjacent] " + ab + " " + dx + " " + dy);
+            if ( dx < tol && dy < tol) // 
+            {
+                final Vertex v = ab.v1;
+                log.debug("[smooth.adjacent] removing " + v);
+                // remove v from poly
+                poly.getVertices().remove(v); // Vertex uses Object.equals aka ==
+                if (SegmentType.MOVE.equals(v.getType()))
+                {
+                    // change v+1 to MOVE
+                    final Vertex vp1 = ab.v2;
+                    poly.getVertices().replaceAll(new UnaryOperator<Vertex>()
+                    {
+
+                        public Vertex apply(Vertex t)
+                        {
+                            Vertex ret = t;
+                            if (vp1 == t) // yes: really ==
+                                ret = new Vertex(t.cval1, t.cval2, SegmentType.MOVE);
+                            return ret;
+                        }
+                    });
+                }
+            }
+        }
+    }
+    
+    private static void smoothSimpleColinearSegments(Polygon poly)
+    {
+        log.debug("[smooth.colinear] " + poly);
+        if (poly.getVertices().size() <= 4) // 3+close == triangle
+            return;
+        PolygonProperties pp = computePolygonProperties(poly);
+        
+        Iterator<Vertex> vi = poly.getVertices().iterator();
+        List<Segment> segs = new ArrayList<Segment>();
+        Vertex start = vi.next();
+        Vertex v1 = start;
+        while ( vi.hasNext() )
+        {
+            Vertex v2 = vi.next();
+            if (SegmentType.CLOSE.equals(v2.getType()))
+                v2 = start;
+            Segment s = new Segment(v1, v2);
+            segs.add(s);
+            v1 = v2;
+        }
+        
+        // remove colinear segments
+        for (int i=0; i<segs.size() - 1; i++)
+        {
+            Segment ab = segs.get(i);
+            Segment cd = segs.get(i+1);
+            if ( colinear(ab, cd) )
+            {
+                // vertex b aka c is on a line between a and d: remove it
+                final Vertex v = ab.v2; // == cd.v1
+                log.debug("[smooth.colinear] " + ab + " + " + cd + ": removing " + v);
+                
+                // remove v from poly
+                poly.getVertices().removeIf(new Predicate<Vertex>()
+                {
+                    public boolean test(Vertex t)
+                    {
+                        return (v == t); // yes, really ==
+                    }
+                });
+                if (SegmentType.MOVE.equals(v.getType()))
+                {
+                    // change v+1 to MOVE
+                    final Vertex vp1 = cd.v2;
+                    poly.getVertices().replaceAll(new UnaryOperator<Vertex>()
+                    {
+
+                        public Vertex apply(Vertex t)
+                        {
+                            Vertex ret = t;
+                            if (vp1 == t) // yes: really ==
+                                ret = new Vertex(t.cval1, t.cval2, SegmentType.MOVE);
+                            return ret;
+                        }
+                    });
+                }
+            }
+            else
+                log.debug("[smooth.colinear] non-colinear: " + ab + " + " + cd);
+        }
+        
+    }
+    
+    private static void smoothSimpleSmallAreaChange(Polygon poly, double rat)
     {
         log.debug("[smooth] " + poly + " rat="+rat);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
@@ -439,6 +588,7 @@ public final class PolygonUtil
             double negDA = Double.MAX_VALUE;
             Vertex posV = null;
             Vertex negV = null;
+            log.debug("starting loop over vertices...");
             for (int i=0; i<poly.getVertices().size(); i++)
             {
                 verts.clear();
@@ -454,9 +604,14 @@ public final class PolygonUtil
                     {
                         // change the next from  LINE to MOVE
                         Vertex vl = verts.get(i);
-                        Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
-                        log.debug("[smooth] (try) change " + vl + " -> " + vm);
-                        verts.set(i, vm);
+                        if (SegmentType.LINE.equals(vl.getType()))
+                        {
+                            Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
+                            log.debug("[smooth] (try) change " + vl + " -> " + vm);
+                            verts.set(i, vm);
+                        }
+                        else
+                            throw new IllegalStateException("found " + vl + " after " + v);
                     }
                     PolygonProperties tp = computePolygonProperties(tmp);
                     double da = (tp.area - pp.area)/pp.area;
@@ -748,6 +903,28 @@ public final class PolygonUtil
         }
     }
 
+    private static boolean colinear(Segment ab, Segment cd)
+    {
+        // determine dot-product 
+        double v1x = (ab.v2.cval1 - ab.v1.cval1);
+        double v1y = (ab.v2.cval2 - ab.v1.cval2);
+        double v2x = (cd.v2.cval1 - cd.v1.cval1);
+        double v2y = (cd.v2.cval2 - cd.v1.cval2);
+        
+        double dp = v1x*v2x + v1y*v2y;
+        double magAB = Math.sqrt(v1x*v1x + v1y*v1y);
+        double magCD = Math.sqrt(v2x*v2x + v2y*v2y);
+        double ang = Math.acos(dp/(magAB*magCD));
+        
+        log.debug("colinear: dot.product = " + ang);
+        if ( Math.abs(ang) < 0.05
+                || Math.abs(Math.PI - ang) < 0.05 )
+            return true;
+        
+        return false;
+    }
+    
+    
     private static boolean intersects(Segment ab, Segment cd, boolean isNext)
     {
         log.debug("intersects: " + ab + " vs " + cd);

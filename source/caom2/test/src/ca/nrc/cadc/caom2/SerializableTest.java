@@ -171,6 +171,9 @@ public class SerializableTest
         
         if ( c.isEnum() )
             return false;
+        
+        if ( c.isAnonymousClass() )
+            return false;
 
         // is final, has only static methods and static fields
         if ( Modifier.isFinal(c.getModifiers()) && c.getSuperclass().equals(Object.class) )
