@@ -491,7 +491,13 @@ public final class PolygonUtil
                 if (SegmentType.MOVE.equals(v.getType()))
                 {
                     // change v+1 to MOVE
-                    final Vertex vp1 = ab.v2;
+                    final Vertex nv = new Vertex(ab.v2.cval1, ab.v2.cval2, SegmentType.MOVE);
+                    // ugly List.replace(old, new): find index and set
+                    int curi = 0;
+                    while (ab.v2 != poly.getVertices().get(curi))
+                        curi++;
+                    poly.getVertices().set(curi, nv);
+                    /*
                     poly.getVertices().replaceAll(new UnaryOperator<Vertex>()
                     {
 
@@ -499,10 +505,11 @@ public final class PolygonUtil
                         {
                             Vertex ret = t;
                             if (vp1 == t) // yes: really ==
-                                ret = new Vertex(t.cval1, t.cval2, SegmentType.MOVE);
+                                return nv;
                             return ret;
                         }
                     });
+                    */
                 }
             }
         }
@@ -541,17 +548,18 @@ public final class PolygonUtil
                 log.debug("[smooth.colinear] " + ab + " + " + cd + ": removing " + v);
                 
                 // remove v from poly
-                poly.getVertices().removeIf(new Predicate<Vertex>()
-                {
-                    public boolean test(Vertex t)
-                    {
-                        return (v == t); // yes, really ==
-                    }
-                });
+                poly.getVertices().remove(v);
+                
                 if (SegmentType.MOVE.equals(v.getType()))
                 {
                     // change v+1 to MOVE
-                    final Vertex vp1 = cd.v2;
+                    final Vertex nv = new Vertex(cd.v2.cval1, cd.v2.cval2, SegmentType.MOVE);
+                    // ugly List.replace(old, new): find index and set
+                    int curi = 0;
+                    while (cd.v2 != poly.getVertices().get(curi))
+                        curi++;
+                    poly.getVertices().set(curi, nv);
+                    /*
                     poly.getVertices().replaceAll(new UnaryOperator<Vertex>()
                     {
 
@@ -559,10 +567,11 @@ public final class PolygonUtil
                         {
                             Vertex ret = t;
                             if (vp1 == t) // yes: really ==
-                                ret = new Vertex(t.cval1, t.cval2, SegmentType.MOVE);
+                                return nv;
                             return ret;
                         }
                     });
+                    */
                 }
             }
             else
