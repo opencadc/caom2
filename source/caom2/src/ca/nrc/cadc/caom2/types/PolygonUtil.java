@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
 import org.apache.log4j.Logger;
 
 /**
