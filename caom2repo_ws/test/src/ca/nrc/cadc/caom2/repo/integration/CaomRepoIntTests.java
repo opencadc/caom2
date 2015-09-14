@@ -555,7 +555,7 @@ public class CaomRepoIntTests
         return conn;
     }
     
-    private long DOCUMENT_SIZE_MAX = 20971520L;
+    private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;
     private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
     private Observation createVeryLargeObservation(String collection, String observationID)
     {
