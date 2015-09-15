@@ -1,15 +1,15 @@
 
---create table caom2_DeletedObservation
---(
---    id bigint primary key nonclustered,
---    lastModified datetime not null
---)
---lock datarows
---partition by roundrobin 16
---;
+create table caom2_DeletedObservation
+(
+    id bigint primary key nonclustered,
+    lastModified datetime not null
+)
+lock datarows
+partition by roundrobin 16
+;
 
---create index i_lastModified on caom2_DeletedObservation (lastModified)
---;
+create index i_lastModified on caom2_DeletedObservation (lastModified)
+;
 
 create table caom2_DeletedObservationMetaReadAccess
 (

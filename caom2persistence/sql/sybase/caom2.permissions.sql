@@ -32,11 +32,3 @@ grant insert, update, delete on caom2_PlaneDataReadAccess to caom2;
 grant insert on caom2_DeletedObservationMetaReadAccess to caom2;
 grant insert on caom2_DeletedPlaneMetaReadAccess to caom2;
 grant insert on caom2_DeletedPlaneDataReadAccess to caom2;
-
--- temporary tables
-grant select on caom2_ObservationMetaReadAccess_new to public;
-grant select on caom2_PlaneMetaReadAccess_new to public;
-grant select on caom2_PlaneDataReadAccess_new to public;
-grant insert, update, delete on caom2_ObservationMetaReadAccess_new to caom2;
-grant insert, update, delete on caom2_PlaneMetaReadAccess_new to caom2;
-grant insert, update, delete on caom2_PlaneDataReadAccess_new to caom2;
