@@ -118,7 +118,7 @@ public class FitsMapperTest
     private static Logger log = Logger.getLogger(FitsValuesMap.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
     
     static FitsMapping simpleMapping;
@@ -179,7 +179,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 10, 3, 0, 4, 1, 3, 0, 6, 5, 1, 4, 13
+            0, 0, 11, 3, 0, 4, 1, 3, 0, 7, 5, 1, 4, 13
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -210,7 +210,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            1, 2, 1, 1, 1, 1, 1, 1
+            2, 2, 2, 2, 2, 1, 1, 1
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);

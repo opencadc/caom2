@@ -335,7 +335,7 @@ public class FitsMapper
                 
                     // Not interested in static, final, or transient fields.
                     if (Modifier.isStatic(field.getModifiers()) ||
-                        Modifier.isFinal(field.getModifiers()) ||
+                        //Modifier.isFinal(field.getModifiers()) ||
                         Modifier.isTransient(field.getModifiers()))
                         continue;
                     fieldList.add(field);

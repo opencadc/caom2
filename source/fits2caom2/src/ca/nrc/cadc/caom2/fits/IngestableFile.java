@@ -380,7 +380,7 @@ public class IngestableFile
         // schema validation is always enabled
         VOSpaceClient client = new VOSpaceClient(baseURL.toString(), true);
         View view = new View(new URI(VOS.VIEW_DEFAULT));        
-        Transfer transfer = new Transfer(src, Direction.pullFromVoSpace, view, protocols);
+        Transfer transfer = new Transfer(src.getURI(), Direction.pullFromVoSpace, view, protocols);
         ClientTransfer clientTransfer = client.createTransfer(transfer);
         protocols = clientTransfer.getTransfer().getProtocols();
         URL url = null;

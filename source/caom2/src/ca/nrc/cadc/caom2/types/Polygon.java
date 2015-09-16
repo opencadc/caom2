@@ -81,7 +81,7 @@ public class Polygon implements Shape
 {
     private static final long serialVersionUID = 201202081100L;
     
-    private List<Vertex> vertices;
+    private final List<Vertex> vertices = new ArrayList<Vertex>();
 
     // lazily computed
     private static int vertexStateCode = -1;
@@ -89,10 +89,7 @@ public class Polygon implements Shape
     private transient Double area;
     private transient Double size;
 
-    public Polygon()
-    {
-        this.vertices = new ArrayList<Vertex>();
-    }
+    public Polygon() { }
 
     private void validate()
     {
