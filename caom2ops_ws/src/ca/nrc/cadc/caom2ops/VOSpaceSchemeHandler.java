@@ -144,13 +144,12 @@ public class VOSpaceSchemeHandler implements SchemeHandler
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
             
-            RegistryClient rc = new RegistryClient();
-            CredUtil cr = new CredUtil(rc);
+            
             String proto = "http";
             AuthMethod wsAuth = AuthMethod.ANON;
             try
             {
-                if (cr.hasValidCredentials(subject))
+                if (CredUtil.checkCredentials())
                 {
                     proto = "https";
                     wsAuth = AuthMethod.CERT;
@@ -161,30 +160,26 @@ public class VOSpaceSchemeHandler implements SchemeHandler
                 proto = "http";
                 log.debug("caller has invalid delegated certficate - using http for vospace calls", ex);
             }
-            catch(MalformedURLException ex)
-            {
-                throw new RuntimeException("CONFIG ERROR: failed to check credentials", ex);
-            }
 
             try
             {
+                RegistryClient rc = new RegistryClient();
                 VOSURI vuri = new VOSURI(uri);
-                URL url = rc.getServiceURL(vuri.getServiceURI(), proto);
+                URL url = rc.getServiceURL(vuri.getServiceURI(), proto, null, wsAuth);
                 String baseURL = url.toExternalForm();
                 VOSpaceClient vosClient = new VOSpaceClient(baseURL);
 
                 List<Protocol> protocols = new ArrayList<Protocol>();
-                Protocol reqP = new Protocol(VOS.PROTOCOL_HTTP_GET);
+                protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
                 if ( AuthMethod.CERT.equals(authMethod))
-                    reqP = new Protocol(VOS.PROTOCOL_HTTPS_GET);
-                protocols.add(reqP);
+                    protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
                 
                 Transfer trans = new Transfer(uri, Direction.pullFromVoSpace, protocols);
                 ClientTransfer ct = vosClient.createTransfer(trans);
                 trans = ct.getTransfer();
                 for (Protocol p : trans.getProtocols())
                 {
-                    if ( reqP.getUri().equals(p.getUri()) && p.getEndpoint() != null)
+                    if ( p.getEndpoint() != null) // first available URL
                         return p.getEndpoint();
                 }
                 // did not find desired protocol/endpoint

@@ -37,7 +37,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
