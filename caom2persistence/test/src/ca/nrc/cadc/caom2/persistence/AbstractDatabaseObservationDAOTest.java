@@ -228,7 +228,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    //@Test
+    ////@Test
     public void testTemplate()
     {
         try
@@ -623,7 +623,6 @@ public abstract class AbstractDatabaseObservationDAOTest
                 txnManager.commitTransaction();
 
                 Observation ret1 = dao.get(orig.getURI());
-
                 Assert.assertNotNull("found", ret1);
                 Assert.assertEquals(numPlanes, ret1.getPlanes().size());
                 testEqual(orig, ret1);
@@ -639,23 +638,22 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Assert.assertNotNull("found", ret2);
                 Assert.assertEquals(numPlanes+1, ret1.getPlanes().size());
                 testEqual(ret1, ret2);
-
+                
                 ret2.getPlanes().remove(newPlane);
                 txnManager.startTransaction();
                 dao.put(ret2);
                 txnManager.commitTransaction();
-
+                
                 Observation ret3 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret3);
                 Assert.assertEquals(numPlanes, ret3.getPlanes().size());
                 testEqual(orig, ret3);
-
+                        
                 txnManager.startTransaction();
                 dao.delete(orig.getURI());
                 txnManager.commitTransaction();
 
                 Observation deleted = dao.get(orig.getURI());
-
                 Assert.assertNull("deleted", deleted);
             }
         }
@@ -812,44 +810,27 @@ public abstract class AbstractDatabaseObservationDAOTest
             Observation changed = dao.get(orig.getURI());
             Assert.assertNotNull("found", changed);
 
-            // this is the critical check here: verify that Observation.maxLastModified was persisted
-            // get persisted value instead of recomputing
-            Date changedMaxLastMod = Util.getLastModified(changed, "maxLastModified");
             long t1 = expected.getTime();
-            long t2 = changedMaxLastMod.getTime();
-            log.debug("testUpdateMaxLastModified: " + t1 + " vs " + t2);
-            Assert.assertTrue("maxLastModified increased", (t2-t1) > 20L);
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            if ( txnManager.isOpen() )
-                try { txnManager.rollbackTransaction(); }
-                catch(Throwable t)
-                {
-                    log.error("failed to rollback transaction", t);
-                }
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-
-    @Test
-    public void testLeaveCompositeObservation()
-    {
-        try
-        {
-            log.info("testLeaveCompositeObservation: 5");
-            Observation orig = getTestObservation(true, 5, true, true);
-
+            long t2 = changed.getMaxLastModified().getTime();
+            Assert.assertTrue("maxLastModified increased from update", (t2-t1) > 10L);
+            
+            Thread.sleep(10L);
+            
+            Date d1 = changed.getMaxLastModified();
+            Plane firstPlane = changed.getPlanes().iterator().next();
+            boolean del = changed.getPlanes().remove(firstPlane);
+            Assert.assertTrue("deleted plane", del);
+            
             txnManager.startTransaction();
-            dao.put(orig);
+            dao.put(changed); // maxLastModified increases here due to delete of plane
             txnManager.commitTransaction();
-
-            Observation retrieved = dao.get(orig.getURI());
-            Assert.assertNotNull("found", retrieved);
-            testEqual(orig, retrieved);
+            
+            Observation o2 = dao.get(orig.getURI());
+            Assert.assertEquals("num planes after delete", changed.getPlanes().size(), o2.getPlanes().size());
+            Date d2 = o2.getMaxLastModified();
+            t1 = d1.getTime();
+            t2 = d2.getTime();
+            Assert.assertTrue("maxLastModified increased from delete", (t2-t1) > 10L);
         }
         catch(Exception unexpected)
         {
@@ -872,8 +853,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.assertNull(s, actual);
             return;
         }
-        log.debug("testEqual (~3ms): " + expected.getTime() + " vs " + actual.getTime());
-        Assert.assertTrue(s, Math.abs(expected.getTime() - actual.getTime()) < 3L);
+        long dt = Math.abs(expected.getTime() - actual.getTime());
+        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt < 3L));
     }
     
     // for comparing release dates: compare second
