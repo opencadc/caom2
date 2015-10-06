@@ -141,18 +141,12 @@ public class VOSpaceSchemeHandler implements SchemeHandler
         String errorMessage = null;
         try
         {
-            AccessControlContext accessControlContext = AccessController.getContext();
-            Subject subject = Subject.getSubject(accessControlContext);
-            
-            
             String proto = "http";
-            AuthMethod wsAuth = AuthMethod.ANON;
             try
             {
                 if (CredUtil.checkCredentials())
                 {
                     proto = "https";
-                    wsAuth = AuthMethod.CERT;
                 }
             }
             catch (CertificateException ex)
@@ -165,14 +159,18 @@ public class VOSpaceSchemeHandler implements SchemeHandler
             {
                 RegistryClient rc = new RegistryClient();
                 VOSURI vuri = new VOSURI(uri);
-                URL url = rc.getServiceURL(vuri.getServiceURI(), proto, null, wsAuth);
+                URL url = rc.getServiceURL(vuri.getServiceURI(), proto);
                 String baseURL = url.toExternalForm();
                 VOSpaceClient vosClient = new VOSpaceClient(baseURL);
+                
+                // TODO: switch to this once VOSpaceClient is fixed
+                //VOSpaceClient vosClient = new VOSpaceClient(vuri.getServiceURI());
 
                 List<Protocol> protocols = new ArrayList<Protocol>();
-                protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
                 if ( AuthMethod.CERT.equals(authMethod))
                     protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+                else
+                    protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
                 
                 Transfer trans = new Transfer(uri, Direction.pullFromVoSpace, protocols);
                 ClientTransfer ct = vosClient.createTransfer(trans);
