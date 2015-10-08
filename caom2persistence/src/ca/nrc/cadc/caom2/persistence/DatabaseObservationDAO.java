@@ -472,10 +472,15 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     private boolean updateLastModified(Observation o, ObservationSkeleton s)
     {
         if (s != null)
+        {
             Util.assignLastModified(o, s.lastModified, "lastModified");
+            Util.assignLastModified(o, s.maxLastModified, "maxLastModified");
+        }
         
         Date now = new Date();
         boolean updateMax = false;
+        
+        // check for added or modified
         for (Plane plane : o.getPlanes())
         {
             PlaneSkeleton skel = null;
@@ -488,9 +493,22 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             boolean ulm = updateLastModified(plane, skel, now);
             updateMax = updateMax || ulm;
         }
+        // check for deleted (unmatched skel)
+        if (s != null)
+        {
+            for (PlaneSkeleton ss : s.planes)
+            {
+                Plane p = Util.findPlane(o.getPlanes(), ss.id);
+                boolean ulm = (p == null);
+                updateMax = updateMax || ulm;
+            }
+        }
 
         // new or changed
-        if (s == null || s.stateCode.intValue() != o.getStateCode(gen.persistTransientState()))
+        int nsc = o.getStateCode(gen.persistTransientState());
+        if (s != null)
+            log.warn("updateLastModified: " + s.stateCode + " vs " + nsc);
+        if (s == null || s.stateCode.intValue() != nsc)
         {
             Util.assignLastModified(o, now, "lastModified");
             updateMax = true;
@@ -505,7 +523,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     private boolean updateLastModified(Plane p, PlaneSkeleton s, Date now)
     {
         if (s != null)
+        {
             Util.assignLastModified(p, s.lastModified, "lastModified");
+            Util.assignLastModified(p, s.maxLastModified, "maxLastModified");
+        }
         
         boolean updateMax = false;
         for (Artifact artifact : p.getArtifacts())
@@ -519,6 +540,16 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 }
             boolean ulm = updateLastModified(artifact, skel, now);
             updateMax = updateMax || ulm;
+        }
+        // check for deleted (unmatched skel)
+        if (s != null)
+        {
+            for (ArtifactSkeleton ss : s.artifacts)
+            {
+                Artifact a = Util.findArtifact(p.getArtifacts(), ss.id);
+                boolean ulm = (a == null);
+                updateMax = updateMax || ulm;
+            }
         }
 
         // new or changed
@@ -537,7 +568,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     private boolean updateLastModified(Artifact a, ArtifactSkeleton s, Date now)
     {
         if (s != null)
+        {
             Util.assignLastModified(a, s.lastModified, "lastModified");
+            Util.assignLastModified(a, s.maxLastModified, "maxLastModified");
+        }
 
         boolean updateMax = false;
         for (Part part : a.getParts())
@@ -552,7 +586,17 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             boolean ulm = updateLastModified(part, skel, now);
             updateMax = updateMax || ulm;
         }
-
+        // check for deleted (unmatched skel)
+        if (s != null)
+        {
+            for (PartSkeleton ss : s.parts)
+            {
+                Part p = Util.findPart(a.getParts(), ss.id);
+                boolean ulm = (p == null);
+                updateMax = updateMax || ulm;
+            }
+        }
+        
         // new or changed
         if (s == null || s.stateCode.intValue() != a.getStateCode(gen.persistTransientState()))
         {
@@ -569,7 +613,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     private boolean updateLastModified(Part p, PartSkeleton s, Date now)
     {
         if (s != null)
+        {
             Util.assignLastModified(p, s.lastModified, "lastModified");
+            Util.assignLastModified(p, s.maxLastModified, "maxLastModified");
+        }
 
         boolean updateMax = false;
         for (Chunk chunk : p.getChunks())
@@ -584,7 +631,17 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             boolean ulm = updateLastModified(chunk, skel, now);
             updateMax = updateMax || ulm;
         }
-
+        // check for deleted (unmatched skel)
+        if (s != null)
+        {
+            for (ChunkSkeleton ss : s.chunks)
+            {
+                Chunk c = Util.findChunk(p.getChunks(), ss.id);
+                boolean ulm = (c == null);
+                updateMax = updateMax || ulm;
+            }
+        }
+        
         // new or changed
         if (s == null || s.stateCode.intValue() != p.getStateCode(gen.persistTransientState()))
         {
@@ -601,7 +658,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     private boolean updateLastModified(Chunk c, ChunkSkeleton s, Date now)
     {
         if (s != null)
+        {
             Util.assignLastModified(c, s.lastModified, "lastModified");
+            Util.assignLastModified(c, s.maxLastModified, "maxLastModified");
+        }
 
         boolean updateMax = false;
 

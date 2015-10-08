@@ -82,6 +82,7 @@ public class Skeleton
 {
     public UUID id;
     public Date lastModified;
+    public Date maxLastModified;
     public Integer stateCode;
     public Class targetClass;
 
