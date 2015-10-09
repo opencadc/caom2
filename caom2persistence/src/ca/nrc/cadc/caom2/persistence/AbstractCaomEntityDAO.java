@@ -271,7 +271,7 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
                 log.debug("PUT insert: " + val.getClass().getSimpleName() + " " + val.getID());
             EntityPut<T> op = gen.getEntityPut(val.getClass(), isUpdate);
             op.setValue(val, parents);
-            jdbc.update(op);
+            op.execute(jdbc);
         }
         else
             log.debug("PUT skip: " + val.getClass().getSimpleName() + " " + val.getID());

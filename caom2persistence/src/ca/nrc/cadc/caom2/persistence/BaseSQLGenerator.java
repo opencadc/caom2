@@ -165,6 +165,8 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -861,12 +863,17 @@ public class BaseSQLGenerator implements SQLGenerator
         throw new UnsupportedOperationException();
     }
     
-    private class ObservationPut implements EntityPut<Observation>
+    private class ObservationPut implements EntityPut<Observation>, PreparedStatementCreator
     {
         boolean update;
         Observation obs;
 
         ObservationPut(boolean update) { this.update = update; }
+
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
         
         public void setValue(Observation obs, List<CaomEntity> unused) { this.obs = obs; }
 
@@ -1033,13 +1040,19 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class PlanePut implements EntityPut<Plane>
+    private class PlanePut implements EntityPut<Plane> , PreparedStatementCreator
     {
         private boolean update;
         private Plane plane;
         private List<CaomEntity> parents;
+        
         PlanePut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Plane plane, List<CaomEntity> parents)
         {
             this.plane = plane;
@@ -1248,7 +1261,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ArtifactPut implements EntityPut<Artifact>
+    private class ArtifactPut implements EntityPut<Artifact> , PreparedStatementCreator
     {
         private boolean update;
         private Artifact artifact;
@@ -1256,6 +1269,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         ArtifactPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Artifact a, List<CaomEntity> parents)
         {
             this.artifact = a;
@@ -1313,7 +1331,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class PartPut implements EntityPut<Part>
+    private class PartPut implements EntityPut<Part>, PreparedStatementCreator
     {
         private boolean update;
         private Part part;
@@ -1321,6 +1339,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         PartPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Part p, List<CaomEntity> parents)
         {
             this.part = p;
@@ -1380,7 +1403,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ChunkPut implements EntityPut<Chunk>
+    private class ChunkPut implements EntityPut<Chunk>, PreparedStatementCreator
     {
         private boolean update;
         private Chunk chunk;
@@ -1388,6 +1411,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         ChunkPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Chunk c, List<CaomEntity> parents)
         {
             this.chunk = c;
@@ -1811,13 +1839,18 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ReadAccessPut implements EntityPut<ReadAccess>
+    private class ReadAccessPut implements EntityPut<ReadAccess>, PreparedStatementCreator
     {
         private boolean update;
         private ReadAccess ra;
 
         ReadAccessPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(ReadAccess ra, List<CaomEntity> unused)
         {
             this.ra = ra;

@@ -72,12 +72,15 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.CaomEntity;
 import java.util.List;
-import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * @author pdowler
+ * @param <T>
  */
-public interface EntityPut<T extends AbstractCaomEntity> extends PreparedStatementCreator
+public interface EntityPut<T extends AbstractCaomEntity>
 {
+    void execute(JdbcTemplate jdbc);
+    
     void setValue(T value, List<CaomEntity> parents);
 }
