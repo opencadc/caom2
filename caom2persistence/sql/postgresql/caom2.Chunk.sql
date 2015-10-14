@@ -119,6 +119,9 @@ create table caom2.Chunk
     observable_independent_axis_cunit varchar(64),
     observable_independent_bin bigint,
 
+-- optimisation
+    metaReadAccessGroups tsvector default '',
+
 -- internal
     obsID bigint not null,
     planeID bigint not null,

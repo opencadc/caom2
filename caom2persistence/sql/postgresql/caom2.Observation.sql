@@ -49,6 +49,9 @@ create table caom2.Observation
 
     members text null,
 
+-- optimisation
+    metaReadAccessGroups tsvector default '',
+
 -- internal
     typeCode char not null,
     obsID bigint not null primary key using index tablespace caom_index,

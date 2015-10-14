@@ -6,6 +6,8 @@ create table caom2.Part
     name varchar(1024) not null,
     productType varchar(64),
     
+-- optimisation
+    metaReadAccessGroups tsvector default '',
 
 -- internal
     obsID bigint not null,

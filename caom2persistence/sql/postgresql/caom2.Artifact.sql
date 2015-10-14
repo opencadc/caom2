@@ -9,6 +9,9 @@ create table caom2.Artifact
     contentLength bigint,
     alternative integer not null,
 
+-- optimisation
+    metaReadAccessGroups tsvector default '',
+
 -- internal
     obsID bigint not null,
     metaRelease timestamp,
