@@ -109,7 +109,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
             if (ret == null)
                 ret = new ObservationSkeleton();
 
-            Date d;
+            Date d, md;
             Integer sc;
             UUID id;
             int col = 1;
@@ -117,18 +117,21 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
             if (ret.id == null) // first row
             {
                 d = Util.getDate(rs, col++, CAL);
+                md = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
                 id = Util.getUUID(rs, col++);
 
                 ret.id = id;
                 ret.lastModified = d;
+                ret.maxLastModified = md;
                 ret.stateCode = sc;
             }
             else
-                col += 3; // skip
+                col += 4; // skip
 
             // plane
             d = Util.getDate(rs, col++, CAL);
+            md = Util.getDate(rs, col++, CAL);
             sc = Util.getInteger(rs, col++);
             id = Util.getUUID(rs, col++);
             if (id != null)
@@ -138,6 +141,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                     curPlane = new PlaneSkeleton();
                     curPlane.id = id;
                     curPlane.lastModified = d;
+                    curPlane.maxLastModified = md;
                     curPlane.stateCode = sc;
                     log.debug("add: " + curPlane + " to " + ret);
                     ret.planes.add(curPlane);
@@ -145,6 +149,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
 
                 // artifact
                 d = Util.getDate(rs, col++, CAL);
+                md = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
                 id = Util.getUUID(rs, col++);
                 if (id != null)
@@ -154,6 +159,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                         curArtifact = new ArtifactSkeleton();
                         curArtifact.id = id;
                         curArtifact.lastModified = d;
+                        curArtifact.maxLastModified = md;
                         curArtifact.stateCode = sc;
                         log.debug("add: " + curArtifact + " to " + curPlane);
                         curPlane.artifacts.add(curArtifact);
@@ -161,6 +167,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
 
                     // part
                     d = Util.getDate(rs, col++, CAL);
+                    md = Util.getDate(rs, col++, CAL);
                     sc = Util.getInteger(rs, col++);
                     id = Util.getUUID(rs, col++);
                     if (id != null)
@@ -170,6 +177,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                             curPart = new PartSkeleton();
                             curPart.id = id;
                             curPart.lastModified = d;
+                            curPart.maxLastModified = md;
                             curPart.stateCode = sc;
                             log.debug("add: " + curPart + " to " + curArtifact);
                             curArtifact.parts.add(curPart);
@@ -177,6 +185,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
 
                         // chunk
                         d = Util.getDate(rs, col++, CAL);
+                        md = Util.getDate(rs, col++, CAL);
                         sc = Util.getInteger(rs, col++);
                         id = Util.getUUID(rs, col++);
                         if (id != null)
@@ -184,6 +193,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                             curChunk = new ChunkSkeleton();
                             curChunk.id = id;
                             curChunk.lastModified = d;
+                            curChunk.maxLastModified = md;
                             curChunk.stateCode = sc;
                             log.debug("add: " + curChunk + " to " + curPart);
                             curPart.chunks.add(curChunk);

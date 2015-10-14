@@ -513,12 +513,12 @@ public class BaseSQLGenerator implements SQLGenerator
         columnMap.put(DeletedPlaneMetaReadAccess.class, deletedCols);
         columnMap.put(DeletedPlaneDataReadAccess.class, deletedCols);
 
-        //columnMap.put(ObservationSkeleton.class, new String[] { "lastModified", "stateCode", "obsID" });
-        columnMap.put(ObservationSkeleton.class, new String[] { "maxLastModified", "stateCode", "obsID" });
-        columnMap.put(PlaneSkeleton.class, new String[] { "lastModified", "stateCode", "planeID" });
-        columnMap.put(ArtifactSkeleton.class, new String[] { "lastModified", "stateCode", "artifactID" });
-        columnMap.put(PartSkeleton.class, new String[] { "lastModified", "stateCode", "partID" });
-        columnMap.put(ChunkSkeleton.class, new String[] { "lastModified", "stateCode", "chunkID" });
+        columnMap.put(ObservationSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "obsID" });
+        columnMap.put(PlaneSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "planeID" });
+        columnMap.put(ArtifactSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "artifactID" });
+        columnMap.put(PartSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "partID" });
+        columnMap.put(ChunkSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "chunkID" });
+        
         columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
         columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
         columnMap.put(PlaneDataReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
