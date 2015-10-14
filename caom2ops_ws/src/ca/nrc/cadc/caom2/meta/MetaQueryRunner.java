@@ -199,16 +199,12 @@ public class MetaQueryRunner implements JobRunner
                 throw new IllegalArgumentException(msg.toString(), ex);
             }
             
-            RegistryClient reg = new RegistryClient();
-            CredUtil cred = new CredUtil(reg);
-
             // obtain credentials fropm CDP if the user is authorized
             String tapProto = "http";
-            AccessControlContext accessControlContext = AccessController.getContext();
-            Subject subject = Subject.getSubject(accessControlContext);
-            if ( cred.hasValidCredentials(subject) )
+            if ( CredUtil.checkCredentials() )
                 tapProto = "https";
 
+            RegistryClient reg = new RegistryClient();
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
             log.debug("TAP: " + tapURL.toExternalForm());
             
