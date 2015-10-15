@@ -75,21 +75,16 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.MissingResourceException;
 
-import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
-import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.cred.AuthorizationException;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
@@ -111,8 +106,6 @@ import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
 import java.security.AccessControlException;
-import java.security.cert.X509Certificate;
-import java.util.Set;
 
 /**
  *
@@ -189,20 +182,16 @@ public class LinkQueryRunner implements JobRunner
             if (GETDOWNLOAD.equalsIgnoreCase(request))
                 artifactOnly = true;
 
-            RegistryClient reg = new RegistryClient();
-            CredUtil cred = new CredUtil(reg);
-
             // obtain credentials fropm CDP if the user is authorized
             String tapProto = "http";
             AuthMethod queryAuthMethod = AuthMethod.ANON;
-            AccessControlContext accessControlContext = AccessController.getContext();
-            Subject subject = Subject.getSubject(accessControlContext);
-            if ( cred.hasValidCredentials(subject) )
+            if ( CredUtil.checkCredentials() )
             {
                 tapProto = "https";
                 queryAuthMethod = AuthMethod.CERT;
             }
 
+            RegistryClient reg = new RegistryClient();
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
 
             VOTableDocument vot = new VOTableDocument();
@@ -232,7 +221,7 @@ public class LinkQueryRunner implements JobRunner
             VOTableResource metaResource = serviceDocument.getResourceByType("meta");
 
             // set the access URL
-            AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
+            AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
             RegistryClient regClient = new RegistryClient();
             URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI), job.protocol, null, am);
             VOTableParam accessURLParam = null;
@@ -329,7 +318,7 @@ public class LinkQueryRunner implements JobRunner
                     log.error("failed to check job phase after InterruptedException", ex2);
                 }
             }
-            else if ( ThrowableUtil.isACause(t, AuthorizationException.class) ) // CredUtil + CredPrivateClient
+            else if ( ThrowableUtil.isACause(t, AccessControlException.class) ) // CredUtil + CredClient
             {
                 sendError(t, "permission denied -- reason: " + t.getCause().getMessage(), 403);
                 return;

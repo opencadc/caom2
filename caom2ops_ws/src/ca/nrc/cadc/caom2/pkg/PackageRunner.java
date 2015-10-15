@@ -177,16 +177,13 @@ public class PackageRunner implements JobRunner
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
-            RegistryClient reg = new RegistryClient();
-            CredUtil cred = new CredUtil(reg);
-
             // obtain credentials fropm CDP if the user is authorized
             String tapProto = "http";
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
             AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
             AuthMethod proxyAuthMethod = authMethod;
-            if ( cred.hasValidCredentials(subject) )
+            if ( CredUtil.checkCredentials() )
             {
                 tapProto = "https";
                 proxyAuthMethod = AuthMethod.CERT;
@@ -198,6 +195,7 @@ public class PackageRunner implements JobRunner
             
             List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
 
+            RegistryClient reg = new RegistryClient();
             URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, proxyAuthMethod);
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             
