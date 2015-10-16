@@ -758,7 +758,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
 
-    public String getDeleteSQL(Class c, UUID id, boolean primaryKey)
+    String getDeleteSQL(Class c, UUID id, boolean primaryKey)
     {
         if (Observation.class.isAssignableFrom(c))
             c = Observation.class;
@@ -839,6 +839,36 @@ public class BaseSQLGenerator implements SQLGenerator
 
         return sb.toString();
     }
+    String getUpdateAssetSQL(Class asset, Class ra, boolean add)
+    {
+        StringBuilder sb = new StringBuilder();
+        String col = getReadAccessCol(ra);
+        
+            
+        sb.append("UPDATE ");
+        sb.append(getTable(asset));
+        sb.append(" SET ").append(col).append(" = ");
+        if (add)
+        {
+            sb.append(")");
+            sb.append(col).append(" || ?)");
+        }
+        else // remove
+        {
+            sb.append("regexp_replace(").append(col).append("::text,$$'?'$$, '')::tsvector");
+        }
+        sb.append(" WHERE ");
+        sb.append(getPrimaryKeyColumn(ra));
+        sb.append(" = ?");
+
+        return sb.toString();
+    }
+    private String getReadAccessCol(Class raclz)
+    {
+        if (PlaneDataReadAccess.class.equals(raclz))
+            return "dataReadAccessGroups";
+        return "metaReadAccessGroups";
+    }
 
     public EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate)
     {
@@ -861,6 +891,43 @@ public class BaseSQLGenerator implements SQLGenerator
             return new ReadAccessPut(isUpdate);
 
         throw new UnsupportedOperationException();
+    }
+
+    public EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey)
+    {
+        return new PkEntityDelete(c, primaryKey);
+    }
+
+    // delete by primary key
+    private class PkEntityDelete implements EntityDelete<AbstractCaomEntity>
+    {
+        private Class<? extends AbstractCaomEntity> clz;
+        private boolean byPK;
+        private UUID id;
+
+        public PkEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        {
+            this.clz = c;
+            this.byPK = byPK;
+        }
+        
+        public void execute(JdbcTemplate jdbc)
+        {
+            // delete by PK
+            String sql = getDeleteSQL(clz, id, byPK);
+            log.debug("delete: " + sql);
+            jdbc.update(sql);
+        }
+
+        public void setID(UUID id)
+        {
+            this.id = id;
+        }
+
+        public void setValue(AbstractCaomEntity value)
+        {
+            throw new UnsupportedOperationException(); 
+        }
     }
     
     private class ObservationPut implements EntityPut<Observation>, PreparedStatementCreator
@@ -1843,12 +1910,41 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         private boolean update;
         private ReadAccess ra;
+        
+        private int putCount = 0;
+        private Class assetClass;
+        
 
         ReadAccessPut(boolean update) { this.update = update; }
 
         public void execute(JdbcTemplate jdbc)
         {
             jdbc.update(this);
+            /*
+            putCount++;
+            
+            if (ObservationMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Observation.class;
+                jdbc.update(this);
+            }
+            else if (PlaneDataReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+            }
+            else if (PlaneMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+                this.assetClass = Artifact.class;
+                jdbc.update(this);
+                this.assetClass = Part.class;
+                jdbc.update(this);
+                this.assetClass = Chunk.class;
+                jdbc.update(this);
+            }
+            */
         }
         
         public void setValue(ReadAccess ra, List<CaomEntity> unused)
@@ -1859,10 +1955,17 @@ public class BaseSQLGenerator implements SQLGenerator
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException
         {
             String sql = null;
-            if (update)
-                sql = getUpdateSQL(ra.getClass());
-            else
-                sql = getInsertSQL(ra.getClass());
+            if (putCount == 0) // primary
+            {
+                if (update)
+                    sql = getUpdateSQL(ra.getClass());
+                else
+                    sql = getInsertSQL(ra.getClass());
+            }
+            else // put  into asset table
+            {
+                sql = getUpdateAssetSQL(assetClass, ra.getClass(), true);
+            }
             PreparedStatement prep = conn.prepareStatement(sql);
             log.debug(sql);
             loadValues(prep);
@@ -1877,14 +1980,20 @@ public class BaseSQLGenerator implements SQLGenerator
             StringBuilder sb = null;
             if (log.isDebugEnabled())
                 sb = new StringBuilder();
-
-            int col = 1;
-            safeSetLong(sb, ps, col++, ra.getAssetID());
-            safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
-            safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
-            safeSetInteger(sb, ps, col++, ra.getStateCode());
-            safeSetUUID(sb, ps, col++, ra.getID());
-
+            if (putCount == 0) // complete
+            {
+                int col = 1;
+                safeSetLong(sb, ps, col++, ra.getAssetID());
+                safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
+                safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
+                safeSetInteger(sb, ps, col++, ra.getStateCode());
+                safeSetUUID(sb, ps, col++, ra.getID());
+            }
+            else // putCount == 1 : update asset  table
+            {
+                int col = 1;
+                safeSetString(sb, ps, col++, ra.getGroupName()); // short name
+            }
             if (sb != null)
                 log.debug(sb.toString());
         }

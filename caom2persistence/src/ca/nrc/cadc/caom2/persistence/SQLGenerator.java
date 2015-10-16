@@ -140,9 +140,10 @@ public interface SQLGenerator
     RowMapper getTimestampRowMapper();
     
     EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate);
+    
+    EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey);
 
-    String getDeleteSQL(Class c, UUID id, boolean primaryKey);
-
+    //String getDeleteSQL(Class c, UUID id, boolean primaryKey);
     
     String literal(Object o);
 

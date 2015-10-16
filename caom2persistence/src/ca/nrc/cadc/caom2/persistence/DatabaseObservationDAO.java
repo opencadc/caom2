@@ -461,9 +461,12 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 planeDAO.deleteChildren(p, jdbc);
 
             // delete planes by FK
-            String sql = gen.getDeleteSQL(Plane.class, o.id, false);
-            log.debug("delete: " + sql);
-            jdbc.update(sql);
+            EntityDelete op = gen.getEntityDelete(Plane.class, false);
+            op.setID(o.id);
+            op.execute(jdbc);
+            //String sql = gen.getDeleteSQL(Plane.class, o.id, false);
+            //log.debug("delete: " + sql);
+            //jdbc.update(sql);
         }
         else
             log.debug("no children: " + o.id);

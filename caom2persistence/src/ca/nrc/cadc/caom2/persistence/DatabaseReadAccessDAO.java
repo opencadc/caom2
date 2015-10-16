@@ -170,9 +170,17 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = gen.getDeleteSQL(c, id, true);
-            log.debug("DELETE: " + sql);
-            jdbc.update(sql);
+            // get current tuple
+            ReadAccess cur = get(c, id);
+            if (cur != null)
+            {
+                EntityDelete op = gen.getEntityDelete(c, true);
+                op.setID(id);
+                op.execute(jdbc);
+                //String sql = gen.getDeleteSQL(c, id, true);
+                //log.debug("DELETE: " + sql);
+                //jdbc.update(sql);
+            }
         }
         finally
         {
