@@ -78,6 +78,7 @@ import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
+import org.json.JSONException;
 
 /**
  *
@@ -113,29 +114,25 @@ public class JsonWriter extends ObservationWriter implements Serializable
     protected void write(Element root, Writer writer) throws IOException
     {
         JsonOutputter outputter = new JsonOutputter();
-        outputter.getListElementNames().add("planes");
-        outputter.getListElementNames().add("artifacts");
-        outputter.getListElementNames().add("parts");
-        outputter.getListElementNames().add("chunks");
-        outputter.getListElementNames().add("vertices");
-        outputter.getListElementNames().add("inputs");
-        outputter.getListElementNames().add("states");
-        outputter.getListElementNames().add("samples");
-        outputter.getListElementNames().add("members");
-        
-        outputter.getStringElementNames().add("observationID");
-        outputter.getStringElementNames().add("productID");
-        outputter.getStringElementNames().add("sequenceNumber");
-        outputter.getStringElementNames().add("name"); // anything with a name
-        
         Format fmt = null;
+
         if (prettyPrint)
         {
             fmt = Format.getPrettyFormat();
             fmt.setIndent("  "); // 2 spaces
         }
+
         outputter.setFormat(fmt);
         Document document = new Document(root);
-        outputter.output(document, writer);
+
+        try
+        {
+            outputter.output(document, writer);
+        }
+        catch (JSONException e)
+        {
+            log.error("JSON Error.  Should never happen.", e);
+            throw new IOException(e);
+        }
     }
 }
