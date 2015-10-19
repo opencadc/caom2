@@ -151,7 +151,7 @@ public class JsonWriterTest
             Assert.assertNotNull(xmlns);
             Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
             
-            String otype = doc.getString("@type");
+            String otype = obsObject.getString("@type");
             Assert.assertNotNull(otype);
             Assert.assertEquals("caom2:SimpleObservation", otype);
         }
@@ -203,7 +203,7 @@ public class JsonWriterTest
             Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2",
                                 xmlns);
             
-            String otype = doc.getString("@type");
+            String otype = obsObject.getString("@type");
             Assert.assertNotNull(otype);
             Assert.assertEquals("caom2:CompositeObservation", otype);
         }
