@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
@@ -89,6 +90,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
@@ -156,7 +158,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         log.debug("clearing old tables... OK");
     }
 
-    //@Test
+    @Test
     public void testGet()
     {
         try
@@ -199,7 +201,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         ReadAccess actual = dao.get(expected.getClass(), expected.getID());
         
         checkPut(s, expected, actual);
-
+        
         dao.delete(expected.getClass(), expected.getID());
         actual = dao.get(expected.getClass(), expected.getID());
         
@@ -209,7 +211,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        Long assetID = 666L;
+        Long assetID = 666L; // want same assetID on all assets so test code is simpler
         UUID id = new UUID(0L, assetID);
         Observation obs = new SimpleObservation("FOO", "bar");
         Util.assignID(obs, id);
@@ -229,6 +231,9 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             
         try
         {
+            // cleanup previous test run
+            obsDAO.delete(id);
+            
             obsDAO.put(obs);
             
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
@@ -248,15 +253,25 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            //obsDAO.delete(obs.getID());
+            obsDAO.delete(obs.getID());
         }
     }
     
-    //@Test
+    @Test
     public void testGetList()
     {
+        // random ID is OK since we are testing observation only
+        Observation obs = new SimpleObservation("FOO", "bar");
+        UUID id = obs.getID();
+        Long assetID = id.getLeastSignificantBits();
+        Util.assignID(obs, id);
+        
         try
         {
+            obsDAO.delete(id);
+            
+            obsDAO.put(obs);
+            
             ReadAccess ra;
             URI groupID;
             Class c = ObservationMetaReadAccess.class;
@@ -264,7 +279,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             for (int i=0; i<3; i++)
             {
                 groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
-                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
+                ra = (ReadAccess) ctor.newInstance(assetID, groupID);
                 dao.put(ra);
             }
             List<ReadAccess> ras = dao.getList(c, null, null, null);
@@ -275,6 +290,10 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally
+        {
+            obsDAO.delete(id);
         }
     }
     

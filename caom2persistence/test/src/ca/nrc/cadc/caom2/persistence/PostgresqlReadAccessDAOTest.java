@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
@@ -78,11 +79,15 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import static ca.nrc.cadc.caom2.persistence.AbstractDatabaseReadAccessDAOTest.log;
 import ca.nrc.cadc.util.Log4jInit;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import junit.framework.Assert;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -94,7 +99,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     static
     {
         log = Logger.getLogger(PostgresqlReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
     }
 
     public PostgresqlReadAccessDAOTest()
@@ -109,6 +114,39 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         };
     }
 
+    @Test
+    public void testNoAssetFail()
+    {
+        Long assetID = CaomIDGenerator.getInstance().generateID();
+            
+        try
+        {
+            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
+            ReadAccess expected;
+
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                expected = (ReadAccess) ctor.newInstance(assetID, groupID);
+                try
+                {
+                    dao.put(expected);
+                    org.junit.Assert.fail("put did not throw, expected: DataIntegrityViolationException"
+                        + " but successfully put " + expected);
+                }
+                catch(DataIntegrityViolationException ex)
+                {
+                    log.debug("caught expected exception: " + ex);
+                }
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            org.junit.Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     @Override
     protected void checkDelete(String s, ReadAccess expected, ReadAccess actual)
     {

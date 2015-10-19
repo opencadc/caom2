@@ -165,6 +165,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -1989,23 +1990,38 @@ public class BaseSQLGenerator implements SQLGenerator
             if (ObservationMetaReadAccess.class.equals(ra.getClass()))
             {
                 this.assetClass = Observation.class;
-                jdbc.update(this);
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Observation " + ra.getAssetID());
             }
             else if (PlaneDataReadAccess.class.equals(ra.getClass()))
             {
                 this.assetClass = Plane.class;
-                jdbc.update(this);
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
             }
             else if (PlaneMetaReadAccess.class.equals(ra.getClass()))
             {
                 this.assetClass = Plane.class;
-                jdbc.update(this);
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
+                
                 this.assetClass = Artifact.class;
-                jdbc.update(this);
+                num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Artifact " + ra.getAssetID());
+                
                 this.assetClass = Part.class;
-                jdbc.update(this);
+                num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Part " + ra.getAssetID());
+                
                 this.assetClass = Chunk.class;
-                jdbc.update(this);
+                num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Chunk " + ra.getAssetID());
             }
         }
         
