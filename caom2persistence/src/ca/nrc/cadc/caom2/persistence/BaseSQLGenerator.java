@@ -202,6 +202,7 @@ public class BaseSQLGenerator implements SQLGenerator
     protected String schema;
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistTransientState = false; // persist computed plane metadata
+    protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
     
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
@@ -839,31 +840,13 @@ public class BaseSQLGenerator implements SQLGenerator
 
         return sb.toString();
     }
-    String getUpdateAssetSQL(Class asset, Class ra, boolean add)
+    
+    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add)
     {
-        StringBuilder sb = new StringBuilder();
-        String col = getReadAccessCol(ra);
-        
-            
-        sb.append("UPDATE ");
-        sb.append(getTable(asset));
-        sb.append(" SET ").append(col).append(" = ");
-        if (add)
-        {
-            sb.append(")");
-            sb.append(col).append(" || ?)");
-        }
-        else // remove
-        {
-            sb.append("regexp_replace(").append(col).append("::text,$$'?'$$, '')::tsvector");
-        }
-        sb.append(" WHERE ");
-        sb.append(getPrimaryKeyColumn(ra));
-        sb.append(" = ?");
-
-        return sb.toString();
+        throw new UnsupportedOperationException();
     }
-    private String getReadAccessCol(Class raclz)
+    // test access
+    String getReadAccessCol(Class raclz)
     {
         if (PlaneDataReadAccess.class.equals(raclz))
             return "dataReadAccessGroups";
@@ -895,17 +878,19 @@ public class BaseSQLGenerator implements SQLGenerator
 
     public EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey)
     {
-        return new PkEntityDelete(c, primaryKey);
+        if (ReadAccess.class.isAssignableFrom(c))
+            return new ReadAccessEntityDelete(c, true);
+        return new BaseEntityDelete(c, primaryKey);
     }
 
-    // delete by primary key
-    private class PkEntityDelete implements EntityDelete<AbstractCaomEntity>
+    // delete single entity by primary key or foreign key
+    private class BaseEntityDelete implements EntityDelete<AbstractCaomEntity>
     {
         private Class<? extends AbstractCaomEntity> clz;
         private boolean byPK;
         private UUID id;
 
-        public PkEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        public BaseEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
         {
             this.clz = c;
             this.byPK = byPK;
@@ -917,6 +902,7 @@ public class BaseSQLGenerator implements SQLGenerator
             String sql = getDeleteSQL(clz, id, byPK);
             log.debug("delete: " + sql);
             jdbc.update(sql);
+            
         }
 
         public void setID(UUID id)
@@ -927,6 +913,80 @@ public class BaseSQLGenerator implements SQLGenerator
         public void setValue(AbstractCaomEntity value)
         {
             throw new UnsupportedOperationException(); 
+        }
+    }
+    
+    // extended version to cleanup optimized persistence
+    private class ReadAccessEntityDelete extends BaseEntityDelete implements PreparedStatementCreator
+    {
+        ReadAccess ra;
+        Class assetClass;
+        
+        public ReadAccessEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        {
+            super(c, byPK);
+        }
+
+        @Override
+        public void setValue(AbstractCaomEntity value)
+        {
+            this.ra = (ReadAccess) value;
+        }
+
+        @Override
+        public void execute(JdbcTemplate jdbc)
+        {
+            super.execute(jdbc);
+            
+            if (!persistReadAccessWithAsset)
+                return;
+            
+            // this is a PreparedStatement for asset table updates
+            if (ObservationMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Observation.class;
+                jdbc.update(this);
+            }
+            else if (PlaneDataReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+            }
+            else if (PlaneMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+                this.assetClass = Artifact.class;
+                jdbc.update(this);
+                this.assetClass = Part.class;
+                jdbc.update(this);
+                this.assetClass = Chunk.class;
+                jdbc.update(this);
+            }
+        }
+
+        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException
+        {
+            String sql = getUpdateAssetSQL(assetClass, ra.getClass(), false);
+            PreparedStatement prep = conn.prepareStatement(sql);
+            log.debug(sql);
+            loadValues(prep);
+            return prep;
+        }
+        private void loadValues(PreparedStatement ps)
+            throws SQLException
+        {
+            if (ra == null)
+                throw new IllegalStateException("null read access");
+
+            StringBuilder sb = null;
+            if (log.isDebugEnabled())
+                sb = new StringBuilder();
+            int col = 1;
+            safeSetString(sb, ps, col++, ra.getGroupName());
+            safeSetLong(sb, ps, col++, ra.getAssetID());
+            if (sb != null)
+                log.debug(sb.toString());
         }
     }
     
@@ -1920,7 +1980,10 @@ public class BaseSQLGenerator implements SQLGenerator
         public void execute(JdbcTemplate jdbc)
         {
             jdbc.update(this);
-            /*
+            
+            if (!persistReadAccessWithAsset)
+                return;
+            
             putCount++;
             
             if (ObservationMetaReadAccess.class.equals(ra.getClass()))
@@ -1944,7 +2007,6 @@ public class BaseSQLGenerator implements SQLGenerator
                 this.assetClass = Chunk.class;
                 jdbc.update(this);
             }
-            */
         }
         
         public void setValue(ReadAccess ra, List<CaomEntity> unused)
@@ -1971,6 +2033,7 @@ public class BaseSQLGenerator implements SQLGenerator
             loadValues(prep);
             return prep;
         }
+        
         private void loadValues(PreparedStatement ps)
             throws SQLException
         {
@@ -1993,6 +2056,7 @@ public class BaseSQLGenerator implements SQLGenerator
             {
                 int col = 1;
                 safeSetString(sb, ps, col++, ra.getGroupName()); // short name
+                safeSetLong(sb, ps, col++, ra.getAssetID());
             }
             if (sb != null)
                 log.debug(sb.toString());

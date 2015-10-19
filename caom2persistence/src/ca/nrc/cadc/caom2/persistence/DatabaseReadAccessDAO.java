@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.Date;
 import java.util.List;
@@ -176,6 +175,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
             {
                 EntityDelete op = gen.getEntityDelete(c, true);
                 op.setID(id);
+                op.setValue(cur);
                 op.execute(jdbc);
                 //String sql = gen.getDeleteSQL(c, id, true);
                 //log.debug("DELETE: " + sql);

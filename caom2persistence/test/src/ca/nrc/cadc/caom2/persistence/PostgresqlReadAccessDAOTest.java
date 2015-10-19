@@ -69,18 +69,21 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.util.Log4jInit;
-import java.lang.reflect.Constructor;
 import java.net.URI;
-import java.util.List;
+import junit.framework.Assert;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
@@ -91,7 +94,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     static
     {
         log = Logger.getLogger(PostgresqlReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
     }
 
     public PostgresqlReadAccessDAOTest()
@@ -105,30 +108,74 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             PlaneDataReadAccess.class
         };
     }
+
+    @Override
+    protected void checkDelete(String s, ReadAccess expected, ReadAccess actual)
+    {
+        super.checkDelete(s, expected, actual);
+
+        Class[] assetClass = getAssetClasses(expected);
+        for (Class ac : assetClass)
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
+            String sql = getAssetCountSQL(ac, expected);
+            log.debug(s + " " + expected.getClass().getSimpleName() + "\n" + sql);
+            int count = jdbc.queryForInt(sql);
+            Assert.assertEquals(s + ".checkDelete for " + ac.getSimpleName(), 0, count);
+        }
+        
+    }
+
+    @Override
+    protected void checkPut(String s, ReadAccess expected, ReadAccess actual)
+    {
+        super.checkPut(s, expected, actual);
+        
+        Class[] assetClass = getAssetClasses(expected);
+        for (Class ac : assetClass)
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
+            String sql = getAssetCountSQL(ac, expected);
+            log.debug(s + " " + expected.getClass().getSimpleName() + "\n" + sql);
+            int count = jdbc.queryForInt(sql);
+            Assert.assertEquals(s + ".checkPut for " + ac.getSimpleName(), 1, count);
+        }
+    }
+
+    private String getAssetCountSQL(Class ac, ReadAccess expected)
+    {
+        BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
+        String assetTable = gen.getTable(ac);
+        String pkCol = gen.getPrimaryKeyColumn(ac);
+        String raCol = gen.getReadAccessCol(expected.getClass());
+        StringBuilder sb = new StringBuilder();
+        sb.append("select count(*) from ").append(assetTable);
+        sb.append(" where ").append(pkCol).append(" = ").append(expected.getAssetID());
+        sb.append(" and ").append(raCol).append(" @@ '").append(expected.getGroupName()).append("'::tsquery");
+        String sql = sb.toString();
+        return sql;
+    }
     
-//    @Test
-//    public void testGetList()
-//    {
-//        try
-//        {
-//            ReadAccess ra;
-//            URI groupID;
-//            Class c = ObservationMetaReadAccess.class;
-//            Constructor ctor = c.getConstructor(Long.class, URI.class);
-//            for (int i=0; i<3; i++)
-//            {
-//                groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
-//                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
-//                dao.put(ra);
-//            }
-//            List<ReadAccess> ras = dao.getList(c, null, null, null);
-//            Assert.assertNotNull(ras);
-//            Assert.assertEquals(3, ras.size());
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
+    private Class[] getAssetClasses(ReadAccess expected)
+    {
+        Class[] assetClass = null;
+        if (expected instanceof ObservationMetaReadAccess)
+        {
+            assetClass = new Class[] { Observation.class };
+        }
+        else if (expected instanceof PlaneDataReadAccess)
+        {
+            assetClass = new Class[] { Plane.class };
+        }
+        else if (expected instanceof PlaneMetaReadAccess)
+        {
+            assetClass = new Class[] { Plane.class, Artifact.class, Part.class, Chunk.class };
+        }
+        
+        if (assetClass == null)
+            throw new IllegalStateException("unexpected ReadAccess type: " + expected.getClass().getName());
+        
+        return assetClass;
+    }
+    
 }

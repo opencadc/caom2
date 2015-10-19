@@ -100,6 +100,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     {
         super(database, schema, null, true);
         this.useIntegerForBoolean = true;
+        this.persistReadAccessWithAsset = true;
     }
 
     @Override
@@ -108,6 +109,31 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
         if (batchSize == null)
             return null;
         return "LIMIT " + batchSize;
+    }
+    
+    @Override
+    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add)
+    {
+        StringBuilder sb = new StringBuilder();
+        String col = getReadAccessCol(ra);
+        
+            
+        sb.append("UPDATE ");
+        sb.append(getTable(asset));
+        sb.append(" SET ").append(col).append(" = ");
+        if (add)
+        {
+            sb.append("(").append(col).append(" || ?)::tsvector");
+        }
+        else // remove
+        {
+            sb.append("to_tsvector(regexp_replace(").append(col).append("::text, ?, ''))");
+        }
+        sb.append(" WHERE ");
+        sb.append(getPrimaryKeyColumn(asset));
+        sb.append(" = ?");
+
+        return sb.toString();
     }
     
     @Override

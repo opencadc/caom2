@@ -151,6 +151,9 @@ public abstract class AbstractDatabaseObservationDAOTest
 {
     protected static Logger log;
 
+    // round-trip timestamp comparisons must not be more lossy than this
+    public static final long TIME_TOLERANCE = 3L;
+    
     public static final Long TEST_LONG = new Long(123456789L);
     public static final List<String> TEST_KEYWORDS = new ArrayList<String>();
     public static Date TEST_DATE;
@@ -337,6 +340,10 @@ public abstract class AbstractDatabaseObservationDAOTest
             dao.put(orig);
             txnManager.commitTransaction();
             
+            // this is so we can detect incorrect timestamp round trips
+            // caused by assigning something other than what was stored
+            Thread.sleep(2*TIME_TOLERANCE);
+            
             // EXISTS
             txnManager.startTransaction();
             Assert.assertTrue(dao.exists(orig.getURI()));
@@ -391,6 +398,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                         dao.put(orig);
                         txnManager.commitTransaction();
 
+                        // this is so we can detect incorrect timestamp round trips
+                        // caused by assigning something other than what was stored
+                        Thread.sleep(2*TIME_TOLERANCE);
+                        
                         Observation retrieved = dao.get(orig.getURI());
                         Assert.assertNotNull("found", retrieved);
                         testEqual(orig, retrieved);
@@ -436,6 +447,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                     dao.put(orig);
                     txnManager.commitTransaction();
 
+                    // this is so we can detect incorrect timestamp round trips
+                    // caused by assigning something other than what was stored
+                    Thread.sleep(2*TIME_TOLERANCE);
+                        
                     Observation retrieved = dao.get(orig.getURI());
                     Assert.assertNotNull("found", retrieved);
                     testEqual(orig, retrieved);
@@ -480,6 +495,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                 dao.put(orig);
                 txnManager.commitTransaction();
 
+                // this is so we can detect incorrect timestamp round trips
+                // caused by assigning something other than what was stored
+                Thread.sleep(2*TIME_TOLERANCE);
+                        
                 Observation ret1 = dao.get(orig.getURI());
 
                 Assert.assertNotNull("found", ret1);
@@ -530,6 +549,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                 dao.put(ret1);
                 txnManager.commitTransaction();
 
+                // this is so we can detect incorrect timestamp round trips
+                // caused by assigning something other than what was stored
+                Thread.sleep(2*TIME_TOLERANCE);
+                        
                 Observation ret2 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret2);
                 testEqual(ret1, ret2);
@@ -559,6 +582,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                     dao.put(ret1);
                     txnManager.commitTransaction();
 
+                    // this is so we can detect incorrect timestamp round trips
+                    // caused by assigning something other than what was stored
+                    Thread.sleep(2*TIME_TOLERANCE);
+                
                     Observation ret3 = dao.get(orig.getURI());
                     Assert.assertNotNull("found", ret3);
                     
@@ -621,6 +648,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                 txnManager.startTransaction();
                 dao.put(orig);
                 txnManager.commitTransaction();
+                
+                // this is so we can detect incorrect timestamp round trips
+                // caused by assigning something other than what was stored
+                Thread.sleep(2*TIME_TOLERANCE);
 
                 Observation ret1 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret1);
@@ -634,6 +665,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                 dao.put(ret1);
                 txnManager.commitTransaction();
 
+                // this is so we can detect incorrect timestamp round trips
+                // caused by assigning something other than what was stored
+                Thread.sleep(2*TIME_TOLERANCE);
+                
                 Observation ret2 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret2);
                 Assert.assertEquals(numPlanes+1, ret1.getPlanes().size());
@@ -643,6 +678,10 @@ public abstract class AbstractDatabaseObservationDAOTest
                 txnManager.startTransaction();
                 dao.put(ret2);
                 txnManager.commitTransaction();
+                
+                // this is so we can detect incorrect timestamp round trips
+                // caused by assigning something other than what was stored
+                Thread.sleep(2*TIME_TOLERANCE);
                 
                 Observation ret3 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret3);
@@ -854,7 +893,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             return;
         }
         long dt = Math.abs(expected.getTime() - actual.getTime());
-        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt < 3L));
+        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= 3L));
     }
     
     // for comparing release dates: compare second
