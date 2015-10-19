@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.access;
 
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 
 /**
@@ -94,6 +95,9 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
         CaomValidator.assertNotNull(this.getClass(), "groupID", groupID);
         this.assetID = assetID;
         this.groupID = groupID;
+        String name = getGroupName();
+        if (name == null)
+            throw new IllegalArgumentException("invalid groupID (no group name in found in query string or fragment): " + groupID);
     }
 
     public Long getAssetID()
@@ -104,6 +108,15 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
     public URI getGroupID()
     {
         return groupID;
+    }
+    
+    public String getGroupName()
+    {
+        String ret = groupID.getQuery();
+        if (StringUtil.hasText(ret))
+            return ret;
+        // backwards compat
+        return groupID.getFragment();
     }
 
     @Override

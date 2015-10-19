@@ -70,6 +70,8 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -85,6 +87,7 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.Serializable;
 import java.lang.reflect.Field;
