@@ -145,8 +145,9 @@ public class JsonWriterTest
             log.info(str);
             
             JSONObject doc = new JSONObject(str);
-            
-            String xmlns = doc.getString("@xmlns");
+            final JSONObject obsObject = doc.getJSONObject("caom2:Observation");
+
+            String xmlns = obsObject.getJSONObject("@xmlns").getString("$");
             Assert.assertNotNull(xmlns);
             Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
             
