@@ -195,10 +195,12 @@ public class JsonWriterTest
             log.info(str);
             
             JSONObject doc = new JSONObject(str);
+            final JSONObject obsObject = doc.getJSONObject("caom2:Observation");
             
-            String xmlns = doc.getString("@xmlns");
+            String xmlns = obsObject.getJSONObject("@xmlns").getString("$");
             Assert.assertNotNull(xmlns);
-            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
+            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2",
+                                xmlns);
             
             String otype = doc.getString("@type");
             Assert.assertNotNull(otype);
