@@ -86,6 +86,13 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
     private static final Logger log = Logger.getLogger(DatabaseReadAccessDAO.class);
 
     public DatabaseReadAccessDAO() { }
+    
+    // need to expose this for caom2ac which has to cleanup tuples for caom2 
+    // assets that became public
+    public String getTable(Class c)
+    {
+        return gen.getTable(c);
+    }
 
     public ReadAccess get(Class<? extends ReadAccess> c, UUID id)
     {

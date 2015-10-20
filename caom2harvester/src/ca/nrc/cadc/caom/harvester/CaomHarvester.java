@@ -113,15 +113,7 @@ public class CaomHarvester implements Runnable
         {
             throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
         }
-        
-        // make sure access control tuples are harvested before observations
-        if (observationMetaHarvester != null)
-            observationMetaHarvester.run();
-        if (planeDataHarvester != null)
-            planeDataHarvester.run();
-        if (planeMetaHarvester != null)
-            planeMetaHarvester.run();
-        
+
         // delete observations before harvest to avoid observationURI conflicts 
         // from delete+create
         if (obsDeleter != null)
@@ -130,6 +122,15 @@ public class CaomHarvester implements Runnable
         if (obsHarvester != null)
             obsHarvester.run();
 
+        // make sure access control tuples are harvested after observations
+        // because they update asset tables and fail if asset is missing
+        if (observationMetaHarvester != null)
+            observationMetaHarvester.run();
+        if (planeDataHarvester != null)
+            planeDataHarvester.run();
+        if (planeMetaHarvester != null)
+            planeMetaHarvester.run();
+        
         // clean up old access control tuples, should not have conflict issue 
         // like observations but that is due to how accessControlDA is implemented
         if (observationMetaDeleter != null)
