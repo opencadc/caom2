@@ -97,7 +97,7 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
         this.groupID = groupID;
         String name = getGroupName();
         if (name == null)
-            throw new IllegalArgumentException("invalid groupID (no group name in found in query string or fragment): " + groupID);
+            throw new IllegalArgumentException("invalid groupID (no group name found in query string or fragment): " + groupID);
     }
 
     public Long getAssetID()
@@ -110,13 +110,19 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
         return groupID;
     }
     
-    public String getGroupName()
+    public final String getGroupName()
     {
         String ret = groupID.getQuery();
         if (StringUtil.hasText(ret))
             return ret;
+        
         // backwards compat
-        return groupID.getFragment();
+        ret = groupID.getFragment();
+        if (StringUtil.hasText(ret))
+            return ret;
+        
+        // temporary backwards compat for caom2ac usage hack
+        return groupID.toASCIIString();
     }
 
     @Override

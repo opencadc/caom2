@@ -107,6 +107,35 @@ public class ReadAccessTest
     }
 
     @Test
+    public void testGetGroupName()
+    {
+        try
+        {
+            URI guri = new URI("ivo://cadc.nrc.ca/gms?ABC");
+            ObservationMetaReadAccess ra = new ObservationMetaReadAccess(assetID, guri);
+            String gname = ra.getGroupName();
+            Assert.assertEquals("ABC", gname);
+            
+            // compat with fragments
+            guri = new URI("ivo://cadc.nrc.ca/gms#ABC");
+            ra = new ObservationMetaReadAccess(assetID, guri);
+            gname = ra.getGroupName();
+            Assert.assertEquals("ABC", gname);
+            
+            // compat with simple name
+            guri = new URI("ABC");
+            ra = new ObservationMetaReadAccess(assetID, guri);
+            gname = ra.getGroupName();
+            Assert.assertEquals("ABC", gname);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testObservationMetaReadAccess()
     {
         try
