@@ -69,18 +69,22 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.auth.GroupUtil;
+import ca.nrc.cadc.ac.UserNotFoundException;
+import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.auth.CredUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
+import java.security.cert.CertificateException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.springframework.dao.TransientDataAccessResourceException;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -96,14 +100,6 @@ import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.io.ByteCountReader;
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.cert.CertificateException;
-import javax.security.auth.Subject;
-import org.springframework.dao.TransientDataAccessResourceException;
 
 /**
  *
@@ -129,6 +125,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
     private URI CADC_GROUP_URI;
+    private URI GMS_SERVICE_URI;
 
     protected SyncInput syncInput;
     protected SyncOutput syncOutput;
@@ -144,6 +141,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     {
         try
         {
+            GMS_SERVICE_URI = new URI("ivo://cadc.nrc.ca/canfargms");
             CADC_GROUP_URI = new URI("ivo://cadc.nrc.ca/gms#CADC");
         }
         catch(URISyntaxException bug)
@@ -360,21 +358,29 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
         
-        GroupUtil gu = new GroupUtil();
-        
-        URI guri;
+        try
+        {
+            if (CredUtil.checkCredentials())
+            {
+                GMSClient gms = new GMSClient(GMS_SERVICE_URI);
+                URI guri;
 
-        guri = i.getReadWriteGroup();
-        if (gu.isMember(guri))
-            return;
+                guri = i.getReadWriteGroup();
+                if (gms.isMember(guri.getFragment()))
+                    return;
 
-        guri = i.getReadOnlyGroup();
-        if (gu.isMember(guri))
-            return;
-        
-        if (gu.isMember(CADC_GROUP_URI))
-            return;
+                guri = i.getReadOnlyGroup();
+                if (gms.isMember(guri.getFragment()))
+                    return;
 
+                if (gms.isMember(CADC_GROUP_URI.getFragment()))
+                    return;
+            }
+        }
+        catch(UserNotFoundException ex)
+        {
+            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        }
         throw new AccessControlException("read permission denied: " + getURI());
     }
 
@@ -403,12 +409,20 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (i == null)
             throw new CollectionNotFoundException(uri.getCollection());
 
-        GroupUtil gu = new GroupUtil();
-        
-        URI guri = i.getReadWriteGroup();
-        if (gu.isMember(guri))
-            return;
-
+        try
+        {
+            if (CredUtil.checkCredentials())
+            {
+                GMSClient gms = new GMSClient(GMS_SERVICE_URI);
+                URI guri = i.getReadWriteGroup();
+                if (gms.isMember(guri.getFragment()))
+                    return;
+            }
+        }
+        catch(UserNotFoundException ex)
+        {
+            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        }
 
         throw new AccessControlException("write permission denied: " + getURI());
     }
