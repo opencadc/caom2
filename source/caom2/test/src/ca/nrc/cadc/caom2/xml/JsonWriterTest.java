@@ -116,7 +116,7 @@ public class JsonWriterTest
     {
         try
         {
-            int i = 5;
+            int i = 2;
             Observation o = getCompleteSimple(i, true);
             if (i == 5)
             {
@@ -142,16 +142,18 @@ public class JsonWriterTest
             StringBuilder sb = new StringBuilder();
             jw.write(o, sb);
             String str = sb.toString();
-            log.info(str);
+            log.info("\n" + str);
             
             JSONObject doc = new JSONObject(str);
-            final JSONObject obsObject = doc.getJSONObject("caom2:Observation");
-
-            String xmlns = obsObject.getJSONObject("@xmlns").getString("$");
+            
+            JSONObject obs = doc.getJSONObject("caom2:Observation");
+            Assert.assertNotNull(obs);
+            
+            String xmlns = obs.getString("@xmlns:caom2");
             Assert.assertNotNull(xmlns);
             Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
             
-            String otype = obsObject.getString("@type");
+            String otype = obs.getString("@xsi:type");
             Assert.assertNotNull(otype);
             Assert.assertEquals("caom2:SimpleObservation", otype);
         }
@@ -162,7 +164,7 @@ public class JsonWriterTest
         }
     }
     
-    @Test
+    //@Test
     public void testComposite()
     {
         try
@@ -193,17 +195,18 @@ public class JsonWriterTest
             StringBuilder sb = new StringBuilder();
             jw.write(o, sb);
             String str = sb.toString();
-            log.info(str);
+            log.info("\n" + str);
             
             JSONObject doc = new JSONObject(str);
-            final JSONObject obsObject = doc.getJSONObject("caom2:Observation");
             
-            String xmlns = obsObject.getJSONObject("@xmlns").getString("$");
+            JSONObject obs = doc.getJSONObject("caom2:Observation");
+            Assert.assertNotNull(obs);
+            
+            String xmlns = obs.getString("@xmlns:caom2");
             Assert.assertNotNull(xmlns);
-            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2",
-                                xmlns);
+            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
             
-            String otype = obsObject.getString("@type");
+            String otype = obs.getString("@xsi:type");
             Assert.assertNotNull(otype);
             Assert.assertEquals("caom2:CompositeObservation", otype);
         }
