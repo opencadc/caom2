@@ -116,7 +116,7 @@ public class JsonWriterTest
     {
         try
         {
-            int i = 2;
+            int i = 5;
             Observation o = getCompleteSimple(i, true);
             if (i == 5)
             {
@@ -164,7 +164,7 @@ public class JsonWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testComposite()
     {
         try
