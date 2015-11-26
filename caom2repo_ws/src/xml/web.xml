@@ -24,6 +24,14 @@
                 ca.nrc.cadc.gms
             </param-value>
         </init-param>
+        <init-param>
+            <param-name>logAccessGroup</param-name>
+            <param-value>CADC</param-value>
+        </init-param>
+        <init-param>
+            <param-name>groupAuthorizer</param-name>
+            <param-value>ca.nrc.cadc.auth.CADCGroupAuthorizer</param-value>
+        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -80,6 +88,7 @@
             <web-resource-name>auth</web-resource-name>
             <description/>
             <url-pattern>/auth/*</url-pattern>
+            <url-pattern>/logControl/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
             <http-method>HEAD</http-method>
@@ -99,17 +108,4 @@
         <realm-name>Canadian Astronomy Data Centre</realm-name>
     </login-config>
     
-    <security-role>
-        <description>CADC staff</description>
-        <role-name>poweruser</role-name>
-    </security-role>
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>logControl</web-resource-name>
-            <url-pattern>/logControl/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>poweruser</role-name>
-        </auth-constraint>
-    </security-constraint>
 </web-app>
