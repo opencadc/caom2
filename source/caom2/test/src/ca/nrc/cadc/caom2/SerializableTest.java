@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.Serializable;
@@ -120,7 +121,24 @@ public class SerializableTest
             String path = cname.replace('.', '/') + ".class";
             log.debug("pkg: " + pname + " class: " + cname + " -> path: " + path);
             URL url = loader.getResource(path);
-            File dir = new File(url.getPath()).getParentFile();
+
+            final File cnameFile = new File(url.getPath());
+            final File actual;
+
+            log.info("Observation class filepath: "
+                     + cnameFile.getAbsolutePath());
+
+            if (cnameFile.exists())
+            {
+                actual = cnameFile;
+            }
+            else
+            {
+                actual = new File(NetUtil.decode(cnameFile.getAbsolutePath()));
+            }
+
+            final File dir = actual.getParentFile();
+
             doPackage(pname, dir);
         }
         catch(Exception unexpected)
