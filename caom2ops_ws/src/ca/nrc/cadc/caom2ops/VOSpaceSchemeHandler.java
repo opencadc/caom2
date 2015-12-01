@@ -172,7 +172,7 @@ public class VOSpaceSchemeHandler implements SchemeHandler
                 else
                     protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
                 
-                Transfer trans = new Transfer(uri, Direction.pullFromVoSpace, protocols);
+                Transfer trans = new Transfer(vuri.getURI(), Direction.pullFromVoSpace, protocols);
                 ClientTransfer ct = vosClient.createTransfer(trans);
                 trans = ct.getTransfer();
                 for (Protocol p : trans.getProtocols())
