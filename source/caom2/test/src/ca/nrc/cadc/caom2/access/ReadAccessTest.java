@@ -115,16 +115,17 @@ public class ReadAccessTest
             ObservationMetaReadAccess ra = new ObservationMetaReadAccess(assetID, guri);
             String gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
+            Assert.assertEquals(guri, ra.getGroupID());
             
             // compat with fragments
-            guri = new URI("ivo://cadc.nrc.ca/gms#ABC");
-            ra = new ObservationMetaReadAccess(assetID, guri);
+            URI guriCompat = new URI("ivo://cadc.nrc.ca/gms#ABC");
+            ra = new ObservationMetaReadAccess(assetID, guriCompat);
             gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
             
             // compat with simple name
-            guri = new URI("ABC");
-            ra = new ObservationMetaReadAccess(assetID, guri);
+            URI guriNameOnly = new URI("ABC");
+            ra = new ObservationMetaReadAccess(assetID, guriNameOnly);
             gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
         }

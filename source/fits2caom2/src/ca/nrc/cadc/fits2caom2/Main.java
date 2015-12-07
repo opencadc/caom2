@@ -70,6 +70,7 @@ package ca.nrc.cadc.fits2caom2;
 
 import ca.nrc.cadc.auth.CertCmdArgUtil;
 import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.net.NetrcAuthenticator;
@@ -77,8 +78,11 @@ import ca.nrc.cadc.util.ArgumentMap;
 import java.io.File;
 import java.net.Authenticator;
 import java.net.URI;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -134,6 +138,26 @@ public class Main
             
             Ingest ingest = createIngest(argsMap);
             Subject subject = CertCmdArgUtil.initSubject(argsMap, true);
+            if (subject != null)
+            {
+                X509CertificateChain chain = null;
+                try
+                {
+                    Set<X509CertificateChain> chains = subject.getPublicCredentials(X509CertificateChain.class);
+                    chain = chains.iterator().next();
+                    chain.getChain()[0].checkValidity();
+                }
+                catch(CertificateExpiredException ex)
+                {
+                    log.warn("X509Certificate expired at : " + chain.getExpiryDate() + ": running ingest anonymously");
+                    subject = null; // drop to anon
+                }
+                catch (CertificateNotYetValidException ex)
+                {
+                    log.warn("X509Certificate is not valid yet (clock issue?): " + ex.getMessage()+  ": running ingest anonymously");
+                    subject = null; // drop to anon
+                }
+            }
             if (subject == null)
             {
                 log.debug("no SSL credentials found: running ingest anonymously");

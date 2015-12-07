@@ -112,6 +112,8 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
     
     public final String getGroupName()
     {
+        // canonical form: ivo://<authority>/<path>?<name>
+        
         String ret = groupID.getQuery();
         if (StringUtil.hasText(ret))
             return ret;
