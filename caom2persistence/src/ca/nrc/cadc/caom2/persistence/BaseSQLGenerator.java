@@ -2068,7 +2068,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetInteger(sb, ps, col++, ra.getStateCode());
                 safeSetUUID(sb, ps, col++, ra.getID());
             }
-            else // putCount == 1 : update asset  table
+            else // putCount > 1 : update asset table
             {
                 int col = 1;
                 safeSetString(sb, ps, col++, ra.getGroupName()); // short name
@@ -3442,7 +3442,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 int col = 1;
                 Long assetID = Util.getLong(rs, col++);
                 URI groupID = Util.getURI(rs, col++);
-
+                
                 Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(Long.class, URI.class);
                 ReadAccess ret = ctor.newInstance(assetID, groupID);
                 log.debug("found: " + ret);

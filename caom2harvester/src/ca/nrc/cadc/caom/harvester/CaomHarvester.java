@@ -91,8 +91,8 @@ public class CaomHarvester implements Runnable
     {
         CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, skip, maxdate);
         
-        //ret.obsHarvester = null;
-        //ret.obsDeleter = null;
+        ret.obsHarvester = null;
+        ret.obsDeleter = null;
         
         //ret.observationMetaHarvester = null;
         //ret.planeMetaHarvester = null;
