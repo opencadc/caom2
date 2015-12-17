@@ -72,17 +72,11 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.text.DateFormat;
-import java.util.Date;
-import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 
 /**
  *
