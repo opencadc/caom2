@@ -247,6 +247,7 @@ public class CaomTapQuery
     {
         log.debug("building observation from VOTable");
         VOTableResource vr = vot.getResourceByType("results");
+        // TODO: check QUERY_STATUS to be careful and avoid about NPEs below
         VOTableTable vt = vr.getTable();
     	TableData data = vt.getTableData();
     	Iterator<List<Object>> rowIterator = data.iterator();
