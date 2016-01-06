@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.harvester.state;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  *
@@ -79,14 +80,14 @@ public class HarvestSkip
 {
     public String source;
     public String cname;
-    public Long skipID;
+    public UUID skipID;
 
     public Date lastModified;
-    Long id;
+    UUID id;
 
     HarvestSkip() { }
     
-    public HarvestSkip(String source, String cname, Long skipID)
+    public HarvestSkip(String source, String cname, UUID skipID)
     {
         this.source = source;
         this.cname = cname;
@@ -99,12 +100,12 @@ public class HarvestSkip
         return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
     }
 
-    public Long getSkipID()
+    public UUID getSkipID()
     {
         return skipID;
     }
 
-    public Long getID()
+    public UUID getID()
     {
         return skipID;
     }
