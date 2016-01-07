@@ -218,11 +218,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
-        Util.assignID(ar, id);
+        //Util.assignID(ar, id);
         Part pp = new Part(0);
-        Util.assignID(pp, id);
+        //Util.assignID(pp, id);
         Chunk ch = new Chunk();
-        Util.assignID(ch, id);
+        //Util.assignID(ch, id);
         
         pp.getChunks().add(ch);
         ar.getParts().add(pp);

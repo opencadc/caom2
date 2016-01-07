@@ -55,11 +55,16 @@ public class ReadAccessHarvester extends Harvester
     {
         Map<String,Object> config1 = getConfigDAO(src);
         Map<String,Object> config2 = getConfigDAO(dest);
+        
         this.srcAccessDAO = new DatabaseReadAccessDAO();
         srcAccessDAO.setConfig(config1);
+        
         this.destAccessDAO = new DatabaseReadAccessDAO();
+         // required to update asset tables when assets change but identical tuples are generated
+        config2.put("forceUpdate", Boolean.TRUE);
         destAccessDAO.setConfig(config2);
         destAccessDAO.setComputeLastModified(false); // copy as-is
+        
         initHarvestState(destAccessDAO.getDataSource(), entityClass);
     }
 
@@ -98,6 +103,7 @@ public class ReadAccessHarvester extends Harvester
             full = false; // do not start at min(lastModified) again
             if (dryrun)
                 go = false;
+            //go = false;// single loop for testing
         }
         try
         {
@@ -147,8 +153,7 @@ public class ReadAccessHarvester extends Harvester
             //else: skipped: keep startDate across multiple batches since we don't persist harvest state
             
             Date end = null;
-            
-            // lastModified is maintained in the DB so we do not need this
+            // lastModified is set by a single caom2AccessControlDA process
             //end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
             
             List<SkippedWrapper<ReadAccess>> entityList = null;
@@ -156,10 +161,12 @@ public class ReadAccessHarvester extends Harvester
                 entityList = getSkipped(startDate);
             else
             {
-                entityList = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
-                if (entityList.size() == expectedNum)
-                    detectLoop(entityList);
+                List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
+                entityList = wrap(tmp);
             }
+
+            if (entityList.size() >= expectedNum)
+                    detectLoop(entityList);
             
             ret.found = entityList.size();
             log.info("found: " + entityList.size());

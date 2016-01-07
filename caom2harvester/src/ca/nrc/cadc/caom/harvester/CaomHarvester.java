@@ -131,15 +131,12 @@ public class CaomHarvester implements Runnable
         if (planeMetaHarvester != null)
             planeMetaHarvester.run();
         
-        // clean up old access control tuples, should not have conflict issue 
-        // like observations but that is due to how accessControlDA is implemented
+        // clean up old access control tuples
         if (observationMetaDeleter != null)
             observationMetaDeleter.run();
         if (planeDataDeleter != null)
             planeDataDeleter.run();
         if (planeMetaDeleter != null)
             planeMetaDeleter.run();
-        
-        
     }
 }

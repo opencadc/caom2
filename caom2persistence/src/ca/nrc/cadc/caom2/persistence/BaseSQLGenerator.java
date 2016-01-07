@@ -1986,7 +1986,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 return;
             
             putCount++;
-            
+
             if (ObservationMetaReadAccess.class.equals(ra.getClass()))
             {
                 this.assetClass = Observation.class;
@@ -2008,20 +2008,28 @@ public class BaseSQLGenerator implements SQLGenerator
                 if (num == 0)
                     throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
                 
+                // we do not know how many child assets exist under the plane so we cannot detect
+                // if the following succeeds or fails due to missing entities; if a later update
+                // adds children, then the observation gets reharvested and presumably ReadAccess
+                // tuples get regenerated with new timestamps and we'll try this again
+                
                 this.assetClass = Artifact.class;
                 num = jdbc.update(this);
-                if (num == 0)
-                    throw new DataIntegrityViolationException("failed to update Artifact " + ra.getAssetID());
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Artifact(s) planeID=" + ra.getAssetID());
                 
                 this.assetClass = Part.class;
                 num = jdbc.update(this);
-                if (num == 0)
-                    throw new DataIntegrityViolationException("failed to update Part " + ra.getAssetID());
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Part(s) planeID=" + ra.getAssetID());
                 
                 this.assetClass = Chunk.class;
                 num = jdbc.update(this);
-                if (num == 0)
-                    throw new DataIntegrityViolationException("failed to update Chunk " + ra.getAssetID());
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Chunk(s) planeID=" + ra.getAssetID());
             }
         }
         

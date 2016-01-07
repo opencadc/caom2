@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
@@ -130,7 +132,10 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
             sb.append("to_tsvector(regexp_replace(").append(col).append("::text, ?, ''))");
         }
         sb.append(" WHERE ");
-        sb.append(getPrimaryKeyColumn(asset));
+        if (PlaneMetaReadAccess.class.equals(ra) && !Plane.class.equals(asset))
+            sb.append(getPrimaryKeyColumn(Plane.class)); // HACK: only works because column name is the same in all tables
+        else      
+            sb.append(getPrimaryKeyColumn(asset));
         sb.append(" = ?");
 
         return sb.toString();

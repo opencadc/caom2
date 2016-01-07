@@ -184,11 +184,17 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     {
         BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
         String assetTable = gen.getTable(ac);
-        String pkCol = gen.getPrimaryKeyColumn(ac);
+        String kCol = gen.getPrimaryKeyColumn(ac);
+        if (PlaneMetaReadAccess.class.equals(expected.getClass())
+                && !Plane.class.equals(ac))
+        {
+            // HACK: see PostgresqlSQLGenerator.getUpdateAssetSQL
+            kCol = gen.getPrimaryKeyColumn(Plane.class);
+        }
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select count(*) from ").append(assetTable);
-        sb.append(" where ").append(pkCol).append(" = ").append(expected.getAssetID());
+        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID());
         sb.append(" and ").append(raCol).append(" @@ '").append(expected.getGroupName()).append("'::tsquery");
         String sql = sb.toString();
         return sql;
