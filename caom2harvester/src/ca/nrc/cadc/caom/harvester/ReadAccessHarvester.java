@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Harvest a single type of entity in order of lastModified date.
@@ -92,7 +93,7 @@ public class ReadAccessHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            if (num.failed > num.found/2) // more than half failed
+            if (!skipped && num.failed > num.found/2) // more than half failed
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
@@ -143,8 +144,10 @@ public class ReadAccessHarvester extends Harvester
         {
             HarvestState state = null;
             if (!skipped)
+            {
                 state = harvestState.get(source, cname);
-            log.info("last harvest: " + format(state.curLastModified));
+                log.info("last harvest: " + format(state.curLastModified));
+            }
 
             if (full)
                 startDate = null;
@@ -185,28 +188,36 @@ public class ReadAccessHarvester extends Harvester
                 boolean ok = false;
                 try
                 {
-                    log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID() + " " + format(ra.getLastModified()));
+                    if (ra != null)
+                        log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID() + " " + format(ra.getLastModified()));
                     if (!dryrun)
                     {
-                        if (skipped)
-                            startDate = hs.lastModified;
-                        
-                        if (state != null)
+                        if (ra != null)
                         {
-                            state.curLastModified = ra.getLastModified();
-                            state.curID = ra.getID();
+                            if (skipped)
+                                startDate = hs.lastModified;
+
+                            if (state != null)
+                            {
+                                state.curLastModified = ra.getLastModified();
+                                state.curID = ra.getID();
+                            }
+
+                            destAccessDAO.put(ra);
+
+                            if (hs != null) // success in redo mode
+                            {
+                                log.info("delete: " + hs + " " + format(hs.lastModified));
+                                harvestSkip.delete(hs);
+                            }
+                            else
+                                harvestState.put(state);
                         }
-                        
-                        destAccessDAO.put(ra);
-                        
-                        if (hs != null) // success in redo mode
+                        else if (skipped) // entity gone from src
                         {
                             log.info("delete: " + hs + " " + format(hs.lastModified));
                             harvestSkip.delete(hs);
                         }
-                        else
-                            harvestState.put(state);
-
                         log.debug("committing transaction");
                         destAccessDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
@@ -216,7 +227,16 @@ public class ReadAccessHarvester extends Harvester
                 }
                 catch(Throwable t)
                 {
-                    log.error("BUG - failed to put ReadAccess", t);
+                    if (t instanceof DataIntegrityViolationException
+                            && t.getMessage().contains("failed to update"))
+                    {
+                        log.error(t.getMessage());
+                    }
+                    else
+                    {
+                        log.error("BUG - failed to put ReadAccess", t);
+                        ret.abort = true;
+                    }
                 }
                 finally
                 {
@@ -227,31 +247,34 @@ public class ReadAccessHarvester extends Harvester
                         log.warn("rollback: OK");
 
                         // track failures where possible
-                        try
+                        if (!skipped)
                         {
-                            log.debug("starting harvestSkip transaction");
-                            HarvestSkip skip = harvestSkip.get(source, cname, ra.getID());
-                            if (skip == null)
-                                skip = new HarvestSkip(source, cname, ra.getID());
-                            destAccessDAO.getTransactionManager().startTransaction();
-                            log.info("skip: " + skip);
+                            try
+                            {
+                                log.debug("starting harvestSkip transaction");
+                                HarvestSkip skip = harvestSkip.get(source, cname, ra.getID());
+                                if (skip == null)
+                                    skip = new HarvestSkip(source, cname, ra.getID());
+                                destAccessDAO.getTransactionManager().startTransaction();
+                                log.info("skip: " + skip);
 
-                            // track the harvest state progress
-                            harvestState.put(state);
-                            // track the fail
-                            harvestSkip.put(skip);
-                            // TBD: delete previous version of entity?
-                            //destAccessDAO.delete(ra.getClass(), ra.getID());
-                            
-                            log.debug("committing harvestSkip transaction");
-                            destAccessDAO.getTransactionManager().commitTransaction();
-                            log.debug("commit harvestSkip: OK");
-                        }
-                        catch(Throwable oops)
-                        {
-                            log.warn("failed to insert via HarvestSkip", oops);
-                            destAccessDAO.getTransactionManager().rollbackTransaction();
-                            log.warn("rollback harvestSkip: OK");
+                                // track the harvest state progress
+                                harvestState.put(state);
+                                // track the fail
+                                harvestSkip.put(skip);
+                                // TBD: delete previous version of entity?
+                                //destAccessDAO.delete(ra.getClass(), ra.getID());
+
+                                log.debug("committing harvestSkip transaction");
+                                destAccessDAO.getTransactionManager().commitTransaction();
+                                log.debug("commit harvestSkip: OK");
+                            }
+                            catch(Throwable oops)
+                            {
+                                log.warn("failed to insert via HarvestSkip", oops);
+                                destAccessDAO.getTransactionManager().rollbackTransaction();
+                                log.warn("rollback harvestSkip: OK");
+                            }
                         }
                         ret.failed++;
                     }
@@ -312,7 +335,7 @@ public class ReadAccessHarvester extends Harvester
         List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(skip.size());
         for (HarvestSkip hs : skip)
         {
-            ReadAccess o = srcAccessDAO.get(hs.getSkipID());
+            ReadAccess o = srcAccessDAO.get(entityClass, hs.getSkipID());
             ret.add(new SkippedWrapper<ReadAccess>(o, hs));
         }
         return ret;

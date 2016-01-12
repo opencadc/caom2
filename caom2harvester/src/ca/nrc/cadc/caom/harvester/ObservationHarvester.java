@@ -115,14 +115,12 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            /*
             double failFrac = ((double) num.failed) / ((double) num.found);
-            if (failFrac > 0.5)
+            if (!skipped && failFrac > 0.5)
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
             }
-            */
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
@@ -159,8 +157,6 @@ public class ObservationHarvester extends Harvester
     
     private Progress doit()
     {
-        log.info("batch: " + Observation.class.getSimpleName());
-
         Progress ret = new Progress();
 
         BufferedReader stdin = null;
@@ -213,7 +209,7 @@ public class ObservationHarvester extends Harvester
                 }
             
                 log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
-                List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
+                List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize+1);
                 entityList = wrap(tmp);
             }
 
@@ -243,8 +239,8 @@ public class ObservationHarvester extends Harvester
             {
                 ListIterator<SkippedWrapper<Observation>> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().entity;
-                log.info("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
-                log.info("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
+                log.debug("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
+                log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
                 if (curBatchLeader.getID().equals(state.curID)                                 // same obs as last time
                         && curBatchLeader.getMaxLastModified().equals(state.curLastModified) ) // not modified since
                 {
@@ -333,6 +329,11 @@ public class ObservationHarvester extends Harvester
                             }
                             else
                                 harvestState.put(state);
+                        }
+                        else if (skipped) // observation is gone from  src
+                        {
+                            log.info("delete: " + hs + " " + format(hs.lastModified));
+                            harvestSkip.delete(hs);
                         }
 
                         if (skipped)

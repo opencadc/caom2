@@ -25,9 +25,9 @@ public class CaomHarvester implements Runnable
     private ObservationHarvester obsHarvester;
     private DeletionHarvester obsDeleter;
 
-    private Harvester observationMetaHarvester;
-    private Harvester planeDataHarvester;
-    private Harvester planeMetaHarvester;
+    private ReadAccessHarvester observationMetaHarvester;
+    private ReadAccessHarvester planeDataHarvester;
+    private ReadAccessHarvester planeMetaHarvester;
     
     private DeletionHarvester observationMetaDeleter;
     private DeletionHarvester planeDataDeleter;
@@ -57,12 +57,12 @@ public class CaomHarvester implements Runnable
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
 
-        if (!skip) // these don't have redo-skip mode yet
-        {
-            this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-        }
+        this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        observationMetaHarvester.setSkipped(skip);
+        this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        planeDataHarvester.setSkipped(skip);
+        this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        planeMetaHarvester.setSkipped(skip);
         
         if (!full)
         {

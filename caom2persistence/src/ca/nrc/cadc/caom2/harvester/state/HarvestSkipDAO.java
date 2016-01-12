@@ -89,7 +89,8 @@ public class HarvestSkipDAO
         if (skip == null || skip.id == null)
             throw new IllegalArgumentException("cannot delete: " + skip);
 
-        String sql = "DELETE FROM " + tableName + " WHERE id = " + skip.id;
+        // TODO: this is non-portable postgresql-specific (relies on casting string UUID)
+        String sql = "DELETE FROM " + tableName + " WHERE id = '" + skip.id +"'";
         jdbc.update(sql);
     }
 
