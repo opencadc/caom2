@@ -213,7 +213,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         Long assetID = 666L; // want same assetID on all assets so test code is simpler
         UUID id = new UUID(0L, assetID);
-        Observation obs = new SimpleObservation("FOO", "bar");
+        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
         Util.assignID(obs, id);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);

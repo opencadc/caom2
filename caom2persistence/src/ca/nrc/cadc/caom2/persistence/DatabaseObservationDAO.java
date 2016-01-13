@@ -510,7 +510,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         // new or changed
         int nsc = o.getStateCode(gen.persistTransientState());
         if (s != null)
-            log.warn("updateLastModified: " + s.stateCode + " vs " + nsc);
+            log.debug("updateLastModified: " + s.stateCode + " vs " + nsc);
         if (s == null || s.stateCode.intValue() != nsc)
         {
             Util.assignLastModified(o, now, "lastModified");
