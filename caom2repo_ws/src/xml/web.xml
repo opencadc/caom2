@@ -22,6 +22,7 @@
                 ca.nrc.cadc.wcs
                 ca.nrc.cadc.auth
                 ca.nrc.cadc.gms
+                ca.nrc.cadc.vosi
             </param-value>
         </init-param>
         <init-param>
