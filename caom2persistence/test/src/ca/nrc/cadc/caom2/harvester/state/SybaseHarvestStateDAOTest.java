@@ -267,7 +267,7 @@ public class SybaseHarvestStateDAOTest
 
             HarvestState s2 = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertNotNull(s2);
-            Assert.assertEquals(s.curLastModified.getTime(), s2.curLastModified.getTime(), 2.0);
+            Assert.assertEquals(s.curLastModified.getTime(), s2.curLastModified.getTime(), 3);
 
             s.curLastModified = new Date(t + 10L);
             dao.put(s);
