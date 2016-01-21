@@ -137,7 +137,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void setup()
         throws Exception
     {
-        log.debug("clearing old tables...");
+        log.info("clearing old tables...");
         SQLGenerator gen = dao.getSQLGenerator();
         DataSource ds = dao.getDataSource();
         for (Class c : entityClasses)
@@ -155,7 +155,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
                 ds.getConnection().createStatement().execute(sql);
             }
         }
-        log.debug("clearing old tables... OK");
+        log.info("clearing old tables... OK");
     }
 
     @Test
@@ -261,7 +261,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testGetList()
     {
         // random ID is OK since we are testing observation only
-        Observation obs = new SimpleObservation("FOO", "bar");
+        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
         UUID id = obs.getID();
         Long assetID = id.getLeastSignificantBits();
         Util.assignID(obs, id);
@@ -300,13 +300,9 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     // for comparing lastModified: Sybase isn't reliable to ms accuracy when using UTC
     protected void testEqual(String s, Date expected, Date actual)
     {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
         log.debug("testEqual(Date,Date): " + expected.getTime() + " vs " + actual.getTime());
-        if (expected == null)
-        {
-            Assert.assertNull(s, actual);
-            return;
-        }
-
         Assert.assertTrue(s, Math.abs(expected.getTime() - actual.getTime()) < 3L);
     }
 }
