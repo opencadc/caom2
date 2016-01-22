@@ -167,6 +167,16 @@ public class ReadAccessHarvester extends Harvester
                 entityList = getSkipped(startDate);
             else
             {
+                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
+                if (end == null)
+                    end = fiveMinAgo;
+                else
+                {
+                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                    if (end.getTime() > fiveMinAgo.getTime())
+                        end = fiveMinAgo;
+                }
+                
                 List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
                 entityList = wrap(tmp);
             }
