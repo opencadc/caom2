@@ -165,6 +165,9 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -200,6 +203,7 @@ public class BaseSQLGenerator implements SQLGenerator
     protected String schema;
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistTransientState = false; // persist computed plane metadata
+    protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
     
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
@@ -735,6 +739,27 @@ public class BaseSQLGenerator implements SQLGenerator
         return null;
     }
 
+    public String getSelectSQL(Class<? extends ReadAccess> clz, Long assetID, URI groupID)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        String[] cols = columnMap.get(clz);
+        for (int c=0; c<cols.length; c++)
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+        }
+        sb.append(" FROM ");
+        sb.append(getTable(clz));
+        sb.append(" WHERE assetID = ");
+        sb.append(literal(assetID));
+        sb.append(" AND groupID = ");
+        sb.append(literal(groupID));
+        return sb.toString();
+    }
+
+    
     public String getSelectSQL(Class clz, UUID id)
     {
         StringBuilder sb = new StringBuilder();
@@ -756,7 +781,7 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
 
-    public String getDeleteSQL(Class c, UUID id, boolean primaryKey)
+    String getDeleteSQL(Class c, UUID id, boolean primaryKey)
     {
         if (Observation.class.isAssignableFrom(c))
             c = Observation.class;
@@ -837,6 +862,18 @@ public class BaseSQLGenerator implements SQLGenerator
 
         return sb.toString();
     }
+    
+    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add)
+    {
+        throw new UnsupportedOperationException();
+    }
+    // test access
+    String getReadAccessCol(Class raclz)
+    {
+        if (PlaneDataReadAccess.class.equals(raclz))
+            return "dataReadAccessGroups";
+        return "metaReadAccessGroups";
+    }
 
     public EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate)
     {
@@ -860,13 +897,132 @@ public class BaseSQLGenerator implements SQLGenerator
 
         throw new UnsupportedOperationException();
     }
+
+    public EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey)
+    {
+        if (ReadAccess.class.isAssignableFrom(c))
+            return new ReadAccessEntityDelete(c, true);
+        return new BaseEntityDelete(c, primaryKey);
+    }
+
+    // delete single entity by primary key or foreign key
+    private class BaseEntityDelete implements EntityDelete<AbstractCaomEntity>
+    {
+        private Class<? extends AbstractCaomEntity> clz;
+        private boolean byPK;
+        private UUID id;
+
+        public BaseEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        {
+            this.clz = c;
+            this.byPK = byPK;
+        }
+        
+        public void execute(JdbcTemplate jdbc)
+        {
+            // delete by PK
+            String sql = getDeleteSQL(clz, id, byPK);
+            log.debug("delete: " + sql);
+            jdbc.update(sql);
+            
+        }
+
+        public void setID(UUID id)
+        {
+            this.id = id;
+        }
+
+        public void setValue(AbstractCaomEntity value)
+        {
+            throw new UnsupportedOperationException(); 
+        }
+    }
     
-    private class ObservationPut implements EntityPut<Observation>
+    // extended version to cleanup optimized persistence
+    private class ReadAccessEntityDelete extends BaseEntityDelete implements PreparedStatementCreator
+    {
+        ReadAccess ra;
+        Class assetClass;
+        
+        public ReadAccessEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        {
+            super(c, byPK);
+        }
+
+        @Override
+        public void setValue(AbstractCaomEntity value)
+        {
+            this.ra = (ReadAccess) value;
+        }
+
+        @Override
+        public void execute(JdbcTemplate jdbc)
+        {
+            super.execute(jdbc);
+            
+            if (!persistReadAccessWithAsset)
+                return;
+            
+            // this is a PreparedStatement for asset table updates
+            if (ObservationMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Observation.class;
+                jdbc.update(this);
+            }
+            else if (PlaneDataReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+            }
+            else if (PlaneMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                jdbc.update(this);
+                this.assetClass = Artifact.class;
+                jdbc.update(this);
+                this.assetClass = Part.class;
+                jdbc.update(this);
+                this.assetClass = Chunk.class;
+                jdbc.update(this);
+            }
+        }
+
+        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException
+        {
+            String sql = getUpdateAssetSQL(assetClass, ra.getClass(), false);
+            PreparedStatement prep = conn.prepareStatement(sql);
+            log.debug(sql);
+            loadValues(prep);
+            return prep;
+        }
+        private void loadValues(PreparedStatement ps)
+            throws SQLException
+        {
+            if (ra == null)
+                throw new IllegalStateException("null read access");
+
+            StringBuilder sb = null;
+            if (log.isDebugEnabled())
+                sb = new StringBuilder();
+            int col = 1;
+            safeSetString(sb, ps, col++, ra.getGroupName());
+            safeSetLong(sb, ps, col++, ra.getAssetID());
+            if (sb != null)
+                log.debug(sb.toString());
+        }
+    }
+    
+    private class ObservationPut implements EntityPut<Observation>, PreparedStatementCreator
     {
         boolean update;
         Observation obs;
 
         ObservationPut(boolean update) { this.update = update; }
+
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
         
         public void setValue(Observation obs, List<CaomEntity> unused) { this.obs = obs; }
 
@@ -1033,13 +1189,19 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class PlanePut implements EntityPut<Plane>
+    private class PlanePut implements EntityPut<Plane> , PreparedStatementCreator
     {
         private boolean update;
         private Plane plane;
         private List<CaomEntity> parents;
+        
         PlanePut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Plane plane, List<CaomEntity> parents)
         {
             this.plane = plane;
@@ -1248,7 +1410,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ArtifactPut implements EntityPut<Artifact>
+    private class ArtifactPut implements EntityPut<Artifact> , PreparedStatementCreator
     {
         private boolean update;
         private Artifact artifact;
@@ -1256,6 +1418,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         ArtifactPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Artifact a, List<CaomEntity> parents)
         {
             this.artifact = a;
@@ -1313,7 +1480,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class PartPut implements EntityPut<Part>
+    private class PartPut implements EntityPut<Part>, PreparedStatementCreator
     {
         private boolean update;
         private Part part;
@@ -1321,6 +1488,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         PartPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Part p, List<CaomEntity> parents)
         {
             this.part = p;
@@ -1380,7 +1552,7 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ChunkPut implements EntityPut<Chunk>
+    private class ChunkPut implements EntityPut<Chunk>, PreparedStatementCreator
     {
         private boolean update;
         private Chunk chunk;
@@ -1388,6 +1560,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
         ChunkPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+        }
+        
         public void setValue(Chunk c, List<CaomEntity> parents)
         {
             this.chunk = c;
@@ -1811,13 +1988,72 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
 
-    private class ReadAccessPut implements EntityPut<ReadAccess>
+    private class ReadAccessPut implements EntityPut<ReadAccess>, PreparedStatementCreator
     {
         private boolean update;
         private ReadAccess ra;
+        
+        private int putCount = 0;
+        private Class assetClass;
+        
 
         ReadAccessPut(boolean update) { this.update = update; }
 
+        public void execute(JdbcTemplate jdbc)
+        {
+            jdbc.update(this);
+            
+            if (!persistReadAccessWithAsset)
+                return;
+            
+            putCount++;
+
+            if (ObservationMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Observation.class;
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Observation " + ra.getAssetID());
+            }
+            else if (PlaneDataReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
+            }
+            else if (PlaneMetaReadAccess.class.equals(ra.getClass()))
+            {
+                this.assetClass = Plane.class;
+                int num = jdbc.update(this);
+                if (num == 0)
+                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
+                
+                // we do not know how many child assets exist under the plane so we cannot detect
+                // if the following succeeds or fails due to missing entities; if a later update
+                // adds children, then the observation gets reharvested and presumably ReadAccess
+                // tuples get regenerated with new timestamps and we'll try this again
+                
+                this.assetClass = Artifact.class;
+                num = jdbc.update(this);
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Artifact(s) planeID=" + ra.getAssetID());
+                
+                this.assetClass = Part.class;
+                num = jdbc.update(this);
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Part(s) planeID=" + ra.getAssetID());
+                
+                this.assetClass = Chunk.class;
+                num = jdbc.update(this);
+                log.debug("update asset count " + assetClass.getSimpleName() +" : " + num);
+                //if (num == 0)
+                //    throw new DataIntegrityViolationException("failed to update Chunk(s) planeID=" + ra.getAssetID());
+            }
+        }
+        
         public void setValue(ReadAccess ra, List<CaomEntity> unused)
         {
             this.ra = ra;
@@ -1826,15 +2062,23 @@ public class BaseSQLGenerator implements SQLGenerator
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException
         {
             String sql = null;
-            if (update)
-                sql = getUpdateSQL(ra.getClass());
-            else
-                sql = getInsertSQL(ra.getClass());
+            if (putCount == 0) // primary
+            {
+                if (update)
+                    sql = getUpdateSQL(ra.getClass());
+                else
+                    sql = getInsertSQL(ra.getClass());
+            }
+            else // put  into asset table
+            {
+                sql = getUpdateAssetSQL(assetClass, ra.getClass(), true);
+            }
             PreparedStatement prep = conn.prepareStatement(sql);
             log.debug(sql);
             loadValues(prep);
             return prep;
         }
+        
         private void loadValues(PreparedStatement ps)
             throws SQLException
         {
@@ -1844,14 +2088,21 @@ public class BaseSQLGenerator implements SQLGenerator
             StringBuilder sb = null;
             if (log.isDebugEnabled())
                 sb = new StringBuilder();
-
-            int col = 1;
-            safeSetLong(sb, ps, col++, ra.getAssetID());
-            safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
-            safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
-            safeSetInteger(sb, ps, col++, ra.getStateCode());
-            safeSetUUID(sb, ps, col++, ra.getID());
-
+            if (putCount == 0) // complete
+            {
+                int col = 1;
+                safeSetLong(sb, ps, col++, ra.getAssetID());
+                safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
+                safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
+                safeSetInteger(sb, ps, col++, ra.getStateCode());
+                safeSetUUID(sb, ps, col++, ra.getID());
+            }
+            else // putCount > 1 : update asset table
+            {
+                int col = 1;
+                safeSetString(sb, ps, col++, ra.getGroupName()); // short name
+                safeSetLong(sb, ps, col++, ra.getAssetID());
+            }
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -2030,6 +2281,9 @@ public class BaseSQLGenerator implements SQLGenerator
         if (obj instanceof UUID)
             return literal((UUID) obj);
         
+        if (obj instanceof URI)
+            return literal((URI) obj);
+        
         throw new IllegalArgumentException("unsupported literal: " + obj.getClass().getName());
     }
 
@@ -2056,6 +2310,11 @@ public class BaseSQLGenerator implements SQLGenerator
     protected String literal(long value)
     {
         return Long.toString(value);
+    }
+    
+    protected String literal(URI value)
+    {
+        return "'" + value.toASCIIString() + "'";
     }
     
     protected String literal(UUID value)
@@ -3220,7 +3479,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 int col = 1;
                 Long assetID = Util.getLong(rs, col++);
                 URI groupID = Util.getURI(rs, col++);
-
+                
                 Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(Long.class, URI.class);
                 ReadAccess ret = ctor.newInstance(assetID, groupID);
                 log.debug("found: " + ret);

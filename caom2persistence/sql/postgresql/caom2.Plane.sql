@@ -75,6 +75,10 @@ create table caom2.Plane
     polarization_states     varchar(34),
     polarization_dimension  integer,
 
+-- optimisation
+    dataReadAccessGroups tsvector default '',
+    metaReadAccessGroups tsvector default '',
+
 -- internal
     obsID bigint not null references caom2.Observation (obsID),
     planeID bigint not null  primary key using index tablespace caom_index,

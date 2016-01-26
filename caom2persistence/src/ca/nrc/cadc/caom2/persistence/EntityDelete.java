@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,94 +62,27 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.harvester.state;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBConfig;
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
-import java.io.FileReader;
-import java.io.LineNumberReader;
-import java.util.HashMap;
-import java.util.Map;
+import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import java.util.UUID;
-import javax.sql.DataSource;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
  * @author pdowler
+ * @param <T>
  */
-public class SkipLoader
+public interface EntityDelete<T extends AbstractCaomEntity>
 {
-    private static final Logger log = Logger.getLogger(SkipLoader.class);
+    void execute(JdbcTemplate jdbc);
     
-    public static void main(String[] args)
-    {
-        try
-        {
-            Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
-            ArgumentMap am = new ArgumentMap(args);
-            String server = am.getValue("server");
-            String source = am.getValue("source");
-            String database = am.getValue("database");
-            String schema = am.getValue("schema");
-            if (database == null)
-                database = "cadctest";
-            if (schema == null)
-                schema = "pdowler";
-                    
-            String fname = am.getValue("fname");
-            if (server == null || source == null || fname == null)
-            {
-                log.error("usage: skipLoader --server=<pg server> --source=<SYBASE.cfht.dbo> --fname=<input file>");
-                System.exit(1);
-            }
-            Map<String,Object> config = new HashMap<String,Object>();
-            DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
-            DataSource ds = DBUtil.getDataSource(cc);
-            
-            HarvestSkipDAO dao = new HarvestSkipDAO(ds, database, schema, 10);
-            
-            LineNumberReader r = new LineNumberReader(new FileReader(fname));
-            String s = r.readLine();
-            while (s != null)
-            {   
-                String[] parts = s.split(" ");
-                Long lsb = new Long(parts[0]);
-                UUID id = new UUID(0L, lsb);
-                Thread.sleep(1L); // make sure timestamps are spread out
-                HarvestSkip h = new HarvestSkip(source, Observation.class.getSimpleName(), id);
-                try
-                {
-                    dao.put(h);
-                    log.info("put: " + h);
-                }
-                catch(DataIntegrityViolationException ex)
-                {
-                    log.warn("put: " + h + " duplicate: skip");
-                }
-                
-                s = r.readLine();
-            }
-        }
-        catch(Exception ex)
-        {
-            log.error("unexpected fail", ex);
-        }
-        finally
-        {
-            log.info("DONE");
-        }
-    }
+    void setID(UUID id);
+    
+    void setValue(T value);
 }

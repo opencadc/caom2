@@ -22,6 +22,10 @@ create index i_lastModified
     on caom2_ObservationMetaReadAccess ( lastModified )
 ;
 
+create unique index i_omra_tuple 
+    on caom2_ObservationMetaReadAccess (assetID, groupID)
+;
+
 -- PlaneMetaReadAccess --
 create table caom2_PlaneMetaReadAccess
 (
@@ -40,6 +44,10 @@ create index i_lastModified
     on caom2_PlaneMetaReadAccess ( lastModified )
 ;
 
+create unique index i_pmra_tuple 
+    on caom2_PlaneMetaReadAccess (assetID, groupID)
+;
+
 -- PlaneDataReadAccess --
 create table caom2_PlaneDataReadAccess
 (
@@ -56,4 +64,8 @@ partition by roundrobin 16
 
 create index i_lastModified
     on caom2_PlaneDataReadAccess ( lastModified )
+;
+
+create unique index i_pdra_tuple 
+    on caom2_PlaneDataReadAccess (assetID, groupID)
 ;

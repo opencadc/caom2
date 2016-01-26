@@ -160,7 +160,7 @@ public class AbstractDAO
         try
         {
             if (jndiDataSourceName != null)
-                this.dataSource = new DataSourceWrapper(database, DBUtil.getDataSource(jndiDataSourceName));
+                this.dataSource = new DataSourceWrapper(database, DBUtil.findJNDIDataSource(jndiDataSourceName));
             else
             {
                 DBConfig dbrc = new DBConfig();

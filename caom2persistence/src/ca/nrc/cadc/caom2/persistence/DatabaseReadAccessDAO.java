@@ -70,8 +70,8 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -87,6 +87,56 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
     private static final Logger log = Logger.getLogger(DatabaseReadAccessDAO.class);
 
     public DatabaseReadAccessDAO() { }
+    
+    // need to expose this for caom2ac which has to cleanup tuples for caom2 
+    // assets that became public
+    public String getTable(Class c)
+    {
+        return gen.getTable(c);
+    }
+    
+    public ReadAccess get(Class<? extends ReadAccess> c, Long assetID, URI groupID)
+    {
+        checkInit();
+        if (c == null || assetID == null || groupID == null)
+            throw new IllegalArgumentException("args cannot be null");
+        log.debug("GET: " + c.getSimpleName() + " " + assetID + "," + groupID);
+        long t = System.currentTimeMillis();
+        
+        try
+        {
+            String sql = gen.getSelectSQL(c, assetID, groupID);
+            if (log.isDebugEnabled())
+                log.debug("GET SQL: " + Util.formatSQL(sql));
+
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Object result = jdbc.query(sql, gen.getReadAccessMapper(c));
+            if (result == null)
+                return null;
+            if (result instanceof List)
+            {
+                List obs = (List) result;
+                if (obs.isEmpty())
+                    return null;
+                if (obs.size() > 1)
+                    throw new RuntimeException("BUG: get " + c.getSimpleName() + " " + assetID + "," + groupID + " query returned " + obs.size() + " ReadAccess tuples");
+                Object o = obs.get(0);
+                if (o instanceof ReadAccess)
+                {
+                    ReadAccess ret = (ReadAccess) obs.get(0);
+                    return ret;
+                }
+                else
+                    throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
+            }
+            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + c.getSimpleName() + " " + assetID + "," + groupID + " " + dt + "ms");
+        }
+    }
 
     public ReadAccess get(Class<? extends ReadAccess> c, UUID id)
     {
@@ -170,9 +220,18 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = gen.getDeleteSQL(c, id, true);
-            log.debug("DELETE: " + sql);
-            jdbc.update(sql);
+            // get current tuple
+            ReadAccess cur = get(c, id);
+            if (cur != null)
+            {
+                EntityDelete op = gen.getEntityDelete(c, true);
+                op.setID(id);
+                op.setValue(cur);
+                op.execute(jdbc);
+                //String sql = gen.getDeleteSQL(c, id, true);
+                //log.debug("DELETE: " + sql);
+                //jdbc.update(sql);
+            }
         }
         finally
         {

@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
@@ -167,9 +166,12 @@ class PlaneDAO extends AbstractCaomEntityDAO<Plane>
                 artifactDAO.deleteChildren(a, jdbc);
 
             // delete artifacts by FK
-            String sql = gen.getDeleteSQL(Artifact.class, p.id, false);
-            log.debug("delete: " + sql);
-            jdbc.update(sql);
+            EntityDelete op = gen.getEntityDelete(Artifact.class, false);
+            op.setID(p.id);
+            op.execute(jdbc);
+            //String sql = gen.getDeleteSQL(Artifact.class, p.id, false);
+            //log.debug("delete: " + sql);
+            //jdbc.update(sql);
         }
         else
             log.debug("no artifacts: " + p.id);

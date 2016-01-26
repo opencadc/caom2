@@ -115,14 +115,12 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            /*
             double failFrac = ((double) num.failed) / ((double) num.found);
-            if (failFrac > 0.5)
+            if (!skipped && failFrac > 0.5)
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
             }
-            */
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
@@ -159,8 +157,6 @@ public class ObservationHarvester extends Harvester
     
     private Progress doit()
     {
-        log.info("batch: " + Observation.class.getSimpleName());
-
         Progress ret = new Progress();
 
         BufferedReader stdin = null;
@@ -197,7 +193,7 @@ public class ObservationHarvester extends Harvester
             
             
             Date end = maxDate;
-            List<ObservationWrapper> entityList = null;
+            List<SkippedWrapper<Observation>> entityList = null;
             if (skipped)
                 entityList = getSkipped(startDate);
             else
@@ -213,7 +209,7 @@ public class ObservationHarvester extends Harvester
                 }
             
                 log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
-                List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize);
+                List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize+1);
                 entityList = wrap(tmp);
             }
 
@@ -241,10 +237,10 @@ public class ObservationHarvester extends Harvester
             // avoid re-processing the last successful one stored in HarvestState
             if ( !entityList.isEmpty() && !skipped )
             {
-                ListIterator<ObservationWrapper> iter = entityList.listIterator();
-                Observation curBatchLeader = iter.next().obs;
-                log.info("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
-                log.info("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
+                ListIterator<SkippedWrapper<Observation>> iter = entityList.listIterator();
+                Observation curBatchLeader = iter.next().entity;
+                log.debug("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
+                log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
                 if (curBatchLeader.getID().equals(state.curID)                                 // same obs as last time
                         && curBatchLeader.getMaxLastModified().equals(state.curLastModified) ) // not modified since
                 {
@@ -259,11 +255,11 @@ public class ObservationHarvester extends Harvester
             tQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
             
-            ListIterator<ObservationWrapper> iter = entityList.listIterator();
+            ListIterator<SkippedWrapper<Observation>> iter = entityList.listIterator();
             while ( iter.hasNext() )
             {
-                ObservationWrapper ow = iter.next();
-                Observation o = ow.obs;
+                SkippedWrapper<Observation> ow = iter.next();
+                Observation o = ow.entity;
                 HarvestSkip hs = ow.skip;
                 iter.remove(); // allow garbage collection during loop
                 
@@ -333,6 +329,11 @@ public class ObservationHarvester extends Harvester
                             }
                             else
                                 harvestState.put(state);
+                        }
+                        else if (skipped) // observation is gone from  src
+                        {
+                            log.info("delete: " + hs + " " + format(hs.lastModified));
+                            harvestSkip.delete(hs);
                         }
 
                         if (skipped)
@@ -411,9 +412,9 @@ public class ObservationHarvester extends Harvester
                             try
                             {
                                 log.debug("starting HarvestSkip transaction");
-                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID().getLeastSignificantBits()); // backwards compat
+                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
                                 if (skip == null)
-                                    skip = new HarvestSkip(source, cname, o.getID().getLeastSignificantBits()); // backwards compat
+                                    skip = new HarvestSkip(source, cname, o.getID());
                                 log.info(skip);
 
                                 destObservationDAO.getTransactionManager().startTransaction();
@@ -504,12 +505,12 @@ public class ObservationHarvester extends Harvester
         sb.append(numC).append("]");
         return sb.toString();
     }
-    private void detectLoop(List<ObservationWrapper> entityList)
+    private void detectLoop(List<SkippedWrapper<Observation>> entityList)
     {
         if (entityList.size() < 2)
             return;
-        ObservationWrapper start = entityList.get(0);
-        ObservationWrapper end = entityList.get(entityList.size() - 1);
+        SkippedWrapper<Observation> start = entityList.get(0);
+        SkippedWrapper<Observation> end = entityList.get(entityList.size() - 1);
         if (skipped)
         {
             if (start.skip.lastModified.equals(end.skip.lastModified))
@@ -517,45 +518,33 @@ public class ObservationHarvester extends Harvester
                     + HarvestSkip.class.getSimpleName() + " at " + format(start.skip.lastModified));
             return;
         }
-        if (start.obs.getMaxLastModified().equals(end.obs.getMaxLastModified()))
+        if (start.entity.getMaxLastModified().equals(end.entity.getMaxLastModified()))
         {
             throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at " + format(start.obs.getMaxLastModified()));
+                    + entityClass.getSimpleName() + " at " + format(start.entity.getMaxLastModified()));
         }
     }
     
-    private class ObservationWrapper
+    private List<SkippedWrapper<Observation>> wrap(List<Observation> obsList)
     {
-        Observation obs;
-        HarvestSkip skip;
-        ObservationWrapper(Observation o, HarvestSkip hs)
-        {
-            this.obs = o;
-            this.skip = hs;
-        }
-    }
-    
-    private List<ObservationWrapper> wrap(List<Observation> obsList)
-    {
-        List<ObservationWrapper> ret = new ArrayList<ObservationWrapper>(obsList.size());
+        List<SkippedWrapper<Observation>> ret = new ArrayList<SkippedWrapper<Observation>>(obsList.size());
         for (Observation o : obsList)
         {
-            ret.add(new ObservationWrapper(o, null));
+            ret.add(new SkippedWrapper<Observation>(o, null));
         }
         return ret;
     }
     
-    private List<ObservationWrapper> getSkipped(Date start)
+    private List<SkippedWrapper<Observation>> getSkipped(Date start)
     {
         
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]");
         List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
-        List<ObservationWrapper> ret = new ArrayList<ObservationWrapper>(skip.size());
+        List<SkippedWrapper<Observation>> ret = new ArrayList<SkippedWrapper<Observation>>(skip.size());
         for (HarvestSkip hs : skip)
         {
-            UUID obsID = new UUID(0L, hs.getSkipID()); // backwards compat
-            Observation o = srcObservationDAO.get(obsID);
-            ret.add(new ObservationWrapper(o, hs));
+            Observation o = srcObservationDAO.get(hs.getSkipID());
+            ret.add(new SkippedWrapper<Observation>(o, hs));
         }
         return ret;
     }

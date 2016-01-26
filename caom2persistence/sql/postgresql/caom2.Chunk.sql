@@ -119,6 +119,9 @@ create table caom2.Chunk
     observable_independent_axis_cunit varchar(64),
     observable_independent_bin bigint,
 
+-- optimisation
+    metaReadAccessGroups tsvector default '',
+
 -- internal
     obsID bigint not null,
     planeID bigint not null,
@@ -133,9 +136,15 @@ create table caom2.Chunk
 tablespace caom_data
 ;
 
+-- this is for Part join Chunk
 create index i_partID on caom2.Chunk (partID)
 tablespace caom_index
 ;
 
 cluster i_partID on caom2.Chunk
+;
+
+-- this is for asset updates
+create index ic_planeID on caom2.Chunk (planeID)
+tablespace caom_index
 ;

@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -117,6 +118,14 @@ public interface SQLGenerator
      */
     String getSelectSQL(UUID id, int depth, boolean skeleton);
 
+    /**
+     * 
+     * @param c
+     * @param assetID
+     * @param groupID
+     * @return 
+     */
+    String getSelectSQL(Class<? extends ReadAccess> c, Long assetID, URI groupID);
     
     String getSelectSQL(Class c, UUID id);
     
@@ -140,9 +149,10 @@ public interface SQLGenerator
     RowMapper getTimestampRowMapper();
     
     EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate);
+    
+    EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey);
 
-    String getDeleteSQL(Class c, UUID id, boolean primaryKey);
-
+    //String getDeleteSQL(Class c, UUID id, boolean primaryKey);
     
     String literal(Object o);
 

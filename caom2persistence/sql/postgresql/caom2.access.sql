@@ -12,10 +12,11 @@ create table caom2.ObservationMetaReadAccess
 tablespace caom_data
 ;
 
-create index i_ObservationMetaReadAccess_group
-    on caom2.ObservationMetaReadAccess (groupID)
+create unique index i_omra_tuple 
+    on caom2.ObservationMetaReadAccess (groupID, assetID)
 tablespace caom_index
 ;
+
 
 -- PlaneMetaReadAccess --
 create table caom2.PlaneMetaReadAccess
@@ -30,8 +31,8 @@ create table caom2.PlaneMetaReadAccess
 tablespace caom_data
 ;
 
-create index i_PlaneMetaReadAccess_group
-    on caom2.PlaneMetaReadAccess (groupID)
+create unique index i_pmra_tuple 
+    on caom2.PlaneMetaReadAccess (groupID, assetID)
 tablespace caom_index
 ;
 
@@ -48,7 +49,7 @@ create table caom2.PlaneDataReadAccess
 tablespace caom_data
 ;
 
-create index i_PlaneDataReadAccess_group
-    on caom2.PlaneDataReadAccess (groupID)
+create unique index i_pdra_tuple 
+    on caom2.PlaneDataReadAccess (groupID, assetID)
 tablespace caom_index
 ;

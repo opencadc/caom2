@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,7 +49,7 @@ public class HarvestSkipDAO
         this.extractor = new HarvestSkipMapper();
     }
 
-    public HarvestSkip get(String source, String cname, Long skipID)
+    public HarvestSkip get(String source, String cname, UUID skipID)
     {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, skipID, null, null);
@@ -75,7 +76,7 @@ public class HarvestSkipDAO
         if (skip.id == null)
         {
             update = false;
-            skip.id = CaomIDGenerator.getInstance().generateID();
+            skip.id = UUID.randomUUID();
         }
         skip.lastModified = new Date();
         PutStatementCreator put = new PutStatementCreator(update);
@@ -88,7 +89,8 @@ public class HarvestSkipDAO
         if (skip == null || skip.id == null)
             throw new IllegalArgumentException("cannot delete: " + skip);
 
-        String sql = "DELETE FROM " + tableName + " WHERE id = " + skip.id;
+        // TODO: this is non-portable postgresql-specific (relies on casting string UUID)
+        String sql = "DELETE FROM " + tableName + " WHERE id = '" + skip.id +"'";
         jdbc.update(sql);
     }
 
@@ -97,12 +99,12 @@ public class HarvestSkipDAO
         private String source;
         private String cname;
         private Integer batchSize;
-        private Long skipID;
+        private UUID skipID;
         private Date start;
 
         public SelectStatementCreator() { }
 
-        public void setValues(String source, String cname, Long skipID, Integer batchSize, Date start)
+        public void setValues(String source, String cname, UUID skipID, Integer batchSize, Date start)
         {
             this.source = source;
             this.cname = cname;
@@ -139,7 +141,7 @@ public class HarvestSkipDAO
             ps.setString(1, source);
             ps.setString(2, cname);
             if (skipID != null)
-                ps.setLong(3, skipID);
+                ps.setObject(3, skipID);
             else if (start != null)
                 ps.setTimestamp(3, new Timestamp(start.getTime()), CAL);
         }
@@ -177,9 +179,9 @@ public class HarvestSkipDAO
             int col = 1;
             ps.setString(col++, skip.source);
             ps.setString(col++, skip.cname);
-            ps.setLong(col++, skip.skipID);
+            ps.setObject(col++, skip.skipID);
             ps.setTimestamp(col++, new Timestamp(now.getTime()), CAL);
-            ps.setLong(col++, skip.id);
+            ps.setObject(col++, skip.id);
         }
     }
 
@@ -191,9 +193,9 @@ public class HarvestSkipDAO
             int col = 1;
             ret.source = rs.getString(col++);
             ret.cname = rs.getString(col++);
-            ret.skipID = rs.getLong(col++);
+            ret.skipID = Util.getUUID(rs, col++); //rs.getLong(col++);
             ret.lastModified = Util.getDate(rs, col++, CAL);
-            ret.id = rs.getLong(col++);
+            ret.id = Util.getUUID(rs, col++); // rs.getLong(col++);
             return ret;
         }
 

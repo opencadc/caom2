@@ -69,6 +69,13 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import java.lang.reflect.Constructor;
@@ -83,6 +90,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
@@ -94,6 +102,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
 
     boolean deletionTrack;
     DatabaseReadAccessDAO dao;
+    DatabaseObservationDAO obsDAO;
     DatabaseTransactionManager txnManager;
 
     protected Class[] entityClasses;
@@ -112,6 +121,9 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             this.dao = new DatabaseReadAccessDAO();
             dao.setConfig(config);
             this.txnManager = new DatabaseTransactionManager(dao.getDataSource());
+            
+            this.obsDAO = new DatabaseObservationDAO();
+            obsDAO.setConfig(config);
         }
         catch(Exception ex)
         {
@@ -125,7 +137,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void setup()
         throws Exception
     {
-        log.debug("clearing old tables...");
+        log.info("clearing old tables...");
         SQLGenerator gen = dao.getSQLGenerator();
         DataSource ds = dao.getDataSource();
         for (Class c : entityClasses)
@@ -143,11 +155,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
                 ds.getConnection().createStatement().execute(sql);
             }
         }
-        log.debug("clearing old tables... OK");
+        log.info("clearing old tables... OK");
     }
 
     @Test
-    public void testGet()
+    public void testGetNotFound()
     {
         try
         {
@@ -165,29 +177,69 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
 
+    // overridable in subclass to extend checks
+    protected void checkPut(String s, ReadAccess expected, ReadAccess actual)
+    {
+        Assert.assertNotNull(s, actual);
+        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
+        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
+        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
+        //Assert.assertEquals(s+".getStateCode", expected.getStateCode(), actual.getStateCode());
+    }
+    
+    // overridable in subclass to extend checks
+    protected void checkDelete(String s, ReadAccess expected, ReadAccess actual)
+    {
+        Assert.assertNull(actual);
+    }
+    
     protected void doPutGetDelete(ReadAccess expected)
         throws Exception
     {
         String s = expected.getClass().getSimpleName();
         dao.put(expected);
         ReadAccess actual = dao.get(expected.getClass(), expected.getID());
-        Assert.assertNotNull(s, actual);
-        Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
-        Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
-        testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
-        //Assert.assertEquals(s+".getStateCode", expected.getStateCode(), actual.getStateCode());
-
+        
+        checkPut(s, expected, actual);
+        
+        ReadAccess actual2 = dao.get(expected.getClass(), expected.getAssetID(), expected.getGroupID());
+        checkPut(s, expected, actual2);
+        Assert.assertEquals(expected.getID(), actual2.getID());
+        
         dao.delete(expected.getClass(), expected.getID());
         actual = dao.get(expected.getClass(), expected.getID());
-        Assert.assertNull(actual);
+        
+        checkDelete(s, expected, actual);
     }
 
     @Test
     public void testPutGetDelete()
     {
+        Long assetID = 666L; // want same assetID on all assets so test code is simpler
+        UUID id = new UUID(0L, assetID);
+        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
+        Util.assignID(obs, id);
+        Plane pl = new Plane("bar1");
+        Util.assignID(pl, id);
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        //Util.assignID(ar, id);
+        Part pp = new Part(0);
+        //Util.assignID(pp, id);
+        Chunk ch = new Chunk();
+        //Util.assignID(ch, id);
+        
+        pp.getChunks().add(ch);
+        ar.getParts().add(pp);
+        pl.getArtifacts().add(ar);
+        obs.getPlanes().add(pl);
+            
         try
         {
-            Long assetID = 666L;
+            // cleanup previous test run
+            obsDAO.delete(id);
+            
+            obsDAO.put(obs);
+            
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
             ReadAccess expected;
 
@@ -203,13 +255,80 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+        finally
+        {
+            obsDAO.delete(obs.getID());
+        }
+    }
+    
+    @Test
+    public void testRejectDuplicate()
+    {
+        // random ID is OK since we are testing observation only
+        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
+        UUID id = obs.getID();
+        Long assetID = id.getLeastSignificantBits();
+        Util.assignID(obs, id);
+        Plane pl = new Plane("bar1");
+        Util.assignID(pl, id);
+        obs.getPlanes().add(pl);
+        
+        
+        try
+        {
+            // cleanup previous test run
+            obsDAO.delete(obs.getID());
+            obsDAO.put(obs);
+            
+            for (Class c : entityClasses)
+            {
+                URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
+        
+                // make sure it isn't there
+                ReadAccess cur = dao.get(c, assetID, groupID);
+                Assert.assertNull(cur);
+                
+                dao.put(expected);
+                
+                ReadAccess dupe = (ReadAccess) ctor.newInstance(assetID, groupID);
+                try
+                {
+                    dao.put(dupe);
+                }
+                catch(DataIntegrityViolationException ex)
+                {
+                    log.info("testRejectDuplicate: caught expected DataIntegrityViolationException");
+                }
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally
+        {
+            obsDAO.delete(obs.getID());
+        }
     }
     
     @Test
     public void testGetList()
     {
+        // random ID is OK since we are testing observation only
+        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
+        UUID id = obs.getID();
+        Long assetID = id.getLeastSignificantBits();
+        Util.assignID(obs, id);
+        
         try
         {
+            obsDAO.delete(id);
+            
+            obsDAO.put(obs);
+            
             ReadAccess ra;
             URI groupID;
             Class c = ObservationMetaReadAccess.class;
@@ -217,7 +336,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             for (int i=0; i<3; i++)
             {
                 groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
-                ra = (ReadAccess) ctor.newInstance(1000L+i, groupID);
+                ra = (ReadAccess) ctor.newInstance(assetID, groupID);
                 dao.put(ra);
             }
             List<ReadAccess> ras = dao.getList(c, null, null, null);
@@ -229,18 +348,18 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+        finally
+        {
+            obsDAO.delete(id);
+        }
     }
     
     // for comparing lastModified: Sybase isn't reliable to ms accuracy when using UTC
     protected void testEqual(String s, Date expected, Date actual)
     {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
         log.debug("testEqual(Date,Date): " + expected.getTime() + " vs " + actual.getTime());
-        if (expected == null)
-        {
-            Assert.assertNull(s, actual);
-            return;
-        }
-
         Assert.assertTrue(s, Math.abs(expected.getTime() - actual.getTime()) < 3L);
     }
 }

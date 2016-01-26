@@ -75,6 +75,7 @@ import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -139,17 +140,19 @@ public class PostgresqlHarvestSkipDAOTest
         try
         {
             HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            Long id1 = new Long(555L);
-            Long id2 = new Long(666L);
-            Long id3 = new Long(777L);
+            UUID id1 = UUID.randomUUID();
+            UUID id2 = UUID.randomUUID();
+            UUID id3 = UUID.randomUUID();
 
             HarvestSkip skip;
             Date start = null;
             
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id1);
             dao.put(skip);
+            Thread.sleep(10L);
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id2);
             dao.put(skip);
+            Thread.sleep(10L);
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id3);
             dao.put(skip);
 
@@ -172,7 +175,7 @@ public class PostgresqlHarvestSkipDAOTest
         try
         {
             HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            Long id1 = new Long(888L);
+            UUID id1 = UUID.randomUUID();
 
             HarvestSkip skip;
 

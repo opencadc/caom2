@@ -3,9 +3,9 @@ create table caom2_HarvestSkip
 (
     source          varchar(256) not null,
     cname           varchar(256) not null,
-    skipID          bigint not null,
+    skipID          binary(16) not null,
     lastModified    datetime not null,
-    id              bigint not null primary key nonclustered
+    id              binary(16) primary key nonclustered nonclustered
 )
 ;
 

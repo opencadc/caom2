@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
@@ -100,6 +102,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     {
         super(database, schema, null, true);
         this.useIntegerForBoolean = true;
+        this.persistReadAccessWithAsset = true;
     }
 
     @Override
@@ -108,6 +111,34 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
         if (batchSize == null)
             return null;
         return "LIMIT " + batchSize;
+    }
+    
+    @Override
+    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add)
+    {
+        StringBuilder sb = new StringBuilder();
+        String col = getReadAccessCol(ra);
+        
+            
+        sb.append("UPDATE ");
+        sb.append(getTable(asset));
+        sb.append(" SET ").append(col).append(" = ");
+        if (add)
+        {
+            sb.append("(").append(col).append(" || ?)::tsvector");
+        }
+        else // remove
+        {
+            sb.append("to_tsvector(regexp_replace(").append(col).append("::text, ?, ''))");
+        }
+        sb.append(" WHERE ");
+        if (PlaneMetaReadAccess.class.equals(ra) && !Plane.class.equals(asset))
+            sb.append(getPrimaryKeyColumn(Plane.class)); // HACK: only works because column name is the same in all tables
+        else      
+            sb.append(getPrimaryKeyColumn(asset));
+        sb.append(" = ?");
+
+        return sb.toString();
     }
     
     @Override

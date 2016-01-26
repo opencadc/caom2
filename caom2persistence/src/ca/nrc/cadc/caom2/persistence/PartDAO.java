@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
@@ -158,9 +157,12 @@ class PartDAO extends AbstractCaomEntityDAO<Part>
             // chunks have no children
             
             // delete chunks by FK
-            String sql = gen.getDeleteSQL(Chunk.class, p.id, false);
-            log.debug("delete: " + sql);
-            jdbc.update(sql);
+            EntityDelete op = gen.getEntityDelete(Chunk.class, false);
+            op.setID(p.id);
+            op.execute(jdbc);
+            //String sql = gen.getDeleteSQL(Chunk.class, p.id, false);
+            //log.debug("delete: " + sql);
+            //jdbc.update(sql);
         }
     }
 }

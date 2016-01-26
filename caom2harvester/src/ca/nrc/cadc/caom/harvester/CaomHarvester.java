@@ -25,9 +25,9 @@ public class CaomHarvester implements Runnable
     private ObservationHarvester obsHarvester;
     private DeletionHarvester obsDeleter;
 
-    private Harvester observationMetaHarvester;
-    private Harvester planeDataHarvester;
-    private Harvester planeMetaHarvester;
+    private ReadAccessHarvester observationMetaHarvester;
+    private ReadAccessHarvester planeDataHarvester;
+    private ReadAccessHarvester planeMetaHarvester;
     
     private DeletionHarvester observationMetaDeleter;
     private DeletionHarvester planeDataDeleter;
@@ -57,12 +57,12 @@ public class CaomHarvester implements Runnable
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
 
-        if (!skip) // these don't have redo-skip mode yet
-        {
-            this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-        }
+        this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        observationMetaHarvester.setSkipped(skip);
+        this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        planeDataHarvester.setSkipped(skip);
+        this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+        planeMetaHarvester.setSkipped(skip);
         
         if (!full)
         {
@@ -91,8 +91,8 @@ public class CaomHarvester implements Runnable
     {
         CaomHarvester ret = new CaomHarvester(dryrun, src, dest, batchSize, batchFactor, full, skip, maxdate);
         
-        //ret.obsHarvester = null;
-        //ret.obsDeleter = null;
+        ret.obsHarvester = null;
+        ret.obsDeleter = null;
         
         //ret.observationMetaHarvester = null;
         //ret.planeMetaHarvester = null;
@@ -113,15 +113,7 @@ public class CaomHarvester implements Runnable
         {
             throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
         }
-        
-        // make sure access control tuples are harvested before observations
-        if (observationMetaHarvester != null)
-            observationMetaHarvester.run();
-        if (planeDataHarvester != null)
-            planeDataHarvester.run();
-        if (planeMetaHarvester != null)
-            planeMetaHarvester.run();
-        
+
         // delete observations before harvest to avoid observationURI conflicts 
         // from delete+create
         if (obsDeleter != null)
@@ -130,15 +122,21 @@ public class CaomHarvester implements Runnable
         if (obsHarvester != null)
             obsHarvester.run();
 
-        // clean up old access control tuples, should not have conflict issue 
-        // like observations but that is due to how accessControlDA is implemented
+        // make sure access control tuples are harvested after observations
+        // because they update asset tables and fail if asset is missing
+        if (observationMetaHarvester != null)
+            observationMetaHarvester.run();
+        if (planeDataHarvester != null)
+            planeDataHarvester.run();
+        if (planeMetaHarvester != null)
+            planeMetaHarvester.run();
+        
+        // clean up old access control tuples
         if (observationMetaDeleter != null)
             observationMetaDeleter.run();
         if (planeDataDeleter != null)
             planeDataDeleter.run();
         if (planeMetaDeleter != null)
             planeMetaDeleter.run();
-        
-        
     }
 }
