@@ -30,6 +30,7 @@ public class ReadAccessHarvester extends Harvester
     private DatabaseReadAccessDAO destAccessDAO;
     
     private boolean skipped;
+    private Date maxDate;
     
     /**
      * Harvest ReadAccess tuples.
@@ -44,6 +45,11 @@ public class ReadAccessHarvester extends Harvester
         throws IOException
     {
         super(entityClass, src, dest, batchSize, full, dryrun);
+    }
+
+    public void setMaxDate(Date maxDate)
+    {
+        this.maxDate = maxDate;
     }
 
     public void setSkipped(boolean skipped)
@@ -155,15 +161,22 @@ public class ReadAccessHarvester extends Harvester
                 startDate = state.curLastModified;
             //else: skipped: keep startDate across multiple batches since we don't persist harvest state
             
-            Date end = null;
-            // lastModified is set by a single caom2AccessControlDA process
-            //end = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago
-            
+            Date end = maxDate;
             List<SkippedWrapper<ReadAccess>> entityList = null;
             if (skipped)
                 entityList = getSkipped(startDate);
             else
             {
+                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5*60000L); // 5 minutes ago;
+                if (end == null)
+                    end = fiveMinAgo;
+                else
+                {
+                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                    if (end.getTime() > fiveMinAgo.getTime())
+                        end = fiveMinAgo;
+                }
+                
                 List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
                 entityList = wrap(tmp);
             }

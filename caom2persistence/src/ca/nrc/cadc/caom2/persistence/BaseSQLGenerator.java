@@ -739,6 +739,27 @@ public class BaseSQLGenerator implements SQLGenerator
         return null;
     }
 
+    public String getSelectSQL(Class<? extends ReadAccess> clz, Long assetID, URI groupID)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        String[] cols = columnMap.get(clz);
+        for (int c=0; c<cols.length; c++)
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+        }
+        sb.append(" FROM ");
+        sb.append(getTable(clz));
+        sb.append(" WHERE assetID = ");
+        sb.append(literal(assetID));
+        sb.append(" AND groupID = ");
+        sb.append(literal(groupID));
+        return sb.toString();
+    }
+
+    
     public String getSelectSQL(Class clz, UUID id)
     {
         StringBuilder sb = new StringBuilder();
@@ -2260,6 +2281,9 @@ public class BaseSQLGenerator implements SQLGenerator
         if (obj instanceof UUID)
             return literal((UUID) obj);
         
+        if (obj instanceof URI)
+            return literal((URI) obj);
+        
         throw new IllegalArgumentException("unsupported literal: " + obj.getClass().getName());
     }
 
@@ -2286,6 +2310,11 @@ public class BaseSQLGenerator implements SQLGenerator
     protected String literal(long value)
     {
         return Long.toString(value);
+    }
+    
+    protected String literal(URI value)
+    {
+        return "'" + value.toASCIIString() + "'";
     }
     
     protected String literal(UUID value)
