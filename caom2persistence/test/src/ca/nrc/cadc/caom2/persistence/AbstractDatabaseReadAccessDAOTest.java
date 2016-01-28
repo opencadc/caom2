@@ -159,7 +159,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     }
 
     @Test
-    public void testGet()
+    public void testGetNotFound()
     {
         try
         {
@@ -201,6 +201,10 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         ReadAccess actual = dao.get(expected.getClass(), expected.getID());
         
         checkPut(s, expected, actual);
+        
+        ReadAccess actual2 = dao.get(expected.getClass(), expected.getAssetID(), expected.getGroupID());
+        checkPut(s, expected, actual2);
+        Assert.assertEquals(expected.getID(), actual2.getID());
         
         dao.delete(expected.getClass(), expected.getID());
         actual = dao.get(expected.getClass(), expected.getID());
@@ -244,6 +248,59 @@ public abstract class AbstractDatabaseReadAccessDAOTest
                 Constructor ctor = c.getConstructor(Long.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally
+        {
+            obsDAO.delete(obs.getID());
+        }
+    }
+    
+    @Test
+    public void testRejectDuplicate()
+    {
+        // random ID is OK since we are testing observation only
+        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
+        UUID id = obs.getID();
+        Long assetID = id.getLeastSignificantBits();
+        Util.assignID(obs, id);
+        Plane pl = new Plane("bar1");
+        Util.assignID(pl, id);
+        obs.getPlanes().add(pl);
+        
+        
+        try
+        {
+            // cleanup previous test run
+            obsDAO.delete(obs.getID());
+            obsDAO.put(obs);
+            
+            for (Class c : entityClasses)
+            {
+                URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
+        
+                // make sure it isn't there
+                ReadAccess cur = dao.get(c, assetID, groupID);
+                Assert.assertNull(cur);
+                
+                dao.put(expected);
+                
+                ReadAccess dupe = (ReadAccess) ctor.newInstance(assetID, groupID);
+                try
+                {
+                    dao.put(dupe);
+                }
+                catch(DataIntegrityViolationException ex)
+                {
+                    log.info("testRejectDuplicate: caught expected DataIntegrityViolationException");
+                }
             }
         }
         catch(Exception unexpected)
