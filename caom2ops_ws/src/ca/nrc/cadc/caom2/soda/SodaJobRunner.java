@@ -85,9 +85,11 @@ import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.dali.DaliUtil;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.CircleFormat;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.dali.util.PolygonFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.TransientException;
@@ -254,10 +256,31 @@ public class SodaJobRunner implements JobRunner
             for (String s : posList)
             {
                 // just circle for now
-                CircleFormat cf = new CircleFormat();
-                ca.nrc.cadc.dali.Circle c = cf.parse(s);
-                Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
-                posCut.add(cc);
+                Class clz = DaliUtil.getShapeType(s);
+                if (clz.equals(ca.nrc.cadc.dali.Circle.class))
+                {
+                    CircleFormat cf = new CircleFormat();
+                    ca.nrc.cadc.dali.Circle c = cf.parse(s);
+                    Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
+                    posCut.add(cc);
+                }
+                else if (clz.equals(ca.nrc.cadc.dali.Polygon.class))
+                {
+                    PolygonFormat pf = new PolygonFormat();
+                    ca.nrc.cadc.dali.Polygon p = pf.parse(s);
+                    Polygon pp = new Polygon();
+                    SegmentType seg = SegmentType.MOVE;
+                    for (ca.nrc.cadc.dali.Coord coord : p.getVertices())
+                    {
+                        Vertex v = new Vertex(coord.getLongitude(), coord.getLatitude(), seg);
+                        pp.getVertices().add(v);
+                        seg = SegmentType.LINE;
+                    }
+                    pp.getVertices().add(Vertex.CLOSE);
+                    posCut.add(pp);
+                }
+                else
+                    throw new UnsupportedOperationException("unexpected DALI shape type: " + clz.getSimpleName());
             }
             for (String s : circList)
             {
