@@ -85,7 +85,7 @@ public class AbstractTest
     private static final Logger log = Logger.getLogger(AbstractTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     public AbstractTest() { }

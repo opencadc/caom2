@@ -341,7 +341,7 @@ public class Ingest implements Runnable
             boolean isSimpleFITS = true;
 
             // Load the file into the nom.tam FITS class.
-            Fits fits = new Fits(file, FitsUtil.isCompressed(file));
+            Fits fits = new Fits(file);
 
             try
             {
@@ -794,7 +794,7 @@ public class Ingest implements Runnable
                 headers.add(header);
                 try
                 {
-                    dataStr.skipBytes(header.getDataSize());
+                    dataStr.skipAllBytes(header.getDataSize());
                 }
                 catch (EOFException ignore) {
                     break;

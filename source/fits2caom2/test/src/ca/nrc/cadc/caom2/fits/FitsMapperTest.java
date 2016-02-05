@@ -118,7 +118,7 @@ public class FitsMapperTest
     private static Logger log = Logger.getLogger(FitsValuesMap.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
     
     static FitsMapping simpleMapping;

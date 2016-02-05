@@ -116,10 +116,10 @@ public class FitsFileTest
         File simple2File = new File("test/files/simple2.fits");
         File mefFile = new File("test/files/mef.fits");
         
-        Fits simple1Fits = new Fits(simple1File, FitsUtil.isCompressed(simple1File.getAbsolutePath()));
-        Fits simple1FitsGZ = new Fits(simple1FileGZ, FitsUtil.isCompressed(simple1FileGZ.getAbsolutePath()));
-        Fits simple2Fits = new Fits(simple2File, FitsUtil.isCompressed(simple2File.getAbsolutePath()));
-        Fits mefFits = new Fits(mefFile, FitsUtil.isCompressed(mefFile.getAbsolutePath()));
+        Fits simple1Fits = new Fits(simple1File);
+        Fits simple1FitsGZ = new Fits(simple1FileGZ);
+        Fits simple2Fits = new Fits(simple2File);
+        Fits mefFits = new Fits(mefFile);
         
         simple1Headers = simple1Fits.read();
         simple1HeadersGZ = simple1FitsGZ.read();

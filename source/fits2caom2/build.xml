@@ -86,9 +86,9 @@
     
     <property name="project"            value="fits2caom2" />
 
-    <property name="cadcRegistryClient" value="${lib}/cadcRegistry.jar" />
+    <property name="cadcRegistry"       value="${lib}/cadcRegistry.jar" />
     <property name="cadcUtil"           value="${lib}/cadcUtil.jar" />
-    <property name="cadcVOSClient"      value="${lib}/cadcVOS.jar" />
+    <property name="cadcVOS"            value="${lib}/cadcVOS.jar" />
     <property name="cadcUWS"            value="${lib}/cadcUWS.jar" />
     <property name="cadcWCS"            value="${lib}/cadcWCS.jar" />
     
@@ -99,9 +99,9 @@
     <property name="log4j"              value="${ext.lib}/log4j.jar" />
     <property name="xerces"             value="${ext.lib}/xerces.jar" />
     
-    <property name="jars"   value="${cadcRegistryClient}:${cadcUtil}:${cadcVOSClient}:${cadcWCS}:${caom2}:${fits}:${jdom2}:${log4j}" />
+    <property name="jars"   value="${cadcRegistry}:${cadcUtil}:${cadcVOS}:${cadcWCS}:${caom2}:${fits}:${jdom2}:${log4j}" />
 
-    <property name="client.cadc.jars"      value="${cadcRegistryClient}:${cadcUtil}:${cadcVOSClient}:${cadcUWS}:${cadcWCS}:${caom2}" />
+    <property name="client.cadc.jars"      value="${cadcRegistry}:${cadcUtil}:${cadcVOS}:${cadcUWS}:${cadcWCS}:${caom2}" />
     <property name="client.external.jars"  value="${fits}:${jdom2}:${log4j}:${xerces}" />
     
     <target name="config">
