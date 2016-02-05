@@ -122,6 +122,15 @@ public class CaomHarvester implements Runnable
         if (obsHarvester != null)
             obsHarvester.run();
 
+        // clean up old access control tuples before harvest to avoid conflicts
+        // from delete+create
+        if (observationMetaDeleter != null)
+            observationMetaDeleter.run();
+        if (planeDataDeleter != null)
+            planeDataDeleter.run();
+        if (planeMetaDeleter != null)
+            planeMetaDeleter.run();
+        
         // make sure access control tuples are harvested after observations
         // because they update asset tables and fail if asset is missing
         if (observationMetaHarvester != null)
@@ -131,12 +140,6 @@ public class CaomHarvester implements Runnable
         if (planeMetaHarvester != null)
             planeMetaHarvester.run();
         
-        // clean up old access control tuples
-        if (observationMetaDeleter != null)
-            observationMetaDeleter.run();
-        if (planeDataDeleter != null)
-            planeDataDeleter.run();
-        if (planeMetaDeleter != null)
-            planeMetaDeleter.run();
+        
     }
 }
