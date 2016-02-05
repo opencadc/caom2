@@ -206,6 +206,13 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         checkPut(s, expected, actual2);
         Assert.assertEquals(expected.getID(), actual2.getID());
         
+        // idempotent put (a no-net-op update)
+        checkPut(s, expected, actual);
+        
+        ReadAccess actual3 = dao.get(expected.getClass(), expected.getAssetID(), expected.getGroupID());
+        checkPut(s, expected, actual3);
+        Assert.assertEquals(expected.getID(), actual3.getID());
+        
         dao.delete(expected.getClass(), expected.getID());
         actual = dao.get(expected.getClass(), expected.getID());
         
@@ -222,11 +229,8 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
-        //Util.assignID(ar, id);
         Part pp = new Part(0);
-        //Util.assignID(pp, id);
         Chunk ch = new Chunk();
-        //Util.assignID(ch, id);
         
         pp.getChunks().add(ch);
         ar.getParts().add(pp);
@@ -240,15 +244,24 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             
             obsDAO.put(obs);
             
-            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
             ReadAccess expected;
-
+            
+            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
             for (Class c : entityClasses)
             {
                 Constructor ctor = c.getConstructor(Long.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
+            
+            groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                expected = (ReadAccess) ctor.newInstance(assetID, groupID);
+                doPutGetDelete(expected);
+            }
+            
         }
         catch(Exception unexpected)
         {
@@ -257,7 +270,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            obsDAO.delete(obs.getID());
+            //obsDAO.delete(obs.getID());
         }
     }
     
@@ -314,7 +327,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
     
-    @Test
+    //@Test
     public void testGetList()
     {
         // random ID is OK since we are testing observation only

@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
@@ -83,6 +84,7 @@ import static ca.nrc.cadc.caom2.persistence.AbstractDatabaseReadAccessDAOTest.lo
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.util.UUID;
 import junit.framework.Assert;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -99,7 +101,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     static
     {
         log = Logger.getLogger(PostgresqlReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
     }
 
     public PostgresqlReadAccessDAOTest()
@@ -144,6 +146,116 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         {
             log.error("unexpected exception", unexpected);
             org.junit.Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testExtendedUpdate()
+    {
+        Long assetID = 333L; // want same assetID on all assets so test code is simpler
+        UUID id = new UUID(0L, assetID);
+        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
+        Util.assignID(obs, id);
+        Plane pl = new Plane("bar1");
+        Util.assignID(pl, id);
+        
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        Part pp = new Part(0);
+        Chunk ch = new Chunk();
+        pp.getChunks().add(ch);
+        ar.getParts().add(pp);
+        pl.getArtifacts().add(ar);
+        obs.getPlanes().add(pl);
+            
+        try
+        {
+            JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
+            
+            // cleanup previous test run
+            obsDAO.delete(id);
+            
+            obsDAO.put(obs);
+            
+            URI group1 =  new URI("ivo://cadc.nrc.ca/gms?FOO-333");
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group1);
+                dao.put(expected);
+                
+                Class[] assetClass = getAssetClasses(expected);
+                for (Class ac : assetClass)
+                {
+                    String vecSQL = getGroupVectorSQL(ac, expected);
+                    log.info("checkUpdate: " + vecSQL);
+                    String vec = (String) jdbc.queryForObject(vecSQL, String.class);
+                    log.info("checkUpdate: " + expected.getClass().getSimpleName() + " " + vec);
+                    String[] groups = vec.split(" ");
+                    Assert.assertEquals("insert 1", 1, groups.length);
+                    // vector should be in alphabetic order with tick marks
+                    Assert.assertEquals("insert 1", "'"+expected.getGroupName()+"'", groups[0]);
+                }
+            }
+            
+            URI group2 =  new URI("ivo://cadc.nrc.ca/gms?FOO-444");
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                ReadAccess expected1 = (ReadAccess) ctor.newInstance(assetID, group1);
+                ReadAccess expected2 = (ReadAccess) ctor.newInstance(assetID, group2);
+                
+                dao.put(expected2);
+                
+                Class[] assetClass = getAssetClasses(expected2);
+                for (Class ac : assetClass)
+                {
+                    String vecSQL = getGroupVectorSQL(ac, expected2);
+                    log.info("checkUpdate: " + vecSQL);
+                    String vec = (String) jdbc.queryForObject(vecSQL, String.class);
+                    log.info("checkUpdate: " + expected2.getClass().getSimpleName() + " " + vec);
+                    String[] groups = vec.split(" ");
+                    Assert.assertEquals(2, groups.length);
+                    // vector should be in alphabetic order with tick marks
+                    Assert.assertEquals("insert 2", "'"+expected1.getGroupName()+"'", groups[0]);
+                    Assert.assertEquals("insert 2", "'"+expected2.getGroupName()+"'", groups[1]);
+                }
+            }
+            
+            // test removal
+            for (Class c : entityClasses)
+            {
+                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                ReadAccess cur = dao.get(c, assetID, group1);
+                Assert.assertNotNull("found group1 tuple", cur);
+                dao.delete(c, cur.getID());
+                
+                // now only group 2 should be in the vector
+                ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group2);
+                
+                Class[] assetClass = getAssetClasses(cur);
+                for (Class ac : assetClass)
+                {
+                    String vecSQL = getGroupVectorSQL(ac, cur);
+                    log.info("checkUpdate: " + vecSQL);
+                    String vec = (String) jdbc.queryForObject(vecSQL, String.class);
+                    log.info("checkUpdate: " + cur.getClass().getSimpleName() + " " + vec);
+                    String[] groups = vec.split(" ");
+                    Assert.assertEquals("delete 1", 1, groups.length);
+                    // vector should be in alphabetic order with tick marks
+                    Assert.assertEquals("delete 1", "'"+expected.getGroupName()+"'", groups[0]);
+                }
+            }
+            
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            org.junit.Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally
+        {
+            //obsDAO.delete(obs.getID());
         }
     }
     
@@ -196,6 +308,25 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         sb.append("select count(*) from ").append(assetTable);
         sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID());
         sb.append(" and ").append(raCol).append(" @@ '").append(expected.getGroupName()).append("'::tsquery");
+        String sql = sb.toString();
+        return sql;
+    }
+    
+    private String getGroupVectorSQL(Class ac, ReadAccess expected)
+    {
+        BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
+        String assetTable = gen.getTable(ac);
+        String kCol = gen.getPrimaryKeyColumn(ac);
+        if (PlaneMetaReadAccess.class.equals(expected.getClass())
+                && !Plane.class.equals(ac))
+        {
+            // HACK: see PostgresqlSQLGenerator.getUpdateAssetSQL
+            kCol = gen.getPrimaryKeyColumn(Plane.class);
+        }
+        String raCol = gen.getReadAccessCol(expected.getClass());
+        StringBuilder sb = new StringBuilder();
+        sb.append("select ").append(raCol).append(" from ").append(assetTable);
+        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID());
         String sql = sb.toString();
         return sql;
     }

@@ -125,11 +125,13 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
         sb.append(" SET ").append(col).append(" = ");
         if (add)
         {
-            sb.append("(").append(col).append(" || ?)::tsvector");
+            sb.append("(").append(col).append(" || ?::tsvector)");
         }
         else // remove
         {
-            sb.append("to_tsvector(regexp_replace(").append(col).append("::text, ?, ''))");
+            sb.append("regexp_replace(");
+            sb.append("regexp_replace(").append(col).append("::text, ?, '')"); // remove group name
+            sb.append(", $$''$$, '', 'g')::tsvector"); // remove all tick marks before cast
         }
         sb.append(" WHERE ");
         if (PlaneMetaReadAccess.class.equals(ra) && !Plane.class.equals(asset))
