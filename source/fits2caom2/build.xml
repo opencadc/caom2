@@ -86,9 +86,9 @@
     
     <property name="project"            value="fits2caom2" />
 
-    <property name="cadcRegistryClient" value="${lib}/cadcRegistryClient.jar" />
+    <property name="cadcRegistryClient" value="${lib}/cadcRegistry.jar" />
     <property name="cadcUtil"           value="${lib}/cadcUtil.jar" />
-    <property name="cadcVOSClient"      value="${lib}/cadcVOSClient.jar" />
+    <property name="cadcVOSClient"      value="${lib}/cadcVOS.jar" />
     <property name="cadcUWS"            value="${lib}/cadcUWS.jar" />
     <property name="cadcWCS"            value="${lib}/cadcWCS.jar" />
     
