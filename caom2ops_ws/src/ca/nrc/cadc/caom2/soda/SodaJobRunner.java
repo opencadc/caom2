@@ -387,6 +387,7 @@ public class SodaJobRunner implements JobRunner
             URL tapURL = reg.getServiceURL(TAP, tapProto, null, wsAuth);
             
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
+            SchemeHandler sh = new CaomSchemeHandler();
             List<Result> jobResults = new ArrayList<Result>();
             List<String> jobWarnings = new ArrayList<String>();
             int serialNum = 1;
@@ -410,7 +411,6 @@ public class SodaJobRunner implements JobRunner
                                 List<String> cutout = CutoutUtil.computeCutout(a, pos, band, time, polCut);
                                 if (cutout != null && !cutout.isEmpty())
                                 {
-                                    SchemeHandler sh = new CaomSchemeHandler();
                                     URL url = sh.getURL(a.getURI());
                                     int num = 0;
                                     if (url.getQuery() != null)
