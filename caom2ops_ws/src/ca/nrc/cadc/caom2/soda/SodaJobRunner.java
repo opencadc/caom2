@@ -255,16 +255,14 @@ public class SodaJobRunner implements JobRunner
             
             for (String s : posList)
             {
-                // just circle for now
-                Class clz = DaliUtil.getShapeType(s);
-                if (clz.equals(ca.nrc.cadc.dali.Circle.class))
+                if (CircleFormat.isCircle(s))
                 {
                     CircleFormat cf = new CircleFormat();
                     ca.nrc.cadc.dali.Circle c = cf.parse(s);
                     Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
                     posCut.add(cc);
                 }
-                else if (clz.equals(ca.nrc.cadc.dali.Polygon.class))
+                else if (PolygonFormat.isPolygon(s))
                 {
                     PolygonFormat pf = new PolygonFormat();
                     ca.nrc.cadc.dali.Polygon p = pf.parse(s);
@@ -280,7 +278,7 @@ public class SodaJobRunner implements JobRunner
                     posCut.add(pp);
                 }
                 else
-                    throw new UnsupportedOperationException("unexpected DALI shape type: " + clz.getSimpleName());
+                    throw new UnsupportedOperationException("unexpected DALI shape type in: " + s);
             }
             for (String s : circList)
             {
