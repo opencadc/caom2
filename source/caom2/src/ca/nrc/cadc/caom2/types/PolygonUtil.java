@@ -819,15 +819,10 @@ public final class PolygonUtil
         // midpoint between vertices
         if (e1 != null && e2 != null && d > 0.0)
         {
-            log.warn("MSC raw: " + e1 + " -- " + e2);
-            log.warn("MSC inv: " + trans.inverseTransform(e1) + " -- " + trans.inverseTransform(e2));
             Point cen = new Point(0.5*Math.abs(e1.cval1 + e2.cval1), 0.5*Math.abs(e1.cval2 + e2.cval2));
             Point mscc = trans.inverseTransform(cen);
-            log.warn("MSC center raw: " +  cen);
-            log.warn("MSC center inv:" + mscc);
             ret.minSpanCircle = new Circle(mscc, d/2.0);
         }
-        
         
         return ret;
     }

@@ -91,13 +91,13 @@ public final class EnergyUtil
                             CoordFunction1D function = c.energy.getAxis().function;
                             if (range != null)
                             {
-                                log.warn("computeBounds: " + range);
+                                log.debug("computeBounds: " + range);
                                 SubInterval s = toInterval(c.energy, range);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
                             else if (bounds != null)
                             {
-                                log.warn("computeBounds: " + bounds);
+                                log.debug("computeBounds: " + bounds);
                                 for (CoordRange1D sr : bounds.getSamples())
                                 {
                                     SubInterval s = toInterval(c.energy, sr);
@@ -106,7 +106,7 @@ public final class EnergyUtil
                             }
                             else if (function != null)
                             {
-                                log.warn("computeBounds: " + function);
+                                log.debug("computeBounds: " + function);
                                 SubInterval s = toInterval(c.energy, function);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
@@ -205,7 +205,7 @@ public final class EnergyUtil
     static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
-        log.warn("computeDimensionFromWCS: " + bounds + " " + productType);
+        log.debug("computeDimensionFromWCS: " + bounds + " " + productType);
         if (bounds == null)
             return null;
         
@@ -235,7 +235,7 @@ public final class EnergyUtil
             }
         }
         
-        log.warn("computeDimensionFromWCS: " + bounds + " numA: " + num + " wcs: " + sw);
+        log.debug("computeDimensionFromWCS: " + bounds + " numA: " + num + " wcs: " + sw);
 
         if (sw == null)
             return null;
