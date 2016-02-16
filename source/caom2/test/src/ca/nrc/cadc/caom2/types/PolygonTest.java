@@ -85,6 +85,7 @@ public class PolygonTest
 
     private Polygon target;
     private double expCenterX, expCenterY, expArea, expSize;
+    private double expMSCX, expMSCY, expMSCR;
     
     static
     {
@@ -103,6 +104,11 @@ public class PolygonTest
         expCenterY = 3.0;
         expArea = 2.0;
         expSize = 2.0;
+        
+        expMSCX = expCenterX;
+        expMSCY = expCenterY;
+        expMSCR = 1.0;
+        
     }
     
     //@Test
@@ -128,6 +134,10 @@ public class PolygonTest
             Assert.assertEquals(expCenterY, target.getCenter().cval2, 0.001);
             Assert.assertEquals(expArea, target.getArea(), 0.01);
             Assert.assertEquals(expSize, target.getSize(), 0.01);
+            
+            Assert.assertEquals(expMSCX, target.getMinimumSpanningCircle().getCenter().cval1, 0.001);
+            Assert.assertEquals(expMSCY, target.getMinimumSpanningCircle().getCenter().cval2, 0.001);
+            Assert.assertEquals(expMSCR, target.getMinimumSpanningCircle().getRadius(), 0.001);
         }
         catch(Exception unexpected)
         {
@@ -160,4 +170,6 @@ public class PolygonTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    
 }

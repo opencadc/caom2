@@ -202,7 +202,7 @@ public final class TimeUtil
                         if (c.time != null && c.time.getAxis().function != null)
                         {
                             num++;
-                            double ss = c.time.getAxis().function.getDelta();
+                            double ss = Math.abs(c.time.getAxis().function.getDelta());
                             if (ss >= scale)
                             {
                                 scale = ss;

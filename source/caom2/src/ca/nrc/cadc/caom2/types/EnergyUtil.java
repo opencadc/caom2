@@ -91,11 +91,13 @@ public final class EnergyUtil
                             CoordFunction1D function = c.energy.getAxis().function;
                             if (range != null)
                             {
+                                log.warn("computeBounds: " + range);
                                 SubInterval s = toInterval(c.energy, range);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
                             else if (bounds != null)
                             {
+                                log.warn("computeBounds: " + bounds);
                                 for (CoordRange1D sr : bounds.getSamples())
                                 {
                                     SubInterval s = toInterval(c.energy, sr);
@@ -104,6 +106,7 @@ public final class EnergyUtil
                             }
                             else if (function != null)
                             {
+                                log.warn("computeBounds: " + function);
                                 SubInterval s = toInterval(c.energy, function);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
@@ -202,6 +205,7 @@ public final class EnergyUtil
     static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
+        log.warn("computeDimensionFromWCS: " + bounds + " " + productType);
         if (bounds == null)
             return null;
         
@@ -219,7 +223,7 @@ public final class EnergyUtil
                         if (c.energy != null && c.energy.getAxis().function != null)
                         {
                             num++;
-                            double ss = c.energy.getAxis().function.getDelta();
+                            double ss = Math.abs(c.energy.getAxis().function.getDelta());
                             if (ss >= scale)
                             {
                                 scale = ss;
@@ -231,6 +235,8 @@ public final class EnergyUtil
             }
         }
         
+        log.warn("computeDimensionFromWCS: " + bounds + " numA: " + num + " wcs: " + sw);
+
         if (sw == null)
             return null;
         

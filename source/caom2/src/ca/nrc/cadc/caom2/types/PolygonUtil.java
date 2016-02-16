@@ -457,7 +457,7 @@ public final class PolygonUtil
             return;
         PolygonProperties pp = computePolygonProperties(poly);
         
-        double tol = pp.maxVertexSeparation*1.0e-6;
+        double tol = pp.minSpanCircle.getSize()*1.0e-6;
         
         Iterator<Vertex> vi = poly.getVertices().iterator();
         List<Segment> segs = new ArrayList<Segment>();
@@ -739,8 +739,8 @@ public final class PolygonUtil
         
         boolean winding;
         Double area;
-        Double maxVertexSeparation;
         Point center;
+        Circle minSpanCircle;
     }
     
     // lazy computation of center, area, and size
@@ -780,16 +780,11 @@ public final class PolygonUtil
         a *= 0.5;
         cx = cx / (6.0 * a);
         cy = cy / (6.0 * a);
-        //log.debug("[computePolygonProperties] " + a + "," + cx + "," + cy);
 
-        PolygonProperties ret = new PolygonProperties();
-        ret.winding = (a < 0.0); // arbitrary
-        if (a < 0.0) a *= -1.0;
-        ret.area = new Double(a);
-        ret.center = trans.inverseTransform(new Point(cx, cy));
-
-        // size: max distance between any two vertices
+        // quick and dirty minimum spanning circle computation
         double d = 0.0;
+        Vertex e1 = null;
+        Vertex e2 = null;
         for (int i = 0; i < tpoly.getVertices().size(); i++)
         {
             Vertex vi = (Vertex) tpoly.getVertices().get(i);
@@ -804,13 +799,36 @@ public final class PolygonUtil
                         double d2 = vi.cval2 - vj.cval2;
                         double dd = Math.sqrt(d1*d1 + d2*d2);
                         if (dd > d)
+                        {
                             d = dd;
+                            e1 = vi;
+                            e2 = vj;
+                            
+                        }
                     }
                 }
             }
         }
-        ret.maxVertexSeparation = new Double(d);
-
+        
+        PolygonProperties ret = new PolygonProperties();
+        ret.winding = (a < 0.0); // arbitrary
+        if (a < 0.0) a *= -1.0;
+        ret.area = new Double(a);
+        ret.center = trans.inverseTransform(new Point(cx, cy));
+        
+        // midpoint between vertices
+        if (e1 != null && e2 != null && d > 0.0)
+        {
+            log.warn("MSC raw: " + e1 + " -- " + e2);
+            log.warn("MSC inv: " + trans.inverseTransform(e1) + " -- " + trans.inverseTransform(e2));
+            Point cen = new Point(0.5*Math.abs(e1.cval1 + e2.cval1), 0.5*Math.abs(e1.cval2 + e2.cval2));
+            Point mscc = trans.inverseTransform(cen);
+            log.warn("MSC center raw: " +  cen);
+            log.warn("MSC center inv:" + mscc);
+            ret.minSpanCircle = new Circle(mscc, d/2.0);
+        }
+        
+        
         return ret;
     }
 

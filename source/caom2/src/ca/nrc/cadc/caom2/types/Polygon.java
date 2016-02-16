@@ -87,7 +87,7 @@ public class Polygon implements Shape
     private static int vertexStateCode = -1;
     private transient Point center;
     private transient Double area;
-    private transient Double size;
+    private transient Circle minimumSpanningCircle;
 
     public Polygon() { }
 
@@ -125,7 +125,7 @@ public class Polygon implements Shape
     {
         return vertices;
     }
-
+    
     public double getArea()
     {
         if (area == null)
@@ -140,11 +140,19 @@ public class Polygon implements Shape
         return center;
     }
 
+    /**
+     * @return 
+     */
     public double getSize()
     {
-        if (size == null)
+        if (minimumSpanningCircle == null)
             initProps();
-        return size;
+        return minimumSpanningCircle.getSize();
+    }
+
+    public Circle getMinimumSpanningCircle()
+    {
+        return minimumSpanningCircle;
     }
 
     public boolean isSimple()
@@ -162,7 +170,7 @@ public class Polygon implements Shape
         PolygonUtil.PolygonProperties pp = PolygonUtil.computePolygonProperties(this);
         this.area = pp.area;
         this.center = pp.center;
-        this.size = pp.maxVertexSeparation;
+        this.minimumSpanningCircle = pp.minSpanCircle;
     }
     
     @Override
