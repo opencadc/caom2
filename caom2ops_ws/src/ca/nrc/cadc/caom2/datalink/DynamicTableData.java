@@ -92,38 +92,47 @@ public class DynamicTableData implements TableData
 {
     private static final Logger log = Logger.getLogger(DynamicTableData.class);
     
+    private int maxrec;
     private Iterator<String> argIter;
     private CaomTapQuery query;
     private boolean artifactOnly;
     private ArtifactProcessor ap;
 
     private Iterator<List<Object>> curIter;
+    
+    private List<ServiceDescriptor> serviceDescriptors = new ArrayList<ServiceDescriptor>();
 
-    public DynamicTableData(Job job, CaomTapQuery query, boolean artifactOnly, ArtifactProcessor ap)
+    public DynamicTableData(int maxrec, Job job, CaomTapQuery query, boolean artifactOnly, ArtifactProcessor ap)
     {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
         if (args == null || args.isEmpty())
             throw new UsageFault("missing required parameter ID");
+        this.maxrec = maxrec;
         this.argIter = args.iterator();
         this.query = query;
         this.artifactOnly = artifactOnly;
         this.ap = ap;
     }
 
+    public Iterator<ServiceDescriptor> descriptors()
+    {
+        return serviceDescriptors.iterator();
+    }
+    
     public Iterator<List<Object>> iterator()
     {
         return new ConcatIterator();
     }
-
+    
     private class ConcatIterator implements Iterator<List<Object>>
     {
-
+        private int count = 0;
         public boolean hasNext()
         {
             if (argIter == null)
                 return false; // done
 
-            if (curIter == null || !curIter.hasNext())
+            if ( (curIter == null || !curIter.hasNext()) && count < maxrec )
                 curIter = getBatchIterator();
             
             if (curIter == null)
@@ -137,7 +146,9 @@ public class DynamicTableData implements TableData
 
         public List<Object> next()
         {
-            return curIter.next();
+            List<Object> ret = curIter.next();
+            count++;
+            return ret;
         }
 
         public void remove()
@@ -212,6 +223,12 @@ public class DynamicTableData implements TableData
                                 r.add(o);
                             }
                             rows.add(r);
+                            
+                            if (dl.descriptor != null)
+                            {
+                                log.debug("adding: " + dl.descriptor);
+                                serviceDescriptors.add(dl.descriptor);
+                            }
                         }
                         curIter = rows.iterator();
                         done = true;

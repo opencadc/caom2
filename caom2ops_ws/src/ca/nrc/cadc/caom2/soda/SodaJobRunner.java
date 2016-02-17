@@ -85,7 +85,6 @@ import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
-import ca.nrc.cadc.dali.DaliUtil;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.CircleFormat;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
@@ -94,6 +93,7 @@ import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
 import ca.nrc.cadc.uws.ExecutionPhase;
@@ -108,8 +108,8 @@ import ca.nrc.cadc.uws.util.JobLogInfo;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -122,7 +122,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 /**
- * This JobRunner is implements IVOA WD-SODA-1.0 job semantics.
+ * This JobRunner implements IVOA WD-SODA-1.0 job semantics.
  * 
  * @author pdowler
  */
@@ -133,14 +133,20 @@ public class SodaJobRunner implements JobRunner
     private static final EnergyConverter conv = new EnergyConverter();    
 
     static final URI TAP = URI.create("ivo://cadc.nrc.ca/tap#sync");
+    static final URI SODA = URI.create("ivo://cadc.nrc.ca/soda#sync");
+    
     static final String PARAM_ID = "ID";
     static final String PARAM_POS = "POS";
-    static final String PARAM_CIRC = "XCIRC";
-    static final String PARAM_POLY = "XPOLY";
+    static final String PARAM_CIRC = "CIRC";
+    static final String PARAM_POLY = "POLY";
     static final String PARAM_BAND = "BAND";
     static final String PARAM_TIME = "TIME";
     static final String PARAM_POL = "POL";
     static final String PARAM_RUNID = "RUNID";
+    
+    static final String RESULT_OK = "ok";
+    static final String RESULT_WARN = "warn";
+    static final String RESULT_FAIL = "fail";
     
     static final List<String> SODA_PARAMS = Arrays.asList(
             PARAM_ID, PARAM_POS, PARAM_CIRC, PARAM_POLY, PARAM_BAND, PARAM_TIME, PARAM_POL
@@ -218,14 +224,11 @@ public class SodaJobRunner implements JobRunner
             Map<String,List<String>> params = pex.getParameters(job.getParameterList());
             log.debug("soda params: " + SODA_PARAMS.size() +" map params: " + params.size());
             List<String> idList = params.get(PARAM_ID);
-            List<String> posList = params.get(PARAM_POS);
-            List<String> bandList = params.get(PARAM_BAND);
-            List<String> timeList = params.get(PARAM_TIME);
-            List<String> polList = params.get(PARAM_POL);
             
-            List<String> circList = params.get(PARAM_CIRC);
-            List<String> polyList = params.get(PARAM_POLY);
-            
+            List<Cutout<Shape>> posCut = getSpatialCuts(params);
+            List<Cutout<Interval>> bandCut = getEnergyCuts(params);
+            List<Cutout<Interval>> timeCut = getTimeCuts(params);
+            Cutout<List<PolarizationState>> polCut = getPolarizationCuts(params);
             
             StringBuilder esb = new StringBuilder();
             
@@ -234,134 +237,26 @@ public class SodaJobRunner implements JobRunner
             {
                 if (idList.size() != 1)
                     esb.append("found ").append(idList.size()).append(" ID values, expected 1\n");
-                int numpos = posList.size() + circList.size() + polyList.size();
-                if (numpos > 1)
-                    esb.append("found ").append(numpos).append(" POS/XCIRC/XPOLY values, expected 0-1\n");
-                if (bandList.size() > 1)
-                    esb.append("found ").append(bandList.size()).append(" BAND values, expected 0-1\n");
-                if (timeList.size() > 1)
-                    esb.append("found ").append(timeList.size()).append(" TIME values, expected 0-1\n");
+                if (posCut.size() > 1)
+                    esb.append("found ").append(posCut.size()).append(" POS/XCIRC/XPOLY values, expected 0-1\n");
+                if (bandCut.size() > 1)
+                    esb.append("found ").append(bandCut.size()).append(" BAND values, expected 0-1\n");
+                if (timeCut.size() > 1)
+                    esb.append("found ").append(timeCut.size()).append(" TIME values, expected 0-1\n");
                 
                 if (esb.length() > 0)
                 {
                     throw new IllegalArgumentException("sync: " + esb.toString());
                 }
             }
-            DoubleArrayFormat daf = new DoubleArrayFormat();
-            List<Shape> posCut = new ArrayList<Shape>();
-            List<Interval> bandCut = new ArrayList<Interval>();
-            List<Interval> timeCut = new ArrayList<Interval>();
-            List<PolarizationState> polCut = new ArrayList<PolarizationState>();
-            
-            for (String s : posList)
-            {
-                if (CircleFormat.isCircle(s))
-                {
-                    CircleFormat cf = new CircleFormat();
-                    ca.nrc.cadc.dali.Circle c = cf.parse(s);
-                    Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
-                    posCut.add(cc);
-                }
-                else if (PolygonFormat.isPolygon(s))
-                {
-                    PolygonFormat pf = new PolygonFormat();
-                    ca.nrc.cadc.dali.Polygon p = pf.parse(s);
-                    Polygon pp = new Polygon();
-                    SegmentType seg = SegmentType.MOVE;
-                    for (ca.nrc.cadc.dali.Coord coord : p.getVertices())
-                    {
-                        Vertex v = new Vertex(coord.getLongitude(), coord.getLatitude(), seg);
-                        pp.getVertices().add(v);
-                        seg = SegmentType.LINE;
-                    }
-                    pp.getVertices().add(Vertex.CLOSE);
-                    posCut.add(pp);
-                }
-                else
-                    throw new UnsupportedOperationException("unexpected DALI shape type in: " + s);
-            }
-            for (String s : circList)
-            {
-                double[] dd = daf.parse(s);
-                try
-                {
-                    if (dd.length != 3)
-                        throw new IndexOutOfBoundsException();
-                    
-                    Circle c = new Circle(new Point(dd[0], dd[1]), dd[2]);
-                    log.debug("CIRC cut: " + c);
-                    posCut.add(c);
-                }
-                catch(IndexOutOfBoundsException ex)
-                {
-                    throw new IllegalArgumentException("invalid " + PARAM_CIRC + ": " + s);
-                }
-            }
-            for (String s : polyList)
-            {
-                double[] dd = daf.parse(s);
-                try
-                {
-                    if (dd.length < 6)
-                        throw new IndexOutOfBoundsException();
-                    Polygon poly = new Polygon();
-                    SegmentType st = SegmentType.MOVE;
-                    for (int i=0; i<dd.length; i += 2)
-                    {
-                        Vertex v = new Vertex(dd[i], dd[i+1], st);
-                        poly.getVertices().add(v);
-                        st = SegmentType.LINE;
-                    }
-                    poly.getVertices().add(Vertex.CLOSE);
-                    log.debug("POLY cut: " + poly);
-                    posCut.add(poly);
-                }
-                catch(IndexOutOfBoundsException ex)
-                {
-                    throw new IllegalArgumentException("invalid " + PARAM_POLY + ": " + s);
-                }
-            }
-            
-            for (String s : bandList)
-            {
-                double[] dd = daf.parse(s);
-                if (dd.length == 2)
-                {
-                    Interval i = new Interval(dd[0], dd[1]);
-                    log.debug("BAND cut: " + i);
-                    bandCut.add(i);
-                }
-                else
-                    throw new IllegalArgumentException("invalid " + PARAM_BAND + ": " + s);
-            }
-            
-            for (String s : timeList)
-            {
-                double[] dd = daf.parse(s);
-                if (dd.length == 2)
-                {
-                    Interval i = new Interval(dd[0], dd[1]);
-                    log.debug("TIME cut: " + i);
-                    timeCut.add(i);
-                }
-                else
-                    throw new IllegalArgumentException("invalid " + PARAM_BAND + ": " + s);
-            }
-            
-            for (String s : polList)
-            {
-                PolarizationState ps = PolarizationState.toValue(s);
-                log.debug("POL cut: " + ps);
-                polCut.add(ps);
-            }
             
             // add  single null element to make subsequent loops easier
             if (posCut.isEmpty())
-                posCut.add(null);
+                posCut.add(new Cutout<Shape>());
             if (bandCut.isEmpty())
-                bandCut.add(null);
+                bandCut.add(new Cutout<Interval>());
             if (timeCut.isEmpty())
-                timeCut.add(null);
+                timeCut.add(new Cutout<Interval>());
             
             tList.add(System.currentTimeMillis());
             sList.add("parse parameters");
@@ -387,7 +282,6 @@ public class SodaJobRunner implements JobRunner
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             SchemeHandler sh = new CaomSchemeHandler();
             List<Result> jobResults = new ArrayList<Result>();
-            List<String> jobWarnings = new ArrayList<String>();
             int serialNum = 1;
             for (String id : idList)
             {
@@ -397,64 +291,106 @@ public class SodaJobRunner implements JobRunner
                 sList.add("query tap for artifact " + id);
                 
                 if (a == null)
-                    jobWarnings.add("not found: " + id);
+                {
+                    StringBuilder path = new StringBuilder();
+                    path.append("?CODE=404");
+                    path.append("&TYPE=text/plain");
+                    path.append("&BODY=").append( NetUtil.encode("NotFound: " + id));
+                    URL url = reg.getServiceURL(SODA, "http", path.toString(), AuthMethod.ANON);
+                    URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
+                    jobResults.add(new Result("error-"+serialNum++, loc));
+                }
                 else
                 {
-                    for (Shape pos : posCut)
+                    for (Cutout<Shape> pos : posCut)
                     {
-                        for (Interval band : bandCut)
+                        for (Cutout<Interval> band : bandCut)
                         {
-                            for (Interval time : timeCut)
+                            for (Cutout<Interval> time : timeCut)
                             {
-                                List<String> cutout = CutoutUtil.computeCutout(a, pos, band, time, polCut);
-                                if (cutout != null && !cutout.isEmpty())
+                                Cutout<List<PolarizationState>> pol = polCut;
+                                try
                                 {
-                                    URL url = sh.getURL(a.getURI());
-                                    int num = 0;
-                                    if (url.getQuery() != null)
-                                        num = 1;
-                                    StringBuilder sb = new StringBuilder(url.toExternalForm());
-
-                                    if (runID != null)
+                                    List<String> cutout = CutoutUtil.computeCutout(a, pos.cut, band.cut, time.cut, pol.cut);
+                                    if (cutout != null && !cutout.isEmpty())
                                     {
-                                        if (num == 0)
-                                            sb.append("?");
-                                        else
-                                            sb.append("&");
-                                        sb.append("runid=").append(runID);
-                                        num++;
-                                    }
+                                        URL url = sh.getURL(a.getURI());
+                                        int num = 0;
+                                        if (url.getQuery() != null)
+                                            num = 1;
+                                        StringBuilder sb = new StringBuilder(url.toExternalForm());
 
-                                    for (String c : cutout)
+                                        if (runID != null)
+                                        {
+                                            if (num == 0)
+                                                sb.append("?");
+                                            else
+                                                sb.append("&");
+                                            sb.append("runid=").append(runID);
+                                            num++;
+                                        }
+
+                                        for (String c : cutout)
+                                        {
+                                            if (num == 0)
+                                                sb.append("?");
+                                            else
+                                                sb.append("&");
+                                            sb.append("cutout=").append( NetUtil.encode(c) );
+                                            num++;
+                                        }
+
+                                        String ret = sb.toString();
+                                        log.debug("cutout URL: " + ret);
+                                        URI loc = new URI(ret);
+                                        jobResults.add(new Result(RESULT_OK+"-"+serialNum++, loc));
+                                    }
+                                    else
                                     {
-                                        if (num == 0)
-                                            sb.append("?");
-                                        else
-                                            sb.append("&");
-                                        sb.append("cutout=").append( NetUtil.encode(c) );
-                                        num++;
-                                    }
+                                        StringBuilder sb = new StringBuilder();
+                                        sb.append("NoContent: ").append(id).append(" vs");
+                                        if (pos.name != null)
+                                            sb.append(" ").append(pos.name).append("=").append(pos.value);
+                                        if (band.name != null)
+                                            sb.append(" ").append(band.name).append("=").append(band.value);
+                                        if (time.name != null)
+                                            sb.append(" ").append(time.name).append("=").append(time.value);
+                                        if (pol.name != null)
+                                            sb.append(" ").append(pol.name).append("=").append(pol.value);
 
-                                    String ret = sb.toString();
-                                    log.debug("cutout URL: " + ret);
-                                    URI loc = new URI(ret);
-                                    jobResults.add(new Result("cutout-"+serialNum++, loc));
+                                        StringBuilder path = new StringBuilder();
+                                        path.append("400");
+                                        path.append("|text/plain");
+                                        path.append("|").append(sb.toString());
+                                        String msg = Base64.encodeString(path.toString());
+
+                                        URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+                                        URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
+                                        jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
+                                    }
                                 }
-                                else
+                                catch(Exception ex) // fail to compute cutout in this case
                                 {
                                     StringBuilder sb = new StringBuilder();
-                                    sb.append("no content: ").append(id).append(" vs ");
-                                    if (pos != null)
-                                        sb.append("POS=").append(pos).append(" & ");
-                                    if (band != null)
-                                        sb.append("BAND=").append(band).append(" & ");
-                                    if (time != null)
-                                        sb.append("TIME=").append(time).append(" & ");
-                                    for (PolarizationState s : polCut)
-                                    {
-                                        sb.append("POL=").append(s.stringValue()).append("&");
-                                    }
-                                    jobWarnings.add(sb.toString());
+                                    sb.append("Error: ").append(id).append(" vs");
+                                    if (pos.name != null)
+                                        sb.append(" ").append(pos.name).append("=").append(pos.value);
+                                    if (band.name != null)
+                                        sb.append(" ").append(band.name).append("=").append(band.value);
+                                    if (time.name != null)
+                                        sb.append(" ").append(time.name).append("=").append(time.value);
+                                    if (pol.name != null)
+                                        sb.append(" ").append(pol.name).append("=").append(pol.value);
+
+                                    StringBuilder path = new StringBuilder();
+                                    path.append("500");
+                                    path.append("|text/plain");
+                                    path.append("|").append(sb.toString());
+                                    String msg = Base64.encodeString(path.toString());
+
+                                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+                                    URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
+                                    jobResults.add(new Result(RESULT_FAIL+"-"+serialNum++, loc));
                                 }
                             }                            
                         }
@@ -465,31 +401,16 @@ public class SodaJobRunner implements JobRunner
             // sync: redirect
             if (syncOutput != null)
             {
-                if (jobResults.isEmpty())
-                {
-                    logInfo.setMessage("result: no content");
-                    syncOutput.setResponseCode(400); // no content
-                    syncOutput.setHeader("Content-Type", "text/plain");
-                    PrintWriter w = new PrintWriter(syncOutput.getOutputStream());
-                    for (String e : jobWarnings)
-                    {
-                        w.println(e);
-                    }
-                    w.flush();
-                }
-                else
-                {
-                    Result r0 = jobResults.get(0);
-                    syncOutput.setHeader("Location", r0.getURI().toASCIIString());
-                    syncOutput.setResponseCode(303);
-                }
+                Result r0 = jobResults.get(0);
+                syncOutput.setHeader("Location", r0.getURI().toASCIIString());
+                syncOutput.setResponseCode(303);
             }
+            
+            // TODO: check all the jobResults for failures and if enough of them failed then
+            // set fional job phase to ERROR instead of completed... formulate a common error
+            // message somehow
+            
             // phase -> COMPLETED
-            
-            // TODO: what to with jobWarnings? 
-            // - stuff them into result list?
-            // - write an error document and a Result("warnings", eurl)?
-            
             ExecutionPhase fep = ExecutionPhase.COMPLETED;
             log.debug("setting ExecutionPhase = " + fep + " with results");
             jobUpdater.setPhase(job.getID(), ExecutionPhase.EXECUTING, fep, jobResults, new Date());
@@ -497,10 +418,6 @@ public class SodaJobRunner implements JobRunner
         catch(IllegalArgumentException ex)
         {
             handleError(400, ex.getMessage());
-        }
-        catch(NoSuchKeywordException ex)
-        {
-            handleError(500, "BUG: " + ex.getMessage());
         }
         catch(FileNotFoundException ex)
         {
@@ -541,6 +458,149 @@ public class SodaJobRunner implements JobRunner
                 log.debug(job.getID() + " -- " + sList.get(i) + " " + dt + "ms");
             }
         }
+    }
+    
+    private class Cutout<T>
+    {
+        String name, value;
+        T cut;
+        Cutout() { }
+        Cutout(String name, String value, T cut)
+        {
+            this.name = name;
+            this.value = value;
+            this.cut = cut;
+        }
+    }
+    
+    List<Cutout<Interval>> getEnergyCuts(Map<String,List<String>> params)
+    {
+        List<String> vals = params.get(PARAM_BAND);
+        DoubleArrayFormat daf = new DoubleArrayFormat();
+        List<Cutout<Interval>> ret = new ArrayList<Cutout<Interval>>();
+        for (String s : vals)
+        {
+            double[] dd = daf.parse(s);
+            if (dd.length == 2)
+            {
+                Interval i = new Interval(dd[0], dd[1]);
+                ret.add(new Cutout(PARAM_BAND, s, i));
+            }
+            else
+                throw new IllegalArgumentException("invalid " + PARAM_BAND + ": " + s);
+        }
+        
+        return ret;
+    }
+    List<Cutout<Interval>> getTimeCuts(Map<String,List<String>> params)
+    {
+        List<String> vals = params.get(PARAM_TIME);
+        DoubleArrayFormat daf = new DoubleArrayFormat();
+        List<Cutout<Interval>> ret = new ArrayList<Cutout<Interval>>();
+        for (String s : vals)
+        {
+            double[] dd = daf.parse(s);
+            if (dd.length == 2)
+            {
+                Interval i = new Interval(dd[0], dd[1]);
+                ret.add(new Cutout(PARAM_TIME, s, i));
+            }
+            else
+                throw new IllegalArgumentException("invalid " + PARAM_BAND + ": " + s);
+        }
+
+        return ret;
+    }
+    Cutout<List<PolarizationState>> getPolarizationCuts(Map<String,List<String>> params)
+    {
+        List<String> vals = params.get(PARAM_POL);
+        List<PolarizationState> states = new ArrayList<PolarizationState>();
+        StringBuilder sb = new StringBuilder();
+        for (String s : vals)
+        {
+            PolarizationState ps = PolarizationState.toValue(s);
+            states.add(ps);
+            sb.append(ps.stringValue()).append("/");
+        }
+        if (states.isEmpty())
+            return new Cutout<List<PolarizationState>>();
+        return new Cutout(PARAM_POL, sb.substring(0, sb.length() - 1), states);
+    }
+    List<Cutout<Shape>> getSpatialCuts(Map<String,List<String>> params)
+    {
+        List<String> posList = params.get(PARAM_POS);
+        List<String> circList = params.get(PARAM_CIRC);
+        List<String> polyList = params.get(PARAM_POLY);
+        DoubleArrayFormat daf = new DoubleArrayFormat();
+        List<Cutout<Shape>> posCut = new ArrayList<Cutout<Shape>>();
+        for (String s : posList)
+        {
+            if (CircleFormat.isCircle(s))
+            {
+                CircleFormat cf = new CircleFormat();
+                ca.nrc.cadc.dali.Circle c = cf.parse(s);
+                Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
+                posCut.add(new Cutout(PARAM_POS, s, cc));
+            }
+            else if (PolygonFormat.isPolygon(s))
+            {
+                PolygonFormat pf = new PolygonFormat();
+                ca.nrc.cadc.dali.Polygon p = pf.parse(s);
+                Polygon pp = new Polygon();
+                SegmentType seg = SegmentType.MOVE;
+                for (ca.nrc.cadc.dali.Coord coord : p.getVertices())
+                {
+                    Vertex v = new Vertex(coord.getLongitude(), coord.getLatitude(), seg);
+                    pp.getVertices().add(v);
+                    seg = SegmentType.LINE;
+                }
+                pp.getVertices().add(Vertex.CLOSE);
+                posCut.add(new Cutout(PARAM_POS, s, pp));
+            }
+            else
+                throw new IllegalArgumentException("unexpected DALI shape type in: " + s);
+        }
+        for (String s : circList)
+        {
+            double[] dd = daf.parse(s);
+            try
+            {
+                if (dd.length != 3)
+                    throw new IndexOutOfBoundsException();
+
+                Circle c = new Circle(new Point(dd[0], dd[1]), dd[2]);
+                posCut.add(new Cutout(PARAM_CIRC, s, c));
+            }
+            catch(IndexOutOfBoundsException ex)
+            {
+                throw new IllegalArgumentException("invalid " + PARAM_CIRC + ": " + s);
+            }
+        }
+        for (String s : polyList)
+        {
+            double[] dd = daf.parse(s);
+            try
+            {
+                if (dd.length < 6)
+                    throw new IndexOutOfBoundsException();
+                Polygon poly = new Polygon();
+                SegmentType st = SegmentType.MOVE;
+                for (int i=0; i<dd.length; i += 2)
+                {
+                    Vertex v = new Vertex(dd[i], dd[i+1], st);
+                    poly.getVertices().add(v);
+                    st = SegmentType.LINE;
+                }
+                poly.getVertices().add(Vertex.CLOSE);
+                posCut.add(new Cutout(PARAM_POLY, s, poly));
+            }
+            catch(IndexOutOfBoundsException ex)
+            {
+                throw new IllegalArgumentException("invalid " + PARAM_POLY + ": " + s);
+            }
+        }
+        
+        return posCut;
     }
     
     private void handleError(int code, String msg)
