@@ -97,7 +97,7 @@ public class Point implements Serializable
     @Override
     public String toString()
     {
-        return "Point[ " + cval1 + ", " + cval2 + "]";
+        return "Point[" + cval1 + ", " + cval2 + "]";
     }
 
 }
