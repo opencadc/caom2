@@ -70,10 +70,8 @@
 package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,15 +80,30 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.EnergyUtil;
+import ca.nrc.cadc.caom2.types.PolarizationUtil;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.PolygonUtil;
+import ca.nrc.cadc.caom2.types.PositionUtil;
+import ca.nrc.cadc.caom2.types.TimeUtil;
 import ca.nrc.cadc.caom2.util.CutoutUtil;
-import ca.nrc.cadc.caom2.datalink.DataLink;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
-import javax.security.auth.Subject;
+import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -100,22 +113,15 @@ import javax.security.auth.Subject;
 public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
-
+    
+    private static URI SODA_SYNC_STD = URI.create("ivo://ivoa.net/std/SODA#sync-1.0");
+    private static URI SODA_ASYNC_STD = URI.create("ivo://ivoa.net/std/SODA#async-1.0");
+    
+    private static URI SODA_SYNC = URI.create("ivo://cadc.nrc.ca/soda#sync");
+    private static URI SODA_ASYNC = URI.create("ivo://cadc.nrc.ca/soda#async");
+    
     private static String CUTOUT = "cutout";
-
-    private static URI CUTOUT_SERVICE;
-
-    static
-    {
-        try
-        {
-            CUTOUT_SERVICE = new URI("ivo://cadc.nrc.ca/cutout");
-        }
-        catch(URISyntaxException bug)
-        {
-            log.error("BUG", bug);
-        }
-    }
+    private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/cutout");
 
     private AuthMethod authMethod;
     private RegistryClient registryClient;
@@ -181,22 +187,172 @@ public class ArtifactProcessor
                 boolean cutout = canCutout(a);
                 if (cutout)
                 {
-                    DataLink cut = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    cut.serviceDef = CUTOUT;
-                    cut.contentType = a.contentType; // unchanged
-                    cut.contentLength = null; // unknown
-                    cut.fileURI = a.getURI().toString();
-                    findProductTypes(a, cut.productTypes);
-                    ret.add(cut);
+                    DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    link.serviceDef = CUTOUT;
+                    link.contentType = a.contentType; // unchanged
+                    link.contentLength = null; // unknown
+                    link.fileURI = a.getURI().toString();
+                    findProductTypes(a, link.productTypes);
+                    ret.add(link);
                 }
-                else
-                    log.debug(a.getURI() + ": no cutout URL");
+                try
+                {
+                    ArtifactBounds ab = generateBounds(a);
+                    DataLink link;
+                    
+                    link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    //link.serviceDef = "soda-sync"; // generic SODA service
+                    link.serviceDef = "soda-" + UUID.randomUUID();
+                    link.contentType = a.contentType; // unchanged
+                    link.contentLength = null; // unknown
+                    link.fileURI = a.getURI().toString();
+                    findProductTypes(a, link.productTypes);
+                    link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, ab);
+                    if (link.descriptor != null)
+                        ret.add(link);
+
+                    link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    //link.serviceDef = "soda-async"; // generic SODA service
+                    link.serviceDef = "soda-" + UUID.randomUUID();
+                    link.contentType = a.contentType; // unchanged
+                    link.contentLength = null; // unknown
+                    link.fileURI = a.getURI().toString();
+                    findProductTypes(a, link.productTypes);
+                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, ab);
+                    if (link.descriptor != null)
+                        ret.add(link);
+                }
+                catch(NoSuchKeywordException ex)
+                {
+                    throw new RuntimeException("FAIL: invalid WCS", ex);
+                }
 
             }
         }
         return ret;
     }
+    
+    private class ArtifactBounds
+    {
+        public String circle;
+        public String poly;
+        public String band;
+        public String time;
+        public List<PolarizationState> pol;
+    }
+    
+    private ArtifactBounds generateBounds(Artifact a)
+        throws NoSuchKeywordException
+    {
+        ArtifactBounds ret = new ArtifactBounds();
+        Set<Artifact> aset = new TreeSet<Artifact>();
+        aset.add(a);
 
+        // compute artifact-specific metadata for cutout params
+        DoubleArrayFormat daf = new DoubleArrayFormat();
+
+        Position pos = PositionUtil.compute(aset);
+        if (pos != null) 
+            log.debug("pos: " + pos.bounds + " " + pos.dimension);
+        if (pos != null && pos.bounds != null && pos.bounds != null 
+                && pos.dimension != null && (pos.dimension.naxis1 > 1 || pos.dimension.naxis2 > 1))
+        {
+            Polygon outer = PolygonUtil.getOuterHull((Polygon) pos.bounds);
+            ret.poly = daf.format(new CoordIterator(outer.getVertices().iterator()));
+
+            Circle msc = outer.getMinimumSpanningCircle();
+            ret.circle = daf.format(new double[] { msc.getCenter().cval1, msc.getCenter().cval2, msc.getRadius() });
+        }
+
+        Energy nrg = EnergyUtil.compute(aset);
+        if (nrg != null) log.debug("nrg: " + nrg.bounds + " " + nrg.dimension);
+        if (nrg != null && nrg.bounds != null && nrg.dimension != null && nrg.dimension > 1)
+        {
+            double[] val = new double[] { nrg.bounds.getLower(), nrg.bounds.getUpper() };
+            ret.band = daf.format(val);
+        }
+
+        Time tim = TimeUtil.compute(aset);
+        if (nrg != null) log.debug("tim: " + tim.bounds + " " + tim.dimension);
+        if (tim != null && tim.bounds != null && tim.dimension != null && tim.dimension > 1)
+        {
+            double[] val = new double[] { tim.bounds.getLower(), tim.bounds.getUpper() };
+            ret.time = daf.format(val);
+        }
+
+        Polarization pol = PolarizationUtil.compute(aset);
+        List<PolarizationState> polStates = null;
+        if (pol != null && pol.dimension != null && pol.dimension > 1)
+        {
+            ret.pol = pol.states;
+        }
+            
+        return ret;
+    }
+    
+    protected ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, ArtifactBounds ab)
+    {
+        if (ab.poly == null && ab.band == null && ab.time == null && ab.pol == null)
+            return null;
+
+        // generate artifact-specific SODA service descriptor
+        ServiceDescriptor sd = new ServiceDescriptor(id, serviceID);
+        sd.standardID = standardID;
+
+        ServiceParameter sp;
+        sp = new ServiceParameter("POS", "char", null, true, "obs.field");
+        sd.getInputParams().add(sp);
+
+        if (ab.circle != null)
+        {
+            sp = new ServiceParameter("CIRC", "double", 3, false, "obs.field");
+            sp.xtype = "circle";
+            sp.unit = "deg";
+            sp.setMinMax(null, ab.circle);
+            sd.getInputParams().add(sp);
+        }
+
+        if (ab.poly != null)
+        {
+            sp = new ServiceParameter("POLY", "double", null, true, "obs.field");
+            sp.xtype = "polygon";
+            sp.unit = "deg";
+            sp.setMinMax(null, ab.poly);
+            sd.getInputParams().add(sp);
+        }
+
+        if (ab.band != null)
+        {
+            sp = new ServiceParameter("BAND", "double", 2, false, "em.wl;stat.interval");
+            sp.xtype = "interval";
+            sp.unit = "m";
+            sp.setMinMax(null, ab.band);
+            sd.getInputParams().add(sp);
+        }
+
+        if (ab.time != null)
+        {
+            sp = new ServiceParameter("TIME", "double", 2, false, "time;stat.interval");
+            sp.xtype = "interval";
+            sp.unit = "d";
+            sp.setMinMax(null, ab.time);
+            sd.getInputParams().add(sp);
+        }
+
+        if (ab.pol != null)
+        {
+            sp = new ServiceParameter("POL", "char", null, true, "phys.polarization.state");
+            for (PolarizationState s : ab.pol)
+            {
+                sp.getOptions().add(s.stringValue());
+            }
+            sd.getInputParams().add(sp);
+        }
+
+        return sd;
+        
+    }
+    
     protected void findProductTypes(Artifact a, List<ProductType> pts)
     {
         if (a.productType != null && !pts.contains(a.productType))
