@@ -81,6 +81,7 @@ import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.EnergyUtil;
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
@@ -106,14 +107,6 @@ public final class CutoutUtil
     {
         if (a == null)
             throw new IllegalArgumentException("null Artifact");
-        Circle circle = null;
-        if (shape != null)
-        {
-            if (shape instanceof Circle)
-                circle = (Circle) shape;
-            else
-                throw new IllegalArgumentException("Only Circle is currently supported.");
-        }
         
         if (log.isDebugEnabled()) // costly string conversions here
         {
@@ -140,13 +133,13 @@ public final class CutoutUtil
             for (Chunk c : p.getChunks())
             {
                 // check if spatial axes are part of the actual data array
-                if (circle != null )
+                if (shape != null )
                 {
                     if ( canPositionCutout(c) )
                     {
                         // cut.length==0 means circle contains all pixels
                         // cut.length==4 means circle picks a subset of pixels
-                        long[] cut = PositionUtil.getBounds(c.position, circle);
+                        long[] cut = PositionUtil.getBounds(c.position, shape);
                         if (posCut == null)
                             posCut = cut;
                         else if (posCut.length == 4 && cut != null) // subset
@@ -239,7 +232,7 @@ public final class CutoutUtil
                 String cs = sb.toString();
                 log.debug("position cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
             }
-            else if (circle != null)
+            else if (shape != null)
             {
                 log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no position overlap");
                 doCut = false;

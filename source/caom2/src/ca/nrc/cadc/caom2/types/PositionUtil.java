@@ -729,6 +729,18 @@ public final class PositionUtil
         }
     }
     
+    public static long[] getBounds(SpatialWCS wcs, Shape s)
+        throws NoSuchKeywordException, WCSLibRuntimeException
+    {
+        if (s == null)
+            return null;
+        if (s instanceof Circle)
+            return getBounds(wcs, (Circle) s);
+        if (s instanceof Polygon)
+            return getBounds(wcs, (Polygon) s);
+        throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
+    }
+    
     /**
      * Find the pixel bounds that enclose the specified circle.
      *
