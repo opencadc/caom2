@@ -112,4 +112,10 @@ public class CoordIterator implements Iterator<Double>
             cur = null;
         return ret;
     }
+
+    // compile compat with older java versions
+    public void remove()
+    {
+        throw new UnsupportedOperationException();
+    }
 }
