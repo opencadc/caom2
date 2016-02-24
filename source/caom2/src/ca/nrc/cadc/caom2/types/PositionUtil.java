@@ -199,7 +199,7 @@ public final class PositionUtil
                         if (c.position != null)
                         {
                             Polygon poly = toPolygon(c.position);
-                            log.debug("[computeBounds] in: " + poly);
+                            log.debug("[computeBounds] wcs: " + poly);
                             if (poly != null)
                                 polys.add(poly);
                         }
@@ -484,7 +484,7 @@ public final class PositionUtil
             {
                 CoordCircle2D cc = (CoordCircle2D) bounds;
                 if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
-                    throw new UnsupportedOperationException("cannot convert CoordCircld2D -> Polygon near the pole ("+cc+")");
+                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> Polygon near the pole ("+cc+")");
                 double x = cc.getCenter().coord1;
                 double y = cc.getCenter().coord2;
                 double dy = cc.getRadius();

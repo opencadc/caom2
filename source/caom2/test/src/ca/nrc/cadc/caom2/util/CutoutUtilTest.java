@@ -144,26 +144,14 @@ public class CutoutUtilTest
             }
             catch(IllegalArgumentException expected) { }
             
-            try 
-            { 
-                CutoutUtil.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Location(new Point(1.0, 2.0)), null, null, null); 
-                Assert.fail("expected IllegalArgumentException for null artifact");
-            }
-            catch(IllegalArgumentException expected) { }
-            
+            // this is not testable without part and chunk metadata because the Shape->impl support is in a wcs-specific
+            // piece of code
             //try 
             //{ 
-            //    cu.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Box(new Point(1.0, 2.0), 0.5, 0.5), null, null, null); 
-            //    Assert.fail("expected IllegalArgumentException for null artifact");
+            //    CutoutUtil.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Location(new Point(1.0, 2.0)), null, null, null); 
+            //    Assert.fail("expected IllegalArgumentException for Location cutout");
             //}
             //catch(IllegalArgumentException expected) { }
-            
-            try 
-            { 
-                CutoutUtil.computeCutout(new Artifact(new URI("ad", "FOO/bar", null)), new Polygon(), null, null, null); 
-                Assert.fail("expected IllegalArgumentException for null artifact");
-            }
-            catch(IllegalArgumentException expected) { }
             
         }
         catch(Exception unexpected)
@@ -173,7 +161,7 @@ public class CutoutUtilTest
         }
     }
     
-    //@Test
+    @Test
     public void testComputeCutoutAll()
     {
         try
@@ -221,7 +209,10 @@ public class CutoutUtilTest
                 c.naxis = i;
                 if (i > 1)
                     cur += ",";
-                cur += "*";
+                if (i == 6)
+                    cur += "1:1"; // internal observable cut 
+                else
+                    cur += "*";
                 String expected = tmpl.replace("STAR", cur);
                 cus = CutoutUtil.computeCutout(a, null, null, null, null);
                 Assert.assertNotNull(cus);

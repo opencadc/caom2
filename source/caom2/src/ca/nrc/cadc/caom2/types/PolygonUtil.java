@@ -1,11 +1,14 @@
 
 package ca.nrc.cadc.caom2.types;
 
+import ca.nrc.cadc.caom2.types.impl.GrahamScan;
+import ca.nrc.cadc.caom2.types.impl.SortablePoint2D;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -21,6 +24,8 @@ public final class PolygonUtil
 
     private static final double DEFAULT_SCALE = 0.02;
     private static final double MAX_SCALE = 0.12;
+    
+    private static boolean dbg = false;
 
     public static Polygon toPolygon(Shape s)
     {
@@ -43,11 +48,34 @@ public final class PolygonUtil
      */
     public static Polygon getOuterHull(final Polygon poly)
     {
+        if (poly.isSimple())
+        {
+            log.debug("[getOuterHull] SIMPLE " + poly);
+            return poly;
+        }
+        
         log.debug("[getOuterHull] " + poly);
-        Polygon ret = getConcaveHull(poly);
-        if (ret == null)
-            ret = getConvexHull(poly);
-        return ret;
+        PolygonProperties pp = computePolygonProperties(poly);
+        
+        Polygon convex = getConvexHull(poly);
+        PolygonProperties cxp = computePolygonProperties(convex);
+        
+        Polygon concave = getConcaveHull(poly);
+        
+        if (concave != null)
+        {
+            PolygonProperties ccp = computePolygonProperties(poly);
+            double daConcave = (pp.area - ccp.area)/pp.area;
+            double daConvex = (pp.area - cxp.area)/pp.area;
+            if (daConcave < daConvex)
+            {
+                log.debug("[getOuterHull] CONCAVE " + concave);
+                return concave;
+            }
+                
+        }
+        log.debug("[getOuterHull] CONVEX " + convex);
+        return convex;
     }
 
     /**
@@ -58,9 +86,9 @@ public final class PolygonUtil
      * @param poly
      * @return concave hull or null of not possible
      */
-    public static Polygon getConcaveHull(final Polygon poly)
+    static Polygon getConcaveHull(final Polygon poly)
     {
-        log.debug("[getConcaveHull] " + poly);
+        if (dbg) log.debug("[getConcaveHull] " + poly);
         if (poly == null)
             return null;
         
@@ -79,16 +107,28 @@ public final class PolygonUtil
             outer = union(parts, scale);
             log.debug("[getConcaveHull] union = " + outer);
             scale += DEFAULT_SCALE; // 2x, 3x, etc
-            parts = removeHoles(outer);
-            log.debug("");
+            List<Polygon> tmp = removeHoles(outer);
+            if (tmp.size() == 1)
+            {
+                try 
+                { 
+                    validateSegments(poly); 
+                    parts = tmp;
+                }
+                catch(IllegalPolygonException skip) 
+                { 
+                    log.debug("scale: " + scale + " -> " + skip); 
+                }
+            }
+            if (dbg) log.debug("");
         }
         if (parts.size() == 1)
         {
             outer = parts.get(0);
-            log.debug("[getConcaveHull] SUCCESS: " + outer);
+            if (dbg) log.debug("[getConcaveHull] SUCCESS: " + outer);
             return outer;
         }
-        log.debug("[getConcaveHull] FAILED");
+        if (dbg) log.debug("[getConcaveHull] FAILED");
         return null;
     }
 
@@ -98,23 +138,26 @@ public final class PolygonUtil
      * @param poly
      * @return
      */
-    public static Polygon getConvexHull(final Polygon poly)
+    static Polygon getConvexHull(final Polygon poly)
     {
         log.debug("[getConvexHull] " + poly);
         if (poly == null)
             return null;
+        
 
-        // deep copy
-        //Polygon outer = new Polygon();
-        //for (Vertex v : poly.getVertices())
-        //{
-        //    outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
-        //}
-
-        // TODO: triangulate and find union of all triangles
-        // technically just need to add triangles that have one vertex in one part and two in
-        // the other part (eg that join two parts)
-        throw new UnsupportedOperationException("getConvexHull: not implemented");
+        CartesianTransform trans = CartesianTransform.getTransform(poly);
+        Polygon tpoly = trans.transform(poly);
+        log.debug("[getConvexHull] tpoly " + tpoly);
+        Polygon tconvex = computeConvexHull(tpoly);
+        log.debug("[getConvexHull] tconvex " + tconvex);
+        smooth(tconvex);
+        log.debug("[getConvexHull] tsmooth " + tconvex);
+        Polygon convex = trans.inverseTransform(tconvex);
+        log.debug("[getConvexHull] convex " + convex );
+        
+        return convex;
+        
+        //throw new UnsupportedOperationException("getConvexHull: not implemented");
     }
 
     public static Polygon union(List<Polygon> polys)
@@ -134,7 +177,7 @@ public final class PolygonUtil
             cube = CartesianTransform.getBoundingCube(p, cube);
         }
         CartesianTransform trans = CartesianTransform.getTransform(cube, false);
-        log.debug("working transform: " + trans);
+        if (dbg) log.debug("working transform: " + trans);
         
         // transform all the polygons
         List<Polygon> work = new ArrayList<Polygon>(polys.size());
@@ -173,7 +216,7 @@ public final class PolygonUtil
     // assumes cartesian approx is safe
     private static Polygon computeUnion(List<Polygon> work, double scale)
     {
-        log.debug("[computeUnion] work=" + work.size() + ", scale="+scale);
+        if (dbg) log.debug("[computeUnion] work=" + work.size() + ", scale="+scale);
         // scale all the polygons up to cause nearby polygons to intersect
         List<Polygon> scaled = work;
         if (scale > 0.0)
@@ -218,7 +261,7 @@ public final class PolygonUtil
     
     private static Polygon scalePolygon(Polygon poly, double factor)
     {
-        log.debug("[scalePolygon] start: " + poly + " BY " + factor);
+        if (dbg) log.debug("[scalePolygon] start: " + poly + " BY " + factor);
         Polygon ret = new Polygon();
         PolygonProperties pp = computePolygonProperties(poly);
         Point c = pp.center;
@@ -237,17 +280,17 @@ public final class PolygonUtil
                 ret.getVertices().add(sv);
             }
         }
-        log.debug("[scalePolygon] done: " + ret);
+        if (dbg) log.debug("[scalePolygon] done: " + ret);
         return ret;
     }
     private static Polygon unscalePolygon(Polygon poly, List<Polygon> scaled)
     {
-        log.debug("[unscalePolygon] start: " + poly);
+        if (dbg) log.debug("[unscalePolygon] start: " + poly);
         Polygon ret = new Polygon();
         
         boolean validSeg = false;
         double tol = 0.5* poly.getSize() * DEFAULT_SCALE;
-        log.debug("[unscalePolygon] tol = " + tol);
+        if (dbg) log.debug("[unscalePolygon] tol = " + tol);
 
         // or each vertex in poly, look for the scaled vertex in the list of input polygons
         // that is nearest and use the original unscaled vertex if it is close enough
@@ -263,28 +306,28 @@ public final class PolygonUtil
             if ( !SegmentType.CLOSE.equals(pv.getType()) )
             {
                 ScaledVertex sv = (ScaledVertex) findNearest(pv, scaled);
-                log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
+                if (dbg) log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
                 double d = Math.sqrt(distanceSquared(pv, sv));
                 
                 if (d < tol)
                 {
                     // use orig coords but keep current segtype
                     Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
-                    log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
+                    if (dbg) log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
                     ret.getVertices().set(i, v);
                     if (validSeg)
                     {
                         try { validateSegments(ret); }
                         catch(IllegalPolygonException oops)
                         {
-                            log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
+                            if (dbg) log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
                             ret.getVertices().set(i, pv); // undo
                         }
                     }
                 }
                 else
                 {
-                    log.debug("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
+                    if (dbg) log.debug("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
                 //    Vertex v = new Vertex(pv.cval1, pv.cval2, pv.getType());
                 //    ret.getVertices().add(v);
                 }
@@ -292,7 +335,7 @@ public final class PolygonUtil
         }
         // TODO: could track which vertices were replaced and undo it if validateSegments proves
         // we created an invalid polygon
-        log.debug("[unscalePolygon] done: " + ret);
+        if (dbg) log.debug("[unscalePolygon] done: " + ret);
         return ret;
     }
 
@@ -320,7 +363,7 @@ public final class PolygonUtil
 
     static List<Polygon> removeHoles(Polygon poly)
     {
-        log.debug("[removeHoles] start: " + poly);
+        if (dbg) log.debug("[removeHoles] start: " + poly);
         List<Polygon> samples = decompose(poly);
         // find samples and holes via sign of the area
         boolean cw = computePolygonProperties(poly).winding;
@@ -337,14 +380,14 @@ public final class PolygonUtil
             }
         }
         if (num > 0)
-            log.debug("[removeHoles] discarded " + num + " holes");
+            if (dbg) log.debug("[removeHoles] discarded " + num + " holes");
         
         poly.getVertices().clear();
         for (Polygon p : samples)
         {
             poly.getVertices().addAll(p.getVertices());
         }
-        log.debug("[removeHoles] done: " + poly);
+        if (dbg) log.debug("[removeHoles] done: " + poly);
         return samples;
     }
     
@@ -355,7 +398,7 @@ public final class PolygonUtil
             return false; // cannot have holes with fewer than 8 vertices (two triangles and 2 CLOSE)
 
         boolean hasHoles = false;
-        log.debug("[removeHoles] start: " + poly);
+        if (dbg) log.debug("[removeHoles] start: " + poly);
         PolygonProperties pProp = computePolygonProperties(poly);
         Polygon tmp = new Polygon();
         boolean go = true;
@@ -374,10 +417,10 @@ public final class PolygonUtil
                     if (tmp.getVertices().size() <= 3) // 2+close is a line == 0 area
                     {
                         // this could be a line segment that is in or out: remove both kinds
-                        //log.debug("[removeHoles] removing vertex " + start + " " + tmp.getVertices().size() + " times");
+                        //if (dbg) log.debug("[removeHoles] removing vertex " + start + " " + tmp.getVertices().size() + " times");
                         //for (int j=0; j<tmp.getVertices().size(); j++)
                         //    pVerts.remove(start);
-                        log.debug("[removeHoles] remove scrap segment " + tmp + " from " + poly);
+                        if (dbg) log.debug("[removeHoles] remove scrap segment " + tmp + " from " + poly);
                         for (Vertex rv : tmp.getVertices())
                         {
                             boolean ok = poly.getVertices().remove(rv);
@@ -397,11 +440,11 @@ public final class PolygonUtil
                         if (isHole && da < rat) // hole && small
                         {
                             // remove all these verts from list
-                            //log.debug("[removeHoles] removing hole: " + tmp + " with da = " + da);
-                            //log.debug("removing vertex " + start + " " + tmp.getVertices().size() + " times");
+                            //if (dbg) log.debug("[removeHoles] removing hole: " + tmp + " with da = " + da);
+                            //if (dbg) log.debug("removing vertex " + start + " " + tmp.getVertices().size() + " times");
                             //for (int j=0; j<tmp.getVertices().size(); j++)
                             //    pVerts.remove(start);
-                            log.debug("[removeHoles] remove hole " + tmp + " from " + poly);
+                            if (dbg) log.debug("[removeHoles] remove hole " + tmp + " from " + poly);
                             for (Vertex rv : tmp.getVertices())
                             {
                                 boolean ok = poly.getVertices().remove(rv);
@@ -417,7 +460,7 @@ public final class PolygonUtil
                 }
             }
         }
-        log.debug("[removeHoles] done: " + poly);
+        if (dbg) log.debug("[removeHoles] done: " + poly);
         return hasHoles;
     }
 
@@ -452,7 +495,7 @@ public final class PolygonUtil
     
     private static void smoothSimpleAdjacentVertices(Polygon poly)
     {
-        log.debug("[smooth.adjacent] " + poly);
+        if (dbg) log.debug("[smooth.adjacent] " + poly);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
             return;
         PolygonProperties pp = computePolygonProperties(poly);
@@ -479,11 +522,11 @@ public final class PolygonUtil
             Segment ab = segs.get(i);
             double dx = Math.abs(ab.v1.cval1 - ab.v2.cval1);
             double dy = Math.abs(ab.v1.cval2 - ab.v2.cval2);
-            log.debug("[smooth.adjacent] " + ab + " " + dx + " " + dy);
+            if (dbg) log.debug("[smooth.adjacent] " + ab + " " + dx + " " + dy);
             if ( dx < tol && dy < tol) // 
             {
                 final Vertex v = ab.v1;
-                log.debug("[smooth.adjacent] removing " + v);
+                if (dbg) log.debug("[smooth.adjacent] removing " + v);
                 // remove v from poly
                 poly.getVertices().remove(v); // Vertex uses Object.equals aka ==
                 if (SegmentType.MOVE.equals(v.getType()))
@@ -515,7 +558,7 @@ public final class PolygonUtil
     
     private static void smoothSimpleColinearSegments(Polygon poly)
     {
-        log.debug("[smooth.colinear] " + poly);
+        if (dbg) log.debug("[smooth.colinear] " + poly);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
             return;
         PolygonProperties pp = computePolygonProperties(poly);
@@ -543,7 +586,7 @@ public final class PolygonUtil
             {
                 // vertex b aka c is on a line between a and d: remove it
                 final Vertex v = ab.v2; // == cd.v1
-                log.debug("[smooth.colinear] " + ab + " + " + cd + ": removing " + v);
+                if (dbg) log.debug("[smooth.colinear] " + ab + " + " + cd + ": removing " + v);
                 
                 // remove v from poly
                 poly.getVertices().remove(v);
@@ -573,14 +616,14 @@ public final class PolygonUtil
                 }
             }
             else
-                log.debug("[smooth.colinear] non-colinear: " + ab + " + " + cd);
+                if (dbg) log.debug("[smooth.colinear] non-colinear: " + ab + " + " + cd);
         }
         
     }
     
     private static void smoothSimpleSmallAreaChange(Polygon poly, double rat)
     {
-        log.debug("[smooth] " + poly + " rat="+rat);
+        if (dbg) log.debug("[smooth] " + poly + " rat="+rat);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
             return;
         PolygonProperties pp = computePolygonProperties(poly);
@@ -595,13 +638,13 @@ public final class PolygonUtil
             double negDA = Double.MAX_VALUE;
             Vertex posV = null;
             Vertex negV = null;
-            log.debug("starting loop over vertices...");
+            if (dbg) log.debug("starting loop over vertices...");
             for (int i=0; i<poly.getVertices().size(); i++)
             {
                 verts.clear();
                 verts.addAll(poly.getVertices());
                 Vertex v = tmp.getVertices().get(i);
-                log.debug("[smooth] (try) " + v);
+                if (dbg) log.debug("[smooth] (try) " + v);
                 boolean move = SegmentType.MOVE.equals(v.getType());
                 boolean line = SegmentType.LINE.equals(v.getType());
                 if (line || move)
@@ -614,7 +657,7 @@ public final class PolygonUtil
                         if (SegmentType.LINE.equals(vl.getType()))
                         {
                             Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
-                            log.debug("[smooth] (try) change " + vl + " -> " + vm);
+                            if (dbg) log.debug("[smooth] (try) change " + vl + " -> " + vm);
                             verts.set(i, vm);
                         }
                         else
@@ -622,7 +665,7 @@ public final class PolygonUtil
                     }
                     PolygonProperties tp = computePolygonProperties(tmp);
                     double da = (tp.area - pp.area)/pp.area;
-                    log.debug("[smooth] (try) remove " + v + ", dA = " + da + ", " + pp.area + " -> " + tp.area);
+                    if (dbg) log.debug("[smooth] (try) remove " + v + ", dA = " + da + ", " + pp.area + " -> " + tp.area);
                     if (da >= 0.0)
                     {
                         if (da < posDA)
@@ -647,36 +690,36 @@ public final class PolygonUtil
             changed = false;
             if (posV != null && posDA <= negDA && posDA < rat)
             {
-                log.debug("[smooth] dA = " + posDA + " remove " + posV);
+                if (dbg) log.debug("[smooth] dA = " + posDA + " remove " + posV);
                 poly.getVertices().remove(posV);
                 if ( SegmentType.MOVE.equals(posV.getType()) )
                 {
                     // change the next from  LINE to MOVE
                     Vertex vl = poly.getVertices().get(posI);
                     Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
-                    log.debug("[smooth] change " + vl + " -> " + vm);
+                    if (dbg) log.debug("[smooth] change " + vl + " -> " + vm);
                     poly.getVertices().set(posI, vm);
                 }
                 changed = true;
             }
             else if (negV != null && negDA < rat)
             {
-                log.debug("[smooth] dA = -" + negDA + " remove " + negV);
+                if (dbg) log.debug("[smooth] dA = -" + negDA + " remove " + negV);
                 poly.getVertices().remove(negV);
                 if ( SegmentType.MOVE.equals(negV.getType()) )
                 {
                     // change the next from  LINE to MOVE
                     Vertex vl = poly.getVertices().get(negI);
                     Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
-                    log.debug("[smooth] change " + vl + " -> " + vm);
+                    if (dbg) log.debug("[smooth] change " + vl + " -> " + vm);
                     poly.getVertices().set(negI, vm);
                 }
                 changed = true;
             }
             else
             {
-                if (negV != null) log.debug("[smooth] negDA = -" + negDA + " keep " + negV);
-                if (posV != null) log.debug("[smooth] posDA = " + posDA + " keep " + posV);
+                if (negV != null) if (dbg) log.debug("[smooth] negDA = -" + negDA + " keep " + negV);
+                if (posV != null) if (dbg) log.debug("[smooth] posDA = " + posDA + " keep " + posV);
             }
         }
     }
@@ -697,36 +740,36 @@ public final class PolygonUtil
         {
             if (cur == null) // start new poly
             {
-                log.debug("new Polygon");
+                if (dbg) log.debug("new Polygon");
                 cur = new Polygon();
-                log.debug("vertex: " + v);
+                if (dbg) log.debug("vertex: " + v);
                 cur.getVertices().add(v);
             }
             else if (SegmentType.MOVE.equals(v.getType()))
             {
-                //log.debug("vertex: " + v);
+                //if (dbg) log.debug("vertex: " + v);
                 //cur.getVertices().add(new Vertex(0.0, 0.0,SegmentType.CLOSE));
                 //polys.add(cur);
-                //log.debug("close Polygon");
+                //if (dbg) log.debug("close Polygon");
                 if (cur != null)
                     prev = cur; // embedded loop
 
-                log.debug("new Polygon");
+                if (dbg) log.debug("new Polygon");
                 cur = new Polygon();
-                log.debug("vertex: " + v);
+                if (dbg) log.debug("vertex: " + v);
                 cur.getVertices().add(v);
             }
             else if (SegmentType.CLOSE.equals(v.getType()))
             {
-                log.debug("vertex: " + v);
+                if (dbg) log.debug("vertex: " + v);
                 cur.getVertices().add(v);
                 polys.add(cur);
                 cur = prev;
-                log.debug("close Polygon");
+                if (dbg) log.debug("close Polygon");
             }
             else
             {
-                log.debug("vertex: " + v);
+                if (dbg) log.debug("vertex: " + v);
                 cur.getVertices().add(v);
             }
         }
@@ -747,6 +790,7 @@ public final class PolygonUtil
     // returns the signed area
     static PolygonProperties computePolygonProperties(Polygon poly)
     {
+        log.debug("computePolygonProperties: " + poly);
         // the transform needed for computing things in long/lat using cartesian approximation
         CartesianTransform trans = CartesianTransform.getTransform(poly);
         Polygon tpoly = trans.transform(poly);
@@ -773,7 +817,7 @@ public final class PolygonUtil
                 a += tmp;
                 cx += (v1.cval1 + v2.cval1) * tmp;
                 cy += (v1.cval2 + v2.cval2) * tmp;
-                //log.debug("[computePolygonProperties] " + v1 + "," + v2 + "," + tmp + " " + cx + "," + cy);
+                //if (dbg) log.debug("[computePolygonProperties] " + v1 + "," + v2 + "," + tmp + " " + cx + "," + cy);
             }
         }
 
@@ -881,7 +925,7 @@ public final class PolygonUtil
             if (SegmentType.CLOSE.equals(v2.getType()))
                 v2 = start;
             Segment s = new Segment(v1, v2);
-            log.debug("validateSegments: " + s);
+            if (dbg) log.debug("validateSegments: " + s);
             tsegs.add(s);
             v1 = v2;
         }
@@ -898,7 +942,7 @@ public final class PolygonUtil
                 if (SegmentType.CLOSE.equals(v2.getType()))
                     v2 = start;
                 Segment s = new Segment(v1, v2);
-                log.debug("validateSegments: " + s);
+                if (dbg) log.debug("validateSegments: " + s);
                 psegs.add(s);
                 v1 = v2;
             }
@@ -936,7 +980,7 @@ public final class PolygonUtil
         double magCD = Math.sqrt(v2x*v2x + v2y*v2y);
         double ang = Math.acos(dp/(magAB*magCD));
         
-        log.debug("colinear: dot.product = " + ang);
+        if (dbg) log.debug("colinear: dot.product = " + ang);
         if ( Math.abs(ang) < 0.05
                 || Math.abs(Math.PI - ang) < 0.05 )
             return true;
@@ -947,16 +991,16 @@ public final class PolygonUtil
     
     private static boolean intersects(Segment ab, Segment cd, boolean isNext)
     {
-        log.debug("intersects: " + ab + " vs " + cd);
+        if (dbg) log.debug("intersects: " + ab + " vs " + cd);
         // rden = (Bx-Ax)(Dy-Cy)-(By-Ay)(Dx-Cx)
         double den = (ab.v2.cval1 - ab.v1.cval1)*(cd.v2.cval2 - cd.v1.cval2)
                 - (ab.v2.cval2 - ab.v1.cval2)*(cd.v2.cval1 - cd.v1.cval1);
-        //log.debug("den = " + den);
+        //if (dbg) log.debug("den = " + den);
 
         //rnum = (Ay-Cy)(Dx-Cx)-(Ax-Cx)(Dy-Cy)
         double rnum = (ab.v1.cval2 - cd.v1.cval2)*(cd.v2.cval1 - cd.v1.cval1)
                 - (ab.v1.cval1 - cd.v1.cval1)*(cd.v2.cval2 - cd.v1.cval2);
-        //log.debug("rnum = " + rnum);
+        //if (dbg) log.debug("rnum = " + rnum);
 
         if (Math.abs(den) < 1.0e-12) //(den == 0.0)
         {
@@ -992,7 +1036,7 @@ public final class PolygonUtil
         }
 
         double r = rnum / den;
-        //log.debug("r = " + r);
+        //if (dbg) log.debug("r = " + r);
         // no intersect, =0 or 1 means the ends touch, which is normal  but pg_sphere doesn't like it
         if (r <= 0.0 || r >= 1.0)
         //if (r < 0.0 || r > 1.0)
@@ -1001,10 +1045,10 @@ public final class PolygonUtil
         //snum = (Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)
         double snum = (ab.v1.cval2 - cd.v1.cval2)*(ab.v2.cval1 - ab.v1.cval1)
                 - (ab.v1.cval1 - cd.v1.cval1)*(ab.v2.cval2 - ab.v1.cval2);
-        //log.debug("snum = " + snum);
+        //if (dbg) log.debug("snum = " + snum);
         
         double s = snum / den;
-        //log.debug("s = " + s);
+        //if (dbg) log.debug("s = " + s);
         if (s <= 0.0 || s >= 1.0)
         //if (s < 0.0 || s > 1.0)
             return false; // no intersect, =0 or 1 means the ends touch, which is normal
@@ -1101,4 +1145,30 @@ public final class PolygonUtil
     {
         return new Area(toGeneralPath(poly));
     }
+    
+    private static Polygon computeConvexHull(Polygon poly)
+    {
+        // copy and strip out CLOSE
+        List<SortablePoint2D> tmp = new ArrayList<SortablePoint2D>();
+        for (Vertex v : poly.getVertices())
+        {
+            if (!SegmentType.CLOSE.equals(v.getType()))
+                tmp.add(new SortablePoint2D(v.cval1, v.cval2));
+        }
+        SortablePoint2D[] points = (SortablePoint2D[]) tmp.toArray(new SortablePoint2D[tmp.size()]);
+        
+        Polygon ret = new Polygon();
+        SegmentType t = SegmentType.MOVE;
+        GrahamScan gs = new GrahamScan(points);
+        for (SortablePoint2D p : gs.hull())
+        {
+            ret.getVertices().add(new Vertex(p.x(), p.y(), t));
+            t = SegmentType.LINE;
+        }
+        ret.getVertices().add(Vertex.CLOSE);
+        
+        return ret;
+    }
+    
+    
 }

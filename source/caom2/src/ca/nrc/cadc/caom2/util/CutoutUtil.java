@@ -177,7 +177,7 @@ public final class CutoutUtil
                     }
                 }
                 // no time cutout
-                // no polarizatrion cutout
+                // no polarization cutout
                 // no input observable cutout, but merge
                 if ( canObservableCutout(c) )
                 {
