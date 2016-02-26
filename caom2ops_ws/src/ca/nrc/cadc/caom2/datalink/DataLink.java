@@ -119,6 +119,7 @@ public class DataLink implements Iterable<Object>
     // custom CADC fields
     public List<ProductType> productTypes = new ArrayList<ProductType>();
     public String fileURI;
+    public ServiceDescriptor descriptor; // link-specific service descriptor
 
     public DataLink(String id, Term semantics)
     {

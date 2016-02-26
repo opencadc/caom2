@@ -216,7 +216,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
         Double delta = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.function.delta"));
         if (naxis != null)
             enfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
-
+        
         String specsys = Util.getString(data, map.get("caom2:Chunk.energy.specsys"));
         String ssysobs = Util.getString(data, map.get("caom2:Chunk.energy.ssysobs"));
         String ssyssrc = Util.getString(data, map.get("caom2:Chunk.energy.ssyssrc"));
@@ -252,7 +252,6 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
         }
 
         // time
-        
         String tctype = Util.getString(data, map.get("caom2:Chunk.time.axis.axis.ctype"));
         String tcunit = Util.getString(data, map.get("caom2:Chunk.time.axis.axis.cunit"));
         Double tes = Util.getDouble(data, map.get("caom2:Chunk.time.axis.error.syser"));

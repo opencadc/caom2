@@ -132,7 +132,7 @@ public class DynamicTableDataTest
             
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
             
             Assert.assertFalse( iter.hasNext() );
@@ -159,7 +159,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
-            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             Assert.assertTrue(iter.hasNext());
@@ -189,7 +189,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 1);
-            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             // 2x1 results
@@ -219,7 +219,7 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 2);
-            DynamicTableData dtd = new DynamicTableData(job, query, false, ap);
+            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
             // 2x2 results
