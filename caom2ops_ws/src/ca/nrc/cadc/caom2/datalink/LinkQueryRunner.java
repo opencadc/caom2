@@ -85,8 +85,12 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
+import ca.nrc.cadc.dali.MaxRecValidator;
+import ca.nrc.cadc.dali.tables.ListTableData;
+import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableGroup;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
@@ -105,7 +109,11 @@ import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -117,9 +125,8 @@ public class LinkQueryRunner implements JobRunner
 
     private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
-    private static final String CUTOUT_SERVICE_URI = "ivo://cadc.nrc.ca/cutout";
 
-    private static final String GETLINKS = "getLinks";
+    private static final int MAXREC = 100;
     private static final String GETDOWNLOAD = "getDownloadLinks";
     
     private Job job;
@@ -178,9 +185,26 @@ public class LinkQueryRunner implements JobRunner
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
             String request = ParameterUtil.findParameterValue("REQUEST", job.getParameterList());
-            boolean artifactOnly = false;
-            if (GETDOWNLOAD.equalsIgnoreCase(request))
-                artifactOnly = true;
+            String fmt = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
+            
+            boolean downloadFilesOnly = false;
+            if (ManifestWriter.CONTENT_TYPE.equals(fmt) || GETDOWNLOAD.equalsIgnoreCase(request))
+                downloadFilesOnly = true;
+            
+            MaxRecValidator mrv = new MaxRecValidator();
+            mrv.setJob(job);
+            if (downloadFilesOnly)
+            {
+                // no limit
+                mrv.setDefaultValue(null);
+                mrv.setMaxValue(null);
+            }
+            else
+            {
+                mrv.setDefaultValue(MAXREC);
+                mrv.setMaxValue(MAXREC);
+            }
+            Integer maxrec = mrv.validate();
 
             // obtain credentials fropm CDP if the user is authorized
             String tapProto = "http";
@@ -206,10 +230,30 @@ public class LinkQueryRunner implements JobRunner
                 runID = job.getRunID();
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
-            ap.setDownloadOnly(artifactOnly); 
-            tab.setTableData(new DynamicTableData(job, query, artifactOnly, ap));
+            ap.setDownloadOnly(downloadFilesOnly); 
+            DynamicTableData dtd = null;
+            if (downloadFilesOnly)
+            {
+                int limit = Integer.MAX_VALUE;
+                if (maxrec != null)
+                    limit = maxrec + 1;
+                dtd = new DynamicTableData(limit, job, query, downloadFilesOnly, ap);
+                tab.setTableData(dtd);
+            }
+            else
+            {
+                // generate links with maxrec limit but have to truncate between ID values
+                dtd = new DynamicTableData(maxrec + 1, job, query, downloadFilesOnly, ap);
+                Iterator<List<Object>> links = dtd.iterator();
+                ListTableData tdata = new ListTableData();
+                while (links.hasNext())
+                {
+                    tdata.getArrayList().add(links.next());
+                }
+                tab.setTableData(tdata);
+            }
 
-            // Add the service descriptions resource
+            // Add the generic service descriptor(s)
             InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
             if (is == null)
             {
@@ -218,36 +262,52 @@ public class LinkQueryRunner implements JobRunner
             }
             VOTableReader reader = new VOTableReader();
             VOTableDocument serviceDocument = reader.read(is);
-            VOTableResource metaResource = serviceDocument.getResourceByType("meta");
-
-            // set the access URL
-            AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-            RegistryClient regClient = new RegistryClient();
-            URL cutoutServiceURL = regClient.getServiceURL(new URI(CUTOUT_SERVICE_URI), job.protocol, null, am);
-            VOTableParam accessURLParam = null;
-            for (VOTableParam param :  metaResource.getParams())
+            // generic descriptors: this, cutout, maybe preview someday
+            for (VOTableResource metaResource : serviceDocument.getResources())
             {
-                if (param.getName().equals("accessURL"))
+                setServiceURL(metaResource);
+                vot.getResources().add(metaResource);
+            }
+            // dynamic link-specific descriptors
+            Iterator<ServiceDescriptor> sdi = dtd.descriptors();
+            while (sdi.hasNext())
+            {
+                ServiceDescriptor sd = sdi.next();
+                VOTableResource metaResource = new VOTableResource("meta");
+                metaResource.id = sd.getID();
+                metaResource.utype = "adhoc:service";
+                String val = sd.getResourceIdentifier().toASCIIString();
+                metaResource.getParams().add(new VOTableParam("resourceIdentifier", "char", val.length(), false, val));
+                metaResource.getParams().add(new VOTableParam("accessURL", "char", null, true, "place holder"));
+                if (sd.standardID != null)
                 {
-                    accessURLParam = param;
+                    val = sd.standardID.toASCIIString();
+                    metaResource.getParams().add(new VOTableParam("standardID", "char", val.length(), false, val));
                 }
+                VOTableGroup inputParams = new VOTableGroup("inputParams");
+                for (ServiceParameter p : sd.getInputParams())
+                {
+                    VOTableParam vp = new VOTableParam(p.getName(), p.getDatatype(), p.getArraysize(), p.isVarsize(), "");
+                    vp.ucd = p.getUcd();
+                    vp.unit = p.unit;
+                    vp.utype = p.utype;
+                    vp.xtype = p.xtype;
+                    vp.description = p.description;
+                    if (p.getMin() != null || p.getMax() != null || !p.getOptions().isEmpty())
+                    {
+                        vp.setMin(p.getMin());
+                        vp.setMax(p.getMax());
+                        vp.getOptions().addAll(p.getOptions());
+                    }
+                    inputParams.getParams().add(vp);
+                }
+                metaResource.getGroups().add(inputParams);
+                setServiceURL(metaResource);
+                vot.getResources().add(metaResource);
             }
 
-            if (accessURLParam == null)
-                throw new MissingResourceException(
-                    "accessURL parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "accessURL");
-
-            VOTableParam newAccessURL = new VOTableParam(
-                    accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),
-                    accessURLParam.isVariableSize(), cutoutServiceURL.toString());
-            metaResource.getParams().remove(accessURLParam);
-            metaResource.getParams().add(newAccessURL);
-
-            // add the meta resource to the votable
-            vot.getResources().add(metaResource);
-
             TableWriter<VOTableDocument> writer;
-            String fmt = ParameterUtil.findParameterValue("RESPONSEFORMAT", job.getParameterList());
+            
             if (fmt == null || VOTableWriter.CONTENT_TYPE.equals(fmt) )
             {
                 writer = new VOTableWriter();
@@ -266,6 +326,7 @@ public class LinkQueryRunner implements JobRunner
             }
 
             syncOutput.setResponseCode(HttpURLConnection.HTTP_OK);
+            // TODO: enable VOTableWriter to detect truncate and put overflow indicator
             writer.write(vot, syncOutput.getOutputStream());
 
             // set final phase, only sync so no results
@@ -327,6 +388,37 @@ public class LinkQueryRunner implements JobRunner
         }
     }
 
+    private void setServiceURL(VOTableResource metaResource)
+        throws URISyntaxException, MalformedURLException
+    {
+        // set the access URL
+        VOTableParam accessURLParam = null;
+        VOTableParam resourceIDParam = null;
+        for (VOTableParam param :  metaResource.getParams())
+        {
+            if (param.getName().equals("accessURL"))
+                accessURLParam = param;
+            else if (param.getName().equals("resourceIdentifier"))
+                resourceIDParam = param;
+        }
+        if (accessURLParam == null)
+            throw new MissingResourceException(
+                "accessURL parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "accessURL");
+        if (resourceIDParam == null)
+            throw new MissingResourceException(
+                "resourceIdentifier parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
+
+        AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+        RegistryClient regClient = new RegistryClient();
+        URL serviceURL = regClient.getServiceURL(new URI(resourceIDParam.getValue()), job.protocol, null, am);                
+
+        VOTableParam newAccessURL = new VOTableParam(
+            accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),
+            accessURLParam.isVariableSize(), serviceURL.toString());
+        metaResource.getParams().remove(accessURLParam);
+        metaResource.getParams().add(newAccessURL);
+    }
+    
     private void sendError(Throwable t, int code)
     {
         if (code >= 500)
