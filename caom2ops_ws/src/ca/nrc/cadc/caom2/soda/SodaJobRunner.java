@@ -250,6 +250,27 @@ public class SodaJobRunner implements JobRunner
                 }
             }
             
+            if (idList.isEmpty())
+                throw new IllegalArgumentException("missing required param ID");
+            
+            List<URI> ids = new ArrayList<URI>();
+            esb = new StringBuilder();
+            for (String i : idList)
+            {
+                try
+                {
+                    ids.add(new URI(i));
+                }
+                catch(URISyntaxException ex)
+                {
+                    esb.append("invalid URI: " + i + "\n");
+                }
+            }
+            if (esb.length() > 0)
+            {
+                throw new IllegalArgumentException("invalid ID(s) found\n" + esb.toString());
+            }
+            
             // add  single null element to make subsequent loops easier
             if (posCut.isEmpty())
                 posCut.add(new Cutout<Shape>());
@@ -283,10 +304,10 @@ public class SodaJobRunner implements JobRunner
             SchemeHandler sh = new CaomSchemeHandler();
             List<Result> jobResults = new ArrayList<Result>();
             int serialNum = 1;
-            for (String id : idList)
+            for (URI id : ids)
             {
                 // query for caom2 artifact(s)
-                Artifact a = query.performQuery(new URI(id));
+                Artifact a = query.performQuery(id);
                 tList.add(System.currentTimeMillis());
                 sList.add("query tap for artifact " + id);
                 
