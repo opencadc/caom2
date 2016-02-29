@@ -287,7 +287,8 @@ public class LinkQueryRunner implements JobRunner
                 VOTableGroup inputParams = new VOTableGroup("inputParams");
                 for (ServiceParameter p : sd.getInputParams())
                 {
-                    VOTableParam vp = new VOTableParam(p.getName(), p.getDatatype(), p.getArraysize(), p.isVarsize(), "");
+                    VOTableParam vp = new VOTableParam(p.getName(), p.getDatatype(), p.getArraysize(), p.isVarsize(), p.getValue());
+                    vp.ref = p.getRef();
                     vp.ucd = p.getUcd();
                     vp.unit = p.unit;
                     vp.utype = p.utype;

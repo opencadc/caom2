@@ -201,24 +201,22 @@ public class ArtifactProcessor
                     DataLink link;
                     
                     link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    //link.serviceDef = "soda-sync"; // generic SODA service
                     link.serviceDef = "soda-" + UUID.randomUUID();
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, ab);
+                    link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
 
                     link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    //link.serviceDef = "soda-async"; // generic SODA service
                     link.serviceDef = "soda-" + UUID.randomUUID();
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, ab);
+                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
                 }
@@ -290,7 +288,7 @@ public class ArtifactProcessor
         return ret;
     }
     
-    protected ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, ArtifactBounds ab)
+    protected ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
     {
         if (ab.poly == null && ab.band == null && ab.time == null && ab.pol == null)
             return null;
@@ -300,8 +298,15 @@ public class ArtifactProcessor
         sd.standardID = standardID;
 
         ServiceParameter sp;
-        sp = new ServiceParameter("POS", "char", null, true, "obs.field");
+        sp = new ServiceParameter("ID", "char", null, true, "");
+        sp.setValueRef(artifactURI.toASCIIString(), null);
         sd.getInputParams().add(sp);
+        
+        if (ab.poly != null)
+        {
+            sp = new ServiceParameter("POS", "char", null, true, "obs.field");
+            sd.getInputParams().add(sp);
+        }
 
         if (ab.circle != null)
         {

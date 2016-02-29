@@ -91,12 +91,13 @@ public class ServiceParameter
     private final List<String> options = new ArrayList<String>();
     private String min;
     private String max;
+    private String value;
+    private String ref;
     
     public String xtype;
     public String unit;
     public String utype;
     public String description;
-    
     
     public ServiceParameter(String name, String datatype, Integer arraysize, boolean varsize, String ucd) 
     {
@@ -138,6 +139,26 @@ public class ServiceParameter
         return options;
     }
 
+    public void setValueRef(String val, String ref)
+    {
+        if (val != null && ref != null)
+            throw new IllegalArgumentException("only one of value and ref may be set");
+        this.value = val;
+        this.ref = ref;
+    }
+
+    public String getValue()
+    {
+        if (value == null)
+            return "";
+        return value;
+    }
+
+    public String getRef()
+    {
+        return ref;
+    }
+    
     public void setMinMax(String min, String max)
     {
         this.min = min;
