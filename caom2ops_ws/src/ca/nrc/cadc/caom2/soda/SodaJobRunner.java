@@ -314,12 +314,14 @@ public class SodaJobRunner implements JobRunner
                 if (a == null)
                 {
                     StringBuilder path = new StringBuilder();
-                    path.append("?CODE=404");
-                    path.append("&TYPE=text/plain");
-                    path.append("&BODY=").append( NetUtil.encode("NotFound: " + id));
-                    URL url = reg.getServiceURL(SODA, "http", path.toString(), AuthMethod.ANON);
+                    path.append("400");
+                    path.append("|text/plain");
+                    path.append("|").append("NotFound: "+id);
+                    String msg = Base64.encodeString(path.toString());
+
+                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
-                    jobResults.add(new Result("error-"+serialNum++, loc));
+                    jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
                 }
                 else
                 {
@@ -426,10 +428,6 @@ public class SodaJobRunner implements JobRunner
                 syncOutput.setHeader("Location", r0.getURI().toASCIIString());
                 syncOutput.setResponseCode(303);
             }
-            
-            // TODO: check all the jobResults for failures and if enough of them failed then
-            // set fional job phase to ERROR instead of completed... formulate a common error
-            // message somehow
             
             // phase -> COMPLETED
             ExecutionPhase fep = ExecutionPhase.COMPLETED;
