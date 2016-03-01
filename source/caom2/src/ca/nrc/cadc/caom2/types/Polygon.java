@@ -152,6 +152,8 @@ public class Polygon implements Shape
 
     public Circle getMinimumSpanningCircle()
     {
+        if (minimumSpanningCircle == null)
+            initProps();
         return minimumSpanningCircle;
     }
 
