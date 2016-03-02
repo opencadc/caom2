@@ -326,7 +326,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 "planeURI",
                 
                 // position
-                "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size", "position_bounds_encoded",
+                "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size",
                 "position_dimension1", "position_dimension2",
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
@@ -1310,7 +1310,6 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
                     safeSetDouble(sb, ps, col++, pos.bounds.getArea());
                     safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                    safeSetBinary(sb, ps, col++, PositionUtil.encode(pos.bounds));
                 }
                 else
                 {
@@ -1318,7 +1317,6 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetPoint(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
-                    safeSetBinary(sb, ps, col++, null);
                 }
 
                 if (pos.dimension != null)

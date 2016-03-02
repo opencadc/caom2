@@ -13,10 +13,10 @@ create table caom2.Artifact
     metaReadAccessGroups tsvector default '',
 
 -- internal
-    obsID bigint not null,
+    obsID bigint not null, -- change: UUID
     metaRelease timestamp,
-    planeID bigint not null references caom2.Plane (planeID),
-    artifactID bigint not null primary key using index tablespace caom_index,
+    planeID bigint not null references caom2.Plane (planeID), -- change: UUID
+    artifactID bigint not null primary key using index tablespace caom_index, -- change: UUID
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null

@@ -123,12 +123,12 @@ create table caom2.Chunk
     metaReadAccessGroups tsvector default '',
 
 -- internal
-    obsID bigint not null,
-    planeID bigint not null,
-    artifactID bigint not null,
+    obsID bigint not null, -- change: UUID
+    planeID bigint not null, -- change: UUID
+    artifactID bigint not null, -- change: UUID
     metaRelease timestamp,
-    partID bigint not null references caom2.Part (partID),
-    chunkID bigint not null primary key using index tablespace caom_index,
+    partID bigint not null references caom2.Part (partID), -- change: UUID
+    chunkID bigint not null primary key using index tablespace caom_index, -- change: UUID
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null

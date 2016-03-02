@@ -1,9 +1,9 @@
 
 create table caom2.Observation
 (
-    observationURI varchar(512) not null,
-    collection varchar(64) not null,
-    observationID varchar(256) not null,
+    observationURI varchar(512) not null, -- change: rename to uri
+    collection varchar(64) not null,      -- change: rename to uri_collection
+    observationID varchar(256) not null,  -- change: rename to uri_observationID
     algorithm_name varchar(64) not null,
     type varchar(32),
     intent varchar(32),
@@ -13,15 +13,15 @@ create table caom2.Observation
     proposal_id varchar(64),
     proposal_pi varchar(64),
     proposal_project varchar(64),
-    proposal_title varchar(256),
-    proposal_keywords text,
+    proposal_title varchar(256), -- change: citext
+    proposal_keywords text,      -- change: tsvector
 
     target_name varchar(64),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,
     target_moving integer,
-    target_keywords text,
+    target_keywords text, -- change: tsvector
 
     targetPosition_coordsys varchar(16),
     targetPosition_equinox double precision,
@@ -32,12 +32,12 @@ create table caom2.Observation
     telescope_geoLocationX double precision,
     telescope_geoLocationY double precision,
     telescope_geoLocationZ double precision,
-    telescope_keywords text,
+    telescope_keywords text, -- change: tsvector
 
     requirements_flag varchar(16),
 
     instrument_name varchar(64),
-    instrument_keywords text,
+    instrument_keywords text, -- change: tsvector
 
     environment_seeing double precision,
     environment_humidity double precision,
@@ -54,7 +54,7 @@ create table caom2.Observation
 
 -- internal
     typeCode char not null,
-    obsID bigint not null primary key using index tablespace caom_index,
+    obsID bigint not null primary key using index tablespace caom_index, -- change: UUID
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
@@ -74,8 +74,8 @@ tablespace caom_index
 -- member join support
 create table caom2.Observation_members
 (
-    compositeID bigint not null references caom2.Observation (obsID),
-    simpleID bigint not null references caom2.Observation (obsID)
+    compositeID bigint not null references caom2.Observation (obsID), -- change: UUID
+    simpleID bigint not null references caom2.Observation (obsID)     -- change: UUID
 )
 tablespace caom_data
 ;

@@ -102,4 +102,4 @@ CRED=$(dbrc_get CAOM2_PG_TEST cadctest)
 DBUSER=$(echo $CRED | awk '{print $1}')
 DBPW=$(echo $CRED | awk '{print $2}')
 
-doitPG "psql -h cvodb0 -d cadctest -U $DBUSER -w" $DBUSER
+doitPG "psql -h cvodbdev -d cadctest -U $DBUSER -w" $DBUSER
