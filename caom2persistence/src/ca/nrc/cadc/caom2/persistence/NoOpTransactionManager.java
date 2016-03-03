@@ -67,21 +67,43 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
+package ca.nrc.cadc.caom2.persistence;
 
 /**
- *
+ * Dummy transaction manager that doesn't do anything. This is for use with really
+ * simple persistence layer like a file where you just rely on the write/close to
+ * commit the changes.
+ * 
  * @author pdowler
  */
-public interface TransactionManager 
+public class NoOpTransactionManager implements TransactionManager
 {
+    private boolean txn = false;
+    
+    public void commitTransaction()
+    {
+        if (!txn)
+            throw new IllegalStateException("no transaction");
+        txn = false;
+    }
 
-    void commitTransaction();
+    public boolean isOpen()
+    {
+        return txn;
+    }
 
-    boolean isOpen();
+    public void rollbackTransaction()
+    {
+        if (!txn)
+            throw new IllegalStateException("no transaction");
+        txn = false;
+    }
 
-    void rollbackTransaction();
-
-    void startTransaction();
+    public void startTransaction()
+    {
+        if (txn)
+            throw new IllegalStateException("transaction already started");
+        txn = true;
+    }
 
 }

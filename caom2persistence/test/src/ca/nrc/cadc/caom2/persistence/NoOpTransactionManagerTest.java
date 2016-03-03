@@ -67,43 +67,98 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
+package ca.nrc.cadc.caom2.persistence;
+
+import ca.nrc.cadc.util.Log4jInit;
+import java.util.Random;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Dummy transaction manager that doesn't do anything. This is for use with really
- * simple persistence layer like a file where you just rely on the write/close to
- * commit the changes.
- * 
+ *
  * @author pdowler
  */
-public class NoOpTransactionManager implements TransactionManager
+public class NoOpTransactionManagerTest 
 {
-    private boolean txn = false;
+    private static final Logger log = Logger.getLogger(NoOpTransactionManagerTest.class);
+
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+    }
+
+    Random rnd = new Random();
     
-    public void commitTransaction()
+    @Test
+    public void testStates()
     {
-        if (!txn)
-            throw new IllegalStateException("no transaction");
-        txn = false;
+        try
+        {
+            TransactionManager tm = new NoOpTransactionManager();
+            Assert.assertFalse(tm.isOpen());
+            
+            tm.startTransaction();
+            Assert.assertTrue(tm.isOpen());
+            
+            tm.commitTransaction();
+            Assert.assertFalse(tm.isOpen());
+            
+            tm.startTransaction();
+            Assert.assertTrue(tm.isOpen());
+            
+            tm.rollbackTransaction();
+            Assert.assertFalse(tm.isOpen());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-    public boolean isOpen()
+    @Test
+    public void testExceptions()
     {
-        return txn;
+        try
+        {
+            TransactionManager tm = new NoOpTransactionManager();
+            
+            Assert.assertFalse(tm.isOpen());
+            try
+            {
+                tm.commitTransaction();
+                Assert.fail("expected IllegalStateException from commitTransaction");
+            }
+            catch(IllegalStateException expected) { }
+            
+            Assert.assertFalse(tm.isOpen());
+            try
+            {
+                tm.rollbackTransaction();
+                Assert.fail("expected IllegalStateException from rollbackTransaction");
+            }
+            catch(IllegalStateException expected) { }
+            
+            Assert.assertFalse(tm.isOpen());
+            tm.startTransaction();
+            Assert.assertTrue(tm.isOpen());
+            try
+            {
+                tm.startTransaction();
+                Assert.fail("expected IllegalStateException from startTransaction");
+            }
+            catch(IllegalStateException expected) { }
+            
+            tm.rollbackTransaction();
+            Assert.assertFalse(tm.isOpen());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-    public void rollbackTransaction()
-    {
-        if (!txn)
-            throw new IllegalStateException("no transaction");
-        txn = false;
-    }
-
-    public void startTransaction()
-    {
-        if (txn)
-            throw new IllegalStateException("transaction already started");
-        txn = true;
-    }
-
+    
+    
 }

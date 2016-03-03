@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
+package ca.nrc.cadc.caom2.persistence;
 
 import java.util.Map;
 

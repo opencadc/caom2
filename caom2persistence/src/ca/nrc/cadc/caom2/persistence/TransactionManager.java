@@ -67,98 +67,21 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.dao;
-
-import ca.nrc.cadc.util.Log4jInit;
-import java.util.Random;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
+package ca.nrc.cadc.caom2.persistence;
 
 /**
  *
  * @author pdowler
  */
-public class NoOpTransactionManagerTest 
+public interface TransactionManager 
 {
-    private static final Logger log = Logger.getLogger(NoOpTransactionManagerTest.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
-    }
+    void commitTransaction();
 
-    Random rnd = new Random();
-    
-    @Test
-    public void testStates()
-    {
-        try
-        {
-            TransactionManager tm = new NoOpTransactionManager();
-            Assert.assertFalse(tm.isOpen());
-            
-            tm.startTransaction();
-            Assert.assertTrue(tm.isOpen());
-            
-            tm.commitTransaction();
-            Assert.assertFalse(tm.isOpen());
-            
-            tm.startTransaction();
-            Assert.assertTrue(tm.isOpen());
-            
-            tm.rollbackTransaction();
-            Assert.assertFalse(tm.isOpen());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    @Test
-    public void testExceptions()
-    {
-        try
-        {
-            TransactionManager tm = new NoOpTransactionManager();
-            
-            Assert.assertFalse(tm.isOpen());
-            try
-            {
-                tm.commitTransaction();
-                Assert.fail("expected IllegalStateException from commitTransaction");
-            }
-            catch(IllegalStateException expected) { }
-            
-            Assert.assertFalse(tm.isOpen());
-            try
-            {
-                tm.rollbackTransaction();
-                Assert.fail("expected IllegalStateException from rollbackTransaction");
-            }
-            catch(IllegalStateException expected) { }
-            
-            Assert.assertFalse(tm.isOpen());
-            tm.startTransaction();
-            Assert.assertTrue(tm.isOpen());
-            try
-            {
-                tm.startTransaction();
-                Assert.fail("expected IllegalStateException from startTransaction");
-            }
-            catch(IllegalStateException expected) { }
-            
-            tm.rollbackTransaction();
-            Assert.assertFalse(tm.isOpen());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    
+    boolean isOpen();
+
+    void rollbackTransaction();
+
+    void startTransaction();
+
 }

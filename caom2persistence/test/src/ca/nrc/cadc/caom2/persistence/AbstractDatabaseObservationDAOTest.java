@@ -116,7 +116,6 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
-import ca.nrc.cadc.caom2.dao.TransactionManager;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;

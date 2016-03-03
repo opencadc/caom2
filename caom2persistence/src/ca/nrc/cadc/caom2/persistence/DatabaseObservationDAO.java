@@ -76,7 +76,6 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.dao.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
