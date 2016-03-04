@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.HashUtil;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -85,8 +84,7 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
-    private final String collection;
-    private final String observationID;
+    private final ObservationURI uri;
 
     // mutable state
     private Algorithm algorithm;
@@ -106,44 +104,41 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
 
-    /**
-     * Constructor with required arguments.
-     * 
-     * @param collection
-     * @param observationID
-     * @param algorithm 
-     */
-    protected Observation(String collection, String observationID, Algorithm algorithm)
+    protected Observation(ObservationURI uri, Algorithm algorithm)
     {
-        CaomValidator.assertNotNull(getClass(), "collection", collection);
-        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-        CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+        super();
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
-        this.collection = collection;
-        this.observationID = observationID;
+        this.uri = uri;
         this.algorithm = algorithm;
     }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + collection + "," + observationID + "]";
+        return getClass().getSimpleName() + "[" + uri.getURI().toASCIIString() + "]";
     }
 
     public ObservationURI getURI()
     {
-        return new ObservationURI(collection, observationID);
+        return uri;
     }
 
-    public String getCollection()
+    /**
+     * @deprecated convenience method
+     * @return 
+     */
+    private String getCollection()
     {
-        return collection;
+        return uri.getCollection();
     }
 
-    public String getObservationID()
+    /**
+     * @deprecated convenience method
+     * @return 
+     */
+    private String getObservationID()
     {
-        return observationID;
+        return uri.getObservationID();
     }
 
     public void setAlgorithm(Algorithm algorithm)
@@ -180,17 +175,12 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     @Override
     public int hashCode()
     {
-        int ret = HashUtil.hash(HashUtil.SEED, collection);
-        ret = HashUtil.hash(ret, observationID);
-        return ret;
+        return uri.hashCode();
     }
 
     @Override
     public int compareTo(Observation o)
     {
-        int ret = this.collection.compareTo(o.collection);
-        if (ret != 0)
-            return ret;
-        return this.observationID.compareTo(o.observationID);
+        return uri.compareTo(o.uri);
     }
 }

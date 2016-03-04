@@ -160,7 +160,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation("FOO", "bar");
+            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
             
             ObservationWriter w20 = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -204,7 +204,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation("FOO", "bar");
+            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
             ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -230,7 +230,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation("FOO", "bar");
+            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
             ObservationWriter w = new ObservationWriter();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -317,7 +317,7 @@ public class ObservationReaderWriterTest
         try
         {
             ObservationReader r = new ObservationReader();
-            SimpleObservation observation = new SimpleObservation("FOO", "bar");
+            SimpleObservation observation = new SimpleObservation(new ObservationURI("FOO", "bar"));
             observation.telescope = new Telescope("bar\tbaz\n1.0");
             StringBuilder sb = new StringBuilder();
             ObservationWriter writer = new ObservationWriter();
@@ -329,8 +329,8 @@ public class ObservationReaderWriterTest
             ObservationReader reader = new ObservationReader(false);
             Observation returned = reader.read(sb.toString());
             
-            assertEquals("FOO", returned.getCollection());
-            assertEquals("bar", returned.getObservationID());
+            assertEquals("FOO", returned.getURI().getCollection());
+            assertEquals("bar", returned.getURI().getObservationID());
             assertNotNull("has telescope", returned.telescope);
             assertEquals("bar baz 1.0", returned.telescope.getName());
 
@@ -614,13 +614,13 @@ public class ObservationReaderWriterTest
         if (expected.getLastModified() != null && actual.getLastModified() != null)
             assertEquals("Observation.lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
     
-        assertNotNull(expected.getCollection());
-        assertNotNull(actual.getCollection());
-        assertEquals(expected.getCollection(), actual.getCollection());
+        assertNotNull(expected.getURI().getCollection());
+        assertNotNull(actual.getURI().getCollection());
+        assertEquals(expected.getURI().getCollection(), actual.getURI().getCollection());
         
-        assertNotNull(expected.getObservationID());
-        assertNotNull(actual.getObservationID());
-        assertEquals(expected.getObservationID(), actual.getObservationID());
+        assertNotNull(expected.getURI().getObservationID());
+        assertNotNull(actual.getURI().getObservationID());
+        assertEquals(expected.getURI().getObservationID(), actual.getURI().getObservationID());
         
         assertNotNull(expected.getAlgorithm());
         assertNotNull(actual.getAlgorithm());

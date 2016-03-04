@@ -181,7 +181,7 @@ public class Caom2TestInstances
     public SimpleObservation getSimpleObservation()
         throws Exception
     {        
-        SimpleObservation observation = new SimpleObservation(collection, observationID);
+        SimpleObservation observation = new SimpleObservation(new ObservationURI(collection, observationID));
         if (complete)
         {
             observation.type = "flat";
@@ -205,7 +205,7 @@ public class Caom2TestInstances
     public CompositeObservation getCompositeObservation()
         throws Exception
     {
-        CompositeObservation observation = new CompositeObservation(collection, observationID, getAlgorithm());
+        CompositeObservation observation = new CompositeObservation(new ObservationURI(collection, observationID), getAlgorithm());
         if (complete)
         {
             observation.type = "field";

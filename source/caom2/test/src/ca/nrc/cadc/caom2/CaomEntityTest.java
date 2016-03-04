@@ -107,13 +107,14 @@ public class CaomEntityTest
     {
         try
         {
-            SimpleObservation so = new SimpleObservation("FOO", "bar");
-            CompositeObservation co = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            ObservationURI uri = new ObservationURI("FOO", "bar");
+            SimpleObservation so = new SimpleObservation(uri);
+            CompositeObservation co = new CompositeObservation(uri, new Algorithm("doit"));
             co.getMembers().add(new ObservationURI("foo", "baz"));
             
             Plane pl = new Plane("thing");
             pl.provenance = new Provenance("doit");
-            pl.provenance.getInputs().add(new PlaneURI(new ObservationURI("foo", "baz"), "thing"));
+            pl.provenance.getInputs().add(new PlaneURI(uri, "thing"));
 
             Artifact ar = new Artifact(new URI("ad", "FOO/bar", null));
             Part pa = new Part("x");
@@ -141,8 +142,8 @@ public class CaomEntityTest
         }
     }
 
-    static int[] expectedStateFields = { 14, 15, 8, 5, 2, 13 };
-    static int[] expectedStateFieldsWithTrans = { 14, 15, 12, 6, 3, 14 };
+    static int[] expectedStateFields = { 13, 14, 8, 5, 2, 13 };
+    static int[] expectedStateFieldsWithTrans = { 13, 14, 12, 6, 3, 14 };
     static int[] expectedChildFields = { 1, 1, 1, 1, 1, 0 };
 
     //@Test
@@ -256,7 +257,7 @@ public class CaomEntityTest
     {
         try
         {
-            Observation o = new SimpleObservation("FOO", "bar");
+            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
             int cs1 = o.getStateCode();
             o.metaRelease = new Date();
             int cs2 = o.getStateCode();
@@ -274,7 +275,7 @@ public class CaomEntityTest
     {
         try
         {
-            Observation o = new SimpleObservation("FOO", "bar");
+            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
             o.target = new Target("foo");
             int cs1 = o.getStateCode();
             o.target.type = TargetType.OBJECT;
@@ -293,7 +294,7 @@ public class CaomEntityTest
     {
         try
         {
-            Observation o = new SimpleObservation("FOO", "bar");
+            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
             o.telescope = new Telescope("fooscope");
             int cs1 = o.getStateCode();
             o.telescope.getKeywords().add("foo=2");
@@ -403,7 +404,7 @@ public class CaomEntityTest
             actual = chunk.getStateCode();
             Assert.assertFalse("changed Chunk code", expected == actual);
 
-            Observation o = new SimpleObservation("foo", "bar");
+            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
             expected = o.getStateCode();
             o.environment = new Environment();
             actual = o.getStateCode();

@@ -143,11 +143,11 @@ public class CaomUtilTest
         {
             UUID id = new UUID(0L, 666L);
             
-            CaomEntity ce = new SimpleObservation("FOO", "bar");
+            CaomEntity ce = new SimpleObservation(new ObservationURI("FOO", "bar"));
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
-            ce = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            ce = new CompositeObservation(new ObservationURI("FOO", "bar"), new Algorithm("doit"));
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
@@ -181,13 +181,13 @@ public class CaomUtilTest
         {
             Date expected = new Date();
             
-            CaomEntity ce = new SimpleObservation("FOO", "bar");
+            CaomEntity ce = new SimpleObservation(new ObservationURI("FOO", "bar"));
             CaomUtil.assignLastModified(ce, expected, "lastModified");
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
             
-            ce = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            ce = new CompositeObservation(new ObservationURI("FOO", "bar"), new Algorithm("doit"));
             CaomUtil.assignLastModified(ce, expected, "lastModified");
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");

@@ -195,7 +195,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
     /**
      * Compute and return a hash code of the entire state of the entity.
      *
-     * @param incldue transient fields in checksum calculation
+     * @param includeTransient fields in checksum calculation
      * @return 32-bit checksum of all non-null fields, 0 for an empty entity
      */
     public int getStateCode(boolean includeTransient)

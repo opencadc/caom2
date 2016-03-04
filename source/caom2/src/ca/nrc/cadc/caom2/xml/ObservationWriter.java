@@ -318,7 +318,7 @@ public class ObservationWriter implements Serializable
 
     private void addEntityAttributes(CaomEntity ce, Element el, DateFormat df)
     {
-        if (outputVersion == 20)
+        if (outputVersion < 21) // compat
             el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
         else
             el.setAttribute("id", ce.getID().toString(), caom2Namespace);
@@ -343,10 +343,16 @@ public class ObservationWriter implements Serializable
         element.setAttribute("type", type, xsiNamespace);
 
         addEntityAttributes(obs, element, dateFormat);
-        
-        // collection and observationID.
-        addElement("collection", obs.getCollection(), element);
-        addElement("observationID", obs.getObservationID(), element);
+
+        if (outputVersion < 22) // compat
+        {
+            addElement("collection", obs.getURI().getCollection(), element);
+            addElement("observationID", obs.getURI().getObservationID(), element);
+        }
+        else
+        {
+            addElement("uri", obs.getURI().getURI().toASCIIString(), element);
+        }
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);

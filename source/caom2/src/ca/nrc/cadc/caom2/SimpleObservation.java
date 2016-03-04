@@ -81,9 +81,9 @@ public class SimpleObservation extends Observation
     private static final long serialVersionUID = 201110261400L;
     public static final Algorithm ALGORITHM = new Algorithm("exposure");
 
-    public SimpleObservation(String collection, String observationID)
+    public SimpleObservation(ObservationURI uri)
     {
-        super(collection, observationID, ALGORITHM);
+        super(uri, ALGORITHM);
     }
 
     @Override

@@ -148,6 +148,7 @@ public class CaomUtil implements Serializable
             Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, d);
+            //log.debug("assignLastModified: " + d.getTime() + " -> " + ce.getClass().getSimpleName() + "." + fieldName);
         }
         catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }

@@ -70,11 +70,9 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -162,7 +160,7 @@ public class CaomValidatorTest
     {
         try
         {
-            Observation o = new SimpleObservation("FOO", "bar");
+            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
             Plane p = new Plane("baz");
             o.getPlanes().add(p);
             CaomValidator.validate(o);

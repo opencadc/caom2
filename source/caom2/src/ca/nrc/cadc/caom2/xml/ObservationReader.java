@@ -353,10 +353,27 @@ public class ObservationReader implements Serializable
         Attribute type = root.getAttribute("type", xsiNamespace);
         String tval = type.getValue();
         
-        // collection and observationID.
-        String collection = getChildText("collection", root, namespace, true);
-        String observationID = getChildText("observationID", root, namespace, true);
-       
+        ObservationURI uri = null;
+        if (XmlConstants.CAOM2_2_NAMESPACE.equals(namespace.getURI()))
+        {
+            String suri = getChildText("uri", root, namespace, true);
+            try
+            {
+                uri = new ObservationURI(new URI(suri));
+            }
+            catch(URISyntaxException ex)
+            {
+                throw new ObservationParsingException("invalid ObservationURI: " + suri, ex);
+            }
+        }
+        else
+        {
+            // compat: collection and observationID.
+            String collection = getChildText("collection", root, namespace, false);
+            String observationID = getChildText("observationID", root, namespace, false);
+            uri = new ObservationURI(collection, observationID);
+        }
+        
         // Algorithm.
         Algorithm algorithm = getAlgorithm(root, namespace, dateFormat);
             
@@ -366,12 +383,12 @@ public class ObservationReader implements Serializable
         String comp = namespace.getPrefix() + ":" +  CompositeObservation.class.getSimpleName();
         if ( simple.equals(tval) )
         {
-            obs = new SimpleObservation(collection, observationID);
+            obs = new SimpleObservation(uri);
             obs.setAlgorithm(algorithm);
         }
         else if ( comp.equals(tval) )
         {
-            obs = new CompositeObservation(collection, observationID, algorithm);
+            obs = new CompositeObservation(uri, algorithm);
         }
         else
             throw new ObservationParsingException("unexpected observation type: " + tval);
