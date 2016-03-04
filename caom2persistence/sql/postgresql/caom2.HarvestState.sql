@@ -2,7 +2,6 @@
 create table caom2.HarvestState
 (
     source          varchar(256) not null,
-    code            integer not null,
     cname           varchar(256)  not null,
     curLastModified timestamp,
     curID           uuid,

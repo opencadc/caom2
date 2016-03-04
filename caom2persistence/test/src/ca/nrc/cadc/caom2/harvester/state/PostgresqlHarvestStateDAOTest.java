@@ -92,7 +92,7 @@ public class PostgresqlHarvestStateDAOTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
     }
 
     static DataSource dataSource;
@@ -150,7 +150,6 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertEquals("testGet", s.source);
             Assert.assertEquals(Integer.class.getName(), s.cname);
-            Assert.assertEquals("testGet".hashCode(), s.code.intValue());
             Assert.assertNull(s.curLastModified);
         }
         catch(Exception unexpected)
@@ -193,7 +192,6 @@ public class PostgresqlHarvestStateDAOTest
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertEquals("testInsertDate", s.source);
-            Assert.assertEquals("testInsertDate".hashCode(), s.code.intValue());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
@@ -253,7 +251,6 @@ public class PostgresqlHarvestStateDAOTest
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertEquals("testUpdateDate", s.source);
-            Assert.assertEquals("testUpdateDate".hashCode(), s.code.intValue());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 

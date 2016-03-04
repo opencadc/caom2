@@ -93,7 +93,7 @@ public class SybaseHarvestStateDAOTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
     }
 
     static DataSource dataSource;
@@ -114,10 +114,10 @@ public class SybaseHarvestStateDAOTest
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_SYB_TEST", "cadctest");
             dataSource = DBUtil.getDataSource(cc);
-            database = null;
-            schema = "caom2";
+            database = "cadctest";
+            schema = System.getProperty("user.name");
 
-            String sql = "DELETE FROM " + schema + "_HarvestState";
+            String sql = "DELETE FROM " + database + "." + schema + ".caom2_HarvestState";
             log.info("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
         }
@@ -151,7 +151,6 @@ public class SybaseHarvestStateDAOTest
             Assert.assertNotNull(s);
             Assert.assertEquals("testGet", s.source);
             Assert.assertEquals(Integer.class.getName(), s.cname);
-            Assert.assertEquals("testGet".hashCode(), s.code.intValue());
             Assert.assertNull(s.curLastModified);
         }
         catch(Exception unexpected)
@@ -195,7 +194,6 @@ public class SybaseHarvestStateDAOTest
             HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertEquals("testInsertDate", s.source);
-            Assert.assertEquals("testInsertDate".hashCode(), s.code.intValue());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
@@ -257,7 +255,6 @@ public class SybaseHarvestStateDAOTest
             HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertEquals("testUpdateDate", s.source);
-            Assert.assertEquals("testUpdateDate".hashCode(), s.code.intValue());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 

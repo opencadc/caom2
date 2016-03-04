@@ -84,7 +84,6 @@ public class HarvestState
     
     // internal
     String source;
-    Integer code;
     String cname;
 
     Date lastModified;
@@ -92,6 +91,6 @@ public class HarvestState
 
     public String toString()
     {
-        return "HarvestState[" + source + "," + code + "," + cname + ": " + curLastModified + "," + curID +  "]";
+        return "HarvestState[" + source + "," + cname + ": " + curLastModified + "," + curID +  "]";
     }
 }

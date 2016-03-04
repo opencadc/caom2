@@ -32,11 +32,13 @@ public abstract class HarvestStateDAO
 
     private static final String[] COLUMNS =
     {
-        "source", "code", "cname", "curLastModified", "curID",
+        "source", "cname", "curLastModified", "curID",
         "lastModified", "stateID"
     };
     
-    protected boolean useLongForUUID;
+    protected String fakeSchemaTablePrefix = null;
+    private String database;
+    private String schema;
     private String tableName;
     private JdbcTemplate jdbc;
     private ResultSetExtractor extractor;
@@ -46,8 +48,19 @@ public abstract class HarvestStateDAO
     public HarvestStateDAO(DataSource dataSource, String database, String schema)
     {
         this.jdbc = new JdbcTemplate(dataSource);
-        this.tableName = getTable(database, schema);
+        this.database = database;
+        this.schema = schema;
         this.extractor = new StateExtractor();
+    }
+    
+    protected void init()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(database).append(".").append(schema).append(".");
+        if (fakeSchemaTablePrefix != null)
+            sb.append(fakeSchemaTablePrefix);
+        sb.append(HarvestState.class.getSimpleName());
+        this.tableName = sb.toString();
     }
 
     // get the current state from the database
@@ -61,7 +74,6 @@ public abstract class HarvestStateDAO
             HarvestState s = new HarvestState();
             s.cname = cname;
             s.source = source;
-            s.code = source.hashCode();
             log.debug("created: " + s);
             return s;
         }
@@ -75,10 +87,7 @@ public abstract class HarvestStateDAO
         if (state.id == null)
         {
             update = false;
-            if (useLongForUUID)
-                state.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
-            else
-                state.id = UUID.randomUUID();
+            state.id = UUID.randomUUID();
         }
         state.lastModified = new Date();
         PutStatementCreator put = new PutStatementCreator(update);
@@ -86,11 +95,8 @@ public abstract class HarvestStateDAO
         jdbc.update(put);
     }
 
-    protected abstract String getTable(String database, String schema);
-
     protected abstract void setUUID(PreparedStatement ps, int col, UUID val)
         throws SQLException;
-
 
     private class SelectStatementCreator  implements PreparedStatementCreator
     {
@@ -156,7 +162,6 @@ public abstract class HarvestStateDAO
         {
             int col = 1;
             ps.setString(col++, state.source);
-            ps.setInt(col++, state.code);
             ps.setString(col++, state.cname);
             if (state.curLastModified != null)
                 ps.setTimestamp(col++, new Timestamp(state.curLastModified.getTime()), CAL);
@@ -165,10 +170,7 @@ public abstract class HarvestStateDAO
             setUUID(ps, col++, state.curID);
 
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
-            if (useLongForUUID)
-                ps.setLong(col++, CaomUtil.uuidToLong(state.id));
-            else
-                ps.setObject(col++, state.id);
+            setUUID(ps, col++, state.id);
         }
     }
     
@@ -188,7 +190,6 @@ public abstract class HarvestStateDAO
                 ret = new HarvestState();
                 int col = 1;
                 ret.source = rs.getString(col++);
-                ret.code = rs.getInt(col++);
                 ret.cname = rs.getString(col++);
                 ret.curLastModified = Util.getDate(rs, col++, CAL);
                 ret.curID = Util.getUUID(rs, col++);
