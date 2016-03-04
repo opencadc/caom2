@@ -23,7 +23,7 @@ public final class PolygonUtil
     private static Logger log = Logger.getLogger(PolygonUtil.class);
 
     private static final double DEFAULT_SCALE = 0.02;
-    private static final double MAX_SCALE = 0.12;
+    private static final double MAX_SCALE = 0.11;
     
     private static boolean dbg = false;
 
@@ -105,22 +105,21 @@ public final class PolygonUtil
         {
             log.debug("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
             outer = union(parts, scale);
+            
             log.debug("[getConcaveHull] union = " + outer);
-            scale += DEFAULT_SCALE; // 2x, 3x, etc
-            List<Polygon> tmp = removeHoles(outer);
-            if (tmp.size() == 1)
+            if (outer.isSimple())
             {
                 try 
                 { 
-                    validateSegments(poly); 
-                    parts = tmp;
+                    validateSegments(outer); 
+                    parts = decompose(outer);
                 }
                 catch(IllegalPolygonException skip) 
                 { 
                     log.debug("scale: " + scale + " -> " + skip); 
                 }
             }
-            if (dbg) log.debug("");
+            scale += DEFAULT_SCALE; // 2x, 3x, etc
         }
         if (parts.size() == 1)
         {
@@ -238,9 +237,9 @@ public final class PolygonUtil
         }
 
         removeHoles(poly, 1.0);
-
+        
         if (scale > 0.0)
-            poly = unscalePolygon(poly, scaled);
+            poly = unscalePolygon(poly, scaled, scale);
 
         smooth(poly);
         //smooth(poly, 1.0e-4);
@@ -259,9 +258,9 @@ public final class PolygonUtil
         }
     }
     
-    private static Polygon scalePolygon(Polygon poly, double factor)
+    private static Polygon scalePolygon(Polygon poly, double scale)
     {
-        if (dbg) log.debug("[scalePolygon] start: " + poly + " BY " + factor);
+        if (dbg) log.debug("[scalePolygon] start: " + poly + " BY " + scale);
         Polygon ret = new Polygon();
         PolygonProperties pp = computePolygonProperties(poly);
         Point c = pp.center;
@@ -274,8 +273,8 @@ public final class PolygonUtil
             }
             else
             {
-                double dx = (v.cval1 - c.cval1) * factor;
-                double dy = (v.cval2 - c.cval2) * factor;
+                double dx = (v.cval1 - c.cval1) * scale;
+                double dy = (v.cval2 - c.cval2) * scale;
                 Vertex sv = new ScaledVertex(v.cval1 + dx, v.cval2 + dy, v.getType(), v);
                 ret.getVertices().add(sv);
             }
@@ -283,13 +282,13 @@ public final class PolygonUtil
         if (dbg) log.debug("[scalePolygon] done: " + ret);
         return ret;
     }
-    private static Polygon unscalePolygon(Polygon poly, List<Polygon> scaled)
+    private static Polygon unscalePolygon(Polygon poly, List<Polygon> scaled, double scale)
     {
-        if (dbg) log.debug("[unscalePolygon] start: " + poly);
+        log.debug("[unscalePolygon] scale: " + scale + " IN: " + poly);
         Polygon ret = new Polygon();
         
         boolean validSeg = false;
-        double tol = 0.5* poly.getSize() * DEFAULT_SCALE;
+        double tol = 1.1 * poly.getSize() * scale;
         if (dbg) log.debug("[unscalePolygon] tol = " + tol);
 
         // or each vertex in poly, look for the scaled vertex in the list of input polygons
@@ -306,35 +305,31 @@ public final class PolygonUtil
             if ( !SegmentType.CLOSE.equals(pv.getType()) )
             {
                 ScaledVertex sv = (ScaledVertex) findNearest(pv, scaled);
-                if (dbg) log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
+                log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
                 double d = Math.sqrt(distanceSquared(pv, sv));
                 
                 if (d < tol)
                 {
                     // use orig coords but keep current segtype
                     Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
-                    if (dbg) log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
+                    log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
                     ret.getVertices().set(i, v);
                     if (validSeg)
                     {
                         try { validateSegments(ret); }
                         catch(IllegalPolygonException oops)
                         {
-                            if (dbg) log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
+                            log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
                             ret.getVertices().set(i, pv); // undo
                         }
                     }
                 }
                 else
                 {
-                    if (dbg) log.debug("[unscalePolygon] keep: " + pv + " (d=" + d + ")");
-                //    Vertex v = new Vertex(pv.cval1, pv.cval2, pv.getType());
-                //    ret.getVertices().add(v);
+                    log.debug("[unscalePolygon] KEEP: " + pv + " (d=" + d + ")");
                 }
             }
         }
-        // TODO: could track which vertices were replaced and undo it if validateSegments proves
-        // we created an invalid polygon
         if (dbg) log.debug("[unscalePolygon] done: " + ret);
         return ret;
     }
@@ -425,7 +420,7 @@ public final class PolygonUtil
                         {
                             boolean ok = poly.getVertices().remove(rv);
                             if (!ok)
-                                log.warn("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
+                                log.debug("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
                         }
                         go = true;
                         restart = true;
@@ -449,7 +444,7 @@ public final class PolygonUtil
                             {
                                 boolean ok = poly.getVertices().remove(rv);
                                 if (!ok)
-                                    log.warn("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
+                                    log.debug("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
                             }
                             go = true;
                             restart = true;
@@ -500,7 +495,7 @@ public final class PolygonUtil
             return;
         PolygonProperties pp = computePolygonProperties(poly);
         
-        double tol = pp.minSpanCircle.getSize()*1.0e-6;
+        double tol = pp.minSpanCircle.getSize()*1.0e-3;
         
         Iterator<Vertex> vi = poly.getVertices().iterator();
         List<Segment> segs = new ArrayList<Segment>();
@@ -733,6 +728,8 @@ public final class PolygonUtil
      */
     public static List<Polygon> decompose(Polygon p)
     {
+        if (p == null)
+            return null;
         List<Polygon> polys = new ArrayList<Polygon>();
         Polygon prev = null; // needs to be a stack?
         Polygon cur = null;

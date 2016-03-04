@@ -6,6 +6,7 @@
 
 package ca.nrc.cadc.caom2.types.impl;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Stack;
 
@@ -24,7 +25,9 @@ import java.util.Stack;
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-public class GrahamScan {
+public class GrahamScan implements Serializable
+{
+    private static final long serialVersionUID = 201603031530L;
     private Stack<SortablePoint2D> hull = new Stack<SortablePoint2D>();
 
     /**
