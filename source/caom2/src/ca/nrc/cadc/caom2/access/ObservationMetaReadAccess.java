@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.access;
 
 import java.net.URI;
+import java.util.UUID;
 
 /**
  *
@@ -79,7 +80,7 @@ public class ObservationMetaReadAccess extends ReadAccess
 {
     private static final long serialVersionUID = 201202081620L;
     
-    public ObservationMetaReadAccess(Long assetID, URI groupID)
+    public ObservationMetaReadAccess(UUID assetID, URI groupID)
     {
         super(assetID, groupID);
     }

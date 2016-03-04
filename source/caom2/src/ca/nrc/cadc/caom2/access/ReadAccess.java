@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
+import java.util.UUID;
 
 /**
  *
@@ -82,13 +83,13 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
 {
     private static final long serialVersionUID = 201202081620L;
     
-    private Long assetID;
+    private UUID assetID;
 
     private URI groupID;
     
     private ReadAccess() { }
 
-    public ReadAccess(Long assetID, URI groupID)
+    public ReadAccess(UUID assetID, URI groupID)
     {
         super(true);
         CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
@@ -100,7 +101,7 @@ public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAcc
             throw new IllegalArgumentException("invalid groupID (no group name found in query string or fragment): " + groupID);
     }
 
-    public Long getAssetID()
+    public UUID getAssetID()
     {
         return assetID;
     }

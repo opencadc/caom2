@@ -105,8 +105,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
     
     protected AbstractCaomEntity()
     {
-        // default: 64-bit consistent with CAOM-2.0 use of Long
-        this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+        this(false); // default: 64-bit consistent with CAOM-2.0 use of Long
     }
     protected AbstractCaomEntity(boolean fullUUID)
     {
