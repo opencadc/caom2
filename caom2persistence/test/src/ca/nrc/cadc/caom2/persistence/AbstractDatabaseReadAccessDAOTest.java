@@ -101,15 +101,17 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     protected static Logger log;
 
     boolean deletionTrack;
+    boolean useLongForUUID;
     DatabaseReadAccessDAO dao;
     DatabaseObservationDAO obsDAO;
     DatabaseTransactionManager txnManager;
 
     protected Class[] entityClasses;
 
-    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
+    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
+        this.useLongForUUID = useLongForUUID;
         this.deletionTrack = deletionTrack;
         try
         {
@@ -133,6 +135,15 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
 
+    protected UUID genID()
+    {
+        if (useLongForUUID)
+        {
+            Long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
+    }
     @Before
     public void setup()
         throws Exception
@@ -222,12 +233,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        Long assetID = 666L; // want same assetID on all assets so test code is simpler
-        UUID id = new UUID(0L, assetID);
+        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, id);
+        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, id);
+        Util.assignID(pl, assetID);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
         Part pp = new Part(0);
         Chunk ch = new Chunk();
@@ -240,7 +250,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         try
         {
             // cleanup previous test run
-            obsDAO.delete(id);
+            obsDAO.delete(assetID);
             
             obsDAO.put(obs);
             
@@ -249,7 +259,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
@@ -257,7 +267,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
@@ -279,11 +289,12 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
-        UUID id = obs.getID();
-        Long assetID = id.getLeastSignificantBits();
-        Util.assignID(obs, id);
+        
+        UUID assetID = genID();
+        
+        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, id);
+        Util.assignID(pl, assetID);
         obs.getPlanes().add(pl);
         
         
@@ -296,7 +307,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             for (Class c : entityClasses)
             {
                 URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
         
                 // make sure it isn't there

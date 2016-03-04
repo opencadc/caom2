@@ -88,7 +88,7 @@ public class HarvestState
     String cname;
 
     Date lastModified;
-    Long id;
+    UUID id;
 
     public String toString()
     {

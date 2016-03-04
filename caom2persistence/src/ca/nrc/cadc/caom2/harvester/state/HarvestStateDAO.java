@@ -3,6 +3,7 @@ package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.persistence.Util;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +36,7 @@ public abstract class HarvestStateDAO
         "lastModified", "stateID"
     };
     
+    protected boolean useLongForUUID;
     private String tableName;
     private JdbcTemplate jdbc;
     private ResultSetExtractor extractor;
@@ -73,7 +75,10 @@ public abstract class HarvestStateDAO
         if (state.id == null)
         {
             update = false;
-            state.id = CaomIDGenerator.getInstance().generateID();
+            if (useLongForUUID)
+                state.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+            else
+                state.id = UUID.randomUUID();
         }
         state.lastModified = new Date();
         PutStatementCreator put = new PutStatementCreator(update);
@@ -160,7 +165,10 @@ public abstract class HarvestStateDAO
             setUUID(ps, col++, state.curID);
 
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
-            ps.setLong(col++, state.id);
+            if (useLongForUUID)
+                ps.setLong(col++, CaomUtil.uuidToLong(state.id));
+            else
+                ps.setObject(col++, state.id);
         }
     }
     
@@ -186,7 +194,7 @@ public abstract class HarvestStateDAO
                 ret.curID = Util.getUUID(rs, col++);
                 
                 ret.lastModified = Util.getDate(rs, col++, CAL);
-                ret.id = Util.getLong(rs, col++);
+                ret.id = Util.getUUID(rs, col++);
             }
             return ret;
         }

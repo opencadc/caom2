@@ -77,17 +77,17 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseDAOTest extends AbstractDatabaseObservationDAOTest
+public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAOTest
 {
     static
     {
-        log = Logger.getLogger(SybaseDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        log = Logger.getLogger(PostgresqlObservationDAOTest.class);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
     }
 
-    public SybaseDAOTest()
+    public PostgresqlObservationDAOTest()
         throws Exception
     {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", System.getProperty("user.name"), false, false);
     }
 }

@@ -125,7 +125,7 @@ public interface SQLGenerator
      * @param groupID
      * @return 
      */
-    String getSelectSQL(Class<? extends ReadAccess> c, Long assetID, URI groupID);
+    String getSelectSQL(Class<? extends ReadAccess> c, UUID assetID, URI groupID);
     
     String getSelectSQL(Class c, UUID id);
     

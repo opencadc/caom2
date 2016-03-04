@@ -41,6 +41,7 @@ public class SybaseHarvestStateDAO extends HarvestStateDAO
     public SybaseHarvestStateDAO(DataSource dataSource, String database, String schema)
     {
         super(dataSource, database, schema);
+        this.useLongForUUID = true;
     }
 
     protected String getTable(String database, String schema)

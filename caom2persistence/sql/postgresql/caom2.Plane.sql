@@ -79,8 +79,8 @@ create table caom2.Plane
     metaReadAccessGroups tsvector default '',
 
 -- internal
-    obsID bigint not null references caom2.Observation (obsID), -- change: UUID
-    planeID bigint not null  primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null references caom2.Observation (obsID), -- change: UUID
+    planeID uuid not null  primary key using index tablespace caom_index, -- change: UUID
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
@@ -102,8 +102,8 @@ drop table if exists caom2.Plane_inputs;
 
 create table caom2.Plane_inputs
 (
-    outputID bigint not null references caom2.Plane (planeID), -- change: UUID
-    inputID bigint not null references caom2.Plane (planeID)   -- change: UUID
+    outputID uuid not null references caom2.Plane (planeID), -- change: UUID
+    inputID uuid not null references caom2.Plane (planeID)   -- change: UUID
 )
 tablespace caom_data
 ;

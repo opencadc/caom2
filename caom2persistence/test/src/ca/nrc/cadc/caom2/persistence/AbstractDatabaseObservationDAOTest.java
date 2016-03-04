@@ -174,6 +174,7 @@ public abstract class AbstractDatabaseObservationDAOTest
     }
 
     boolean deletionTrack;
+    boolean useLongForUUID;
     DatabaseObservationDAO dao;
     TransactionManager txnManager;
 
@@ -182,9 +183,11 @@ public abstract class AbstractDatabaseObservationDAOTest
         Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
+    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, 
+            boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
+        this.useLongForUUID = useLongForUUID;
         this.deletionTrack = deletionTrack;
         try
         {
@@ -204,7 +207,17 @@ public abstract class AbstractDatabaseObservationDAOTest
             throw ex;
         }
     }
-
+    
+    protected UUID genID()
+    {
+        if (useLongForUUID)
+        {
+            Long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
+    }
+    
     @Before
     public void setup()
         throws Exception
@@ -230,7 +243,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    ////@Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -305,12 +318,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             UUID notFound = dao.getID(uri);
             Assert.assertNull(uri.toString(), notFound);
             
-            Long id = CaomIDGenerator.getInstance().generateID();
-            UUID uuid = new UUID(0L, id); // obsID is currently long == LSB of uuid
+            UUID uuid = genID();
             ObservationURI nuri = dao.getURI(uuid);
-            Assert.assertNull(id.toString(), nuri);
+            Assert.assertNull(uuid.toString(), nuri);
             Observation nobs = dao.get(uuid);
-            Assert.assertNull(id.toString(), nobs);
+            Assert.assertNull(uuid.toString(), nobs);
             
             // should return without failing
             dao.delete(uri);

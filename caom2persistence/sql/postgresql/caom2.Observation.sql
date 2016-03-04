@@ -54,7 +54,7 @@ create table caom2.Observation
 
 -- internal
     typeCode char not null,
-    obsID bigint not null primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null primary key using index tablespace caom_index, -- change: UUID
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
@@ -74,8 +74,8 @@ tablespace caom_index
 -- member join support
 create table caom2.Observation_members
 (
-    compositeID bigint not null references caom2.Observation (obsID), -- change: UUID
-    simpleID bigint not null references caom2.Observation (obsID)     -- change: UUID
+    compositeID uuid not null references caom2.Observation (obsID), -- change: UUID
+    simpleID uuid not null references caom2.Observation (obsID)     -- change: UUID
 )
 tablespace caom_data
 ;

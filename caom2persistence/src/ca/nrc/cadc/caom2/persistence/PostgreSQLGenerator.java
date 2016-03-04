@@ -100,9 +100,13 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     
     public PostgreSQLGenerator(String database, String schema)
     {
-        super(database, schema, null, true);
+        super(database, schema);
         this.useIntegerForBoolean = true;
+        this.persistTransientState = true;
         this.persistReadAccessWithAsset = true;
+        this.useLongForUUID = false;
+        this.useIntegerForBoolean = true;
+        super.init();
     }
 
     @Override
@@ -146,10 +150,6 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     @Override
     protected String literal(UUID value)
     {
-        // backwards compat with Long id valued in main CAOM tables
-        if (value.getMostSignificantBits() == 0L)
-            return Long.toString(value.getLeastSignificantBits());
-        
         // uuid datatype accepts a string with the standard hex string format
         return "'" + value.toString() + "'";
     }
