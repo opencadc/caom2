@@ -6,6 +6,7 @@
 
 package ca.nrc.cadc.caom2.types.impl;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 
@@ -24,8 +25,10 @@ import java.util.Comparator;
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-public final class SortablePoint2D implements Comparable<SortablePoint2D> {
-
+public final class SortablePoint2D implements Comparable<SortablePoint2D>, Serializable 
+{
+    private static final long serialVersionUID = 201603031530L;
+    
     /**
      * Compares two points by x-coordinate.
      */
@@ -201,7 +204,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
 
     // compare points according to their x-coordinate
-    private static class XOrder implements Comparator<SortablePoint2D> {
+    private static class XOrder implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+
         public int compare(SortablePoint2D p, SortablePoint2D q) {
             if (p.x < q.x) return -1;
             if (p.x > q.x) return +1;
@@ -210,7 +216,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
 
     // compare points according to their y-coordinate
-    private static class YOrder implements Comparator<SortablePoint2D> {
+    private static class YOrder implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+
         public int compare(SortablePoint2D p, SortablePoint2D q) {
             if (p.y < q.y) return -1;
             if (p.y > q.y) return +1;
@@ -219,7 +228,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
 
     // compare points according to their polar radius
-    private static class ROrder implements Comparator<SortablePoint2D> {
+    private static class ROrder implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+
         public int compare(SortablePoint2D p, SortablePoint2D q) {
             double delta = (p.x*p.x + p.y*p.y) - (q.x*q.x + q.y*q.y);
             if (delta < 0) return -1;
@@ -229,7 +241,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
  
     // compare other points relative to atan2 angle (bewteen -pi/2 and pi/2) they make with this Point
-    private class Atan2Order implements Comparator<SortablePoint2D> {
+    private class Atan2Order implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+
         public int compare(SortablePoint2D q1, SortablePoint2D q2) {
             double angle1 = angleTo(q1);
             double angle2 = angleTo(q2);
@@ -240,7 +255,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
 
     // compare other points relative to polar angle (between 0 and 2pi) they make with this Point
-    private class PolarOrder implements Comparator<SortablePoint2D> {
+    private class PolarOrder implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+        
         public int compare(SortablePoint2D q1, SortablePoint2D q2) {
             double dx1 = q1.x - x;
             double dy1 = q1.y - y;
@@ -261,7 +279,10 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D> {
     }
 
     // compare points according to their distance to this point
-    private class DistanceToOrder implements Comparator<SortablePoint2D> {
+    private class DistanceToOrder implements Comparator<SortablePoint2D>, Serializable 
+    {
+        private static final long serialVersionUID = 201603031530L;
+
         public int compare(SortablePoint2D p, SortablePoint2D q) {
             double dist1 = distanceSquaredTo(p);
             double dist2 = distanceSquaredTo(q);

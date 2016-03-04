@@ -201,6 +201,9 @@ public class CaomEntityTest
             id = new UUID(-1L, -1L);
             log.debug("[-1,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
+            
+            id = new UUID(0, 666L);
+            log.info("[0,666] as UUID: " + id.toString());
         }
         catch(Exception unexpected)
         {
