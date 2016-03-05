@@ -83,6 +83,7 @@ public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAO
     {
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
     }
 
     public PostgresqlObservationDAOTest()

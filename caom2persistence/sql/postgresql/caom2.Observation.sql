@@ -1,9 +1,9 @@
 
 create table caom2.Observation
 (
-    observationURI varchar(512) not null, -- change: rename to uri
-    collection varchar(64) not null,      -- change: rename to uri_collection
-    observationID varchar(256) not null,  -- change: rename to uri_observationID
+    uri varchar(512) not null,                -- change: rename observationURI to uri
+    uri_collection varchar(64) not null,      -- change: rename collection to uri_collection
+    uri_observationID varchar(256) not null,  -- change: rename observationID to uri_observationID 
     algorithm_name varchar(64) not null,
     type varchar(32),
     intent varchar(32),
@@ -13,15 +13,15 @@ create table caom2.Observation
     proposal_id varchar(64),
     proposal_pi varchar(64),
     proposal_project varchar(64),
-    proposal_title varchar(256), -- change: citext
-    proposal_keywords text,      -- change: tsvector
+    proposal_title citext,       -- change: varchar(256) to citext
+    proposal_keywords text,      -- change: text to tsvector
 
     target_name varchar(64),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,
     target_moving integer,
-    target_keywords text, -- change: tsvector
+    target_keywords text, -- change: text to tsvector
 
     targetPosition_coordsys varchar(16),
     targetPosition_equinox double precision,
@@ -32,12 +32,12 @@ create table caom2.Observation
     telescope_geoLocationX double precision,
     telescope_geoLocationY double precision,
     telescope_geoLocationZ double precision,
-    telescope_keywords text, -- change: tsvector
+    telescope_keywords text, -- change: text to tsvector
 
     requirements_flag varchar(16),
 
     instrument_name varchar(64),
-    instrument_keywords text, -- change: tsvector
+    instrument_keywords text, -- change: text to tsvector
 
     environment_seeing double precision,
     environment_humidity double precision,
@@ -62,7 +62,7 @@ create table caom2.Observation
 tablespace caom_data
 ;
 
-create unique index i_observationURI on caom2.Observation (collection, observationID)
+create unique index i_observationURI on caom2.Observation (uri_collection, uri_observationID)
 tablespace caom_index
 ;
 
@@ -72,6 +72,7 @@ tablespace caom_index
 ;
 
 -- member join support
+-- not currently used/tested
 create table caom2.Observation_members
 (
     compositeID uuid not null references caom2.Observation (obsID), -- change: UUID

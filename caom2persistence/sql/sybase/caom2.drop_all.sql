@@ -3,6 +3,7 @@ drop table caom2_Chunk;
 drop table caom2_Part;
 drop table caom2_Artifact;
 drop table caom2_Plane;
+drop table caom2_Observation_members;
 drop table caom2_Observation;
 
 drop table caom2_DeletedObservation;

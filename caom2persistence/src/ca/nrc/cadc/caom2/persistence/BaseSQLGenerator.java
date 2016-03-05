@@ -278,7 +278,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] obsColumns = new String[]
         {
             "typeCode", 
-            "collection", "observationID", "algorithm_name", 
+            "uri_collection", "uri_observationID", "algorithm_name", 
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
             "target_name", "target_type", "target_standard",
@@ -298,7 +298,7 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             String[] computedObsColumns = new String[]
             {
-                "observationURI"
+                "uri"
             };
             this.numComputedObservationColumns = computedObsColumns.length;
             int n = obsColumns.length + computedObsColumns.length;
@@ -562,11 +562,12 @@ public class BaseSQLGenerator implements SQLGenerator
         sb.append(getObservationSelect(depth, skeleton));
         sb.append(" WHERE ");
         sb.append(alias);
-        sb.append(".collection = ");
+        // TODO: use uri column directly in future
+        sb.append(".uri_collection = ");
         sb.append(literal(uri.getCollection()));
         sb.append(" AND ");
         sb.append(alias);
-        sb.append(".observationID = ");
+        sb.append(".uri_observationID = ");
         sb.append(literal(uri.getObservationID()));
         String orderBy = getOrderColumns(depth);
         if (skeleton)
@@ -2803,17 +2804,21 @@ public class BaseSQLGenerator implements SQLGenerator
                 return null;
 
             String collection = rs.getString(col++);
-            log.debug("found: collection = " + collection);
             String observationID = rs.getString(col++);
-            log.debug("found: observationID = " + observationID);
+            // TODO: current: uri_collection,uri_observationID are persisted everywhere
+            // and uri is persisted on for persistTransientState==true
+            // future: uri is always eprsisted, uri_collection,uri_observationID are transient
+            ObservationURI uri = new ObservationURI(collection, observationID);
+            log.debug("found: uri = " + uri);
+            
             Algorithm algorithm = new Algorithm(rs.getString(col++));
             log.debug("found: algorithm = " + algorithm);
 
             Observation o = null;
             if (SIMPLE_TYPE.equals(typeCode))
-                o = new SimpleObservation(collection, observationID);
+                o = new SimpleObservation(uri);
             else if (COMPOSITE_TYPE.equals(typeCode))
-                o = new CompositeObservation(collection, observationID, algorithm);
+                o = new CompositeObservation(uri, algorithm);
 
             o.type = rs.getString(col++);
             String intent = rs.getString(col++);

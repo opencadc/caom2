@@ -1,8 +1,9 @@
 
 create table caom2_Observation
 (
-    collection varchar(64) not null,
-    observationID varchar(256) not null,
+--  uri varchar(256) not null                -- TODO: add uri column
+    uri_collection varchar(64) not null,     -- change: rename collection to uri_collection
+    uri_observationID varchar(256) not null, -- change: rename observationID to uri_observationID
     algorithm_name varchar(64) not null,
     type varchar(32) null,
     intent varchar(32) null,
@@ -59,7 +60,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create unique index observationURI on caom2_Observation (collection, observationID)
+create unique index observationURI on caom2_Observation (uri_collection, uri_observationID)
 ;
 
 create index lastModified on caom2_Observation (lastModified)
@@ -69,18 +70,18 @@ create index lastModified on caom2_Observation (lastModified)
 create index maxLastModified on caom2_Observation (maxLastModified)
 ;
 
--- reference/join table for composites
---create table caom2_Observation_members
---(
--- internal
---    compositeID bigint not null references caom2_Observation (obsID),
---    simpleID bigint not null references caom2_Observation (obsID)
---)
---lock datarows
---;
+-- reference/join table for composites 
+-- not currently used/tested
+create table caom2_Observation_members
+(
+    compositeID bigint not null references caom2_Observation (obsID),
+    simpleID bigint not null references caom2_Observation (obsID)
+)
+lock datarows
+;
 
---create unique clustered index composite2simple on caom2_Observation_members (compositeID,simpleID)
---;
+create unique clustered index composite2simple on caom2_Observation_members (compositeID,simpleID)
+;
 
---create unique nonclustered index simple2composite on caom2_Observation_members (simpleID,compositeID)
---;
+create unique nonclustered index simple2composite on caom2_Observation_members (simpleID,compositeID)
+;

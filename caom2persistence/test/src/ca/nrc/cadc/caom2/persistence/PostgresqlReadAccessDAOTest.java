@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
@@ -152,7 +153,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     public void testExtendedUpdate()
     {
         UUID assetID = genID();
-        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
+        Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar-" + UUID.randomUUID()));
         Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);

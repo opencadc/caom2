@@ -265,14 +265,14 @@ public abstract class AbstractDatabaseObservationDAOTest
         // can still proceed -- eg it is really nested
         try
         {
-            Observation obs1 = new SimpleObservation("FOO", "bar");
+            Observation obs1 = new SimpleObservation(new ObservationURI("FOO", "bar"));
             dao.put(obs1);
             Assert.assertTrue(dao.exists(obs1.getURI()));
             log.info("created: " + obs1);
             
             
-            Observation dupe = new SimpleObservation("FOO", "bar");
-            Observation obs2 = new SimpleObservation("FOO", "bar2");
+            Observation dupe = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs2 = new SimpleObservation(new ObservationURI("FOO", "bar2"));
             
             txnManager.startTransaction(); // outer txn
             try
@@ -656,15 +656,19 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Observation orig = getTestObservation(full, i, false, true);
                 int numPlanes = orig.getPlanes().size();
                 
+                log.info("put: orig");
                 txnManager.startTransaction();
                 dao.put(orig);
                 txnManager.commitTransaction();
+                log.info("put: orig DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
 
+                log.info("get: orig");
                 Observation ret1 = dao.get(orig.getURI());
+                log.info("get: orig DONE");
                 Assert.assertNotNull("found", ret1);
                 Assert.assertEquals(numPlanes, ret1.getPlanes().size());
                 testEqual(orig, ret1);
@@ -672,29 +676,38 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Plane newPlane = getTestPlane(full, "newPlane", i);
                 ret1.getPlanes().add(newPlane);
                 
+                log.info("put: added");
                 txnManager.startTransaction();
                 dao.put(ret1);
                 txnManager.commitTransaction();
+                log.info("put: added DONE");
 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
+                log.info("get: added");
                 Observation ret2 = dao.get(orig.getURI());
+                log.info("get: added DONE");
                 Assert.assertNotNull("found", ret2);
                 Assert.assertEquals(numPlanes+1, ret1.getPlanes().size());
                 testEqual(ret1, ret2);
                 
                 ret2.getPlanes().remove(newPlane);
+                
+                log.info("put: removed");
                 txnManager.startTransaction();
                 dao.put(ret2);
                 txnManager.commitTransaction();
+                log.info("put: removed DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
+                log.info("get: removed");
                 Observation ret3 = dao.get(orig.getURI());
+                log.info("get: removed DONE");
                 Assert.assertNotNull("found", ret3);
                 Assert.assertEquals(numPlanes, ret3.getPlanes().size());
                 testEqual(orig, ret3);
@@ -728,11 +741,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             log.info("testGetObservationList");
             Integer batchSize = new Integer(3);
 
-            Observation o1 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1");
-            Observation o2 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA");
-            Observation o3 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2");
-            Observation o4 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB");
-            Observation o5 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3");
+            Observation o1 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1"));
+            Observation o2 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA"));
+            Observation o3 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2"));
+            Observation o4 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB"));
+            Observation o5 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3"));
 
             txnManager.startTransaction();
             dao.put(o1);
@@ -904,7 +917,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             return;
         }
         long dt = Math.abs(expected.getTime() - actual.getTime());
-        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= 3L));
+        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= TIME_TOLERANCE));
     }
     
     // for comparing release dates: compare second
@@ -957,8 +970,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
-        Assert.assertEquals(expected.getCollection(), actual.getCollection());
-        Assert.assertEquals(expected.getObservationID(), actual.getObservationID());
+        Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals("algorithm.name", expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
 
         Assert.assertEquals("type", expected.type, actual.type);
@@ -1324,7 +1336,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         Observation o;
         if (comp)
         {
-            CompositeObservation co = new CompositeObservation("TEST", "SimpleBar", new Algorithm("doit"));
+            CompositeObservation co = new CompositeObservation(new ObservationURI("TEST", "SimpleBar"), new Algorithm("doit"));
             if (full)
             {
                 co.getMembers().add(new ObservationURI("TEST", "simple1"));
@@ -1334,7 +1346,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             o = co;
         }
         else
-            o = new SimpleObservation("TEST", "SimpleBar");
+            o = new SimpleObservation(new ObservationURI("TEST", "SimpleBar"));
 
         if (full)
         {
