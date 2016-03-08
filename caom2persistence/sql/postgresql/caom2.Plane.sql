@@ -19,7 +19,7 @@ create table caom2.Plane
     provenance_producer varchar(256),
     provenance_runID varchar(256),
     provenance_lastExecuted timestamp,
-    provenance_keywords text, -- change: text to tsvector
+    provenance_keywords tsvector, -- change: text to tsvector
     provenance_inputs text,
 
 -- metrics

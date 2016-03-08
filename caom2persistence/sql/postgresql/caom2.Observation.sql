@@ -14,14 +14,14 @@ create table caom2.Observation
     proposal_pi varchar(64),
     proposal_project varchar(64),
     proposal_title citext,       -- change: varchar(256) to citext
-    proposal_keywords text,      -- change: text to tsvector
+    proposal_keywords tsvector,      -- change: text to tsvector
 
     target_name varchar(64),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,
     target_moving integer,
-    target_keywords text, -- change: text to tsvector
+    target_keywords tsvector, -- change: text to tsvector
 
     targetPosition_coordsys varchar(16),
     targetPosition_equinox double precision,
@@ -32,12 +32,12 @@ create table caom2.Observation
     telescope_geoLocationX double precision,
     telescope_geoLocationY double precision,
     telescope_geoLocationZ double precision,
-    telescope_keywords text, -- change: text to tsvector
+    telescope_keywords tsvector, -- change: text to tsvector
 
     requirements_flag varchar(16),
 
     instrument_name varchar(64),
-    instrument_keywords text, -- change: text to tsvector
+    instrument_keywords tsvector, -- change: text to tsvector
 
     environment_seeing double precision,
     environment_humidity double precision,
@@ -62,7 +62,11 @@ create table caom2.Observation
 tablespace caom_data
 ;
 
-create unique index i_observationURI on caom2.Observation (uri_collection, uri_observationID)
+create unique index i_observationURI on caom2.Observation (uri)
+tablespace caom_index
+;
+
+create unique index i_observationURI2 on caom2.Observation (uri_collection, uri_observationID)
 tablespace caom_index
 ;
 

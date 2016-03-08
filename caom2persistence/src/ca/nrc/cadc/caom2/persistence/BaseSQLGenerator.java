@@ -160,6 +160,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
@@ -217,6 +218,9 @@ public class BaseSQLGenerator implements SQLGenerator
 
     // map of Class to String[] with all the column names
     protected final Map<Class,String[]> columnMap = new TreeMap<Class,String[]>(new ClassComp());
+    
+    // map of column names whose values must be cast in insert or update
+    protected final Map<String,String> castMap = new TreeMap<String,String>();
 
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class,String> aliasMap = new TreeMap<Class,String>(new ClassComp());
@@ -844,9 +848,13 @@ public class BaseSQLGenerator implements SQLGenerator
         for (int c=0; c<cols.length; c++)
         {
             if (c > 0)
-                sb.append(",?");
-            else
-                sb.append("?");
+                sb.append(",");
+            sb.append("?");
+            
+            // experimental cast support
+            String cast = castMap.get(cols[c]);
+            if (cast != null)
+                sb.append("::").append(cast);
         }
         sb.append(")");
 
@@ -866,6 +874,11 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb.append(",");
             sb.append(cols[c]);
             sb.append(" = ?");
+            
+            // experimental cast support
+            String cast = castMap.get(cols[c]);
+            if (cast != null)
+                sb.append("::").append(cast);
         }
         sb.append(" WHERE ");
         sb.append(getPrimaryKeyColumn(clz));
@@ -1084,7 +1097,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, obs.proposal.pi);
                 safeSetString(sb, ps, col++, obs.proposal.project);
                 safeSetString(sb, ps, col++, obs.proposal.title);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.proposal.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.proposal.getKeywords());
             }
             else
             {
@@ -1104,7 +1117,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetBoolean(sb, ps, col++, obs.target.standard);
                 safeSetDouble(sb, ps, col++, obs.target.redshift);
                 safeSetBoolean(sb, ps, col++, obs.target.moving);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.target.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.target.getKeywords());
             }
             else
             {
@@ -1113,7 +1126,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetBoolean(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetBoolean(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.targetPosition != null)
             {
@@ -1140,7 +1153,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationX);
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationY);
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationZ);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.telescope.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.telescope.getKeywords());
             }
             else
             {
@@ -1148,17 +1161,17 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.instrument != null)
             {
                 safeSetString(sb, ps, col++, obs.instrument.getName());
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.instrument.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.instrument.getKeywords());
             }
             else
             {
                 safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.environment != null)
             {
@@ -1280,7 +1293,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, plane.provenance.runID);
                 safeSetDate(sb, ps, col++, Util.truncate(plane.provenance.lastExecuted), UTC_CAL);
                 safeSetString(sb, ps, col++, Util.encodePlaneURIs(plane.provenance.getInputs()));
-                safeSetString(sb, ps, col++, Util.encodeListString(plane.provenance.getKeywords()));
+                safeSetKeywords(sb, ps, col++, plane.provenance.getKeywords());
             }
             else
             {
@@ -1292,7 +1305,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, null);
                 safeSetDate(sb, ps, col++, null, UTC_CAL);
                 safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
 
             if (plane.metrics != null)
@@ -2200,6 +2213,29 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
     
+    // default: space-separated words in a single string
+    protected void safeSetKeywords(StringBuilder sb, PreparedStatement ps, int col, Set<String> vals)
+        throws SQLException
+    {
+        // default impl: space-separated
+        String val = CaomUtil.encodeListString(vals);
+        if (val != null)
+            ps.setString(col, val);
+        else
+            ps.setNull(col, Types.VARCHAR);
+        if (sb != null)
+        {
+            sb.append(val);
+            sb.append(",");
+        }
+    }
+    // default: space-separated words in a single string
+    protected void getKeywords(ResultSet rs, int col, Set<String> keywords)
+        throws SQLException
+    {
+        CaomUtil.decodeListString(rs.getString(col), keywords);
+    }
+    
     protected void safeSetDouble(StringBuilder sb, PreparedStatement ps, int col, Double val)
         throws SQLException
     {
@@ -2225,7 +2261,15 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(",");
         }
     }
-     
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final UUID getUUID(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetLongUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
         throws SQLException
     {
@@ -2317,13 +2361,38 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         throw new UnsupportedOperationException();
     }
-
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Point getPoint(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
         throws SQLException
     {
         throw new UnsupportedOperationException();
     }
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Polygon getPolygon(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Interval getInterval(ResultSet rs, int col)
         throws SQLException
     {
         throw new UnsupportedOperationException();
@@ -2837,7 +2906,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.proposal.pi = rs.getString(col++);
                 o.proposal.project = rs.getString(col++);
                 o.proposal.title = rs.getString(col++);
-                Util.decodeListString(rs.getString(col++), o.proposal.getKeywords());
+                getKeywords(rs, col++, o.proposal.getKeywords());
                 log.debug("found: " + o.proposal);
             }
             else
@@ -2857,7 +2926,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.target.standard = Util.getBoolean(rs, col++);
                 o.target.redshift = Util.getDouble(rs, col++);
                 o.target.moving = Util.getBoolean(rs, col++);
-                Util.decodeListString(rs.getString(col++), o.target.getKeywords());
+                getKeywords(rs, col++, o.target.getKeywords());
                 log.debug("found: " + o.target);
             }
             else
@@ -2891,7 +2960,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.telescope.geoLocationX = Util.getDouble(rs, col++);
                 o.telescope.geoLocationY = Util.getDouble(rs, col++);
                 o.telescope.geoLocationZ = Util.getDouble(rs, col++);
-                Util.decodeListString(rs.getString(col++), o.telescope.getKeywords());
+                getKeywords(rs, col++, o.telescope.getKeywords());
                 log.debug("found: " + o.telescope);
             }
             else
@@ -2905,7 +2974,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (in != null)
             {
                 o.instrument = new Instrument(in);
-                Util.decodeListString(rs.getString(col++), o.instrument.getKeywords());
+                getKeywords(rs, col++, o.instrument.getKeywords());
                 log.debug("found: " + o.instrument);
             }
             else
@@ -3047,7 +3116,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 log.debug("found p.provenance.lastExecuted = " + p.provenance.lastExecuted);
                 Util.decodePlaneURIs(rs.getString(col++), p.provenance.getInputs());
                 log.debug("found p.provenance.inpts: " + p.provenance.getInputs().size());
-                Util.decodeListString(rs.getString(col++), p.provenance.getKeywords());
+                getKeywords(rs, col++, p.provenance.getKeywords());
                 log.debug("found p.provenance.keywords: " + p.provenance.getKeywords().size());
             }
             else

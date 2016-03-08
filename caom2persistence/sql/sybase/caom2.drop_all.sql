@@ -17,4 +17,4 @@ drop table caom2_DeletedPlaneMetaReadAccess;
 drop table caom2_DeletedPlaneDataReadAccess;
 
 drop table caom2_HarvestState;
---drop table caom2_HarvestSkip;
+drop table caom2_HarvestSkip;

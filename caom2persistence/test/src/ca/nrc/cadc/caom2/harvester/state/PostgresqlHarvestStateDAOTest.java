@@ -92,7 +92,7 @@ public class PostgresqlHarvestStateDAOTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
     static DataSource dataSource;
