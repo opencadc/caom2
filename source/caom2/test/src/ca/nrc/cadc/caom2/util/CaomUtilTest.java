@@ -339,11 +339,11 @@ public class CaomUtilTest
     {
         try
         {
-            List<String> keywords = new ArrayList<String>();
+            Set<String> keywords = new TreeSet<String>();
             String actual = CaomUtil.encodeListString(keywords);
             Assert.assertNull(actual);
             
-            List<String> kw2 = new ArrayList<String>();
+            Set<String> kw2 = new TreeSet<String>();
             CaomUtil.decodeListString(actual, kw2);
             Assert.assertTrue(kw2.isEmpty());
             

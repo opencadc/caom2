@@ -131,6 +131,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
 import java.text.DateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -1573,7 +1574,7 @@ public class ObservationWriter implements Serializable
      * @param values The List of Strings for the element.
      * @param parent The parent element for this child element.
      */
-    protected void addStringListElement(String name, List<String> values, Element parent)
+    protected void addStringListElement(String name, Collection<String> values, Element parent)
     {
         if (values == null || (values.isEmpty() && !writeEmptyCollections))
             return;

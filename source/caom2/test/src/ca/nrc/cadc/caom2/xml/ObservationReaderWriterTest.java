@@ -654,13 +654,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.pi, actual.pi);
         assertEquals(expected.project, actual.project);
         assertEquals(expected.title, actual.title);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareTarget(Target expected, Target actual)
@@ -673,13 +667,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.type, actual.type);
         assertEquals(expected.redshift, actual.redshift);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareTargetPosition(TargetPosition expected, TargetPosition actual)
@@ -717,13 +705,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.geoLocationX, actual.geoLocationX);
         assertEquals(expected.geoLocationY, actual.geoLocationY);
         assertEquals(expected.geoLocationZ, actual.geoLocationZ);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareInstrument(Instrument expected, Instrument actual)
@@ -734,13 +716,7 @@ public class ObservationReaderWriterTest
         assertNotNull(expected);
         assertNotNull(actual);
         assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
 
     protected void compareEnvironment(Environment expected, Environment actual)

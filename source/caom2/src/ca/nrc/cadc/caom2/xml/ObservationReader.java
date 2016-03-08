@@ -145,6 +145,7 @@ import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1814,7 +1815,7 @@ public class ObservationReader implements Serializable
         return null;
     }
     
-    protected void addChildTextToStringList(String name, List<String> list, Element element, Namespace ns, boolean required)
+    protected void addChildTextToStringList(String name, Collection<String> list, Element element, Namespace ns, boolean required)
         throws ObservationParsingException
     {
         String child = getChildText(name, element, ns, required);
