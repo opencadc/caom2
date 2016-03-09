@@ -128,6 +128,35 @@ public class CaomValidatorTest
     }
     
     @Test
+    public void testAssertValidKeyword()
+    {
+        try
+        {
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo");
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo=42");
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo:42");
+            
+            try 
+            { 
+                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo's");
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo bar");
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    @Test
     public void testAssertPositive()
     {
         try

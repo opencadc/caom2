@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
-import ca.nrc.cadc.caom2.types.Shape;
+import java.util.Set;
 
 /**
  *
@@ -90,6 +90,16 @@ public final class CaomValidator
             throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
     }
 
+    public static void assertValidKeyword(Class caller, String name, String val)
+    {
+        assertNotNull(caller, name, val);
+        boolean space = (val.indexOf(' ') >= 0);
+        boolean tick = (val.indexOf('\'') >= 0);
+        if (!tick && !space)
+            return;
+        throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name
+                + ": may not contain single tick (') or space ( )");
+    }
     /**
      * A valid path component has no space ( ), slash (/), escape (\), or percent (%) characters.
      * 
@@ -117,8 +127,34 @@ public final class CaomValidator
             throw new IllegalArgumentException(caller.getSimpleName() + ": " + name + " must be > 0.0");
     }
 
+    private static void validateKeywords(String name, Set<String> vals)
+    {
+        for (String s : vals)
+        {
+            assertValidKeyword(CaomValidator.class, name, s);
+        }
+    }
+    public static void validateKeywords(Observation obs)
+    {
+        if (obs.proposal != null)
+            validateKeywords("proposal.keywords", obs.proposal.getKeywords());
+        if (obs.target != null)
+            validateKeywords("target.keywords", obs.target.getKeywords());
+        if (obs.telescope != null)
+            validateKeywords("telescope.keywords", obs.telescope.getKeywords());
+        if (obs.instrument != null)
+            validateKeywords("instrument.keywords", obs.instrument.getKeywords());
+        
+        for (Plane p : obs.getPlanes())
+        {
+            if (p.provenance != null)
+                validateKeywords("provenance.keywords", p.provenance.getKeywords());            
+        }
+    }
     public static void validate(Observation obs)
     {
+        validateKeywords(obs);
+        
         for (Plane p : obs.getPlanes())
         {
             try
