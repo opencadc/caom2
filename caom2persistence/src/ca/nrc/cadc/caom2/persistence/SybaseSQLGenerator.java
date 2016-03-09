@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.util.HexUtil;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -88,8 +89,12 @@ public class SybaseSQLGenerator extends BaseSQLGenerator
         this.persistReadAccessWithAsset = false;
         this.useLongForUUID = true;
         this.useIntegerForBoolean = true;
+        // temporary compat hack
+        this.collectionCol = "collection";
+        this.observationIDCol = "observationID";
         super.init();
     }
+    
 
     @Override
     protected String getTopConstraint(Integer batchSize)

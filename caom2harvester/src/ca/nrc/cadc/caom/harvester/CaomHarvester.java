@@ -33,6 +33,8 @@ public class CaomHarvester implements Runnable
     private DeletionHarvester planeDataDeleter;
     private DeletionHarvester planeMetaDeleter;
     
+    private boolean intiDeletionHarvesters;
+    
     private CaomHarvester() { }
 
     /**
@@ -85,6 +87,12 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
+    public void setIntiDeletionHarvesters(boolean intiDeletionHarvesters)
+    {
+        this.intiDeletionHarvesters = intiDeletionHarvesters;
+    }
+
+    
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 
             Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxdate)
         throws IOException
@@ -117,19 +125,30 @@ public class CaomHarvester implements Runnable
         // delete observations before harvest to avoid observationURI conflicts 
         // from delete+create
         if (obsDeleter != null)
+        {
+            obsDeleter.setInitHarvestState(intiDeletionHarvesters);
             obsDeleter.run();
-
+        }
         if (obsHarvester != null)
             obsHarvester.run();
 
         // clean up old access control tuples before harvest to avoid conflicts
         // from delete+create
         if (observationMetaDeleter != null)
+        {
+            observationMetaDeleter.setInitHarvestState(intiDeletionHarvesters);
             observationMetaDeleter.run();
+        }
         if (planeDataDeleter != null)
+        {
+            planeDataDeleter.setInitHarvestState(intiDeletionHarvesters);
             planeDataDeleter.run();
+        }
         if (planeMetaDeleter != null)
+        {
+            planeDataDeleter.setInitHarvestState(intiDeletionHarvesters);
             planeMetaDeleter.run();
+        }
         
         // make sure access control tuples are harvested after observations
         // because they update asset tables and fail if asset is missing

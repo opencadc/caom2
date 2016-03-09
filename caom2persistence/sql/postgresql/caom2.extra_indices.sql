@@ -25,11 +25,11 @@ tablespace caom_index
 ;
 
 create index Plane_energy_ib1
-        on caom2.Plane (energy_bounds_cval1)
+        on caom2.Plane (energy_bounds_lower)
 tablespace caom_index
 ;
 create index Plane_energy_ib2
-        on caom2.Plane (energy_bounds_cval2)
+        on caom2.Plane (energy_bounds_upper)
 tablespace caom_index
 ;
 
@@ -55,11 +55,11 @@ tablespace caom_index
 ;
 
 create index Plane_time_ib1
-        on caom2.Plane (time_bounds_cval1)
+        on caom2.Plane (time_bounds_lower)
 tablespace caom_index
 ;
 create index Plane_time_ib2
-        on caom2.Plane (time_bounds_cval2)
+        on caom2.Plane (time_bounds_upper)
 tablespace caom_index
 ;
 

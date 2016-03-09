@@ -9,6 +9,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -319,6 +320,10 @@ public class ObservationHarvester extends Harvester
                                     throw new IllegalStateException("detected harvesting collision: " + o.getURI() 
                                             + " maxLastModified: " + format(o.getMaxLastModified()));
                             }
+                            
+                            // temporary validation hack to avoid tickmarks in the keywords columns
+                            CaomValidator.validateKeywords(o);
+                            
                             destObservationDAO.put(o);
                       
                         
@@ -388,8 +393,7 @@ public class ObservationHarvester extends Harvester
                     {
                         if (str.contains("spherepoly_from_array"))
                         {
-                            log.error("UNDETECTED illegal polygon: "
-                                    + o.getCollection() + "," + o.getObservationID());
+                            log.error("UNDETECTED illegal polygon: " + o.getURI());
                         }
                         else
                             log.error("unexpected exception", oops);

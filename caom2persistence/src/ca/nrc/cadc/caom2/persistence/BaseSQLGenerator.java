@@ -229,6 +229,11 @@ public class BaseSQLGenerator implements SQLGenerator
 
     protected DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     
+    
+    // temporary allow sybase packwards compat
+    protected String collectionCol = "uri_collection";
+    protected String observationIDCol = "uri_observationID";
+    
     private BaseSQLGenerator() { }
     
     public BaseSQLGenerator(String database, String schema)
@@ -282,7 +287,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] obsColumns = new String[]
         {
             "typeCode", 
-            "uri_collection", "uri_observationID", "algorithm_name", 
+            collectionCol, observationIDCol, "algorithm_name", 
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
             "target_name", "target_type", "target_standard",
@@ -345,14 +350,14 @@ public class BaseSQLGenerator implements SQLGenerator
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
                 // energy
-                "energy_emBand", "energy_bounds", "energy_bounds_cval1", "energy_bounds_cval2", "energy_bounds_width",
+                "energy_emBand", "energy_bounds", "energy_bounds_lower", "energy_bounds_upper", "energy_bounds_width",
                 "energy_freqWidth", "energy_freqSampleSize",
                 "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
                 "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
                 "energy_restwav",
 
                 // time
-                "time_bounds", "time_bounds_cval1", "time_bounds_cval2", "time_bounds_width",
+                "time_bounds", "time_bounds_lower", "time_bounds_upper", "time_bounds_width",
                 "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
 
                 // polarization
@@ -567,11 +572,11 @@ public class BaseSQLGenerator implements SQLGenerator
         sb.append(" WHERE ");
         sb.append(alias);
         // TODO: use uri column directly in future
-        sb.append(".uri_collection = ");
+        sb.append(".").append(collectionCol).append(" = ");
         sb.append(literal(uri.getCollection()));
         sb.append(" AND ");
         sb.append(alias);
-        sb.append(".uri_observationID = ");
+        sb.append(".").append(observationIDCol).append(" = ");
         sb.append(literal(uri.getObservationID()));
         String orderBy = getOrderColumns(depth);
         if (skeleton)

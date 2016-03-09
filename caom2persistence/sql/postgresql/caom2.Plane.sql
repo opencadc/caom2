@@ -45,8 +45,8 @@ create table caom2.Plane
 -- energy
     energy_emband            varchar(32),
     energy_bounds            polygon,          -- includes all energy_bounds_samples values
-    energy_bounds_cval1      double precision, -- change: rename to energy_bounds_lower
-    energy_bounds_cval2      double precision, -- change: rename to energy_bounds_upper
+    energy_bounds_lower      double precision, -- change: rename to energy_bounds_lower
+    energy_bounds_upper      double precision, -- change: rename to energy_bounds_upper
     energy_bounds_width      double precision,
     energy_bounds_integrated double precision,
     energy_dimension         bigint,
@@ -61,8 +61,8 @@ create table caom2.Plane
 
 -- time
     time_bounds             polygon,          -- includes all time_bounds_samples values
-    time_bounds_cval1       double precision, -- change: rename to time_bounds_lower
-    time_bounds_cval2       double precision, -- change: rename to time_bounds_upper
+    time_bounds_lower       double precision, -- change: rename to time_bounds_lower
+    time_bounds_upper       double precision, -- change: rename to time_bounds_upper
     time_bounds_width       double precision,
     time_bounds_integrated  double precision,
     time_dimension          bigint,

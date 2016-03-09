@@ -2,8 +2,8 @@
 create table caom2_Observation
 (
 --  uri varchar(256) not null                -- TODO: add uri column
-    uri_collection varchar(64) not null,     -- change: rename collection to uri_collection
-    uri_observationID varchar(256) not null, -- change: rename observationID to uri_observationID
+    collection varchar(64) not null,     -- change: rename collection to uri_collection
+    observationID varchar(256) not null, -- change: rename observationID to uri_observationID
     algorithm_name varchar(64) not null,
     type varchar(32) null,
     intent varchar(32) null,
@@ -60,7 +60,7 @@ lock datarows
 partition by roundrobin 16
 ;
 
-create unique index observationURI on caom2_Observation (uri_collection, uri_observationID)
+create unique index observationURI on caom2_Observation (collection, observationID)
 ;
 
 create index lastModified on caom2_Observation (lastModified)
