@@ -108,6 +108,7 @@ public class CartesianTransformTest
         try
         {
             CartesianTransform trans = new CartesianTransform();
+            CartesianTransform inv = trans.getInverseTransform();
             Vertex v1, v2, v3;
 
             // check null transforms are no-ops
@@ -116,7 +117,7 @@ public class CartesianTransformTest
             Assert.assertEquals(v1.cval1, v2.cval1, 0.01);
             Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
             Assert.assertEquals(v1.getType(), v2.getType());
-            v3 = trans.inverseTransform(v2);
+            v3 = inv.transform(v2);
             Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
             Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
             Assert.assertEquals(v1.getType(), v3.getType());
@@ -127,6 +128,7 @@ public class CartesianTransformTest
             {
                 double increment = Math.toDegrees(a);
                 trans.a = a;
+                inv = trans.getInverseTransform();
                 
                 v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
                 v2 = trans.transform(v1);
@@ -134,7 +136,7 @@ public class CartesianTransformTest
                 Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v2.getType());
 
-                v3 = trans.inverseTransform(v2);
+                v3 = inv.transform(v2);
                 Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
                 Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v3.getType());
@@ -145,7 +147,7 @@ public class CartesianTransformTest
                 Assert.assertEquals(v1.cval2, v2.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v2.getType());
 
-                v3 = trans.inverseTransform(v2);
+                v3 = inv.transform(v2);
                 Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
                 Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v3.getType());
@@ -160,17 +162,18 @@ public class CartesianTransformTest
             for (double a=Math.PI/4.0; a <= Math.PI/2.0; a += Math.PI/4.0)
             {
                 trans.a = a;
+                inv = trans.getInverseTransform();
                 
                 v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
                 v2 = trans.transform(v1);
-                v3 = trans.inverseTransform(v2);
+                v3 = inv.transform(v2);
                 Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
                 Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v3.getType());
 
                 v1 = new Vertex(2.0, 4.0, SegmentType.MOVE);
                 v2 = trans.transform(v1);
-                v3 = trans.inverseTransform(v2);
+                v3 = inv.transform(v2);
                 Assert.assertEquals(v1.cval1, v3.cval1, 0.01);
                 Assert.assertEquals(v1.cval2, v3.cval2, 0.01);
                 Assert.assertEquals(v1.getType(), v3.getType());
@@ -204,7 +207,7 @@ public class CartesianTransformTest
             p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             
             Polygon p2 = trans.transform(p1);
-            Polygon p3 = trans.inverseTransform(p2);
+            Polygon p3 = trans.getInverseTransform().transform(p2);
             
             Assert.assertEquals(p1.getVertices().size(), p3.getVertices().size());
             for (int i=0; i<p1.getVertices().size(); i++)

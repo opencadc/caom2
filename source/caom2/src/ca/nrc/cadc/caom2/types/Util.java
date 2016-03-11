@@ -35,7 +35,7 @@ public final class Util
         return Math.floor(d+0.5);
     }
 
-    static ProductType choseProductType(Set<Artifact> artifacts)
+    public static ProductType choseProductType(Set<Artifact> artifacts)
     {
         ProductType ret = null;
         for (Artifact a : artifacts)
@@ -62,7 +62,7 @@ public final class Util
         return ret;
     }
     
-    static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
+    public static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
     {
         if (matches == null)
             return false;

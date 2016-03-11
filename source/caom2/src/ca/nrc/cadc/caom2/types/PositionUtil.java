@@ -182,7 +182,7 @@ public final class PositionUtil
         throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
     }
    
-    static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
         // since we compute the union, just blindly use all the polygons
@@ -210,9 +210,6 @@ public final class PositionUtil
         if (polys.isEmpty())
             return null;
         Polygon poly = PolygonUtil.union(polys);
-        Polygon p2 = PolygonUtil.union(polys, 0.0);
-        if (p2.getVertices().size() <= poly.getVertices().size())
-            poly = p2; // simpler polygon, more exact vertices with scale=0.0
         log.debug("[computeBounds] done: " + poly);
         return poly;
     }
@@ -466,7 +463,7 @@ public final class PositionUtil
         return null;
     }
     
-    static Polygon toPolygon(SpatialWCS wcs)
+    public static Polygon toPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException
     {
         CoordSys coordsys = inferCoordSys(wcs);
