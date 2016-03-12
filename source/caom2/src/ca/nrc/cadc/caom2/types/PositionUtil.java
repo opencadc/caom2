@@ -182,11 +182,9 @@ public final class PositionUtil
         throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
     }
    
-    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+    public static List<Polygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
-        // since we compute the union, just blindly use all the polygons
-        // derived from spatial wcs
         List<Polygon> polys = new ArrayList<Polygon>();
         for (Artifact a : artifacts)
         {
@@ -199,7 +197,7 @@ public final class PositionUtil
                         if (c.position != null)
                         {
                             Polygon poly = toPolygon(c.position);
-                            log.debug("[computeBounds] wcs: " + poly);
+                            log.debug("[generatePolygons] wcs: " + poly);
                             if (poly != null)
                                 polys.add(poly);
                         }
@@ -207,8 +205,17 @@ public final class PositionUtil
                 }
             }
         }
+        return polys;
+    }
+    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+        throws NoSuchKeywordException
+    {
+        // since we compute the union, just blindly use all the polygons
+        // derived from spatial wcs
+        List<Polygon> polys = generatePolygons(artifacts, productType);
         if (polys.isEmpty())
             return null;
+        log.debug("[computeBounds] components: " + polys.size());
         Polygon poly = PolygonUtil.union(polys);
         log.debug("[computeBounds] done: " + poly);
         return poly;
@@ -537,14 +544,15 @@ public final class PositionUtil
             poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
         }
 
+        log.debug("[wcs.toPolygon] native " + poly);
         toICRS(coordsys, poly.getVertices());
         
-        PolygonUtil.validateSegments(poly);
+        PolygonUtil.validateSegments(poly); // check for butterfly from above
         Point c = poly.getCenter();
         if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
             throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         
-
+        log.debug("[wcs.toPolygon] icrs " + poly);
         return poly;
     }
     

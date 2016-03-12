@@ -38,7 +38,7 @@ public class CartesianTransform implements Serializable
         return getTransform(cube, force);
     }
 
-    static CartesianTransform getTransform(double[] cube, boolean force)
+    public static CartesianTransform getTransform(double[] cube, boolean force)
     {
         double x1 = cube[0];
         double x2 = cube[1];
@@ -189,7 +189,7 @@ public class CartesianTransform implements Serializable
         return CartesianTransform.toLongLat(dp[0], dp[1], dp[2]);
     }
 
-    static double[] getBoundingCube(Polygon poly, double[] cube)
+    public static double[] getBoundingCube(Polygon poly, double[] cube)
     {
         // x1, x2, y1, y2, z1, z2
         if (cube == null)

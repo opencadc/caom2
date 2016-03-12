@@ -160,10 +160,14 @@ public class Polygon implements Shape
     public boolean isSimple()
     {
         validate();
-        for (int i=1; i<vertices.size() - 1; i++)
-            if ( !SegmentType.LINE.equals(vertices.get(i).getType()) )
-                return false;
-        return true;
+        int num = 0;
+        for (Vertex v : vertices)
+        {
+            if ( SegmentType.MOVE.equals(v.getType()) )
+                num++;
+        }
+        
+        return (num == 1);
     }
 
     private void initProps()
@@ -180,6 +184,7 @@ public class Polygon implements Shape
     {
         StringBuilder sb = new StringBuilder();
         sb.append("Polygon[");
+        sb.append(isSimple()).append(",");
         sb.append(vertices.size());
         sb.append(",");
         for (int i=0; i<vertices.size(); i++)
