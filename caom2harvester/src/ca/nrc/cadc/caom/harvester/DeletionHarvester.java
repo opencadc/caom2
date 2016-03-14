@@ -38,6 +38,7 @@ public class DeletionHarvester extends Harvester implements Runnable
     private TransactionManager txnManager;
     
     private boolean initHarvestState;
+    private Date initDate;
     
     private DeletionHarvester() { }
 
@@ -64,6 +65,8 @@ public class DeletionHarvester extends Harvester implements Runnable
     public void setInitHarvestState(boolean initHarvestState)
     {
         this.initHarvestState = initHarvestState;
+        if (initHarvestState)
+            this.initDate = new Date(); // timestamp at startup, not when run
     }
     
     private void init()
@@ -226,7 +229,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             
             if (initHarvestState && state.curLastModified == null)
             {
-                state.curLastModified = new Date();
+                state.curLastModified = initDate;
                 harvestState.put(state);
                 state = harvestState.get(source, cname);
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
