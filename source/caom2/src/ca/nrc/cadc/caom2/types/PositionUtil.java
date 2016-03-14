@@ -512,6 +512,7 @@ public final class PositionUtil
                         poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
                 }
                 poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+                PolygonUtil.validateSegments(poly);
             }
             else
                 throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
@@ -547,7 +548,6 @@ public final class PositionUtil
         log.debug("[wcs.toPolygon] native " + poly);
         toICRS(coordsys, poly.getVertices());
         
-        PolygonUtil.validateSegments(poly); // check for butterfly from above
         Point c = poly.getCenter();
         if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
             throw new IllegalPolygonException("computed polygon has invalid center: " + c);

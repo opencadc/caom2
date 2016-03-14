@@ -30,9 +30,14 @@ public final class PolygonUtil
     private static Logger log = Logger.getLogger(PolygonUtil.class);
 
     private static final double DEFAULT_SCALE = 0.02;
-    private static final double MAX_SCALE = 0.11;
+    private static final double MAX_SCALE = 0.07;
     
-    private static boolean dbg = true;
+    /**
+     * Flag to control attempts to use getConcaveHull from getOuterHull.
+     * When this is false, the getOuterHull always computes and returns 
+     * a convex hull. Currently: hard-coded to false.
+     */
+    public static final boolean ENABLE_CONCAVE_OUTER = false;
 
     public static Polygon toPolygon(Shape s)
     {
@@ -55,34 +60,35 @@ public final class PolygonUtil
      */
     public static Polygon getOuterHull(final Polygon poly)
     {
-        if (poly.isSimple())
-        {
-            log.debug("[getOuterHull] SIMPLE " + poly);
-            return poly;
-        }
+        List<Polygon> parts = decompose(poly, true);
+        return getOuterHull(parts);
+    }
+    
+    public static Polygon getOuterHull(final List<Polygon> parts)
+    {
+        Polygon tmp = compose(parts);
         
-        log.debug("[getOuterHull] " + poly);
-        PolygonProperties pp = computePolygonProperties(poly);
-        
-        Polygon convex = getConvexHull(poly);
+        Polygon convex = getConvexHull(tmp);
         PolygonProperties cxp = computePolygonProperties(convex);
-        double daConvex = Math.abs(pp.area - cxp.area)/pp.area;
-        log.debug("[getOuterHull] convex: " + convex + " dA = " + daConvex);
+        log.debug("[getOuterHull] convex: " + convex + " A = " + cxp.area);
         
-        Polygon concave = getConcaveHull(poly);
-        if (concave != null)
+        if (ENABLE_CONCAVE_OUTER)
         {
-            PolygonProperties ccp = computePolygonProperties(poly);
-            double daConcave = Math.abs(pp.area - ccp.area)/pp.area;
-            log.debug("[getOuterHull] concave: " + concave + " dA = " + daConcave);
-            if (daConcave < daConvex)
+            Polygon concave = getConcaveHull(parts);
+            if (concave != null)
             {
-                log.debug("[getOuterHull] pick CONCAVE " + concave);
-                return concave;
+                PolygonProperties ccp = computePolygonProperties(concave);
+                log.debug("[getOuterHull] concave: " + concave + " A = " + ccp.area);
+                
+                // if (  comcave isBetterThan convex )
+                {
+                    log.debug("[getOuterHull] pick CONCAVE " + concave);
+                    return concave;
+                }
             }
+            else
+                log.debug("[getOuterHull] concave: FAIL");
         }
-        else
-            log.debug("[getOuterHull] concave: FAIL");
         
         log.debug("[getOuterHull] pick CONVEX " + convex);
         return convex;
@@ -99,24 +105,17 @@ public final class PolygonUtil
      */
     static Polygon getConcaveHull(final Polygon poly)
     {
-        log.debug("[getConcaveHull] " + poly);
-        if (poly == null)
-            return null;
-        
-        // deep copy
-        Polygon outer = new Polygon();
-        for (Vertex v : poly.getVertices())
+        List<Polygon> parts = decompose(poly, true);  // decompose and remove holes
+        return getConcaveHull(parts);
+    }
+    
+    static Polygon getConcaveHull(final List<Polygon> parts)
+    {
+        double scale = 0.0;
+        Polygon outer = null;
+        while (outer == null && scale <= MAX_SCALE)
         {
-            outer.getVertices().add(new Vertex(v.cval1, v.cval2, v.getType()));
-        }
-
-        double scale = DEFAULT_SCALE;
-        boolean done = false;
-        while ( !done && scale <= MAX_SCALE)
-        {
-            List<Polygon> parts = removeHoles(outer); // decompose and remove holes
-            
-            log.debug("[getConcaveHull] trying union at scale=" + scale + " with " + parts.size() + " simple polygons");
+            log.debug("[getConcaveHull] trying scale=" + scale + " with " + parts.size() + " simple polygons");
             Polygon tmp = transComputeUnion(parts, scale, true, true);
             
             log.debug("[getConcaveHull] union = " + tmp);
@@ -133,15 +132,12 @@ public final class PolygonUtil
                 }
             }
             scale += DEFAULT_SCALE; // 2x, 3x, etc
-            done = outer.isSimple();
         }
-        if (outer != null && outer.isSimple())
-        {
+        if (outer != null)
             log.debug("[getConcaveHull] SUCCESS: " + outer);
-            return outer;
-        }
-        log.debug("[getConcaveHull] FAILED");
-        return null;
+        else
+            log.debug("[getConcaveHull] FAILED");
+        return outer;
     }
 
     /**
@@ -182,52 +178,7 @@ public final class PolygonUtil
      */
     public static Polygon union(List<Polygon> polys)
     {
-        Polygon approx = null;
-        try
-        {
-            Polygon ret = transComputeUnion(polys, 0.0, true, false);
-            approx = ret;
-            validateSegments(ret);
-            return ret;
-        }
-        catch(IllegalPolygonException ex)
-        {
-            log.debug("[union] invalid unscaled poly: " + ex);
-        }
-        catch(IllegalStateException ex)
-        {
-            log.debug("[union] invalid unscaled poly: " + ex);
-        }
-        try
-        {
-            Polygon ret = transComputeUnion(polys, DEFAULT_SCALE, true, false);
-            validateSegments(ret);
-            return ret;
-        }
-        catch(IllegalPolygonException ex2)
-        {
-            log.debug("[union] invalid scaled/unscaled poly: " + ex2);
-        }
-        catch(IllegalStateException ex)
-        {
-            log.debug("[union] invalid unscaled poly: " + ex);
-        }
-        
-        try
-        {
-            Polygon ret = transComputeUnion(polys, DEFAULT_SCALE, false, false);
-            validateSegments(ret);
-            return ret;
-        }
-        catch(IllegalPolygonException ex2)
-        {
-            log.debug("[union] invalid scaled poly: " + ex2);
-        }
-        catch(IllegalStateException ex)
-        {
-            log.debug("[union] invalid unscaled poly: " + ex);
-        }
-        return getOuterHull(approx);
+        return getOuterHull(polys);
     }
     
     public static Polygon intersection(Polygon p1, Polygon p2)
@@ -304,26 +255,92 @@ public final class PolygonUtil
             else
                 poly = doUnionCAG(poly, p);
         }
-
+        log.debug("[computeUnion] raw " + poly);
+        
         if (removeHoles)
-            removeHoles(poly, 1.0); // dA = 1.0 will be all holes
+            poly = removeHoles(poly);
         
         if (unscale && scale > 0.0)
-                poly = unscalePolygon(poly, scaled, scale);
-            
+            poly = unscalePolygon(poly, scaled, scale);
+
         smooth(poly);
 
         return poly;
     }
 
-    
-
-    static List<Polygon> removeHoles(Polygon poly)
+    private static Polygon removeHoles(Polygon poly)
     {
-        log.debug("[removeHoles] start: " + poly);
+        // impl: no checking, just blindly decompose and reassemble
+        List<Polygon> parts = decompose(poly, true);
+        return compose(parts);
+    }
+    
+    private static Polygon compose(List<Polygon> parts)
+    {
+        Polygon poly = new Polygon();
+        for (Polygon p : parts)
+        {
+            for (Vertex v : p.getVertices())
+            {
+                poly.getVertices().add(v);
+            }
+        }
+        return poly;
+    }
+    
+    private static List<Polygon> decompose(Polygon p)
+    {
+        if (p == null)
+            return null;
+        List<Polygon> polys = new ArrayList<Polygon>();
+        Polygon prev = null; // needs to be a stack?
+        Polygon cur = null;
+        for (Vertex v : p.getVertices())
+        {
+            if (cur == null) // start new poly
+            {
+                //log.debug("new Polygon");
+                cur = new Polygon();
+                //log.debug("vertex: " + v);
+                cur.getVertices().add(v);
+            }
+            else if (SegmentType.MOVE.equals(v.getType()))
+            {
+                //log.debug("vertex: " + v);
+                //cur.getVertices().add(new Vertex(0.0, 0.0,SegmentType.CLOSE));
+                //polys.add(cur);
+                //log.debug("close Polygon");
+                prev = cur; // embedded loop
+
+                //log.debug("new Polygon");
+                cur = new Polygon();
+                //log.debug("vertex: " + v);
+                cur.getVertices().add(v);
+            }
+            else if (SegmentType.CLOSE.equals(v.getType()))
+            {
+                //log.debug("vertex: " + v);
+                cur.getVertices().add(v);
+                polys.add(cur);
+                cur = prev;
+                //log.debug("close Polygon");
+            }
+            else
+            {
+                //log.debug("vertex: " + v);
+                cur.getVertices().add(v);
+            }
+        }
+        return polys;
+    }
+
+    static List<Polygon> decompose(Polygon poly, boolean removeHoles)
+    {
+        log.debug("[decompose] START: " + poly + " removeHoles="+removeHoles);
         List<Polygon> samples = decompose(poly);
+        
         // find samples and holes via sign of the area
-        boolean cw = computePolygonProperties(poly).winding;
+        boolean cw = computePolygonProperties(poly).winding; 
         ListIterator<Polygon> iter = samples.listIterator();
         int num = 0;
         while ( iter.hasNext() )
@@ -349,13 +366,13 @@ public final class PolygonUtil
     }
     
     // removes all holes with fractional area less than rat
-    static boolean removeHoles(Polygon poly, double rat)
+    static boolean removeSmallHoles(Polygon poly, double rat)
     {
         if (poly.getVertices().size() <= 8)
             return false; // cannot have holes with fewer than 8 vertices (two triangles and 2 CLOSE)
 
         boolean hasHoles = false;
-        log.debug("[removeHoles] start: " + poly);
+        log.debug("[removeSmallHoles] start: " + poly);
         PolygonProperties pProp = computePolygonProperties(poly);
         Polygon tmp = new Polygon();
         boolean go = true;
@@ -377,12 +394,12 @@ public final class PolygonUtil
                         //log.debug("[removeHoles] removing vertex " + start + " " + tmp.getVertices().size() + " times");
                         //for (int j=0; j<tmp.getVertices().size(); j++)
                         //    pVerts.remove(start);
-                        log.debug("[removeHoles] remove scrap segment " + tmp + " from " + poly);
+                        log.debug("[removeSmallHoles] remove scrap segment " + tmp + " from " + poly);
                         for (Vertex rv : tmp.getVertices())
                         {
                             boolean ok = poly.getVertices().remove(rv);
                             if (!ok)
-                                log.debug("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
+                                log.debug("[removeSmallHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
                         }
                         go = true;
                         restart = true;
@@ -401,12 +418,12 @@ public final class PolygonUtil
                             //log.debug("removing vertex " + start + " " + tmp.getVertices().size() + " times");
                             //for (int j=0; j<tmp.getVertices().size(); j++)
                             //    pVerts.remove(start);
-                            log.debug("[removeHoles] remove hole " + tmp + " from " + poly);
+                            log.debug("[removeSmallHoles] remove hole " + tmp + " from " + poly);
                             for (Vertex rv : tmp.getVertices())
                             {
                                 boolean ok = poly.getVertices().remove(rv);
                                 if (!ok)
-                                    log.debug("[removeHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
+                                    log.debug("[removeSmallHoles] found hole " + tmp + " but failed to remove " + v + " from " + poly);
                             }
                             go = true;
                             restart = true;
@@ -417,7 +434,7 @@ public final class PolygonUtil
                 }
             }
         }
-        log.debug("[removeHoles] done: " + poly);
+        log.debug("[removeSmallHoles] done: " + poly);
         return hasHoles;
     }
 
@@ -432,7 +449,7 @@ public final class PolygonUtil
             while (improve) // improving
             {
                 smoothSimpleAdjacentVertices(p, 1.0e-2); // 1% of size
-                smoothSimpleColinearSegments(p, 0.17); // 0.17 radians < 10 deg
+                smoothSimpleColinearSegments(p, 0.05); // 10 deg ~ 0.17 rad
                 int cur = p.getVertices().size();
                 
                 if (cur == prev)
@@ -714,60 +731,6 @@ public final class PolygonUtil
         }
     }
   
-    /**
-     * Decompose a polygon into one or more simple polygons. Note that disjoint
-     * sections and holes are both included in the output list.
-     * 
-     * @param p
-     * @return
-     */
-    private static List<Polygon> decompose(Polygon p)
-    {
-        if (p == null)
-            return null;
-        List<Polygon> polys = new ArrayList<Polygon>();
-        Polygon prev = null; // needs to be a stack?
-        Polygon cur = null;
-        for (Vertex v : p.getVertices())
-        {
-            if (cur == null) // start new poly
-            {
-                log.debug("new Polygon");
-                cur = new Polygon();
-                log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            }
-            else if (SegmentType.MOVE.equals(v.getType()))
-            {
-                //log.debug("vertex: " + v);
-                //cur.getVertices().add(new Vertex(0.0, 0.0,SegmentType.CLOSE));
-                //polys.add(cur);
-                //log.debug("close Polygon");
-                if (cur != null)
-                    prev = cur; // embedded loop
-
-                log.debug("new Polygon");
-                cur = new Polygon();
-                log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            }
-            else if (SegmentType.CLOSE.equals(v.getType()))
-            {
-                log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-                polys.add(cur);
-                cur = prev;
-                log.debug("close Polygon");
-            }
-            else
-            {
-                log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            }
-        }
-        return polys;
-    }
-
     private static class ScaledVertex extends Vertex
     {
         private static final long serialVersionUID = 201207271500L;

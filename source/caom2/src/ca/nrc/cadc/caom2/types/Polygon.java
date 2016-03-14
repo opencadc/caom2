@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.types;
 import ca.nrc.cadc.util.HexUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.omg.PortableServer.POAPackage.InvalidPolicy;
 
 /**
  *
@@ -94,14 +95,14 @@ public class Polygon implements Shape
     private void validate()
     {
         if (vertices.size() < 4) // triangle
-            throw new IllegalStateException("invalid polygon: " + vertices.size() + " vertices");
+            throw new IllegalPolygonException("invalid polygon: " + vertices.size() + " vertices");
 
         Vertex end = vertices.get(0);
         if ( !SegmentType.MOVE.equals(end.getType()) )
-            throw new IllegalStateException("invalid polygon: first vertex must be MOVE, found " + end);
+            throw new IllegalPolygonException("invalid polygon: first vertex must be MOVE, found " + end);
         end = vertices.get(vertices.size() - 1);
         if ( !SegmentType.CLOSE.equals(end.getType()) )
-            throw new IllegalStateException("invalid polygon: last vertex must be CLOSE, found " + end);
+            throw new IllegalPolygonException("invalid polygon: last vertex must be CLOSE, found " + end);
 
         boolean openLoop = false;
         for (Vertex v : vertices)
@@ -109,13 +110,13 @@ public class Polygon implements Shape
             if ( SegmentType.MOVE.equals(v.getType()) )
             {
                 if (openLoop)
-                    throw new IllegalStateException("invalid polygon: found MOVE when loop already open");
+                    throw new IllegalPolygonException("invalid polygon: found MOVE when loop already open");
                 openLoop = true;
             }
             else if (  SegmentType.CLOSE.equals(v.getType()) )
             {
                 if (!openLoop)
-                    throw new IllegalStateException("invalid polygon: found CLOSE without MOVE");
+                    throw new IllegalPolygonException("invalid polygon: found CLOSE without MOVE");
                 openLoop = false;
             }
         }
