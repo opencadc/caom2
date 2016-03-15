@@ -1043,23 +1043,22 @@ public final class PolygonUtil
         double v2x = (bc.v2.cval1 - bc.v1.cval1);
         double v2y = (bc.v2.cval2 - bc.v1.cval2);
         
-        double dp = v1x*v2x + v1y*v2y;
-        double magAB = ab.length(); //Math.sqrt(v1x*v1x + v1y*v1y);
-        double magBC = bc.length(); //Math.sqrt(v2x*v2x + v2y*v2y);
-        double cosA = dp/(magAB*magBC);
-        log.debug("[colinear] dp " + dp + " mags " + magAB + " " + magBC + " -> cosA " + cosA);
+        double ang2 = Math.atan2(v2y, v2x) - Math.atan2(v1y, v1x);
+        log.debug("[colinear] ang2="+ang2);
+        double ang = Math.abs(ang2);
         
-        double ang = Math.acos(cosA);
-        
-        ang = Math.abs(ang);
-        
-        log.debug("[colinear] dot.product: ang " + ang + " da " + da + " lengths: " + ab.length() + " " + bc.length());
-        if ( ang <= da)
+        log.debug("[colinear] ang="+ang);
+        if ( ang <= da) // parallel
             return true;
         
-        ang = Math.abs(Math.PI - ang);
-        if ( ang <= da )
-            return true;
+        // reduce
+        while (ang > 0)
+        {
+            ang = ang - Math.PI;
+            log.debug("[colinear] ang="+ang);
+            if ( Math.abs(ang) <= da )
+                return true;
+        }
         
         return false;
     }
