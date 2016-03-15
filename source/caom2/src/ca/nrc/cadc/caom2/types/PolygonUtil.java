@@ -445,11 +445,12 @@ public final class PolygonUtil
         for (Polygon p : parts)
         {
             int prev = p.getVertices().size();
+            int num = 0;
             boolean improve = true;
             while (improve) // improving
             {
                 smoothSimpleAdjacentVertices(p, 1.0e-2); // 1% of size
-                smoothSimpleColinearSegments(p, 0.05); // 10 deg ~ 0.17 rad
+                smoothSimpleColinearSegments(p, 0.05); // ~3 deg ~ 0.05 rad
                 int cur = p.getVertices().size();
                 
                 if (cur == prev)
@@ -473,7 +474,7 @@ public final class PolygonUtil
     private static void smoothSimpleAdjacentVertices(Polygon poly, double rsl)
     {
         log.debug("[smooth.adjacent] " + poly);
-        if (poly.getVertices().size() <= 4) // 3+close == triangle
+        if (poly.getVertices().size() <= 5) // 4+close == rectangle
             return;
         PolygonProperties pp = computePolygonProperties(poly);
         
@@ -520,7 +521,7 @@ public final class PolygonUtil
                 
                 double len = bc.length();
                 log.debug("[smooth.adjacent] " + bc + " " + len + " triple " + n1 + ","+n2+","+n3);
-                if (len < tol)
+                if (len < tol && segs.size() >= 4) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = ab.v1;
 
@@ -595,7 +596,7 @@ public final class PolygonUtil
                 if (n == segs.size())
                     n = 0; // wrap to first segment
                 Segment bc = segs.get(n);
-                if ( colinear(ab, bc, tol) )
+                if ( colinear(ab, bc, tol) && segs.size() >= 4) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = new Vertex(ab.v1.cval1, ab.v1.cval2, SegmentType.LINE);
                     Vertex nv2 = bc.v2;
