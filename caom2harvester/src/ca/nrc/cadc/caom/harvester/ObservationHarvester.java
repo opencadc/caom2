@@ -116,7 +116,7 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            double failFrac = ((double) num.failed) / ((double) num.found);
+            double failFrac = ((double) num.failed - num.handled) / ((double) num.found);
             if (!skipped && failFrac > 0.5)
             {
                 log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
@@ -150,6 +150,7 @@ public class ObservationHarvester extends Harvester
         int found = 0;
         int ingested = 0;
         int failed = 0;
+        int handled = 0;
         @Override
         public String toString() { return found + " ingested: " + ingested + " failed: " + failed; }
     }
@@ -388,15 +389,24 @@ public class ObservationHarvester extends Harvester
                     {
                         log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
                                 + o.getURI().getURI().toASCIIString());
+                        ret.handled++;
                     }
                     else if  (oops instanceof UncategorizedSQLException)
                     {
                         if (str.contains("spherepoly_from_array"))
                         {
                             log.error("UNDETECTED illegal polygon: " + o.getURI());
+                            ret.handled++;
                         }
                         else
                             log.error("unexpected exception", oops);
+                    }
+                    else if (oops instanceof IllegalArgumentException
+                            && str.contains("CaomValidator") && str.contains("keywords"))
+                    {
+                        log.error("CONTENT PROBLEM - invalid keywords: " + format(o.getID()) + " "
+                                + o.getURI().getURI().toASCIIString());
+                        ret.handled++;
                     }
                     else
                         log.error("unexpected exception", oops);
