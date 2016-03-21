@@ -479,6 +479,7 @@ public final class PolygonUtil
         PolygonProperties pp = computePolygonProperties(poly);
         
         double tol = pp.minSpanCircle.getSize()*rsl;
+        //double tol = Math.sqrt(pp.area)*rsl; // ~same for squares, smaller for skinny rectangles
         log.debug("[smooth.adjacent] r=" + pp.minSpanCircle.getRadius()
             + " tol=" + tol);
         
@@ -498,12 +499,12 @@ public final class PolygonUtil
         }
         log.debug("[smooth.adjacent] before: " + segs.size() + " segments");
             
+        double frac = 1.0e-4; // start with reallty small delta and work up
         boolean changed = true;
-        int num = 0;
-        while (changed && num < 5)
+        while (frac <= 1.0 || changed)
         {
-            num++;
             changed = false;
+            frac *= 10.0; // 1e-3, 1e-2, 1e-1, 1
             for (int i=0; i< segs.size(); i++) // go around twice
             {
                 int n2 = i;
@@ -521,7 +522,7 @@ public final class PolygonUtil
                 
                 double len = bc.length();
                 log.debug("[smooth.adjacent] " + bc + " " + len + " triple " + n1 + ","+n2+","+n3);
-                if (len < tol && segs.size() >= 4) // realistically: rectangle is the smallest
+                if (len < tol*frac && segs.size() > 4) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = ab.v1;
 
@@ -596,7 +597,7 @@ public final class PolygonUtil
                 if (n == segs.size())
                     n = 0; // wrap to first segment
                 Segment bc = segs.get(n);
-                if ( colinear(ab, bc, tol) && segs.size() >= 4) // realistically: rectangle is the smallest
+                if ( colinear(ab, bc, tol) && segs.size() > 4) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = new Vertex(ab.v1.cval1, ab.v1.cval2, SegmentType.LINE);
                     Vertex nv2 = bc.v2;

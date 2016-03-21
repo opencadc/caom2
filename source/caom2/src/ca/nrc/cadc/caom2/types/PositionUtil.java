@@ -107,6 +107,8 @@ public final class PositionUtil
 {
     private static final Logger log = Logger.getLogger(PositionUtil.class);
     
+    public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
+    
     private PositionUtil() { }
 
     /**
@@ -198,6 +200,9 @@ public final class PositionUtil
                         {
                             Polygon poly = toPolygon(c.position);
                             log.debug("[generatePolygons] wcs: " + poly);
+                            if (poly.getArea() > MAX_SANE_AREA)
+                                throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
+                                    + a.getURI() + "/" + p.getName() + " " + poly.getArea());
                             if (poly != null)
                                 polys.add(poly);
                         }
@@ -218,6 +223,8 @@ public final class PositionUtil
         log.debug("[computeBounds] components: " + polys.size());
         Polygon poly = PolygonUtil.union(polys);
         log.debug("[computeBounds] done: " + poly);
+        if (poly.getArea() > MAX_SANE_AREA)
+            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + poly.getArea());
         return poly;
     }
 
