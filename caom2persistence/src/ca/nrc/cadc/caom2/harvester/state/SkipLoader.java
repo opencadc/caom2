@@ -111,7 +111,7 @@ public class SkipLoader
             String fname = am.getValue("fname");
             if (server == null || source == null || fname == null)
             {
-                log.error("usage: skipLoader --server=<pg server> --source=<SYBASE.cfht.dbo> --fname=<input file>");
+                log.error("usage: skipLoader --server=<pg server> --database=<pgdb> --schema=<pg schema> --source=<SYBASE.cfht.dbo> --fname=<input file>");
                 System.exit(1);
             }
             Map<String,Object> config = new HashMap<String,Object>();
@@ -126,10 +126,10 @@ public class SkipLoader
             while (s != null)
             {   
                 String[] parts = s.split(" ");
-                Long lsb = new Long(parts[0]);
-                UUID id = new UUID(0L, lsb);
+                //Long lsb = new Long(parts[0]);
+                UUID id = UUID.fromString(parts[0]);
                 Thread.sleep(1L); // make sure timestamps are spread out
-                HarvestSkip h = new HarvestSkip(source, Observation.class.getSimpleName(), id);
+                HarvestSkip h = new HarvestSkip(source, Observation.class.getSimpleName(), id, null);
                 try
                 {
                     dao.put(h);

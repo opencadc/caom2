@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,7 +31,7 @@ public class HarvestSkipDAO
 
     private static final String[] COLUMNS =
     {
-        "source", "cname", "skipID",
+        "source", "cname", "skipID", "errorMessage",
         "lastModified", "id"
     };
     
@@ -180,6 +181,7 @@ public class HarvestSkipDAO
             ps.setString(col++, skip.source);
             ps.setString(col++, skip.cname);
             ps.setObject(col++, skip.skipID);
+            ps.setString(col++, skip.errorMessage);
             ps.setTimestamp(col++, new Timestamp(now.getTime()), CAL);
             ps.setObject(col++, skip.id);
         }
@@ -194,6 +196,7 @@ public class HarvestSkipDAO
             ret.source = rs.getString(col++);
             ret.cname = rs.getString(col++);
             ret.skipID = Util.getUUID(rs, col++); //rs.getLong(col++);
+            ret.errorMessage = rs.getString(col++);
             ret.lastModified = Util.getDate(rs, col++, CAL);
             ret.id = Util.getUUID(rs, col++); // rs.getLong(col++);
             return ret;
