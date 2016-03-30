@@ -194,7 +194,10 @@ public class ObservationWriter implements Serializable
             throw new IllegalArgumentException("null or 0-length namespace prefix is not allowed: " + caom2NamespacePrefix);
         
         if (namespace == null)
+        {
             namespace = XmlConstants.CAOM2_1_NAMESPACE; // default
+            log.debug("default namespace: " + namespace);
+        }
         
         if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
         {
@@ -215,6 +218,8 @@ public class ObservationWriter implements Serializable
             throw new IllegalArgumentException("invalid namespace: " + namespace);
             
         this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
+        
+        log.debug("output version: " + outputVersion + " " + caom2Namespace.getPrefix() + " -> " + caom2Namespace.getURI());
     }
     
     /**

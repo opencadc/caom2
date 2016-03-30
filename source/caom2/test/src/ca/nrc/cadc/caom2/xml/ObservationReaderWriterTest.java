@@ -427,7 +427,13 @@ public class ObservationReaderWriterTest
             SimpleObservation observation = getCompleteSimple(5, true);
             testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
 
-            testObservation(observation, false, null, XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
+            // nullify fields introduced after 2.0 so the comparison will work
+            observation.requirements = null;
+            for (Plane p : observation.getPlanes())
+            {
+                p.quality = null;
+            }
+            testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }
         catch(Exception unexpected)
         {
@@ -522,7 +528,9 @@ public class ObservationReaderWriterTest
 
             // Do not write empty elements.
             testObservation(observation, false);
-
+            
+            log.debug("computing transient metadata for planes...");
+                    
             for (Plane p : observation.getPlanes())
             {
                 p.computeTransientState();
@@ -541,7 +549,7 @@ public class ObservationReaderWriterTest
             }
 
             // must force CAOM-2.2 to write transient metadata
-            testObservation(observation, false, "caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            testObservation(observation, false, "caom2", XmlConstants.CAOM2_2_NAMESPACE, true);
         }
         catch(Exception unexpected)
         {
@@ -600,14 +608,17 @@ public class ObservationReaderWriterTest
         throws Exception
     {
         StringBuilder sb = new StringBuilder();
-        ObservationWriter writer = new ObservationWriter();
-        if (nsPrefix != null)
+        ObservationWriter writer = null;
+        if (forceNS != null)
             writer = new ObservationWriter(nsPrefix, forceNS, writeEmptyCollections);
+        else
+            writer = new ObservationWriter();
+        
         writer.setWriteEmptyCollections(writeEmptyCollections);
         writer.write(observation, sb);
         log.debug(sb.toString());
 
-        // do not validate the XML.
+        // well-formed XML
         ObservationReader reader = new ObservationReader(false);
         Observation returned = reader.read(sb.toString());
 
@@ -616,7 +627,7 @@ public class ObservationReaderWriterTest
         if (!schemaVal)
             return;
         
-        // validate the XML.
+        // valid XML
         reader = new ObservationReader(true);
         returned = reader.read(sb.toString());
 
