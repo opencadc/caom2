@@ -171,6 +171,7 @@ public class ObservationReader implements Serializable
     
     private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
     private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
+    private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
     
     private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
 
@@ -210,6 +211,9 @@ public class ObservationReader implements Serializable
                 
                 String caom21SchemaUrl = XmlUtil.getResourceUrlString(CAOM21_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.1 schema URL: " + caom21SchemaUrl);
+                
+                String caom22SchemaUrl = XmlUtil.getResourceUrlString(CAOM22_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.2 schema URL: " + caom22SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(XLINK_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("xlinkSchemaUrl: " + xlinkSchemaUrl);
@@ -224,6 +228,7 @@ public class ObservationReader implements Serializable
                 schemaMap = new HashMap<String, String>();
                 schemaMap.put(XmlConstants.CAOM2_0_NAMESPACE, caom2SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_1_NAMESPACE, caom21SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_2_NAMESPACE, caom22SchemaUrl);
                 schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
                 log.debug("schema validation enabled");
             }

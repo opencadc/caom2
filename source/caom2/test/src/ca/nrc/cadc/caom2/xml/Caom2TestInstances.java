@@ -541,28 +541,31 @@ public class Caom2TestInstances
         {
             coordAxis2D.error1 = new CoordError(1.0, 1.5);
             coordAxis2D.error2 = new CoordError(2.0, 2.5);
+
+            // 20x20, center @ 11,12
             
-            Coord2D start = new Coord2D(new RefCoord(3.0, 3.5), new RefCoord(4.0, 4.5));
-            Coord2D end = new Coord2D(new RefCoord(5.0, 5.5), new RefCoord(6.0, 6.5));
+            Coord2D start = new Coord2D(new RefCoord(1, 10.0), new RefCoord(1, 11.0));
+            Coord2D end = new Coord2D(new RefCoord(20, 12.0), new RefCoord(40, 13.0));
             coordAxis2D.range = new CoordRange2D(start, end);
             
-            Dimension2D dimension = new Dimension2D(7, 8);
-            Coord2D refCoord = new Coord2D(new RefCoord(9.0, 9.5), new RefCoord(10.0, 10.5));
-            coordAxis2D.function = new CoordFunction2D(dimension, refCoord, 11.0, 12.0, 13.0, 14.0);
-            
+            Dimension2D dimension = new Dimension2D(20, 20);
+            Coord2D refCoord = new Coord2D(new RefCoord(10, 11.0), new RefCoord(20, 12.0));
+            coordAxis2D.function = new CoordFunction2D(dimension, refCoord, 0.05, 0.0, 0.0, 0.05);
             if (boundsIsCircle)
             {
-                ValueCoord2D center = new ValueCoord2D(15.5, 16.5);
-                Double radius = 17.0;
+                ValueCoord2D center = new ValueCoord2D(11.0, 12.0);
+                Double radius = 0.5;
                 CoordCircle2D circle = new CoordCircle2D(center, radius);
                 coordAxis2D.bounds = circle;
             }
             else
             {
+                // a smaller polygon inside the pixel array
                 CoordPolygon2D polygon = new CoordPolygon2D();
-                polygon.getVertices().add(new ValueCoord2D(15.5,16.5));
-                polygon.getVertices().add(new ValueCoord2D(17.5,18.5));
-                polygon.getVertices().add(new ValueCoord2D(19.5,20.5));
+                polygon.getVertices().add(new ValueCoord2D(10.2, 11.2));
+                polygon.getVertices().add(new ValueCoord2D(11.8, 11.2));
+                polygon.getVertices().add(new ValueCoord2D(11.8, 12.8));
+                polygon.getVertices().add(new ValueCoord2D(10.2, 12.8));
                 coordAxis2D.bounds = polygon;
             }
         }

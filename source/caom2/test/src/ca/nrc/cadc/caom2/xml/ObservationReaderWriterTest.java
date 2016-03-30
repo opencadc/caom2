@@ -166,7 +166,7 @@ public class ObservationReaderWriterTest
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w20.write(obs, bos);
             String caom20 = bos.toString();
-            log.debug("caom-2.0 XML: " + caom20);
+            log.info("caom-2.0 XML:\n" + caom20);
             assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
             ObservationReader r = new ObservationReader();
             Observation obs20 = r.read(caom20);
@@ -175,23 +175,40 @@ public class ObservationReaderWriterTest
             bos = new ByteArrayOutputStream();
             w21.write(obs, bos);
             String caom21 = bos.toString();
-            log.debug("caom-2.1 XML: " + caom21);
+            log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             Observation obs21 = r.read(caom21);
             
-            // new reader
+            // new writer
             w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
             w21.write(obs, bos);
             caom21 = bos.toString();
-            log.debug("caom-2.1 XML: " + caom21);
+            log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             obs21 = r.read(caom21);
+            
+            ObservationWriter w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w22.write(obs, bos);
+            String caom22 = bos.toString();
+            log.info("caom-2.2 XML:\n" + caom22);
+            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
+            Observation obs22 = r.read(caom22);
+            
+            // new writer
+            w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w22.write(obs, bos);
+            caom22 = bos.toString();
+            log.info("caom-2.2 XML:\n" + caom22);
+            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
+            obs22 = r.read(caom22);
         }
-        catch(ObservationParsingException expected)
-        {
-            log.debug("caught expected exception: " + expected);
-        }
+        //catch(ObservationParsingException expected)
+        //{
+        //    log.info("caught expected exception: " + expected);
+        //}
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
