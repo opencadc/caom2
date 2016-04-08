@@ -133,9 +133,8 @@ methods should also be stored for efficient querying (for example, by the TAP se
 <h3>Changes</h3>
 
 <ul>
-    <li>2016-03-15 (red outline): extracted ObservationURI and PlaneURI concepts explicitly in the model; made
-        the entity aggregations (e.g. Observation-to-Plane uni-directional); changed ReadAccess so groupID is a 
-        (resolvable) URI; marginally uncertain about how to handle the reference from PlaneURI to ObservationURI
+    <li>2016-04-07 (red outline): made Artifact.productType mandatory; added mandatory Artifact.release; 
+        changed Part-Chunk cardinality from 0..* to 0..1 and removed Chunk.productType
     <li>2014-11-18: added Observation.requirements with a Status flag; added Plane.qualityFlag; moved 
 	all vocabularies (enumerations) a separate diagram (below)
     <li>2014-02-10: added restwav (observed rest wavelength) to computed plane energy metadata
@@ -192,8 +191,8 @@ literal values used when stored or serialised follow.
 
 <h3>Changes</h3>
 <ul>
-	<li>2014-11-18 (red outline): separate vocabulary (enumerations) diagram, added Status and Quality; 
-        removed ProductType.CATALOG value</li>
+    <li>2016-04-07 (red outline): ; added ProductType.THUMBNAIL (subtype of preview); added ReleaseType vocabulary</li>
+    <li>2014-11-18: separate vocabulary (enumerations) diagram, added Status and Quality; removed ProductType.CATALOG value</li>
 </ul>
 
 <h3>Observation</h3>

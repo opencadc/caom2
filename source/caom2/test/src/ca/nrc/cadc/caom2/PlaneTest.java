@@ -135,17 +135,17 @@ public class PlaneTest
             Assert.assertEquals(0, p.getArtifacts().size());
 
             // add something
-            boolean added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null)));
+            boolean added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.AUXILIARY, ReleaseType.DATA));
             Assert.assertTrue("foo:abc", added);
             Assert.assertEquals(1, p.getArtifacts().size());
 
             // fail to add duplicate
-            added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null)));
+            added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.AUXILIARY, ReleaseType.DATA));
             Assert.assertFalse("foo:abc", added);
             Assert.assertEquals(1, p.getArtifacts().size());
 
             // add non-dupe
-            added = p.getArtifacts().add(new Artifact(new URI("foo", "def", null)));
+            added = p.getArtifacts().add(new Artifact(new URI("foo", "def", null), ProductType.AUXILIARY, ReleaseType.DATA));
             Assert.assertTrue("foo:abc", added);
             Assert.assertEquals(2, p.getArtifacts().size());
 

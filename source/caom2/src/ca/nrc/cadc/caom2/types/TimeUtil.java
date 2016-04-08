@@ -65,9 +65,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.time != null)
                         {
@@ -133,10 +135,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                // assumption is only really true for the chunks in a single part
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.time != null)
                         {
@@ -195,9 +198,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.time != null && c.time.getAxis().function != null)
                         {
@@ -243,10 +248,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                // assumption is only really true for the chunks of a part
-                for (Chunk c : p.getChunks())
-                {
-                    if ( c.time != null && Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         double n = Util.getNumPixels(c.time.getAxis(), false);
                         numPixels += n;
@@ -282,9 +288,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.time != null && c.time.exposure != null)
                         {
@@ -320,9 +328,11 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.time != null && c.time.resolution != null)
                         {

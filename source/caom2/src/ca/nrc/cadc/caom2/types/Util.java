@@ -40,9 +40,9 @@ public final class Util
         ProductType ret = null;
         for (Artifact a : artifacts)
         {
-            if (ProductType.SCIENCE.equals(a.productType))
+            if (ProductType.SCIENCE.equals(a.getProductType()))
                 return ProductType.SCIENCE;
-            if (ProductType.CALIBRATION.equals(a.productType))
+            if (ProductType.CALIBRATION.equals(a.getProductType()))
                 ret = ProductType.CALIBRATION;
             for (Part p : a.getParts())
             {
@@ -50,6 +50,7 @@ public final class Util
                     return ProductType.SCIENCE;
                 if (ProductType.CALIBRATION.equals(p.productType))
                     ret = ProductType.CALIBRATION;
+                /*
                 for (Chunk c : p.getChunks())
                 {
                     if (ProductType.SCIENCE.equals(c.productType))
@@ -57,11 +58,30 @@ public final class Util
                     if (ProductType.CALIBRATION.equals(c.productType))
                         ret = ProductType.CALIBRATION;
                 }
+                */
             }
         }
         return ret;
     }
     
+    public static boolean usePart(ProductType atype, ProductType ptype, ProductType matches)
+    {
+        if (matches == null)
+            return false;
+        if (atype != null && matches.equals(atype))
+        {
+            log.debug("useChunk: Artifact.productType="+atype);
+            return true;
+        }
+        if (ptype != null && matches.equals(ptype))
+        {
+            log.debug("useChunk: Part.productType="+ptype);
+            return true;
+        }
+        log.debug("useChunk: productType="+atype + "," + ptype);
+        return false;
+    }
+    /*
     public static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
     {
         if (matches == null)
@@ -84,6 +104,7 @@ public final class Util
         log.debug("useChunk: productType="+atype + "," + ptype + "," + ctype);
         return false;
     }
+    */
     
     static double getNumPixels(CoordAxis2D axis)
     {

@@ -82,7 +82,8 @@ public enum ProductType implements CaomEnum
     PREVIEW("preview"),
     CATALOG("catalog"),
     NOISE("noise"),
-    WEIGHT("weight");
+    WEIGHT("weight"),
+    THUMBNAIL("thumbnail");
 
     private String value;
 

@@ -1,0 +1,16 @@
+
+added ProductType.THUMBNAIL, name and serialised value TBD
+
+added ReleaseType enum (values: DATA, META)
+
+mandatory Artifact.productType (was optional), default: SCIENCE?
+
+added mandatory Artifact.releaseType (ReleaseType), default: DATA
+
+removed Artifact.alternative (was optional, all values currently null)
+
+changed Part->Chunk from 0..* to 0..1
+removed Chunk.productType
+- Chunk is now "description of a data array in the part" and not one of the "subsections of the array"
+- ObservableAxis will need to be generalised to descibe the hwole axis (all Slices) and not just a single Slice
+

@@ -81,7 +81,7 @@ import java.util.TreeSet;
  */
 public abstract class Observation extends AbstractCaomEntity implements Comparable<Observation>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
 
     // immutable state
     private final ObservationURI uri;
@@ -103,12 +103,12 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
 
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
-
-    protected Observation(ObservationURI uri, Algorithm algorithm)
+    
+    protected Observation(String collection, String observationID, Algorithm algorithm)
     {
         super();
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
-        this.uri = uri;
+        this.uri = new ObservationURI(collection, observationID);
         this.algorithm = algorithm;
     }
 

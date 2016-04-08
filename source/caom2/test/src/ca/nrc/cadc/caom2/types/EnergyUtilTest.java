@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -329,7 +330,7 @@ public class EnergyUtilTest
             // use this to create the objects, then replace the single SpectralWCS with above
             Plane plane = getTestSetRange(1,1,1);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
             c.energy = spec;
 
             Energy actual = EnergyUtil.compute(plane.getArtifacts());
@@ -371,7 +372,7 @@ public class EnergyUtilTest
             Energy actual;
 
             plane = getTestSetFunction(1, 1, 1);
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
             c.energy = getInvalidFunction(); // replace the func
             actual = EnergyUtil.compute(plane.getArtifacts());
 
@@ -541,8 +542,7 @@ public class EnergyUtilTest
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.AUXILIARY;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -591,8 +591,7 @@ public class EnergyUtilTest
             // add some cal artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.CALIBRATION;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -640,8 +639,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ptype;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
@@ -649,10 +647,9 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
+                    np.chunk = new Chunk();
                     // just shift to higher values of x for each subsequent chunk
-                    nc.energy = getTestRange(true,  px, sx+n*nx*ds, nx, ds);
+                    np.chunk.energy = getTestRange(true,  px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -674,8 +671,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
@@ -683,10 +679,9 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
+                    np.chunk = new Chunk();
                     // just shift to higher values of x for each subsequent chunk
-                    nc.energy = getTestBounds(true,  px, sx+n*nx*ds, nx, ds);
+                    np.chunk.energy = getTestBounds(true,  px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -707,8 +702,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
@@ -716,10 +710,9 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
+                    np.chunk = new Chunk();
                     // shift px to larger values
-                    nc.energy = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
+                    np.chunk.energy = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }

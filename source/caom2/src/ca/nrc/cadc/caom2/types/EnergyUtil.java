@@ -80,9 +80,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -147,9 +149,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -216,9 +220,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null && c.energy.getAxis().function != null)
                         {
@@ -283,9 +289,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -321,9 +329,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null && c.energy.resolvingPower != null)
                         {
@@ -348,9 +358,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -378,9 +390,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.energy != null)
                         {
@@ -416,9 +430,11 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         Double rw = getRestWav(c.energy);
                         if (rw != null)

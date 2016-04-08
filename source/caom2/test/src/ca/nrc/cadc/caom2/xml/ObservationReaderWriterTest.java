@@ -160,7 +160,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             
             ObservationWriter w20 = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -221,7 +221,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -247,7 +247,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             ObservationWriter w = new ObservationWriter();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -334,7 +334,7 @@ public class ObservationReaderWriterTest
         try
         {
             ObservationReader r = new ObservationReader();
-            SimpleObservation observation = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            SimpleObservation observation = new SimpleObservation("FOO", "bar");
             observation.telescope = new Telescope("bar\tbaz\n1.0");
             StringBuilder sb = new StringBuilder();
             ObservationWriter writer = new ObservationWriter();
@@ -548,8 +548,10 @@ public class ObservationReaderWriterTest
                 Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
             }
 
-            // must force CAOM-2.2 to write transient metadata
-            testObservation(observation, false, "caom2", XmlConstants.CAOM2_2_NAMESPACE, true);
+            // CAOM-2.2 is now the default
+            testObservation(observation, true);
+            
+            testObservation(observation, false);
         }
         catch(Exception unexpected)
         {
@@ -1024,10 +1026,11 @@ public class ObservationReaderWriterTest
                 assertEquals("Artifact.lastModified", expectedArtifact.getLastModified().getTime(), actualArtifact.getLastModified().getTime());
             
             assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
+            assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
+            assertEquals(expectedArtifact.getReleaseType(), actualArtifact.getReleaseType());
+            
             assertEquals(expectedArtifact.contentType, actualArtifact.contentType);
             assertEquals(expectedArtifact.contentLength, actualArtifact.contentLength);
-            assertEquals(expectedArtifact.productType, actualArtifact.productType);
-            assertEquals(expectedArtifact.alternative, actualArtifact.alternative);
             
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
         }
@@ -1059,48 +1062,38 @@ public class ObservationReaderWriterTest
             assertEquals(expectedPart.getName(), actualPart.getName());
             assertEquals(expectedPart.productType, actualPart.productType);
             
-            compareChunks(expectedPart.getChunks(), actualPart.getChunks());
+            compareChunks(expectedPart.chunk, actualPart.chunk);
         }
     }
     
-    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual)
+    protected void compareChunks(Chunk expected, Chunk actual)
     {
         if (expected == null && actual == null)
             return;
         
         assertNotNull(expected);
         assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
         
-        Iterator actualIter = expected.iterator();
-        Iterator expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
-            Chunk expectedChunk = (Chunk) expectedIter.next();
-            Chunk actualChunk = (Chunk) actualIter.next();
-            
-            assertNotNull(expectedChunk);
-            assertNotNull(actualChunk);
+        assertNotNull(expected);
+        assertNotNull(actual);
 
-            assertEquals(expectedChunk.getID(), actualChunk.getID());
-            if (expectedChunk.getLastModified() != null && actualChunk.getLastModified() != null)
-                assertEquals("Chunk.lastModified", expectedChunk.getLastModified().getTime(), actualChunk.getLastModified().getTime());
-            
-            assertEquals(expectedChunk.productType, actualChunk.productType);
-            assertEquals(expectedChunk.naxis, actualChunk.naxis);
-            assertEquals(expectedChunk.observableAxis, actualChunk.observableAxis);
-            assertEquals(expectedChunk.positionAxis1, actualChunk.positionAxis1);
-            assertEquals(expectedChunk.positionAxis2, actualChunk.positionAxis2);
-            assertEquals(expectedChunk.energyAxis, actualChunk.energyAxis);
-            assertEquals(expectedChunk.timeAxis, actualChunk.timeAxis);
-            assertEquals(expectedChunk.polarizationAxis, actualChunk.polarizationAxis);
-            
-            compareObservableAxis(expectedChunk.observable, actualChunk.observable);
-            compareSpatialWCS(expectedChunk.position, actualChunk.position);
-            compareSpectralWCS(expectedChunk.energy, actualChunk.energy);
-            compareTemporalWCS(expectedChunk.time, actualChunk.time);
-            comparePolarizationWCS(expectedChunk.polarization, actualChunk.polarization);
-        }
+        assertEquals(expected.getID(), actual.getID());
+        if (expected.getLastModified() != null && actual.getLastModified() != null)
+            assertEquals("Chunk.lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
+
+        assertEquals(expected.naxis, actual.naxis);
+        assertEquals(expected.observableAxis, actual.observableAxis);
+        assertEquals(expected.positionAxis1, actual.positionAxis1);
+        assertEquals(expected.positionAxis2, actual.positionAxis2);
+        assertEquals(expected.energyAxis, actual.energyAxis);
+        assertEquals(expected.timeAxis, actual.timeAxis);
+        assertEquals(expected.polarizationAxis, actual.polarizationAxis);
+
+        compareObservableAxis(expected.observable, actual.observable);
+        compareSpatialWCS(expected.position, actual.position);
+        compareSpectralWCS(expected.energy, actual.energy);
+        compareTemporalWCS(expected.time, actual.time);
+        comparePolarizationWCS(expected.polarization, actual.polarization);
     }
     
     protected void compareObservableAxis(ObservableAxis expected, ObservableAxis actual)

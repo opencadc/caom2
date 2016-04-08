@@ -90,7 +90,7 @@ import org.apache.log4j.Logger;
  */
 public class Plane extends AbstractCaomEntity implements Comparable<Plane>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
     private static final Logger log = Logger.getLogger(Plane.class);
     
     // immutable state
@@ -155,10 +155,8 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
             for (Part p : a.getParts())
             {
                 p.metaRelease = null;
-                for (Chunk c : p.getChunks())
-                {
-                    c.metaRelease = null;
-                }
+                if (p.chunk != null)
+                    p.chunk.metaRelease = null;
             }
         }
     }
@@ -318,10 +316,8 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
             for (Part p : a.getParts())
             {
                 p.metaRelease = metaRelease;
-                for (Chunk c : p.getChunks())
-                {
-                    c.metaRelease = metaRelease;
-                }
+                if (p.chunk != null)
+                    p.chunk.metaRelease = metaRelease;
             }
         }
     }

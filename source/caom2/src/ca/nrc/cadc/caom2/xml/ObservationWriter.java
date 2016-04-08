@@ -151,7 +151,7 @@ import org.jdom2.output.XMLOutputter;
  */
 public class ObservationWriter implements Serializable
 {
-    private static final long serialVersionUID = 201209071030L;
+    private static final long serialVersionUID = 201604081100L;
     
     private static Logger log = Logger.getLogger(ObservationWriter.class);
 
@@ -160,7 +160,7 @@ public class ObservationWriter implements Serializable
 
     protected transient Namespace caom2Namespace;
     protected transient Namespace xsiNamespace;
-    private final int outputVersion;
+    private final int docVersion; // (int) (major.minor / 10) so CAOM-2.0 == 20
 
     /**
      * Default constructor. This uses a standard prefix <code>caom2</code>, does
@@ -195,31 +195,31 @@ public class ObservationWriter implements Serializable
         
         if (namespace == null)
         {
-            namespace = XmlConstants.CAOM2_1_NAMESPACE; // default
+            namespace = XmlConstants.CAOM2_2_NAMESPACE; // default
             log.debug("default namespace: " + namespace);
         }
         
         if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
         {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_2_NAMESPACE);
-            outputVersion = 22;
+            docVersion = 22;
         }
         else if ( XmlConstants.CAOM2_1_NAMESPACE.equals(namespace))
         {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_1_NAMESPACE);
-            outputVersion = 21;
+            docVersion = 21;
         }
         else if (XmlConstants.CAOM2_0_NAMESPACE.equals(namespace))
         {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_0_NAMESPACE);
-            outputVersion = 20;
+            docVersion = 20;
         }
         else
             throw new IllegalArgumentException("invalid namespace: " + namespace);
             
         this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
         
-        log.debug("output version: " + outputVersion + " " + caom2Namespace.getPrefix() + " -> " + caom2Namespace.getURI());
+        log.debug("output version: " + docVersion + " " + caom2Namespace.getPrefix() + " -> " + caom2Namespace.getURI());
     }
     
     /**
@@ -324,7 +324,7 @@ public class ObservationWriter implements Serializable
 
     private void addEntityAttributes(CaomEntity ce, Element el, DateFormat df)
     {
-        if (outputVersion < 21) // compat
+        if (docVersion < 21) // compat
             el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
         else
             el.setAttribute("id", ce.getID().toString(), caom2Namespace);
@@ -350,15 +350,8 @@ public class ObservationWriter implements Serializable
 
         addEntityAttributes(obs, element, dateFormat);
 
-        if (outputVersion < 22) // compat
-        {
-            addElement("collection", obs.getURI().getCollection(), element);
-            addElement("observationID", obs.getURI().getObservationID(), element);
-        }
-        else
-        {
-            addElement("uri", obs.getURI().getURI().toASCIIString(), element);
-        }
+        addElement("collection", obs.getURI().getCollection(), element);
+        addElement("observationID", obs.getURI().getObservationID(), element);
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);
@@ -488,7 +481,7 @@ public class ObservationWriter implements Serializable
      */
     protected void addRequirements(Requirements req, Element parent, DateFormat dateFormat)
     {
-        if (outputVersion < 21)
+        if (docVersion < 21)
             return; // Requirements added in CAOM-2.1
         if (req == null)
             return;
@@ -631,7 +624,7 @@ public class ObservationWriter implements Serializable
 
     protected void addPositionElement(Position comp, Element parent)
     {
-        if (outputVersion < 22)
+        if (docVersion < 22)
             return;
         if (comp == null)
             return;
@@ -694,7 +687,7 @@ public class ObservationWriter implements Serializable
     }
     protected void addEnergyElement(Energy comp, Element parent)
     {
-        if (outputVersion < 22)
+        if (docVersion < 22)
             return;
         if (comp == null)
             return;
@@ -760,7 +753,7 @@ public class ObservationWriter implements Serializable
 
     protected void addTimeElement(Time comp, Element parent)
     {
-        if (outputVersion < 22)
+        if (docVersion < 22)
             return;
         if (comp == null)
             return;
@@ -811,7 +804,7 @@ public class ObservationWriter implements Serializable
     
     protected void addPolarizationElement(Polarization comp, Element parent)
     {
-        if (outputVersion < 22)
+        if (docVersion < 22)
             return;
         if (comp == null)
             return;
@@ -888,7 +881,7 @@ public class ObservationWriter implements Serializable
      */
     protected void addQuaility(DataQuality dq, Element parent, DateFormat dateFormat)
     {
-        if (outputVersion < 21)
+        if (docVersion < 21)
             return; // DataQuality added in CAOM-2.1
         if (dq == null)
             return;
@@ -950,13 +943,19 @@ public class ObservationWriter implements Serializable
             Element artifactElement = getCaom2Element("artifact");
             addEntityAttributes(artifact, artifactElement, dateFormat);
             addURIElement("uri", artifact.getURI(), artifactElement);
+            
+            if (docVersion >= 22)
+            {
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
+                addElement("releaseType", artifact.getReleaseType().getValue(), artifactElement);
+            }
+            
             addElement("contentType", artifact.contentType, artifactElement);
             addNumberElement("contentLength", artifact.contentLength, artifactElement);
-            if (artifact.productType != null)
-            {
-                addElement("productType", artifact.productType.getValue(), artifactElement);
-            }
-            addBooleanElement("alternative", artifact.alternative, artifactElement);
+            
+            if (docVersion < 22)
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
+            
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
             element.addContent(artifactElement);
         }
@@ -986,7 +985,7 @@ public class ObservationWriter implements Serializable
             {
                 addElement("productType", part.productType.getValue(), partElement);
             }
-            addChunksElement(part.getChunks(), partElement, dateFormat);
+            addChunksElement(part.chunk, partElement, dateFormat);
             element.addContent(partElement);
         }
         parent.addContent(element);
@@ -1000,37 +999,36 @@ public class ObservationWriter implements Serializable
      * @param parent The parent element for this child element.
      * @param dateFormat The IVOA DateFormat.
      */
-    protected void addChunksElement(Set<Chunk> chunks, Element parent, DateFormat dateFormat)
+    protected void addChunksElement(Chunk chunk, Element parent, DateFormat dateFormat)
     {
-        if (chunks == null || (chunks.isEmpty() && !writeEmptyCollections))
+        if (chunk == null)
             return;
         
-        Element element = getCaom2Element("chunks");
-        for (Chunk chunk : chunks)
+        Element chunkParent = parent;
+        if (docVersion < 22)
         {
-            Element chunkElement = getCaom2Element("chunk");
-            addEntityAttributes(chunk, chunkElement, dateFormat);
-            if (chunk.productType != null)
-            {
-                addElement("productType", chunk.productType.getValue(), chunkElement);
-            }
-            addNumberElement("naxis", chunk.naxis, chunkElement);
-            addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
-            addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
-            addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
-            addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
-            addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
-            addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
-            
-            addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
-            addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
-            addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
-            addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
-            addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
-            
-            element.addContent(chunkElement);
+            Element chunks = getCaom2Element("chunks");
+            parent.addContent(chunks);
+            chunkParent = chunks;
         }
-        parent.addContent(element);
+        
+        Element chunkElement = getCaom2Element("chunk");
+        addEntityAttributes(chunk, chunkElement, dateFormat);
+        addNumberElement("naxis", chunk.naxis, chunkElement);
+        addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
+        addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
+        addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
+        addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
+        addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
+        addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
+
+        addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
+        addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
+        addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
+        addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
+        addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
+
+        chunkParent.addContent(chunkElement);
     }
     
     /**

@@ -130,8 +130,10 @@ public final class CutoutUtil
             long[] timCut = null;
             long[] polCut = null;
             long[] obsCut = null;
-            for (Chunk c : p.getChunks())
-            {
+            //for (Chunk c : p.getChunks())
+            if (p.chunk != null)
+            {   
+                Chunk c = p.chunk;
                 // check if spatial axes are part of the actual data array
                 if (shape != null )
                 {
@@ -350,8 +352,10 @@ public final class CutoutUtil
         boolean pol = false;
         boolean obs = false;
         int naxis = 0;
-        for (Chunk c : p.getChunks())
+        //for (Chunk c : p.getChunks())
+        if (p.chunk != null)
         {
+            Chunk c = p.chunk;
             naxis = Math.max(naxis, c.naxis);
             for (int i=1; i <= c.naxis.intValue(); i++)
             {

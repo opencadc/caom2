@@ -192,9 +192,11 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -244,9 +246,11 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null && c.position.getAxis().function != null)
                         {
@@ -354,9 +358,11 @@ public final class PositionUtil
             for (Part p : a.getParts())
             {
                 // assumption is only true for all the chunks in a part
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -395,9 +401,11 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null)
                         {
@@ -426,9 +434,11 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null && c.position.resolution != null)
                         {
@@ -453,9 +463,11 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                for (Chunk c : p.getChunks())
-                {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                //for (Chunk c : p.getChunks())
+                if (p.chunk != null)
+                {   
+                    Chunk c = p.chunk;
+                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
                     {
                         if (c.position != null)
                         {

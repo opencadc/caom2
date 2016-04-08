@@ -110,18 +110,39 @@ public class ArtifactTest
         {
             URI uri = new URI("ad", "Stuff/Thing/thing1", null);
 
-            Artifact a = new Artifact(uri);
+            Artifact a = new Artifact(uri, ProductType.AUXILIARY, ReleaseType.DATA);
             log.debug("created: " + a);
             
             Assert.assertNotNull(a.getURI());
             Assert.assertEquals(uri, a.getURI());
+            Assert.assertEquals(ProductType.AUXILIARY, a.getProductType());
+            Assert.assertEquals(ReleaseType.DATA, a.getReleaseType());
             
             try
             {
-                a = new Artifact(null);
+                a = new Artifact(null, ProductType.AUXILIARY, ReleaseType.DATA);
                 Assert.fail("expected IllegalArgumentException for uri=null, got: " + a);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            // in future these will fail but right now they assign default values
+            try
+            {
+                a = new Artifact(uri, null, ReleaseType.DATA);
+                //Assert.fail("expected IllegalArgumentException for productType==null, got: " + a);
+                Assert.assertEquals("default Artifact.productType", ProductType.SCIENCE, a.getProductType());
+            }
+            //catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            finally { }
+            
+            try
+            {
+                a = new Artifact(uri, ProductType.AUXILIARY, null);
+                //Assert.fail("expected IllegalArgumentException for releaseType=null, got: " + a);
+                Assert.assertEquals("default Artifact.releaseType", ReleaseType.DATA, a.getReleaseType());
+            }
+            //catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            finally { }
         }
         catch(Exception unexpected)
         {
@@ -135,9 +156,9 @@ public class ArtifactTest
     {
         try
         {
-            Artifact o1 = new Artifact(new URI("ad", "FOO/bar1", null));
-            Artifact o2 = new Artifact(new URI("ad", "FOO/bar2", null));
-            Artifact o2d = new Artifact(new URI("ad", "FOO/bar2", null));
+            Artifact o1 = new Artifact(new URI("ad", "FOO/bar1", null), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact o2 = new Artifact(new URI("ad", "FOO/bar2", null), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact o2d = new Artifact(new URI("ad", "FOO/bar2", null), ProductType.AUXILIARY, ReleaseType.DATA);
             
             Assert.assertTrue(o1.equals(o1));
             
@@ -170,7 +191,7 @@ public class ArtifactTest
         try
         {
             URI uri = new URI("ad", "Stuff/Thing/thing1", null);
-            Artifact a = new Artifact(uri);
+            Artifact a = new Artifact(uri, ProductType.AUXILIARY, ReleaseType.DATA);
             Assert.assertEquals(0, a.getParts().size());
 
             Part p1 = new Part(new Integer(1));
@@ -203,69 +224,4 @@ public class ArtifactTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-    /* pdd: removed getProductType logic from core classes
-    @Test
-    public void testGetProductType()
-    {
-        try
-        {
-            // some parts
-            int i=1;
-            Part sci1 = new Part(new Integer(i++));
-            sci1.productType = ProductType.SCIENCE;
-            Part sci2 = new Part(new Integer(i++));
-            sci2.productType = ProductType.SCIENCE;
-            Part aux = new Part(new Integer(i++));
-            aux.productType = ProductType.AUXILIARY;
-            Part info = new Part(new Integer(i++));
-            info.productType = ProductType.INFO;
-            Part prev = new Part(new Integer(i++));
-            prev.productType = ProductType.PREVIEW;
-            boolean add;
-
-            // test set type
-            Artifact a = new Artifact(new URI("foo", "bar", null));
-            a.productType = ProductType.SCIENCE;
-            Assert.assertEquals(ProductType.SCIENCE, a.getProductType());
-            Assert.assertEquals(0, a.getParts().size());
-            a.getParts().add(aux); // add an aux child
-            Assert.assertEquals(1, a.getParts().size());
-            Assert.assertEquals(ProductType.SCIENCE, a.getProductType()); // still science
-
-            // test computed type
-            a = new Artifact(new URI("foo", "bar", null));
-            add = a.getParts().add(sci1);
-            log.debug("added: " + sci1 + " " + add);
-            Assert.assertEquals(1, a.getParts().size());
-            Assert.assertEquals(ProductType.SCIENCE, a.getProductType());
-            add = a.getParts().add(sci2);
-            log.debug("added: " + sci2 + " " + add);
-            Assert.assertEquals(2, a.getParts().size());
-            Assert.assertEquals(ProductType.SCIENCE, a.getProductType());
-            add = a.getParts().add(aux);
-            log.debug("added: " + aux + " " + add);
-            Assert.assertEquals(3, a.getParts().size());
-            Assert.assertNull(a.getProductType()); // no common type
-            add = a.getParts().add(info);
-            log.debug("added: " + info + " " + add);
-            Assert.assertEquals(4, a.getParts().size());
-            Assert.assertNull(a.getProductType()); // no common type
-            add = a.getParts().add(prev);
-            log.debug("added: " + prev + " " + add);
-            Assert.assertEquals(5, a.getParts().size());
-            Assert.assertNull(a.getProductType()); // no common type
-
-            a.getParts().clear();
-            Assert.assertEquals(0, a.getParts().size());
-            Assert.assertNull(a.getProductType()); // no type at all
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    */
 }

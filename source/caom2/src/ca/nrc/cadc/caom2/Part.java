@@ -71,8 +71,6 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -85,7 +83,7 @@ import org.apache.log4j.Logger;
  */
 public class Part extends AbstractCaomEntity implements Comparable<Part>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
     private static final Logger log = Logger.getLogger(Part.class);
 
     // immutable state
@@ -93,12 +91,10 @@ public class Part extends AbstractCaomEntity implements Comparable<Part>
 
     // mutable state
     public ProductType productType;
+    public Chunk chunk;
     
     // computed state
     public transient Date metaRelease;
-
-    // mutable contents
-    private final Set<Chunk> chunks = new TreeSet<Chunk>();;
 
     public Part(String name)
     {
@@ -115,11 +111,6 @@ public class Part extends AbstractCaomEntity implements Comparable<Part>
     public String getName()
     {
         return name;
-    }
-
-    public Set<Chunk> getChunks()
-    {
-        return chunks;
     }
 
     @Override

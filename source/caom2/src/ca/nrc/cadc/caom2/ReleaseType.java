@@ -62,135 +62,43 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.net.URI;
-import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Logger;
-
 /**
- * An artifact is a single physical (stored) result. This is normally a file, but
- * could also be a table in a database or a resource available on the internet
- * (such as a web page).
- *
  * @author pdowler
  */
-public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
+public enum ReleaseType implements CaomEnum
 {
-    private static final long serialVersionUID = 201604081100L;
-    private static final Logger log = Logger.getLogger(Artifact.class);
+    DATA("data"),
+    META("meta");
 
-    // immutable state
-    private final URI uri;
+    private String value;
 
-    // mutable contents
-    private final Set<Part> parts = new TreeSet<Part>();
-    private ProductType productType;
-    private ReleaseType releaseType;
-    
-    // mutable state
-    public String contentType;
-    public Long contentLength;
-    
-    public boolean alternative;
-    
-    // computed state
-    public transient Date metaRelease;
+    private ReleaseType(String value) { this.value = value; }
 
-    public Artifact(URI uri, ProductType productType, ReleaseType releaseType)
+    public static ReleaseType toValue(String s)
     {
-        CaomValidator.assertNotNull(Artifact.class, "uri", uri);
-        // mandatory in the model next release
-        //CaomValidator.assertNotNull(Artifact.class, "productType", productType);
-        //CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
-        this.uri = uri;
-        if (productType == null)
-        {
-            this.productType = ProductType.SCIENCE;
-            log.warn("assigning default Artifact.productType = " + this.productType + " for "+uri.toASCIIString());
-        }
-        else
-            this.productType = productType;
-        
-        if (releaseType == null)
-        {
-           this.releaseType = ReleaseType.DATA;
-           log.warn("assigning default Artifact.releaseType = " + this.releaseType + " for "+uri.toASCIIString());
-        }
-        else
-            this.releaseType = releaseType;
+        for (ReleaseType d : values())
+            if (d.value.equals(s))
+                return d;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
+    
+    public String getValue() { return value; }
 
+    public int checksum()
+    {
+        return value.hashCode();
+    }
+    
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + uri + "]";
-    }
-
-    public URI getURI()
-    {
-        return uri;
-    }
-
-    public ProductType getProductType()
-    {
-        return productType;
-    }
-
-    public void setProductType(ProductType productType)
-    {
-        CaomValidator.assertNotNull(Artifact.class, "productType", productType);
-        this.productType = productType;
-    }
-
-    public ReleaseType getReleaseType()
-    {
-        return releaseType;
-    }
-
-    public void setReleaseType(ReleaseType releaseType)
-    {
-        CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
-        this.releaseType = releaseType;
-    }
-
-    
-    public Set<Part> getParts()
-    {
-        return parts;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
-            return false;
-        if (this == o)
-            return true;
-        if (o instanceof Artifact)
-        {
-            Artifact a = (Artifact) o;
-            return ( this.hashCode() == a.hashCode() );
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode()
-    {
-       return uri.hashCode();
-    }
-
-    public int compareTo(Artifact a)
-    {
-        return this.uri.compareTo(a.uri);
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

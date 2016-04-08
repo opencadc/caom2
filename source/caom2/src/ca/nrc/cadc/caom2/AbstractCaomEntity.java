@@ -301,6 +301,13 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
         return pname.startsWith(CAOM2);
     }
 
+    // child is a CaomEntity
+    static boolean isChildEntity(Field f)
+        throws IllegalAccessException
+    {
+        return ( CaomEntity.class.isAssignableFrom(f.getType()));
+    }
+    
     // child collection is a non-empty Set<CaomEntity>
     static boolean isChildCollection(Field f)
         throws IllegalAccessException
@@ -330,7 +337,8 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
             boolean inc = true;
             inc = inc && (includeTransient || !Modifier.isTransient(m));
             inc = inc && !Modifier.isStatic(m);
-            inc = inc && !isChildCollection(f);
+            inc = inc && !isChildCollection(f); // 0..* relations to other CaomEntity
+            inc = inc && !isChildEntity(f); // 0..1 relation to other CaomEntity
             if (inc)
                 ret.add(f);
         }
@@ -352,7 +360,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
         {
             int m = f.getModifiers();
             if ( !Modifier.isTransient(m) && !Modifier.isStatic(m)
-                    && isChildCollection(f) )
+                    && (isChildCollection(f) || isChildEntity(f)) )
                 ret.add(f);
         }
         Class sc = c.getSuperclass();

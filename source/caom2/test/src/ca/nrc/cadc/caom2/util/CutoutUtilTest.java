@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2.util;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Location;
@@ -196,10 +198,10 @@ public class CutoutUtilTest
             c.polarizationAxis = 5;
             c.observableAxis = 6;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.getChunks().add(c);
+            p.chunk = c;
             List<String> cus;
             
             String tmpl = "[0][STAR]";
@@ -287,10 +289,10 @@ public class CutoutUtilTest
             c.position.getAxis().range = null;
             c.position.getAxis().bounds = null;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.getChunks().add(c);
+            p.chunk = c;
             
             Circle miss = new Circle(new Point(2.0, 2.0), 0.1);
             Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-4);
@@ -345,10 +347,10 @@ public class CutoutUtilTest
             c.position.getAxis().function = wcsf;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.getChunks().add(c);
+            p.chunk = c;
             
             Circle miss = new Circle(new Point(2.0, 2.0), 0.1);
             Circle inside = new Circle(new Point(262.89, -15.21), 1.0e-4); // 10,10 in gal ~~ 262,-15 in ICRS
@@ -429,10 +431,10 @@ public class CutoutUtilTest
             c.energy.getAxis().range = null;
             c.energy.getAxis().bounds = null;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.getChunks().add(c);
+            p.chunk = c;
             
             // cutout requests: must be wavelength in meters
             Interval miss = new Interval(600.0e-9, 800.0e-9);
