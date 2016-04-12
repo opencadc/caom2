@@ -109,36 +109,38 @@ class PartDAO extends AbstractCaomEntityDAO<Part>
         try
         {
             // delete obsolete children
-            List<Pair<Chunk>> pairs = new ArrayList<Pair<Chunk>>();
-            if (cur != null)
+            Pair<Chunk> pair = null;
+            if (cur != null) // update, maybe delete
             {
                 PartSkeleton cs = (PartSkeleton) cur;
-                // delete the skeletons that are not in p.getChunks()
-                for (ChunkSkeleton s : cs.chunks)
+                // delete the skeleton that are not in p.getChunks()
+                if (cs.chunk != null) // current chunk exists
                 {
-                    Chunk c = Util.findChunk(p.getChunks(), s.id);
-                    if ( c == null ) // removed by client
+                    // removed || replaced
+                    if ( p.chunk == null || !p.chunk.getID().equals(cs.chunk.id) )
                     {
-                        log.debug("put caused delete: " + c);
-                        chunkDAO.delete(s, jdbc);
+                        log.debug("put caused delete: " + cs.chunk);
+                        chunkDAO.delete(cs.chunk, jdbc);
                     }
                 }
-                // pair up chunks and skeletons for insert/update
-                for (Chunk c : p.getChunks())
+                // pair up chunks and skeletons for update
+                if (p.chunk != null)
                 {
-                    ChunkSkeleton s = Util.findChunkSkel(cs.chunks, c.getID());
-                    pairs.add(new Pair<Chunk>(s, c)); // null ok
+                    ChunkSkeleton s = null;
+                    if (p.chunk.getID().equals(cs.chunk.id))
+                        s = cs.chunk; // update
+                    pair = new Pair<Chunk>(s, p.chunk); // null ok
                 }
             }
-            else
-                for (Chunk c : p.getChunks())
-                    pairs.add(new Pair<Chunk>(null, c));
+            else // insert new
+                if (p.chunk != null)
+                    pair = new Pair<Chunk>(null, p.chunk);
 
             super.put(cur, p, parents, jdbc);
 
             parents.push(p);
-            for (Pair<Chunk> part : pairs)
-                chunkDAO.put(part.cur, part.val, parents, jdbc);
+            if (pair != null)
+                chunkDAO.put(pair.cur, pair.val, parents, jdbc);
             parents.pop();
         }
         finally
@@ -152,11 +154,11 @@ class PartDAO extends AbstractCaomEntityDAO<Part>
     protected void deleteChildren(Skeleton s, JdbcTemplate jdbc)
     {
         PartSkeleton p = (PartSkeleton) s;
-        if (p.chunks.size() > 0)
+        if (p.chunk != null)
         {
             // chunks have no children
             
-            // delete chunks by FK
+            // delete chunk by FK
             EntityDelete op = gen.getEntityDelete(Chunk.class, false);
             op.setID(p.id);
             op.execute(jdbc);

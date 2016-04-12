@@ -622,25 +622,25 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
 
         boolean updateMax = false;
-        for (Chunk chunk : p.getChunks())
+        Chunk chunk = p.chunk;
+        if (chunk != null)
         {
             ChunkSkeleton skel = null;
-            if (s != null)
-                for (ChunkSkeleton ss : s.chunks)
-                {
-                    if (chunk.getID().equals(ss.id))
-                        skel = ss;
-                }
+            if (s != null && s.chunk != null)
+            {
+                if (chunk.getID().equals(s.chunk.id))
+                    skel = s.chunk;
+            }
             boolean ulm = updateLastModified(chunk, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
         if (s != null)
         {
-            for (ChunkSkeleton ss : s.chunks)
+            if (s.chunk != null)
             {
-                Chunk c = Util.findChunk(p.getChunks(), ss.id);
-                boolean ulm = (c == null);
+                // update if IDs do not match
+                boolean ulm = ( !p.chunk.getID().equals(s.chunk.id) );
                 updateMax = updateMax || ulm;
             }
         }

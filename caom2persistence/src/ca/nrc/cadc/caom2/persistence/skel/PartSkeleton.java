@@ -70,8 +70,6 @@
 package ca.nrc.cadc.caom2.persistence.skel;
 
 import ca.nrc.cadc.caom2.Part;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -79,8 +77,8 @@ import java.util.List;
  */
 public class PartSkeleton extends Skeleton
 {
-    public List<ChunkSkeleton> chunks = new ArrayList<ChunkSkeleton>();
-
+    public ChunkSkeleton chunk;
+    
     public PartSkeleton()
     {
         super(Part.class);

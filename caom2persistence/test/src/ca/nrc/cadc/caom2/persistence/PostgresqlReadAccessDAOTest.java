@@ -75,6 +75,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
@@ -101,7 +103,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     static
     {
         log = Logger.getLogger(PostgresqlReadAccessDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
     }
 
     public PostgresqlReadAccessDAOTest()
@@ -119,7 +121,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     @Test
     public void testNoAssetFail()
     {
-        Long assetID = CaomIDGenerator.getInstance().generateID();
+        UUID assetID = new UUID(0L, CaomIDGenerator.getInstance().generateID());
             
         try
         {
@@ -128,7 +130,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
 
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 try
                 {
@@ -152,17 +154,18 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     @Test
     public void testExtendedUpdate()
     {
-        Long assetID = 333L; // want same assetID on all assets so test code is simpler
-        UUID id = new UUID(0L, assetID);
+        Long sid = 333L; // want same assetID on all assets so test code is simpler
+        UUID id = new UUID(0L, sid);
+        UUID assetID = id;
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
         Util.assignID(obs, id);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);
         
-        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
-        pp.getChunks().add(ch);
+        pp.chunk = ch;
         ar.getParts().add(pp);
         pl.getArtifacts().add(ar);
         obs.getPlanes().add(pl);
@@ -179,7 +182,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             URI group1 =  new URI("ivo://cadc.nrc.ca/gms?FOO-333");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group1);
                 dao.put(expected);
                 
@@ -200,7 +203,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             URI group2 =  new URI("ivo://cadc.nrc.ca/gms?FOO-444");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected1 = (ReadAccess) ctor.newInstance(assetID, group1);
                 ReadAccess expected2 = (ReadAccess) ctor.newInstance(assetID, group2);
                 
@@ -224,7 +227,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             // test removal
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess cur = dao.get(c, assetID, group1);
                 Assert.assertNotNull("found group1 tuple", cur);
                 dao.delete(c, cur.getID());
@@ -306,7 +309,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select count(*) from ").append(assetTable);
-        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID());
+        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID().getLeastSignificantBits());
         sb.append(" and ").append(raCol).append(" @@ '").append(expected.getGroupName()).append("'::tsquery");
         String sql = sb.toString();
         return sql;
@@ -326,7 +329,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select ").append(raCol).append(" from ").append(assetTable);
-        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID());
+        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID().getLeastSignificantBits());
         String sql = sb.toString();
         return sql;
     }

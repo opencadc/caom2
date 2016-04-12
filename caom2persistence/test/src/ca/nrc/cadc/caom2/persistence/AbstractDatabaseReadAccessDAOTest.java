@@ -75,6 +75,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
@@ -222,17 +224,17 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        Long assetID = 666L; // want same assetID on all assets so test code is simpler
-        UUID id = new UUID(0L, assetID);
+        UUID id = new UUID(0L, 666L);
+        UUID assetID = id; // want same assetID on all assets so test code is simpler
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
         Util.assignID(obs, id);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);
-        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
         
-        pp.getChunks().add(ch);
+        pp.chunk = ch;
         ar.getParts().add(pp);
         pl.getArtifacts().add(ar);
         obs.getPlanes().add(pl);
@@ -249,7 +251,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
@@ -257,7 +259,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
             for (Class c : entityClasses)
             {
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
@@ -280,7 +282,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
         UUID id = obs.getID();
-        Long assetID = id.getLeastSignificantBits();
+        UUID assetID = id;
         Util.assignID(obs, id);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, id);
@@ -296,7 +298,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             for (Class c : entityClasses)
             {
                 URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
-                Constructor ctor = c.getConstructor(Long.class, URI.class);
+                Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
         
                 // make sure it isn't there
@@ -327,13 +329,13 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetList()
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
-        UUID id = obs.getID();
-        Long assetID = id.getLeastSignificantBits();
+        UUID id = new UUID(0L, 777L);
+        UUID assetID = id;
         Util.assignID(obs, id);
         
         try
@@ -345,7 +347,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             ReadAccess ra;
             URI groupID;
             Class c = ObservationMetaReadAccess.class;
-            Constructor ctor = c.getConstructor(Long.class, URI.class);
+            Constructor ctor = c.getConstructor(UUID.class, URI.class);
             for (int i=0; i<3; i++)
             {
                 groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);
