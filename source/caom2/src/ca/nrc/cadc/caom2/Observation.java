@@ -123,20 +123,12 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
         return uri;
     }
 
-    /**
-     * @deprecated convenience method
-     * @return 
-     */
-    private String getCollection()
+    public String getCollection()
     {
         return uri.getCollection();
     }
 
-    /**
-     * @deprecated convenience method
-     * @return 
-     */
-    private String getObservationID()
+    public String getObservationID()
     {
         return uri.getObservationID();
     }
