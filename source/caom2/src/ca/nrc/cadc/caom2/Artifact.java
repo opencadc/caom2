@@ -100,8 +100,6 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
     public String contentType;
     public Long contentLength;
     
-    public boolean alternative;
-    
     // computed state
     public transient Date metaRelease;
 

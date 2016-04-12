@@ -370,7 +370,6 @@ public class Caom2TestInstances
         {
             artifact.contentType = "application/fits";
             artifact.contentLength = 12345L;
-            artifact.alternative = false;
         }
         if (depth > 3)
             artifact.getParts().addAll(getParts());
