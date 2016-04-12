@@ -1,7 +1,6 @@
 
 create table caom2_Chunk
 (
-    productType varchar(64) null,
     naxis int null,
     positionAxis1 int null,
     positionAxis2 int null,
