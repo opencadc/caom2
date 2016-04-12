@@ -80,38 +80,34 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null)
                     {
-                        if (c.energy != null)
+                        CoordRange1D range = c.energy.getAxis().range;
+                        CoordBounds1D bounds = c.energy.getAxis().bounds;
+                        CoordFunction1D function = c.energy.getAxis().function;
+                        if (range != null)
                         {
-                            CoordRange1D range = c.energy.getAxis().range;
-                            CoordBounds1D bounds = c.energy.getAxis().bounds;
-                            CoordFunction1D function = c.energy.getAxis().function;
-                            if (range != null)
+                            log.debug("computeBounds: " + range);
+                            SubInterval s = toInterval(c.energy, range);
+                            Util.mergeIntoList(s, subs, smooth);
+                        }
+                        else if (bounds != null)
+                        {
+                            log.debug("computeBounds: " + bounds);
+                            for (CoordRange1D sr : bounds.getSamples())
                             {
-                                log.debug("computeBounds: " + range);
-                                SubInterval s = toInterval(c.energy, range);
+                                SubInterval s = toInterval(c.energy, sr);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
-                            else if (bounds != null)
-                            {
-                                log.debug("computeBounds: " + bounds);
-                                for (CoordRange1D sr : bounds.getSamples())
-                                {
-                                    SubInterval s = toInterval(c.energy, sr);
-                                    Util.mergeIntoList(s, subs, smooth);
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                log.debug("computeBounds: " + function);
-                                SubInterval s = toInterval(c.energy, function);
-                                Util.mergeIntoList(s, subs, smooth);
-                            }
+                        }
+                        else if (function != null)
+                        {
+                            log.debug("computeBounds: " + function);
+                            SubInterval s = toInterval(c.energy, function);
+                            Util.mergeIntoList(s, subs, smooth);
                         }
                     }
                 }
@@ -149,41 +145,37 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null)
                     {
-                        if (c.energy != null)
-                        {
-                            double num = Util.getNumPixels(c.energy.getAxis());
-                            double tot = 0.0;
+                        double num = Util.getNumPixels(c.energy.getAxis());
+                        double tot = 0.0;
 
-                            CoordRange1D range = c.energy.getAxis().range;
-                            CoordBounds1D bounds = c.energy.getAxis().bounds;
-                            CoordFunction1D function = c.energy.getAxis().function;
-                            if (range != null)
-                            {
-                                SubInterval si = toInterval(c.energy, range);
-                                tot = si.getUpper() - si.getLower();
-                            }
-                            else if (bounds != null)
-                            {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
-                                    SubInterval si = toInterval(c.energy, cr);
-                                    tot += si.getUpper() - si.getLower();
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                SubInterval si = toInterval(c.energy, function);
-                                tot = si.getUpper() - si.getLower();
-                            }
-                            totSampleSize += tot;
-                            numPixels += num;
+                        CoordRange1D range = c.energy.getAxis().range;
+                        CoordBounds1D bounds = c.energy.getAxis().bounds;
+                        CoordFunction1D function = c.energy.getAxis().function;
+                        if (range != null)
+                        {
+                            SubInterval si = toInterval(c.energy, range);
+                            tot = si.getUpper() - si.getLower();
                         }
+                        else if (bounds != null)
+                        {
+                            for (CoordRange1D cr : bounds.getSamples())
+                            {
+                                SubInterval si = toInterval(c.energy, cr);
+                                tot += si.getUpper() - si.getLower();
+                            }
+                        }
+                        else if (function != null)
+                        {
+                            SubInterval si = toInterval(c.energy, function);
+                            tot = si.getUpper() - si.getLower();
+                        }
+                        totSampleSize += tot;
+                        numPixels += num;
                     }
                 }
             }
@@ -220,21 +212,17 @@ public final class EnergyUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null && c.energy.getAxis().function != null)
                     {
-                        if (c.energy != null && c.energy.getAxis().function != null)
+                        num++;
+                        double ss = Math.abs(c.energy.getAxis().function.getDelta());
+                        if (ss >= scale)
                         {
-                            num++;
-                            double ss = Math.abs(c.energy.getAxis().function.getDelta());
-                            if (ss >= scale)
-                            {
-                                scale = ss;
-                                sw = c.energy;
-                            }
+                            scale = ss;
+                            sw = c.energy;
                         }
                     }
                 }
@@ -290,17 +278,14 @@ public final class EnergyUtil
             for (Part p : a.getParts())
             {
                 //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null)
                     {
-                        if (c.energy != null)
-                        {
-                            double num = Util.getNumPixels(c.energy.getAxis(), false);
-                            log.debug("[computeDimension] num=" + num + ", numPixels="+numPixels);
-                            numPixels += num;
-                        }
+                        double num = Util.getNumPixels(c.energy.getAxis(), false);
+                        log.debug("[computeDimension] num=" + num + ", numPixels="+numPixels);
+                        numPixels += num;
                     }
                 }
             }
@@ -330,17 +315,14 @@ public final class EnergyUtil
             for (Part p : a.getParts())
             {
                 //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null && c.energy.resolvingPower != null)
                     {
-                        if (c.energy != null && c.energy.resolvingPower != null)
-                        {
-                            double num = Util.getNumPixels(c.energy.getAxis());
-                            totResolution += c.energy.resolvingPower * num;
-                            numPixels += num;
-                         }
+                        double num = Util.getNumPixels(c.energy.getAxis());
+                        totResolution += c.energy.resolvingPower * num;
+                        numPixels += num;
                     }
                 }
             }
@@ -359,22 +341,19 @@ public final class EnergyUtil
             for (Part p : a.getParts())
             {
                 //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null)
                     {
-                        if (c.energy != null)
+                        if (ret == null)
+                            ret = c.energy.transition;
+                        // check for conflict and return null immediately
+                        if (ret != null && c.energy.transition != null)
                         {
-                            if (ret == null)
-                                ret = c.energy.transition;
-                            // check for conflict and return null immediately
-                            if (ret != null && c.energy.transition != null)
-                            {
-                                if ( !ret.getSpecies().equals(c.energy.transition.getSpecies())
-                                        || !ret.getTransition().equals(c.energy.transition.getTransition()) )
-                                    return null;
-                            }
+                            if ( !ret.getSpecies().equals(c.energy.transition.getSpecies())
+                                    || !ret.getTransition().equals(c.energy.transition.getTransition()) )
+                                return null;
                         }
                     }
                 }
@@ -391,21 +370,18 @@ public final class EnergyUtil
             for (Part p : a.getParts())
             {
                 //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.energy != null)
                     {
-                        if (c.energy != null)
+                        if (ret == null)
+                            ret = c.energy.bandpassName;
+                        // check for conflict and return null immediately
+                        if (ret != null && c.energy.bandpassName != null)
                         {
-                            if (ret == null)
-                                ret = c.energy.bandpassName;
-                            // check for conflict and return null immediately
-                            if (ret != null && c.energy.bandpassName != null)
-                            {
-                                if ( !ret.equals(c.energy.bandpassName) )
-                                    return null;
-                            }
+                            if ( !ret.equals(c.energy.bandpassName) )
+                                return null;
                         }
                     }
                 }
@@ -431,18 +407,15 @@ public final class EnergyUtil
             for (Part p : a.getParts())
             {
                 //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    Double rw = getRestWav(c.energy);
+                    if (rw != null)
                     {
-                        Double rw = getRestWav(c.energy);
-                        if (rw != null)
-                        {
-                            minW = Math.min(minW, rw);
-                            maxW = Math.max(maxW, rw);
-                            found = true;
-                        }
+                        minW = Math.min(minW, rw);
+                        maxW = Math.max(maxW, rw);
+                        found = true;
                     }
                 }
             }

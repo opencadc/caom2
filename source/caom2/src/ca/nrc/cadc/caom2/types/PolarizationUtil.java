@@ -103,47 +103,43 @@ public final class PolarizationUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null)
+                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
                 {   
                     Chunk c = p.chunk;
-                    if ( Util.usePart(a.getProductType(), p.productType, productType) )
+                    if (c.polarization != null)
                     {
-                        if (c.polarization != null)
+                        numPixels += Util.getNumPixels(c.polarization.getAxis());
+                        CoordRange1D range = c.polarization.getAxis().range;
+                        CoordBounds1D bounds = c.polarization.getAxis().bounds;
+                        CoordFunction1D function = c.polarization.getAxis().function;
+                        if (range != null)
                         {
-                            numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            CoordRange1D range = c.polarization.getAxis().range;
-                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
-                            CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null)
+                            int lb = (int) range.getStart().val;
+                            int ub = (int) range.getEnd().val;
+                            for (int i=lb; i <= ub; i++)
                             {
-                                int lb = (int) range.getStart().val;
-                                int ub = (int) range.getEnd().val;
+                                pol.add(PolarizationState.toValue(i));
+                            }
+                        }
+                        else if (bounds != null)
+                        {
+                            for (CoordRange1D cr : bounds.getSamples())
+                            {
+                                int lb = (int) cr.getStart().val;
+                                int ub = (int) cr.getEnd().val;
                                 for (int i=lb; i <= ub; i++)
                                 {
                                     pol.add(PolarizationState.toValue(i));
                                 }
                             }
-                            else if (bounds != null)
+                        }
+                        else if (function != null)
+                        {
+                            for (int i=1; i <= function.getNaxis(); i++)
                             {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
-                                    int lb = (int) cr.getStart().val;
-                                    int ub = (int) cr.getEnd().val;
-                                    for (int i=lb; i <= ub; i++)
-                                    {
-                                        pol.add(PolarizationState.toValue(i));
-                                    }
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                for (int i=1; i <= function.getNaxis(); i++)
-                                {
-                                    double pix = (double) i;
-                                    int val = (int) Util.pix2val(function, pix);
-                                    pol.add(PolarizationState.toValue(val));
-                                }
+                                double pix = (double) i;
+                                int val = (int) Util.pix2val(function, pix);
+                                pol.add(PolarizationState.toValue(val));
                             }
                         }
                     }
