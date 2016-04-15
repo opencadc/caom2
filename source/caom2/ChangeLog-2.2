@@ -6,6 +6,10 @@ ProductType describes what an Artifact or Part *is*, not how it relates to the P
 
 Changes:
 
+changed the implementation of keywords fields in Proposal, Telescope, Instrument, and Provenance from List to Set since List implies 
+that the order of keywords is relevant; also specifically forbid use of single-quote and space within a keyword (space was already
+likely to be lost during serialisation or storage and single-quote just causes pain)
+
 added ProductType.THUMBNAIL, name and serialised value TBD?
 
 added ReleaseType enum (values: DATA, META)
