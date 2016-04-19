@@ -123,7 +123,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     @Override
     public String toString()
     {
-        return "ObservationURI[" + SCHEME + ":" + collection + "/" + observationID + "]";
+        return SCHEME + ":" + collection + "/" + observationID;
     }
 
     public String getCollection()

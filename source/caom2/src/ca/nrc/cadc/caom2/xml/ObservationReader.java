@@ -1075,11 +1075,21 @@ public class ObservationReader implements Serializable
             ProductType productType = null;
             if (pts != null)
                 productType = ProductType.toValue(pts);
-            
+            else
+            {
+                productType = ProductType.SCIENCE;
+                log.warn("assigning default Artifact.productType = " + productType + " for "+uri);
+            }
+        
             String rts = getChildText("release", artifactElement, namespace, false);
             ReleaseType releaseType = null;
             if (rts != null)
                 ReleaseType.toValue(rts);
+            else
+            {
+                releaseType = ReleaseType.DATA;
+                log.warn("assigning default Artifact.releaseType = " + releaseType + " for "+uri);
+            }
             
             Artifact artifact;
             try

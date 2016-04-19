@@ -106,25 +106,11 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType)
     {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
-        // mandatory in the model next release
-        //CaomValidator.assertNotNull(Artifact.class, "productType", productType);
-        //CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
+        CaomValidator.assertNotNull(Artifact.class, "productType", productType);
+        CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
         this.uri = uri;
-        if (productType == null)
-        {
-            this.productType = ProductType.SCIENCE;
-            log.warn("assigning default Artifact.productType = " + this.productType + " for "+uri.toASCIIString());
-        }
-        else
-            this.productType = productType;
-        
-        if (releaseType == null)
-        {
-           this.releaseType = ReleaseType.DATA;
-           log.warn("assigning default Artifact.releaseType = " + this.releaseType + " for "+uri.toASCIIString());
-        }
-        else
-            this.releaseType = releaseType;
+        this.productType = productType;
+        this.releaseType = releaseType;
     }
 
     @Override

@@ -125,23 +125,20 @@ public class ArtifactTest
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
             
-            // in future these will fail but right now they assign default values
             try
             {
                 a = new Artifact(uri, null, ReleaseType.DATA);
-                //Assert.fail("expected IllegalArgumentException for productType==null, got: " + a);
-                Assert.assertEquals("default Artifact.productType", ProductType.SCIENCE, a.getProductType());
+                Assert.fail("expected IllegalArgumentException for productType==null, got: " + a);
             }
-            //catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
             finally { }
             
             try
             {
                 a = new Artifact(uri, ProductType.AUXILIARY, null);
-                //Assert.fail("expected IllegalArgumentException for releaseType=null, got: " + a);
-                Assert.assertEquals("default Artifact.releaseType", ReleaseType.DATA, a.getReleaseType());
+                Assert.fail("expected IllegalArgumentException for releaseType=null, got: " + a);
             }
-            //catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
             finally { }
         }
         catch(Exception unexpected)
