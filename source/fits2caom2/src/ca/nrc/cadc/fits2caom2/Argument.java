@@ -104,6 +104,7 @@ public abstract class Argument
     public static final String H = "h";
     public static final String HELP = "help";
 
+    public static final String LOG_DEBUG = "debug";
     public static final String LOG_DEBUG_SHORT = "d";
     public static final String LOG_QUIET = "quiet";
     public static final String LOG_QUIET_SHORT = "q";

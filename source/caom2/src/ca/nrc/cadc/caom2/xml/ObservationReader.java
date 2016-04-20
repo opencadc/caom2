@@ -1081,10 +1081,10 @@ public class ObservationReader implements Serializable
                 log.warn("assigning default Artifact.productType = " + productType + " for "+uri);
             }
         
-            String rts = getChildText("release", artifactElement, namespace, false);
+            String rts = getChildText("releaseType", artifactElement, namespace, false);
             ReleaseType releaseType = null;
             if (rts != null)
-                ReleaseType.toValue(rts);
+                releaseType = ReleaseType.toValue(rts);
             else
             {
                 releaseType = ReleaseType.DATA;

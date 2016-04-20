@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.fits.FitsMapper;
 import ca.nrc.cadc.caom2.fits.FitsMapping;
@@ -102,11 +103,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
-import nom.tam.fits.FitsUtil;
 import nom.tam.fits.Header;
 import nom.tam.fits.TruncatedFileException;
 import nom.tam.util.ArrayDataInput;
@@ -121,6 +119,9 @@ public class Ingest implements Runnable
 {
     private static Logger log = Logger.getLogger(Ingest.class);
 
+    public static final ProductType DEFAULT_PRODUCT_TYPE = ProductType.SCIENCE;
+    public static final ReleaseType DEFAULT_RELEASE_TYPE = ReleaseType.DATA;
+    
     private String collection;
     private String observationID;
     private String productID;
@@ -392,7 +393,17 @@ public class Ingest implements Runnable
             log.debug(insert ? "adding "  + plane : "updating " + plane);
 
             // Populate an existing or new Artifact.
-            Artifact artifact = new Artifact(ingestFile.getURI());
+            URI uri = ingestFile.getURI();
+
+            ProductType ptype = (ProductType) fitsMapper.getEnumValue(ProductType.class, Artifact.class, "productType");
+            if (ptype == null) // provide default so fits2caom2 can in principle read a FITS file with no config
+                ptype = DEFAULT_PRODUCT_TYPE;
+            
+            ReleaseType rtype = (ReleaseType) fitsMapper.getEnumValue(ReleaseType.class, Artifact.class, "releaseType");
+            if (rtype == null) // provide default so fits2caom2 can in principle read a FITS file with no config
+                rtype = DEFAULT_RELEASE_TYPE;
+            
+            Artifact artifact = new Artifact(uri, ptype, rtype);
             for (Artifact a : plane.getArtifacts())
             {
                 if (a.equals(artifact))
@@ -449,20 +460,11 @@ public class Ingest implements Runnable
                 if ( hasData(mapping) )
                 {
                     // Populate an existing or new Chunk.
-                    Chunk chunk = new Chunk();
-                    if (!part.getChunks().isEmpty())
-                    {
-                        chunk = part.getChunks().iterator().next();
-                        
-                        // If more than one Chunk, clear the set.
-                        if (part.getChunks().size() > 1)
-                        {
-                            part.getChunks().clear();
-                        }
-                    }
-                    populateChunk(chunk, mapping);
-                    insert = part.getChunks().add(chunk);
-                    log.debug(insert ? "adding "  + chunk : "updating " + chunk);
+                    insert = (part.chunk == null); // was null
+                    if (insert)
+                        part.chunk = new Chunk();
+                    populateChunk(part.chunk, mapping);
+                    log.debug(insert ? "adding "  + part.chunk : "updating " + part.chunk);
                 }
                 else
                     log.debug("part " + extension + ": no data");
@@ -518,7 +520,6 @@ public class Ingest implements Runnable
     protected void populateChunk(Chunk chunk, FitsMapping mapping)
     {
         // re-initialize the chunk.
-        chunk.productType = null;
         chunk.naxis = null;
         chunk.positionAxis1 = null;
         chunk.positionAxis2 = null;
@@ -533,11 +534,7 @@ public class Ingest implements Runnable
         chunk.observable = null;
         
         // ProductType.
-        String value = mapping.getMapping("Chunk.productType");
-        if (value != null)
-        {
-            chunk.productType = ProductType.toValue(value);
-        }
+        String value;
         
         // naxis.
         value = mapping.getMapping("Chunk.naxis");

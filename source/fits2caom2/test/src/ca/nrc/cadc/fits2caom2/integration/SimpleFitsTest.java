@@ -118,7 +118,7 @@ public class SimpleFitsTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().chunk;
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
 

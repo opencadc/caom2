@@ -70,11 +70,13 @@ package ca.nrc.cadc.caom2.fits;
 
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomEnum;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.fits.exceptions.MapperException;
 import java.lang.reflect.Constructor;
@@ -273,6 +275,26 @@ public class FitsMapper
             log.debug("field(non-CAOM)[" + utype + "] = " + value);
         }
         return instance;
+    }
+    
+    public CaomEnum getEnumValue(Class type, Class parent, String fieldName)
+        throws MapperException
+    {
+        CaomEnum ret = null;
+        String utype = parent.getSimpleName() + "." + fieldName;
+        String value = mapping.getMapping(utype);
+        if (value != null)
+        {
+            try
+            {
+                return getEnumValue(type, value);
+            }
+            catch (Exception e)
+            {
+                throw new MapperException("Unable to map " + utype + " to " + value, e);
+            }
+        }
+        return null;
     }
     
     /**
@@ -497,7 +519,7 @@ public class FitsMapper
      * @param value of the enum.
      * @return name of the given enum value.
      */
-    protected static Object getEnumValue(Class c, String value)
+    protected static CaomEnum getEnumValue(Class c, String value)
     {
         if (c == DataProductType.class)
         {
@@ -506,6 +528,10 @@ public class FitsMapper
         else if (c == ProductType.class)
         {
             return ProductType.toValue(value);
+        }
+        else if (c == ReleaseType.class)
+        {
+            return ReleaseType.toValue(value);
         }
         else if (c == TargetType.class)
         {
@@ -894,6 +920,7 @@ public class FitsMapper
         Set<Map.Entry<String, Method>> getEntrySet = getters.entrySet();
         for (Map.Entry<String, Method> entry : getEntrySet)
         {
+            log.debug("invokePublicGetCollectionMethods: " + c.getSimpleName() + " " + entry.getKey() + " " + entry.getValue());
             // Check for a value for the field this method accesses.
             String fieldUtype = utype + "." + entry.getKey();
             String value = mapping.getMapping(fieldUtype);
@@ -954,6 +981,9 @@ public class FitsMapper
                                     set.add(new PlaneURI(new URI(s.trim())));
                                 else if (ObservationURI.class.isAssignableFrom(setClass))
                                     set.add(new ObservationURI(new URI(s.trim())));
+                                else
+                                    // keywords
+                                    set.add(s.trim());
                             }
                         }
                         log.debug(method.getName() + "(Set)[" + utype + "] = " + set);

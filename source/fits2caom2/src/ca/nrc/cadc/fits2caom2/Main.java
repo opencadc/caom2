@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.net.Authenticator;
 import java.net.URI;
@@ -84,6 +85,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import javax.security.auth.Subject;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -106,7 +108,7 @@ public class Main
         {
             ArgumentMap argsMap = new ArgumentMap(args);
             
-            if (argsMap.isSet(Argument.HELP))
+            if (argsMap.isSet(Argument.H) || argsMap.isSet(Argument.HELP))
             {
                 System.out.print(Argument.usage());
                 System.exit(0);
@@ -119,6 +121,7 @@ public class Main
                 "ca.nrc.cadc.caom2.xml",
                 "ca.nrc.cadc.net"
             };
+                
             Util.initialize(packages, argsMap);
             Main.log = Logger.getLogger(Main.class);
 
