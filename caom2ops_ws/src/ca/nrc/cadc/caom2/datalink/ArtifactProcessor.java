@@ -154,16 +154,22 @@ public class ArtifactProcessor
         for (Artifact a : artifacts)
         {
             DataLink.Term sem = DataLink.Term.THIS;
-            if (ProductType.PREVIEW.equals(a.productType))
+            if (ProductType.PREVIEW.equals(a.getProductType())
+                    || ProductType.THUMBNAIL.equals(a.getProductType()))
+            {
                 sem = DataLink.Term.PREVIEW;
-            else if (ProductType.CATALOG.equals(a.productType))
+            }
+            else if (ProductType.CATALOG.equals(a.getProductType()))
+            {
                 sem = DataLink.Term.DERIVATION;
-            else if (ProductType.AUXILIARY.equals(a.productType)
-                    || ProductType.WEIGHT.equals(a.productType)
-                    || ProductType.NOISE.equals(a.productType)
-                    || ProductType.INFO.equals(a.productType))
+            }
+            else if (ProductType.AUXILIARY.equals(a.getProductType())
+                    || ProductType.WEIGHT.equals(a.getProductType())
+                    || ProductType.NOISE.equals(a.getProductType())
+                    || ProductType.INFO.equals(a.getProductType()))
+            {
                 sem = DataLink.Term.AUXILIARY;
-            //else: THIS
+            }
                         
             // direct download links
             try
@@ -172,7 +178,7 @@ public class ArtifactProcessor
                 dl.url = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
-                findProductTypes(a, dl.productTypes);
+                //findProductTypes(a, dl.productTypes); // TODO
                 ret.add(dl);
             }
             catch(MalformedURLException ex)
@@ -192,7 +198,7 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    findProductTypes(a, link.productTypes);
+                    //findProductTypes(a, link.productTypes);
                     ret.add(link);
                 }
                 try
@@ -205,7 +211,7 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    findProductTypes(a, link.productTypes);
+                    //findProductTypes(a, link.productTypes);
                     link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
@@ -215,7 +221,7 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    findProductTypes(a, link.productTypes);
+                    //findProductTypes(a, link.productTypes);
                     link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
@@ -358,6 +364,7 @@ public class ArtifactProcessor
         
     }
     
+    /*
     protected void findProductTypes(Artifact a, List<ProductType> pts)
     {
         if (a.productType != null && !pts.contains(a.productType))
@@ -373,6 +380,7 @@ public class ArtifactProcessor
             }
         }
     }
+    */
 
     /**
      * Convert a URI to a URL. TBD: This method fails if the SchemeHandler returns multiple URLs,
@@ -424,9 +432,9 @@ public class ArtifactProcessor
     {
         for (Part p : a.getParts())
         {
-            for (Chunk c : p.getChunks())
+            if (p.chunk != null)
             {
-                if ( CutoutUtil.canCutout(c) )
+                if ( CutoutUtil.canCutout(p.chunk) )
                     return true;
             }
         }

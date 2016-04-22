@@ -122,11 +122,6 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
 
         Chunk c = new Chunk();
 
-        String pt = Util.getString(data, map.get("caom2:Chunk.productType"));
-        log.debug("found c.productType = " + pt);
-        if (pt != null)
-            c.productType = ProductType.toValue(pt);
-
         c.naxis = Util.getInteger(data, map.get("caom2:Chunk.naxis"));
         c.positionAxis1 = Util.getInteger(data, map.get("caom2:Chunk.positionAxis1"));
         c.positionAxis2 = Util.getInteger(data, map.get("caom2:Chunk.positionAxis2"));

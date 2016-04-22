@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.datalink;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -262,11 +263,8 @@ public class DynamicTableDataTest
                 for (int i=0; i<num; i++)
                 {
                     Artifact a = new Artifact(
-                            new URI(
-                                "ad:FOO/" + planeURI.getParent().getObservationID() + "_" + planeURI.getProductID() + "_" + i
-                                )
-                            );
-                    a.productType = ProductType.SCIENCE;
+                        URI.create("ad:FOO/" + planeURI.getParent().getObservationID() + "_" + planeURI.getProductID() + "_" + i),
+                        ProductType.SCIENCE, ReleaseType.DATA);
                     a.contentLength = 123L;
                     a.contentType = "text/plain";
                     ret.add(a);

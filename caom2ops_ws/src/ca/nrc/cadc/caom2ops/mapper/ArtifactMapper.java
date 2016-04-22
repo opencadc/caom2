@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -117,17 +118,29 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
         try
         {
             URI uri = new URI(suri);
-
-            Artifact artifact = new Artifact(uri);
-
-            String pType = Util.getString(data, map.get("caom2:Artifact.productType"));
-            if (pType != null)
-                artifact.productType = ProductType.toValue(pType);
+            ProductType pt = null;
+            String pts = Util.getString(data, map.get("caom2:Artifact.productType"));
+            if (pts != null)
+                pt = ProductType.toValue(pts);
+            else
+            {
+                pt = ProductType.SCIENCE;
+                log.warn("assigning default Artifact.productType = " + pt + " for " + uri);
+            }
+            ReleaseType rt = null;
+            String rts = Util.getString(data, map.get("caom2:Artifact.releaseType"));
+            if (rts != null)
+                rt = ReleaseType.toValue(rts);
+            else
+            {
+                rt = ReleaseType.DATA;
+                log.warn("assigning default Artifact.releaseType = " + rt + " for "+uri);
+            }
+            
+            Artifact artifact = new Artifact(uri, pt, rt);
 
             artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
             artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
-            Integer alt = Util.getInteger(data, map.get("caom2:Artifact.alternative"));
-            artifact.alternative = (alt != null && alt.intValue() == 1); // TAP: 1===true
 
             Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));

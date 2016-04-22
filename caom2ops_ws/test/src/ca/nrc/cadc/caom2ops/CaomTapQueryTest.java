@@ -104,6 +104,7 @@ public class CaomTapQueryTest
     private static final String ARTIFACT_ID = "-635063708241084595";
     private static final String ARTIFACT_URI = "ad:IRIS/I212B2H0";
     private static final String ARTIFACT_PRODUCT_TYPE = "science";
+    private static final String ARTIFACT_RELEASE_TYPE = "data";
     private static final String ARTIFACT_CONTENT_TYPE = "application/fits";
     private static final Long ARTIFACT_CONTENT_LENGTH = new Long("1008000");
     private static final Integer ARTIFACT_ALTERNATIVE = new Integer(0);
@@ -187,8 +188,8 @@ public class CaomTapQueryTest
             	Assert.assertEquals(ARTIFACT_URI, artifact.getURI().toString());
             	Assert.assertEquals(ARTIFACT_CONTENT_TYPE, artifact.contentType);
             	Assert.assertEquals(ARTIFACT_CONTENT_LENGTH.longValue(), artifact.contentLength.longValue());
-            	Assert.assertEquals(ARTIFACT_PRODUCT_TYPE, artifact.productType.getValue());
-            	Assert.assertTrue(alternative == artifact.alternative);
+            	Assert.assertEquals(ARTIFACT_PRODUCT_TYPE, artifact.getProductType().getValue());
+                Assert.assertEquals(ARTIFACT_RELEASE_TYPE, artifact.getReleaseType().getValue());
             	String expectedLM = dateFormat.parse(ARTIFACT_LASTMODIFIED).toString();
             	String actualLM = artifact.getLastModified().toString();
             	Assert.assertEquals(expectedLM, actualLM);
@@ -270,6 +271,13 @@ public class CaomTapQueryTest
             ptField.xtype = "adql:VARCHAR";
             fields.add(ptField);
             
+            VOTableField rtField = new VOTableField("releaseType", "char");
+            rtField.setArraysize(16);
+            rtField.setVariableSize(true);
+            rtField.utype = "caom2:Artifact.releaseType";
+            rtField.xtype = "adql:VARCHAR";
+            fields.add(rtField);
+            
             VOTableField ctField = new VOTableField("contentType", "char");
             ctField.setArraysize(128);
             ctField.setVariableSize(true);
@@ -281,11 +289,6 @@ public class CaomTapQueryTest
             clField.utype = "caom2:Artifact.contentLength";
             clField.xtype = "adql:BIGINT";
             fields.add(clField);
-            
-            VOTableField aField = new VOTableField("alternative", "int");
-            aField.utype = "caom2:Artifact.alternative";
-            aField.xtype = "adql:INTEGER";
-            fields.add(aField);
             
             VOTableField lmField = new VOTableField("lastModified", "char");
             lmField.setArraysize(64);
@@ -410,9 +413,9 @@ public class CaomTapQueryTest
             row.add(new Long(ARTIFACT_ID) + i);            
             row.add(ARTIFACT_URI);
             row.add(ARTIFACT_PRODUCT_TYPE);
+            row.add(ARTIFACT_RELEASE_TYPE);
             row.add(ARTIFACT_CONTENT_TYPE);
             row.add(ARTIFACT_CONTENT_LENGTH);
-            row.add(ARTIFACT_ALTERNATIVE);
             row.add(dateFormat.parse(ARTIFACT_LASTMODIFIED));
             row.add(dateFormat.parse(ARTIFACT_MAXLASTMODIFIED));
         }
