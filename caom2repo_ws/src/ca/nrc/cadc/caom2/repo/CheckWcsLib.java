@@ -69,12 +69,9 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
-import ca.nrc.cadc.wcs.Transform;
-import ca.nrc.cadc.wcs.WCSKeywords;
-import ca.nrc.cadc.wcs.WCSKeywordsImpl;
+import ca.nrc.cadc.wcs.VerifyWCS;
 import org.apache.log4j.Logger;
 
 /**
@@ -85,9 +82,6 @@ public class CheckWcsLib implements CheckResource
 {
     private static Logger log = Logger.getLogger(CheckWcsLib.class);
 
-    private static final double FREQ = 600.0;
-    private static final String CUNIT = "kHz";
-    
     public CheckWcsLib() { }
     
     public void check() 
@@ -95,26 +89,8 @@ public class CheckWcsLib implements CheckResource
     {
         try
         {
-            WCSKeywordsImpl wcs = new WCSKeywordsImpl();
-            wcs.put("SPECSYS", "TOPOCENT");
-            wcs.put("NAXIS", 1);
-            wcs.put("CTYPE1", "FREQ");
-            wcs.put("CUNIT1", CUNIT);
-            wcs.put("NAXIS1", 1000);
-            wcs.put("CRPIX1", 0.5);
-            wcs.put("CRVAL1", 200.0);
-            wcs.put("CDELT1", 1.0); // 200-1200
-            Transform trans = new Transform(wcs);
-            trans.sky2pix( new double[] { FREQ });
-            trans.pix2sky( new double[] { 200.0 });
-            
-            WCSKeywords kw = trans.translate("WAVE-???");
-            Transform trans2 = new Transform(kw);
-            
-            EnergyConverter ec = new EnergyConverter();
-            double wav = ec.toMeters(FREQ, CUNIT);
-            trans2.sky2pix( new double[] { wav });
-            trans2.pix2sky( new double[] { 200.0 });
+            VerifyWCS ver = new VerifyWCS();
+            ver.run();
         }
         catch(Throwable t)
         {
