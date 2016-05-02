@@ -138,6 +138,19 @@ public class ManifestWriter implements TableWriter<VOTableDocument>
         writer.flush();
     }
 
+    public String getErrorContentType()
+    {
+        return "text/plain";
+    }
+
+    public void write(Throwable t, OutputStream out) 
+        throws IOException
+    {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+        writer.write(t.getMessage());
+        writer.flush();
+    }
+    
     public void write(VOTableDocument vot, OutputStream out) 
         throws IOException
     {
