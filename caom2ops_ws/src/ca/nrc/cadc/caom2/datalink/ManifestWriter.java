@@ -130,14 +130,6 @@ public class ManifestWriter implements TableWriter<VOTableDocument>
         // no-op: hard-coded behaviour only relying on DataLink class
     }
     
-    public void write(Throwable thrown, OutputStream out) 
-        throws IOException
-    {
-        Writer writer = new BufferedWriter(new OutputStreamWriter(out));
-        writer.write(thrown.getMessage());
-        writer.flush();
-    }
-
     public void write(Throwable t, OutputStream out) 
         throws IOException
     {
