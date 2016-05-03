@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.ac.AC;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.CredUtil;
@@ -141,7 +142,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     {
         try
         {
-            GMS_SERVICE_URI = new URI("ivo://cadc.nrc.ca/canfargms");
+            GMS_SERVICE_URI = new URI(AC.GMS_SERVICE_URI);
             CADC_GROUP_URI = new URI("ivo://cadc.nrc.ca/gms#CADC");
         }
         catch(URISyntaxException bug)
