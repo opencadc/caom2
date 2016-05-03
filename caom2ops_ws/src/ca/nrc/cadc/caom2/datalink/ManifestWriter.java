@@ -120,11 +120,24 @@ public class ManifestWriter implements TableWriter<VOTableDocument>
         return "txt";
     }
 
+    public String getErrorContentType()
+    {
+        return "text/plain";
+    }
+    
     public void setFormatFactory(FormatFactory ff)
     {
         // no-op: hard-coded behaviour only relying on DataLink class
     }
-
+    
+    public void write(Throwable t, OutputStream out) 
+        throws IOException
+    {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+        writer.write(t.getMessage());
+        writer.flush();
+    }
+    
     public void write(VOTableDocument vot, OutputStream out) 
         throws IOException
     {
