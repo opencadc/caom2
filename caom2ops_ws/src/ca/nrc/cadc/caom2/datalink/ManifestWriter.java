@@ -84,7 +84,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -120,14 +119,14 @@ public class ManifestWriter implements TableWriter<VOTableDocument>
         return "txt";
     }
 
-    public void setFormatFactory(FormatFactory ff)
-    {
-        // no-op: hard-coded behaviour only relying on DataLink class
-    }
-
     public String getErrorContentType()
     {
         return "text/plain";
+    }
+    
+    public void setFormatFactory(FormatFactory ff)
+    {
+        // no-op: hard-coded behaviour only relying on DataLink class
     }
 
     public void write(Throwable t, OutputStream out) 
