@@ -147,13 +147,13 @@ public class PostgresqlHarvestSkipDAOTest
             HarvestSkip skip;
             Date start = null;
             
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1);
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1, "m1");
             dao.put(skip);
             Thread.sleep(10L);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2);
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2, "m2");
             dao.put(skip);
             Thread.sleep(10L);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3);
+            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3, null);
             dao.put(skip);
 
             List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
@@ -179,17 +179,19 @@ public class PostgresqlHarvestSkipDAOTest
 
             HarvestSkip skip;
 
-            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1);
+            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1, "initial error message");
             dao.put(skip);
             
             HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
             Assert.assertNotNull(actual1);
             Assert.assertEquals(id1, actual1.skipID);
+            Assert.assertEquals("error message", skip.errorMessage, actual1.errorMessage);
             Date d1 = actual1.lastModified;
 
             Thread.sleep(100L);
 
-            dao.put(actual1);
+            skip.errorMessage = "modified error message";
+            dao.put(skip);
 
             HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
             Assert.assertNotNull(actual2);
@@ -198,6 +200,7 @@ public class PostgresqlHarvestSkipDAOTest
             log.debug("skip.lastModified: " + skip.lastModified.getTime());
             log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
             Assert.assertTrue("lastModfified increased", skip.lastModified.getTime() < actual2.lastModified.getTime());
+            Assert.assertEquals("error message", skip.errorMessage, actual2.errorMessage);
 
         }
         catch(Exception unexpected)

@@ -81,17 +81,19 @@ public class HarvestSkip
     public String source;
     public String cname;
     public UUID skipID;
+    public String errorMessage;
 
     public Date lastModified;
     UUID id;
 
     HarvestSkip() { }
     
-    public HarvestSkip(String source, String cname, UUID skipID)
+    public HarvestSkip(String source, String cname, UUID skipID, String msg)
     {
         this.source = source;
         this.cname = cname;
         this.skipID = skipID;
+        this.errorMessage = msg;
     }
 
     @Override

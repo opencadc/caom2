@@ -266,6 +266,7 @@ public class ObservationHarvester extends Harvester
                 iter.remove(); // allow garbage collection during loop
                 
                 String lastMsg = null;
+                String skipMsg = null;
                 
                 if (!dryrun)
                 {
@@ -353,7 +354,7 @@ public class ObservationHarvester extends Harvester
                 }
                 catch(Throwable oops)
                 {
-                    lastMsg = "unexpected: " + oops.getMessage();
+                    lastMsg = oops.getMessage();
                     String str = oops.toString();
                     if (oops instanceof Error)
                     {
@@ -416,39 +417,45 @@ public class ObservationHarvester extends Harvester
                     if (!ok && !dryrun)
                     {
                         log.warn("failed to insert " + o + ": " + lastMsg);
+                        skipMsg = o + ": " + lastMsg;
                         lastMsg = null;
                         destObservationDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
                         tTransaction += System.currentTimeMillis() - t;
                         
-                        // track failures in normal mode, just ignore in skipped mode
-                        if (!skipped)
-                            try
-                            {
-                                log.debug("starting HarvestSkip transaction");
-                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
-                                if (skip == null)
-                                    skip = new HarvestSkip(source, cname, o.getID());
-                                log.info(skip);
+                        try
+                        {
+                            log.debug("starting HarvestSkip transaction");
+                            HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
+                            if (skip == null)
+                                skip = new HarvestSkip(source, cname, o.getID(), skipMsg);
+                            else
+                                skip.errorMessage = skipMsg; // possible update
+                            log.info(skip);
 
-                                destObservationDAO.getTransactionManager().startTransaction();
+                            destObservationDAO.getTransactionManager().startTransaction();
+
+                            if (!skipped)
+                            {
                                 // track the harvest state progress
                                 harvestState.put(state);
-                                // track the fail
-                                harvestSkip.put(skip);
-                                // TBD: delete previous version of obs?
-                                //destObservationDAO.delete(o.getID());
-                                log.debug("committing HarvestSkip transaction");
-                                destObservationDAO.getTransactionManager().commitTransaction();
-                                log.debug("commit HarvestSkip: OK");
                             }
-                            catch(Throwable oops)
-                            {
-                                log.warn("failed to insert HarvestSkip", oops);
-                                destObservationDAO.getTransactionManager().rollbackTransaction();
-                                log.warn("rollback HarvestSkip: OK");
-                                ret.abort = true;
-                            }
+                            
+                            // track the fail
+                            harvestSkip.put(skip);
+                            // TBD: delete previous version of obs?
+                            //destObservationDAO.delete(o.getID());
+                            log.debug("committing HarvestSkip transaction");
+                            destObservationDAO.getTransactionManager().commitTransaction();
+                            log.debug("commit HarvestSkip: OK");
+                        }
+                        catch(Throwable oops)
+                        {
+                            log.warn("failed to insert HarvestSkip", oops);
+                            destObservationDAO.getTransactionManager().rollbackTransaction();
+                            log.warn("rollback HarvestSkip: OK");
+                            ret.abort = true;
+                        }
                         ret.failed++;
                     }
 

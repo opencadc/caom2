@@ -267,7 +267,7 @@ public class ReadAccessHarvester extends Harvester
                                 log.debug("starting harvestSkip transaction");
                                 HarvestSkip skip = harvestSkip.get(source, cname, ra.getID());
                                 if (skip == null)
-                                    skip = new HarvestSkip(source, cname, ra.getID());
+                                    skip = new HarvestSkip(source, cname, ra.getID(), null);
                                 destAccessDAO.getTransactionManager().startTransaction();
                                 log.info("skip: " + skip);
 
