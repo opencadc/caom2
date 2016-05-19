@@ -89,7 +89,7 @@ import org.springframework.dao.TransientDataAccessResourceException;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.dao.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
@@ -204,7 +204,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         catch(AccessControlException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 403, "permission denied: " + uri, false);
+            handleException(ex, 403, "permission denied: " + uri.getURI().toASCIIString(), false);
         }
         catch(CertificateException ex)
         {
@@ -223,17 +223,17 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         catch(ObservationNotFoundException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 404, "not found: " + uri, false);
+            handleException(ex, 404, "not found: " + uri.getURI().toASCIIString(), false);
         }
         catch(ObservationAlreadyExistsException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 409, "already exists: " + uri, false);
+            handleException(ex, 409, "already exists: " + uri.getURI().toASCIIString(), false);
         }
         catch(ByteLimitExceededException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 413, "too large: " + uri, false);
+            handleException(ex, 413, "too large: " + uri.getURI().toASCIIString(), false);
         }
         catch(TransientDataAccessResourceException ex)
         {
@@ -242,18 +242,18 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             if (lowerr.contains("attempt to insert duplicate key"))
             {
                 logInfo.setSuccess(true);
-                handleException(ex, 400, "duplicate entity: " + uri, true);
+                handleException(ex, 400, "duplicate entity: " + uri.getURI().toASCIIString(), true);
             }
             else
                 handleException(ex, 500, "unexpected failure: " + path, true);
         }
         catch(RuntimeException unexpected)
         {
-            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri, true);
+            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri.getURI().toASCIIString(), true);
         }
         catch(Error unexpected)
         {
-            handleException(unexpected, 500, "unexpected error: " + path + " " + uri, true);
+            handleException(unexpected, 500, "unexpected error: " + path + " " + uri.getURI().toASCIIString(), true);
         }
         
         return null;
