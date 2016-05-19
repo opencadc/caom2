@@ -85,7 +85,16 @@ public class SimpleObservation extends Observation
     {
         super(uri, ALGORITHM);
     }
-
+    
+    /**
+     * @param collection
+     * @param observationID 
+     */
+    public SimpleObservation(String collection, String observationID)
+    {
+        this(new ObservationURI(collection, observationID));
+    }
+    
     @Override
     public void setAlgorithm(Algorithm a)
     {

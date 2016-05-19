@@ -91,6 +91,16 @@ public class CompositeObservation extends Observation
         super(uri, algorithm);
     }
     
+    /**
+     * @param collection
+     * @param observationID 
+     * @param algorithm
+     */
+    public CompositeObservation(String collection, String observationID, Algorithm algorithm)
+    {
+        this(new ObservationURI(collection, observationID), algorithm);
+    }
+    
     public Set<ObservationURI> getMembers()
     {
         return members;
