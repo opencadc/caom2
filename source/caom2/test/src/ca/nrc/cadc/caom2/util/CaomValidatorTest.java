@@ -189,7 +189,7 @@ public class CaomValidatorTest
     {
         try
         {
-            Observation o = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation o = new SimpleObservation("FOO", "bar");
             Plane p = new Plane("baz");
             o.getPlanes().add(p);
             CaomValidator.validate(o);

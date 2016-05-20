@@ -107,18 +107,18 @@ public class ObservationTest
     {
         try
         {
-            Observation o = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
+            Observation o = new SimpleObservation("Stuff", "Thing");
             log.debug("created: " + o);
             Assert.assertEquals("Stuff", o.getURI().getCollection());
             Assert.assertEquals("Thing", o.getURI().getObservationID());
 
-            o = new CompositeObservation(new ObservationURI("Stuff", "Thing"), new Algorithm("doit"));
+            o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
             Assert.assertEquals("Stuff", o.getURI().getCollection());
             Assert.assertEquals("Thing", o.getURI().getObservationID());
             
             try 
             {
-                o = new CompositeObservation(new ObservationURI("Stuff", "Thing"), null);
+                o = new CompositeObservation("Stuff", "Thing", null);
                 Assert.fail("excpected IllegalArgumentException from " + o);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
@@ -135,10 +135,10 @@ public class ObservationTest
     {
         try
         {
-            Observation cat = new SimpleObservation(new ObservationURI("Stuff", "CatInTheHat"));
-            Observation thing1 = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
-            Observation thing2 = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
-            Observation dog = new SimpleObservation(new ObservationURI("Dog", "Thing"));
+            Observation cat = new SimpleObservation("Stuff", "CatInTheHat");
+            Observation thing1 = new SimpleObservation("Stuff", "Thing");
+            Observation thing2 = new SimpleObservation("Stuff", "Thing");
+            Observation dog = new SimpleObservation("Dog", "Thing");
 
             Assert.assertTrue(thing1.equals(thing1));
             Assert.assertTrue(thing1.equals(thing2));
@@ -164,9 +164,9 @@ public class ObservationTest
     {
         try
         {
-            Observation cat = new SimpleObservation(new ObservationURI("Stuff", "CatInTheHat"));
-            Observation thing1 = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
-            Observation thing2 = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
+            Observation cat = new SimpleObservation("Stuff", "CatInTheHat");
+            Observation thing1 = new SimpleObservation("Stuff", "Thing");
+            Observation thing2 = new SimpleObservation("Stuff", "Thing");
 
             Assert.assertTrue(thing1.hashCode() == thing2.hashCode());
 
@@ -186,7 +186,7 @@ public class ObservationTest
     {
         try
         {
-            Observation o = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
+            Observation o = new SimpleObservation("Stuff", "Thing");
             Assert.assertEquals(SimpleObservation.ALGORITHM.getName(), o.getAlgorithm().getName());
 
             o.setAlgorithm(SimpleObservation.ALGORITHM);
@@ -223,7 +223,7 @@ public class ObservationTest
     {
         try
         {
-            Observation o = new CompositeObservation(new ObservationURI("Stuff", "Thing"), new Algorithm("doit"));
+            Observation o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
             Assert.assertEquals("doit", o.getAlgorithm().getName());
 
             o.setAlgorithm(new Algorithm("foo"));
@@ -265,7 +265,7 @@ public class ObservationTest
     {
         try
         {
-            Observation o = new SimpleObservation(new ObservationURI("Stuff", "Thing"));
+            Observation o = new SimpleObservation("Stuff", "Thing");
             Assert.assertNotNull(o.getPlanes());
             Assert.assertEquals(0, o.getPlanes().size());
 
@@ -299,7 +299,7 @@ public class ObservationTest
     {
         try
         {
-            CompositeObservation o = new CompositeObservation(new ObservationURI("Stuff", "Thing"), new Algorithm("doit"));
+            CompositeObservation o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
             Assert.assertNotNull(o.getMembers());
             Assert.assertEquals(0, o.getMembers().size());
 

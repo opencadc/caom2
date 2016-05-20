@@ -132,7 +132,7 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
      * @see computeTransientState()
      */
     public transient Polarization polarization;
-
+    
     public Plane(String productID)
     {
         CaomValidator.assertNotNull(getClass(), "productID", productID);
@@ -176,11 +176,6 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         propagateMetaRelease();
     }
 
-    public PlaneURI getURI(ObservationURI parentURI)
-    {
-        return new PlaneURI(parentURI, productID);
-    }
-
     @Override
     public String toString()
     {
@@ -190,6 +185,11 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     public String getProductID()
     {
         return productID;
+    }
+
+    public PlaneURI getURI(ObservationURI parentURI)
+    {
+        return new PlaneURI(parentURI, productID);
     }
 
     public Set<Artifact> getArtifacts()

@@ -361,7 +361,6 @@ public class ObservationReader implements Serializable
         
         String collection = getChildText("collection", root, namespace, false);
         String observationID = getChildText("observationID", root, namespace, false);
-        ObservationURI uri = new ObservationURI(collection, observationID);
         
         // Algorithm.
         Algorithm algorithm = getAlgorithm(root, namespace, dateFormat);
@@ -372,12 +371,12 @@ public class ObservationReader implements Serializable
         String comp = namespace.getPrefix() + ":" +  CompositeObservation.class.getSimpleName();
         if ( simple.equals(tval) )
         {
-            obs = new SimpleObservation(uri);
+            obs = new SimpleObservation(collection, observationID);
             obs.setAlgorithm(algorithm);
         }
         else if ( comp.equals(tval) )
         {
-            obs = new CompositeObservation(uri, algorithm);
+            obs = new CompositeObservation(collection, observationID, algorithm);
         }
         else
             throw new ObservationParsingException("unexpected observation type: " + tval);

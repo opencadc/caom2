@@ -169,11 +169,11 @@ public final class CaomValidator
             }
             catch(Error er)
             {
-                throw new RuntimeException("failed to compute metadata for plane " + p.getURI(obs.getURI()), er);
+                throw new RuntimeException("failed to compute metadata for plane " + p.getProductID(), er);
             }
             catch(Exception ex)
             {
-                throw new IllegalArgumentException("failed to compute metadata for plane " + p.getURI(obs.getURI()), ex);
+                throw new IllegalArgumentException("failed to compute metadata for plane " + p.getProductID(), ex);
             }
         }
     }

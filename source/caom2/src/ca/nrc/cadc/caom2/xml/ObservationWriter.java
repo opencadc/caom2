@@ -351,8 +351,8 @@ public class ObservationWriter implements Serializable
 
         addEntityAttributes(obs, element, dateFormat);
 
-        addElement("collection", obs.getURI().getCollection(), element);
-        addElement("observationID", obs.getURI().getObservationID(), element);
+        addElement("collection", obs.getCollection(), element);
+        addElement("observationID", obs.getObservationID(), element);
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);

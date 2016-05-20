@@ -87,6 +87,8 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     
     private String collection;
     private String observationID;
+    
+    private transient URI uri;
 
     private ObservationURI() { }
 
@@ -105,6 +107,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
             CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
             CaomValidator.assertNotNull(getClass(), "observationID", observationID);
             CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+            this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
         }
         else
             throw new IllegalArgumentException("input URI has " + cop.length + " parts ("+ssp+"), expected 2: <collection>/<observationID>");
@@ -118,12 +121,13 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         this.collection = collection;
         this.observationID = observationID;
+        this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
     }
 
     @Override
     public String toString()
     {
-        return "ObservationURI[" + SCHEME + ":" + collection + "/" + observationID + "]";
+        return uri.toASCIIString();
     }
 
     public String getCollection()
@@ -138,7 +142,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
 
     public URI getURI()
     {
-        return URI.create(SCHEME + ":" + collection + "/" + observationID);
+        return uri;
     }
 
     @Override
@@ -159,7 +163,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     @Override
     public int hashCode()
     {
-        return getURI().toASCIIString().hashCode();
+        return uri.hashCode();
     }
 
     public int compareTo(ObservationURI u)

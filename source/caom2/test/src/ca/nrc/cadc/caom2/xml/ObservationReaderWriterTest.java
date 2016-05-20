@@ -160,7 +160,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             
             ObservationReader validatingReader = new ObservationReader();
             ObservationReader nonvalidatingReader = new ObservationReader(false);
@@ -224,7 +224,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -250,7 +250,7 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs = new SimpleObservation("FOO", "bar");
             ObservationWriter w = new ObservationWriter();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -337,7 +337,7 @@ public class ObservationReaderWriterTest
         try
         {
             ObservationReader r = new ObservationReader();
-            SimpleObservation observation = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            SimpleObservation observation = new SimpleObservation("FOO", "bar");
             observation.telescope = new Telescope("bar\tbaz\n1.0");
             StringBuilder sb = new StringBuilder();
             ObservationWriter writer = new ObservationWriter();

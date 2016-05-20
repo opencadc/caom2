@@ -84,7 +84,8 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
-    private final ObservationURI uri;
+    private final String collection;
+    private final String observationID;
 
     // mutable state
     private Algorithm algorithm;
@@ -104,41 +105,36 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
 
-    protected Observation(ObservationURI uri, Algorithm algorithm)
+    protected Observation(String collection, String observationID, Algorithm algorithm)
     {
         super();
+        CaomValidator.assertNotNull(getClass(), "collection", collection);
+        CaomValidator.assertNotNull(getClass(), "observationID", observationID);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
-        this.uri = uri;
+        this.collection = collection;
+        this.observationID = observationID;
         this.algorithm = algorithm;
     }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + uri.getURI().toASCIIString() + "]";
+        return getClass().getSimpleName() + "[" + collection + "/" + observationID + "]";
+    }
+
+    public String getCollection()
+    {
+        return collection;
+    }
+
+    public String getObservationID()
+    {
+        return observationID;
     }
 
     public ObservationURI getURI()
     {
-        return uri;
-    }
-
-    /**
-     * @deprecated convenience method
-     * @return 
-     */
-    private String getCollection()
-    {
-        return uri.getCollection();
-    }
-
-    /**
-     * @deprecated convenience method
-     * @return 
-     */
-    private String getObservationID()
-    {
-        return uri.getObservationID();
+        return new ObservationURI(collection, observationID);
     }
 
     public void setAlgorithm(Algorithm algorithm)
@@ -175,12 +171,12 @@ public abstract class Observation extends AbstractCaomEntity implements Comparab
     @Override
     public int hashCode()
     {
-        return uri.hashCode();
+        return getURI().hashCode();
     }
 
     @Override
     public int compareTo(Observation o)
     {
-        return uri.compareTo(o.uri);
-    }
+        return getURI().compareTo(o.getURI());
+    }    
 }
