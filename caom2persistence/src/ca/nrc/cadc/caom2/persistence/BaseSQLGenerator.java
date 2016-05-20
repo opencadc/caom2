@@ -229,11 +229,6 @@ public class BaseSQLGenerator implements SQLGenerator
 
     protected DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     
-    
-    // temporary allow sybase packwards compat
-    protected String collectionCol = "uri_collection";
-    protected String observationIDCol = "uri_observationID";
-    
     private BaseSQLGenerator() { }
     
     public BaseSQLGenerator(String database, String schema)
@@ -287,7 +282,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] obsColumns = new String[]
         {
             "typeCode", 
-            collectionCol, observationIDCol, "algorithm_name", 
+            "collection", "observationID", "algorithm_name", 
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
             "target_name", "target_type", "target_standard",
@@ -307,7 +302,7 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             String[] computedObsColumns = new String[]
             {
-                "uri"
+                "observationURI"
             };
             this.numComputedObservationColumns = computedObsColumns.length;
             int n = obsColumns.length + computedObsColumns.length;
@@ -572,11 +567,11 @@ public class BaseSQLGenerator implements SQLGenerator
         sb.append(" WHERE ");
         sb.append(alias);
         // TODO: use uri column directly in future
-        sb.append(".").append(collectionCol).append(" = ");
+        sb.append(".").append("collection").append(" = ");
         sb.append(literal(uri.getCollection()));
         sb.append(" AND ");
         sb.append(alias);
-        sb.append(".").append(observationIDCol).append(" = ");
+        sb.append(".").append("observationID").append(" = ");
         sb.append(literal(uri.getObservationID()));
         String orderBy = getOrderColumns(depth);
         if (skeleton)
@@ -2879,20 +2874,16 @@ public class BaseSQLGenerator implements SQLGenerator
 
             String collection = rs.getString(col++);
             String observationID = rs.getString(col++);
-            // TODO: current: uri_collection,uri_observationID are persisted everywhere
-            // and uri is persisted on for persistTransientState==true
-            // future: uri is always eprsisted, uri_collection,uri_observationID are transient
-            ObservationURI uri = new ObservationURI(collection, observationID);
-            log.debug("found: uri = " + uri);
+            log.debug("found: uri = " + collection + "/" + observationID);
             
             Algorithm algorithm = new Algorithm(rs.getString(col++));
             log.debug("found: algorithm = " + algorithm);
 
             Observation o = null;
             if (SIMPLE_TYPE.equals(typeCode))
-                o = new SimpleObservation(uri);
+                o = new SimpleObservation(collection, observationID);
             else if (COMPOSITE_TYPE.equals(typeCode))
-                o = new CompositeObservation(uri, algorithm);
+                o = new CompositeObservation(collection, observationID, algorithm);
 
             o.type = rs.getString(col++);
             String intent = rs.getString(col++);

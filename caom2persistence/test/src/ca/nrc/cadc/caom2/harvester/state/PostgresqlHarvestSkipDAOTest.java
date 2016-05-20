@@ -197,9 +197,9 @@ public class PostgresqlHarvestSkipDAOTest
             Assert.assertNotNull(actual2);
             Assert.assertEquals(id1, actual2.skipID);
 
-            log.debug("skip.lastModified: " + skip.lastModified.getTime());
+            log.debug("actual1.lastModified: " + actual1.lastModified.getTime());
             log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
-            Assert.assertTrue("lastModfified increased", skip.lastModified.getTime() < actual2.lastModified.getTime());
+            Assert.assertTrue("lastModified increased", actual1.lastModified.getTime() < actual2.lastModified.getTime());
             Assert.assertEquals("error message", skip.errorMessage, actual2.errorMessage);
 
         }

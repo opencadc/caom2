@@ -127,7 +127,7 @@ public class HarvestSkipDAO
             }
             sb.append(" ORDER BY lastModified ASC");
             
-            if (batchSize != null && batchSize.intValue() > 0)
+            if (batchSize != null && batchSize > 0)
                 sb.append(" LIMIT ").append(batchSize.toString());
             
             String sql = sb.toString();

@@ -235,7 +235,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testPutGetDelete()
     {
         UUID assetID = genID();
-        Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar-" + UUID.randomUUID()));
+        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
         Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);
@@ -289,7 +289,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testRejectDuplicate()
     {
         // random ID is OK since we are testing observation only
-        Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar-"+UUID.randomUUID()));
+        Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
         
         UUID assetID = genID();
         
@@ -343,7 +343,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testGetList()
     {
         // random ID is OK since we are testing observation only
-        Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar-"+UUID.randomUUID()));
+        Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
         UUID id = obs.getID();
         Long assetID = id.getLeastSignificantBits();
         Util.assignID(obs, id);

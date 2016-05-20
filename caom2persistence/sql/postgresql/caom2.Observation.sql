@@ -1,9 +1,9 @@
 
 create table caom2.Observation
 (
-    uri varchar(512) not null,                -- change: rename observationURI to uri
-    uri_collection varchar(64) not null,      -- change: rename collection to uri_collection
-    uri_observationID varchar(256) not null,  -- change: rename observationID to uri_observationID 
+    observationURI varchar(512) not null,
+    collection varchar(64) not null,
+    observationID varchar(256) not null,
     algorithm_name varchar(64) not null,
     type varchar(32),
     intent varchar(32),
@@ -62,11 +62,11 @@ create table caom2.Observation
 tablespace caom_data
 ;
 
-create unique index i_observationURI on caom2.Observation (uri)
+create unique index i_observationURI on caom2.Observation (observationURI)
 tablespace caom_index
 ;
 
-create unique index i_observationURI2 on caom2.Observation (uri_collection, uri_observationID)
+create unique index i_observationURI2 on caom2.Observation (collection, observationID)
 tablespace caom_index
 ;
 

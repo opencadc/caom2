@@ -153,7 +153,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     public void testExtendedUpdate()
     {
         UUID assetID = genID();
-        Observation obs = new SimpleObservation(new ObservationURI("FOO", "bar-" + UUID.randomUUID()));
+        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
         Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);

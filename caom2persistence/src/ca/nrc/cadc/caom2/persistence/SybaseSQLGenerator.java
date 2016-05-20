@@ -89,9 +89,6 @@ public class SybaseSQLGenerator extends BaseSQLGenerator
         this.persistReadAccessWithAsset = false;
         this.useLongForUUID = true;
         this.useIntegerForBoolean = true;
-        // temporary compat hack
-        this.collectionCol = "collection";
-        this.observationIDCol = "observationID";
         super.init();
     }
     

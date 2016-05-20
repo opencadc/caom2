@@ -267,14 +267,14 @@ public abstract class AbstractDatabaseObservationDAOTest
         // can still proceed -- eg it is really nested
         try
         {
-            Observation obs1 = new SimpleObservation(new ObservationURI("FOO", "bar"));
+            Observation obs1 = new SimpleObservation("FOO", "bar");
             dao.put(obs1);
             Assert.assertTrue(dao.exists(obs1.getURI()));
             log.info("created: " + obs1);
             
             
-            Observation dupe = new SimpleObservation(new ObservationURI("FOO", "bar"));
-            Observation obs2 = new SimpleObservation(new ObservationURI("FOO", "bar2"));
+            Observation dupe = new SimpleObservation("FOO", "bar");
+            Observation obs2 = new SimpleObservation("FOO", "bar2");
             
             txnManager.startTransaction(); // outer txn
             try
@@ -743,11 +743,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             log.info("testGetObservationList");
             Integer batchSize = new Integer(3);
 
-            Observation o1 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1"));
-            Observation o2 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA"));
-            Observation o3 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2"));
-            Observation o4 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB"));
-            Observation o5 = new SimpleObservation(new ObservationURI(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3"));
+            Observation o1 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1");
+            Observation o2 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA");
+            Observation o3 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2");
+            Observation o4 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB");
+            Observation o5 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3");
 
             txnManager.startTransaction();
             dao.put(o1);
@@ -1343,7 +1343,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         Observation o;
         if (comp)
         {
-            CompositeObservation co = new CompositeObservation(new ObservationURI("TEST", "SimpleBar"), new Algorithm("doit"));
+            CompositeObservation co = new CompositeObservation("TEST", "SimpleBar", new Algorithm("doit"));
             if (full)
             {
                 co.getMembers().add(new ObservationURI("TEST", "simple1"));
@@ -1353,7 +1353,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             o = co;
         }
         else
-            o = new SimpleObservation(new ObservationURI("TEST", "SimpleBar"));
+            o = new SimpleObservation("TEST", "SimpleBar");
 
         if (full)
         {

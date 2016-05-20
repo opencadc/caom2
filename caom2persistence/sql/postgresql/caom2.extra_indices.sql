@@ -70,7 +70,7 @@ tablespace caom_index
 
 -- case-sensitive
 create index i_collection_instrument
-    on caom2.Observation (uri_collection, instrument_name)
+    on caom2.Observation (collection, instrument_name)
     tablespace caom_index
 ;
 
@@ -99,8 +99,8 @@ create index i_provenance_runid
 
 -- case-insensitive
 
-create index Observation_i_collectionID_lower
-    on caom2.Observation ( lower(uri_observationID) )
+create index Observation_i_observationID_lower
+    on caom2.Observation ( lower(observationID) )
     tablespace caom_index
 ;
 
@@ -117,7 +117,7 @@ create index Observation_i_proposal_id_lower
 -- support both case-insensitive and LIKE via special operator
 
 create index Observation_i_observationID_lower_pattern
-    on caom2.Observation ( lower(uri_observationID)  varchar_pattern_ops )
+    on caom2.Observation ( lower(observationID)  varchar_pattern_ops )
     tablespace caom_index
 ;
 
