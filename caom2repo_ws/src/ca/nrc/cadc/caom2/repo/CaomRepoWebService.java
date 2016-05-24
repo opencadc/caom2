@@ -70,7 +70,7 @@
 package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.ac.auth.AuthenticatorImpl;
+import ca.nrc.cadc.auth.AuthenticatorImpl;
 import ca.nrc.cadc.caom2.repo.action.RepoAction;
 import ca.nrc.cadc.vosi.AvailabilityStatus;
 import ca.nrc.cadc.vosi.WebService;
