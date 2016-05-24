@@ -12,5 +12,5 @@ create table caom2_HarvestSkip
 ;
 
 create unique index i_HarvestSkip
-    on caom2_HarvestSkip ( source,cname,skipID )
+    on caom2_HarvestState ( source,cname,skipID )
 ;
