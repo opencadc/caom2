@@ -954,6 +954,8 @@ public class FitsMapper
                                     set.add(new PlaneURI(new URI(s.trim())));
                                 else if (ObservationURI.class.isAssignableFrom(setClass))
                                     set.add(new ObservationURI(new URI(s.trim())));
+                                else
+                                    set.add(s.trim());
                             }
                         }
                         log.debug(method.getName() + "(Set)[" + utype + "] = " + set);
