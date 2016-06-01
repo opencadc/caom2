@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.soda;
 
 
+import ca.nrc.cadc.caom2ops.Config;
 import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
 import ca.nrc.cadc.uws.server.JobDAO;
 import ca.nrc.cadc.uws.server.JobExecutor;
@@ -96,7 +97,7 @@ public class SodaJobManager  extends SimpleJobManager
     {
         super();
 
-        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence(Config.POOL_CONFIG);
         this.config = jobPersist.getJobSchema();
         
         //JobExecutor jobExec = new SyncJobExecutor(jobPersist, SodaJobRunner.class);

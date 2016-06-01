@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.datalink;
 
+import ca.nrc.cadc.caom2ops.Config;
 import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
 import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
 import ca.nrc.cadc.uws.server.JobExecutor;
@@ -93,7 +94,7 @@ public class LinkQueryJobManager extends SimpleJobManager
     public LinkQueryJobManager()
     {
         super();
-        PostgresJobPersistence jobPersist = new PostgresJobPersistence();
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence(Config.POOL_CONFIG);
         this.config = jobPersist.getJobSchema();
         
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, LinkQueryRunner.class);

@@ -67,48 +67,20 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.meta;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2ops.Config;
-import ca.nrc.cadc.uws.impl.PostgresJobPersistence;
-import ca.nrc.cadc.uws.server.JobDAO.JobSchema;
-import ca.nrc.cadc.uws.server.JobExecutor;
-import ca.nrc.cadc.uws.server.SimpleJobManager;
-import ca.nrc.cadc.uws.server.SyncJobExecutor;
+
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class MetaQueryJobManager extends SimpleJobManager
+public class Config 
 {
-    private static final Logger log = Logger.getLogger(MetaQueryJobManager.class);
+    private static final Logger log = Logger.getLogger(Config.class);
 
-    private static final Long MAX_EXEC_DURATION = 120L;
-    private static final Long MAX_DESTRUCTION = 3600L; 
-    private static final Long MAX_QUOTE = 120L;
-
-    private final JobSchema config;
-
-    public MetaQueryJobManager()
-    {
-        super();
-
-        PostgresJobPersistence jobPersist = new PostgresJobPersistence(Config.POOL_CONFIG);
-        this.config = jobPersist.getJobSchema();
-        
-        JobExecutor jobExec = new SyncJobExecutor(jobPersist, MetaQueryRunner.class);
-
-        super.setJobPersistence(jobPersist);
-        super.setJobExecutor(jobExec);
-        super.setMaxExecDuration(MAX_EXEC_DURATION);
-        super.setMaxDestruction(MAX_DESTRUCTION);
-        super.setMaxQuote(MAX_QUOTE);
-    }
-
-    public JobSchema getConfig()
-    {
-        return config;
-    }
+    public static final String POOL_CONFIG = "cvo-pool-config.properties";
+    
+    private Config() { }
 }
