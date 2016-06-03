@@ -174,7 +174,7 @@ public class Main
                 System.exit(exitValue);
             }
             
-            ch.setIntiDeletionHarvesters(init);
+            ch.setInitHarvesters(init);
             
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));

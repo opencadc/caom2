@@ -33,7 +33,7 @@ public class CaomHarvester implements Runnable
     private DeletionHarvester planeDataDeleter;
     private DeletionHarvester planeMetaDeleter;
     
-    private boolean intiDeletionHarvesters;
+    private boolean init;
     
     private CaomHarvester() { }
 
@@ -87,9 +87,9 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
-    public void setIntiDeletionHarvesters(boolean intiDeletionHarvesters)
+    public void setInitHarvesters(boolean init)
     {
-        this.intiDeletionHarvesters = intiDeletionHarvesters;
+        this.init = init;
     }
 
     
@@ -102,9 +102,9 @@ public class CaomHarvester implements Runnable
         ret.obsHarvester = null;
         ret.obsDeleter = null;
         
-        //ret.observationMetaHarvester = null;
-        //ret.planeMetaHarvester = null;
-        //ret.planeDataHarvester = null;
+        ret.observationMetaHarvester = null;
+        ret.planeMetaHarvester = null;
+        ret.planeDataHarvester = null;
         
         ret.observationMetaDeleter = null;
         ret.planeMetaDeleter = null;
@@ -126,38 +126,50 @@ public class CaomHarvester implements Runnable
         // from delete+create
         if (obsDeleter != null)
         {
-            obsDeleter.setInitHarvestState(intiDeletionHarvesters);
+            obsDeleter.setInitHarvestState(init);
             obsDeleter.run();
         }
         if (obsHarvester != null)
+        {
+            obsHarvester.setInitHarvest(init);
             obsHarvester.run();
-
+        }
+        
         // clean up old access control tuples before harvest to avoid conflicts
         // from delete+create
         if (observationMetaDeleter != null)
         {
-            observationMetaDeleter.setInitHarvestState(intiDeletionHarvesters);
+            observationMetaDeleter.setInitHarvestState(init);
             observationMetaDeleter.run();
         }
         if (planeDataDeleter != null)
         {
-            planeDataDeleter.setInitHarvestState(intiDeletionHarvesters);
+            planeDataDeleter.setInitHarvestState(init);
             planeDataDeleter.run();
         }
         if (planeMetaDeleter != null)
         {
-            planeMetaDeleter.setInitHarvestState(intiDeletionHarvesters);
+            planeMetaDeleter.setInitHarvestState(init);
             planeMetaDeleter.run();
         }
+        
+        if (init)
+            return; // no point in trying to harvest a batch of ReadAccess tuples
         
         // make sure access control tuples are harvested after observations
         // because they update asset tables and fail if asset is missing
         if (observationMetaHarvester != null)
+        {
             observationMetaHarvester.run();
+        }
         if (planeDataHarvester != null)
+        {
             planeDataHarvester.run();
+        }
         if (planeMetaHarvester != null)
+        {
             planeMetaHarvester.run();
+        }
         
         
     }

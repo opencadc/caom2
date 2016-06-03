@@ -1,5 +1,8 @@
 
-drop view if exists caom2.obscore;
+drop view if exists caom2.ObsPart;
+drop view if exists caom2.ObsFile;
+drop view if exists caom2.ObsCore;
+drop view if exists caom2.SIAv1;
 
 drop table if exists caom2.Chunk;
 drop table if exists caom2.Part;
