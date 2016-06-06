@@ -122,12 +122,13 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            double failFrac = ((double) num.failed - num.handled) / ((double) num.found);
-            if (!skipped && failFrac > 0.5)
-            {
-                log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
-                num.abort = true;
-            }
+            
+            //double failFrac = ((double) num.failed - num.handled) / ((double) num.found);
+            //if (!skipped && failFrac > 0.5)
+            //{
+            //    log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
+            //    num.abort = true;
+            //}
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
@@ -331,6 +332,10 @@ public class ObservationHarvester extends Harvester
                                             + " maxLastModified: " + format(o.getMaxLastModified()));
                             }
                             
+                            // advannce the date before put as there are usually lots of fails
+                            if (skipped)
+                                startDate = hs.lastModified;
+                            
                             // temporary validation hack to avoid tickmarks in the keywords columns
                             CaomValidator.validateKeywords(o);
                             
@@ -351,8 +356,7 @@ public class ObservationHarvester extends Harvester
                             harvestSkip.delete(hs);
                         }
 
-                        if (skipped)
-                            startDate = hs.lastModified;
+                        
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
@@ -434,11 +438,20 @@ public class ObservationHarvester extends Harvester
                         try
                         {
                             log.debug("starting HarvestSkip transaction");
+                            boolean putSkip = false;
                             HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
                             if (skip == null)
                                 skip = new HarvestSkip(source, cname, o.getID(), skipMsg);
                             else
-                                skip.errorMessage = skipMsg; // possible update
+                            {
+                                if (skipMsg != null && !skipMsg.equals(skip.errorMessage))
+                                {
+                                    skip.errorMessage = skipMsg; // possible update
+                                    putSkip = true;
+                                }
+                                else
+                                    log.info("no change in status: " + hs);
+                            }
                             log.info(skip);
 
                             destObservationDAO.getTransactionManager().startTransaction();
@@ -450,7 +463,9 @@ public class ObservationHarvester extends Harvester
                             }
                             
                             // track the fail
-                            harvestSkip.put(skip);
+                            if (putSkip)
+                                harvestSkip.put(skip);
+                            
                             // TBD: delete previous version of obs?
                             //destObservationDAO.delete(o.getID());
                             log.debug("committing HarvestSkip transaction");
