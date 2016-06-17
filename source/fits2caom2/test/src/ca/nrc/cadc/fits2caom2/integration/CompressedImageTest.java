@@ -127,13 +127,15 @@ public class CompressedImageTest extends AbstractTest
             int count = 0;
             for (Part part : parts)
             {
+                Set<Chunk> chunks = part.getChunks();
+                Assert.assertNotNull("chunks", chunks);
                 if (count == 0)
                 {
-                    Assert.assertNull("null chunk", part.chunk);
+                    Assert.assertTrue("number chunks", chunks.size() == 0);
                 }
                 else
                 {
-                    Assert.assertNotNull("chunk", part.chunk);
+                    Assert.assertTrue("number chunks", chunks.size() == 1);
                 }
                 count++;
             }
@@ -176,8 +178,7 @@ public class CompressedImageTest extends AbstractTest
             int count = 0;
             for (Part part : parts)
             {
-                if (part.chunk != null)
-                    count++;
+                count += part.getChunks().size();
             }
             Assert.assertTrue("number chunks", count == 3);
 

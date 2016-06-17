@@ -460,11 +460,20 @@ public class Ingest implements Runnable
                 if ( hasData(mapping) )
                 {
                     // Populate an existing or new Chunk.
-                    insert = (part.chunk == null); // was null
-                    if (insert)
-                        part.chunk = new Chunk();
-                    populateChunk(part.chunk, mapping);
-                    log.debug(insert ? "adding "  + part.chunk : "updating " + part.chunk);
+                    Chunk chunk = new Chunk();
+                    if (!part.getChunks().isEmpty())
+                    {
+                        chunk = part.getChunks().iterator().next();
+                        
+                        // If more than one Chunk, clear the set.
+                        if (part.getChunks().size() > 1)
+                        {
+                            part.getChunks().clear();
+                        }
+                    }
+                    populateChunk(chunk, mapping);
+                    insert = part.getChunks().add(chunk);
+                    log.debug(insert ? "adding "  + chunk : "updating " + chunk);
                 }
                 else
                     log.debug("part " + extension + ": no data");

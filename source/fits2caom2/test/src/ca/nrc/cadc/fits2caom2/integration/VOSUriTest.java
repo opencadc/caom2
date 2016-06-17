@@ -131,7 +131,7 @@ public class VOSUriTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
 
@@ -168,7 +168,7 @@ public class VOSUriTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
             cleanup();
@@ -207,7 +207,7 @@ public class VOSUriTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
 

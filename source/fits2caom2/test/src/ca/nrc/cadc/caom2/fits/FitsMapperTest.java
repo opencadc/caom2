@@ -180,7 +180,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 11, 3, 0, 4, 1, 3, 0, 7, 5, 2, 2, 12
+            0, 0, 11, 3, 0, 4, 1, 3, 0, 7, 5, 1, 2, 13
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -190,7 +190,7 @@ public class FitsMapperTest
             log.debug(classes[i].getSimpleName() + " public fields: " + fields.size());
             for (Field field : fields)
                 log.debug("\t" + field.getName());
-            Assert.assertEquals(members[i], fields.size());
+            Assert.assertEquals(classes[i].getSimpleName(), members[i], fields.size());
         }
     }
     
@@ -211,7 +211,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            2, 2, 2, 2, 1, 1, 1, 1
+            2, 2, 2, 2, 2, 1, 1, 1
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
