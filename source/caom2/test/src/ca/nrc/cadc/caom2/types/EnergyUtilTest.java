@@ -330,7 +330,7 @@ public class EnergyUtilTest
             // use this to create the objects, then replace the single SpectralWCS with above
             Plane plane = getTestSetRange(1,1,1);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             c.energy = spec;
 
             Energy actual = EnergyUtil.compute(plane.getArtifacts());
@@ -372,7 +372,7 @@ public class EnergyUtilTest
             Energy actual;
 
             plane = getTestSetFunction(1, 1, 1);
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             c.energy = getInvalidFunction(); // replace the func
             actual = EnergyUtil.compute(plane.getArtifacts());
 
@@ -647,9 +647,10 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    np.chunk.energy = getTestRange(true,  px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestRange(true,  px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -679,9 +680,10 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    np.chunk.energy = getTestBounds(true,  px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestBounds(true,  px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -710,9 +712,10 @@ public class EnergyUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
                     // shift px to larger values
-                    np.chunk.energy = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }

@@ -517,9 +517,10 @@ public class TimeUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    np.chunk.time = getTestRange(true, px, sx+n*nx*ds, nx, ds);
+                    nc.time = getTestRange(true, px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -547,9 +548,10 @@ public class TimeUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    np.chunk.time = getTestBounds(true, px, sx+n*nx*ds, nx, ds);
+                    nc.time = getTestBounds(true, px, sx+n*nx*ds, nx, ds);
                     n++;
                 }
             }
@@ -577,8 +579,9 @@ public class TimeUtilTest
                 na.getParts().add(np);
                 for (int c=0; c<numC; c++)
                 {
-                    np.chunk = new Chunk();
-                    np.chunk.time = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
+                    nc.time = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
                     if (shift)
                         n++;
                 }

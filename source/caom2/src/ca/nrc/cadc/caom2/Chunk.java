@@ -88,9 +88,11 @@ import java.util.Date;
  */
 public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
 {
-    private static final long serialVersionUID = 201604081100L;
+    private static final long serialVersionUID = 201110261400L;
 
     // mutable state
+    public ProductType productType;
+
     public Integer naxis;
     public Integer observableAxis;
     public Integer positionAxis1;

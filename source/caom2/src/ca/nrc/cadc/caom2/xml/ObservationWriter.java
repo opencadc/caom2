@@ -985,7 +985,7 @@ public class ObservationWriter implements Serializable
             {
                 addElement("productType", part.productType.getValue(), partElement);
             }
-            addChunksElement(part.chunk, partElement, dateFormat);
+            addChunksElement(part.getChunks(), partElement, dateFormat);
             element.addContent(partElement);
         }
         parent.addContent(element);
@@ -999,6 +999,41 @@ public class ObservationWriter implements Serializable
      * @param parent The parent element for this child element.
      * @param dateFormat The IVOA DateFormat.
      */
+    protected void addChunksElement(Set<Chunk> chunks, Element parent, DateFormat dateFormat)
+    {
+        if (chunks == null || (chunks.isEmpty() && !writeEmptyCollections))
+            return;
+        
+        Element element = getCaom2Element("chunks");
+        for (Chunk chunk : chunks)
+        {
+            Element chunkElement = getCaom2Element("chunk");
+            addEntityAttributes(chunk, chunkElement, dateFormat);
+            if (chunk.productType != null)
+            {
+                addElement("productType", chunk.productType.getValue(), chunkElement);
+            }
+            addNumberElement("naxis", chunk.naxis, chunkElement);
+            addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
+            addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
+            addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
+            addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
+            addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
+            addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
+            
+            addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
+            addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
+            addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
+            addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
+            addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
+            
+            element.addContent(chunkElement);
+        }
+        parent.addContent(element);
+    }
+    
+    /*
+    // alt version for one-chunk-per-part that was reverted from caom-2.2
     protected void addChunksElement(Chunk chunk, Element parent, DateFormat dateFormat)
     {
         if (chunk == null)
@@ -1030,6 +1065,7 @@ public class ObservationWriter implements Serializable
 
         chunkParent.addContent(chunkElement);
     }
+    */
     
     /**
      * Builds a JDOM representation of an ObservableAxis and adds it to the

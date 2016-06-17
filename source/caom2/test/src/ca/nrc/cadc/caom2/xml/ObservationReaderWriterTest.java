@@ -1062,38 +1062,48 @@ public class ObservationReaderWriterTest
             assertEquals(expectedPart.getName(), actualPart.getName());
             assertEquals(expectedPart.productType, actualPart.productType);
             
-            compareChunks(expectedPart.chunk, actualPart.chunk);
+            compareChunks(expectedPart.getChunks(), actualPart.getChunks());
         }
     }
     
-    protected void compareChunks(Chunk expected, Chunk actual)
+    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual)
     {
         if (expected == null && actual == null)
             return;
         
         assertNotNull(expected);
         assertNotNull(actual);
+        assertEquals(expected.size(), actual.size());
         
-        assertNotNull(expected);
-        assertNotNull(actual);
+        Iterator actualIter = expected.iterator();
+        Iterator expectedIter = actual.iterator();
+        while (expectedIter.hasNext())
+        {
+            Chunk expectedChunk = (Chunk) expectedIter.next();
+            Chunk actualChunk = (Chunk) actualIter.next();
+            
+            assertNotNull(expectedChunk);
+            assertNotNull(actualChunk);
 
-        assertEquals(expected.getID(), actual.getID());
-        if (expected.getLastModified() != null && actual.getLastModified() != null)
-            assertEquals("Chunk.lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
-
-        assertEquals(expected.naxis, actual.naxis);
-        assertEquals(expected.observableAxis, actual.observableAxis);
-        assertEquals(expected.positionAxis1, actual.positionAxis1);
-        assertEquals(expected.positionAxis2, actual.positionAxis2);
-        assertEquals(expected.energyAxis, actual.energyAxis);
-        assertEquals(expected.timeAxis, actual.timeAxis);
-        assertEquals(expected.polarizationAxis, actual.polarizationAxis);
-
-        compareObservableAxis(expected.observable, actual.observable);
-        compareSpatialWCS(expected.position, actual.position);
-        compareSpectralWCS(expected.energy, actual.energy);
-        compareTemporalWCS(expected.time, actual.time);
-        comparePolarizationWCS(expected.polarization, actual.polarization);
+            assertEquals(expectedChunk.getID(), actualChunk.getID());
+            if (expectedChunk.getLastModified() != null && actualChunk.getLastModified() != null)
+                assertEquals("Chunk.lastModified", expectedChunk.getLastModified().getTime(), actualChunk.getLastModified().getTime());
+            
+            assertEquals(expectedChunk.productType, actualChunk.productType);
+            assertEquals(expectedChunk.naxis, actualChunk.naxis);
+            assertEquals(expectedChunk.observableAxis, actualChunk.observableAxis);
+            assertEquals(expectedChunk.positionAxis1, actualChunk.positionAxis1);
+            assertEquals(expectedChunk.positionAxis2, actualChunk.positionAxis2);
+            assertEquals(expectedChunk.energyAxis, actualChunk.energyAxis);
+            assertEquals(expectedChunk.timeAxis, actualChunk.timeAxis);
+            assertEquals(expectedChunk.polarizationAxis, actualChunk.polarizationAxis);
+            
+            compareObservableAxis(expectedChunk.observable, actualChunk.observable);
+            compareSpatialWCS(expectedChunk.position, actualChunk.position);
+            compareSpectralWCS(expectedChunk.energy, actualChunk.energy);
+            compareTemporalWCS(expectedChunk.time, actualChunk.time);
+            comparePolarizationWCS(expectedChunk.polarization, actualChunk.polarization);
+        }
     }
     
     protected void compareObservableAxis(ObservableAxis expected, ObservableAxis actual)

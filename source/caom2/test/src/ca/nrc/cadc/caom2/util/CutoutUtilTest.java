@@ -201,7 +201,7 @@ public class CutoutUtilTest
             Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.chunk = c;
+            p.getChunks().add(c);
             List<String> cus;
             
             String tmpl = "[0][STAR]";
@@ -292,7 +292,7 @@ public class CutoutUtilTest
             Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.chunk = c;
+            p.getChunks().add(c);
             
             Circle miss = new Circle(new Point(2.0, 2.0), 0.1);
             Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-4);
@@ -350,7 +350,7 @@ public class CutoutUtilTest
             Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.chunk = c;
+            p.getChunks().add(c);
             
             Circle miss = new Circle(new Point(2.0, 2.0), 0.1);
             Circle inside = new Circle(new Point(262.89, -15.21), 1.0e-4); // 10,10 in gal ~~ 262,-15 in ICRS
@@ -434,7 +434,7 @@ public class CutoutUtilTest
             Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
-            p.chunk = c;
+            p.getChunks().add(c);
             
             // cutout requests: must be wavelength in meters
             Interval miss = new Interval(600.0e-9, 800.0e-9);

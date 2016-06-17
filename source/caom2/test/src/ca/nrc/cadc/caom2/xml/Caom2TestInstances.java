@@ -389,7 +389,7 @@ public class Caom2TestInstances
             part.productType = ProductType.SCIENCE;
         }
         if (depth > 4)
-            part.chunk = getChunk();
+            part.getChunks().add(getChunk());
         
         parts.add(part);
         return parts;

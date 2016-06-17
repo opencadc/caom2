@@ -638,8 +638,8 @@ public class PositionUtilTest
 
             plane = getTestSetFunction(1, 2);
             Iterator<Part> pi = plane.getArtifacts().iterator().next().getParts().iterator();
-            Chunk c1 = pi.next().chunk;
-            Chunk c2 = pi.next().chunk;
+            Chunk c1 = pi.next().getChunks().iterator().next();
+            Chunk c2 = pi.next().getChunks().iterator().next();
             c1.position.resolution = 0.02; // arcsec
             c2.position.resolution = 0.04; // arcsec
             sz = PositionUtil.computeResolution(plane.getArtifacts(), ProductType.SCIENCE);
@@ -692,7 +692,7 @@ public class PositionUtilTest
         try
         {
             Plane plane = getTestSetFunction(1, 2);
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Boolean td;
                     
             td = PositionUtil.computeTimeDependent(plane.getArtifacts(), ProductType.SCIENCE);
@@ -800,9 +800,10 @@ public class PositionUtilTest
             {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                np.chunk = new Chunk();
+                Chunk nc = new Chunk();
+                np.getChunks().add(nc);
                 // just shift to higher values of x for each subsequent chunk
-                np.chunk.position = getTestRange(px+n*dp, py, sx+n*ds, sy, dp, ds);
+                nc.position = getTestRange(px+n*dp, py, sx+n*ds, sy, dp, ds);
                 n++;
             }
         }
@@ -841,9 +842,10 @@ public class PositionUtilTest
             {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                np.chunk = new Chunk();
+                Chunk nc = new Chunk();
+                np.getChunks().add(nc);
                 // just shift to higher values of sx for each subsequent chunk
-                np.chunk.position = getTestFunction(px, py, sx + n*ds, sy, gal);
+                nc.position = getTestFunction(px, py, sx + n*ds, sy, gal);
                 n++;
             }
         }

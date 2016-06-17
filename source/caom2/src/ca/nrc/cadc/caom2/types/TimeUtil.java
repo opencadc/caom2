@@ -65,34 +65,36 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.time != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        CoordRange1D range = c.time.getAxis().range;
-                        CoordBounds1D bounds = c.time.getAxis().bounds;
-                        CoordFunction1D function = c.time.getAxis().function;
-                        if (range != null)
+                        if (c.time != null)
                         {
-                            SubInterval s = toInterval(c.time, range);
-                            log.debug("[computeBounds] range -> sub: " + s);
-                            Util.mergeIntoList(s, subs, unionScale);
-                        }
-                        else if (bounds != null)
-                        {
-                            for (CoordRange1D cr : bounds.getSamples())
+                            CoordRange1D range = c.time.getAxis().range;
+                            CoordBounds1D bounds = c.time.getAxis().bounds;
+                            CoordFunction1D function = c.time.getAxis().function;
+                            if (range != null)
                             {
-                                SubInterval s = toInterval(c.time, cr);
-                                log.debug("[computeBounds] bounds -> sub: " + s);
+                                SubInterval s = toInterval(c.time, range);
+                                log.debug("[computeBounds] range -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             }
-                        }
-                        else if (function != null)
-                        {
-                            SubInterval s = toInterval(c.time, function);
-                            log.debug("[computeBounds] function -> sub: " + s);
-                            Util.mergeIntoList(s, subs, unionScale);
+                            else if (bounds != null)
+                            {
+                                for (CoordRange1D cr : bounds.getSamples())
+                                {
+                                    SubInterval s = toInterval(c.time, cr);
+                                    log.debug("[computeBounds] bounds -> sub: " + s);
+                                    Util.mergeIntoList(s, subs, unionScale);
+                                }
+                            }
+                            else if (function != null)
+                            {
+                                SubInterval s = toInterval(c.time, function);
+                                log.debug("[computeBounds] function -> sub: " + s);
+                                Util.mergeIntoList(s, subs, unionScale);
+                            }
                         }
                     }
                 }
@@ -131,33 +133,35 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.time != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        CoordRange1D range = c.time.getAxis().range;
-                        CoordBounds1D bounds = c.time.getAxis().bounds;
-                        CoordFunction1D function = c.time.getAxis().function;
+                        if (c.time != null)
+                        {
+                            CoordRange1D range = c.time.getAxis().range;
+                            CoordBounds1D bounds = c.time.getAxis().bounds;
+                            CoordFunction1D function = c.time.getAxis().function;
 
-                        numPixels += Util.getNumPixels(c.time.getAxis());
-                        if (range != null)
-                        {
-                            SubInterval si = toInterval(c.time, range);
-                            totSampleSize += si.getUpper() - si.getLower();
-                        }
-                        else if (bounds != null)
-                        {
-                            for (CoordRange1D cr : bounds.getSamples())
+                            numPixels += Util.getNumPixels(c.time.getAxis());
+                            if (range != null)
                             {
-                                SubInterval si = toInterval(c.time, cr);
+                                SubInterval si = toInterval(c.time, range);
                                 totSampleSize += si.getUpper() - si.getLower();
                             }
-                        }
-                        else if (function != null)
-                        {
-                            SubInterval si = toInterval(c.time, function);
-                            totSampleSize += si.getUpper() - si.getLower();
+                            else if (bounds != null)
+                            {
+                                for (CoordRange1D cr : bounds.getSamples())
+                                {
+                                    SubInterval si = toInterval(c.time, cr);
+                                    totSampleSize += si.getUpper() - si.getLower();
+                                }
+                            }
+                            else if (function != null)
+                            {
+                                SubInterval si = toInterval(c.time, function);
+                                totSampleSize += si.getUpper() - si.getLower();
+                            }
                         }
                     }
                 }
@@ -190,17 +194,19 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType) )
-                {   
-                    Chunk c = p.chunk;
-                    if (c.time != null && c.time.getAxis().function != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        num++;
-                        double ss = Math.abs(c.time.getAxis().function.getDelta());
-                        if (ss >= scale)
+                        if (c.time != null && c.time.getAxis().function != null)
                         {
-                            scale = ss;
-                            sw = c.time;
+                            num++;
+                            double ss = Math.abs(c.time.getAxis().function.getDelta());
+                            if (ss >= scale)
+                            {
+                                scale = ss;
+                                sw = c.time;
+                            }
                         }
                     }
                 }
@@ -236,13 +242,15 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.time != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        double n = Util.getNumPixels(c.time.getAxis(), false);
-                        numPixels += n;
+                        if (c.time != null)
+                        {
+                            double n = Util.getNumPixels(c.time.getAxis(), false);
+                            numPixels += n;
+                        }
                     }
                 }
             }
@@ -275,14 +283,16 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.time != null && c.time.exposure != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        double num = Util.getNumPixels(c.time.getAxis());
-                        totExposureTime += c.time.exposure * num;
-                        numPixels += num;
+                        if (c.time != null && c.time.exposure != null)
+                        {
+                            double num = Util.getNumPixels(c.time.getAxis());
+                            totExposureTime += c.time.exposure * num;
+                            numPixels += num;
+                        }
                     }
                 }
             }
@@ -311,15 +321,16 @@ public final class TimeUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                Chunk c = p.chunk;
-                    if (c.time != null && c.time.resolution != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        double num = Util.getNumPixels(c.time.getAxis());
-                        totResolution += c.time.resolution * num;
-                        numPixels += num;
+                        if (c.time != null && c.time.resolution != null)
+                        {
+                            double num = Util.getNumPixels(c.time.getAxis());
+                            totResolution += c.time.resolution * num;
+                            numPixels += num;
+                        }
                     }
                 }
             }

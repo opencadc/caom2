@@ -192,18 +192,19 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        Polygon poly = toPolygon(c.position);
-                        log.debug("[generatePolygons] wcs: " + poly);
-                        if (poly.getArea() > MAX_SANE_AREA)
-                            throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
-                                + a.getURI() + "/" + p.getName() + " " + poly.getArea());
-                        polys.add(poly);
+                        if (c.position != null)
+                        {
+                            Polygon poly = toPolygon(c.position);
+                            log.debug("[generatePolygons] wcs: " + poly);
+                            if (poly.getArea() > MAX_SANE_AREA)
+                                throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
+                                    + a.getURI() + "/" + p.getName() + " " + poly.getArea());
+                            polys.add(poly);
+                        }
                     }
                 }
             }
@@ -242,18 +243,19 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null && c.position.getAxis().function != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        num++;
-                        double ss = Util.getPixelScale(c.position.getAxis().function);
-                        if (ss >= scale)
+                        if (c.position != null && c.position.getAxis().function != null)
                         {
-                            scale = ss;
-                            sw = c.position;
+                            num++;
+                            double ss = Util.getPixelScale(c.position.getAxis().function);
+                            if (ss >= scale)
+                            {
+                                scale = ss;
+                                sw = c.position;
+                            }
                         }
                     }
                 }
@@ -350,27 +352,27 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                // assumption is only true for all the chunks in a part
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        CoordRange2D range = c.position.getAxis().range;
-                        CoordBounds2D bounds = c.position.getAxis().bounds;
-                        if (range != null)
+                        if (c.position != null)
                         {
-                            x1 = Math.min(x1, range.getStart().getCoord1().pix);
-                            x1 = Math.min(x1, range.getEnd().getCoord1().pix);
-                            x2 = Math.max(x2, range.getStart().getCoord1().pix);
-                            x2 = Math.max(x2, range.getEnd().getCoord1().pix);
+                            CoordRange2D range = c.position.getAxis().range;
+                            CoordBounds2D bounds = c.position.getAxis().bounds;
+                            if (range != null)
+                            {
+                                x1 = Math.min(x1, range.getStart().getCoord1().pix);
+                                x1 = Math.min(x1, range.getEnd().getCoord1().pix);
+                                x2 = Math.max(x2, range.getStart().getCoord1().pix);
+                                x2 = Math.max(x2, range.getEnd().getCoord1().pix);
 
-                            y1 = Math.min(y1, range.getStart().getCoord2().pix);
-                            y1 = Math.min(y1, range.getEnd().getCoord2().pix);
-                            y2 = Math.max(y2, range.getStart().getCoord2().pix);
-                            y2 = Math.max(y2, range.getEnd().getCoord2().pix);
-                            found = true;
+                                y1 = Math.min(y1, range.getStart().getCoord2().pix);
+                                y1 = Math.min(y1, range.getEnd().getCoord2().pix);
+                                y2 = Math.max(y2, range.getStart().getCoord2().pix);
+                                y2 = Math.max(y2, range.getEnd().getCoord2().pix);
+                                found = true;
+                            }
                         }
                     }
                 }
@@ -391,18 +393,19 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        CoordAxis2D axis = c.position.getAxis();
-                        double num = Util.getNumPixels(axis);
-                        double scale = Util.getPixelScale(axis);
-                        totSampleSize += scale * num;
-                        numPixels += num;
-                        log.debug("[computeSampleSize] num=" + num + " scale="+scale);
+                        if (c.position != null)
+                        {
+                            CoordAxis2D axis = c.position.getAxis();
+                            double num = Util.getNumPixels(axis);
+                            double scale = Util.getPixelScale(axis);
+                            totSampleSize += scale * num;
+                            numPixels += num;
+                            log.debug("[computeSampleSize] num=" + num + " scale="+scale);
+                        }
                     }
                 }
             }
@@ -421,14 +424,16 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null && c.position.resolution != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        double num = Util.getNumPixels(c.position.getAxis());
-                        totResolution += c.position.resolution * num;
-                        numPixels += num;
+                        if (c.position != null && c.position.resolution != null)
+                        {
+                            double num = Util.getNumPixels(c.position.getAxis());
+                            totResolution += c.position.resolution * num;
+                            numPixels += num;
+                        }
                     }
                 }
             }
@@ -446,17 +451,18 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                //for (Chunk c : p.getChunks())
-                if (p.chunk != null && Util.usePart(a.getProductType(), p.productType, productType))
-                {   
-                    Chunk c = p.chunk;
-                    if (c.position != null)
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        CoordSys csys = inferCoordSys(c.position);
-                        if (csys.timeDependent != null)
+                        if (c.position != null)
                         {
-                            foundTD = foundTD || csys.timeDependent;
-                            foundTI = foundTI || !csys.timeDependent;
+                            CoordSys csys = inferCoordSys(c.position);
+                            if (csys.timeDependent != null)
+                            {
+                                foundTD = foundTD || csys.timeDependent;
+                                foundTI = foundTI || !csys.timeDependent;
+                            }
                         }
                     }
                 }

@@ -1144,8 +1144,8 @@ public class ObservationReader implements Serializable
             {
                 part.productType = ProductType.toValue(productType);
             }
-            //addChunks(part.getChunks(), partElement, namespace, dateFormat);
-            part.chunk = getChunk(partElement, namespace, rc);
+            addChunks(part.getChunks(), partElement, namespace, rc);
+            //part.chunk = getChunk(partElement, namespace, rc);
 
             assignEntityAttributes(partElement, part, rc);
             
@@ -1157,11 +1157,54 @@ public class ObservationReader implements Serializable
      * Creates Chunk's from the chunk elements found in the chunks element,
      * and adds them to the given Set of Chunk's.
      * 
+     * @param chunks the Set of Chunk's from the Part.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
+    protected void addChunks(Set<Chunk> chunks, Element parent, Namespace namespace, ReadContext rc)
+        throws ObservationParsingException
+    {
+        Element element = getChildElement("chunks", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0)
+            return;
+        
+        List chunkElements = getChildrenElements("chunk", element, namespace, false);
+        Iterator it = chunkElements.iterator();
+        while (it.hasNext())
+        {
+            Element chunkElement = (Element) it.next();
+            
+            Chunk chunk = new Chunk();
+            
+            String productType = getChildText("productType", chunkElement, namespace, false);
+            if (productType != null)
+            {
+                chunk.productType = ProductType.toValue(productType);
+            }
+            chunk.naxis = getChildTextAsInteger("naxis", chunkElement, namespace, false);
+            chunk.observableAxis = getChildTextAsInteger("observableAxis", chunkElement, namespace, false);
+            chunk.positionAxis1 = getChildTextAsInteger("positionAxis1", chunkElement, namespace, false);
+            chunk.positionAxis2 = getChildTextAsInteger("positionAxis2", chunkElement, namespace, false);
+            chunk.energyAxis = getChildTextAsInteger("energyAxis", chunkElement, namespace, false);
+            chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement, namespace, false);
+            chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis", chunkElement, namespace, false);
+
+            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
+            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
+            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
+            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
+            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
+
+            assignEntityAttributes(chunkElement, chunk, rc);
+            
+            chunks.add(chunk);
+        }
+    }
+    
+    /* 
+    //alt version for one-chunk-per-part that was reverted from caom-2.2
     protected Chunk getChunk(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
@@ -1198,6 +1241,7 @@ public class ObservationReader implements Serializable
 
         return  chunk;
     }
+    */
     
     /**
      * Build an ObservableAxis from a JDOM representation of an observable element.

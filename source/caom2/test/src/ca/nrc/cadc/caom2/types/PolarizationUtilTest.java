@@ -129,7 +129,7 @@ public class PolarizationUtilTest
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
-        np.chunk = new Chunk();
+        np.getChunks().add(new Chunk());
         return plane;
     }
 
@@ -164,7 +164,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             double lowErr = -9.0;
             double highErr = 11.0;
@@ -231,7 +231,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             for (PolarizationState pol : PolarizationState.values())
             {
@@ -269,7 +269,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -304,7 +304,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -340,7 +340,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -374,7 +374,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -411,7 +411,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.CALIBRATION);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -425,12 +425,14 @@ public class PolarizationUtilTest
             plane.getArtifacts().add(at);
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
-            pt.chunk = new Chunk();
+            
+            Chunk ch = new Chunk();
+            pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
-            pt.chunk.polarization = new PolarizationWCS(axist);
+            ch.polarization = new PolarizationWCS(axist);
             RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
             RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
-            pt.chunk.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             
             
@@ -460,7 +462,7 @@ public class PolarizationUtilTest
         {
             Plane plane = getTestPlane(ProductType.SCIENCE);
             // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().chunk;
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
@@ -474,12 +476,13 @@ public class PolarizationUtilTest
             plane.getArtifacts().add(at);
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
-            pt.chunk = new Chunk();
+            Chunk ch = new Chunk();
+            pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
-            pt.chunk.polarization = new PolarizationWCS(axist);
+            ch.polarization = new PolarizationWCS(axist);
             RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
             RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
-            pt.chunk.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             
             

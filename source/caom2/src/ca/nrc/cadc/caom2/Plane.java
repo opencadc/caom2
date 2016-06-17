@@ -155,8 +155,10 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
             for (Part p : a.getParts())
             {
                 p.metaRelease = null;
-                if (p.chunk != null)
-                    p.chunk.metaRelease = null;
+                for (Chunk c : p.getChunks())
+                {
+                    c.metaRelease = null;
+                }
             }
         }
     }
@@ -316,8 +318,10 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
             for (Part p : a.getParts())
             {
                 p.metaRelease = metaRelease;
-                if (p.chunk != null)
-                    p.chunk.metaRelease = metaRelease;
+                for (Chunk c : p.getChunks())
+                {
+                    c.metaRelease = metaRelease;
+                }
             }
         }
     }
