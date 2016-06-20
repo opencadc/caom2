@@ -217,8 +217,9 @@ public class CaomRepoIntTests
         Plane p = new Plane("foo");
         Artifact a = new Artifact(URI.create("ad:FOO/foo"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pa = new Part(0);
-        pa.chunk = new Chunk();
-        pa.chunk.naxis = 0;
+        Chunk ch = new Chunk();
+        ch.naxis = 0;
+        pa.getChunks().add(ch);
         a.getParts().add(pa);
         p.getArtifacts().add(a);
         observation.getPlanes().add(p);
@@ -294,9 +295,10 @@ public class CaomRepoIntTests
         Plane plane = new Plane("foo");
         Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
         Part part = new Part(0);
-        part.chunk = new Chunk();
-        part.chunk.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
-        part.chunk.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+        Chunk ch = new Chunk();
+        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
+        ch.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+        part.getChunks().add(ch);
         artifact.getParts().add(part);
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
@@ -604,7 +606,7 @@ public class CaomRepoIntTests
         coordAxis1D.function = coordFunction1D;
         chunk.polarization = polarization;
         
-        part.chunk = chunk;
+        part.getChunks().add(chunk);
         artifact.getParts().add(part);
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
