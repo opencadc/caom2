@@ -354,11 +354,11 @@ public class CaomTapQuery
                             if (c != null) // always a new chunk since last join
                             {
                                 log.debug("START chunk: " + c.getID());
-                                curPart.chunk = c;
+                                curPart.getChunks().add(c);
                             }
                             else
                             {
-                                log.debug("part: " + curPart.getID() + ": no chunk");
+                                log.debug("part: " + curPart.getID() + ": no chunks");
                             }
                         }                
                     }
@@ -440,12 +440,12 @@ public class CaomTapQuery
                     Chunk c = cm.mapRow(row, df);
                     if (c != null) // always a new chunk since last join
                     {
-                        log.debug("FOUND chunk: " + c.getID());
-                        curPart.chunk = c;
+                        log.debug("START chunk: " + c.getID());
+                        curPart.getChunks().add(c);
                     }
                     else
                     {
-                        log.debug("part: " + curPart.getID() + ": no chunk");
+                        log.debug("part: " + curPart.getID() + ": no chunks");
                     }
                 }                
             }

@@ -116,8 +116,8 @@ public class CaomTapQueryTest
     private static final String PART_PRODUCT_TYPE = null;
     private static final String PART_LASTMODIFIED = "2012-07-12T23:16:14.750";
     private static final String PART_MAXLASTMODIFIED = "2012-07-12T23:16:14.750";
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
-    private DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
+    private final DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     
     static
     {
@@ -464,7 +464,7 @@ public class CaomTapQueryTest
 	    	String runID = "testJobID";
 	    	String tapProto = "http";
 	    	RegistryClient reg = new RegistryClient();
-	    	URL tapURL = new URL(reg.getServiceURL(new URI(TAP_URI), tapProto) + "/sync");
+	    	URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
 	    	
 	        query = new CaomTapQuery(tapURL, runID);    	
 	        Assert.assertEquals(runID, query.getRunID());

@@ -432,9 +432,9 @@ public class ArtifactProcessor
     {
         for (Part p : a.getParts())
         {
-            if (p.chunk != null)
+            for (Chunk c : p.getChunks())
             {
-                if ( CutoutUtil.canCutout(p.chunk) )
+                if ( CutoutUtil.canCutout(c) )
                     return true;
             }
         }
