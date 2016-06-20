@@ -196,7 +196,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                             curChunk.maxLastModified = md;
                             curChunk.stateCode = sc;
                             log.debug("add: " + curChunk + " to " + curPart);
-                            curPart.chunk = curChunk;
+                            curPart.chunks.add(curChunk);
                         }
                     }
                 }

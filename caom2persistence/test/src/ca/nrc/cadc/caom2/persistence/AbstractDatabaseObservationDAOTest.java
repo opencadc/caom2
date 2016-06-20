@@ -516,8 +516,8 @@ public abstract class AbstractDatabaseObservationDAOTest
                         for (Part pa : a.getParts())
                         {
                             Util.assignLastModified(pa, null, "lastModified");
-                            if (pa.chunk != null)
-                                Util.assignLastModified(pa.chunk, null, "lastModified");
+                            for (Chunk c : pa.getChunks())
+                                Util.assignLastModified(c, null, "lastModified");
                         }
                     }
                 }
@@ -539,7 +539,7 @@ public abstract class AbstractDatabaseObservationDAOTest
                             part.productType = ProductType.PREVIEW;
                             if (i > 4)
                             {
-                                Chunk c = part.chunk;
+                                Chunk c = part.getChunks().iterator().next();
                                 c.observable = new ObservableAxis(new Slice(new Axis("flux", "J"), new Long(2)));
                                 c.observable.independent = new Slice(new Axis("wavelength", "nm"), new Long(1));
                             }
@@ -572,8 +572,8 @@ public abstract class AbstractDatabaseObservationDAOTest
                             for (Part pa : a.getParts())
                             {
                                 Util.assignLastModified(pa, null, "lastModified");
-                                if (pa.chunk != null)
-                                    Util.assignLastModified(pa.chunk, null, "lastModified");
+                                for (Chunk c : pa.getChunks())
+                                    Util.assignLastModified(c, null, "lastModified");
                             }
                         }
                     }
@@ -601,8 +601,8 @@ public abstract class AbstractDatabaseObservationDAOTest
                             for (Part pa : a.getParts())
                             {
                                 Assert.assertNotNull(pa.getLastModified());
-                                if (pa.chunk != null)
-                                    Assert.assertNotNull(pa.chunk.getLastModified());
+                                for (Chunk c : pa.getChunks())
+                                    Assert.assertNotNull(c.getLastModified());
                             }
                         }
                     }
@@ -1089,9 +1089,10 @@ public abstract class AbstractDatabaseObservationDAOTest
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
         Assert.assertEquals(expected.getURI(), actual.getURI());
-        Assert.assertEquals(expected.getProductType(), actual.getProductType());
         Assert.assertEquals(expected.contentLength, actual.contentLength);
         Assert.assertEquals(expected.contentType, actual.contentType);
+        Assert.assertEquals(expected.getProductType(), actual.getProductType());
+        Assert.assertEquals(expected.getReleaseType(), actual.getReleaseType());
 
         log.debug("num Parts: " + expected.getParts().size() + " == " + actual.getParts().size());
         Assert.assertEquals("number of parts", expected.getParts().size(), actual.getParts().size());
@@ -1114,10 +1115,15 @@ public abstract class AbstractDatabaseObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
-        if (expected.chunk != null)
+        log.debug("num Chunks: " + expected.getChunks().size() + " == " + actual.getChunks().size());
+        Assert.assertEquals("number of chunks", expected.getChunks().size(), actual.getChunks().size());
+        Iterator<Chunk> ea = expected.getChunks().iterator();
+        Iterator<Chunk> aa = actual.getChunks().iterator();
+        while ( ea.hasNext() )
         {
-            Assert.assertNotNull(actual.chunk);
-            testEqual(expected.chunk, actual.chunk);
+            Chunk ex = ea.next();
+            Chunk ac = aa.next();
+            testEqual(ex, ac);
         }
 
         //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
@@ -1130,6 +1136,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
+        Assert.assertEquals("productType", expected.productType, actual.productType);
         Assert.assertEquals("naxis", expected.naxis, actual.naxis);
         Assert.assertEquals("positionAxis1", expected.positionAxis1, actual.positionAxis1);
         Assert.assertEquals("positionAxis2", expected.positionAxis2, actual.positionAxis2);
@@ -1429,11 +1436,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             return a;
 
         a.getParts().add(getTestPart(full, new Integer(1), depth));
-        a.getParts().add(getTestPart(full, new Integer(2), depth));
-        a.getParts().add(getTestPart(full, new Integer(3), depth));
-        a.getParts().add(getTestPart(full, "SPEC", depth));
-        a.getParts().add(getTestPart(full, "POL", depth));
-        Assert.assertEquals(5, a.getParts().size());
+        a.getParts().add(getTestPart(full, "A", depth));
+        Assert.assertEquals(2, a.getParts().size());
 
         return a;
     }
@@ -1447,21 +1451,9 @@ public abstract class AbstractDatabaseObservationDAOTest
         if (depth <= 4)
             return p;
 
-        switch(pnum)
-        {
-            case 1: 
-                p.chunk = getPosFunctionChunk();
-                break;
-            case 2: 
-                p.chunk = getObservableChunk();
-                break;
-            case 3:
-                p.chunk = getEmptyChunk();
-                break;
-            default:
-                throw new RuntimeException("TEST BUG");
-        }
-        
+        p.getChunks().add(getPosFunctionChunk());
+        p.getChunks().add(getEmptyChunk());
+        p.getChunks().add(getObservableChunk());
 
         return p;
     }
@@ -1474,12 +1466,9 @@ public abstract class AbstractDatabaseObservationDAOTest
         if (depth <= 4)
             return p;
 
-        if ("SPEC".equals(pname))
-            p.chunk = getSpecChunk();
-        else if ("POL".equals(pname))
-            p.chunk = getPolarChunk();
-        else
-            throw new RuntimeException("TEST BUG");
+        p.getChunks().add(getPosRangeChunk());
+        p.getChunks().add(getSpecChunk());
+        p.getChunks().add(getPolarChunk());
 
         return p;
     }
@@ -1610,8 +1599,9 @@ public abstract class AbstractDatabaseObservationDAOTest
                 {
                     Part pt = pti.next();
                     log.warn("\t\t\t" + pt);
-                    if (pt.chunk != null)
-                        log.warn("\t\t\t\t" + pt.chunk);
+                    Iterator ci = pt.getChunks().iterator();
+                    while ( ci.hasNext() )
+                        log.warn("\t\t\t\t" + ci.next());
                 }
             }
         }

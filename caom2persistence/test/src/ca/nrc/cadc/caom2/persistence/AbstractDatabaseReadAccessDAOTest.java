@@ -234,7 +234,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         Part pp = new Part(0);
         Chunk ch = new Chunk();
         
-        pp.chunk = ch;
+        pp.getChunks().add(ch);
         ar.getParts().add(pp);
         pl.getArtifacts().add(ar);
         obs.getPlanes().add(pl);

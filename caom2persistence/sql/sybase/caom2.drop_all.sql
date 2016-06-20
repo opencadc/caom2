@@ -3,6 +3,7 @@ drop table caom2_Chunk;
 drop table caom2_Part;
 drop table caom2_Artifact;
 drop table caom2_Plane;
+drop table caom2_Observation_members;
 drop table caom2_Observation;
 
 drop table caom2_DeletedObservation;
@@ -16,4 +17,4 @@ drop table caom2_DeletedPlaneMetaReadAccess;
 drop table caom2_DeletedPlaneDataReadAccess;
 
 drop table caom2_HarvestState;
---drop table caom2_HarvestSkip;
+drop table caom2_HarvestSkip;

@@ -120,6 +120,7 @@ public class BaseObservationExtractor implements ObservationExtractor
         Plane curPlane = null;
         Artifact curArtifact = null;
         Part curPart = null;
+        Chunk curChunk = null;
         int row = 0;
         while ( rs.next() )
         {
@@ -215,12 +216,20 @@ public class BaseObservationExtractor implements ObservationExtractor
                 col += chunkMapper.getColumnCount();
                 if (c != null)
                 {
-                    curPart.chunk = c;
-                    log.debug("FOUND chunk: " + c.getID());
+                    if (curChunk == null || !curChunk.getID().equals(c.getID()))
+                    {
+                        if (curChunk != null)
+                            log.debug("END part: " + curChunk.getID());
+                        curChunk = c;
+                        curPart.getChunks().add(curChunk);
+                        log.debug("START chunk: " + curChunk.getID());
+                    }
+                    //else: artifact content repeated due to join -- ignore it
                 }
                 else
                 {
                     log.debug("part: " + curPart.getID() + ": no chunks");
+                    curChunk = null;
                 }
             }
         }

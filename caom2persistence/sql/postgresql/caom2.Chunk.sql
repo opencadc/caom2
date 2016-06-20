@@ -3,6 +3,7 @@ drop table if exists caom2.Chunk;
 
 create table caom2.Chunk
 (
+    productType varchar(64),
     naxis integer,
     positionAxis1 integer,
     positionAxis2 integer,
