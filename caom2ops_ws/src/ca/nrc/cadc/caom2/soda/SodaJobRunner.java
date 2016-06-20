@@ -105,11 +105,9 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
-import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -554,20 +552,23 @@ public class SodaJobRunner implements JobRunner
         List<Cutout<Shape>> posCut = new ArrayList<Cutout<Shape>>();
         for (String s : posList)
         {
-            if (CircleFormat.isCircle(s))
+            s = s.trim();
+            if (s.startsWith("circle"))
             {
+                s = s.substring(7); // remove keyword
                 CircleFormat cf = new CircleFormat();
                 ca.nrc.cadc.dali.Circle c = cf.parse(s);
                 Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
                 posCut.add(new Cutout(PARAM_POS, s, cc));
             }
-            else if (PolygonFormat.isPolygon(s))
+            else if (s.startsWith("polygon"))
             {
+                s = s.substring(8); // remove keyword
                 PolygonFormat pf = new PolygonFormat();
                 ca.nrc.cadc.dali.Polygon p = pf.parse(s);
                 Polygon pp = new Polygon();
                 SegmentType seg = SegmentType.MOVE;
-                for (ca.nrc.cadc.dali.Coord coord : p.getVertices())
+                for (ca.nrc.cadc.dali.Point coord : p.getVertices())
                 {
                     Vertex v = new Vertex(coord.getLongitude(), coord.getLatitude(), seg);
                     pp.getVertices().add(v);
@@ -577,7 +578,7 @@ public class SodaJobRunner implements JobRunner
                 posCut.add(new Cutout(PARAM_POS, s, pp));
             }
             else
-                throw new IllegalArgumentException("unexpected DALI shape type in: " + s);
+                throw new IllegalArgumentException("unexpected shape type in: " + s);
         }
         for (String s : circList)
         {
