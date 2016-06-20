@@ -398,7 +398,7 @@
         <xs:sequence>
             <xs:element name="name" type="xs:string" minOccurs="1"/>
             <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
-            <xs:element name="chunk" type="caom2:Chunk" minOccurs="0"/>
+            <xs:element name="chunks" type="caom2:Chunks" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
@@ -406,8 +406,15 @@
     
     <!-- Chunk -->
     
+    <xs:complexType name="Chunks">
+        <xs:sequence>
+            <xs:element name="chunk" type="caom2:Chunk" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
     <xs:complexType name="Chunk">
         <xs:sequence>
+            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
             <xs:element name="naxis" type="xs:integer" minOccurs="0"/>
             <xs:element name="observableAxis" type="xs:integer" minOccurs="0"/>
             <xs:element name="positionAxis1" type="xs:integer" minOccurs="0"/>
