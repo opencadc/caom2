@@ -3061,11 +3061,17 @@ public class BaseSQLGenerator implements SQLGenerator
             
             String pt = rs.getString(col++);
             log.debug("found a.productType = " + pt);
+            ProductType ptype = ProductType.SCIENCE; // backwards compat until backfill
+            if (pt != null)
+                ptype = ProductType.toValue(pt);
             
             String rt = rs.getString(col++);
             log.debug("found a.releaseType = " + rt);
+            ReleaseType rtype = ReleaseType.DATA; // backwards compat until backfill
+            if (rt != null)
+                rtype = ReleaseType.toValue(rt);
             
-            Artifact a = new Artifact(uri, ProductType.toValue(pt), ReleaseType.toValue(rt));
+            Artifact a = new Artifact(uri, ptype, rtype);
 
             a.contentType = rs.getString(col++);
             log.debug("found a.contentType = " + a.contentType);
