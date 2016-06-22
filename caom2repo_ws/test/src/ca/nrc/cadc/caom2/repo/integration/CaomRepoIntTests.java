@@ -146,7 +146,7 @@ public class CaomRepoIntTests
     private static final String SCHEME = "caom:";
     
     // service should be written to output documents with this version
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_1_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
     
     static
     {
