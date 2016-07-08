@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vosi:capabilities
+    xmlns:vosi="http://www.ivoa.net/xml/VOSICapabilities/v1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:vod="http://www.ivoa.net/xml/VODataService/v1.1">
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#capabilities">
+    <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="full">http://replace.me.com/caom2repo/capabilities</accessURL>
+    </interface>
+  </capability>
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#availability">
+    <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="full">http://replace.me.com/caom2repo/availability</accessURL>
+    </interface>
+  </capability>
+  
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/LOGGING#logControl-1.0">
+    <interface xsi:type="vod:ParamHTTP" role="std" version="1.0">
+      <accessURL use="full">http://replace.me.com/caom2repo/logControl</accessURL>     
+    </interface> 
+  </capability> 
+
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2REPO">
+    <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="base">http://replace.me.com/pub</accessURL>
+    </interface>
+    <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="base">http://replace.me.com/auth</accessURL>
+      <securityMethod standardID="http://www.w3.org/Protocols/HTTP/1.0/spec.html#BasicAA"/>
+    </interface>
+    <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="base">https://replace.me.com/pub</accessURL>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+    </interface>
+  </capability>
+  
+</vosi:capabilities>
+
