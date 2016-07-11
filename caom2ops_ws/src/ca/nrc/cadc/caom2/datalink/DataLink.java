@@ -117,7 +117,7 @@ public class DataLink implements Iterable<Object>
     public String errorMessage;
 
     // custom CADC fields
-    public List<ProductType> productTypes = new ArrayList<ProductType>();
+    //public List<ProductType> productTypes = new ArrayList<ProductType>();
     public String fileURI;
     public ServiceDescriptor descriptor; // link-specific service descriptor
 
@@ -137,7 +137,7 @@ public class DataLink implements Iterable<Object>
         return semantics;
     }
 
-    public int size() { return 10; } // number of fields
+    public int size() { return 9; } // number of fields
 
     // order: uri, productType, contentType, contentLength, URL
     @Override
@@ -167,8 +167,8 @@ public class DataLink implements Iterable<Object>
                     case 5: return description;
                     case 6: return contentType;
                     case 7: return contentLength;
-                    case 8: return toProductTypeMask(productTypes);
-                    case 9: return fileURI;
+                    case 8: return fileURI;
+                    //case 9: return toProductTypeMask(productTypes);
                 }
                 throw new NoSuchElementException();
             }
@@ -195,6 +195,7 @@ public class DataLink implements Iterable<Object>
         return url.toExternalForm();
     }
 
+    /*
     private String toProductTypeMask(List<ProductType> productTypes)
     {
         StringBuilder sb = new StringBuilder();
@@ -207,7 +208,8 @@ public class DataLink implements Iterable<Object>
             return sb.substring(0, sb.length() - 1);
         return null;
     }
-
+    */
+    
     /**
      * Get list of table fields that matches the iteration order of the DataLink.
      *
@@ -258,17 +260,16 @@ public class DataLink implements Iterable<Object>
         f.ucd = "phys.size;meta.file";
         fields.add(f);
 
-        
-
-        f = new VOTableField("product_type", "char");
-        f.setVariableSize(true);
-        f.utype = "caom:Artifact.productType";
-        fields.add(f);
-
+        // custom
         f = new VOTableField("file_uri", "char");
         f.id = "fileURIRef";
         f.setVariableSize(true);
         fields.add(f);
+        
+        //f = new VOTableField("product_type", "char");
+        //f.setVariableSize(true);
+        //f.utype = "caom:Artifact.productType";
+        //fields.add(f);
 
         return fields;
     }

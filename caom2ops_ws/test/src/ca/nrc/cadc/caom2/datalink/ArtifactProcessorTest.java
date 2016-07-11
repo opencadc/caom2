@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.datalink;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -221,9 +222,7 @@ public class ArtifactProcessorTest
         List<Artifact> ret = new ArrayList<Artifact>();
         for (int i=0; i<num; i++)
         {
-            Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i));
-            if (productTypeLevel == 1)
-                a.productType = ProductType.SCIENCE;
+            Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i), ProductType.SCIENCE, ReleaseType.DATA);
             ret.add(a);
             if (depth > 1)
             {
