@@ -102,8 +102,8 @@ public class GetAction extends RepoAction
         if (obs == null)
             throw new ObservationNotFoundException(uri);
 
-        // explicitly write with CAOM-2.0 schema
-        ObservationWriter ow = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
+        // write with default schema
+        ObservationWriter ow = new ObservationWriter();
         
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());

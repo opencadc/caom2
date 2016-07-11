@@ -486,23 +486,17 @@ public class ObservationHarvester extends Harvester
         sb.append("[");
         int numA = 0;
         int numP = 0;
-        int numC = 0;
         for (Plane p : o.getPlanes())
         {
             numA += p.getArtifacts().size();
             for (Artifact a : p.getArtifacts())
             {
                 numP += a.getParts().size();
-                for (Part pa : a.getParts())
-                {
-                    numC += pa.getChunks().size();
-                }
             }
         }
         sb.append(o.getPlanes().size()).append(",");
         sb.append(numA).append(",");
-        sb.append(numP).append(",");
-        sb.append(numC).append("]");
+        sb.append(numP).append("]");
         return sb.toString();
     }
     private void detectLoop(List<SkippedWrapper<Observation>> entityList)

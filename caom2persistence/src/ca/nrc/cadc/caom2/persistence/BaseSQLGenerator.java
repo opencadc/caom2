@@ -100,6 +100,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
@@ -361,7 +362,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] artifactColumns = new String[]
         {
             "planeID", "obsID",
-            "uri", "productType", "contentType", "contentLength", "alternative",
+            "uri", "productType", "releaseType", "contentType", "contentLength",
             "lastModified", "maxLastModified", "stateCode", "artifactID"
         };
         if (persistComputedValues)
@@ -413,7 +414,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] chunkColumns = new String[]
         {
             "partID", "artifactID", "planeID", "obsID",
-            "productType", "naxis", 
+            "naxis", 
             "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "observableAxis",
             
             "position_axis_axis1_ctype",
@@ -739,7 +740,7 @@ public class BaseSQLGenerator implements SQLGenerator
         return null;
     }
 
-    public String getSelectSQL(Class<? extends ReadAccess> clz, Long assetID, URI groupID)
+    public String getSelectSQL(Class<? extends ReadAccess> clz, UUID assetID, URI groupID)
     {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -1006,7 +1007,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
             int col = 1;
             safeSetString(sb, ps, col++, ra.getGroupName());
-            safeSetLong(sb, ps, col++, ra.getAssetID());
+            safeSetLongUUID(sb, ps, col++, ra.getAssetID());
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -1459,13 +1460,10 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLongUUID(sb, ps, col++, obs.getID());
             
             safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
-            if (artifact.productType != null)
-                safeSetString(sb, ps, col++, artifact.productType.getValue());
-            else
-                safeSetString(sb, ps, col++, null);
+            safeSetString(sb, ps, col++, artifact.getProductType().getValue());
+            safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
             safeSetString(sb, ps, col++, artifact.contentType);
             safeSetLong(sb, ps, col++, artifact.contentLength);
-            safeSetBoolean(sb, ps, col++, artifact.alternative);
             
             if (persistTransientState)
                 safeSetDate(sb, ps, col++, Util.truncate(artifact.metaRelease), UTC_CAL);
@@ -1605,11 +1603,6 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLongUUID(sb, ps, col++, plane.getID());
             safeSetLongUUID(sb, ps, col++, obs.getID());
             
-            if (chunk.productType != null)
-                safeSetString(sb, ps, col++, chunk.productType.getValue());
-            else
-                safeSetString(sb, ps, col++, null);
-
             safeSetInteger(sb, ps, col++, chunk.naxis);
             safeSetInteger(sb, ps, col++, chunk.positionAxis1);
             safeSetInteger(sb, ps, col++, chunk.positionAxis2);
@@ -2091,7 +2084,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (putCount == 0) // complete
             {
                 int col = 1;
-                safeSetLong(sb, ps, col++, ra.getAssetID());
+                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
                 safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
                 safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
                 safeSetInteger(sb, ps, col++, ra.getStateCode());
@@ -2101,7 +2094,7 @@ public class BaseSQLGenerator implements SQLGenerator
             {
                 int col = 1;
                 safeSetString(sb, ps, col++, ra.getGroupName()); // short name
-                safeSetLong(sb, ps, col++, ra.getAssetID());
+                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
             }
             if (sb != null)
                 log.debug(sb.toString());
@@ -3065,19 +3058,25 @@ public class BaseSQLGenerator implements SQLGenerator
 
             URI uri = Util.getURI(rs, col++);
             log.debug("found a.uri = " + uri);
-            Artifact a = new Artifact(uri);
-
+            
             String pt = rs.getString(col++);
             log.debug("found a.productType = " + pt);
+            ProductType ptype = ProductType.SCIENCE; // backwards compat until backfill
             if (pt != null)
-                a.productType = ProductType.toValue(pt);
+                ptype = ProductType.toValue(pt);
+            
+            String rt = rs.getString(col++);
+            log.debug("found a.releaseType = " + rt);
+            ReleaseType rtype = ReleaseType.DATA; // backwards compat until backfill
+            if (rt != null)
+                rtype = ReleaseType.toValue(rt);
+            
+            Artifact a = new Artifact(uri, ptype, rtype);
 
             a.contentType = rs.getString(col++);
             log.debug("found a.contentType = " + a.contentType);
             a.contentLength = Util.getLong(rs, col++);
             log.debug("found a.contentLength = " + a.contentLength);
-            a.alternative = rs.getBoolean(col++);
-            log.debug("found a.alternative = " + a.alternative);
             
             if (persistTransientState)
                 col += numComputedArtifactColumns;
@@ -3195,11 +3194,6 @@ public class BaseSQLGenerator implements SQLGenerator
             col += 3; // skip ancestor(s)
             
             Chunk c = new Chunk();
-
-            String pt = rs.getString(col++);
-            log.debug("found c.productType = " + pt);
-            if (pt != null)
-                c.productType = ProductType.toValue(pt);
 
             c.naxis = Util.getInteger(rs, col++);
             c.positionAxis1 = Util.getInteger(rs, col++);
@@ -3477,10 +3471,10 @@ public class BaseSQLGenerator implements SQLGenerator
             try
             {
                 int col = 1;
-                Long assetID = Util.getLong(rs, col++);
+                UUID assetID = Util.getUUID(rs, col++);
                 URI groupID = Util.getURI(rs, col++);
                 
-                Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(Long.class, URI.class);
+                Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(UUID.class, URI.class);
                 ReadAccess ret = ctor.newInstance(assetID, groupID);
                 log.debug("found: " + ret);
 

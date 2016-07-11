@@ -97,6 +97,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -145,7 +146,7 @@ public class CaomRepoIntTests
     private static final String SCHEME = "caom:";
     
     // service should be written to output documents with this version
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_1_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
     
     static
     {
@@ -213,6 +214,15 @@ public class CaomRepoIntTests
         
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        Plane p = new Plane("foo");
+        Artifact a = new Artifact(URI.create("ad:FOO/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+        Part pa = new Part(0);
+        Chunk ch = new Chunk();
+        ch.naxis = 0;
+        pa.getChunks().add(ch);
+        a.getParts().add(pa);
+        p.getArtifacts().add(a);
+        observation.getPlanes().add(p);
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // get the observation using subject2
@@ -283,13 +293,12 @@ public class CaomRepoIntTests
         // put an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
         Plane plane = new Plane("foo");
-        Artifact artifact = new Artifact(new URI("ad:TEST/foo"));
-        artifact.productType = ProductType.SCIENCE;
+        Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
         Part part = new Part(0);
-        Chunk chunk = new Chunk();
-        chunk.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
-        chunk.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
-        part.getChunks().add(chunk);
+        Chunk ch = new Chunk();
+        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
+        ch.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+        part.getChunks().add(ch);
         artifact.getParts().add(part);
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
@@ -499,7 +508,7 @@ public class CaomRepoIntTests
         getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
-    //@Test
+    @Test
     public void testDeleteNoWritePermission() throws Throwable
     {   
         String observationID = generateObservationID("testDeleteNoWritePermission");
@@ -579,14 +588,9 @@ public class CaomRepoIntTests
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         Plane plane = new Plane("plane");
-        Artifact artifact = new Artifact(new URI(SCHEME + collection + "/artifact"));
-        artifact.productType = ProductType.SCIENCE;
+        Artifact artifact = new Artifact(new URI(SCHEME + collection + "/artifact"), ProductType.SCIENCE, ReleaseType.DATA);
         Part part = new Part("part");
-        part.productType = ProductType.SCIENCE;
         Chunk chunk = new Chunk();
-        chunk.productType = ProductType.SCIENCE;
-        
-        
         
         String ctype = "STOKES";
         String cunit = "unit";

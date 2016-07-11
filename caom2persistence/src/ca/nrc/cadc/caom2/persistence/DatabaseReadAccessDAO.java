@@ -95,7 +95,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         return gen.getTable(c);
     }
     
-    public ReadAccess get(Class<? extends ReadAccess> c, Long assetID, URI groupID)
+    public ReadAccess get(Class<? extends ReadAccess> c, UUID assetID, URI groupID)
     {
         checkInit();
         if (c == null || assetID == null || groupID == null)
