@@ -4,10 +4,10 @@ drop table if exists caom2.Artifact;
 create table caom2.Artifact
 (
     uri varchar(1024) not null,
-    productType varchar(64),
+    productType varchar(64) not null,
+    releaseType varchar(16) not null,
     contentType varchar(128),
     contentLength bigint,
-    alternative integer not null,
 
 -- optimisation
     metaReadAccessGroups tsvector default '',

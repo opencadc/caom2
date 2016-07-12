@@ -76,6 +76,8 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
@@ -239,7 +241,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);
-        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
         
@@ -339,13 +341,13 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetList()
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
         UUID id = obs.getID();
-        Long assetID = id.getLeastSignificantBits();
+        Long assetID = id.getLeastSignificantBits(); // WTF?
         Util.assignID(obs, id);
         
         try
@@ -357,7 +359,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             ReadAccess ra;
             URI groupID;
             Class c = ObservationMetaReadAccess.class;
-            Constructor ctor = c.getConstructor(Long.class, URI.class);
+            Constructor ctor = c.getConstructor(UUID.class, URI.class);
             for (int i=0; i<3; i++)
             {
                 groupID = new URI("ivo://cadc.nrc.ca/gms?FOO" + i);

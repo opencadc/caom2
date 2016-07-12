@@ -100,6 +100,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
@@ -375,7 +376,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] artifactColumns = new String[]
         {
             "planeID", "obsID",
-            "uri", "productType", "contentType", "contentLength", "alternative",
+            "uri", "productType", "releaseType", "contentType", "contentLength",
             "lastModified", "maxLastModified", "stateCode", "artifactID"
         };
         if (persistTransientState)
@@ -427,7 +428,7 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] chunkColumns = new String[]
         {
             "partID", "artifactID", "planeID", "obsID",
-            "productType", "naxis", 
+            "naxis", 
             "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "observableAxis",
             
             "position_axis_axis1_ctype",
@@ -1502,13 +1503,10 @@ public class BaseSQLGenerator implements SQLGenerator
             }
             
             safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
-            if (artifact.productType != null)
-                safeSetString(sb, ps, col++, artifact.productType.getValue());
-            else
-                safeSetString(sb, ps, col++, null);
+            safeSetString(sb, ps, col++, artifact.getProductType().getValue());
+            safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
             safeSetString(sb, ps, col++, artifact.contentType);
             safeSetLong(sb, ps, col++, artifact.contentLength);
-            safeSetBoolean(sb, ps, col++, artifact.alternative);
             
             if (persistTransientState)
                 safeSetDate(sb, ps, col++, Util.truncate(artifact.metaRelease), UTC_CAL);
@@ -1673,11 +1671,6 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetUUID(sb, ps, col++, obs.getID());
             }
             
-            if (chunk.productType != null)
-                safeSetString(sb, ps, col++, chunk.productType.getValue());
-            else
-                safeSetString(sb, ps, col++, null);
-
             safeSetInteger(sb, ps, col++, chunk.naxis);
             safeSetInteger(sb, ps, col++, chunk.positionAxis1);
             safeSetInteger(sb, ps, col++, chunk.positionAxis2);
@@ -3193,19 +3186,25 @@ public class BaseSQLGenerator implements SQLGenerator
 
             URI uri = Util.getURI(rs, col++);
             log.debug("found a.uri = " + uri);
-            Artifact a = new Artifact(uri);
-
+            
             String pt = rs.getString(col++);
             log.debug("found a.productType = " + pt);
+            ProductType ptype = ProductType.SCIENCE; // backwards compat until backfill
             if (pt != null)
-                a.productType = ProductType.toValue(pt);
+                ptype = ProductType.toValue(pt);
+            
+            String rt = rs.getString(col++);
+            log.debug("found a.releaseType = " + rt);
+            ReleaseType rtype = ReleaseType.DATA; // backwards compat until backfill
+            if (rt != null)
+                rtype = ReleaseType.toValue(rt);
+            
+            Artifact a = new Artifact(uri, ptype, rtype);
 
             a.contentType = rs.getString(col++);
             log.debug("found a.contentType = " + a.contentType);
             a.contentLength = Util.getLong(rs, col++);
             log.debug("found a.contentLength = " + a.contentLength);
-            a.alternative = rs.getBoolean(col++);
-            log.debug("found a.alternative = " + a.alternative);
             
             if (persistTransientState)
                 col += numComputedArtifactColumns;
@@ -3323,11 +3322,6 @@ public class BaseSQLGenerator implements SQLGenerator
             col += 3; // skip ancestor(s)
             
             Chunk c = new Chunk();
-
-            String pt = rs.getString(col++);
-            log.debug("found c.productType = " + pt);
-            if (pt != null)
-                c.productType = ProductType.toValue(pt);
 
             c.naxis = Util.getInteger(rs, col++);
             c.positionAxis1 = Util.getInteger(rs, col++);

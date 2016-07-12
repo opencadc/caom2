@@ -109,6 +109,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
@@ -1118,10 +1119,10 @@ public abstract class AbstractDatabaseObservationDAOTest
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
         Assert.assertEquals(expected.getURI(), actual.getURI());
-        Assert.assertEquals(expected.alternative, actual.alternative);
         Assert.assertEquals(expected.contentLength, actual.contentLength);
         Assert.assertEquals(expected.contentType, actual.contentType);
-        Assert.assertEquals(expected.productType, actual.productType);
+        Assert.assertEquals(expected.getProductType(), actual.getProductType());
+        Assert.assertEquals(expected.getReleaseType(), actual.getReleaseType());
 
         log.debug("num Parts: " + expected.getParts().size() + " == " + actual.getParts().size());
         Assert.assertEquals("number of parts", expected.getParts().size(), actual.getParts().size());
@@ -1454,12 +1455,11 @@ public abstract class AbstractDatabaseObservationDAOTest
 
     private Artifact getTestArtifact(boolean full, URI uri, int depth)
     {
-        Artifact a = new Artifact(uri);
+        Artifact a = new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA);
         if (full)
         {
             a.contentType = "application/fits";
             a.contentLength = TEST_LONG;
-            a.productType = ProductType.SCIENCE;
         }
         
         if (depth <= 3)

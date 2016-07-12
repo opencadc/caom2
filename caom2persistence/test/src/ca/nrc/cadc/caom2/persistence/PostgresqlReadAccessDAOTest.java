@@ -76,6 +76,8 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
@@ -158,7 +160,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);
         
-        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"));
+        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
         pp.getChunks().add(ch);
