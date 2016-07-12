@@ -54,6 +54,16 @@
         </init-param>
     </servlet>
 
+    <servlet>
+      <servlet-name>CapabilitiesServlet</servlet-name>
+      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
+      <init-param>
+        <param-name>input</param-name>
+        <param-value>/capabilities.xml</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
     <!-- URL-to-servlet mapping -->
     
     
@@ -67,6 +77,11 @@
         <url-pattern>/availability</url-pattern>
     </servlet-mapping>
     
+  <servlet-mapping>
+    <servlet-name>CapabilitiesServlet</servlet-name>
+    <url-pattern>/capabilities</url-pattern>
+  </servlet-mapping>
+
     <servlet-mapping>
         <servlet-name>RepoServlet</servlet-name>
         <url-pattern>/pub/*</url-pattern>
