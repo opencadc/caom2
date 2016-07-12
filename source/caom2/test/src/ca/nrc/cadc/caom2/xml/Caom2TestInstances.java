@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
@@ -364,13 +365,11 @@ public class Caom2TestInstances
     {
         Set<Artifact> artifacts = new TreeSet<Artifact>();
         
-        Artifact artifact = new Artifact(new URI("ad:foo/bar1"));
+        Artifact artifact = new Artifact(new URI("ad:foo/bar1"), ProductType.SCIENCE, ReleaseType.DATA);
         if (complete)
         {
             artifact.contentType = "application/fits";
             artifact.contentLength = 12345L;
-            artifact.productType = ProductType.SCIENCE;
-            artifact.alternative = false;
         }
         if (depth > 3)
             artifact.getParts().addAll(getParts());
@@ -390,21 +389,18 @@ public class Caom2TestInstances
             part.productType = ProductType.SCIENCE;
         }
         if (depth > 4)
-            part.getChunks().addAll(getChunks());
+            part.getChunks().add(getChunk());
         
         parts.add(part);
         return parts;
     }
     
-    protected Set<Chunk> getChunks()
+    protected Chunk getChunk()
         throws Exception
     {
-        Set<Chunk> chunks = new TreeSet<Chunk>();
-        
         Chunk chunk = new Chunk();
         if (complete)
         {
-            chunk.productType = ProductType.SCIENCE;
             chunk.naxis = 5;
             chunk.observableAxis = 1;
             chunk.positionAxis1 = 1;
@@ -419,8 +415,7 @@ public class Caom2TestInstances
             chunk.time = getTemporalWCS();
             chunk.polarization = getPolarizationWCS();
         }
-        chunks.add(chunk);
-        return chunks;
+        return chunk;
     }
     
     protected ObservableAxis getObservableAxis()

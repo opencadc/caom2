@@ -81,7 +81,7 @@ import java.util.TreeSet;
  */
 public abstract class Observation extends AbstractCaomEntity implements Comparable<Observation>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
 
     // immutable state
     private final String collection;

@@ -79,6 +79,8 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -155,7 +157,7 @@ public class CaomUtilTest
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
-            ce = new Artifact(new URI("ad:FOO/bar"));
+            ce = new Artifact(new URI("ad:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
@@ -199,7 +201,7 @@ public class CaomUtilTest
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
             
-            ce = new Artifact(new URI("ad:FOO/bar"));
+            ce = new Artifact(new URI("ad:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
             CaomUtil.assignLastModified(ce, expected, "lastModified");
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");

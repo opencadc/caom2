@@ -194,7 +194,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -203,8 +203,7 @@ public final class PositionUtil
                             if (poly != null && poly.getArea() > MAX_SANE_AREA)
                                 throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
                                     + a.getURI() + "/" + p.getName() + " " + poly.getArea());
-                            if (poly != null)
-                                polys.add(poly);
+                            polys.add(poly);
                         }
                     }
                 }
@@ -246,7 +245,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null && c.position.getAxis().function != null)
                         {
@@ -353,10 +352,9 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                // assumption is only true for all the chunks in a part
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -397,7 +395,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -428,7 +426,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null && c.position.resolution != null)
                         {
@@ -455,7 +453,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {

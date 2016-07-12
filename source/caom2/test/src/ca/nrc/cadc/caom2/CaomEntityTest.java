@@ -108,7 +108,6 @@ public class CaomEntityTest
         try
         {
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            
             SimpleObservation so = new SimpleObservation("FOO", "bar");
             CompositeObservation co = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
             co.getMembers().add(new ObservationURI("foo", "baz"));
@@ -117,7 +116,7 @@ public class CaomEntityTest
             pl.provenance = new Provenance("doit");
             pl.provenance.getInputs().add(new PlaneURI(uri, "thing"));
 
-            Artifact ar = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact ar = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part pa = new Part("x");
             Chunk ch = new Chunk();
 

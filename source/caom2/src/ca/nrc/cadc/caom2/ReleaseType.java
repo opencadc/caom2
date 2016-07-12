@@ -67,95 +67,38 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
-
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Set;
-import org.apache.log4j.Logger;
+package ca.nrc.cadc.caom2;
 
 /**
- *
  * @author pdowler
  */
-public final class PolarizationUtil
+public enum ReleaseType implements CaomEnum
 {
-    private static final Logger log = Logger.getLogger(PolarizationUtil.class);
-    
-    private PolarizationUtil() { }
+    DATA("data"),
+    META("meta");
 
-    public static Polarization compute(Set<Artifact> artifacts)
+    private String value;
+
+    private ReleaseType(String value) { this.value = value; }
+
+    public static ReleaseType toValue(String s)
     {
-        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
-        ProductType productType = Util.choseProductType(artifacts);
-        log.debug("compute: " + productType);
-        int numPixels = 0;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.polarization != null)
-                        {
-                            numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            CoordRange1D range = c.polarization.getAxis().range;
-                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
-                            CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null)
-                            {
-                                int lb = (int) range.getStart().val;
-                                int ub = (int) range.getEnd().val;
-                                for (int i=lb; i <= ub; i++)
-                                {
-                                    pol.add(PolarizationState.toValue(i));
-                                }
-                            }
-                            else if (bounds != null)
-                            {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
-                                    int lb = (int) cr.getStart().val;
-                                    int ub = (int) cr.getEnd().val;
-                                    for (int i=lb; i <= ub; i++)
-                                    {
-                                        pol.add(PolarizationState.toValue(i));
-                                    }
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                for (int i=1; i <= function.getNaxis(); i++)
-                                {
-                                    double pix = (double) i;
-                                    int val = (int) Util.pix2val(function, pix);
-                                    pol.add(PolarizationState.toValue(val));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        for (ReleaseType d : values())
+            if (d.value.equals(s))
+                return d;
+        throw new IllegalArgumentException("invalid value: " + s);
+    }
+    
+    public String getValue() { return value; }
 
-        Polarization p = new Polarization();
-        if ( !pol.isEmpty() )
-        {
-            p.states = new ArrayList<PolarizationState>();
-            p.states.addAll(pol);
-            p.dimension = new Integer(numPixels);
-        }
-        return p;
+    public int checksum()
+    {
+        return value.hashCode();
+    }
+    
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

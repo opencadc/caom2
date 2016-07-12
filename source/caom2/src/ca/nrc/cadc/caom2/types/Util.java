@@ -40,9 +40,9 @@ public final class Util
         ProductType ret = null;
         for (Artifact a : artifacts)
         {
-            if (ProductType.SCIENCE.equals(a.productType))
+            if (ProductType.SCIENCE.equals(a.getProductType()))
                 return ProductType.SCIENCE;
-            if (ProductType.CALIBRATION.equals(a.productType))
+            if (ProductType.CALIBRATION.equals(a.getProductType()))
                 ret = ProductType.CALIBRATION;
             for (Part p : a.getParts())
             {
@@ -61,6 +61,7 @@ public final class Util
         }
         return ret;
     }
+    
     
     public static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
     {

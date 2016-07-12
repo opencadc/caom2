@@ -85,7 +85,7 @@ import org.apache.log4j.Logger;
  */
 public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
     private static final Logger log = Logger.getLogger(Artifact.class);
 
     // immutable state
@@ -93,20 +93,24 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
 
     // mutable contents
     private final Set<Part> parts = new TreeSet<Part>();
-
+    private ProductType productType;
+    private ReleaseType releaseType;
+    
     // mutable state
     public String contentType;
     public Long contentLength;
-    public ProductType productType;
-    public boolean alternative;
     
     // computed state
     public transient Date metaRelease;
 
-    public Artifact(URI uri)
+    public Artifact(URI uri, ProductType productType, ReleaseType releaseType)
     {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
+        CaomValidator.assertNotNull(Artifact.class, "productType", productType);
+        CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
         this.uri = uri;
+        this.productType = productType;
+        this.releaseType = releaseType;
     }
 
     @Override
@@ -120,6 +124,29 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
         return uri;
     }
 
+    public ProductType getProductType()
+    {
+        return productType;
+    }
+
+    public void setProductType(ProductType productType)
+    {
+        CaomValidator.assertNotNull(Artifact.class, "productType", productType);
+        this.productType = productType;
+    }
+
+    public ReleaseType getReleaseType()
+    {
+        return releaseType;
+    }
+
+    public void setReleaseType(ReleaseType releaseType)
+    {
+        CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
+        this.releaseType = releaseType;
+    }
+
+    
     public Set<Part> getParts()
     {
         return parts;

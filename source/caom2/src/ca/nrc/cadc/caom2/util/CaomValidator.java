@@ -69,8 +69,11 @@
 
 package ca.nrc.cadc.caom2.util;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
 import java.util.Set;
@@ -100,6 +103,7 @@ public final class CaomValidator
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name
                 + ": may not contain single tick (') or space ( )");
     }
+    
     /**
      * A valid path component has no space ( ), slash (/), escape (\), or percent (%) characters.
      * 
@@ -134,6 +138,13 @@ public final class CaomValidator
             assertValidKeyword(CaomValidator.class, name, s);
         }
     }
+    
+    /**
+     * Validate the keywords fields and make sure they don't contain invalid 
+     * characters (currently space and single-quote).
+     * 
+     * @param obs 
+     */
     public static void validateKeywords(Observation obs)
     {
         if (obs.proposal != null)
@@ -151,9 +162,45 @@ public final class CaomValidator
                 validateKeywords("provenance.keywords", p.provenance.getKeywords());            
         }
     }
+    
+    /**
+     * Validate Artifact.productType for consistency with Observation.intent.
+     * Observations with intent=science have no artifacts with productType=calibration.
+     * Observations with intent=calibration have no artifacts with productType=science.
+     * 
+     * @param obs
+     */
+    public static void validateIntent(Observation obs)
+    {
+        if (obs.intent == null)
+            return;
+        
+        ProductType ban = ProductType.CALIBRATION;
+        if ( ObservationIntentType.CALIBRATION.equals(obs.intent))
+        {
+            ban = ProductType.SCIENCE;
+        }
+        for (Plane p : obs.getPlanes())
+        {
+            for (Artifact a : p.getArtifacts())
+            {
+                if (ban.equals(a.getProductType()))
+                    throw new IllegalArgumentException("Observation.intent = " + obs.intent + " but artifact "
+                            + a.getURI().toASCIIString() + "has productType = " + a.getProductType());
+            }
+        }
+    }
+    
+    /**
+     * Perform all validation of the content of an observation.
+     * 
+     * @param obs 
+     */
     public static void validate(Observation obs)
     {
         validateKeywords(obs);
+        
+        validateIntent(obs);
         
         for (Plane p : obs.getPlanes())
         {

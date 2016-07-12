@@ -95,6 +95,7 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
@@ -167,11 +168,11 @@ import org.jdom2.Namespace;
  */
 public class ObservationReader implements Serializable
 {
-    private static final long serialVersionUID = 201209071030L;
+    private static final long serialVersionUID = 201604081100L;
     
     private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
     private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
-    //private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
+    private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
     
     private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
 
@@ -212,8 +213,8 @@ public class ObservationReader implements Serializable
                 String caom21SchemaUrl = XmlUtil.getResourceUrlString(CAOM21_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.1 schema URL: " + caom21SchemaUrl);
                 
-                //String caom22SchemaUrl = XmlUtil.getResourceUrlString(CAOM22_SCHEMA_RESOURCE, ObservationReader.class);
-                //log.debug("caom-2.2 schema URL: " + caom22SchemaUrl);
+                String caom22SchemaUrl = XmlUtil.getResourceUrlString(CAOM22_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.2 schema URL: " + caom22SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(XLINK_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("xlinkSchemaUrl: " + xlinkSchemaUrl);
@@ -228,7 +229,7 @@ public class ObservationReader implements Serializable
                 schemaMap = new HashMap<String, String>();
                 schemaMap.put(XmlConstants.CAOM2_0_NAMESPACE, caom2SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_1_NAMESPACE, caom21SchemaUrl);
-                //schemaMap.put(XmlConstants.CAOM2_2_NAMESPACE, caom22SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_2_NAMESPACE, caom22SchemaUrl);
                 schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
                 log.debug("schema validation enabled");
             }
@@ -238,6 +239,13 @@ public class ObservationReader implements Serializable
             xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
             this.initDone = true;
         }
+    }
+    
+    private class ReadContext implements Serializable
+    {
+        private static final long serialVersionUID = 201604081100L;
+        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        int docVersion = 22;
     }
     
     /**
@@ -285,28 +293,26 @@ public class ObservationReader implements Serializable
         }
     }
 
-    private void assignEntityAttributes(Element e, CaomEntity ce, DateFormat df)
+    private void assignEntityAttributes(Element e, CaomEntity ce, ReadContext rc)
         throws ObservationParsingException
     {
-        boolean expectUUID = true;
-        if ( XmlConstants.CAOM2_0_NAMESPACE.equals(e.getNamespaceURI()) )
-            expectUUID = false;
         Attribute aid = e.getAttribute("id", e.getNamespace());
         Attribute alastModified = e.getAttribute("lastModified", e.getNamespace());
         try
         {
             UUID uuid;
-            if (expectUUID)
-                uuid = UUID.fromString(aid.getValue());
-            else
+            if (rc.docVersion == 20)
             {
                 Long id = new Long(aid.getLongValue());
                 uuid = new UUID(0L, id);
             }
+            else
+                uuid = UUID.fromString(aid.getValue());
+            
             CaomUtil.assignID(ce, uuid);
             if (alastModified != null)
             {
-                Date lastModified = df.parse(alastModified.getValue());
+                Date lastModified = rc.dateFormat.parse(alastModified.getValue());
                 CaomUtil.assignLastModified(ce, lastModified, "lastModified");
             }
         }
@@ -346,14 +352,17 @@ public class ObservationReader implements Serializable
             throw new ObservationParsingException(error, jde);
         }
         
-        // IVOA DateFormat.
-        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-
         // Root element and namespace of the Document
         Element root = document.getRootElement();
         Namespace namespace = root.getNamespace();
         log.debug("obs namespace uri: " + namespace.getURI());
         log.debug("obs namespace prefix: " + namespace.getPrefix());
+        
+        ReadContext rc = new ReadContext();
+        if ( XmlConstants.CAOM2_0_NAMESPACE.equals(namespace.getURI()) )
+            rc.docVersion = 20;
+        else if ( XmlConstants.CAOM2_1_NAMESPACE.equals(namespace.getURI()) )
+            rc.docVersion = 21;
         
         // Simple or Composite
         Attribute type = root.getAttribute("type", xsiNamespace);
@@ -363,7 +372,7 @@ public class ObservationReader implements Serializable
         String observationID = getChildText("observationID", root, namespace, false);
         
         // Algorithm.
-        Algorithm algorithm = getAlgorithm(root, namespace, dateFormat);
+        Algorithm algorithm = getAlgorithm(root, namespace, rc);
             
         // Create the Observation.
         Observation obs;
@@ -388,24 +397,24 @@ public class ObservationReader implements Serializable
         obs.type = getChildText("type", root, namespace, false);
 
 
-        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, dateFormat);
+        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, rc.dateFormat);
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root, namespace, false);
-        obs.proposal = getProposal(root, namespace, dateFormat);
-        obs.target = getTarget(root, namespace, dateFormat);
-        obs.targetPosition = getTargetPosition(root, namespace, dateFormat);
-        obs.requirements = getRequirements(root, namespace, dateFormat);
-        obs.telescope = getTelescope(root, namespace, dateFormat);
-        obs.instrument = getInstrument(root, namespace, dateFormat);
-        obs.environment = getEnvironment(root, namespace, dateFormat);
+        obs.proposal = getProposal(root, namespace, rc);
+        obs.target = getTarget(root, namespace, rc);
+        obs.targetPosition = getTargetPosition(root, namespace, rc);
+        obs.requirements = getRequirements(root, namespace, rc);
+        obs.telescope = getTelescope(root, namespace, rc);
+        obs.instrument = getInstrument(root, namespace, rc);
+        obs.environment = getEnvironment(root, namespace, rc);
 
-        addPlanes(obs.getPlanes(), root, namespace, dateFormat);
+        addPlanes(obs.getPlanes(), root, namespace, rc);
         
         if (obs instanceof CompositeObservation)
         {
-            addMembers(((CompositeObservation) obs).getMembers(), root, namespace, dateFormat);
+            addMembers(((CompositeObservation) obs).getMembers(), root, namespace, rc);
         }
 
-        assignEntityAttributes(root, obs, dateFormat);
+        assignEntityAttributes(root, obs, rc);
         
         return obs;
     }
@@ -419,7 +428,7 @@ public class ObservationReader implements Serializable
      * @return an Algorithm, or null if the document doesn't contain an algorithm element.
      * @throws ObservationParsingException
      */
-    protected Environment getEnvironment(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Environment getEnvironment(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("environment", parent, namespace, false);
@@ -446,7 +455,7 @@ public class ObservationReader implements Serializable
      * @return an Algorithm, or null if the document doesn't contain an algorithm element.
      * @throws ObservationParsingException 
      */
-    protected Algorithm getAlgorithm(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Algorithm getAlgorithm(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("algorithm", parent, namespace, true);
@@ -466,7 +475,7 @@ public class ObservationReader implements Serializable
      * @return an Proposal, or null if the document doesn't contain an proposal element.
      * @throws ObservationParsingException 
      */
-    protected Proposal getProposal(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Proposal getProposal(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("proposal", parent, namespace, false);
@@ -494,7 +503,7 @@ public class ObservationReader implements Serializable
      * @return an Target, or null if the document doesn't contain an target element.
      * @throws ObservationParsingException 
      */
-    protected Target getTarget(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Target getTarget(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("target", parent, namespace, false);
@@ -526,7 +535,7 @@ public class ObservationReader implements Serializable
      * @return a TargetPosition, or null if the document doesn't contain an targetPosition element.
      * @throws ObservationParsingException 
      */
-    protected TargetPosition getTargetPosition(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected TargetPosition getTargetPosition(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("targetPosition", parent, namespace, false);
@@ -554,7 +563,7 @@ public class ObservationReader implements Serializable
      * @return
      * @throws ObservationParsingException 
      */
-    protected Requirements getRequirements(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Requirements getRequirements(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("requirements", parent, namespace, false);
@@ -576,7 +585,7 @@ public class ObservationReader implements Serializable
      * @return an TarTelescopeget, or null if the document doesn't contain an telescope element.
      * @throws ObservationParsingException 
      */
-    protected Telescope getTelescope(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Telescope getTelescope(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("telescope", parent, namespace, false);
@@ -603,7 +612,7 @@ public class ObservationReader implements Serializable
      * @return an Instrument, or null if the document doesn't contain an instrument element.
      * @throws ObservationParsingException 
      */
-    protected Instrument getInstrument(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Instrument getInstrument(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("instrument", parent, namespace, false);
@@ -628,7 +637,7 @@ public class ObservationReader implements Serializable
      * @param dateFormat  IVOA DateFormat.
      * @throws ObservationParsingException 
      */
-    protected void addMembers(Set<ObservationURI> members, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addMembers(Set<ObservationURI> members, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("members", parent, namespace, false);
@@ -664,7 +673,7 @@ public class ObservationReader implements Serializable
      * @param dateFormat  IVOA DateFormat.
      * @throws ObservationParsingException 
      */
-    protected void addPlanes(Set<Plane> planes, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addPlanes(Set<Plane> planes, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("planes", parent, namespace, false);
@@ -679,8 +688,8 @@ public class ObservationReader implements Serializable
             String productID = getChildText("productID", planeElement, namespace, true);
             Plane plane = new Plane(productID);
             
-            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, dateFormat);
-            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, dateFormat);
+            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
+            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
             
             String dataProductType = getChildText("dataProductType", planeElement, namespace, false);
             if (dataProductType != null)
@@ -694,24 +703,24 @@ public class ObservationReader implements Serializable
                 plane.calibrationLevel = CalibrationLevel.toValue(Integer.parseInt(calibrationLevel));
             }
             
-            plane.provenance = getProvenance(planeElement, namespace, dateFormat);
-            plane.metrics = getMetrics(planeElement, namespace, dateFormat);
-            plane.quality = getQuality(planeElement, namespace, dateFormat);
+            plane.provenance = getProvenance(planeElement, namespace, rc);
+            plane.metrics = getMetrics(planeElement, namespace, rc);
+            plane.quality = getQuality(planeElement, namespace, rc);
             
-            plane.position = getPosition(planeElement, namespace);
-            plane.energy = getEnergy(planeElement, namespace);
-            plane.time = getTime(planeElement, namespace);
-            plane.polarization = getPolarization(planeElement, namespace);
+            plane.position = getPosition(planeElement, namespace, rc);
+            plane.energy = getEnergy(planeElement, namespace, rc);
+            plane.time = getTime(planeElement, namespace, rc);
+            plane.polarization = getPolarization(planeElement, namespace, rc);
 
-            addArtifacts(plane.getArtifacts(), planeElement, namespace, dateFormat);
+            addArtifacts(plane.getArtifacts(), planeElement, namespace, rc);
 
-            assignEntityAttributes(planeElement, plane, dateFormat);
+            assignEntityAttributes(planeElement, plane, rc);
 
             planes.add(plane);
         }
     }
     
-    protected Position getPosition(Element parent, Namespace namespace)
+    protected Position getPosition(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("position", parent, namespace, false);
@@ -765,7 +774,7 @@ public class ObservationReader implements Serializable
         return pos;
     }
     
-    protected Energy getEnergy(Element parent, Namespace namespace)
+    protected Energy getEnergy(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("energy", parent, namespace, false);
@@ -824,7 +833,7 @@ public class ObservationReader implements Serializable
         return nrg;
     }
     
-    protected Time getTime(Element parent, Namespace namespace)
+    protected Time getTime(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("time", parent, namespace, false);
@@ -871,7 +880,7 @@ public class ObservationReader implements Serializable
         return tim;        
     }
     
-    protected Polarization getPolarization(Element parent, Namespace namespace)
+    protected Polarization getPolarization(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("polarization", parent, namespace, false);
@@ -917,7 +926,7 @@ public class ObservationReader implements Serializable
      * @return an Provenance, or null if the document doesn't contain a provenance element.
      * @throws ObservationParsingException 
      */
-    protected Provenance getProvenance(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Provenance getProvenance(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("provenance", parent, namespace, false);
@@ -946,14 +955,14 @@ public class ObservationReader implements Serializable
                 throw new ObservationParsingException(error);
             }
         }
-        provenance.lastExecuted = getChildTextAsDate("lastExecuted", element, namespace, false, dateFormat);
+        provenance.lastExecuted = getChildTextAsDate("lastExecuted", element, namespace, false, rc.dateFormat);
         addChildTextToStringList("keywords", provenance.getKeywords(), element, namespace, false);
-        addInputs(provenance.getInputs(), element, namespace, dateFormat);
+        addInputs(provenance.getInputs(), element, namespace, rc);
         
         return provenance;
     }
 
-    protected Metrics getMetrics(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected Metrics getMetrics(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("metrics", parent, namespace, false);
@@ -977,7 +986,7 @@ public class ObservationReader implements Serializable
      * @return
      * @throws ObservationParsingException 
      */
-    protected DataQuality getQuality(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected DataQuality getQuality(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("quality", parent, namespace, false);
@@ -990,7 +999,7 @@ public class ObservationReader implements Serializable
         return ret;
     }
     
-    protected EnergyTransition getTransition(Element parent, Namespace namespace, DateFormat dateFormat)
+    protected EnergyTransition getTransition(Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("transition", parent, namespace, false);
@@ -1012,7 +1021,7 @@ public class ObservationReader implements Serializable
      * @param dateFormat  IVOA DateFormat.
      * @throws ObservationParsingException 
      */
-    protected void addInputs(Set<PlaneURI> inputs, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addInputs(Set<PlaneURI> inputs, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("inputs", parent, namespace, false);
@@ -1048,7 +1057,7 @@ public class ObservationReader implements Serializable
      * @param dateFormat  IVOA DateFormat.
      * @throws ObservationParsingException 
      */
-    protected void addArtifacts(Set<Artifact> artifacts, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addArtifacts(Set<Artifact> artifacts, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("artifacts", parent, namespace, false);
@@ -1061,10 +1070,31 @@ public class ObservationReader implements Serializable
         {
             Element artifactElement = (Element) it.next();
             String uri = getChildText("uri", artifactElement, namespace, true);
+            
+            String pts = getChildText("productType", artifactElement, namespace, false);
+            ProductType productType = null;
+            if (pts != null)
+                productType = ProductType.toValue(pts);
+            else
+            {
+                productType = ProductType.SCIENCE;
+                log.warn("assigning default Artifact.productType = " + productType + " for "+uri);
+            }
+        
+            String rts = getChildText("releaseType", artifactElement, namespace, false);
+            ReleaseType releaseType = null;
+            if (rts != null)
+                releaseType = ReleaseType.toValue(rts);
+            else
+            {
+                releaseType = ReleaseType.DATA;
+                log.warn("assigning default Artifact.releaseType = " + releaseType + " for "+uri);
+            }
+            
             Artifact artifact;
             try
             {
-                artifact = new Artifact(new URI(uri));
+                artifact = new Artifact(new URI(uri), productType, releaseType);
             }
             catch (URISyntaxException e)
             {
@@ -1075,15 +1105,9 @@ public class ObservationReader implements Serializable
 
             artifact.contentType = getChildText("contentType", artifactElement, namespace, false);
             artifact.contentLength = getChildTextAsLong("contentLength", artifactElement, namespace, false);
-            String productType = getChildText("productType", artifactElement, namespace, false);
-            if (productType != null)
-            {
-                artifact.productType = ProductType.toValue(productType);
-            }
-            artifact.alternative = getChildTextAsBoolean("alternative", artifactElement, namespace, false);
-            addParts(artifact.getParts(), artifactElement, namespace, dateFormat);
+            addParts(artifact.getParts(), artifactElement, namespace, rc);
 
-            assignEntityAttributes(artifactElement, artifact, dateFormat);
+            assignEntityAttributes(artifactElement, artifact, rc);
             
             artifacts.add(artifact);
         }
@@ -1099,7 +1123,7 @@ public class ObservationReader implements Serializable
      * @param dateFormat  IVOA DateFormat.
      * @throws ObservationParsingException 
      */
-    protected void addParts(Set<Part> parts, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addParts(Set<Part> parts, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("parts", parent, namespace, false);
@@ -1120,9 +1144,10 @@ public class ObservationReader implements Serializable
             {
                 part.productType = ProductType.toValue(productType);
             }
-            addChunks(part.getChunks(), partElement, namespace, dateFormat);
+            addChunks(part.getChunks(), partElement, namespace, rc);
+            //part.chunk = getChunk(partElement, namespace, rc);
 
-            assignEntityAttributes(partElement, part, dateFormat);
+            assignEntityAttributes(partElement, part, rc);
             
             parts.add(part);
         }
@@ -1135,10 +1160,10 @@ public class ObservationReader implements Serializable
      * @param chunks the Set of Chunk's from the Part.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
-    protected void addChunks(Set<Chunk> chunks, Element parent, Namespace namespace, DateFormat dateFormat)
+    protected void addChunks(Set<Chunk> chunks, Element parent, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement("chunks", parent, namespace, false);
@@ -1166,17 +1191,57 @@ public class ObservationReader implements Serializable
             chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement, namespace, false);
             chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis", chunkElement, namespace, false);
 
-            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, dateFormat);
-            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, dateFormat);
-            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, dateFormat);
-            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, dateFormat);
-            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, dateFormat);
+            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
+            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
+            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
+            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
+            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
 
-            assignEntityAttributes(chunkElement, chunk, dateFormat);
+            assignEntityAttributes(chunkElement, chunk, rc);
             
             chunks.add(chunk);
         }
     }
+    
+    /* 
+    //alt version for one-chunk-per-part that was reverted from caom-2.2
+    protected Chunk getChunk(Element parent, Namespace namespace, ReadContext rc)
+        throws ObservationParsingException
+    {
+        Element chunkParent = parent;
+        if (rc.docVersion < 22)
+        {
+            // pre 2.2 a part could have multiple chunks inside a "chunks" element
+            Element e = getChildElement("chunks", parent, namespace, false);
+            if (e == null)
+                return null;
+            chunkParent = e;
+        }
+        Element chunkElement = getChildElement("chunk", chunkParent, namespace, false);
+        if (chunkElement == null)
+            return null;
+        
+        Chunk chunk = new Chunk();
+
+        chunk.naxis = getChildTextAsInteger("naxis", chunkElement, namespace, false);
+        chunk.observableAxis = getChildTextAsInteger("observableAxis", chunkElement, namespace, false);
+        chunk.positionAxis1 = getChildTextAsInteger("positionAxis1", chunkElement, namespace, false);
+        chunk.positionAxis2 = getChildTextAsInteger("positionAxis2", chunkElement, namespace, false);
+        chunk.energyAxis = getChildTextAsInteger("energyAxis", chunkElement, namespace, false);
+        chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement, namespace, false);
+        chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis", chunkElement, namespace, false);
+
+        chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
+        chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
+        chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
+        chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
+        chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
+
+        assignEntityAttributes(chunkElement, chunk, rc);
+
+        return  chunk;
+    }
+    */
     
     /**
      * Build an ObservableAxis from a JDOM representation of an observable element.
@@ -1189,7 +1254,7 @@ public class ObservationReader implements Serializable
      * @return an ObservableAxis, or null if the document doesn't contain an observable element.
      * @throws ObservationParsingException 
      */
-    protected ObservableAxis getObservableAxis(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+    protected ObservableAxis getObservableAxis(String name, Element parent, Namespace namespace, boolean required, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement(name, parent, namespace, false);
@@ -1213,7 +1278,7 @@ public class ObservationReader implements Serializable
      * @return an SpatialWCS, or null if the document doesn't contain an position element.
      * @throws ObservationParsingException 
      */
-    protected SpatialWCS getSpatialWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+    protected SpatialWCS getSpatialWCS(String name, Element parent, Namespace namespace, boolean required, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement(name, parent, namespace, required);
@@ -1239,7 +1304,7 @@ public class ObservationReader implements Serializable
      * @return an SpectralWCS, or null if the document doesn't contain an energy element.
      * @throws ObservationParsingException 
      */
-    protected SpectralWCS getSpectralWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+    protected SpectralWCS getSpectralWCS(String name, Element parent, Namespace namespace, boolean required, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement(name, parent, namespace, false);
@@ -1258,7 +1323,7 @@ public class ObservationReader implements Serializable
         energy.velang = getChildTextAsDouble("velang", element, namespace, false);
         energy.bandpassName = getChildText("bandpassName", element, namespace, false);
         energy.resolvingPower = getChildTextAsDouble("resolvingPower", element, namespace, false);
-        energy.transition = getTransition(element, namespace, dateFormat);
+        energy.transition = getTransition(element, namespace, rc);
         return energy;
     }
     
@@ -1273,7 +1338,7 @@ public class ObservationReader implements Serializable
      * @return an TemporalWCS, or null if the document doesn't contain an time element.
      * @throws ObservationParsingException 
      */
-    protected TemporalWCS getTemporalWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+    protected TemporalWCS getTemporalWCS(String name, Element parent, Namespace namespace, boolean required, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement(name, parent, namespace, false);
@@ -1301,7 +1366,7 @@ public class ObservationReader implements Serializable
      * @return an PolarizationWCS, or null if the document doesn't contain an polarization element.
      * @throws ObservationParsingException 
      */
-    protected PolarizationWCS getPolarizationWCS(String name, Element parent, Namespace namespace, boolean required, DateFormat dateFormat)
+    protected PolarizationWCS getPolarizationWCS(String name, Element parent, Namespace namespace, boolean required, ReadContext rc)
         throws ObservationParsingException
     {
         Element element = getChildElement(name, parent, namespace, false);

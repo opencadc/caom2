@@ -48,7 +48,7 @@ Artifact.uri =
 Artifact.contentType = 
 Artifact.contentLength = 
 Artifact.productType = 
-Artifact.alternative = 
+Artifact.releaseType = 
 
 Part.name = 
 Part.productType = 
@@ -60,7 +60,6 @@ Chunk.positionAxis2 =
 Chunk.energyAxis = 
 Chunk.timeAxis = 
 Chunk.polarizationAxis = 
-Chunk.productType = 
 
 Chunk.observable.dependent.bin = 
 Chunk.observable.dependent.axis.ctype = 
