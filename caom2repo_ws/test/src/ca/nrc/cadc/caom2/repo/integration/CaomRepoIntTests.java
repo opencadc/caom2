@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.RunnableAction;
 import java.io.File;
 import java.io.InputStream;
@@ -81,6 +82,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
 
+import ca.nrc.cadc.reg.Standards;
 import junit.framework.Assert;
 
 import org.apache.log4j.Level;
@@ -167,9 +169,14 @@ public class CaomRepoIntTests
             RegistryClient rc = new RegistryClient();
 
             URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
-            AVAIL_URL = rc.getServiceURL(serviceURI, "http", "/availability");
-            BASE_HTTP_URL = rc.getServiceURL(serviceURI, "http", "/pub").toExternalForm();
-            BASE_HTTPS_URL = rc.getServiceURL(serviceURI, "https", "/pub").toExternalForm();
+
+            URL serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_20_URI, AuthMethod.ANON);
+            AVAIL_URL = new URL(serviceURL.toExternalForm() + "/availability");
+            BASE_HTTP_URL = serviceURL.toExternalForm() + "/pub";
+
+            serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_20_URI, AuthMethod.CERT);
+            BASE_HTTPS_URL = serviceURL.toExternalForm() + "/pub";
+
             log.debug("test service URL: " + BASE_HTTP_URL);
             log.debug("test service URL: " + BASE_HTTPS_URL);
         }
