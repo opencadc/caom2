@@ -72,13 +72,11 @@ package ca.nrc.cadc.caom2.meta;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.Date;
 
-import javax.security.auth.Subject;
-
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
@@ -115,7 +113,7 @@ public class MetaQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
-    private static final String THIS_URI = "ivo://cadc.nrc.ca/meta";
+    private static final String META_URI = "ivo://cadc.nrc.ca/meta";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     private static final String DEFAULT_FORMAT = "text/xml";
     private static final String JSON_FORMAT = "application/json";
@@ -200,12 +198,15 @@ public class MetaQueryRunner implements JobRunner
             }
             
             // obtain credentials fropm CDP if the user is authorized
-            String tapProto = "http";
+            AuthMethod authMethod = AuthMethod.ANON;
             if ( CredUtil.checkCredentials() )
-                tapProto = "https";
+            {
+                authMethod = AuthMethod.CERT;
+            }
 
             RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
+//            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, authMethod);
             log.debug("TAP: " + tapURL.toExternalForm());
             
             
@@ -230,8 +231,9 @@ public class MetaQueryRunner implements JobRunner
             }
             else
             {
-                URL thisURL = reg.getServiceURL(new URI(THIS_URI), "http");
-                String styleSheetURL = thisURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
+//                URL thisURL = reg.getServiceURL(new URI(META_URI), "http");
+                URL metaURL = reg.getServiceURL(URI.create(META_URI), Standards.META_2x_URI, AuthMethod.ANON);
+                String styleSheetURL = metaURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
                 // force CAOM-2.2 so we write out transient/computed fields
                 ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
                 writer.setStylesheetURL(styleSheetURL);

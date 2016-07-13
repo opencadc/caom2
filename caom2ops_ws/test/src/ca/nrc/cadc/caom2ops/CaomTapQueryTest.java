@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.dali.tables.ListTableData;
@@ -78,6 +79,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableField;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Method;
@@ -461,7 +463,7 @@ public class CaomTapQueryTest
 	    	String runID = "testJobID";
 	    	String tapProto = "http";
 	    	RegistryClient reg = new RegistryClient();
-	    	URL tapURL = new URL(reg.getServiceURL(new URI(TAP_URI), tapProto) + "/sync");
+	    	URL tapURL = reg.getServiceURL(new URI(TAP_URI), Standards.TAP_SYNC_11_URI, AuthMethod.ANON);
 	    	
 	        query = new CaomTapQuery(tapURL, runID);    	
 	        Assert.assertEquals(runID, query.getRunID());

@@ -80,6 +80,7 @@ import java.util.Date;
 import java.util.MissingResourceException;
 
 
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.CredUtil;
@@ -207,16 +208,15 @@ public class LinkQueryRunner implements JobRunner
             Integer maxrec = mrv.validate();
 
             // obtain credentials fropm CDP if the user is authorized
-            String tapProto = "http";
             AuthMethod queryAuthMethod = AuthMethod.ANON;
             if ( CredUtil.checkCredentials() )
             {
-                tapProto = "https";
                 queryAuthMethod = AuthMethod.CERT;
             }
 
             RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
+//            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, queryAuthMethod);
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");
@@ -395,12 +395,15 @@ public class LinkQueryRunner implements JobRunner
         // set the access URL
         VOTableParam accessURLParam = null;
         VOTableParam resourceIDParam = null;
+        VOTableParam standardIDParam = null;
         for (VOTableParam param :  metaResource.getParams())
         {
             if (param.getName().equals("accessURL"))
                 accessURLParam = param;
             else if (param.getName().equals("resourceIdentifier"))
                 resourceIDParam = param;
+            else if (param.getName().equals("standardID"))
+                standardIDParam = param;
         }
         if (accessURLParam == null)
             throw new MissingResourceException(
@@ -408,10 +411,15 @@ public class LinkQueryRunner implements JobRunner
         if (resourceIDParam == null)
             throw new MissingResourceException(
                 "resourceIdentifier parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
+        if (standardIDParam == null)
+            throw new MissingResourceException(
+                "standardID parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
 
         AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
         RegistryClient regClient = new RegistryClient();
-        URL serviceURL = regClient.getServiceURL(new URI(resourceIDParam.getValue()), job.protocol, null, am);                
+        URI serviceID = URI.create(resourceIDParam.getValue());
+        URI standardID = URI.create(standardIDParam.getValue());
+        URL serviceURL = regClient.getServiceURL(serviceID, standardID, am);
 
         VOTableParam newAccessURL = new VOTableParam(
             accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),

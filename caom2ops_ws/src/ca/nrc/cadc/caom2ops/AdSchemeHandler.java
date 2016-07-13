@@ -30,6 +30,7 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -77,13 +78,16 @@ public class AdSchemeHandler implements SchemeHandler
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
-        String proto = "http"; // eventually this needs to be part of API
-        if ( AuthMethod.CERT.equals(authMethod))
-            proto = "https";
         try
         {
             String path = getPath(uri);
-            URL url = rc.getServiceURL(dataURI, proto, path, authMethod);
+            AuthMethod am = this.authMethod;
+            if (am == null)
+            {
+                am = AuthMethod.ANON;
+            }
+            URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10_URI, am);
+            URL url = new URL(serviceURL.toExternalForm() + path);
             log.debug(uri + " --> " + url);
             return url;
         }

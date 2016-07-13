@@ -74,6 +74,8 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import java.util.Date;
+
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
@@ -114,7 +116,7 @@ public class PackageRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(PackageRunner.class);
 
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     
     private Job job;
     private JobUpdater jobUpdater;
@@ -196,7 +198,8 @@ public class PackageRunner implements JobRunner
             List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
 
             RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, proxyAuthMethod);
+//            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, proxyAuthMethod);
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, proxyAuthMethod);
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             
             SchemeHandler sh = new CaomSchemeHandler();

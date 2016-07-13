@@ -92,6 +92,7 @@ import ca.nrc.cadc.dali.util.PolygonFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.uws.ErrorSummary;
@@ -130,8 +131,8 @@ public class SodaJobRunner implements JobRunner
     
     private static final EnergyConverter conv = new EnergyConverter();    
 
-    static final URI TAP = URI.create("ivo://cadc.nrc.ca/tap#sync");
-    static final URI SODA = URI.create("ivo://cadc.nrc.ca/soda#sync");
+    static final URI TAP = URI.create("ivo://cadc.nrc.ca/tap");
+    static final URI SODA = URI.create("ivo://cadc.nrc.ca/soda");
     
     static final String PARAM_ID = "ID";
     static final String PARAM_POS = "POS";
@@ -285,18 +286,17 @@ public class SodaJobRunner implements JobRunner
                 runID = job.getID();
             
             // obtain credentials from CDP if the user is authorized
-            String tapProto = "http";
             AuthMethod wsAuth = AuthMethod.ANON;
             if ( CredUtil.checkCredentials() )
             {
-                tapProto = "https";
                 wsAuth= AuthMethod.CERT;
             }
             tList.add(System.currentTimeMillis());
             sList.add("check credentials");
             
             RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(TAP, tapProto, null, wsAuth);
+//            URL tapURL = reg.getServiceURL(TAP, tapProto, null, wsAuth);
+            URL tapURL = reg.getServiceURL(TAP, Standards.TAP_SYNC_11_URI, wsAuth);
             
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             SchemeHandler sh = new CaomSchemeHandler();
@@ -317,7 +317,9 @@ public class SodaJobRunner implements JobRunner
                     path.append("|").append("NotFound: "+id);
                     String msg = Base64.encodeString(path.toString());
 
-                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+//                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                    URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                     jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
                 }
@@ -385,7 +387,9 @@ public class SodaJobRunner implements JobRunner
                                         path.append("|").append(sb.toString());
                                         String msg = Base64.encodeString(path.toString());
 
-                                        URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+//                                        URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+                                        URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                                        URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                         URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                         jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
                                     }
@@ -409,7 +413,9 @@ public class SodaJobRunner implements JobRunner
                                     path.append("|").append(sb.toString());
                                     String msg = Base64.encodeString(path.toString());
 
-                                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+//                                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
+                                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                                    URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                     jobResults.add(new Result(RESULT_FAIL+"-"+serialNum++, loc));
                                 }

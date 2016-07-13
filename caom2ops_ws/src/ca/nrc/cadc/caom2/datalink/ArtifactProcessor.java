@@ -76,6 +76,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Artifact;
@@ -113,9 +114,6 @@ import java.util.UUID;
 public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
-    
-    private static URI SODA_SYNC_STD = URI.create("ivo://ivoa.net/std/SODA#sync-1.0");
-    private static URI SODA_ASYNC_STD = URI.create("ivo://ivoa.net/std/SODA#async-1.0");
     
     private static URI SODA_SYNC = URI.create("ivo://cadc.nrc.ca/soda#sync");
     private static URI SODA_ASYNC = URI.create("ivo://cadc.nrc.ca/soda#async");
@@ -206,7 +204,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_SYNC, Standards.SODA_SYNC_10_URI, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
 
@@ -216,7 +214,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, Standards.SODA_ASYNC_10_URI, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
                 }
@@ -404,16 +402,16 @@ public class ArtifactProcessor
     protected URL getCutoutURL(Artifact a)
         throws MalformedURLException
     {
-        String proto = "http";
-        if ( AuthMethod.CERT.equals(authMethod))
-            proto = "https";
         if ( canCutout(a) )
         {
             StringBuilder sb = new StringBuilder();
             sb.append("?");
             if (runID != null)
                 sb.append("runid=").append(runID);
-            URL ret = registryClient.getServiceURL(CUTOUT_SERVICE, proto, sb.toString());
+//            URL ret = registryClient.getServiceURL(CUTOUT_SERVICE, proto, sb.toString());
+            URL serviceURL = registryClient
+                .getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20_URI, authMethod);
+            URL ret = new URL(serviceURL.toExternalForm() + sb.toString());
             return ret;
         }
         return null;

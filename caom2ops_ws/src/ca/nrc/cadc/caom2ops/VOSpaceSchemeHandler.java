@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2ops;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CredUtil;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
@@ -141,30 +142,24 @@ public class VOSpaceSchemeHandler implements SchemeHandler
         String errorMessage = null;
         try
         {
-            String proto = "http";
+            AuthMethod authMethod = AuthMethod.ANON;
             try
             {
                 if (CredUtil.checkCredentials())
                 {
-                    proto = "https";
+                    authMethod = AuthMethod.CERT;
                 }
             }
             catch (CertificateException ex)
             {
-                proto = "http";
+                authMethod = AuthMethod.ANON;
                 log.debug("caller has invalid delegated certficate - using http for vospace calls", ex);
             }
 
             try
             {
-                RegistryClient rc = new RegistryClient();
                 VOSURI vuri = new VOSURI(uri);
-                URL url = rc.getServiceURL(vuri.getServiceURI(), proto);
-                String baseURL = url.toExternalForm();
-                VOSpaceClient vosClient = new VOSpaceClient(baseURL);
-                
-                // TODO: switch to this once VOSpaceClient is fixed
-                //VOSpaceClient vosClient = new VOSpaceClient(vuri.getServiceURI());
+                VOSpaceClient vosClient = new VOSpaceClient(vuri.getServiceURI());
 
                 List<Protocol> protocols = new ArrayList<Protocol>();
                 if ( AuthMethod.CERT.equals(authMethod))
