@@ -467,7 +467,7 @@ public class ObservationHarvester extends Harvester
                                 harvestSkip.put(skip);
                             
                             // TBD: delete previous version of obs?
-                            //destObservationDAO.delete(o.getID());
+                            destObservationDAO.delete(o.getID());
                             log.debug("committing HarvestSkip transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
                             log.debug("commit HarvestSkip: OK");
