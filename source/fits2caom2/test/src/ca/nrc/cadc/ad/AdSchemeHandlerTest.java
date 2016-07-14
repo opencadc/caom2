@@ -68,6 +68,8 @@
 */
 package ca.nrc.cadc.ad;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -93,8 +95,8 @@ public class AdSchemeHandlerTest
         throws Exception
     {
         RegistryClient rc = new RegistryClient();
-        this.baseHttpURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), "http", "/pub");
-        this.baseHttpsURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), "https", "/pub");
+        this.baseHttpURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.ANON);
+        this.baseHttpsURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.CERT);
     }
 
     @BeforeClass

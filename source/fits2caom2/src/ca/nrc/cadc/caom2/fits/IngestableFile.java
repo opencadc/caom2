@@ -69,7 +69,9 @@
 package ca.nrc.cadc.caom2.fits;
 
 import ca.nrc.cadc.ad.AdSchemeHandler;
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
@@ -123,9 +125,8 @@ public class IngestableFile
      * is on the local file system.
      *
      * @param uri URI to the file
-     * @param just use local file
+     * @param localFile just use local file
      * @param sslEnabled certificates are available for a secure download.
-     * @throws ca.nrc.cadc.fits2caom2.exceptions.IngestException
      */
     public IngestableFile(URI uri, File localFile, boolean sslEnabled)
     {
@@ -199,8 +200,7 @@ public class IngestableFile
      * @throws InterruptedException 
      * @throws RuntimeException 
      * @throws IOException 
-     * @throws URISyntaxException 
-     * @throws ca.nrc.cadc.fits2caom.exceptions.IngestException
+     * @throws URISyntaxException
      */
     public File get() 
     	throws URISyntaxException, IOException, RuntimeException, InterruptedException
@@ -347,38 +347,29 @@ public class IngestableFile
         VOSURI src = new VOSURI(uri);
         URI serverUri = src.getServiceURI();
         RegistryClient reg = new RegistryClient();
-        
-        try
+
+        if (this.sslEnabled)
         {
-	        if (this.sslEnabled)
-	        {
-	            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-	            baseURL = reg.getServiceURL(serverUri, "https");
-	        }
-	        else
-	        {
-	            protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-	            baseURL = reg.getServiceURL(serverUri, "http");
-	        }
-	
-	        if (baseURL == null)
-	        {
-	            log.error("failed to find service URL for " + serverUri);
-	            throw new RuntimeException("BUG: failed to find CADC VOSpace service URL");
-	        }
+            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+            baseURL = reg.getServiceURL(serverUri, Standards.VOSPACE_PROTOCOLS_20, AuthMethod.CERT);
         }
-        catch (MalformedURLException e)
+        else
+        {
+            protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
+            baseURL = reg.getServiceURL(serverUri, Standards.VOSPACE_PROTOCOLS_20, AuthMethod.ANON);
+        }
+
+        if (baseURL == null)
         {
             log.error("failed to find service URL for " + serverUri);
-            log.error("reason: " + e.getMessage());
-            throw new RuntimeException("BUG: failed to find CADC VOSpace service URL", e);
+            throw new RuntimeException("BUG: failed to find CADC VOSpace service URL");
         }
 
         log.debug("server uri: " + serverUri);
         log.debug("base url: " + baseURL.toString());
 
         // schema validation is always enabled
-        VOSpaceClient client = new VOSpaceClient(baseURL.toString(), true);
+        VOSpaceClient client = new VOSpaceClient(serverUri);
         View view = new View(new URI(VOS.VIEW_DEFAULT));        
         Transfer transfer = new Transfer(src.getURI(), Direction.pullFromVoSpace, view, protocols);
         ClientTransfer clientTransfer = client.createTransfer(transfer);

@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.ad;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -125,20 +127,32 @@ public class AdSchemeHandler implements SchemeHandler
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
-        String proto = "http";
+        AuthMethod authMethod = AuthMethod.ANON;
         if (secure)
-            proto = "https";
+        {
+            authMethod = AuthMethod.CERT;
+        }
+
+        String path = getPath(uri);
+        URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10, authMethod);
+        if (serviceURL == null)
+        {
+            throw new RuntimeException("Unable to find URL for " + dataURI + ", " +
+                                        Standards.DATA_10 + ", " + authMethod.getValue());
+        }
+
+        URL url;
         try
         {
-            String path = getPath(uri);
-            URL url = rc.getServiceURL(dataURI, proto, path);
-            log.debug(uri + " --> " + url);
-            return url;
+            url = new URL(serviceURL.toExternalForm() + "/" + uri.getSchemeSpecificPart());
         }
-        catch(MalformedURLException ex)
+        catch (MalformedURLException e)
         {
-            throw new RuntimeException("BUG", ex);
+            throw new RuntimeException("Unable to create URL for " + serviceURL.toExternalForm() +
+                                       " and " + uri.toString());
         }
+        log.debug(url + " --> " + url);
+        return url;
     }
     
     private String getPath(URI uri)
