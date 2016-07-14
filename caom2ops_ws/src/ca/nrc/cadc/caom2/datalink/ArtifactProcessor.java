@@ -210,7 +210,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_SYNC, SODA_SYNC_STD, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_SYNC, Standards.SODA_SYNC_10_URI, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
 
@@ -220,7 +220,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, SODA_ASYNC_STD, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, Standards.SODA_ASYNC_10_URI, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
                 }

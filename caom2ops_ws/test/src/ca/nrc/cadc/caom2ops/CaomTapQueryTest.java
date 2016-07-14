@@ -119,7 +119,7 @@ public class CaomTapQueryTest
     private static final String PART_LASTMODIFIED = "2012-07-12T23:16:14.750";
     private static final String PART_MAXLASTMODIFIED = "2012-07-12T23:16:14.750";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
-    private DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    private final DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     
     static
     {
@@ -291,11 +291,6 @@ public class CaomTapQueryTest
             clField.utype = "caom2:Artifact.contentLength";
             clField.xtype = "adql:BIGINT";
             fields.add(clField);
-            
-            VOTableField aField = new VOTableField("alternative", "int");
-            aField.utype = "caom2:Artifact.alternative";
-            aField.xtype = "adql:INTEGER";
-            fields.add(aField);
             
             VOTableField lmField = new VOTableField("lastModified", "char");
             lmField.setArraysize(64);
