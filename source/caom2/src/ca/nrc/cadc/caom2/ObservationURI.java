@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.util.HashUtil;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -87,36 +88,26 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     private String collection;
     private String observationID;
 
-    private transient URI uri;
-
     private ObservationURI() { }
 
     public ObservationURI(URI uri)
     {
-        try
+        if ( !SCHEME.equals(uri.getScheme()))
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+        String ssp = uri.getSchemeSpecificPart();
+        CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
+        String[] cop = ssp.split("/");
+        if (cop.length == 2)
         {
-            if ( !SCHEME.equals(uri.getScheme()))
-                throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
-            String ssp = uri.getSchemeSpecificPart();
-            CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
-            String[] cop = ssp.split("/");
-            if (cop.length == 2)
-            {
-                this.collection = cop[0];
-                this.observationID = cop[1];
-                CaomValidator.assertNotNull(getClass(), "collection", collection);
-                CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-                CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-                CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
-                this.uri = new URI(SCHEME, ssp, null); // discard all other parts
-            }
-            else
-                throw new IllegalArgumentException("input URI has " + cop.length + " parts ("+ssp+"), expected 2: <collection>/<observationID>");
+            this.collection = cop[0];
+            this.observationID = cop[1];
+            CaomValidator.assertNotNull(getClass(), "collection", collection);
+            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new RuntimeException("BUG: failed to init from " + uri, ex);
-        }
+        else
+            throw new IllegalArgumentException("input URI has " + cop.length + " parts ("+ssp+"), expected 2: <collection>/<observationID>");
     }
 
     public ObservationURI(String collection, String observationID)
@@ -127,20 +118,12 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         this.collection = collection;
         this.observationID = observationID;
-        try
-        {
-            this.uri = new URI(SCHEME, collection + "/" + observationID, null);
-        }
-        catch(URISyntaxException ex)
-        {
-            throw new RuntimeException("BUG: failed to init with " + collection + "/" + observationID, ex);
-        }
     }
 
     @Override
     public String toString()
     {
-        return uri.toString();
+        return SCHEME + ":" + collection + "/" + observationID;
     }
 
     public String getCollection()
@@ -155,7 +138,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
 
     public URI getURI()
     {
-        return uri;
+        return URI.create(SCHEME + ":" + collection + "/" + observationID);
     }
 
     @Override
@@ -168,7 +151,7 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         if (o instanceof ObservationURI)
         {
             ObservationURI u = (ObservationURI) o;
-            return ( this.hashCode() == u.hashCode() );
+            return ( this.compareTo(u) == 0 );
         }
         return false;
     }
@@ -176,11 +159,15 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     @Override
     public int hashCode()
     {
-        return uri.hashCode();
+        return getURI().toASCIIString().hashCode();
     }
 
     public int compareTo(ObservationURI u)
     {
-        return this.uri.compareTo(u.uri);
+        int ret = collection.compareTo(u.collection);
+        if (ret != 0)
+            return ret;
+        return observationID.compareTo(u.observationID);
+                
     }
 }

@@ -107,6 +107,8 @@ public final class PositionUtil
 {
     private static final Logger log = Logger.getLogger(PositionUtil.class);
     
+    public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
+    
     private PositionUtil() { }
 
     /**
@@ -182,11 +184,9 @@ public final class PositionUtil
         throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
     }
    
-    static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+    public static List<Polygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
-        // since we compute the union, just blindly use all the polygons
-        // derived from spatial wcs
         List<Polygon> polys = new ArrayList<Polygon>();
         for (Artifact a : artifacts)
         {
@@ -194,26 +194,36 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
                             Polygon poly = toPolygon(c.position);
-                            log.debug("[computeBounds] wcs: " + poly);
-                            if (poly != null)
-                                polys.add(poly);
+                            log.debug("[generatePolygons] wcs: " + poly);
+                            if (poly.getArea() > MAX_SANE_AREA)
+                                throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
+                                    + a.getURI() + "/" + p.getName() + " " + poly.getArea());
+                            polys.add(poly);
                         }
                     }
                 }
             }
         }
+        return polys;
+    }
+    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+        throws NoSuchKeywordException
+    {
+        // since we compute the union, just blindly use all the polygons
+        // derived from spatial wcs
+        List<Polygon> polys = generatePolygons(artifacts, productType);
         if (polys.isEmpty())
             return null;
+        log.debug("[computeBounds] components: " + polys.size());
         Polygon poly = PolygonUtil.union(polys);
-        Polygon p2 = PolygonUtil.union(polys, 0.0);
-        if (p2.getVertices().size() <= poly.getVertices().size())
-            poly = p2; // simpler polygon, more exact vertices with scale=0.0
         log.debug("[computeBounds] done: " + poly);
+        if (poly.getArea() > MAX_SANE_AREA)
+            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + poly.getArea());
         return poly;
     }
 
@@ -235,7 +245,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null && c.position.getAxis().function != null)
                         {
@@ -342,10 +352,9 @@ public final class PositionUtil
         {
             for (Part p : a.getParts())
             {
-                // assumption is only true for all the chunks in a part
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -386,7 +395,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -417,7 +426,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null && c.position.resolution != null)
                         {
@@ -444,7 +453,7 @@ public final class PositionUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.position != null)
                         {
@@ -466,7 +475,7 @@ public final class PositionUtil
         return null;
     }
     
-    static Polygon toPolygon(SpatialWCS wcs)
+    public static Polygon toPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException
     {
         CoordSys coordsys = inferCoordSys(wcs);
@@ -508,6 +517,7 @@ public final class PositionUtil
                         poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
                 }
                 poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+                PolygonUtil.validateSegments(poly);
             }
             else
                 throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
@@ -540,14 +550,14 @@ public final class PositionUtil
             poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
         }
 
+        log.debug("[wcs.toPolygon] native " + poly);
         toICRS(coordsys, poly.getVertices());
         
-        PolygonUtil.validateSegments(poly);
         Point c = poly.getCenter();
         if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
             throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         
-
+        log.debug("[wcs.toPolygon] icrs " + poly);
         return poly;
     }
     

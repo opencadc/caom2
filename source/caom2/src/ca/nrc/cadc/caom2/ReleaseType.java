@@ -67,21 +67,38 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.access;
-
-import java.net.URI;
-import java.util.UUID;
+package ca.nrc.cadc.caom2;
 
 /**
- *
  * @author pdowler
  */
-public class ObservationMetaReadAccess extends ReadAccess
+public enum ReleaseType implements CaomEnum
 {
-    private static final long serialVersionUID = 201202081620L;
-    
-    public ObservationMetaReadAccess(UUID assetID, URI groupID)
+    DATA("data"),
+    META("meta");
+
+    private String value;
+
+    private ReleaseType(String value) { this.value = value; }
+
+    public static ReleaseType toValue(String s)
     {
-        super(assetID, groupID);
+        for (ReleaseType d : values())
+            if (d.value.equals(s))
+                return d;
+        throw new IllegalArgumentException("invalid value: " + s);
+    }
+    
+    public String getValue() { return value; }
+
+    public int checksum()
+    {
+        return value.hashCode();
+    }
+    
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

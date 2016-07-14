@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -541,8 +542,7 @@ public class EnergyUtilTest
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.AUXILIARY;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -591,8 +591,7 @@ public class EnergyUtilTest
             // add some cal artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.CALIBRATION;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -640,8 +639,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ptype;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
@@ -674,8 +672,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
@@ -707,8 +704,7 @@ public class EnergyUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {

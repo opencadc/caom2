@@ -166,7 +166,7 @@ public class ObservationReaderWriterTest
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w20.write(obs, bos);
             String caom20 = bos.toString();
-            log.debug("caom-2.0 XML: " + caom20);
+            log.info("caom-2.0 XML:\n" + caom20);
             assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
             ObservationReader r = new ObservationReader();
             Observation obs20 = r.read(caom20);
@@ -175,23 +175,40 @@ public class ObservationReaderWriterTest
             bos = new ByteArrayOutputStream();
             w21.write(obs, bos);
             String caom21 = bos.toString();
-            log.debug("caom-2.1 XML: " + caom21);
+            log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             Observation obs21 = r.read(caom21);
             
-            // new reader
+            // new writer
             w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
             w21.write(obs, bos);
             caom21 = bos.toString();
-            log.debug("caom-2.1 XML: " + caom21);
+            log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             obs21 = r.read(caom21);
+            
+            ObservationWriter w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w22.write(obs, bos);
+            String caom22 = bos.toString();
+            log.info("caom-2.2 XML:\n" + caom22);
+            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
+            Observation obs22 = r.read(caom22);
+            
+            // new writer
+            w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w22.write(obs, bos);
+            caom22 = bos.toString();
+            log.info("caom-2.2 XML:\n" + caom22);
+            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
+            obs22 = r.read(caom22);
         }
-        catch(ObservationParsingException expected)
-        {
-            log.debug("caught expected exception: " + expected);
-        }
+        //catch(ObservationParsingException expected)
+        //{
+        //    log.info("caught expected exception: " + expected);
+        //}
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
@@ -329,8 +346,8 @@ public class ObservationReaderWriterTest
             ObservationReader reader = new ObservationReader(false);
             Observation returned = reader.read(sb.toString());
             
-            assertEquals("FOO", returned.getCollection());
-            assertEquals("bar", returned.getObservationID());
+            assertEquals("FOO", returned.getURI().getCollection());
+            assertEquals("bar", returned.getURI().getObservationID());
             assertNotNull("has telescope", returned.telescope);
             assertEquals("bar baz 1.0", returned.telescope.getName());
 
@@ -410,7 +427,13 @@ public class ObservationReaderWriterTest
             SimpleObservation observation = getCompleteSimple(5, true);
             testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
 
-            testObservation(observation, false, null, XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
+            // nullify fields introduced after 2.0 so the comparison will work
+            observation.requirements = null;
+            for (Plane p : observation.getPlanes())
+            {
+                p.quality = null;
+            }
+            testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }
         catch(Exception unexpected)
         {
@@ -505,7 +528,9 @@ public class ObservationReaderWriterTest
 
             // Do not write empty elements.
             testObservation(observation, false);
-
+            
+            log.debug("computing transient metadata for planes...");
+                    
             for (Plane p : observation.getPlanes())
             {
                 p.computeTransientState();
@@ -523,8 +548,10 @@ public class ObservationReaderWriterTest
                 Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
             }
 
-            // must force CAOM-2.2 to write transient metadata
-            testObservation(observation, false, "caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+            // CAOM-2.2 is now the default
+            testObservation(observation, true);
+            
+            testObservation(observation, false);
         }
         catch(Exception unexpected)
         {
@@ -583,14 +610,17 @@ public class ObservationReaderWriterTest
         throws Exception
     {
         StringBuilder sb = new StringBuilder();
-        ObservationWriter writer = new ObservationWriter();
-        if (nsPrefix != null)
+        ObservationWriter writer = null;
+        if (forceNS != null)
             writer = new ObservationWriter(nsPrefix, forceNS, writeEmptyCollections);
+        else
+            writer = new ObservationWriter();
+        
         writer.setWriteEmptyCollections(writeEmptyCollections);
         writer.write(observation, sb);
         log.debug(sb.toString());
 
-        // do not validate the XML.
+        // well-formed XML
         ObservationReader reader = new ObservationReader(false);
         Observation returned = reader.read(sb.toString());
 
@@ -599,7 +629,7 @@ public class ObservationReaderWriterTest
         if (!schemaVal)
             return;
         
-        // validate the XML.
+        // valid XML
         reader = new ObservationReader(true);
         returned = reader.read(sb.toString());
 
@@ -614,13 +644,13 @@ public class ObservationReaderWriterTest
         if (expected.getLastModified() != null && actual.getLastModified() != null)
             assertEquals("Observation.lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
     
-        assertNotNull(expected.getCollection());
-        assertNotNull(actual.getCollection());
-        assertEquals(expected.getCollection(), actual.getCollection());
+        assertNotNull(expected.getURI().getCollection());
+        assertNotNull(actual.getURI().getCollection());
+        assertEquals(expected.getURI().getCollection(), actual.getURI().getCollection());
         
-        assertNotNull(expected.getObservationID());
-        assertNotNull(actual.getObservationID());
-        assertEquals(expected.getObservationID(), actual.getObservationID());
+        assertNotNull(expected.getURI().getObservationID());
+        assertNotNull(actual.getURI().getObservationID());
+        assertEquals(expected.getURI().getObservationID(), actual.getURI().getObservationID());
         
         assertNotNull(expected.getAlgorithm());
         assertNotNull(actual.getAlgorithm());
@@ -654,13 +684,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.pi, actual.pi);
         assertEquals(expected.project, actual.project);
         assertEquals(expected.title, actual.title);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareTarget(Target expected, Target actual)
@@ -673,13 +697,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.type, actual.type);
         assertEquals(expected.redshift, actual.redshift);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareTargetPosition(TargetPosition expected, TargetPosition actual)
@@ -717,13 +735,7 @@ public class ObservationReaderWriterTest
         assertEquals(expected.geoLocationX, actual.geoLocationX);
         assertEquals(expected.geoLocationY, actual.geoLocationY);
         assertEquals(expected.geoLocationZ, actual.geoLocationZ);
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
     
     protected void compareInstrument(Instrument expected, Instrument actual)
@@ -734,13 +746,7 @@ public class ObservationReaderWriterTest
         assertNotNull(expected);
         assertNotNull(actual);
         assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.getKeywords().size(), actual.getKeywords().size());
-        
-        int size = expected.getKeywords().size();
-        for (int i = 0; i < size; i++)
-        {
-            assertEquals(expected.getKeywords().get(i), actual.getKeywords().get(i));
-        }
+        assertEquals(expected.getKeywords(), actual.getKeywords());
     }
 
     protected void compareEnvironment(Environment expected, Environment actual)
@@ -1020,10 +1026,11 @@ public class ObservationReaderWriterTest
                 assertEquals("Artifact.lastModified", expectedArtifact.getLastModified().getTime(), actualArtifact.getLastModified().getTime());
             
             assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
+            assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
+            assertEquals(expectedArtifact.getReleaseType(), actualArtifact.getReleaseType());
+            
             assertEquals(expectedArtifact.contentType, actualArtifact.contentType);
             assertEquals(expectedArtifact.contentLength, actualArtifact.contentLength);
-            assertEquals(expectedArtifact.productType, actualArtifact.productType);
-            assertEquals(expectedArtifact.alternative, actualArtifact.alternative);
             
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
         }

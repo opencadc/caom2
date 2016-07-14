@@ -131,7 +131,7 @@ public final class CutoutUtil
             long[] polCut = null;
             long[] obsCut = null;
             for (Chunk c : p.getChunks())
-            {
+            {   
                 // check if spatial axes are part of the actual data array
                 if (shape != null )
                 {
@@ -355,12 +355,12 @@ public final class CutoutUtil
             naxis = Math.max(naxis, c.naxis);
             for (int i=1; i <= c.naxis.intValue(); i++)
             {
-                pos1 = pos1 || (c.positionAxis1 != null && i == c.positionAxis1.intValue());
-                pos2 = pos2 || (c.positionAxis2 != null && i == c.positionAxis2.intValue());
-                nrg = nrg || (c.energyAxis != null && i == c.energyAxis.intValue());
-                tim = tim || (c.timeAxis != null && i == c.timeAxis.intValue());
-                pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis.intValue());
-                obs = obs || (c.observableAxis != null && i == c.observableAxis.intValue());
+                pos1 = pos1 || (c.positionAxis1 != null && i == c.positionAxis1);
+                pos2 = pos2 || (c.positionAxis2 != null && i == c.positionAxis2);
+                nrg = nrg || (c.energyAxis != null && i == c.energyAxis);
+                tim = tim || (c.timeAxis != null && i == c.timeAxis);
+                pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis);
+                obs = obs || (c.observableAxis != null && i == c.observableAxis);
             }
         }
         if (pos1)

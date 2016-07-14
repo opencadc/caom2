@@ -35,14 +35,14 @@ public final class Util
         return Math.floor(d+0.5);
     }
 
-    static ProductType choseProductType(Set<Artifact> artifacts)
+    public static ProductType choseProductType(Set<Artifact> artifacts)
     {
         ProductType ret = null;
         for (Artifact a : artifacts)
         {
-            if (ProductType.SCIENCE.equals(a.productType))
+            if (ProductType.SCIENCE.equals(a.getProductType()))
                 return ProductType.SCIENCE;
-            if (ProductType.CALIBRATION.equals(a.productType))
+            if (ProductType.CALIBRATION.equals(a.getProductType()))
                 ret = ProductType.CALIBRATION;
             for (Part p : a.getParts())
             {
@@ -62,7 +62,8 @@ public final class Util
         return ret;
     }
     
-    static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
+    
+    public static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches)
     {
         if (matches == null)
             return false;

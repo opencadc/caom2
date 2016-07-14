@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2.util;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Location;
@@ -196,7 +198,7 @@ public class CutoutUtilTest
             c.polarizationAxis = 5;
             c.observableAxis = 6;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -287,7 +289,7 @@ public class CutoutUtilTest
             c.position.getAxis().range = null;
             c.position.getAxis().bounds = null;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -345,7 +347,7 @@ public class CutoutUtilTest
             c.position.getAxis().function = wcsf;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -429,7 +431,7 @@ public class CutoutUtilTest
             c.energy.getAxis().range = null;
             c.energy.getAxis().bounds = null;
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null));
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);

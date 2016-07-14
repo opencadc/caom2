@@ -78,6 +78,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -105,8 +106,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
     
     protected AbstractCaomEntity()
     {
-        // default: 64-bit consistent with CAOM-2.0 use of Long
-        this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+        this(false); // default: 64-bit consistent with CAOM-2.0 use of Long
     }
     protected AbstractCaomEntity(boolean fullUUID)
     {
@@ -196,7 +196,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
     /**
      * Compute and return a hash code of the entire state of the entity.
      *
-     * @param incldue transient fields in checksum calculation
+     * @param includeTransient fields in checksum calculation
      * @return 32-bit checksum of all non-null fields, 0 for an empty entity
      */
     public int getStateCode(boolean includeTransient)
@@ -301,6 +301,13 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
         return pname.startsWith(CAOM2);
     }
 
+    // child is a CaomEntity
+    static boolean isChildEntity(Field f)
+        throws IllegalAccessException
+    {
+        return ( CaomEntity.class.isAssignableFrom(f.getType()));
+    }
+    
     // child collection is a non-empty Set<CaomEntity>
     static boolean isChildCollection(Field f)
         throws IllegalAccessException
@@ -330,7 +337,8 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
             boolean inc = true;
             inc = inc && (includeTransient || !Modifier.isTransient(m));
             inc = inc && !Modifier.isStatic(m);
-            inc = inc && !isChildCollection(f);
+            inc = inc && !isChildCollection(f); // 0..* relations to other CaomEntity
+            inc = inc && !isChildEntity(f); // 0..1 relation to other CaomEntity
             if (inc)
                 ret.add(f);
         }
@@ -352,7 +360,7 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
         {
             int m = f.getModifiers();
             if ( !Modifier.isTransient(m) && !Modifier.isStatic(m)
-                    && isChildCollection(f) )
+                    && (isChildCollection(f) || isChildEntity(f)) )
                 ret.add(f);
         }
         Class sc = c.getSuperclass();

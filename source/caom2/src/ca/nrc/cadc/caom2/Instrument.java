@@ -71,8 +71,8 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
@@ -86,7 +86,7 @@ public class Instrument implements Serializable
     private String name;
 
     // mutable contents
-    private final List<String> keywords = new ArrayList<String>();
+    private final Set<String> keywords = new TreeSet<String>();
 
     public Instrument(String name)
     {
@@ -99,7 +99,7 @@ public class Instrument implements Serializable
         return name;
     }
 
-    public List<String> getKeywords()
+    public Set<String> getKeywords()
     {
         return keywords;
     }

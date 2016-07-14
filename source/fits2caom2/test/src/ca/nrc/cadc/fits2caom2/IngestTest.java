@@ -68,9 +68,12 @@
 */
 package ca.nrc.cadc.fits2caom2;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.FitsValuesMap;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
@@ -84,7 +87,6 @@ import java.util.Set;
 import junit.framework.Assert;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -106,7 +108,7 @@ public class IngestTest
     
     public IngestTest() { }
     
-    //@Test
+    @Test
     public void testIngest() throws Exception
     {
         URI[] uris = new URI[] { new URI("ad", "BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03", null) };
@@ -134,6 +136,52 @@ public class IngestTest
     }
     
     @Test
+    public void testIngestArtifactTypes22() throws Exception
+    {
+        URI uri = URI.create("ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03");
+        URI[] uris = new URI[] { uri };
+        String userConfig = null;
+        Map<String,String> config = Util.loadConfig(userConfig);
+
+        Ingest ingest = new Ingest(collection, observationID, productID, uris, config);
+        ingest.setMapping(Util.getFitsMapping(config, "test/config/fits2caom2/artifact-ingest.defaults", null));
+        ingest.setInFile(new File("test/files/simple.xml"));
+        ingest.setOutFile(new File("build/test/xmltestout22.xml"));
+        ingest.run();
+        
+        File out = new File("build/test/xmltestout22.xml");
+        Assert.assertNotNull(out);
+        
+        ObservationReader reader = new ObservationReader();
+        Observation observation = reader.read(new BufferedReader(new FileReader(out)));
+        
+        Assert.assertNotNull(observation);
+        
+        Set<Plane> planes = observation.getPlanes();
+        Assert.assertEquals(2, planes.size());
+        
+        boolean found = false;
+        for (Plane p : planes)
+        {
+            if (p.getProductID().equals(productID))
+            {
+                for (Artifact a : p.getArtifacts())
+                {
+                    if (a.getURI().equals(uri))
+                    {
+                        found = true;
+                        Assert.assertEquals("Artifact.productType", ProductType.THUMBNAIL, a.getProductType());
+                        Assert.assertEquals("Artifact.productType", ReleaseType.META, a.getReleaseType());
+                    }
+                }
+            }
+        }
+        Assert.assertTrue("found plane/artifact " + uri, found);
+        
+        out.delete();
+    }
+    
+    //@Test
     public void testPopulateChunk() throws Exception
     {
         FitsValuesMap defaults = new FitsValuesMap(null, null);        

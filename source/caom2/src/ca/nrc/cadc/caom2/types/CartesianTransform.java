@@ -21,8 +21,9 @@ public class CartesianTransform implements Serializable
     public static final String Y = "y";
     public static final String Z = "z";
     
-    public double a;
-    public String axis;
+    // some tests mess with these
+    double a;
+    String axis;
 
     CartesianTransform() { }
 
@@ -37,7 +38,7 @@ public class CartesianTransform implements Serializable
         return getTransform(cube, force);
     }
 
-    static CartesianTransform getTransform(double[] cube, boolean force)
+    public static CartesianTransform getTransform(double[] cube, boolean force)
     {
         double x1 = cube[0];
         double x2 = cube[1];
@@ -88,6 +89,16 @@ public class CartesianTransform implements Serializable
         return new CartesianTransform();
     }
 
+    public CartesianTransform getInverseTransform()
+    {
+        if (isNull())
+            return this;
+        CartesianTransform ret = new CartesianTransform();
+        ret.axis = axis;
+        ret.a = -1.0*a;
+        return ret;
+    }
+    
     @Override
     public String toString() { return "CartesianTransform[" + axis + "," + a + "]"; }
     
@@ -146,20 +157,6 @@ public class CartesianTransform implements Serializable
         double[] p2 = transformPoint(p);
         return new Point(p2[0], p2[1]);
     }
-    public Point inverseTransform(Point p)
-    {
-        if (isNull())
-            return p;
-        try
-        {
-            a *= -1.0;
-            return transform(p);
-        }
-        finally
-        {
-            a *= -1.0;
-        }
-    }
     
     public Vertex transform(Vertex v)
     {
@@ -169,20 +166,6 @@ public class CartesianTransform implements Serializable
         if ( !SegmentType.CLOSE.equals(v.getType()) )
             p2 = transformPoint(v);
         return new Vertex(p2[0], p2[1], v.getType());
-    }
-    public Vertex inverseTransform(Vertex v)
-    {
-        if (isNull())
-            return v;
-        try
-        {
-            a *= -1.0;
-            return transform(v);
-        }
-        finally
-        {
-            a *= -1.0;
-        }
     }
 
     public Polygon transform(Polygon p)
@@ -197,20 +180,6 @@ public class CartesianTransform implements Serializable
         }
         return ret;
     }
-    public Polygon inverseTransform(Polygon p)
-    {
-        if (isNull())
-            return p;
-        try
-        {
-            a *= -1.0;
-            return transform(p);
-        }
-        finally
-        {
-            a *= -1.0;
-        }
-    }
     
     // impl for above methods
     private double[] transformPoint(Point p)
@@ -220,7 +189,7 @@ public class CartesianTransform implements Serializable
         return CartesianTransform.toLongLat(dp[0], dp[1], dp[2]);
     }
 
-    static double[] getBoundingCube(Polygon poly, double[] cube)
+    public static double[] getBoundingCube(Polygon poly, double[] cube)
     {
         // x1, x2, y1, y2, z1, z2
         if (cube == null)

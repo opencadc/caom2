@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
@@ -124,13 +125,11 @@ public class PolarizationUtilTest
         throws URISyntaxException
     {
         Plane plane = new Plane("foo");
-        Artifact na = new Artifact(new URI("foo", "bar", null));
-        na.productType = ptype;
+        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
-        Chunk nc = new Chunk();
-        np.getChunks().add(nc);
+        np.getChunks().add(new Chunk());
         return plane;
     }
 
@@ -422,18 +421,18 @@ public class PolarizationUtilTest
             c.polarization = w;
             
             // add some aux artifacts, should not effect result
-            Artifact at = new Artifact(new URI("ad:foo/bar/aux"));
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             plane.getArtifacts().add(at);
-            at.productType = ProductType.AUXILIARY;
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
-            Chunk ct = new Chunk();
-            pt.getChunks().add(ct);
+            
+            Chunk ch = new Chunk();
+            pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
-            ct.polarization = new PolarizationWCS(axist);
+            ch.polarization = new PolarizationWCS(axist);
             RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
             RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
-            ct.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             
             
@@ -473,18 +472,17 @@ public class PolarizationUtilTest
             c.polarization = w;
             
             // add some cal artifacts, should not effect result
-            Artifact at = new Artifact(new URI("ad:foo/bar/aux"));
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             plane.getArtifacts().add(at);
-            at.productType = ProductType.CALIBRATION;
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
-            Chunk ct = new Chunk();
-            pt.getChunks().add(ct);
+            Chunk ch = new Chunk();
+            pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
-            ct.polarization = new PolarizationWCS(axist);
+            ch.polarization = new PolarizationWCS(axist);
             RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
             RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
-            ct.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
+            ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             
             

@@ -72,9 +72,7 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -98,7 +96,7 @@ public class Provenance implements Serializable
     public Date lastExecuted;
 
     // mutable contents
-    private final List<String> keywords = new ArrayList<String>();
+    private final Set<String> keywords = new TreeSet<String>();
     private final Set<PlaneURI> inputs = new TreeSet<PlaneURI>();
 
     private Provenance() { }
@@ -125,7 +123,7 @@ public class Provenance implements Serializable
         return inputs;
     }
 
-    public List<String> getKeywords()
+    public Set<String> getKeywords()
     {
         return keywords;
     }

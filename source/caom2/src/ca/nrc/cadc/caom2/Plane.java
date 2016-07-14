@@ -83,14 +83,14 @@ import org.apache.log4j.Logger;
 
 /**
  * A Plane is a specific science data product resulting from an observation. As
- * the data for an observation is processed in different waysm this makes new
+ * the data for an observation is processed in different ways this makes new
  * data products (e.g. new Planes) with different characteristics.
  * 
  * @author pdowler
  */
 public class Plane extends AbstractCaomEntity implements Comparable<Plane>
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201604081100L;
     private static final Logger log = Logger.getLogger(Plane.class);
     
     // immutable state

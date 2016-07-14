@@ -105,7 +105,7 @@ public final class PolarizationUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.polarization != null)
                         {

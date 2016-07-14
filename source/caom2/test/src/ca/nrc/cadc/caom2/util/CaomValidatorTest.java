@@ -70,11 +70,9 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -129,6 +127,35 @@ public class CaomValidatorTest
         }
     }
     
+    @Test
+    public void testAssertValidKeyword()
+    {
+        try
+        {
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo");
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo=42");
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "foo:42");
+            
+            try 
+            { 
+                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo's");
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo bar");
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
     @Test
     public void testAssertPositive()
     {

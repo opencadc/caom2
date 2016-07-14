@@ -84,14 +84,13 @@ public class CompositeObservation extends Observation
     private static final long serialVersionUID = 201110261400L;
 
     // mutable contents
-    private Set<ObservationURI> members;
+    private final Set<ObservationURI> members = new TreeSet<ObservationURI>();
 
     public CompositeObservation(String collection, String observationID, Algorithm algorithm)
     {
         super(collection, observationID, algorithm);
-        this.members =  new TreeSet<ObservationURI>();
     }
-
+    
     public Set<ObservationURI> getMembers()
     {
         return members;

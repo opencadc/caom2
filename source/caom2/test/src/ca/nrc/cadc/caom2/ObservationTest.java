@@ -109,12 +109,12 @@ public class ObservationTest
         {
             Observation o = new SimpleObservation("Stuff", "Thing");
             log.debug("created: " + o);
-            Assert.assertEquals("Stuff", o.getCollection());
-            Assert.assertEquals("Thing", o.getObservationID());
+            Assert.assertEquals("Stuff", o.getURI().getCollection());
+            Assert.assertEquals("Thing", o.getURI().getObservationID());
 
             o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
-            Assert.assertEquals("Stuff", o.getCollection());
-            Assert.assertEquals("Thing", o.getObservationID());
+            Assert.assertEquals("Stuff", o.getURI().getCollection());
+            Assert.assertEquals("Thing", o.getURI().getObservationID());
             
             try 
             {

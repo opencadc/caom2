@@ -12,7 +12,7 @@
 
 <div class="main">
 
-<h1>Common Archive Observation Model (CAOM-2.0)</h1>
+<h1>Common Archive Observation Model (CAOM-2.2)</h1>
 
 <p>
 The Common Archive Observation Model (CAOM) is a general purpose data model for
@@ -33,7 +33,7 @@ that is available through all applications.
     scenarios for data products.
 </p>
 
-<h2>CAOM-2.0 Software</h2>
+<h2>CAOM-2.2 Software</h2>
 
 <div class="table">
 <table class="content">
@@ -42,11 +42,11 @@ that is available through all applications.
     </tr>
     <tr>
         <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/">Table&nbsp;Access&nbsp;Protocol&nbsp;(TAP)</a></td>
-        <td>a web service for ad-hoc querying, including both CAOM-2.0 and the IVOA ObsCore-1.0 Data Model</td>
+        <td>a web service for ad-hoc querying, including both CAOM and the IVOA ObsCore-1.1 Data Model</td>
     </tr>
     <tr class="even">
         <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/">Simple&nbsp;Image&nbsp;Access&nbsp;(SIA)</a></td>
-        <td> a web service for finding calibrated images (uses TAP and CAOM-2.0)</td>
+        <td> a web service for finding calibrated images (uses TAP and CAOM)</td>
     </tr>
     <tr class="odd">
         <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/AdvancedSearch/">AdvancedSearch</a></td>
@@ -54,13 +54,20 @@ that is available through all applications.
     </tr>
     
     <tr class="even">
-        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2repo/">CAOM-2.0 observation repository</a></td>
-        <td>web service to support ingestion of data to CAOM-2.0 at CADC (requires authentication)</td>
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2ops/">CAOM operations services</a></td>
+        <td>a set of high level web services to support use of CAOM: drill down to downloads using IVOA DataLink, 
+            cutouts on data files using IVOA SODA, get detailed metadata of a CAOM observation, get all files
+            in a product (CAOM Plane) from a single download URL</td>
+    </tr>
+    
+    <tr class="even">
+        <td><a href="http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2repo/">CAOM observation repository</a></td>
+        <td>web service to support ingestion of metadadata into CAOM at CADC (requires authentication)</td>
     </tr>
     
     <tr class="odd">
         <td><b>caom2</b></td>
-        <td>java library for manipulating CAOM-2.0 observations, including reading and writing XML documents
+        <td>java library for manipulating CAOM observations, including reading and writing XML documents
             <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
@@ -72,13 +79,13 @@ that is available through all applications.
     
     <tr class="odd">
         <td><b>pyCAOM2</b></td>
-        <td>python library for manipulating CAOM-2.0 observations, including reading and writing XML documents
+        <td>python library for manipulating CAOM observations, including reading and writing XML documents
             <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
     
     <tr class="even">
         <td><b>caom2repoClient</b></td>
-        <td>python command-line tool for interacting with the CAOM-2.0 observation repository, supports
+        <td>python command-line tool for interacting with the CAOM observation repository, supports
             get, put, update, delete (requires authentication)
             <br><a href="http://code.google.com/p/caom/">source code</a></td>
     </tr>
@@ -126,8 +133,10 @@ methods should also be stored for efficient querying (for example, by the TAP se
 <h3>Changes</h3>
 
 <ul>
-	<li>2014-11-18 (red outline): added Observation.requirements with a Status flag; added Plane.qualityFlag; moved 
-		all vocabularies (enumerations) a separate diagram (below)
+    <li>2016-04-07 (red outline): made Artifact.productType mandatory; added mandatory Artifact.release; 
+        changed Part-Chunk cardinality from 0..* to 0..1 and removed Chunk.productType
+    <li>2014-11-18: added Observation.requirements with a Status flag; added Plane.qualityFlag; moved 
+	all vocabularies (enumerations) a separate diagram (below)
     <li>2014-02-10: added restwav (observed rest wavelength) to computed plane energy metadata
     <li>2013-11-26: added moving flag to Target class, added TargetPosition class
     <li>2013-09-08: added PolarizationState literals: POLI (polarized intensity), FPOLI (fractional polarized intensity), 
@@ -182,8 +191,8 @@ literal values used when stored or serialised follow.
 
 <h3>Changes</h3>
 <ul>
-	<li>2014-11-18 (red outline): separate vocabulary (enumerations) diagram, added Status and Quality; 
-        removed ProductType.CATALOG value</li>
+    <li>2016-04-07 (red outline): ; added ProductType.THUMBNAIL (subtype of preview); added ReleaseType vocabulary</li>
+    <li>2014-11-18: separate vocabulary (enumerations) diagram, added Status and Quality; removed ProductType.CATALOG value</li>
 </ul>
 
 <h3>Observation</h3>

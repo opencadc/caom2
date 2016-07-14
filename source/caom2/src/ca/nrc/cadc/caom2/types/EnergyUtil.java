@@ -82,8 +82,8 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
-                    {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
+                    {   
                         if (c.energy != null)
                         {
                             CoordRange1D range = c.energy.getAxis().range;
@@ -149,7 +149,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null)
                         {
@@ -218,7 +218,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null && c.energy.getAxis().function != null)
                         {
@@ -285,7 +285,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null)
                         {
@@ -323,14 +323,14 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null && c.energy.resolvingPower != null)
                         {
                             double num = Util.getNumPixels(c.energy.getAxis());
                             totResolution += c.energy.resolvingPower * num;
                             numPixels += num;
-                         }
+                        }
                     }
                 }
             }
@@ -350,7 +350,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null)
                         {
@@ -380,7 +380,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         if (c.energy != null)
                         {
@@ -418,7 +418,7 @@ public final class EnergyUtil
             {
                 for (Chunk c : p.getChunks())
                 {
-                    if ( Util.useChunk(a.productType, p.productType, c.productType, productType) )
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
                         Double rw = getRestWav(c.energy);
                         if (rw != null)

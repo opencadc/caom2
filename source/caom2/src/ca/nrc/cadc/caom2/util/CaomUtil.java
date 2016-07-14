@@ -70,8 +70,6 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.AbstractCaomEntity;
-import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -87,13 +85,13 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -148,6 +146,7 @@ public class CaomUtil implements Serializable
             Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, d);
+            //log.debug("assignLastModified: " + d.getTime() + " -> " + ce.getClass().getSimpleName() + "." + fieldName);
         }
         catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
@@ -209,7 +208,7 @@ public class CaomUtil implements Serializable
         }
     }
     
-    public static String encodeListString(List<String> strs)
+    public static String encodeListString(Collection<String> strs)
     {
         if (strs == null || strs.isEmpty())
             return null;
@@ -223,7 +222,7 @@ public class CaomUtil implements Serializable
         }
         return sb.toString();
     }
-    public static void decodeListString(String val, List<String> out)
+    public static void decodeListString(String val, Collection<String> out)
     {
         if (val == null)
             return;

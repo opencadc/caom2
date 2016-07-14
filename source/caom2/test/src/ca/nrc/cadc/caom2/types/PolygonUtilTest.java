@@ -204,7 +204,7 @@ public class PolygonUtilTest
         }
     }
 
-    @Test
+    //@Test
     public void testGetConcaveHullFromHole()
     {
         try
@@ -254,7 +254,7 @@ public class PolygonUtilTest
         }
     }
 
-    @Test
+    //@Test
     public void testGetConcaveHullFromClose()
     {
         try
@@ -292,7 +292,7 @@ public class PolygonUtilTest
             
             Polygon actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
-            log.debug("testGetConcaveHullFromClose: " + actual);
+            log.info("testGetConcaveHullFromClose: " + actual);
             Assert.assertTrue(actual.isSimple());
 
             center = actual.getCenter();
@@ -351,7 +351,7 @@ public class PolygonUtilTest
         }
     }
 
-    @Test
+    //@Test
     public void testGetConcaveHullFromFar()
     {
         try
@@ -397,12 +397,54 @@ public class PolygonUtilTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetConvexHull()
     {
         try
         {
+            Polygon p1 = new Polygon(); // 2x2
+            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            Polygon p2 = new Polygon(); // 2x2 above and to the right
+            p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
+            p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex( 7.0, 5.0, SegmentType.LINE));
+            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
+            log.debug("testGetConvexHull: " + p1);
+            log.debug("testGetConvexHull: " + p2);
+
+            Polygon union = PolygonUtil.doUnionCAG(p1, p2);
+            Assert.assertNotNull(union);
+            log.debug("testGetConvexHull: " + union);
+            Assert.assertFalse(union.isSimple());
+            Point center = union.getCenter();
+            Double area = union.getArea();
+            Assert.assertNotNull(center);
+            Assert.assertEquals(4.0, center.cval1, 0.01);
+            Assert.assertEquals(4.0, center.cval2, 0.01);
+
+            Assert.assertNotNull(area);
+            Assert.assertEquals(8.0, area, 0.02); // 4 + 4
+
+            log.debug("computing convex hull from " + union);
+
+            Polygon actual = PolygonUtil.getConvexHull(union);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals("convex hull num verts", 7, actual.getVertices().size());
+            center = actual.getCenter();
+            area = actual.getArea();
+            Assert.assertNotNull(center);
+            Assert.assertEquals(4.0, center.cval1, 0.01);
+            Assert.assertEquals(4.0, center.cval2, 0.01);
+
+            Assert.assertNotNull(area);
+            Assert.assertEquals(20.0, area, 0.1); // 4 + 4 + 12
+            
         }
         catch(Exception unexpected)
         {

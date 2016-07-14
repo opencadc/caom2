@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -253,7 +254,7 @@ public class PositionUtilTest
             
             Polygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
-                log.info("testCoordCircleToPolygon: " + v);
+                log.debug("testCoordCircleToPolygon: " + v);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
             //double expected = Math.PI*0.25; // triangulated
@@ -266,7 +267,7 @@ public class PositionUtilTest
             
             poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
-                log.info("testCoordCircleToPolygon: " + v);
+                log.debug("testCoordCircleToPolygon: " + v);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
             //double expected = Math.PI*0.25; // triangulated
@@ -472,15 +473,7 @@ public class PositionUtilTest
             Polygon poly;
 
             // coordinate range
-            plane = getTestSetRange(1, 1, 1);
-            poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
-            Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(1.0, poly.getArea(), 0.02);
-            Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
-
-            plane = getTestSetRange(1, 1, 2);
+            plane = getTestSetRange(1, 2);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
@@ -488,7 +481,15 @@ public class PositionUtilTest
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
-            plane = getTestSetRange(1, 3, 1);
+            plane = getTestSetRange(1, 2);
+            poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
+            Assert.assertNotNull(poly);
+            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(2.0, poly.getArea(), 0.05);
+            Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+
+            plane = getTestSetRange(1, 3);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
@@ -496,7 +497,7 @@ public class PositionUtilTest
             Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
-            plane = getTestSetRange(4, 1, 1);
+            plane = getTestSetRange(4, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
@@ -505,7 +506,7 @@ public class PositionUtilTest
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
             // coordinate function
-            plane = getTestSetFunction(1, 1, 1);
+            plane = getTestSetFunction(1, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             Assert.assertEquals(5, poly.getVertices().size());
@@ -513,7 +514,7 @@ public class PositionUtilTest
             Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
-            plane = getTestSetFunction(1, 1, 2);
+            plane = getTestSetFunction(1, 2);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
@@ -522,7 +523,7 @@ public class PositionUtilTest
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
-            plane = getTestSetFunction(1, 3, 1);
+            plane = getTestSetFunction(1, 3);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
@@ -531,7 +532,7 @@ public class PositionUtilTest
             Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
 
-            plane = getTestSetFunction(4, 1, 1);
+            plane = getTestSetFunction(4, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
@@ -539,16 +540,6 @@ public class PositionUtilTest
             Assert.assertEquals(4.0, poly.getArea(), 0.1);
             Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
-
-            plane = getTestSetFunction(1, 2, 2);
-            poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
-            Assert.assertNotNull(poly);
-            log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
-            //Assert.assertEquals(5, poly.getVertices().size());
-            Assert.assertEquals(4.0, poly.getArea(), 0.1);
-            Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(11.0, poly.getCenter().cval2, 0.02);
-
         }
         catch(Exception unexpected)
         {
@@ -566,7 +557,7 @@ public class PositionUtilTest
             Polygon poly;
             Dimension2D dim;
 
-            plane = getTestSetFunction(1, 1, 1);
+            plane = getTestSetFunction(1, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -576,7 +567,7 @@ public class PositionUtilTest
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
             // with GAL <-> ICRS transformations
-            plane = getTestSetFunction(1, 1, 1, true);
+            plane = getTestSetFunction(1, 1, true);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -585,7 +576,7 @@ public class PositionUtilTest
             Assert.assertEquals(1000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
-            plane = getTestSetFunction(1, 2, 1);
+            plane = getTestSetFunction(1, 2);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -594,17 +585,7 @@ public class PositionUtilTest
             Assert.assertEquals(2000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
-            plane = getTestSetFunction(1, 2, 2);
-            poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
-            log.debug("[testComputeDimension] dim="+dim);
-            Assert.assertNotNull(dim);
-            Assert.assertEquals(2000L, dim.naxis1, 1L);
-            Assert.assertEquals(2000L, dim.naxis2, 1L);
-
-
-            plane = getTestSetRange(1, 1, 1);
+            plane = getTestSetRange(1, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -615,18 +596,7 @@ public class PositionUtilTest
             Assert.assertEquals(1000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
-            plane = getTestSetRange(1, 1, 2);
-            poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
-            Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
-            log.debug("[testComputeDimension] dim="+dim);
-            Assert.assertNotNull(dim);
-            Assert.assertEquals(2000L, dim.naxis1, 1L);
-            Assert.assertEquals(1000L, dim.naxis2, 1L);
-
-            plane = getTestSetRange(1, 3, 1);
+            plane = getTestSetRange(1, 3);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -637,7 +607,7 @@ public class PositionUtilTest
             Assert.assertEquals(3000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
-            plane = getTestSetRange(4, 1, 1);
+            plane = getTestSetRange(4, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
@@ -666,12 +636,12 @@ public class PositionUtilTest
             Double sz;
             double expectedSize = 0.03; // weighted average of the two chunks
 
-            plane = getTestSetFunction(1, 1, 2);
-            Iterator<Chunk> iter = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator();
-            Chunk c = iter.next();
-            c.position.resolution = 0.02; // arcsec
-            c = iter.next();
-            c.position.resolution = 0.04; // arcsec
+            plane = getTestSetFunction(1, 2);
+            Iterator<Part> pi = plane.getArtifacts().iterator().next().getParts().iterator();
+            Chunk c1 = pi.next().getChunks().iterator().next();
+            Chunk c2 = pi.next().getChunks().iterator().next();
+            c1.position.resolution = 0.02; // arcsec
+            c2.position.resolution = 0.04; // arcsec
             sz = PositionUtil.computeResolution(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeResolution] sz="+sz);
             Assert.assertNotNull(sz);
@@ -695,14 +665,14 @@ public class PositionUtilTest
             Double sz;
             double expectedSize = 3600.0 * 1.0e-3; // arcsec
 
-            plane = getTestSetFunction(1, 1, 1);
+            plane = getTestSetFunction(1, 1);
             sz = PositionUtil.computeSampleSize(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeSampleSize] sz="+sz);
             Assert.assertNotNull(sz);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
             
-            plane = getTestSetRange(1, 1, 1);
+            plane = getTestSetRange(1, 1);
             sz = PositionUtil.computeSampleSize(plane.getArtifacts(), ProductType.SCIENCE);
             log.debug("[testComputeSampleSize] sz="+sz);
             Assert.assertNotNull(sz);
@@ -721,9 +691,8 @@ public class PositionUtilTest
     {
         try
         {
-            Plane plane = getTestSetFunction(1, 1, 2);
-            Iterator<Chunk> iter = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator();
-            Chunk c = iter.next();
+            Plane plane = getTestSetFunction(1, 2);
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Boolean td;
                     
             td = PositionUtil.computeTimeDependent(plane.getArtifacts(), ProductType.SCIENCE);
@@ -752,12 +721,11 @@ public class PositionUtilTest
             Polygon poly;
 
             // coordinate range
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            plane = getTestSetRange(1, 1, ProductType.CALIBRATION);
             // add some aux artifacts, should not effect result
-            Plane tmp = getTestSetRange(1, 1, 3);
+            Plane tmp = getTestSetRange(1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.AUXILIARY;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -784,12 +752,11 @@ public class PositionUtilTest
             Polygon poly;
 
             // coordinate range
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, ProductType.SCIENCE);
             // add some aux artifacts, should not effect result
-            Plane tmp = getTestSetRange(1, 1, 3);
+            Plane tmp = getTestSetRange(1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"));
-            aux.productType = ProductType.CALIBRATION;
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
             
@@ -807,13 +774,13 @@ public class PositionUtilTest
         }
     }
 
-    static Plane getTestSetRange(int numA, int numP, int numC)
+    static Plane getTestSetRange(int numA, int numP)
         throws URISyntaxException
     {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+        return getTestSetRange(numA, numP, ProductType.SCIENCE);
                 
     }
-    static Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    static Plane getTestSetRange(int numA, int numP, ProductType ptype)
         throws URISyntaxException
     {
         double px = 0.5;
@@ -827,28 +794,24 @@ public class PositionUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ptype;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
-                    // just shift to higher values of x for each subsequent chunk
-                    nc.position = getTestRange(px+n*dp, py, sx+n*ds, sy, dp, ds);
-                    n++;
-                }
+                Chunk nc = new Chunk();
+                np.getChunks().add(nc);
+                // just shift to higher values of x for each subsequent chunk
+                nc.position = getTestRange(px+n*dp, py, sx+n*ds, sy, dp, ds);
+                n++;
             }
         }
         log.debug("getTestSetRange: " + n + " chunks");
         return plane;
     }
 
-    static Plane getTestSetBounds(int numA, int numP, int numC)
+    static Plane getTestSetBounds(int numA, int numP)
         throws URISyntaxException
     {
         Plane plane = new Plane("foo");
@@ -856,12 +819,12 @@ public class PositionUtilTest
         return plane;
     }
 
-     static Plane getTestSetFunction(int numA, int numP, int numC)
+     static Plane getTestSetFunction(int numA, int numP)
         throws URISyntaxException
     {
-        return getTestSetFunction(numA, numP, numC, false);
+        return getTestSetFunction(numA, numP, false);
     }
-    static Plane getTestSetFunction(int numA, int numP, int numC, boolean gal)
+    static Plane getTestSetFunction(int numA, int numP, boolean gal)
         throws URISyntaxException
     {
         double px = 0.5;
@@ -873,23 +836,17 @@ public class PositionUtilTest
         int n = 0;
         for (int a=0; a<numA; a++)
         {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null));
-            na.productType = ProductType.SCIENCE;
+            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p=0; p<numP; p++)
             {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
-                    if (numP > 1 && numC > 1)
-                        nc.position = getTestFunction(px , py, sx + p*ds, sy + c*ds, gal);
-                    else // strip
-                        nc.position = getTestFunction(px , py, sx + n*ds, sy, gal);
-                    n++;
-                }
+                Chunk nc = new Chunk();
+                np.getChunks().add(nc);
+                // just shift to higher values of sx for each subsequent chunk
+                nc.position = getTestFunction(px, py, sx + n*ds, sy, gal);
+                n++;
             }
         }
         log.debug("getTestSetFunction: " + n + " chunks");
