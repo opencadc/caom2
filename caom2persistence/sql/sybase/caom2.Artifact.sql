@@ -3,10 +3,10 @@ create table caom2_Artifact
 (
     uri varchar(1024) not null,
 
-    productType varchar(64) null,
+    productType varchar(64) not null,
+    releaseType varchar(16) not null,
     contentType varchar(128) null,
     contentLength bigint null,
-    alternative integer not null,
 
 -- internal
     obsID bigint not null,
