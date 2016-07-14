@@ -115,11 +115,11 @@ public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
     
-    private static URI SODA_SYNC = URI.create("ivo://cadc.nrc.ca/soda#sync");
-    private static URI SODA_ASYNC = URI.create("ivo://cadc.nrc.ca/soda#async");
+    private static URI SODA_SYNC = URI.create("ivo://cadc.nrc.ca/caom2ops");
+    private static URI SODA_ASYNC = URI.create("ivo://cadc.nrc.ca/caom2ops");
     
     private static String CUTOUT = "cutout";
-    private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/cutout");
+    private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
     private AuthMethod authMethod;
     private RegistryClient registryClient;

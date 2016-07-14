@@ -125,7 +125,7 @@ public class LinkQueryRunner implements JobRunner
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
     private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap#sync";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
 
     private static final int MAXREC = 100;
     private static final String GETDOWNLOAD = "getDownloadLinks";
