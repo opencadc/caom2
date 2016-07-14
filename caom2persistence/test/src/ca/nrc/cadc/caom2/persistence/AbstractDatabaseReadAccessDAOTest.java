@@ -346,13 +346,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
-        UUID id = obs.getID();
-        Long assetID = id.getLeastSignificantBits(); // WTF?
-        Util.assignID(obs, id);
+        UUID assetID = obs.getID();
         
         try
         {
-            obsDAO.delete(id);
+            obsDAO.delete(obs.getID());
             
             obsDAO.put(obs);
             
@@ -377,7 +375,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            obsDAO.delete(id);
+            obsDAO.delete(obs.getID());
         }
     }
     

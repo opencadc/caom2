@@ -1,9 +1,8 @@
 
 create table caom2_Observation
 (
---  uri varchar(256) not null                -- TODO: add uri column
-    collection varchar(64) not null,     -- change: rename collection to uri_collection
-    observationID varchar(256) not null, -- change: rename observationID to uri_observationID
+    collection varchar(64) not null,
+    observationID varchar(256) not null, 
     algorithm_name varchar(64) not null,
     type varchar(32) null,
     intent varchar(32) null,
