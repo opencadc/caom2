@@ -22,7 +22,7 @@
     </interface> 
   </capability> 
 
-  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2REPO">
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#obs-1.0">
     <interface xsi:type="vod:ParamHTTP" role="std">
       <accessURL use="base">http://replace.me.com/pub</accessURL>
     </interface>
