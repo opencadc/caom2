@@ -199,7 +199,7 @@ public class PackageRunner implements JobRunner
 
             RegistryClient reg = new RegistryClient();
 //            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, proxyAuthMethod);
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, proxyAuthMethod);
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, proxyAuthMethod);
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             
             SchemeHandler sh = new CaomSchemeHandler();

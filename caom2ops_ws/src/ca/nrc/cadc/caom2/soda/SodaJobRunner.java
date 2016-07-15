@@ -296,7 +296,7 @@ public class SodaJobRunner implements JobRunner
             
             RegistryClient reg = new RegistryClient();
 //            URL tapURL = reg.getServiceURL(TAP, tapProto, null, wsAuth);
-            URL tapURL = reg.getServiceURL(TAP, Standards.TAP_SYNC_11_URI, wsAuth);
+            URL tapURL = reg.getServiceURL(TAP, Standards.TAP_SYNC_11, wsAuth);
             
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
             SchemeHandler sh = new CaomSchemeHandler();
@@ -318,7 +318,7 @@ public class SodaJobRunner implements JobRunner
                     String msg = Base64.encodeString(path.toString());
 
 //                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10, AuthMethod.ANON);
                     URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                     jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
@@ -388,7 +388,7 @@ public class SodaJobRunner implements JobRunner
                                         String msg = Base64.encodeString(path.toString());
 
 //                                        URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                                        URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                                        URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10, AuthMethod.ANON);
                                         URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                         URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                         jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
@@ -414,7 +414,7 @@ public class SodaJobRunner implements JobRunner
                                     String msg = Base64.encodeString(path.toString());
 
 //                                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10_URI, AuthMethod.ANON);
+                                    URL serviceURL = reg.getServiceURL(SODA, Standards.SODA_SYNC_10, AuthMethod.ANON);
                                     URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                     jobResults.add(new Result(RESULT_FAIL+"-"+serialNum++, loc));

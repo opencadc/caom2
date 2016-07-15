@@ -86,7 +86,7 @@ public class AdSchemeHandler implements SchemeHandler
             {
                 am = AuthMethod.ANON;
             }
-            URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10_URI, am);
+            URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10, am);
             URL url = new URL(serviceURL.toExternalForm() + path);
             log.debug(uri + " --> " + url);
             return url;

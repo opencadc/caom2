@@ -466,7 +466,7 @@ public class CaomTapQueryTest
 	    	String runID = "testJobID";
 	    	String tapProto = "http";
 	    	RegistryClient reg = new RegistryClient();
-	    	URL tapURL = reg.getServiceURL(new URI(TAP_URI), Standards.TAP_SYNC_11_URI, AuthMethod.ANON);
+	    	URL tapURL = reg.getServiceURL(new URI(TAP_URI), Standards.TAP_SYNC_11, AuthMethod.ANON);
 	    	
 	        query = new CaomTapQuery(tapURL, runID);    	
 	        Assert.assertEquals(runID, query.getRunID());

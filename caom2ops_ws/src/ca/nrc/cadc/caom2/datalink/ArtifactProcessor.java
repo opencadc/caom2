@@ -210,7 +210,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_SYNC, Standards.SODA_SYNC_10_URI, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_SYNC, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
 
@@ -220,7 +220,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
                     //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, Standards.SODA_ASYNC_10_URI, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
                 }
@@ -418,7 +418,7 @@ public class ArtifactProcessor
                 sb.append("runid=").append(runID);
 //            URL ret = registryClient.getServiceURL(CUTOUT_SERVICE, proto, sb.toString());
             URL serviceURL = registryClient
-                .getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20_URI, authMethod);
+                .getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20, authMethod);
             URL ret = new URL(serviceURL.toExternalForm() + sb.toString());
             return ret;
         }

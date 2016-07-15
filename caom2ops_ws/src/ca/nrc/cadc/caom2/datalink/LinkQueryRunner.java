@@ -216,7 +216,7 @@ public class LinkQueryRunner implements JobRunner
 
             RegistryClient reg = new RegistryClient();
 //            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, queryAuthMethod);
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, queryAuthMethod);
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");

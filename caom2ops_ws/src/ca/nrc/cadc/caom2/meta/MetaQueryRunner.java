@@ -206,7 +206,7 @@ public class MetaQueryRunner implements JobRunner
 
             RegistryClient reg = new RegistryClient();
 //            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, "/sync");
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11_URI, authMethod);
+            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, authMethod);
             log.debug("TAP: " + tapURL.toExternalForm());
             
             
@@ -232,7 +232,7 @@ public class MetaQueryRunner implements JobRunner
             else
             {
 //                URL thisURL = reg.getServiceURL(new URI(META_URI), "http");
-                URL metaURL = reg.getServiceURL(URI.create(META_URI), Standards.META_2x_URI, AuthMethod.ANON);
+                URL metaURL = reg.getServiceURL(URI.create(META_URI), Standards.CAOM2_OBS_20, AuthMethod.ANON);
                 String styleSheetURL = metaURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
                 // force CAOM-2.2 so we write out transient/computed fields
                 ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
