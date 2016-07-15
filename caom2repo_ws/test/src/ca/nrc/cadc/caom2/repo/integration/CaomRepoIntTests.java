@@ -171,11 +171,11 @@ public class CaomRepoIntTests
 
             URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
 
-            URL serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_20_URI, AuthMethod.ANON);
+            URL serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_OBS_20, AuthMethod.ANON);
             AVAIL_URL = new URL(serviceURL.toExternalForm() + "/availability");
             BASE_HTTP_URL = serviceURL.toExternalForm() + "/pub";
 
-            serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_20_URI, AuthMethod.CERT);
+            serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
             BASE_HTTPS_URL = serviceURL.toExternalForm() + "/pub";
 
             log.debug("test service URL: " + BASE_HTTP_URL);
