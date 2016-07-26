@@ -73,6 +73,7 @@ import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.CredUtil;
 import ca.nrc.cadc.reg.client.LocalAuthority;
+import ca.nrc.cadc.reg.Standards;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -143,7 +144,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         try
         {
             LocalAuthority localAuthority = new LocalAuthority();
-            GMS_SERVICE_URI = localAuthority.getServiceURI("gms");
+            GMS_SERVICE_URI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
             CADC_GROUP_URI = new URI("ivo://cadc.nrc.ca/gms#CADC");
         }
         catch(URISyntaxException bug)
