@@ -113,7 +113,7 @@ public class MetaQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
-    private static final String META_URI = "ivo://cadc.nrc.ca/meta";
+    private static final String META_URI = "ivo://cadc.nrc.ca/caom2ops";
     private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     private static final String DEFAULT_FORMAT = "text/xml";
     private static final String JSON_FORMAT = "application/json";

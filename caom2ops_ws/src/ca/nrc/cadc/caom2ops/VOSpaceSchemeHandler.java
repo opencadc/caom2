@@ -142,51 +142,29 @@ public class VOSpaceSchemeHandler implements SchemeHandler
         String errorMessage = null;
         try
         {
-            AuthMethod authMethod = AuthMethod.ANON;
-            try
-            {
-                if (CredUtil.checkCredentials())
-                {
-                    authMethod = AuthMethod.CERT;
-                }
-            }
-            catch (CertificateException ex)
-            {
-                authMethod = AuthMethod.ANON;
-                log.debug("caller has invalid delegated certficate - using http for vospace calls", ex);
-            }
+            VOSURI vuri = new VOSURI(uri);
+            VOSpaceClient vosClient = new VOSpaceClient(vuri.getServiceURI());
 
-            try
-            {
-                VOSURI vuri = new VOSURI(uri);
-                VOSpaceClient vosClient = new VOSpaceClient(vuri.getServiceURI());
+            List<Protocol> protocols = new ArrayList<Protocol>();
+            if ( AuthMethod.CERT.equals(authMethod))
+                protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+            else
+                protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
 
-                List<Protocol> protocols = new ArrayList<Protocol>();
-                if ( AuthMethod.CERT.equals(authMethod))
-                    protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-                else
-                    protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-                
-                Transfer trans = new Transfer(vuri.getURI(), Direction.pullFromVoSpace, protocols);
-                ClientTransfer ct = vosClient.createTransfer(trans);
-                trans = ct.getTransfer();
-                for (Protocol p : trans.getProtocols())
-                {
-                    if ( p.getEndpoint() != null) // first available URL
-                        return p.getEndpoint();
-                }
-                // did not find desired protocol/endpoint
-                if ( ExecutionPhase.ERROR.equals(ct.getPhase()))
-                {
-                    ErrorSummary err = ct.getServerError();
-                    errorMessage = err.getSummaryMessage();
-                }
-            }
-            catch(MalformedURLException ex)
+            Transfer trans = new Transfer(vuri.getURI(), Direction.pullFromVoSpace, protocols);
+            ClientTransfer ct = vosClient.createTransfer(trans);
+            trans = ct.getTransfer();
+            for (Protocol p : trans.getProtocols())
             {
-                throw new RuntimeException("CONFIG ERROR: RegistryClient failed to find vospace base URL", ex);
+                if ( p.getEndpoint() != null) // first available URL
+                    return p.getEndpoint();
             }
-            
+            // did not find desired protocol/endpoint
+            if ( ExecutionPhase.ERROR.equals(ct.getPhase()))
+            {
+                ErrorSummary err = ct.getServerError();
+                errorMessage = err.getSummaryMessage();
+            }
         }
         catch(Throwable t)
         {
