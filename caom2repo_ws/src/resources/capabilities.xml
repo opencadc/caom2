@@ -24,14 +24,14 @@
 
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#obs-1.0">
     <interface xsi:type="vod:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/pub</accessURL>
+      <accessURL use="base">http://replace.me.com/caom2repo/pub</accessURL>
     </interface>
     <interface xsi:type="vod:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/auth</accessURL>
+      <accessURL use="base">http://replace.me.com/caom2repo/auth</accessURL>
       <securityMethod standardID="http://www.w3.org/Protocols/HTTP/1.0/spec.html#BasicAA"/>
     </interface>
     <interface xsi:type="vod:ParamHTTP" role="std">
-      <accessURL use="base">https://replace.me.com/pub</accessURL>
+      <accessURL use="base">https://replace.me.com/caom2repo/pub</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
     </interface>
   </capability>
