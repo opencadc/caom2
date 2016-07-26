@@ -215,7 +215,6 @@ public class LinkQueryRunner implements JobRunner
             }
 
             RegistryClient reg = new RegistryClient();
-//            URL tapURL = reg.getServiceURL(new URI(TAP_URI), tapProto, null, queryAuthMethod);
             URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, queryAuthMethod);
 
             VOTableDocument vot = new VOTableDocument();
@@ -416,6 +415,10 @@ public class LinkQueryRunner implements JobRunner
                 "standardID parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
 
         AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+        if (am == null)
+        {
+            am = AuthMethod.ANON;
+        }
         RegistryClient regClient = new RegistryClient();
         URI serviceID = URI.create(resourceIDParam.getValue());
         URI standardID = URI.create(standardIDParam.getValue());
