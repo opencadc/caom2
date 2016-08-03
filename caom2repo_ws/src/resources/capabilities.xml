@@ -31,6 +31,10 @@
       <securityMethod standardID="http://www.w3.org/Protocols/HTTP/1.0/spec.html#BasicAA"/>
     </interface>
     <interface xsi:type="vod:ParamHTTP" role="std">
+      <accessURL use="base">http://replace.me.com/caom2repo/pub</accessURL>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+    </interface>
+    <interface xsi:type="vod:ParamHTTP" role="std">
       <accessURL use="base">https://replace.me.com/caom2repo/pub</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
     </interface>
