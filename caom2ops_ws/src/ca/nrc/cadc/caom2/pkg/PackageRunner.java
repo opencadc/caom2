@@ -79,6 +79,7 @@ import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
@@ -106,6 +107,7 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.List;
+import java.util.ListIterator;
 import javax.security.auth.Subject;
 
 /**
@@ -209,6 +211,7 @@ public class PackageRunner implements JobRunner
             {
                 PlaneURI uri = new PlaneURI(new URI(suri));
                 List<Artifact> artifacts = query.performQuery(uri, true);
+                stripPreviews(artifacts);
                 if (idList.size() == 1 && artifacts.size() == 1)
                 {
                     // single file result: redirect
@@ -322,6 +325,21 @@ public class PackageRunner implements JobRunner
         sb.append(uri.getParent().getObservationID()).append("-");
         sb.append(uri.getProductID());
         return sb.toString();
+    }
+    
+    public void stripPreviews(List<Artifact> artifacts)
+    {
+        ListIterator<Artifact> iter = artifacts.listIterator();
+        while (iter.hasNext())
+        {
+            Artifact a = iter.next();
+            if ( ProductType.PREVIEW.equals(a.getProductType())
+                || ProductType.THUMBNAIL.equals(a.getProductType()) )
+            {
+                iter.remove();
+                log.debug("stripPreviews: removed " + a.getProductType() + " " + a.getURI());
+            }
+        }
     }
     
     String generatePackageName()
