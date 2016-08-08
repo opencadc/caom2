@@ -438,7 +438,7 @@ public class ObservationHarvester extends Harvester
                         try
                         {
                             log.debug("starting HarvestSkip transaction");
-                            boolean putSkip = false;
+                            boolean putSkip = true;
                             HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
                             if (skip == null)
                                 skip = new HarvestSkip(source, cname, o.getID(), skipMsg);
@@ -447,12 +447,14 @@ public class ObservationHarvester extends Harvester
                                 if (skipMsg != null && !skipMsg.equals(skip.errorMessage))
                                 {
                                     skip.errorMessage = skipMsg; // possible update
-                                    putSkip = true;
                                 }
                                 else
+                                {
                                     log.info("no change in status: " + hs);
+                                    putSkip = false; // avoid timestamp update
+                                }
                             }
-                            log.info(skip);
+                            
 
                             destObservationDAO.getTransactionManager().startTransaction();
 
@@ -464,7 +466,10 @@ public class ObservationHarvester extends Harvester
                             
                             // track the fail
                             if (putSkip)
+                            {
+                                log.info("put: " + skip);
                                 harvestSkip.put(skip);
+                            }
                             
                             // TBD: delete previous version of obs?
                             destObservationDAO.delete(o.getID());
