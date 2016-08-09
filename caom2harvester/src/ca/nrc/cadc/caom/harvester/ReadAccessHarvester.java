@@ -1,7 +1,6 @@
 
 package ca.nrc.cadc.caom.harvester;
 
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
@@ -276,7 +275,7 @@ public class ReadAccessHarvester extends Harvester
                                 // track the fail
                                 harvestSkip.put(skip);
                                 // TBD: delete previous version of entity?
-                                //destAccessDAO.delete(ra.getClass(), ra.getID());
+                                destAccessDAO.delete(ra.getClass(), ra.getID());
 
                                 log.debug("committing harvestSkip transaction");
                                 destAccessDAO.getTransactionManager().commitTransaction();
@@ -344,13 +343,20 @@ public class ReadAccessHarvester extends Harvester
     {
         
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]");
+        int found = 0;
+        int notFound = 0;
         List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
         List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(skip.size());
         for (HarvestSkip hs : skip)
         {
             ReadAccess o = srcAccessDAO.get(entityClass, hs.getSkipID());
+            if (o == null)
+                notFound++;
+            else
+                found++;
             ret.add(new SkippedWrapper<ReadAccess>(o, hs));
         }
+        log.info("getSkipped found: " + found + " not found: " + notFound);
         return ret;
     }
 }

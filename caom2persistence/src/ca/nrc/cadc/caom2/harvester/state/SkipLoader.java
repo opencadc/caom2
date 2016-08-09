@@ -100,7 +100,7 @@ public class SkipLoader
             Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
             ArgumentMap am = new ArgumentMap(args);
             String server = am.getValue("server");
-            String source = am.getValue("source");
+            //String source = am.getValue("source");
             String database = am.getValue("database");
             String schema = am.getValue("schema");
             if (database == null)
@@ -109,9 +109,10 @@ public class SkipLoader
                 schema = "pdowler";
                     
             String fname = am.getValue("fname");
-            if (server == null || source == null || fname == null)
+            if (server == null || fname == null)
             {
-                log.error("usage: skipLoader --server=<pg server> --database=<pgdb> --schema=<pg schema> --source=<SYBASE.cfht.dbo> --fname=<input file>");
+                log.error("usage: skipLoader --server=<pg server> --database=<pgdb> --schema=<pg schema> --fname=<input file>");
+                log.error("   fname format: <source> <cname> <uuid>");
                 System.exit(1);
             }
             Map<String,Object> config = new HashMap<String,Object>();
@@ -127,9 +128,11 @@ public class SkipLoader
             {   
                 String[] parts = s.split(" ");
                 //Long lsb = new Long(parts[0]);
-                UUID id = UUID.fromString(parts[0]);
+                String source = parts[0];
+                String cname = parts[1];
+                UUID id = UUID.fromString(parts[2]);
                 Thread.sleep(1L); // make sure timestamps are spread out
-                HarvestSkip h = new HarvestSkip(source, Observation.class.getSimpleName(), id, null);
+                HarvestSkip h = new HarvestSkip(source, cname, id, null);
                 try
                 {
                     dao.put(h);
