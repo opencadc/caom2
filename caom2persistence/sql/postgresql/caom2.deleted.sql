@@ -1,7 +1,7 @@
 
 create table caom2.DeletedObservation
 (
-    id bigint not null,
+    id uuid not null, -- change: UUID
     lastModified timestamp not null
 )
 tablespace caom_data

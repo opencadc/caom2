@@ -76,13 +76,13 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.dao.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -510,7 +510,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         // new or changed
         int nsc = o.getStateCode(gen.persistTransientState());
         if (s != null)
-            log.debug("updateLastModified: " + s.stateCode + " vs " + nsc);
+            log.info("updateLastModified: stateCode " + s.stateCode + " vs " + nsc);
         if (s == null || s.stateCode.intValue() != nsc)
         {
             Util.assignLastModified(o, now, "lastModified");

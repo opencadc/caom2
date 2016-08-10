@@ -117,7 +117,6 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
-import ca.nrc.cadc.caom2.dao.TransactionManager;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -138,6 +137,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.Collection;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -165,6 +165,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         TEST_KEYWORDS.add("abc");
         TEST_KEYWORDS.add("x=1");
         TEST_KEYWORDS.add("foo=bar");
+        TEST_KEYWORDS.add("foo:42");
         try
         {
             TEST_DATE = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC).parse("1999-01-02 12:13:14.567");
@@ -176,6 +177,7 @@ public abstract class AbstractDatabaseObservationDAOTest
     }
 
     boolean deletionTrack;
+    boolean useLongForUUID;
     DatabaseObservationDAO dao;
     TransactionManager txnManager;
 
@@ -184,9 +186,11 @@ public abstract class AbstractDatabaseObservationDAOTest
         Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
+    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, 
+            boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
+        this.useLongForUUID = useLongForUUID;
         this.deletionTrack = deletionTrack;
         try
         {
@@ -206,7 +210,17 @@ public abstract class AbstractDatabaseObservationDAOTest
             throw ex;
         }
     }
-
+    
+    protected UUID genID()
+    {
+        if (useLongForUUID)
+        {
+            Long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
+    }
+    
     @Before
     public void setup()
         throws Exception
@@ -232,7 +246,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    ////@Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -307,12 +321,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             UUID notFound = dao.getID(uri);
             Assert.assertNull(uri.toString(), notFound);
             
-            Long id = CaomIDGenerator.getInstance().generateID();
-            UUID uuid = new UUID(0L, id); // obsID is currently long == LSB of uuid
+            UUID uuid = genID();
             ObservationURI nuri = dao.getURI(uuid);
-            Assert.assertNull(id.toString(), nuri);
+            Assert.assertNull(uuid.toString(), nuri);
             Observation nobs = dao.get(uuid);
-            Assert.assertNull(id.toString(), nobs);
+            Assert.assertNull(uuid.toString(), nobs);
             
             // should return without failing
             dao.delete(uri);
@@ -646,15 +659,19 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Observation orig = getTestObservation(full, i, false, true);
                 int numPlanes = orig.getPlanes().size();
                 
+                log.info("put: orig");
                 txnManager.startTransaction();
                 dao.put(orig);
                 txnManager.commitTransaction();
+                log.info("put: orig DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
 
+                log.info("get: orig");
                 Observation ret1 = dao.get(orig.getURI());
+                log.info("get: orig DONE");
                 Assert.assertNotNull("found", ret1);
                 Assert.assertEquals(numPlanes, ret1.getPlanes().size());
                 testEqual(orig, ret1);
@@ -662,29 +679,38 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Plane newPlane = getTestPlane(full, "newPlane", i);
                 ret1.getPlanes().add(newPlane);
                 
+                log.info("put: added");
                 txnManager.startTransaction();
                 dao.put(ret1);
                 txnManager.commitTransaction();
+                log.info("put: added DONE");
 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
+                log.info("get: added");
                 Observation ret2 = dao.get(orig.getURI());
+                log.info("get: added DONE");
                 Assert.assertNotNull("found", ret2);
                 Assert.assertEquals(numPlanes+1, ret1.getPlanes().size());
                 testEqual(ret1, ret2);
                 
                 ret2.getPlanes().remove(newPlane);
+                
+                log.info("put: removed");
                 txnManager.startTransaction();
                 dao.put(ret2);
                 txnManager.commitTransaction();
+                log.info("put: removed DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
+                log.info("get: removed");
                 Observation ret3 = dao.get(orig.getURI());
+                log.info("get: removed DONE");
                 Assert.assertNotNull("found", ret3);
                 Assert.assertEquals(numPlanes, ret3.getPlanes().size());
                 testEqual(orig, ret3);
@@ -894,7 +920,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             return;
         }
         long dt = Math.abs(expected.getTime() - actual.getTime());
-        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= 3L));
+        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= TIME_TOLERANCE));
     }
     
     // for comparing release dates: compare second
@@ -947,8 +973,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
 
-        Assert.assertEquals(expected.getCollection(), actual.getCollection());
-        Assert.assertEquals(expected.getObservationID(), actual.getObservationID());
+        Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals("algorithm.name", expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
 
         Assert.assertEquals("type", expected.type, actual.type);
@@ -960,10 +985,10 @@ public abstract class AbstractDatabaseObservationDAOTest
         if (expected.proposal != null)
         {
             Assert.assertEquals("proposal.id", expected.proposal.getID(), actual.proposal.getID());
-            Assert.assertEquals("proposal.keywords", expected.proposal.getKeywords(), actual.proposal.getKeywords());
             Assert.assertEquals("proposal.pi", expected.proposal.pi, actual.proposal.pi);
             Assert.assertEquals("proposal.project", expected.proposal.project, actual.proposal.project);
             Assert.assertEquals("proposal.title", expected.proposal.title, actual.proposal.title);
+            testEqual("proposal.keywords", expected.proposal.getKeywords(), actual.proposal.getKeywords());
         }
         else
             Assert.assertNull("proposal", actual.proposal);
@@ -974,7 +999,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.assertEquals("target.type", expected.target.type, actual.target.type);
             Assert.assertEquals("target.standard", expected.target.standard, actual.target.standard);
             Assert.assertEquals("target.redshift", expected.target.redshift, actual.target.redshift);
-            Assert.assertEquals("target.keywords", expected.target.getKeywords(), actual.target.getKeywords());
+            testEqual("target.keywords", expected.target.getKeywords(), actual.target.getKeywords());
         }
         else
             Assert.assertNull("target", actual.target);
@@ -983,10 +1008,10 @@ public abstract class AbstractDatabaseObservationDAOTest
         {
             Assert.assertNotNull("telescope", actual.telescope);
             Assert.assertEquals("telescope.name", expected.telescope.getName(), actual.telescope.getName());
-            Assert.assertEquals("telescope.keywords", expected.telescope.getKeywords(), actual.telescope.getKeywords());
             Assert.assertEquals("telescope.geoLocationX", expected.telescope.geoLocationX, actual.telescope.geoLocationX);
             Assert.assertEquals("telescope.geoLocationY", expected.telescope.geoLocationY, actual.telescope.geoLocationY);
             Assert.assertEquals("telescope.geoLocationZ", expected.telescope.geoLocationZ, actual.telescope.geoLocationZ);
+            testEqual("telescope.keywords", expected.telescope.getKeywords(), actual.telescope.getKeywords());
         }
         else
             Assert.assertNull("telescope", actual.telescope);
@@ -995,7 +1020,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         {
             Assert.assertNotNull("instrument", actual.instrument);
             Assert.assertEquals("instrument.name", expected.instrument.getName(), actual.instrument.getName());
-            Assert.assertEquals("instrument.keywords", expected.instrument.getKeywords(), actual.instrument.getKeywords());
+            testEqual("instrument.keywords", expected.instrument.getKeywords(), actual.instrument.getKeywords());
         }
         else
             Assert.assertNull("instrument", actual.instrument);
@@ -1025,6 +1050,11 @@ public abstract class AbstractDatabaseObservationDAOTest
         testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
     }
 
+    private void testEqual(String name, Collection<String> expected, Collection<String> actual)
+    {
+        Assert.assertEquals(name, expected, actual);
+    }
+    
     private void testEqual(Plane expected, Plane actual)
     {
         log.debug("testEqual: " + expected + " == " + actual);
@@ -1049,8 +1079,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             Assert.assertEquals(expected.provenance.producer, actual.provenance.producer);
             Assert.assertEquals(expected.provenance.runID, actual.provenance.runID);
             testEqualSeconds("provenance.lastExecuted", expected.provenance.lastExecuted, actual.provenance.lastExecuted);
-            Assert.assertEquals(expected.provenance.getInputs(), actual.provenance.getInputs());
-            Assert.assertEquals(expected.provenance.getKeywords(), actual.provenance.getKeywords());
+            Assert.assertEquals("provenance.inputs", expected.provenance.getInputs(), actual.provenance.getInputs());
+            testEqual("provenance.keywords", expected.provenance.getKeywords(), actual.provenance.getKeywords());
         }
         else
             Assert.assertNull(actual.provenance);

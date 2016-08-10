@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.dao.TransactionManager;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;

@@ -10,10 +10,10 @@ import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.dao.TransactionManager;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
+import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,6 +37,9 @@ public class DeletionHarvester extends Harvester implements Runnable
     private WrapperDAO entityDAO;
     private TransactionManager txnManager;
     
+    private boolean initHarvestState;
+    private Date initDate;
+    
     private DeletionHarvester() { }
 
     /**
@@ -44,7 +47,7 @@ public class DeletionHarvester extends Harvester implements Runnable
      * 
      * @param src source server.database.schema
      * @param dest destination server.database.schema
-     * @param targetClass the class specifying what should be deleted
+     * @param entityClass the class specifying what should be deleted
      * @param batchSize ignored, always full list
      * @throws IOException
      */
@@ -52,10 +55,20 @@ public class DeletionHarvester extends Harvester implements Runnable
         throws IOException
     {
         super(entityClass, src, dest, batchSize, false, dryrun);
-
-
     }
 
+    /**
+     * Initialise harvest state with the current date.
+     * 
+     * @param initHarvestState 
+     */
+    public void setInitHarvestState(boolean initHarvestState)
+    {
+        this.initHarvestState = initHarvestState;
+        if (initHarvestState)
+            this.initDate = new Date(); // timestamp at startup, not when run
+    }
+    
     private void init()
         throws IOException
     {
@@ -213,6 +226,14 @@ public class DeletionHarvester extends Harvester implements Runnable
         {
             HarvestState state = harvestState.get(source, cname);
             log.info("last harvest: " + format(state.curLastModified));
+            
+            if (initHarvestState && state.curLastModified == null)
+            {
+                state.curLastModified = initDate;
+                harvestState.put(state);
+                state = harvestState.get(source, cname);
+                log.info("harvest state initialised to: " + df.format(state.curLastModified));
+            }
 
             Date start = state.curLastModified;
             if (full)

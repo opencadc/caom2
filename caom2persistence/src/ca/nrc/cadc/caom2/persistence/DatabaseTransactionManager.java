@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.dao.TransactionManager;
 import java.sql.SQLException;
 import java.util.Deque;
 import java.util.LinkedList;

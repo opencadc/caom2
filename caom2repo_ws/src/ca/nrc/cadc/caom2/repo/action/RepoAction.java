@@ -89,7 +89,7 @@ import org.springframework.dao.TransientDataAccessResourceException;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.dao.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
@@ -250,11 +250,11 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         }
         catch(RuntimeException unexpected)
         {
-            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri, true);
+            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri.getURI().toASCIIString(), true);
         }
         catch(Error unexpected)
         {
-            handleException(unexpected, 500, "unexpected error: " + path + " " + uri, true);
+            handleException(unexpected, 500, "unexpected error: " + path + " " + uri.getURI().toASCIIString(), true);
         }
         
         return null;

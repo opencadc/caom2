@@ -2,7 +2,7 @@
 create table caom2_Observation
 (
     collection varchar(64) not null,
-    observationID varchar(256) not null,
+    observationID varchar(256) not null, 
     algorithm_name varchar(64) not null,
     type varchar(32) null,
     intent varchar(32) null,
@@ -69,18 +69,18 @@ create index lastModified on caom2_Observation (lastModified)
 create index maxLastModified on caom2_Observation (maxLastModified)
 ;
 
--- reference/join table for composites
---create table caom2_Observation_members
---(
--- internal
---    compositeID bigint not null references caom2_Observation (obsID),
---    simpleID bigint not null references caom2_Observation (obsID)
---)
---lock datarows
---;
+-- reference/join table for composites 
+-- not currently used/tested
+create table caom2_Observation_members
+(
+    compositeID bigint not null references caom2_Observation (obsID),
+    simpleID bigint not null references caom2_Observation (obsID)
+)
+lock datarows
+;
 
---create unique clustered index composite2simple on caom2_Observation_members (compositeID,simpleID)
---;
+create unique clustered index composite2simple on caom2_Observation_members (compositeID,simpleID)
+;
 
---create unique nonclustered index simple2composite on caom2_Observation_members (simpleID,compositeID)
---;
+create unique nonclustered index simple2composite on caom2_Observation_members (simpleID,compositeID)
+;
