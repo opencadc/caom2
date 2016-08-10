@@ -142,7 +142,7 @@ for src in $SOURCES; do
     ACLOGLINK=$LOGDIR/${SOURCE}-ac.latest
 
     ARC=""
-    TRACK=$LOGDIR/${SOURCE}${ALT_ARGS}.run
+    TRACK=$LOGDIR/${SOURCE}${ALT_ARG}.run
     if [ -e $TRACK ]; then
         echo "blocked: $LOG_SUFFIX" >> $TRACK
     else
