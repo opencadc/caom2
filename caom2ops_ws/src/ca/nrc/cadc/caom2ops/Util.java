@@ -52,9 +52,14 @@ public class Util extends CaomUtil
         Object o = data.get(col);
         if (o == null)
             return null;
-        Long lsb = (Long) o;
-        // backwards compatibility of Long ID values
-        return new UUID(0L, lsb);
+        if (o instanceof UUID)
+            return (UUID) o;
+        if (o instanceof Long)
+        {
+            Long lsb = (Long) o;
+            return new UUID(0L, lsb);
+        }
+        throw new UnsupportedOperationException("cannot convert " + o.getClass().getName() + " to UUID");
     }
     public static Long getLong(List<Object> data, Integer col)
     {

@@ -144,7 +144,7 @@ public class CaomTapQuery
     }
     
     // used by meta
-    public Observation performQUery(final ObservationURI uri)
+    public Observation performQuery(final ObservationURI uri)
         throws IOException, UnexpectedContentException
     {
         
