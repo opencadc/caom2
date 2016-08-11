@@ -86,6 +86,11 @@ public class CompositeObservation extends Observation
     // mutable contents
     private final Set<ObservationURI> members = new TreeSet<ObservationURI>();
 
+    /**
+     * @param collection
+     * @param observationID 
+     * @param algorithm
+     */
     public CompositeObservation(String collection, String observationID, Algorithm algorithm)
     {
         super(collection, observationID, algorithm);

@@ -189,24 +189,6 @@ public class PlaneTest
     }
     
     @Test
-    public void testGetURI()
-    {
-        try
-        {
-            ObservationURI uri = new ObservationURI("FOO", "bar");
-            Plane plane = new Plane("foo");
-            
-            PlaneURI puri = plane.getURI(uri);
-            Assert.assertEquals("caom:FOO/bar/foo", puri.getURI().toASCIIString());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
     public void testTransientState()
     {
         try

@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
@@ -350,8 +351,8 @@ public class ObservationWriter implements Serializable
 
         addEntityAttributes(obs, element, dateFormat);
 
-        addElement("collection", obs.getURI().getCollection(), element);
-        addElement("observationID", obs.getURI().getObservationID(), element);
+        addElement("collection", obs.getCollection(), element);
+        addElement("observationID", obs.getObservationID(), element);
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);

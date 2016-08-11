@@ -368,8 +368,8 @@ public class ObservationReader implements Serializable
         Attribute type = root.getAttribute("type", xsiNamespace);
         String tval = type.getValue();
         
-        String collection = getChildText("collection", root, namespace, true);
-        String observationID = getChildText("observationID", root, namespace, true);
+        String collection = getChildText("collection", root, namespace, false);
+        String observationID = getChildText("observationID", root, namespace, false);
         
         // Algorithm.
         Algorithm algorithm = getAlgorithm(root, namespace, rc);

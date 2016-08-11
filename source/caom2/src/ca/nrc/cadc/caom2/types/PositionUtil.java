@@ -200,10 +200,11 @@ public final class PositionUtil
                         {
                             Polygon poly = toPolygon(c.position);
                             log.debug("[generatePolygons] wcs: " + poly);
-                            if (poly.getArea() > MAX_SANE_AREA)
+                            if (poly != null && poly.getArea() > MAX_SANE_AREA)
                                 throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
-                                    + a.getURI() + "/" + p.getName() + " " + poly.getArea());
-                            polys.add(poly);
+                                    + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                            if (poly != null)
+                                polys.add(poly);
                         }
                     }
                 }

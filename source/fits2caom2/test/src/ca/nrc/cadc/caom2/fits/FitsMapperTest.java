@@ -340,7 +340,7 @@ public class FitsMapperTest
         
         Assert.assertEquals(3, keywords.size());
         Assert.assertTrue("the", keywords.contains("the"));
-        Assert.assertTrue("instrument", keywords.contains("provenance"));
+        Assert.assertTrue("provenance", keywords.contains("provenance"));
         Assert.assertTrue("keywords", keywords.contains("keywords"));
         
         Set<PlaneURI> inputs = provenance.getInputs();
@@ -405,7 +405,7 @@ public class FitsMapperTest
         Assert.assertNull(observation.proposal.title);
         Set<String> proposalKeywords = observation.proposal.getKeywords();
         Assert.assertTrue("the", proposalKeywords.contains("the"));
-        Assert.assertTrue("instrument", proposalKeywords.contains("proposal"));
+        Assert.assertTrue("proposal", proposalKeywords.contains("proposal"));
         Assert.assertTrue("keywords", proposalKeywords.contains("keywords"));
         
         Assert.assertNotNull(observation.target);
@@ -414,7 +414,7 @@ public class FitsMapperTest
         Assert.assertNull(observation.target.redshift);
         Set<String> targetKeywords = observation.target.getKeywords();
         Assert.assertTrue("the", targetKeywords.contains("the"));
-        Assert.assertTrue("instrument", targetKeywords.contains("target"));
+        Assert.assertTrue("target", targetKeywords.contains("target"));
         Assert.assertTrue("keywords", targetKeywords.contains("keywords"));
         Assert.assertNull(observation.target.standard);
         
@@ -477,7 +477,7 @@ public class FitsMapperTest
         Assert.assertEquals("proposal title", observation.proposal.title);
         Set<String> proposalKeywords = observation.proposal.getKeywords();
         Assert.assertTrue("the", proposalKeywords.contains("the"));
-        Assert.assertTrue("instrument", proposalKeywords.contains("proposal"));
+        Assert.assertTrue("proposal", proposalKeywords.contains("proposal"));
         Assert.assertTrue("keywords", proposalKeywords.contains("keywords"));
         Assert.assertTrue(observation.target.standard);
         
@@ -487,7 +487,7 @@ public class FitsMapperTest
         Assert.assertEquals(1.0, observation.target.redshift);
         Set<String> targetKeywords = observation.target.getKeywords();
         Assert.assertTrue("the", targetKeywords.contains("the"));
-        Assert.assertTrue("instrument", targetKeywords.contains("target"));
+        Assert.assertTrue("target", targetKeywords.contains("target"));
         Assert.assertTrue("keywords", targetKeywords.contains("keywords"));
         
         Assert.assertNotNull(observation.telescope);
@@ -497,7 +497,7 @@ public class FitsMapperTest
         Assert.assertEquals(3.0, observation.telescope.geoLocationZ);
         Set<String> telescopeKeywords = observation.telescope.getKeywords();
         Assert.assertTrue("the", telescopeKeywords.contains("the"));
-        Assert.assertTrue("instrument", telescopeKeywords.contains("telescope"));
+        Assert.assertTrue("telescope", telescopeKeywords.contains("telescope"));
         Assert.assertTrue("keywords", telescopeKeywords.contains("keywords"));
         
         Assert.assertNotNull(observation.environment);

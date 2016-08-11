@@ -85,38 +85,32 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
     // immutable state
     private ObservationURI parent;
     private String productID;
-
+    
     private transient URI uri;
 
     private PlaneURI() { }
 
     public PlaneURI(URI uri)
     {
-        try
+        if ( !ObservationURI.SCHEME.equals(uri.getScheme()))
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+        String ssp = uri.getSchemeSpecificPart();
+        CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
+        String[] cop = ssp.split("/");
+        if (cop.length == 3)
         {
-            if ( !ObservationURI.SCHEME.equals(uri.getScheme()))
-                throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
-            String ssp = uri.getSchemeSpecificPart();
-            CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
-            String[] cop = ssp.split("/");
-            if (cop.length == 3)
-            {
-                this.parent = new ObservationURI(cop[0], cop[1]);
-                this.productID = cop[2];
-                CaomValidator.assertNotNull(getClass(), "parent", parent);
-                CaomValidator.assertNotNull(getClass(), "productID", productID);
-                CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-                this.uri = new URI(ObservationURI.SCHEME, ssp, null); // discard all other parts
-            }
-            else
-                throw new IllegalArgumentException("input URI has " + cop.length
-                        + " parts ("+ssp+"), expected 3: caom:<collection>/<observationID>/<productID>");
+            this.parent = new ObservationURI(cop[0], cop[1]);
+            this.productID = cop[2];
+            CaomValidator.assertNotNull(getClass(), "parent", parent);
+            CaomValidator.assertNotNull(getClass(), "productID", productID);
+            CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
+            this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new RuntimeException("BUG: failed to init from " + uri, ex);
-        }
+        else
+            throw new IllegalArgumentException("input URI has " + cop.length
+                    + " parts ("+ssp+"), expected 3: caom:<collection>/<observationID>/<productID>");
     }
+    
     public PlaneURI(ObservationURI parent, String productID)
     {
         CaomValidator.assertNotNull(getClass(), "parent", parent);
@@ -125,20 +119,14 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
 
         this.parent = parent;
         this.productID = productID;
-        try
-        {
-            this.uri = new URI(ObservationURI.SCHEME, parent.getCollection() + "/" + parent.getObservationID() + "/" + productID, null);
-        }
-        catch(URISyntaxException ex)
-        {
-            throw new RuntimeException("BUG: failed to init with " + parent + "," + productID, ex);
-        }
+        this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
+        
     }
 
     @Override
     public String toString()
     {
-        return uri.toString();
+        return getURI().toASCIIString();
     }
 
     public URI getURI()
