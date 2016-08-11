@@ -69,25 +69,41 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 /**
- *
+ * Dummy transaction manager that doesn't do anything. This is for use with really
+ * simple persistence layer like a file where you just rely on the write/close to
+ * commit the changes.
+ * 
  * @author pdowler
  */
-public class SybaseDAOTest extends AbstractDatabaseObservationDAOTest
+public class NoOpTransactionManager implements TransactionManager
 {
-    static
+    private boolean txn = false;
+    
+    public void commitTransaction()
     {
-        log = Logger.getLogger(SybaseDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        if (!txn)
+            throw new IllegalStateException("no transaction");
+        txn = false;
     }
 
-    public SybaseDAOTest()
-        throws Exception
+    public boolean isOpen()
     {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
+        return txn;
     }
+
+    public void rollbackTransaction()
+    {
+        if (!txn)
+            throw new IllegalStateException("no transaction");
+        txn = false;
+    }
+
+    public void startTransaction()
+    {
+        if (txn)
+            throw new IllegalStateException("transaction already started");
+        txn = true;
+    }
+
 }

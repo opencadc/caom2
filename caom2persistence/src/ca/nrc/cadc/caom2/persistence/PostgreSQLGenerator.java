@@ -78,12 +78,16 @@ import ca.nrc.cadc.caom2.types.PolygonUtil;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.postgresql.geometric.PGpoint;
@@ -100,9 +104,19 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     
     public PostgreSQLGenerator(String database, String schema)
     {
-        super(database, schema, null, true);
+        super(database, schema);
         this.useIntegerForBoolean = true;
+        this.persistTransientState = true;
         this.persistReadAccessWithAsset = true;
+        this.useLongForUUID = false;
+        this.useIntegerForBoolean = true;
+        super.init();
+        
+        castMap.put("proposal_keywords", "tsvector");
+        castMap.put("target_keywords", "tsvector");
+        castMap.put("telescope_keywords", "tsvector");
+        castMap.put("instrument_keywords", "tsvector");
+        castMap.put("provenance_keywords", "tsvector");
     }
 
     @Override
@@ -146,14 +160,56 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     @Override
     protected String literal(UUID value)
     {
-        // backwards compat with Long id valued in main CAOM tables
-        if (value.getMostSignificantBits() == 0L)
-            return Long.toString(value.getLeastSignificantBits());
-        
         // uuid datatype accepts a string with the standard hex string format
         return "'" + value.toString() + "'";
     }
 
+    @Override
+    protected void safeSetKeywords(StringBuilder sb, PreparedStatement ps, int col, Set<String> vals) 
+        throws SQLException
+    {
+        String val = null;
+        if (vals != null)
+        {
+            StringBuilder buf = new StringBuilder();
+            boolean first = true;
+            for (String v : vals)
+            {
+                String s = v.replace(":", "\\:"); // escape : for use in tsvector
+                if (!first)
+                    buf.append(" ");
+                first = false;
+                buf.append(s);
+            }
+            //buf.append("::tsvector");
+            if (buf.length() > 0)
+                val = buf.toString();
+        }
+        if (val != null)
+        {
+            ps.setString(col, val);
+        }
+        else
+            ps.setNull(col, Types.VARCHAR);
+        if (sb != null)
+        {
+            sb.append(val);
+            sb.append(",");
+        }
+    }
+    
+    @Override
+    protected void getKeywords(ResultSet rs, int col, Set<String> keywords) 
+        throws SQLException
+    {
+        String sval = rs.getString(col);
+        if (sval == null)
+            return; // empty
+        // strip tickmarks from tsvector output
+        String clean = sval.replaceAll("'", "");
+        CaomUtil.decodeListString(clean, keywords);
+    }
+    
     @Override
     protected void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
         throws SQLException

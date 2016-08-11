@@ -28,16 +28,26 @@ doitSYB()
     mkdir -p $TMPSQL
     \cp -f $SQLDIR/*.sql $TMPSQL
 
+echo "drop all"
     $RUNCMD -i $TMPSQL/caom2.drop_all.sql
+echo "create caom2 tables"
     $RUNCMD -i $TMPSQL/caom2.Observation.sql
     $RUNCMD -i $TMPSQL/caom2.Plane.sql
     $RUNCMD -i $TMPSQL/caom2.Artifact.sql
     $RUNCMD -i $TMPSQL/caom2.Part.sql
     $RUNCMD -i $TMPSQL/caom2.Chunk.sql
+echo "create read access tables"
     $RUNCMD -i $TMPSQL/caom2.access.sql
+echo "create deleted tables"
     $RUNCMD -i $TMPSQL/caom2.deleted.sql
-#    $RUNCMD -i $TMPSQL/caom2.permissions.sql
+echo "create harvest tables"
     $RUNCMD -i $TMPSQL/caom2.HarvestState.sql
+    $RUNCMD -i $TMPSQL/caom2.HarvestSkip.sql
+
+## must be dbo to run textptr_fix
+#    $RUNCMD -i $TMPSQL/caom2.textptr_fix.sql
+## no grants needed for library tests
+#    $RUNCMD -i $TMPSQL/caom2.permissions.sql
 }
 
 doitPG()
@@ -59,18 +69,24 @@ doitPG()
         sed -i 's/caom2./'"${DBUSER}".'/g' $sqlFile
     done
     
-
+echo "drop all"
     $RUNCMD < $TMPSQL/caom2.drop_all.sql
+echo "create caom2 tables"
     $RUNCMD < $TMPSQL/caom2.Observation.sql
     $RUNCMD < $TMPSQL/caom2.Plane.sql
     $RUNCMD < $TMPSQL/caom2.Artifact.sql
     $RUNCMD < $TMPSQL/caom2.Part.sql
     $RUNCMD < $TMPSQL/caom2.Chunk.sql
+echo "create read access tables"
     $RUNCMD < $TMPSQL/caom2.access.sql
+echo "create deleted tables"
     $RUNCMD < $TMPSQL/caom2.deleted.sql
-#    $RUNCMD < $TMPSQL/caom2.permissions.sql
+echo "create harvest tables"
     $RUNCMD < $TMPSQL/caom2.HarvestState.sql
     $RUNCMD < $TMPSQL/caom2.HarvestSkip.sql
+echo "create extra indices"
+    $RUNCMD < $TMPSQL/caom2.extra_indices.sql
+#    $RUNCMD < $TMPSQL/caom2.permissions.sql
 }
 
 ## Sybase test setup
@@ -102,4 +118,4 @@ CRED=$(dbrc_get CAOM2_PG_TEST cadctest)
 DBUSER=$(echo $CRED | awk '{print $1}')
 DBPW=$(echo $CRED | awk '{print $2}')
 
-doitPG "psql -h cvodb0 -d cadctest -U $DBUSER -w" $DBUSER
+doitPG "psql --quiet -h cvodbdev -d cadctest -U $DBUSER -w" $DBUSER

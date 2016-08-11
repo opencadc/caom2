@@ -2,7 +2,7 @@
 -- ObservationMetaReadAccess --
 create table caom2.ObservationMetaReadAccess
 (
-    assetID         bigint not null,
+    assetID         uuid not null, -- change: UUID
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,
@@ -21,7 +21,7 @@ tablespace caom_index
 -- PlaneMetaReadAccess --
 create table caom2.PlaneMetaReadAccess
 (
-    assetID         bigint not null,
+    assetID         uuid not null, -- change: UUID
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,
@@ -39,7 +39,7 @@ tablespace caom_index
 -- PlaneDataReadAccess --
 create table caom2.PlaneDataReadAccess
 (
-    assetID         bigint not null,
+    assetID         uuid not null, -- change: UUID
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key using index tablespace caom_index,

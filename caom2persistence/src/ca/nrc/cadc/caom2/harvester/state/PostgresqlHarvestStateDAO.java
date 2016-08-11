@@ -39,17 +39,7 @@ public class PostgresqlHarvestStateDAO extends HarvestStateDAO
     public PostgresqlHarvestStateDAO(DataSource dataSource, String database, String schema)
     {
         super(dataSource, database, schema);
-    }
-    // assuming database is null is sybase and not null is postgresql
-    protected String getTable(String database, String schema)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.append(database);
-        sb.append(".");
-        sb.append(schema);
-        sb.append(".");
-        sb.append("HarvestState");
-        return sb.toString();
+        super.init();
     }
 
     protected void setUUID(PreparedStatement ps, int col, UUID uuid)

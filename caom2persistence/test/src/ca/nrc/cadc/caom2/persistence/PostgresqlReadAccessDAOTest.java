@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -109,7 +110,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     public PostgresqlReadAccessDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", System.getProperty("user.name"), false);
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", System.getProperty("user.name"), false, false);
         this.entityClasses = new Class[]
         {
             ObservationMetaReadAccess.class,
@@ -121,8 +122,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     @Test
     public void testNoAssetFail()
     {
-        UUID assetID = new UUID(0L, CaomIDGenerator.getInstance().generateID());
-            
+        UUID assetID = genID();
         try
         {
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO777");
@@ -154,13 +154,11 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     @Test
     public void testExtendedUpdate()
     {
-        Long sid = 333L; // want same assetID on all assets so test code is simpler
-        UUID id = new UUID(0L, sid);
-        UUID assetID = id;
+        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, id);
+        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, id);
+        Util.assignID(pl, assetID);
         
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
@@ -175,7 +173,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
             
             // cleanup previous test run
-            obsDAO.delete(id);
+            obsDAO.delete(assetID);
             
             obsDAO.put(obs);
             
@@ -306,10 +304,12 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             // HACK: see PostgresqlSQLGenerator.getUpdateAssetSQL
             kCol = gen.getPrimaryKeyColumn(Plane.class);
         }
+        String assetLiteral = dao.gen.literal(expected.getAssetID());
+        
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select count(*) from ").append(assetTable);
-        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID().getLeastSignificantBits());
+        sb.append(" where ").append(kCol).append(" = ").append(assetLiteral);
         sb.append(" and ").append(raCol).append(" @@ '").append(expected.getGroupName()).append("'::tsquery");
         String sql = sb.toString();
         return sql;
@@ -326,10 +326,13 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
             // HACK: see PostgresqlSQLGenerator.getUpdateAssetSQL
             kCol = gen.getPrimaryKeyColumn(Plane.class);
         }
+        
+        String assetLiteral = dao.gen.literal(expected.getAssetID());
+        
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select ").append(raCol).append(" from ").append(assetTable);
-        sb.append(" where ").append(kCol).append(" = ").append(expected.getAssetID().getLeastSignificantBits());
+        sb.append(" where ").append(kCol).append(" = ").append(assetLiteral);
         String sql = sb.toString();
         return sql;
     }
