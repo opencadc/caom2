@@ -214,7 +214,7 @@ public class MetaQueryRunner implements JobRunner
             if (job.getRunID() != null)
                 runID = job.getRunID();
             CaomTapQuery query = new CaomTapQuery(tapURL, runID);
-            Observation obs = query.performQUery(uri);
+            Observation obs = query.performQuery(uri);
             
             if (obs == null)
             {
