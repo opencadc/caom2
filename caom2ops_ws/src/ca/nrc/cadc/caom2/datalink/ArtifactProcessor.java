@@ -121,7 +121,7 @@ public class ArtifactProcessor
     private static String CUTOUT = "cutout";
     private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
-    private AuthMethod authMethod;
+//    private AuthMethod authMethod;
     private RegistryClient registryClient;
     private String runID;
     private SchemeHandler schemeHandler;
@@ -418,7 +418,7 @@ public class ArtifactProcessor
                 sb.append("runid=").append(runID);
 //            URL ret = registryClient.getServiceURL(CUTOUT_SERVICE, proto, sb.toString());
             URL serviceURL = registryClient
-                .getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20, authMethod);
+                .getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20, AuthMethod.ANON);
             URL ret = new URL(serviceURL.toExternalForm() + sb.toString());
             return ret;
         }
