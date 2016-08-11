@@ -1,20 +1,92 @@
 
+-- position
+create index Plane_position_i1
+        on caom2.Plane using gist (position_bounds)
+tablespace caom_index
+;
+
+create index Plane_position_i2
+        on caom2.Plane using gist (position_bounds_center)
+tablespace caom_index
+;
+create index Plane_position_i3
+        on caom2.Plane (position_bounds_area)
+tablespace caom_index
+;
+
+-- energy
+create index Plane_energy_ib
+      on caom2.Plane using gist (energy_bounds)
+tablespace caom_index
+;
+create index Plane_energy_ibw
+        on caom2.Plane (energy_bounds_width)
+tablespace caom_index
+;
+
+create index Plane_energy_ib1
+        on caom2.Plane (energy_bounds_lower)
+tablespace caom_index
+;
+create index Plane_energy_ib2
+        on caom2.Plane (energy_bounds_upper)
+tablespace caom_index
+;
+
+create index Plane_energy_iss
+        on caom2.Plane (energy_sampleSize)
+tablespace caom_index
+;
+
+create index Plane_energy_irw
+        on caom2.Plane (energy_restwav)
+tablespace caom_index
+where energy_restwav is not null
+;
+
+-- time
+create index Plane_time_ib
+      on caom2.Plane using gist (time_bounds)
+tablespace caom_index
+;
+create index Plane_time_ibw
+        on caom2.Plane (time_bounds_width)
+tablespace caom_index
+;
+
+create index Plane_time_ib1
+        on caom2.Plane (time_bounds_lower)
+tablespace caom_index
+;
+create index Plane_time_ib2
+        on caom2.Plane (time_bounds_upper)
+tablespace caom_index
+;
+
+create index Plane_polar_is
+        on caom2.Plane (polarization_states)
+tablespace caom_index
+;
+
 -- case-sensitive
 create index i_collection_instrument
     on caom2.Observation (collection, instrument_name)
     tablespace caom_index
 ;
 
+-- hardware config: telescope,instrument
 create index i_telescope_instrument
     on caom2.Observation (telescope_name, instrument_name)
     tablespace caom_index
 ;
 
+-- astronomical result search: emBand,dataProductType,calibrationLevel
 create index Plane_i_emBand_dataProductType
     on caom2.Plane (energy_emBand,dataProductType)
     tablespace caom_index
 ;
 
+-- aka filter 
 create index i_bandpassName
     on caom2.Plane (energy_bandpassName)
     tablespace caom_index
@@ -27,7 +99,7 @@ create index i_provenance_runid
 
 -- case-insensitive
 
-create index Observation_i_collectionID_lower
+create index Observation_i_observationID_lower
     on caom2.Observation ( lower(observationID) )
     tablespace caom_index
 ;
@@ -59,28 +131,39 @@ create index Observation_i_proposal_id_lower_pattern
     tablespace caom_index
 ;
 
-create index Observation_i_telescope_keywords_lower_pattern
-    on caom2.Observation ( lower(telescope_keywords) varchar_pattern_ops )
+-- change: remove index(lower(telescope_keywords))
+-- change: index(telescope_keywords) for tsvector @@ tsquery
+create index Observation_i_tel_kw
+    on caom2.Observation using GIN (telescope_keywords)
     tablespace caom_index
 ;
 
-create index Observation_i_instrument_keywords_lower_pattern
-    on caom2.Observation ( lower(instrument_keywords) varchar_pattern_ops )
+-- change: remove index(lower(instrument_keywords))
+-- change: index(instrument_keywords) for tsvector @@ tsquery
+create index Observation_i_instr_kw
+    on caom2.Observation using GIN (instrument_keywords)
     tablespace caom_index
 ;
 
-create index Observation_i_proposal_title_lower_pattern
-    on caom2.Observation ( lower(proposal_title) varchar_pattern_ops )
+-- change: index(target_keywords) for tsvector @@ tsquery
+create index Observation_i_targ_kw
+    on caom2.Observation using GIN (target_keywords)
     tablespace caom_index
 ;
 
-create index Observation_i_proposal_keywords_lower_pattern
-    on caom2.Observation ( lower(proposal_keywords) varchar_pattern_ops )
+-- change: remove index(lower(proposal_title))
+
+-- change: remove index(lower(proposal_keywords))
+-- change: index(proposal_keywords) for tsvector @@ tsquery
+create index Observation_i_prop_kw
+    on caom2.Observation using GIN (proposal_keywords)
     tablespace caom_index
 ;
 
-create index Plane_i_provenance_keywords_lower_pattern
-    on caom2.Plane ( lower(provenance_keywords) varchar_pattern_ops )
+-- change: remove index(lower(provenance_keywords))
+-- change: index(provenance_keywords) for tsvector @@ tsquery
+create index Plane_i_prov_kw
+    on caom2.Plane using GIN (provenance_keywords)
     tablespace caom_index
 ;
 

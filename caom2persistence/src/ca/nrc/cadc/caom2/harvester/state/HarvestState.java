@@ -84,14 +84,13 @@ public class HarvestState
     
     // internal
     String source;
-    Integer code;
     String cname;
 
     Date lastModified;
-    Long id;
+    UUID id;
 
     public String toString()
     {
-        return "HarvestState[" + source + "," + code + "," + cname + ": " + curLastModified + "," + curID +  "]";
+        return "HarvestState[" + source + "," + cname + ": " + curLastModified + "," + curID +  "]";
     }
 }

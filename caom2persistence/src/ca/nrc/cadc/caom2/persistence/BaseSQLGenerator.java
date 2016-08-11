@@ -126,7 +126,6 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.PolygonUtil;
-import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -162,6 +161,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
@@ -205,6 +205,8 @@ public class BaseSQLGenerator implements SQLGenerator
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistTransientState = false; // persist computed plane metadata
     protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
+    protected boolean useLongForUUID = false;
+    protected String fakeSchemaTablePrefix = null;
     
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
@@ -217,6 +219,9 @@ public class BaseSQLGenerator implements SQLGenerator
 
     // map of Class to String[] with all the column names
     protected final Map<Class,String[]> columnMap = new TreeMap<Class,String[]>(new ClassComp());
+    
+    // map of column names whose values must be cast in insert or update
+    protected final Map<String,String> castMap = new TreeMap<String,String>();
 
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class,String> aliasMap = new TreeMap<Class,String>(new ClassComp());
@@ -227,20 +232,31 @@ public class BaseSQLGenerator implements SQLGenerator
     
     private BaseSQLGenerator() { }
     
-    public BaseSQLGenerator(String database, String schema, String tablePrefix, boolean persistComputedValues)
+    public BaseSQLGenerator(String database, String schema)
     { 
         this.database = database;
         this.schema = schema;
-        this.persistTransientState = persistComputedValues;
-        
+    }
+    
+    /**
+     * Subclasses must call this after configuring various settings:
+     * <br/>
+     * Configurable flags and their default values:
+     * <pre>
+     * protected boolean persistTransientState = false;      // persist computed metadata
+     * protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
+     * protected boolean useLongForUUID = false;             // extract 64-bits from UUID and store as bigint
+     * protected String fakeSchemaTablePrefix = null;        // table-name prefix for implementations that don't use schema
+     * </pre>
+     */
+    protected void init()
+    {
         for (Class c : ENTITY_CLASSES)
         {
             String s = c.getSimpleName();
-            if (tablePrefix != null)
+            if (fakeSchemaTablePrefix != null)
             {
-                //if (!s.startsWith("Deleted") && s.endsWith("ReadAccess"))
-                //    s += "_new"; // temporary hack
-                tableMap.put(c, tablePrefix + s);
+                tableMap.put(c, fakeSchemaTablePrefix + s);
             }
             else
                 tableMap.put(c, s);
@@ -250,11 +266,9 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             String s = c.getSimpleName();
             s = s.replace("Skeleton", ""); // skeleton classes read from underlying tables
-            if (tablePrefix != null)
+            if (fakeSchemaTablePrefix != null)
             {
-                //if (s.endsWith("ReadAccess"))
-                //    s += "_new"; // temporary hack
-                tableMap.put(c, tablePrefix + s);
+                tableMap.put(c, fakeSchemaTablePrefix + s);
             }
             else
                 tableMap.put(c, s);
@@ -285,7 +299,7 @@ public class BaseSQLGenerator implements SQLGenerator
 
             "lastModified", "maxLastModified", "stateCode", "obsID"
         };
-        if (persistComputedValues)
+        if (persistTransientState)
         {
             String[] computedObsColumns = new String[]
             {
@@ -320,26 +334,26 @@ public class BaseSQLGenerator implements SQLGenerator
             "lastModified", "maxLastModified", "stateCode", "planeID"
         };
 
-        if (persistComputedValues)
+        if (persistTransientState)
         {
             String[] computedPlaneColumns = new String[]
             {
                 "planeURI",
                 
                 // position
-                "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size", "position_bounds_encoded",
+                "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size",
                 "position_dimension1", "position_dimension2",
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
                 // energy
-                "energy_emBand", "energy_bounds", "energy_bounds_cval1", "energy_bounds_cval2", "energy_bounds_width",
+                "energy_emBand", "energy_bounds", "energy_bounds_lower", "energy_bounds_upper", "energy_bounds_width",
                 "energy_freqWidth", "energy_freqSampleSize",
                 "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
                 "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
                 "energy_restwav",
 
                 // time
-                "time_bounds", "time_bounds_cval1", "time_bounds_cval2", "time_bounds_width",
+                "time_bounds", "time_bounds_lower", "time_bounds_upper", "time_bounds_width",
                 "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
 
                 // polarization
@@ -365,7 +379,7 @@ public class BaseSQLGenerator implements SQLGenerator
             "uri", "productType", "releaseType", "contentType", "contentLength",
             "lastModified", "maxLastModified", "stateCode", "artifactID"
         };
-        if (persistComputedValues)
+        if (persistTransientState)
         {
             String[] computedColumns = new String[]
             {
@@ -391,7 +405,7 @@ public class BaseSQLGenerator implements SQLGenerator
             "name", "productType",
             "lastModified", "maxLastModified", "stateCode", "partID"
         };
-        if (persistComputedValues)
+        if (persistTransientState)
         {
             String[] computedColumns = new String[]
             {
@@ -481,7 +495,7 @@ public class BaseSQLGenerator implements SQLGenerator
 
             "lastModified", "maxLastModified", "stateCode", "chunkID"
         };
-        if (persistComputedValues)
+        if (persistTransientState)
         {
             String[] computedColumns = new String[]
             {
@@ -553,11 +567,12 @@ public class BaseSQLGenerator implements SQLGenerator
         sb.append(getObservationSelect(depth, skeleton));
         sb.append(" WHERE ");
         sb.append(alias);
-        sb.append(".collection = ");
+        // TODO: use uri column directly in future
+        sb.append(".").append("collection").append(" = ");
         sb.append(literal(uri.getCollection()));
         sb.append(" AND ");
         sb.append(alias);
-        sb.append(".observationID = ");
+        sb.append(".").append("observationID").append(" = ");
         sb.append(literal(uri.getObservationID()));
         String orderBy = getOrderColumns(depth);
         if (skeleton)
@@ -834,9 +849,13 @@ public class BaseSQLGenerator implements SQLGenerator
         for (int c=0; c<cols.length; c++)
         {
             if (c > 0)
-                sb.append(",?");
-            else
-                sb.append("?");
+                sb.append(",");
+            sb.append("?");
+            
+            // experimental cast support
+            String cast = castMap.get(cols[c]);
+            if (cast != null)
+                sb.append("::").append(cast);
         }
         sb.append(")");
 
@@ -856,6 +875,11 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb.append(",");
             sb.append(cols[c]);
             sb.append(" = ?");
+            
+            // experimental cast support
+            String cast = castMap.get(cols[c]);
+            if (cast != null)
+                sb.append("::").append(cast);
         }
         sb.append(" WHERE ");
         sb.append(getPrimaryKeyColumn(clz));
@@ -1007,7 +1031,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
             int col = 1;
             safeSetString(sb, ps, col++, ra.getGroupName());
-            safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+            else
+                safeSetUUID(sb, ps, col++, ra.getAssetID());
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -1071,7 +1098,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, obs.proposal.pi);
                 safeSetString(sb, ps, col++, obs.proposal.project);
                 safeSetString(sb, ps, col++, obs.proposal.title);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.proposal.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.proposal.getKeywords());
             }
             else
             {
@@ -1091,7 +1118,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetBoolean(sb, ps, col++, obs.target.standard);
                 safeSetDouble(sb, ps, col++, obs.target.redshift);
                 safeSetBoolean(sb, ps, col++, obs.target.moving);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.target.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.target.getKeywords());
             }
             else
             {
@@ -1100,7 +1127,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetBoolean(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetBoolean(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.targetPosition != null)
             {
@@ -1127,7 +1154,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationX);
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationY);
                 safeSetDouble(sb, ps, col++, obs.telescope.geoLocationZ);
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.telescope.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.telescope.getKeywords());
             }
             else
             {
@@ -1135,17 +1162,17 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.instrument != null)
             {
                 safeSetString(sb, ps, col++, obs.instrument.getName());
-                safeSetString(sb, ps, col++, Util.encodeListString(obs.instrument.getKeywords()));
+                safeSetKeywords(sb, ps, col++, obs.instrument.getKeywords());
             }
             else
             {
                 safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.environment != null)
             {
@@ -1184,7 +1211,11 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, obs.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, obs.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, obs.getStateCode());
-            safeSetLongUUID(sb, ps, col++, obs.getID());
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, obs.getID());
+            else
+                safeSetUUID(sb, ps, col++, obs.getID());
+            
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -1233,7 +1264,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLongUUID(sb, ps, col++, obs.getID()); // obsID
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, obs.getID()); // obsID
+            else
+                safeSetUUID(sb, ps, col++, obs.getID()); // obsID
             
             safeSetString(sb, ps, col++, plane.getProductID());
             safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
@@ -1260,7 +1294,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, plane.provenance.runID);
                 safeSetDate(sb, ps, col++, Util.truncate(plane.provenance.lastExecuted), UTC_CAL);
                 safeSetString(sb, ps, col++, Util.encodePlaneURIs(plane.provenance.getInputs()));
-                safeSetString(sb, ps, col++, Util.encodeListString(plane.provenance.getKeywords()));
+                safeSetKeywords(sb, ps, col++, plane.provenance.getKeywords());
             }
             else
             {
@@ -1272,7 +1306,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, null);
                 safeSetDate(sb, ps, col++, null, UTC_CAL);
                 safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
 
             if (plane.metrics != null)
@@ -1311,7 +1345,6 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
                     safeSetDouble(sb, ps, col++, pos.bounds.getArea());
                     safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                    safeSetBinary(sb, ps, col++, PositionUtil.encode(pos.bounds));
                 }
                 else
                 {
@@ -1319,7 +1352,6 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetPoint(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
-                    safeSetBinary(sb, ps, col++, null);
                 }
 
                 if (pos.dimension != null)
@@ -1404,8 +1436,11 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, plane.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, plane.getStateCode());
-            safeSetLongUUID(sb, ps, col++, plane.getID());
-
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, plane.getID());
+            else
+                safeSetUUID(sb, ps, col++, plane.getID());
+                
             if (sb != null)
                 log.debug(sb.toString());
         }
@@ -1456,8 +1491,16 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLongUUID(sb, ps, col++, plane.getID());
-            safeSetLongUUID(sb, ps, col++, obs.getID());
+            if (useLongForUUID)
+            {
+                safeSetLongUUID(sb, ps, col++, plane.getID());
+                safeSetLongUUID(sb, ps, col++, obs.getID());
+            }
+            else
+            {
+                safeSetUUID(sb, ps, col++, plane.getID());
+                safeSetUUID(sb, ps, col++, obs.getID());
+            }
             
             safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
             safeSetString(sb, ps, col++, artifact.getProductType().getValue());
@@ -1471,7 +1514,10 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, artifact.getStateCode());
-            safeSetLongUUID(sb, ps, col++, artifact.getID());
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, artifact.getID());
+            else
+                safeSetUUID(sb, ps, col++, artifact.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1526,9 +1572,18 @@ public class BaseSQLGenerator implements SQLGenerator
 
             int col = 1;
             
-            safeSetLongUUID(sb, ps, col++, artifact.getID()); 
-            safeSetLongUUID(sb, ps, col++, plane.getID());
-            safeSetLongUUID(sb, ps, col++, obs.getID());
+            if (useLongForUUID)
+            {
+                safeSetLongUUID(sb, ps, col++, artifact.getID()); 
+                safeSetLongUUID(sb, ps, col++, plane.getID());
+                safeSetLongUUID(sb, ps, col++, obs.getID());
+            }
+            else
+            {
+                safeSetUUID(sb, ps, col++, artifact.getID()); 
+                safeSetUUID(sb, ps, col++, plane.getID());
+                safeSetUUID(sb, ps, col++, obs.getID());
+            }
             
             safeSetString(sb, ps, col++, part.getName());
 
@@ -1543,7 +1598,10 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, part.getStateCode());
-            safeSetLongUUID(sb, ps, col++, part.getID());
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, part.getID());
+            else
+                safeSetUUID(sb, ps, col++, part.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -1598,10 +1656,20 @@ public class BaseSQLGenerator implements SQLGenerator
                 sb = new StringBuilder();
 
             int col = 1;
-            safeSetLongUUID(sb, ps, col++, part.getID());
-            safeSetLongUUID(sb, ps, col++, artifact.getID());
-            safeSetLongUUID(sb, ps, col++, plane.getID());
-            safeSetLongUUID(sb, ps, col++, obs.getID());
+            if (useLongForUUID)
+            {
+                safeSetLongUUID(sb, ps, col++, part.getID());
+                safeSetLongUUID(sb, ps, col++, artifact.getID());
+                safeSetLongUUID(sb, ps, col++, plane.getID());
+                safeSetLongUUID(sb, ps, col++, obs.getID());
+            }
+            else
+            {
+                safeSetUUID(sb, ps, col++, part.getID());
+                safeSetUUID(sb, ps, col++, artifact.getID());
+                safeSetUUID(sb, ps, col++, plane.getID());
+                safeSetUUID(sb, ps, col++, obs.getID());
+            }
             
             safeSetInteger(sb, ps, col++, chunk.naxis);
             safeSetInteger(sb, ps, col++, chunk.positionAxis1);
@@ -1877,7 +1945,10 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, chunk.getStateCode());
-            safeSetLongUUID(sb, ps, col++, chunk.getID());
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, chunk.getID());
+            else
+                safeSetUUID(sb, ps, col++, chunk.getID());
 
             if (sb != null)
                 log.debug(sb.toString());
@@ -2084,7 +2155,10 @@ public class BaseSQLGenerator implements SQLGenerator
             if (putCount == 0) // complete
             {
                 int col = 1;
-                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+                if (useLongForUUID)
+                    safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+                else
+                    safeSetUUID(sb, ps, col++, ra.getAssetID());
                 safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
                 safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
                 safeSetInteger(sb, ps, col++, ra.getStateCode());
@@ -2094,7 +2168,10 @@ public class BaseSQLGenerator implements SQLGenerator
             {
                 int col = 1;
                 safeSetString(sb, ps, col++, ra.getGroupName()); // short name
-                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+                if (useLongForUUID)
+                    safeSetLongUUID(sb, ps, col++, ra.getAssetID());
+                else
+                    safeSetUUID(sb, ps, col++, ra.getAssetID());
             }
             if (sb != null)
                 log.debug(sb.toString());
@@ -2129,6 +2206,29 @@ public class BaseSQLGenerator implements SQLGenerator
         }
     }
     
+    // default: space-separated words in a single string
+    protected void safeSetKeywords(StringBuilder sb, PreparedStatement ps, int col, Set<String> vals)
+        throws SQLException
+    {
+        // default impl: space-separated
+        String val = CaomUtil.encodeListString(vals);
+        if (val != null)
+            ps.setString(col, val);
+        else
+            ps.setNull(col, Types.VARCHAR);
+        if (sb != null)
+        {
+            sb.append(val);
+            sb.append(",");
+        }
+    }
+    // default: space-separated words in a single string
+    protected void getKeywords(ResultSet rs, int col, Set<String> keywords)
+        throws SQLException
+    {
+        CaomUtil.decodeListString(rs.getString(col), keywords);
+    }
+    
     protected void safeSetDouble(StringBuilder sb, PreparedStatement ps, int col, Double val)
         throws SQLException
     {
@@ -2147,8 +2247,6 @@ public class BaseSQLGenerator implements SQLGenerator
         throws SQLException
     {
         // null UUID is always a bug
-        //String hex = HexUtil.toHex(val.getMostSignificantBits())
-        //    + HexUtil.toHex(val.getLeastSignificantBits());
         ps.setObject(col, val);
         if (sb != null)
         {
@@ -2156,7 +2254,15 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(",");
         }
     }
-     
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final UUID getUUID(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetLongUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
         throws SQLException
     {
@@ -2248,13 +2354,38 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         throw new UnsupportedOperationException();
     }
-
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Point getPoint(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
         throws SQLException
     {
         throw new UnsupportedOperationException();
     }
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Polygon getPolygon(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    // unused: experiment with what custom extract methods would look like
+    // pro: simple con: single column storage only
+    // final: cannot actually be implemented and used yet
+    protected final Interval getInterval(ResultSet rs, int col)
         throws SQLException
     {
         throw new UnsupportedOperationException();
@@ -2312,11 +2443,8 @@ public class BaseSQLGenerator implements SQLGenerator
     
     protected String literal(UUID value)
     {
-        // backwards compat with Long id valued in main CAOM tables
-        if (value.getMostSignificantBits() == 0L)
-            return Long.toString(value.getLeastSignificantBits());
-        
-        return value.toString();
+        // subclass must override this until useLongForUUID is usable for all UUID values
+        throw new UnsupportedOperationException();
     }
     
     protected Class getClassFromUtype(String utype)
@@ -2738,9 +2866,9 @@ public class BaseSQLGenerator implements SQLGenerator
                 return null;
 
             String collection = rs.getString(col++);
-            log.debug("found: collection = " + collection);
             String observationID = rs.getString(col++);
-            log.debug("found: observationID = " + observationID);
+            log.debug("found: uri = " + collection + "/" + observationID);
+            
             Algorithm algorithm = new Algorithm(rs.getString(col++));
             log.debug("found: algorithm = " + algorithm);
 
@@ -2767,7 +2895,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.proposal.pi = rs.getString(col++);
                 o.proposal.project = rs.getString(col++);
                 o.proposal.title = rs.getString(col++);
-                Util.decodeListString(rs.getString(col++), o.proposal.getKeywords());
+                getKeywords(rs, col++, o.proposal.getKeywords());
                 log.debug("found: " + o.proposal);
             }
             else
@@ -2787,7 +2915,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.target.standard = Util.getBoolean(rs, col++);
                 o.target.redshift = Util.getDouble(rs, col++);
                 o.target.moving = Util.getBoolean(rs, col++);
-                Util.decodeListString(rs.getString(col++), o.target.getKeywords());
+                getKeywords(rs, col++, o.target.getKeywords());
                 log.debug("found: " + o.target);
             }
             else
@@ -2821,7 +2949,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 o.telescope.geoLocationX = Util.getDouble(rs, col++);
                 o.telescope.geoLocationY = Util.getDouble(rs, col++);
                 o.telescope.geoLocationZ = Util.getDouble(rs, col++);
-                Util.decodeListString(rs.getString(col++), o.telescope.getKeywords());
+                getKeywords(rs, col++, o.telescope.getKeywords());
                 log.debug("found: " + o.telescope);
             }
             else
@@ -2835,7 +2963,7 @@ public class BaseSQLGenerator implements SQLGenerator
             if (in != null)
             {
                 o.instrument = new Instrument(in);
-                Util.decodeListString(rs.getString(col++), o.instrument.getKeywords());
+                getKeywords(rs, col++, o.instrument.getKeywords());
                 log.debug("found: " + o.instrument);
             }
             else
@@ -2932,7 +3060,7 @@ public class BaseSQLGenerator implements SQLGenerator
         public Plane mapRow(ResultSet rs, int row, int col)
             throws SQLException
         {
-            Long obsID = Util.getLong(rs, col++); // FK
+            UUID obsID = Util.getUUID(rs, col++); // FK
             if (obsID == null)
                 return null;
 
@@ -2977,7 +3105,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 log.debug("found p.provenance.lastExecuted = " + p.provenance.lastExecuted);
                 Util.decodePlaneURIs(rs.getString(col++), p.provenance.getInputs());
                 log.debug("found p.provenance.inpts: " + p.provenance.getInputs().size());
-                Util.decodeListString(rs.getString(col++), p.provenance.getKeywords());
+                getKeywords(rs, col++, p.provenance.getKeywords());
                 log.debug("found p.provenance.keywords: " + p.provenance.getKeywords().size());
             }
             else
@@ -3050,7 +3178,7 @@ public class BaseSQLGenerator implements SQLGenerator
         public Artifact mapRow(ResultSet rs, int row, int col)
             throws SQLException
         {
-            Long planeID = Util.getLong(rs, col++); // FK
+            UUID planeID = Util.getUUID(rs, col++); // FK
             if (planeID == null)
                 return null;
             
@@ -3125,7 +3253,7 @@ public class BaseSQLGenerator implements SQLGenerator
         public Part mapRow(ResultSet rs, int row, int col)
             throws SQLException
         {
-            Long artifactID = Util.getLong(rs, col++); // FK
+            UUID artifactID = Util.getUUID(rs, col++); // FK
             if (artifactID == null)
                 return null;
             
@@ -3187,7 +3315,7 @@ public class BaseSQLGenerator implements SQLGenerator
         public Chunk mapRow(ResultSet rs, int row, int col)
             throws SQLException
         {
-            Long partID = Util.getLong(rs, col++); // FK
+            UUID partID = Util.getUUID(rs, col++); // FK
             if (partID == null)
                 return null;
             

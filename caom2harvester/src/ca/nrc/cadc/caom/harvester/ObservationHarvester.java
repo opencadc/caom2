@@ -9,6 +9,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,6 +42,7 @@ public class ObservationHarvester extends Harvester
     private boolean skipped;
     private Date maxDate;
     private boolean doCollisionCheck = false;
+    private boolean initHarvest = false;
 
     private ObservationHarvester() { }
     
@@ -49,6 +51,11 @@ public class ObservationHarvester extends Harvester
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
         Date d = new Date();
+    }
+
+    public void setInitHarvest(boolean initHarvest)
+    {
+        this.initHarvest = initHarvest;
     }
     
     public void setSkipped(boolean skipped)
@@ -115,12 +122,13 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
             if (num.found > 0)
                 log.info("finished batch: " + num);
-            double failFrac = ((double) num.failed) / ((double) num.found);
-            if (!skipped && failFrac > 0.5)
-            {
-                log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
-                num.abort = true;
-            }
+            
+            //double failFrac = ((double) num.failed - num.handled) / ((double) num.found);
+            //if (!skipped && failFrac > 0.5)
+            //{
+            //    log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
+            //    num.abort = true;
+            //}
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
@@ -129,6 +137,8 @@ public class ObservationHarvester extends Harvester
             full = false; // do not start at beginning again
             if (dryrun)
                 go = false; // no state update -> infinite loop
+            if (initHarvest)
+                go = false; // single batch
         }
         try
         {
@@ -149,6 +159,7 @@ public class ObservationHarvester extends Harvester
         int found = 0;
         int ingested = 0;
         int failed = 0;
+        int handled = 0;
         @Override
         public String toString() { return found + " ingested: " + ingested + " failed: " + failed; }
     }
@@ -264,6 +275,7 @@ public class ObservationHarvester extends Harvester
                 iter.remove(); // allow garbage collection during loop
                 
                 String lastMsg = null;
+                String skipMsg = null;
                 
                 if (!dryrun)
                 {
@@ -319,6 +331,14 @@ public class ObservationHarvester extends Harvester
                                     throw new IllegalStateException("detected harvesting collision: " + o.getURI() 
                                             + " maxLastModified: " + format(o.getMaxLastModified()));
                             }
+                            
+                            // advannce the date before put as there are usually lots of fails
+                            if (skipped)
+                                startDate = hs.lastModified;
+                            
+                            // temporary validation hack to avoid tickmarks in the keywords columns
+                            CaomValidator.validateKeywords(o);
+                            
                             destObservationDAO.put(o);
                       
                         
@@ -336,8 +356,7 @@ public class ObservationHarvester extends Harvester
                             harvestSkip.delete(hs);
                         }
 
-                        if (skipped)
-                            startDate = hs.lastModified;
+                        
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
@@ -347,7 +366,7 @@ public class ObservationHarvester extends Harvester
                 }
                 catch(Throwable oops)
                 {
-                    lastMsg = "unexpected: " + oops.getMessage();
+                    lastMsg = oops.getMessage();
                     String str = oops.toString();
                     if (oops instanceof Error)
                     {
@@ -383,16 +402,24 @@ public class ObservationHarvester extends Harvester
                     {
                         log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
                                 + o.getURI().getURI().toASCIIString());
+                        ret.handled++;
                     }
                     else if  (oops instanceof UncategorizedSQLException)
                     {
                         if (str.contains("spherepoly_from_array"))
                         {
-                            log.error("UNDETECTED illegal polygon: "
-                                    + o.getCollection() + "," + o.getObservationID());
+                            log.error("UNDETECTED illegal polygon: " + o.getURI());
+                            ret.handled++;
                         }
                         else
                             log.error("unexpected exception", oops);
+                    }
+                    else if (oops instanceof IllegalArgumentException
+                            && str.contains("CaomValidator") && str.contains("keywords"))
+                    {
+                        log.error("CONTENT PROBLEM - invalid keywords: " + format(o.getID()) + " "
+                                + o.getURI().getURI().toASCIIString());
+                        ret.handled++;
                     }
                     else
                         log.error("unexpected exception", oops);
@@ -402,39 +429,61 @@ public class ObservationHarvester extends Harvester
                     if (!ok && !dryrun)
                     {
                         log.warn("failed to insert " + o + ": " + lastMsg);
+                        skipMsg = o + ": " + lastMsg;
                         lastMsg = null;
                         destObservationDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
                         tTransaction += System.currentTimeMillis() - t;
                         
-                        // track failures in normal mode, just ignore in skipped mode
-                        if (!skipped)
-                            try
+                        try
+                        {
+                            log.debug("starting HarvestSkip transaction");
+                            boolean putSkip = true;
+                            HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
+                            if (skip == null)
+                                skip = new HarvestSkip(source, cname, o.getID(), skipMsg);
+                            else
                             {
-                                log.debug("starting HarvestSkip transaction");
-                                HarvestSkip skip = harvestSkip.get(source, cname, o.getID());
-                                if (skip == null)
-                                    skip = new HarvestSkip(source, cname, o.getID());
-                                log.info(skip);
+                                if (skipMsg != null && !skipMsg.equals(skip.errorMessage))
+                                {
+                                    skip.errorMessage = skipMsg; // possible update
+                                }
+                                else
+                                {
+                                    log.info("no change in status: " + hs);
+                                    putSkip = false; // avoid timestamp update
+                                }
+                            }
+                            
 
-                                destObservationDAO.getTransactionManager().startTransaction();
+                            destObservationDAO.getTransactionManager().startTransaction();
+
+                            if (!skipped)
+                            {
                                 // track the harvest state progress
                                 harvestState.put(state);
-                                // track the fail
-                                harvestSkip.put(skip);
-                                // TBD: delete previous version of obs?
-                                //destObservationDAO.delete(o.getID());
-                                log.debug("committing HarvestSkip transaction");
-                                destObservationDAO.getTransactionManager().commitTransaction();
-                                log.debug("commit HarvestSkip: OK");
                             }
-                            catch(Throwable oops)
+                            
+                            // track the fail
+                            if (putSkip)
                             {
-                                log.warn("failed to insert HarvestSkip", oops);
-                                destObservationDAO.getTransactionManager().rollbackTransaction();
-                                log.warn("rollback HarvestSkip: OK");
-                                ret.abort = true;
+                                log.info("put: " + skip);
+                                harvestSkip.put(skip);
                             }
+                            
+                            // TBD: delete previous version of obs?
+                            destObservationDAO.delete(o.getID());
+                            log.debug("committing HarvestSkip transaction");
+                            destObservationDAO.getTransactionManager().commitTransaction();
+                            log.debug("commit HarvestSkip: OK");
+                        }
+                        catch(Throwable oops)
+                        {
+                            log.warn("failed to insert HarvestSkip", oops);
+                            destObservationDAO.getTransactionManager().rollbackTransaction();
+                            log.warn("rollback HarvestSkip: OK");
+                            ret.abort = true;
+                        }
                         ret.failed++;
                     }
 

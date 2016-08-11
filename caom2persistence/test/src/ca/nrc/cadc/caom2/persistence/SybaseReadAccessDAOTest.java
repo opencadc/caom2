@@ -95,7 +95,7 @@ public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
     public SybaseReadAccessDAOTest()
         throws Exception
     {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
+        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true, true);
         this.entityClasses = new Class[]
         {
             ObservationMetaReadAccess.class,

@@ -33,6 +33,8 @@ public class CaomHarvester implements Runnable
     private DeletionHarvester planeDataDeleter;
     private DeletionHarvester planeMetaDeleter;
     
+    private boolean init;
+    
     private CaomHarvester() { }
 
     /**
@@ -71,8 +73,8 @@ public class CaomHarvester implements Runnable
             if (!skip)
             {
                 this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                this.planeDataDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
+                this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
+                this.planeDataDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
             }
         }
     }
@@ -85,6 +87,12 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
+    public void setInitHarvesters(boolean init)
+    {
+        this.init = init;
+    }
+
+    
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 
             Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxdate)
         throws IOException
@@ -94,9 +102,9 @@ public class CaomHarvester implements Runnable
         ret.obsHarvester = null;
         ret.obsDeleter = null;
         
-        //ret.observationMetaHarvester = null;
-        //ret.planeMetaHarvester = null;
-        //ret.planeDataHarvester = null;
+        ret.observationMetaHarvester = null;
+        ret.planeMetaHarvester = null;
+        ret.planeDataHarvester = null;
         
         ret.observationMetaDeleter = null;
         ret.planeMetaDeleter = null;
@@ -117,28 +125,51 @@ public class CaomHarvester implements Runnable
         // delete observations before harvest to avoid observationURI conflicts 
         // from delete+create
         if (obsDeleter != null)
+        {
+            obsDeleter.setInitHarvestState(init);
             obsDeleter.run();
-
+        }
         if (obsHarvester != null)
+        {
+            obsHarvester.setInitHarvest(init);
             obsHarvester.run();
-
+        }
+        
         // clean up old access control tuples before harvest to avoid conflicts
         // from delete+create
         if (observationMetaDeleter != null)
+        {
+            observationMetaDeleter.setInitHarvestState(init);
             observationMetaDeleter.run();
+        }
         if (planeDataDeleter != null)
+        {
+            planeDataDeleter.setInitHarvestState(init);
             planeDataDeleter.run();
+        }
         if (planeMetaDeleter != null)
+        {
+            planeMetaDeleter.setInitHarvestState(init);
             planeMetaDeleter.run();
+        }
+        
+        if (init)
+            return; // no point in trying to harvest a batch of ReadAccess tuples
         
         // make sure access control tuples are harvested after observations
         // because they update asset tables and fail if asset is missing
         if (observationMetaHarvester != null)
+        {
             observationMetaHarvester.run();
+        }
         if (planeDataHarvester != null)
+        {
             planeDataHarvester.run();
+        }
         if (planeMetaHarvester != null)
+        {
             planeMetaHarvester.run();
+        }
         
         
     }

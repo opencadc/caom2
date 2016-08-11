@@ -146,7 +146,25 @@ public class BaseSQLGeneratorTest
         DeletedPlaneDataReadAccess.class
     };
 
-    BaseSQLGenerator gen = new BaseSQLGenerator("cadctest", "caom2", null, false);
+    BaseSQLGenerator gen = new DummyBaseSQLGenerator();
+    private class DummyBaseSQLGenerator extends BaseSQLGenerator
+    {
+
+        public DummyBaseSQLGenerator()
+        {
+            super("cadctest", "caom2");
+            super.init();
+        }
+
+        @Override
+        protected String literal(UUID value)
+        {
+            return value.toString(); // syntax doesn't matter / not checked
+        }
+        
+        
+        
+    }
 
     //@Test
     public void testTemplate()

@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -103,15 +104,17 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     protected static Logger log;
 
     boolean deletionTrack;
+    boolean useLongForUUID;
     DatabaseReadAccessDAO dao;
     DatabaseObservationDAO obsDAO;
     DatabaseTransactionManager txnManager;
 
     protected Class[] entityClasses;
 
-    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean deletionTrack)
+    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
+        this.useLongForUUID = useLongForUUID;
         this.deletionTrack = deletionTrack;
         try
         {
@@ -135,6 +138,15 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
     }
 
+    protected UUID genID()
+    {
+        if (useLongForUUID)
+        {
+            Long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
+    }
     @Before
     public void setup()
         throws Exception
@@ -224,12 +236,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        UUID id = new UUID(0L, 666L);
-        UUID assetID = id; // want same assetID on all assets so test code is simpler
+        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, id);
+        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, id);
+        Util.assignID(pl, assetID);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
@@ -242,7 +253,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         try
         {
             // cleanup previous test run
-            obsDAO.delete(id);
+            obsDAO.delete(assetID);
             
             obsDAO.put(obs);
             
@@ -280,12 +291,13 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testRejectDuplicate()
     {
         // random ID is OK since we are testing observation only
-        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
-        UUID id = obs.getID();
-        UUID assetID = id;
-        Util.assignID(obs, id);
+        Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
+        
+        UUID assetID = genID();
+        
+        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, id);
+        Util.assignID(pl, assetID);
         obs.getPlanes().add(pl);
         
         
@@ -333,14 +345,12 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     public void testGetList()
     {
         // random ID is OK since we are testing observation only
-        Observation obs = new SimpleObservation("FOO", "bar="+UUID.randomUUID());
-        UUID id = new UUID(0L, 777L);
-        UUID assetID = id;
-        Util.assignID(obs, id);
+        Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
+        UUID assetID = obs.getID();
         
         try
         {
-            obsDAO.delete(id);
+            obsDAO.delete(obs.getID());
             
             obsDAO.put(obs);
             
@@ -365,7 +375,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            obsDAO.delete(id);
+            obsDAO.delete(obs.getID());
         }
     }
     

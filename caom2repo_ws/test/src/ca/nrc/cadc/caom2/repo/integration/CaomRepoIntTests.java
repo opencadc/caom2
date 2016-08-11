@@ -655,8 +655,7 @@ public class CaomRepoIntTests
         if (urlPath == null)
         {
             // extract the path from the observation
-            urlPath = observation.getCollection() + "/" +
-                    observation.getObservationID();
+            urlPath = observation.getURI().getURI().getSchemeSpecificPart();
         }
         
         ObservationWriter writer = new ObservationWriter();
