@@ -177,7 +177,8 @@ public abstract class HarvestStateDAO
                 sb.append("NULL,");
             }
             setUUID(ps, col++, state.curID);
-
+            sb.append(state.curID).append(",");
+            
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
             sb.append(state.lastModified).append(",");
             setUUID(ps, col++, state.id);
