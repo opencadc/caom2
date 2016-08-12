@@ -160,17 +160,29 @@ public abstract class HarvestStateDAO
         private void loadValues(PreparedStatement ps)
             throws SQLException
         {
+            StringBuilder sb = new StringBuilder("values: ");
             int col = 1;
             ps.setString(col++, state.source);
+            sb.append(state.source).append(",");
             ps.setString(col++, state.cname);
+            sb.append(state.cname).append(",");
             if (state.curLastModified != null)
+            {
                 ps.setTimestamp(col++, new Timestamp(state.curLastModified.getTime()), CAL);
+                sb.append(state.curLastModified).append(",");
+            }
             else
+            {
                 ps.setNull(col++, Types.TIMESTAMP);
+                sb.append("NULL,");
+            }
             setUUID(ps, col++, state.curID);
 
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), CAL);
+            sb.append(state.lastModified).append(",");
             setUUID(ps, col++, state.id);
+            sb.append(state.id).append("");
+            log.debug(sb.toString());
         }
     }
     
