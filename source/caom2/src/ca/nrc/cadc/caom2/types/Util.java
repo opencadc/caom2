@@ -67,22 +67,25 @@ public final class Util
     {
         if (matches == null)
             return false;
-        if (atype != null && matches.equals(atype))
+        if (ctype != null && !matches.equals(ctype))
         {
-            log.debug("useChunk: Artifact.productType="+atype);
+            log.debug("useChunk=false: Chunk.productType="+ctype);
+            return false;
+        }
+        if (ptype != null && !matches.equals(ptype))
+        {
+            log.debug("useChunk=false: Part.productType="+ptype);
+            return false;
+        }
+        // artifact.productType never null
+        if (matches.equals(atype))
+        {
+            log.debug("useChunk=true: Artifact.productType="+atype);
             return true;
         }
-        if (ptype != null && matches.equals(ptype))
-        {
-            log.debug("useChunk: Part.productType="+ptype);
-            return true;
-        }
-        if (ctype != null && matches.equals(ctype))
-        {
-            log.debug("useChunk: Chunk.productType="+ctype);
-            return true;
-        }
-        log.debug("useChunk: productType="+atype + "," + ptype + "," + ctype);
+        
+        
+        log.debug("useChunk=false: productType="+atype + "," + ptype + "," + ctype);
         return false;
     }
     

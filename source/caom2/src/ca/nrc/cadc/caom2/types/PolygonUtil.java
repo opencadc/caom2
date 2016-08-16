@@ -449,6 +449,7 @@ public final class PolygonUtil
             boolean improve = true;
             while (improve) // improving
             {
+                smoothSimpleColinearSegments(p, 0.05); // ~3 deg ~ 0.05 rad
                 smoothSimpleAdjacentVertices(p, 1.0e-2); // 1% of size
                 smoothSimpleColinearSegments(p, 0.05); // ~3 deg ~ 0.05 rad
                 int cur = p.getVertices().size();
@@ -522,7 +523,7 @@ public final class PolygonUtil
                 
                 double len = bc.length();
                 log.debug("[smooth.adjacent] " + bc + " " + len + " triple " + n1 + ","+n2+","+n3);
-                if (len < tol*frac && segs.size() > 4) // realistically: rectangle is the smallest
+                if (segs.size() > 4 && len < tol*frac) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = ab.v1;
 
@@ -586,7 +587,7 @@ public final class PolygonUtil
         log.debug("[smooth.colinear] before: " + segs.size() + " segments");
 
         boolean changed = true;
-        while (changed)
+        while (segs.size() > 4 && changed)
         {
             changed = false;
             // merge colinear segments
@@ -597,7 +598,7 @@ public final class PolygonUtil
                 if (n == segs.size())
                     n = 0; // wrap to first segment
                 Segment bc = segs.get(n);
-                if ( colinear(ab, bc, tol) && segs.size() > 4) // realistically: rectangle is the smallest
+                if (segs.size() > 4 && colinear(ab, bc, tol)) // realistically: rectangle is the smallest
                 {
                     Vertex nv1 = new Vertex(ab.v1.cval1, ab.v1.cval2, SegmentType.LINE);
                     Vertex nv2 = bc.v2;

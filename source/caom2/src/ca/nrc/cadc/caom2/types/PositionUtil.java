@@ -196,6 +196,8 @@ public final class PositionUtil
                 {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
+                        log.debug("generatePolygons: " + a.getURI() + " " 
+                                + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null)
                         {
                             Polygon poly = toPolygon(c.position);
