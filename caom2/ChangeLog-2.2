@@ -10,24 +10,25 @@ changed the implementation of keywords fields in Proposal, Telescope, Instrument
 that the order of keywords is relevant; also specifically forbid use of single-quote and space within a keyword (space was already
 likely to be lost during serialisation or storage and single-quote just causes pain)
 
-added ProductType.THUMBNAIL, name and serialised value TBD?
+added ProductType.THUMBNAIL
 
 added ReleaseType enum (values: DATA, META)
 
-mandatory Artifact.productType (was: optional), default: SCIENCE?
+mandatory Artifact.productType (was: optional), default: SCIENCE set in ObservationReader
 - default+warn needed in code so that current code can read old observations with 
   Artifact.productType=null; will remove the default value in the next version
 
-added mandatory Artifact.releaseType, default: DATA
+added mandatory Artifact.releaseType, default: DATA set in ObservationReader
 
 removed Artifact.alternative (was: optional, ambiguous, never used)
-
-changed Part->Chunk relation from 0..* to 0..1
-removed Chunk.productType
-- Chunk is now "description of a data array in the part" and not one of the "subsections of the array"
-- ObservableAxis will need to be generalised to descibe the whole axis (all Slices) and not just a single Slice
 
 model changes implemented in CAOM-2.2.xsd
 
 added computed Plane metadata (position, energy, time, polarization) structures to CAOM-2.2.xsd 
+
+* postponed to future version:
+changed Part->Chunk relation from 0..* to 0..1
+removed Chunk.productType
+- Chunk is now "description of a data array in the part" and not one of the "subsections of the array"
+- ObservableAxis will need to be generalised to descibe the whole axis (all Slices) and not just a single Slice
 
