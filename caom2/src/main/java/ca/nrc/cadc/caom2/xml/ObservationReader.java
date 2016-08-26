@@ -1361,8 +1361,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
      * @param required is the element expected to be found.
+     * @param rc ReadContext.
      * @return an PolarizationWCS, or null if the document doesn't contain an polarization element.
      * @throws ObservationParsingException 
      */
