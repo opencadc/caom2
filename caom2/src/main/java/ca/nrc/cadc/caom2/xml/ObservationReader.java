@@ -424,7 +424,7 @@ public class ObservationReader implements Serializable
      *
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Algorithm, or null if the document doesn't contain an algorithm element.
      * @throws ObservationParsingException
      */
@@ -451,7 +451,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Algorithm, or null if the document doesn't contain an algorithm element.
      * @throws ObservationParsingException 
      */
@@ -471,7 +471,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Proposal, or null if the document doesn't contain an proposal element.
      * @throws ObservationParsingException 
      */
@@ -499,7 +499,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Target, or null if the document doesn't contain an target element.
      * @throws ObservationParsingException 
      */
@@ -531,7 +531,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return a TargetPosition, or null if the document doesn't contain an targetPosition element.
      * @throws ObservationParsingException 
      */
@@ -559,7 +559,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent
      * @param namespace
-     * @param dateFormat
+     * @param rc
      * @return
      * @throws ObservationParsingException 
      */
@@ -581,7 +581,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an TarTelescopeget, or null if the document doesn't contain an telescope element.
      * @throws ObservationParsingException 
      */
@@ -608,7 +608,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Instrument, or null if the document doesn't contain an instrument element.
      * @throws ObservationParsingException 
      */
@@ -634,7 +634,7 @@ public class ObservationReader implements Serializable
      * @param members Set of Member's from the Observation.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
     protected void addMembers(Set<ObservationURI> members, Element parent, Namespace namespace, ReadContext rc)
@@ -670,7 +670,7 @@ public class ObservationReader implements Serializable
      * @param planes the Set of Plane's from the Observation.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
     protected void addPlanes(Set<Plane> planes, Element parent, Namespace namespace, ReadContext rc)
@@ -922,7 +922,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @return an Provenance, or null if the document doesn't contain a provenance element.
      * @throws ObservationParsingException 
      */
@@ -982,7 +982,7 @@ public class ObservationReader implements Serializable
      * 
      * @param parent
      * @param namespace
-     * @param dateFormat
+     * @param rc
      * @return
      * @throws ObservationParsingException 
      */
@@ -1018,7 +1018,7 @@ public class ObservationReader implements Serializable
      * @param inputs the Set of PlaneURI from the Provenance.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
     protected void addInputs(Set<PlaneURI> inputs, Element parent, Namespace namespace, ReadContext rc)
@@ -1054,7 +1054,7 @@ public class ObservationReader implements Serializable
      * @param artifacts the Set of Artifact's from the Plane.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
     protected void addArtifacts(Set<Artifact> artifacts, Element parent, Namespace namespace, ReadContext rc)
@@ -1120,7 +1120,7 @@ public class ObservationReader implements Serializable
      * @param parts the Set of Part's from the Artifact.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
+     * @param rc
      * @throws ObservationParsingException 
      */
     protected void addParts(Set<Part> parts, Element parent, Namespace namespace, ReadContext rc)
@@ -1249,8 +1249,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
      * @param required is the element expected to be found.
+     * @param rc
      * @return an ObservableAxis, or null if the document doesn't contain an observable element.
      * @throws ObservationParsingException 
      */
@@ -1273,8 +1273,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
      * @param required is the element expected to be found.
+     * @param rc
      * @return an SpatialWCS, or null if the document doesn't contain an position element.
      * @throws ObservationParsingException 
      */
@@ -1299,8 +1299,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
      * @param required is the element expected to be found.
+     * @param rc
      * @return an SpectralWCS, or null if the document doesn't contain an energy element.
      * @throws ObservationParsingException 
      */
@@ -1333,8 +1333,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
      * @param required is the element expected to be found.
+     * @param rc
      * @return an TemporalWCS, or null if the document doesn't contain an time element.
      * @throws ObservationParsingException 
      */
@@ -1361,8 +1361,8 @@ public class ObservationReader implements Serializable
      * @param name the name of the Element.
      * @param parent the parent Element.
      * @param namespace of the document.
-     * @param dateFormat  IVOA DateFormat.
-     * @param required is the element expected to be found.
+     * @param required
+     * @param rc
      * @return an PolarizationWCS, or null if the document doesn't contain an polarization element.
      * @throws ObservationParsingException 
      */

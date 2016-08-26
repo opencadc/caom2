@@ -129,11 +129,12 @@ public abstract class AbstractCaomEntity implements CaomEntity, Serializable
      * Get the timestamp of the last modification of the state of this object.
      * The last modified date includes all local state but not the state
      * of child objects contained in collections.
-     * </p><p>
+     * <p>
      * This implementation (and hence all subclasses) tracks state changes by computing
      * a hash code for all the non-null state of an entity and comparing it to the
      * previously computed value (e.g. since the last call to either the getLastModified or
      * setLastModified method).
+     * </p>
      * 
      * @return
      */

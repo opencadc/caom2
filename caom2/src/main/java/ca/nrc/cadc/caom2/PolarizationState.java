@@ -75,7 +75,6 @@ import java.util.Comparator;
 /**
  * Standard polarization codes for FITS WCS STOKES axis. We have added some additional codes
  * for values outside the original FITS WCS paper from the discussion at
- * </p>
  * <p>
  * http://listmgr.cv.nrao.edu/pipermail/fitswcs/2008-March/000408.html
  * </p>
