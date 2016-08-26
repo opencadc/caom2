@@ -110,11 +110,11 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     }
 
     /**
-     * Returns true if a->b->c is a counterclockwise turn.
+     * Returns true if a-&gt;b-&gt;c is a counterclockwise turn.
      * @param a first point
      * @param b second point
      * @param c third point
-     * @return { -1, 0, +1 } if a->b->c is a { clockwise, collinear; counterclocwise } turn.
+     * @return { -1, 0, +1 } if a-&gt;b-&gt;c is a { clockwise, collinear; counterclocwise } turn.
      */
     public static int ccw(SortablePoint2D a, SortablePoint2D b, SortablePoint2D c) {
         double area2 = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
@@ -159,7 +159,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     /**
      * Compares two points by y-coordinate, breaking ties by x-coordinate.
      * Formally, the invoking point (x0, y0) is less than the argument point (x1, y1)
-     * if and only if either y0 < y1 or if y0 = y1 and x0 < x1.
+     * if and only if either y0 &lt; y1 or if y0 = y1 and x0 &lt; x1.
      *
      * @param  that the other point
      * @return the value <tt>0</tt> if this string is equal to the argument
