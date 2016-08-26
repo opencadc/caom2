@@ -34,7 +34,7 @@ dependencies {
     
     compile 'org.opencadc:cadc-util:1.+'
     compile 'org.opencadc:cadc-wcs:1.+'
-    compile 'org.opencadc:caom2:2.2+'
+    compile 'org.opencadc:cadc-caom2:2.2+'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vos:1.+'
 
