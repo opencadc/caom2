@@ -152,7 +152,7 @@ public class FitsMapping
     /**
      * Get the configuration mapping.
      * 
-     * @return map of utype -> FITS keyword
+     * @return map of utype-to-FITS keyword
      */
     public Map<String,String> getConfig()
     {

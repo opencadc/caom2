@@ -761,7 +761,7 @@ public class FitsMapper
      * @param c Class declaring the Constructor.
      * @param types Class[] of argument Classes.
      * @param utype utype of the declaring Class.
-     * @param apping FITS Mapping.
+     * @param mapping FITS Mapping.
      * @return Array of Objects for the given constructor.
      * @throws MapperException 
      */

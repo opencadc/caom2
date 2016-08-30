@@ -119,7 +119,6 @@ public class AdSchemeHandler implements SchemeHandler
      * @param uri the URI to convert to an URL.
      * @param secure generate a secure HTTP URL.
      * @throws IllegalArgumentException if the URI scheme is invalid
-     * @see SchemeHandler#getURL(URI)
      * @return a URL to the identified resource
      */
     public URL getURL(URI uri, boolean secure)

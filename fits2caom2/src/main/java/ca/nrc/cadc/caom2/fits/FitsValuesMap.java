@@ -122,9 +122,9 @@ public class FitsValuesMap
      * Default constructor. Reads the configuration file and attempts
      * to parse the file into a Map.
      * 
-     * @param filename Absolute path to the configuration file.
-     * @throws ca.nrc.cadc.fits2caom.exceptions.IngestException If the configuration file can not be read,
-     *         or if there was an error processing the configuration file.
+     * 
+     * @param reader
+     * @param name
      */
     public FitsValuesMap(Reader reader, String name)
     {
