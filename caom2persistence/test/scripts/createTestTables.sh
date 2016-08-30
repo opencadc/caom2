@@ -22,7 +22,7 @@ doitSYB()
 {
     RUNCMD=$1
 
-    SQLDIR=sql/sybase
+    SQLDIR=src/main/resources/sybase
     TMPSQL=build/tmp/sybase
     \rm -rf $TMPSQL
     mkdir -p $TMPSQL
@@ -55,7 +55,7 @@ doitPG()
     RUNCMD=$1
     DBUSER=$2
 
-    SQLDIR=sql/postgresql
+    SQLDIR=src/main/resources/postgresql
     TMPSQL=build/tmp/postgresql
     \rm -rf $TMPSQL
     mkdir -p $TMPSQL
