@@ -46,14 +46,15 @@ public class CaomHarvester implements Runnable
      * @param batchSize number of observations per batch (~memory consumption)
      * @param batchFactor multiplier for batchSize when harvesting single-table entities
      * @param full full harvest of all source entities
-     * @orphans run harvesting and deletion of (orphaned) WCS entities
+     * @param skip
+     * @param maxDate
      * @throws java.io.IOException
      */
-    public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, Integer batchFactor,
+    public CaomHarvester(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor,
         boolean full, boolean skip, Date maxDate)
         throws IOException
     {
-        Integer entityBatchSize = new Integer(batchSize*batchFactor);
+        Integer entityBatchSize = batchSize*batchFactor;
         
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);

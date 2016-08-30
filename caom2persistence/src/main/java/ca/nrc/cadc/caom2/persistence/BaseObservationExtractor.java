@@ -81,7 +81,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * Class that uses PartialRowMapper(s) to construct a List<Observation> out of a ResultSet.
+ * Class that uses PartialRowMapper(s) to construct a List-of-Observation out of a ResultSet.
  * 
  * @author pdowler
  */

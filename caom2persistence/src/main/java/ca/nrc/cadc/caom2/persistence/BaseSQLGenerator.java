@@ -239,9 +239,8 @@ public class BaseSQLGenerator implements SQLGenerator
     }
     
     /**
-     * Subclasses must call this after configuring various settings:
-     * <br/>
-     * Configurable flags and their default values:
+     * Subclasses must call this after configuring various settings. Configurable 
+     * flags and their default values:
      * <pre>
      * protected boolean persistTransientState = false;      // persist computed metadata
      * protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
