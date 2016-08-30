@@ -70,10 +70,8 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -88,7 +86,7 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.UUID;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
