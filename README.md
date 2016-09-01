@@ -1,7 +1,7 @@
 # caom2micro
 Common Archive Observation Model - micro-service implementations
 
-- caom2-tap-query: query a TAP service with CAOM-2.x implementation for observations, planes, or artifacts
+- caom2-tap: CAOM-2.x TAP client to get observations, planes, or artifacts from a TAP service
 - caom2-datalink-server: IVOA DataLink implementation for CAOM-2.x
 - caom2-meta-server: simple metadata service that returns a single CAOM-2.x observation in various formats
 - caom2-pkg-server: simple CAOM-2.x package service that generates a package (tar) with all artifacts of a single plane

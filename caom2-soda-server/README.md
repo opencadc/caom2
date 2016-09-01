@@ -1,7 +1,7 @@
 # IVOA SODA server-side implementation for CAOM-2.x
 
 This package provides the SodaJobRunner class that can be deployed using the SyncServlet in
-cadc-uws-server to provide SODA async and/or sync resource(s). The SodaJobRunner uses caom2-tap-query
+cadc-uws-server to provide SODA async and/or sync resource(s). The SodaJobRunner uses caom2-tap
 to query a TAP service, using the input ID(s) as CAOM-2.x artifact URI(s). The artifact metadata is
 used to convert the SODA cutout specification (parameters) into cfitsio-style pixel cutouts and then
 generate URL(s) to a separate web service that accepts and processes such requests. So, the current

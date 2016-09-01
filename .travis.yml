@@ -2,5 +2,5 @@ language: java
 jdk:
   - openjdk7
   - oraclejdk8
-script: for mod in caom2-tap-query caom2-datalink-server caom2-meta-server caom2-pkg-server caom2-soda-server; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
+script: for mod in caom2-tap caom2-datalink-server caom2-meta-server caom2-pkg-server caom2-soda-server; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
 

@@ -1,7 +1,7 @@
 # IVOA DataLink server-side implementation for CAOM-2.x
 
 This package provides the LinkQueryRunner class that can be deployed using the SyncServlet in
-cadc-uws-server to provide DataLink links resource(s). The LinkQueryRunner uses caom2-tap-query
+cadc-uws-server to provide DataLink links resource(s). The LinkQueryRunner uses caom2-tap
 to query a TAP service, using the input ID as a CAOM-2.x plane identifier, and outputs links
 for each artifact of that plane.
 
