@@ -100,8 +100,8 @@ public class PartMapper implements VOTableRowMapper<Part>
      * specified column offset.
      * 
      * @param data
+     * @param dateFormat 
      * @return
-     * @throws ParseException 
      */
     public Part mapRow(List<Object> data, DateFormat dateFormat)
     {

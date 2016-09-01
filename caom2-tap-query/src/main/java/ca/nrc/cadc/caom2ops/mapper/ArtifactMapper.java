@@ -103,9 +103,8 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
      * specified column offset.
      * 
      * @param data
+     * @param dateFormat
      * @return
-     * @throws URISyntaxException 
-     * @throws ParseException 
      */
     public Artifact mapRow(List<Object> data, DateFormat dateFormat)
     {
