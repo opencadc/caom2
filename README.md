@@ -2,7 +2,8 @@
 Common Archive Observation Model - database implementation
 
 - caom2persistence: database interface library
-- caom2repo: repository web service supporting Create-Remove-Update-Delete of Observations
+- caom2-repo-server: library for implementing a CAOM-2.x repository web service supporting 
+  curation of a CAOM database
 - caom2-test-repo: integration test suite for a caom2repo service
 - caom2harvester: command-line application for incremental harvesting from one caom2 database and writes to another
 

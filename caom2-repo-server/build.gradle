@@ -1,5 +1,5 @@
 plugins {
-    id 'war'
+    id 'java'
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
@@ -23,21 +23,14 @@ version = '2.2'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
-    compile 'jsky:jsky-coords:1.+'
-    compile 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.+'
-    compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
-
-    providedCompile 'javax.servlet:javax.servlet-api:3.1.+'
-    providedRuntime 'org.postgresql:postgresql:9.+'
+    compile 'javax.servlet:javax.servlet-api:3.1.+'
     
     compile 'org.opencadc:cadc-util:1.+'
     compile 'org.opencadc:cadc-log:1.+'
-    compile 'org.opencadc:cadc-wcs:1.+'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     compile 'org.opencadc:caom2:[2.2,3.0)'
     compile 'org.opencadc:caom2persistence:[2.2,3.0)'
     compile 'org.opencadc:cadc-access-control:1.+'
-    compile 'org.opencadc:cadc-access-control-identity:1.+'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     
