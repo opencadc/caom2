@@ -1,3 +1,0 @@
-#!/bin/bash
-
-java -Xmx128m -jar ${CADC_ROOT}/lib/fits2caom2.jar $*
