@@ -1,4 +1,4 @@
-# caom2micro
+# caom2service
 Common Archive Observation Model - micro-service implementations
 
 - caom2-tap: CAOM-2.x TAP client to get observations, planes, or artifacts from a TAP service
