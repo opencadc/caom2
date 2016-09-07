@@ -340,13 +340,13 @@ public final class PolygonUtil
         List<Polygon> samples = decompose(poly);
         
         // find samples and holes via sign of the area
-        boolean cw = computePolygonProperties(poly).winding; 
+        boolean cw = computePolygonProperties(poly).windCounterClockwise; 
         ListIterator<Polygon> iter = samples.listIterator();
         int num = 0;
         while ( iter.hasNext() )
         {
             Polygon part = iter.next();
-            boolean pcw = computePolygonProperties(part).winding;
+            boolean pcw = computePolygonProperties(part).windCounterClockwise;
             if (cw != pcw) // opposite sign
             {
                 iter.remove();
@@ -409,7 +409,7 @@ public final class PolygonUtil
                         // closed loop
                         PolygonProperties tProp = computePolygonProperties(tmp);
                         double da = tProp.area/pProp.area;
-                        boolean isHole = (tProp.winding != pProp.winding); // opposite winding
+                        boolean isHole = (tProp.windCounterClockwise != pProp.windCounterClockwise); // opposite winding
                         hasHoles = isHole;
                         if (isHole && da < rat) // hole && small
                         {
@@ -848,7 +848,7 @@ public final class PolygonUtil
     {
         private static final long serialVersionUID = 201207300900L;
         
-        boolean winding;
+        boolean windCounterClockwise;
         Double area;
         Point center;
         Circle minSpanCircle;
@@ -924,7 +924,7 @@ public final class PolygonUtil
         CartesianTransform inv = trans.getInverseTransform();
         
         PolygonProperties ret = new PolygonProperties();
-        ret.winding = (a < 0.0); // arbitrary
+        ret.windCounterClockwise = (a > 0.0); // positive=counter clockwise, negative=clockwise
         if (a < 0.0) a *= -1.0;
         ret.area = new Double(a);
         ret.center = inv.transform(new Point(cx, cy));

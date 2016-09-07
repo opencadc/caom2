@@ -85,10 +85,10 @@ public class Polygon implements Shape
     private final List<Vertex> vertices = new ArrayList<Vertex>();
 
     // lazily computed
-    private static int vertexStateCode = -1;
     private transient Point center;
     private transient Double area;
     private transient Circle minimumSpanningCircle;
+    private transient Boolean ccw;
 
     public Polygon() { }
 
@@ -126,6 +126,14 @@ public class Polygon implements Shape
     {
         return vertices;
     }
+
+    public boolean getCCW()
+    {
+        if (ccw == null)
+            initProps();
+        return ccw;
+    }
+    
     
     public double getArea()
     {
@@ -178,6 +186,7 @@ public class Polygon implements Shape
         this.area = pp.area;
         this.center = pp.center;
         this.minimumSpanningCircle = pp.minSpanCircle;
+        this.ccw = pp.windCounterClockwise;
     }
     
     @Override

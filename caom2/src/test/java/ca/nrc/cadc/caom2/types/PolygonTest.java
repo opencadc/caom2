@@ -89,7 +89,7 @@ public class PolygonTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
     public PolygonTest()
@@ -171,5 +171,106 @@ public class PolygonTest
         }
     }
     
+    @Test
+    public void testPolygonWindingCCW()
+    {
+        try
+        {
+            Polygon ccw = new Polygon();
+            ccw.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            ccw.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            ccw.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            ccw.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertTrue(ccw.getCCW());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    @Test
+    public void testPolygonWindingCW()
+    {
+        try
+        {
+            Polygon cw = new Polygon();
+            cw.getVertices().add(new Vertex(1.0, 4.0, SegmentType.MOVE));
+            cw.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            cw.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            cw.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertFalse(cw.getCCW());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
     
+    @Test
+    public void testPolygonWindingMeridianCCW()
+    {
+        try
+        {
+            Polygon poly = new Polygon();
+            poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
+            Assert.assertTrue("polygon on meridian ccw", poly.getCCW());
+            
+            poly.getVertices().clear(); // check range reduction
+            poly.getVertices().add(new Vertex(-2.0, -2.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(-2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
+            Assert.assertTrue("polygon on meridian ccw", poly.getCCW());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testPolygonWindingMeridianCW()
+    {
+        try
+        {
+            Polygon poly = new Polygon();
+            poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
+            Assert.assertFalse(poly.getCCW());
+            
+            poly.getVertices().clear(); // check range reduction
+            poly.getVertices().add(new Vertex(-2.0, -2.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(-2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
+            Assert.assertFalse(poly.getCCW());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
