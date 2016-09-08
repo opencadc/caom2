@@ -171,6 +171,9 @@ public class PolygonTest
         }
     }
     
+    // polygon winding driection: viewed in a tangent plane from outside the
+    // unit sphere so RA increases to the right and DEC increases to the north
+    
     @Test
     public void testPolygonWindingCCW()
     {
