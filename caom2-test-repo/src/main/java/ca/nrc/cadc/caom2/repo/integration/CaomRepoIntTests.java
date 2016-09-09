@@ -154,22 +154,28 @@ public class CaomRepoIntTests
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
+
+    private CaomRepoIntTests() { }
     
-    public CaomRepoIntTests() 
+    /**
+     * @param resourceID resource identifier of service to test
+     * @param pem1 PEM file for user with read-write permission
+     * @param pem2 PEM file for user with read-only permission
+     * @param pem3 PEM file for user with no permissions
+     */
+    public CaomRepoIntTests(URI serviceURI, String pem1, String pem2, String pem3) 
     { 
         try
         {
-            File SSL_CERT1 = FileUtil.getFileFromResource("proxy1.pem", CaomRepoIntTests.class);
-            File SSL_CERT2 = FileUtil.getFileFromResource("proxy2.pem", CaomRepoIntTests.class);
-            File SSL_CERT3 = FileUtil.getFileFromResource("proxy3.pem", CaomRepoIntTests.class);
+            File SSL_CERT1 = FileUtil.getFileFromResource(pem1, this.getClass());
+            File SSL_CERT2 = FileUtil.getFileFromResource(pem2, this.getClass());
+            File SSL_CERT3 = FileUtil.getFileFromResource(pem3, this.getClass());
 
             SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
             SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
             SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
             
             RegistryClient rc = new RegistryClient();
-
-            URI serviceURI = new URI("ivo://cadc.nrc.ca/caom2repo");
 
             URL serviceURL = rc.getServiceURL(serviceURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             AVAIL_URL = serviceURL;
