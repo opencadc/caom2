@@ -163,7 +163,7 @@ public class CaomRepoIntTests
      * @param pem2 PEM file for user with read-only permission
      * @param pem3 PEM file for user with no permissions
      */
-    public CaomRepoIntTests(URI serviceURI, String pem1, String pem2, String pem3) 
+    public CaomRepoIntTests(URI resourceID, String pem1, String pem2, String pem3) 
     { 
         try
         {
@@ -177,13 +177,13 @@ public class CaomRepoIntTests
             
             RegistryClient rc = new RegistryClient();
 
-            URL serviceURL = rc.getServiceURL(serviceURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            URL serviceURL = rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             AVAIL_URL = serviceURL;
 
-            serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_OBS_20, AuthMethod.ANON);
+            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.ANON);
             BASE_HTTP_URL = serviceURL.toExternalForm();
 
-            serviceURL = rc.getServiceURL(serviceURI, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
+            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
             BASE_HTTPS_URL = serviceURL.toExternalForm();
 
             log.debug("test service URL: " + BASE_HTTP_URL);
