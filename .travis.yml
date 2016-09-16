@@ -2,5 +2,5 @@ language: java
 jdk:
   - openjdk7
   - oraclejdk8
-script: for mod in caom2persistence caom2harvester caom2repo caom2-test-repo; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
+script: for mod in caom2persistence caom2harvester caom2-repo-server caom2-test-repo; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
 
