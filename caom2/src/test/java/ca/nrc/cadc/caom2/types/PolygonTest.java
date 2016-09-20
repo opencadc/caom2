@@ -179,13 +179,13 @@ public class PolygonTest
     {
         try
         {
-            Polygon ccw = new Polygon();
-            ccw.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
-            ccw.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
-            ccw.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
-            ccw.getVertices().add(Vertex.CLOSE);
+            Polygon p = new Polygon();
+            p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
             
-            Assert.assertTrue(ccw.getCCW());
+            Assert.assertTrue(p.getCCW());
         }
         catch(Exception unexpected)
         {
@@ -198,13 +198,14 @@ public class PolygonTest
     {
         try
         {
-            Polygon cw = new Polygon();
-            cw.getVertices().add(new Vertex(1.0, 4.0, SegmentType.MOVE));
-            cw.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
-            cw.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
-            cw.getVertices().add(Vertex.CLOSE);
+            Polygon p = new Polygon();
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
             
-            Assert.assertFalse(cw.getCCW());
+            p.getVertices().add(Vertex.CLOSE);
+            
+            Assert.assertFalse(p.getCCW());
         }
         catch(Exception unexpected)
         {
@@ -220,9 +221,9 @@ public class PolygonTest
         {
             Polygon poly = new Polygon();
             poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
             poly.getVertices().add(Vertex.CLOSE);
             
             Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
@@ -230,13 +231,13 @@ public class PolygonTest
             
             poly.getVertices().clear(); // check range reduction
             poly.getVertices().add(new Vertex(-2.0, -2.0, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(-2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
             poly.getVertices().add(Vertex.CLOSE);
             
             Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
-            Assert.assertTrue("polygon on meridian ccw", poly.getCCW());
+            Assert.assertTrue("range-reduce polygon on meridian ccw", poly.getCCW());
         }
         catch(Exception unexpected)
         {
@@ -252,23 +253,23 @@ public class PolygonTest
         {
             Polygon poly = new Polygon();
             poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(Vertex.CLOSE);
             
             Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
-            Assert.assertFalse(poly.getCCW());
+            Assert.assertFalse("polygon on meridian cw", poly.getCCW());
             
             poly.getVertices().clear(); // check range reduction
             poly.getVertices().add(new Vertex(-2.0, -2.0, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(-2.0, 2.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(-2.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(Vertex.CLOSE);
             
             Assert.assertEquals("area check", 16.0, poly.getArea(), 0.02);
-            Assert.assertFalse(poly.getCCW());
+            Assert.assertFalse("range-reduce polygon on meridian cw", poly.getCCW());
         }
         catch(Exception unexpected)
         {

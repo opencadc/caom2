@@ -924,9 +924,9 @@ public final class PolygonUtil
         CartesianTransform inv = trans.getInverseTransform();
         
         PolygonProperties ret = new PolygonProperties();
-        ret.windCounterClockwise = (a > 0.0); // positive=counter clockwise, negative=clockwise
+        ret.windCounterClockwise = (a < 0.0); // RA-DEC increases left-up
         if (a < 0.0) a *= -1.0;
-        ret.area = new Double(a);
+        ret.area = a;
         ret.center = inv.transform(new Point(cx, cy));
         
         // midpoint between vertices
