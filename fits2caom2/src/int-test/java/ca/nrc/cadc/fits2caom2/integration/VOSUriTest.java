@@ -68,17 +68,22 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileReader;
+import java.security.PrivilegedExceptionAction;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import javax.security.auth.Subject;
 
 /**
  *
@@ -104,7 +109,7 @@ public class VOSUriTest extends AbstractTest
     public static void setUpClass()
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
-        SSL_CERT = new File("build/test/class/proxy.pem");
+        SSL_CERT = new File(System.getProperty("user.home") + "/.pub/proxy.pem");
     }
 
     @Test
@@ -114,22 +119,31 @@ public class VOSUriTest extends AbstractTest
         {
             log.debug("testSingleVOSUri");
 
-            String[] args = new String[]
+            final String[] args = new String[]
             {
                 "--collection=TEST",
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT
+                "--default=src/int-test/resources/simplefits.default"
             };
 
-            doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
+            Subject subject = SSLUtil.createSubject(SSL_CERT);
+            Subject.doAs(subject, new PrivilegedExceptionAction<Object>()
+            {
+                @Override
+                public Object run() throws Exception
+                {
+                    doTest(args);
+                    doTest(args, "build/tmp/SimpleFitsTest.xml");
+
+                    return null;
+                }
+            });
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
             Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
@@ -151,27 +165,35 @@ public class VOSUriTest extends AbstractTest
         {
             log.debug("testMultipleVOSUri");
 
-            String[] args = new String[]
+            final String[] args = new String[]
             {
                 "--collection=TEST",
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250 +"," + VOS_URI_BLAST_350,
-                "--default=test/config/fits2caom2/simplefits.default",
-                "--cert=" + SSL_CERT
+                "--default=src/int-test/resources/simplefits.default"
             };
 
-            doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
+            Subject subject = SSLUtil.createSubject(SSL_CERT);
+            Subject.doAs(subject, new PrivilegedExceptionAction<Object>()
+            {
+                @Override
+                public Object run() throws Exception
+                {
+                    doTest(args);
+                    doTest(args, "build/tmp/SimpleFitsTest.xml");
+
+                    return null;
+                }
+            });
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
             Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);
             Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
-            cleanup();
 
             log.info("testMultipleVOSUri passed.");
         }
@@ -189,23 +211,32 @@ public class VOSUriTest extends AbstractTest
         {
             log.debug("testVOSUriWithLocal");
 
-            String[] args = new String[]
+            final String[] args = new String[]
             {
                 "--collection=TEST",
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--local=test/files/mef.fits",
-                "--default=test/config/fits2caom2/multiextensionfits.default",
-                "--cert=" + SSL_CERT
+                "--local=src/int-test/resources/mef.fits",
+                "--default=src/int-test/resources/multiextensionfits.default"
             };
 
-            doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
+            Subject subject = SSLUtil.createSubject(SSL_CERT);
+            Subject.doAs(subject, new PrivilegedExceptionAction<Object>()
+            {
+                @Override
+                public Object run() throws Exception
+                {
+                    doTest(args);
+                    doTest(args, "build/tmp/SimpleFitsTest.xml");
+
+                    return null;
+                }
+            });
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
             Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);

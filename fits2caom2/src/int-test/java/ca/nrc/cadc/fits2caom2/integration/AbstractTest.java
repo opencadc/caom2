@@ -68,127 +68,118 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.fits2caom2.Ingest;
+import ca.nrc.cadc.fits2caom2.Main;
+import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.FileReader;
-import java.util.Set;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.sql.Connection;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class CompressedImageTest extends AbstractTest
+public class AbstractTest
 {
-    private static final Logger log = Logger.getLogger(CompressedImageTest.class);
+    private static final Logger log = Logger.getLogger(AbstractTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    public CompressedImageTest()
+    public AbstractTest() { }
+
+    protected void doTest(String[] args)
+        throws Exception
     {
-        super();
+        doTest(args, "build/tmp/int-test-output.xml");
     }
 
-//    @Test
-    public void testCompressedImage()
+    protected void doTest(String[] args, String outFilename)
+        throws Exception
     {
-        try
+        String userDir = System.getProperty("user.dir");
+
+        String[] exec = new String[args.length + 2];
+        exec[0] = "-d";
+        exec[1] = "--out="+outFilename;
+
+        System.arraycopy(args, 0, exec, 2, args.length);
+        log.debug("\r\n");
+        for (int i = 0; i < exec.length; i++)
         {
-            log.debug("testCompressedImage");
-
-            String[] args = new String[]
-            {
-                "--collection=TEST",
-                "--observationID=1247354o",
-                "--productID=productID",
-                "--uri=ad:CFHT/1247354o"
-            };
-
-            doTest(args);
-            doTest(args, "build/test/IsCompressedImageTest.xml");
-
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/CompressedImageTest.xml"));
-            Assert.assertNotNull(o);
-            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
-            Assert.assertNotNull("parts", parts);
-            Assert.assertTrue("number parts", parts.size() == 5);
-
-            int count = 0;
-            for (Part part : parts)
-            {
-                Set<Chunk> chunks = part.getChunks();
-                Assert.assertNotNull("chunks", chunks);
-                if (count == 0)
-                {
-                    Assert.assertTrue("number chunks", chunks.size() == 0);
-                }
-                else
-                {
-                    Assert.assertTrue("number chunks", chunks.size() == 1);
-                }
-                count++;
-            }
-
-            log.info("testCompressedImage passed.");
+            log.debug("arg[" + i + "] = " + exec[i]);
         }
-        catch (Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+
+        ArgumentMap argsMap = new ArgumentMap(exec);
+        Ingest ingest = Main.createIngest(argsMap);
+        ingest.run();
     }
 
-    @Test
-    public void testNotCompressedImage()
-    {
-        try
-        {
-            log.debug("testNotCompressedImage");
-
-            String[] args = new String[]
-            {
-                "--collection=TEST",
-                "--observationID=icr3a1040_drz",
-                "--productID=productID",
-                "--uri=ad:HSTCA/icr3a1040_drz"
-            };
-
-            doTest(args);
-            doTest(args, "build/test/NotCompressedImageTest.xml");
-
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/NotCompressedImageTest.xml"));
-            Assert.assertNotNull(o);
-            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
-            Assert.assertNotNull("parts", parts);
-            Assert.assertTrue("number parts", parts.size() == 5);
-
-            int count = 0;
-            for (Part part : parts)
-            {
-                count += part.getChunks().size();
-            }
-            Assert.assertTrue("number chunks", count == 3);
-
-            log.info("testNotCompressedImage passed.");
-        }
-        catch (Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+//    protected Integer doTest(String[] args, int expectedExitValue, String outFilename)
+//        throws Exception
+//    {
+//        String userDir = System.getProperty("user.dir");
+//
+//        String[] exec = new String[args.length + 3];
+//        exec[0] = userDir + "/src/int-tests/scripts/fits2caom2";
+//        exec[1] = "-d";
+//        exec[2] = "--out="+outFilename;
+//
+//        System.arraycopy(args, 0, exec, 3, args.length);
+//        log.debug("\r\n");
+//        for (int i = 0; i < exec.length; i++)
+//        {
+//            log.debug("arg[" + i + "] = " + exec[i]);
+//        }
+//
+//        ArgumentMap argsMap = new ArgumentMap(exec);
+//        Ingest ingest = createIngest(argsMap);
+//        ingest.run();
+//
+//        ProcessBuilder pb = new ProcessBuilder(exec);
+//        Process process = pb.start();
+//
+//        int exitValue = process.waitFor();
+//
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//        StringBuilder sb = new StringBuilder();
+//        String line;
+//        while ((line = reader.readLine()) != null)
+//        {
+//            sb.append(line).append("\n");
+//        }
+//        String output = sb.toString();
+//
+//        log.debug("Exit value: " + exitValue);
+//        log.debug(output);
+//        Assert.assertEquals("exit value", expectedExitValue, exitValue);
+//        return exitValue;
+//    }
+    
+//    protected void cleanup() throws Exception
+//    {
+//        Connection con = null;
+//        try
+//        {
+//
+//        }
+//        catch (Exception unexpected)
+//        {
+//            log.error("unexpected exception", unexpected);
+//            Assert.fail("unexpected exception: " + unexpected);
+//        }
+//        finally
+//        {
+//            if (con != null)
+//            {
+//                con.close();
+//            }
+//        }
+//    }
 
 }

@@ -99,10 +99,10 @@ public class FitsMappingTest
     @Test
     public void testGetMapping() throws Exception
     {        
-        File df = new File("test/config/fits2caom2/FitsMappingTest.default");
-        File of = new File("test/config/fits2caom2/FitsMappingTest.override");
+        File df = new File("src/test/resources/FitsMappingTest.default");
+        File of = new File("src/test/resources/FitsMappingTest.override");
         
-        Map<String,String> config = Util.loadConfig("test/config/fits2caom2/FitsMappingTest.config");
+        Map<String,String> config = Util.loadConfig("src/test/resources/FitsMappingTest.config");
         FitsValuesMap defaults = new FitsValuesMap(new FileReader(df), "default");
         FitsValuesMap override = new FitsValuesMap(new FileReader(of), "override");
 

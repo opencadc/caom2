@@ -99,14 +99,12 @@ public class UriAndLocalFromFileTest extends AbstractTest
                 "--collection=TEST",
                 "--observationID=MultiExtensionFits",
                 "--productID=productID",
-                "--uri=@test/config/fits2caom2/uriOnly.txt",
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--uri=@src/int-test/resources/uriOnly.txt",
+                "--default=src/int-test/resources/simplefits.default"
             };
 
-            cleanup();
             doTest(args);
             doTest(args);
-            cleanup();
 
             log.info("testUriOnly passed.");
         }
@@ -130,10 +128,15 @@ public class UriAndLocalFromFileTest extends AbstractTest
                 "--observationID=MultiExtensionFits",
                 "--productID=productID",
                 "--uri=@foo.txt",
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--default=src/int-test/resources/simplefits.default"
             };
 
-            doTest(args, 1);
+            try
+            {
+                doTest(args);
+                Assert.fail("Expected exception");
+            }
+            catch (Exception expected) {}
 
             log.info("testUriOnly passed.");
         }

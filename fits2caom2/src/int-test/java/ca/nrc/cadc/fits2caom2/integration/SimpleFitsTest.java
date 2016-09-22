@@ -108,15 +108,15 @@ public class SimpleFitsTest extends AbstractTest
                 "--observationID=SimpleFits",
                 "--productID=productID",
                 "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=test/config/fits2caom2/simplefits.default"
+                "--default=src/int-test/resources/simplefits.default"
             };
 
             doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
+            doTest(args, "build/tmp/SimpleFitsTest.xml");
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
             Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Assert.assertNotNull("chunk.position", c.position);

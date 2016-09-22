@@ -106,15 +106,15 @@ public class FitsFileTest
         throws Exception
     {
         Map<String,String> config = Util.loadConfig("config/fits2caom2.config");
-        File df = new File("test/config/fits2caom2/fits2caom2-simple.default");
+        File df = new File("src/test/resources/fits2caom2-simple.default");
         FitsValuesMap defaults = new FitsValuesMap(new FileReader(df), "default");
         
         mapping = new FitsMapping(config, defaults, null);
         
-        File simple1File = new File("test/files/simple1.fits");
-        File simple1FileGZ = new File("test/files/simple1.fits.gz");
-        File simple2File = new File("test/files/simple2.fits");
-        File mefFile = new File("test/files/mef.fits");
+        File simple1File = new File("src/test/resources/simple1.fits");
+        File simple1FileGZ = new File("src/test/resources/simple1.fits.gz");
+        File simple2File = new File("src/test/resources/simple2.fits");
+        File mefFile = new File("src/test/resources/mef.fits");
         
         Fits simple1Fits = new Fits(simple1File);
         Fits simple1FitsGZ = new Fits(simple1FileGZ);
