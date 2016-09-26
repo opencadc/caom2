@@ -3,6 +3,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
+    id 'application'
 }
 
 repositories {
@@ -21,11 +22,13 @@ group = 'org.opencadc'
 
 version = '2.2'
 
+mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
+
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.jdom:jdom2:2.+'
     compile 'jsky:jsky-coords:1.+'
-    compile 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.+'
+    //compile 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.+'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
     compile 'org.opencadc:cadc-util:1.+'
