@@ -72,48 +72,42 @@ import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class MetaDataTest extends AbstractTest
+public class DumpConfigTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(MetaDataTest.class);
+    private static final Logger log = Logger.getLogger(DumpConfigTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public MetaDataTest()
+    public DumpConfigTest()
     {
         super();
     }
 
+    @Ignore
     @Test
-    public void testMetaData()
+    public void testConfigDump()
     {
         try
         {
-            log.debug("testMetaData");
+            log.debug("testConfigDump");
 
             String[] args = new String[]
             {
-                "--collection=TEST",
-                "--observationID=MetaData",
-                "--productID=productID",
-                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=test/config/fits2caom2/metadata.default",
-                "--override=test/config/fits2caom2/metadata.override"
+                "--dumpconfig"
             };
 
-            cleanup();
             doTest(args);
-            doTest(args);
-            cleanup();
 
-            log.info("testMetaData passed.");
+            log.info("testConfigDump passed.");
         }
         catch (Exception unexpected)
         {

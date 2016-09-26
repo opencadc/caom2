@@ -68,7 +68,12 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.FileReader;
+import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -78,40 +83,48 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class IncludedConfigOnlyTest extends AbstractTest
+public class ImageFileTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(MetaDataTest.class);
+    private static final Logger log = Logger.getLogger(ImageFileTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public IncludedConfigOnlyTest()
+    public ImageFileTest()
     {
         super();
     }
 
     @Test
-    public void testIncludedConfigOnlyTest()
+    public void testImageFile()
     {
         try
         {
-            log.debug("testIncludedConfigOnlyTest");
+            log.debug("testSimpleFits");
+            
+            String userDir = System.getProperty("user.dir");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=IncludeConfigOnly",
+                "--observationID=ImageFile",
                 "--productID=productID",
-                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03"
+                "--uri=file://" + userDir + "/src/int-test/resources/image.png"
             };
 
-            cleanup();
             doTest(args);
-            doTest(args);
-            cleanup();
+            doTest(args, "build/tmp/SimpleFitsTest.xml");
 
-            log.info("testIncludedConfigOnlyTest passed.");
+            // check that CDi_j worked
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
+            Assert.assertNotNull(o);
+            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
+            Assert.assertNotNull("plane.artifacts", artifacts);
+            Assert.assertEquals(1, artifacts.size());
+
+            log.info("testSimpleFits passed.");
         }
         catch (Exception unexpected)
         {

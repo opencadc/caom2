@@ -75,7 +75,9 @@ import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.exceptions.IngestException;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Logger;
+
+import javax.security.auth.Subject;
 import java.io.File;
 import java.net.Authenticator;
 import java.net.URI;
@@ -84,9 +86,6 @@ import java.security.cert.CertificateNotYetValidException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import javax.security.auth.Subject;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
  * Executable class for fits2caom2.
@@ -196,7 +195,7 @@ public class Main
         System.exit(0);
     }
 
-    static Ingest createIngest(ArgumentMap argsMap)
+    public static Ingest createIngest(ArgumentMap argsMap)
         throws Exception
     {
         String collection = argsMap.getValue(Argument.COLLECTION);

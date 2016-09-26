@@ -96,12 +96,12 @@ public class UtilTest
     {
         String[] args = new String[]
         {
-            "--default=test/config/fits2caom2/userConfig.default"
+            "--default=src/test/resources/userConfig.default"
         };
         ArgumentMap argsMap = new ArgumentMap(args);
 
-        Map<String,String> config = Util.loadConfig("test/config/fits2caom2/userConfig.config");
-        FitsMapping mapping = Util.getFitsMapping(config, "test/config/fits2caom2/userConfig.default", null);
+        Map<String,String> config = Util.loadConfig("src/test/resources/userConfig.config");
+        FitsMapping mapping = Util.getFitsMapping(config, "src/test/resources/userConfig.default", null);
 
         // Mapped in internal config.
         String value = mapping.getMapping("Observation.instrument.keywords");
@@ -118,7 +118,7 @@ public class UtilTest
     public void testUriAsFilename() throws Exception
     {
         Util.UriLocal uriLocal;
-        String argument = "@test/config/fits2caom2/uriAndLocalArguments.bad";
+        String argument = "@src/test/resources/uriAndLocalArguments.bad";
         try
         {
             uriLocal = Util.argumentUriToUriLocal(argument);
@@ -126,14 +126,14 @@ public class UtilTest
         }
         catch (IllegalArgumentException expected) {}
 
-        argument = "@test/config/fits2caom2/uriNoLocalArguments.txt";
+        argument = "@src/test/resources/uriNoLocalArguments.txt";
         uriLocal = Util.argumentUriToUriLocal(argument);
         Assert.assertNotNull(uriLocal);
         Assert.assertNotNull(uriLocal.uri);
         Assert.assertEquals(3, uriLocal.uri.length);
         Assert.assertNull(uriLocal.local);
 
-        argument = "@test/config/fits2caom2/uriAndLocalArguments.good";
+        argument = "@src/test/resources/uriAndLocalArguments.good";
         uriLocal = Util.argumentUriToUriLocal(argument);
         Assert.assertNotNull(uriLocal);
         Assert.assertNotNull(uriLocal.uri);

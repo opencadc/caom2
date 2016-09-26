@@ -78,34 +78,40 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class DumpConfigTest extends AbstractTest
+public class GZFileTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(DumpConfigTest.class);
+    private static final Logger log = Logger.getLogger(GZFileTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public DumpConfigTest()
+    public GZFileTest()
     {
         super();
     }
 
     @Test
-    public void testConfigDump()
+    public void testGZFile()
     {
         try
         {
-            log.debug("testConfigDump");
-
+            log.debug("testGZFile");
+            
             String[] args = new String[]
             {
-                "--dumpconfig"
+                "--collection=TEST",
+                "--observationID=GZFileTest",
+                "--productID=productID",
+                "--uri=ad:CFHT/1003700o",
+                "--config=src/int-test/resources/gzfiletest.config",
+                "--default=src/int-test/resources/gzfiletest.default",
+                "--override=src/int-test/resources/gzfiletest.override"
             };
 
             doTest(args);
 
-            log.info("testConfigDump passed.");
+            log.info("testGZFile passed.");
         }
         catch (Exception unexpected)
         {

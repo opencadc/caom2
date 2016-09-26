@@ -117,11 +117,11 @@ public class IngestTest
 
         Ingest ingest = new Ingest(collection, observationID, productID,uris,config);
         ingest.setMapping(Util.getFitsMapping(config, null, null));
-        ingest.setInFile(new File("test/files/simple.xml"));
-        ingest.setOutFile(new File("build/test/xmltestout.xml"));
+        ingest.setInFile(new File("src/test/resources/simple.xml"));
+        ingest.setOutFile(new File("build/tmp/xmltestout.xml"));
         ingest.run();
         
-        File out = new File("build/test/xmltestout.xml");
+        File out = new File("build/tmp/xmltestout.xml");
         Assert.assertNotNull(out);
         
         ObservationReader reader = new ObservationReader();
@@ -144,12 +144,12 @@ public class IngestTest
         Map<String,String> config = Util.loadConfig(userConfig);
 
         Ingest ingest = new Ingest(collection, observationID, productID, uris, config);
-        ingest.setMapping(Util.getFitsMapping(config, "test/config/fits2caom2/artifact-ingest.defaults", null));
-        ingest.setInFile(new File("test/files/simple.xml"));
-        ingest.setOutFile(new File("build/test/xmltestout22.xml"));
+        ingest.setMapping(Util.getFitsMapping(config, "src/test/resources/artifact-ingest.defaults", null));
+        ingest.setInFile(new File("src/test/resources/simple.xml"));
+        ingest.setOutFile(new File("build/tmp/xmltestout22.xml"));
         ingest.run();
         
-        File out = new File("build/test/xmltestout22.xml");
+        File out = new File("build/tmp/xmltestout22.xml");
         Assert.assertNotNull(out);
         
         ObservationReader reader = new ObservationReader();
