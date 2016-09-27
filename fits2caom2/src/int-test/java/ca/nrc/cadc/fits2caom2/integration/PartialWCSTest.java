@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2014.                            (c) 2014.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,6 +66,7 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.fits2caom2.integration;
 
 import ca.nrc.cadc.util.Log4jInit;
@@ -74,46 +75,71 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- * @author jburke
- */
-public class GZFileTest extends AbstractTest
+public class PartialWCSTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(GZFileTest.class);
+    private static final Logger log = Logger.getLogger(PartialWCSTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public GZFileTest()
+    public PartialWCSTest()
     {
         super();
     }
 
     @Test
-    public void testGZFile()
+    public void testAllowPartialWCS()
     {
         try
         {
-            log.debug("testGZFile");
-            
+            log.debug("testAllowPartialWCS");
+
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=GZFileTest",
+                "--observationID=AllowPartialWCS",
                 "--productID=productID",
-                "--uri=ad:CFHT/1003700o",
-                "--config=test/config/fits2caom2/gzfiletest.config",
-                "--default=test/config/fits2caom2/gzfiletest.default",
-                "--override=test/config/fits2caom2/gzfiletest.override"
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/int-test/resources/partialWCS.default"
             };
 
-            cleanup();
-            doTest(args);
-            cleanup();
+            try
+            {
+                doTest(args);
+                Assert.fail("Expected exception");
+            }
+            catch (Exception expected) {}
 
-            log.info("testGZFile passed.");
+            log.info("testAllowPartialWCS passed.");
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testIgnorePartialWCS()
+    {
+        try
+        {
+            log.debug("testIgnorePartialWCS");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=AllowPartialWCS",
+                "--productID=productID",
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/int-test/resources/partialWCS.default",
+                "--ignorePartialWCS"
+            };
+
+            doTest(args);
+
+            log.info("testIgnorePartialWCS passed.");
         }
         catch (Exception unexpected)
         {

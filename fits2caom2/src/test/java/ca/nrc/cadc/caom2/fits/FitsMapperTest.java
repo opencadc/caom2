@@ -131,8 +131,8 @@ public class FitsMapperTest
     public static void setUpClass()
         throws Exception
     {
-        File df = new File("test/config/fits2caom2/fits2caom2-simple.default");
-        File of = new File("test/config/fits2caom2/fits2caom2.override");
+        File df = new File("src/test/resources/fits2caom2-simple.default");
+        File of = new File("src/test/resources/fits2caom2.override");
         
         Map<String,String> config = Util.loadConfig("config/fits2caom2.config");
         FitsValuesMap defaults = new FitsValuesMap(new FileReader(df), "default");
@@ -148,7 +148,7 @@ public class FitsMapperTest
         simpleMapping.polarizationAxis = 4;
         simpleMapping.timeAxis = 5;
         
-        File cdf = new File("test/config/fits2caom2/fits2caom2-composite.default");
+        File cdf = new File("src/test/resources/fits2caom2-composite.default");
         FitsValuesMap compositeDefaults = new FitsValuesMap(new FileReader(cdf), "default");
         
         compositeMapping = new FitsMapping(config, compositeDefaults, override);
@@ -372,7 +372,7 @@ public class FitsMapperTest
     @Test
     public void testIncompleteObservation() throws Exception
     {
-        File df = new File("test/config/fits2caom2/FitsMapperTest.default");
+        File df = new File("src/test/resources/FitsMapperTest.default");
         
         Map<String,String> config = Util.loadConfig("config/fits2caom2.config");
         FitsValuesMap defaults = new FitsValuesMap(new FileReader(df), "default");

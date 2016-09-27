@@ -68,12 +68,14 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.FileReader;
 import java.util.Set;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -83,50 +85,104 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class ImageFileTest extends AbstractTest
+public class CompressedImageTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(ImageFileTest.class);
+    private static final Logger log = Logger.getLogger(CompressedImageTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public ImageFileTest()
+    public CompressedImageTest()
     {
         super();
     }
 
-    @Test
-    public void testImageFile()
+//    @Test
+    public void testCompressedImage()
     {
         try
         {
-            log.debug("testSimpleFits");
-            
-            String userDir = System.getProperty("user.dir");
+            log.debug("testCompressedImage");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=ImageFile",
+                "--observationID=1247354o",
                 "--productID=productID",
-                "--uri=file://" + userDir + "/test/files/image.png"
+                "--uri=ad:CFHT/1247354o"
             };
 
-            cleanup();
             doTest(args);
-            doTest(args, "build/test/SimpleFitsTest.xml");
+            doTest(args, "build/tmp/IsCompressedImageTest.xml");
 
             // check that CDi_j worked
             ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/test/SimpleFitsTest.xml"));
+            Observation o = or.read(new FileReader("build/tmp/CompressedImageTest.xml"));
             Assert.assertNotNull(o);
-            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
-            Assert.assertNotNull("plane.artifacts", artifacts);
-            Assert.assertEquals(1, artifacts.size());
-            cleanup();
+            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
+            Assert.assertNotNull("parts", parts);
+            Assert.assertTrue("number parts", parts.size() == 5);
 
-            log.info("testSimpleFits passed.");
+            int count = 0;
+            for (Part part : parts)
+            {
+                Set<Chunk> chunks = part.getChunks();
+                Assert.assertNotNull("chunks", chunks);
+                if (count == 0)
+                {
+                    Assert.assertTrue("number chunks", chunks.size() == 0);
+                }
+                else
+                {
+                    Assert.assertTrue("number chunks", chunks.size() == 1);
+                }
+                count++;
+            }
+
+            log.info("testCompressedImage passed.");
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testNotCompressedImage()
+    {
+        try
+        {
+            log.debug("testNotCompressedImage");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=icr3a1040_drz",
+                "--productID=productID",
+                "--uri=ad:HSTCA/icr3a1040_drz"
+            };
+
+            doTest(args);
+            doTest(args, "build/tmp/NotCompressedImageTest.xml");
+
+            // check that CDi_j worked
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(new FileReader("build/tmp/NotCompressedImageTest.xml"));
+            Assert.assertNotNull(o);
+            Set<Part> parts = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts();
+            Assert.assertNotNull("parts", parts);
+            Assert.assertTrue("number parts", parts.size() == 5);
+
+            int count = 0;
+            for (Part part : parts)
+            {
+                count += part.getChunks().size();
+            }
+            Assert.assertTrue("number chunks", count == 3);
+
+            log.info("testNotCompressedImage passed.");
         }
         catch (Exception unexpected)
         {
