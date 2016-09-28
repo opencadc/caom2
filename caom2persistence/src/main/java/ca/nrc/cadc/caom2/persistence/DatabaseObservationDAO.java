@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
@@ -156,6 +157,35 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             throw new IllegalArgumentException("id cannot be null");
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
+
+    public List<ObservationState> getObservationStates(String collection, Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
+        checkInit();
+        log.debug("getObservationStates: " + collection + " " + batchSize);
+        
+        // input check since this is a string
+        CaomValidator.assertValidPathComponent(DatabaseObservationDAO.class, "collection", collection);
+        
+        long t = System.currentTimeMillis();
+        
+        try
+        {
+            String sql = gen.getSelectSQL(ObservationState.class, minLastModified, maxLastModified, batchSize, collection);
+            
+            if (log.isDebugEnabled())
+                log.debug("GET: " + Util.formatSQL(sql));
+
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            List result = jdbc.query(sql, gen.getObservationStateMapper());
+            return (List<ObservationState>) result;
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("getObservationStates: " + collection + " " + batchSize + " " + dt + "ms");
+        }
+    }
+    
     
     // pdd: for harvester to get just the observation object and check timestamps
     public Observation getShallow(UUID id)

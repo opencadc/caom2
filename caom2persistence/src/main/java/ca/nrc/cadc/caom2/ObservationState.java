@@ -67,105 +67,44 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2;
 
-import java.util.Map;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
 import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 /**
- *
+ * Wrapper class to support listing observations in incremental mode.
+ * 
  * @author pdowler
  */
-public interface ObservationDAO
+public class ObservationState 
 {
-    /**
-     * Get a suitable transaction manager for use with the DAO.
-     * @return
-     */
-    TransactionManager getTransactionManager();
+    //private static final Logger log = Logger.getLogger(ObservationState.class);
 
-    /**
-     * Get a map of configuration parameters for the implementation.
-     * The names and types are used to provide configuration via the
-     * setConfig method.
-     * 
-     * @return
-     */
-    Map<String,Class> getParams();
+    private final String collection;
+    private final String observationID;
+    private final Date maxLastModified;
+    
+    public ObservationState(String collection, String observationID, Date maxlastModified) 
+    { 
+        this.collection = collection;
+        this.observationID = observationID;
+        this.maxLastModified = maxlastModified;
+    }
 
-    /**
-     * Set the configuration for this implementation. The content of this
-     * map is assumed to match the names and types returned by getParams.
-     * @param config
-     */
-    void setConfig(Map<String,Object> config);
-    
-    /**
-     * Check for observation existence.
-     * 
-     * @param uri Identifies the observation
-     * @return True if the observation identified by uri exists.
-     */
-    boolean exists(ObservationURI uri);
+    public String getObservationID()
+    {
+        return observationID;
+    }
 
-    /**
-     * Get unique identifier for the specified URI.
-     * @param uri
-     * @return UUID
-     */
-    UUID getID(ObservationURI uri);
-    
-    /**
-     * Get URI from unique ID.
-     * 
-     * @param id
-     * @return 
-     */
-    ObservationURI getURI(UUID id);
-    
-    /**
-     * Get list of observation states in order of increasing maxlastModified timestamp.
-     * @param collection
-     * @param minLastModified
-     * @param maxLastModified
-     * @param batchSize
-     * @return 
-     */
-    List<ObservationState> getObservationStates(String collection, Date minLastModified, Date maxLastModified, Integer batchSize);
-    
-    /**
-     * Get a stored observation by UUID.
-     * 
-     * @param id
-     * @return 
-     */
-    Observation get(UUID id);
-    
-    /**
-     * Get a stored observation by URI.
-     *
-     * @param uri
-     * @return the complete observation
-     */
-    Observation get(ObservationURI uri);
+    public Date getMaxLastModified()
+    {
+        return maxLastModified;
+    }
 
-    /**
-     * Store an observation.
-     *
-     * @param ce
-     */
-    void put(Observation ce);
-
-    /**
-     * Delete a stored observation by URI.
-     *
-     * @param uri
-     */
-    void delete(ObservationURI uri);
+    @Override
+    public String toString()
+    {
+        return "ObservationState[" + observationID + "," + maxLastModified + "]";
+    }
 }
