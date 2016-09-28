@@ -187,6 +187,11 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return productID;
     }
 
+    /**
+     * @param parentURI
+     * @return 
+     * @deprecated use the PlaneURI constructor
+     */
     public PlaneURI getURI(ObservationURI parentURI)
     {
         return new PlaneURI(parentURI, productID);
