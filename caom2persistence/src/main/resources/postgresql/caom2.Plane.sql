@@ -3,6 +3,7 @@ drop table if exists caom2.Plane;
 
 create table caom2.Plane
 (
+    publisherID varchar(512) not null,
     planeURI varchar(512) not null,
     productID varchar(64) not null,
 
@@ -19,7 +20,7 @@ create table caom2.Plane
     provenance_producer varchar(256),
     provenance_runID varchar(256),
     provenance_lastExecuted timestamp,
-    provenance_keywords tsvector, -- change: text to tsvector
+    provenance_keywords tsvector,
     provenance_inputs text,
 
 -- metrics
@@ -44,9 +45,9 @@ create table caom2.Plane
 
 -- energy
     energy_emband            varchar(32),
-    energy_bounds            polygon,          -- includes all energy_bounds_samples values
-    energy_bounds_lower      double precision, -- change: rename to energy_bounds_lower
-    energy_bounds_upper      double precision, -- change: rename to energy_bounds_upper
+    energy_bounds            polygon, 
+    energy_bounds_lower      double precision,
+    energy_bounds_upper      double precision,
     energy_bounds_width      double precision,
     energy_bounds_integrated double precision,
     energy_dimension         bigint,
@@ -60,9 +61,9 @@ create table caom2.Plane
     energy_restwav           double precision,
 
 -- time
-    time_bounds             polygon,          -- includes all time_bounds_samples values
-    time_bounds_lower       double precision, -- change: rename to time_bounds_lower
-    time_bounds_upper       double precision, -- change: rename to time_bounds_upper
+    time_bounds             polygon,
+    time_bounds_lower       double precision,
+    time_bounds_upper       double precision,
     time_bounds_width       double precision,
     time_bounds_integrated  double precision,
     time_dimension          bigint,
@@ -79,8 +80,8 @@ create table caom2.Plane
     metaReadAccessGroups tsvector default '',
 
 -- internal
-    obsID uuid not null references caom2.Observation (obsID), -- change: UUID
-    planeID uuid not null  primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null references caom2.Observation (obsID),
+    planeID uuid not null  primary key using index tablespace caom_index,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
@@ -102,10 +103,14 @@ drop table if exists caom2.Plane_inputs;
 
 create table caom2.Plane_inputs
 (
-    outputID uuid not null references caom2.Plane (planeID), -- change: UUID
-    inputID uuid not null references caom2.Plane (planeID)   -- change: UUID
+    outputID uuid not null references caom2.Plane (planeID),
+    inputID uuid not null references caom2.Plane (planeID)
 )
 tablespace caom_data
+;
+
+create unique index i_publisherID on caom2.Plane(publisherID)
+tablespace caom_index
 ;
 
 create unique index i_planeURI on caom2.Plane(planeURI)
