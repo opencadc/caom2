@@ -27,7 +27,7 @@ dependencies {
     compile 'org.postgresql:postgresql:9.4.1209.jre7'
     
     compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:caom2:2.2+'
+    compile 'org.opencadc:caom2:[2.2.2,)'
 
     testCompile 'junit:junit:4.+'
     
