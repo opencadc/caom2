@@ -69,80 +69,78 @@
 
 package ca.nrc.cadc.caom2;
 
+
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
 import java.net.URI;
 
 /**
- *
+ * Globally unique identifer for a CAOM plane. This is meant to be equivalent to
+ * an IVOA publisher dataset identifier. Assumption: the Observation.collection
+ * is the path component of the resourceID (e.g. the collection is registered as
+ * a DataCollection resource in an IVOA registry). 
+ * 
+ * 
  * @author pdowler
  */
-public class PlaneURI implements Comparable<PlaneURI>, Serializable
+public class PublisherID implements Comparable<PublisherID>, Serializable
 {
-    private static final long serialVersionUID = 201202091030L;
-
-    // immutable state
-    private ObservationURI parent;
-    private String productID;
+    private static final long serialVersionUID = 201609271015L;
     
-    private transient URI uri;
-
-    private PlaneURI() { }
-
-    public PlaneURI(URI uri)
+    public static final String SCHEME = "ivo";
+    
+    private transient URI resourceID;
+    
+    private final URI uri;
+    
+    public PublisherID(URI uri)
     {
-        if ( !ObservationURI.SCHEME.equals(uri.getScheme()))
+        CaomValidator.assertNotNull(getClass(), "uri", uri);
+        
+        if ( !SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
-        String ssp = uri.getSchemeSpecificPart();
-        CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
-        String[] cop = ssp.split("/");
-        if (cop.length == 3)
+        String auth = uri.getAuthority();
+        String path = uri.getPath();
+        String id = uri.getQuery();
+        
+        CaomValidator.assertNotNull(getClass(), "authority", auth);
+        CaomValidator.assertNotNull(getClass(), "path", path);
+        CaomValidator.assertNotNull(getClass(), "id", id);
+        
+        String[] ids = id.split("/");
+        if (ids.length == 2)
         {
-            this.parent = new ObservationURI(cop[0], cop[1]);
-            this.productID = cop[2];
-            CaomValidator.assertNotNull(getClass(), "parent", parent);
-            CaomValidator.assertNotNull(getClass(), "productID", productID);
-            CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-            this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
+            String oid = ids[0];
+            String pid = ids[1];
+            CaomValidator.assertValidPathComponent(getClass(), "observationID", oid);
+            CaomValidator.assertValidPathComponent(getClass(), "productID", pid);
+            
         }
         else
-            throw new IllegalArgumentException("input URI has " + cop.length
-                    + " parts ("+ssp+"), expected 3: caom:<collection>/<observationID>/<productID>");
+            throw new IllegalArgumentException("input URI has " + ids.length
+                    + " id components ("+id+"), expected 2: <observationID>/<productID>");
+        this.uri = uri;
+        this.resourceID = URI.create(SCHEME + "://" + auth + "/" + path);
     }
     
-    public PlaneURI(ObservationURI parent, String productID)
-    {
-        CaomValidator.assertNotNull(getClass(), "parent", parent);
-        CaomValidator.assertNotNull(getClass(), "productID", productID);
-        CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-
-        this.parent = parent;
-        this.productID = productID;
-        this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
-        
+    public PublisherID(URI resourceID, PlaneURI id) 
+    { 
+        CaomValidator.assertNotNull(PublisherID.class, "resourceID", resourceID);
+        CaomValidator.assertNotNull(PublisherID.class, "id", id);
+        this.uri = URI.create(resourceID.toASCIIString() + "?" + id.getParent().getObservationID() + "/" + id.getProductID());
+        this.resourceID = resourceID;
     }
-
-    @Override
-    public String toString()
-    {
-        return getURI().toASCIIString();
-    }
-
+    
     public URI getURI()
     {
         return uri;
     }
-
-    public ObservationURI getParent()
+    
+    public URI getResourceID()
     {
-        return parent;
+        return resourceID;
     }
-
-    public String getProductID()
-    {
-        return productID;
-    }
-
+    
     @Override
     public boolean equals(Object o)
     {
@@ -150,9 +148,9 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
             return false;
         if (this == o)
             return true;
-        if (o instanceof PlaneURI)
+        if (o instanceof PublisherID)
         {
-            PlaneURI u = (PlaneURI) o;
+            PublisherID u = (PublisherID) o;
             return ( this.hashCode() == u.hashCode() );
         }
         return false;
@@ -164,7 +162,8 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
         return uri.hashCode();
     }
 
-    public int compareTo(PlaneURI u)
+    @Override
+    public int compareTo(PublisherID u)
     {
         return this.uri.compareTo(u.uri);
     }
