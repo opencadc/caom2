@@ -83,10 +83,10 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
 
 import ca.nrc.cadc.reg.Standards;
-import junit.framework.Assert;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.auth.SSLUtil;
@@ -117,7 +117,14 @@ import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Integration tests for caom2repo_ws
@@ -296,6 +303,130 @@ public class CaomRepoIntTests
         String uri = SCHEME + path;
         
         getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
+    }
+    
+    private List<String> putObservations(final List<String> baseIDs) 
+    		throws Throwable
+    {
+    	List<String> retURIs = new ArrayList<String>();
+    	for (String baseID : baseIDs)
+	    {
+	        String observationID = generateObservationID(baseID);
+	        
+	        String uri = SCHEME + TEST_COLLECTION + "/" + observationID;
+	        
+	        // create an observation using subject1
+	        SimpleObservation observation = new SimpleObservation(
+	        		TEST_COLLECTION, observationID);
+	        Plane p = new Plane("foo");
+	        Artifact a = new Artifact(URI.create("ad:FOO/foo"), 
+	        		ProductType.SCIENCE, ReleaseType.DATA);
+	        Part pa = new Part(0);
+	        Chunk ch = new Chunk();
+	        ch.naxis = 0;
+	        pa.getChunks().add(ch);
+	        a.getParts().add(pa);
+	        p.getArtifacts().add(a);
+	        observation.getPlanes().add(p);
+	        putObservation(observation, SUBJECT1, 200, "OK", null);
+	        
+	        // verify the observation using subject2
+	        Observation ret = getObservation(uri, SUBJECT2, 200, null);
+	        Assert.assertEquals("wrong observation", observation, ret);
+	        retURIs.add(uri);
+    	}
+    	
+    	return retURIs;
+    }
+    
+    private void checkObservationList(final List<String> expectedIDs, 
+    		final String collection, final int maxRec, final Date start, 
+    		final Date end, Subject subject, int expectedCode, 
+    		String expectedMessage, boolean exactMatch) throws Throwable
+    {
+    	Map<String, Date> observationIDMap = listObservationIDs(
+    			SCHEME + TEST_COLLECTION, maxRec, start, end, subject, 
+    			expectedCode, expectedMessage, exactMatch);    	
+        Assert.assertEquals("wrong number of observationIDs", 
+        		expectedIDs.size(), observationIDMap.size());
+        
+        Iterator<Date> iter = observationIDMap.values().iterator();
+        while (iter.hasNext())
+        {
+        	// start date should not be after the date of an observationID
+        	Assert.assertTrue("wrong timestamp", start.compareTo(iter.next()) <= 0);
+        }
+        
+        if (end != null)
+        {
+        	// end date should not be bfore the date of an observationID
+        	Assert.assertTrue("wrong timestamp", end.compareTo(iter.next()) >= 0);
+        }
+    }
+    
+    @Test
+    public void testCleanPutListSuccess() throws Throwable
+    {
+    	int maxRec = 10;    	
+    	Date start = new Date(System.currentTimeMillis());
+    	
+    	// Add a list of observations
+    	List<String> baseIDs1 = new ArrayList<>(Arrays.asList("testCleanPutListSuccess1", 
+    			"testCleanPutListSuccess2", "testCleanPutListSuccess3"));
+    	List<String> observationURIs = this.putObservations(baseIDs1);
+    	
+    	// Delay 100 ms
+    	TimeUnit.MILLISECONDS.sleep(100);
+    	Date end = new Date(System.currentTimeMillis());
+    	
+    	// Add another list of observations
+    	List<String> baseIDs2 = new ArrayList<>(Arrays.asList("testCleanPutListSuccess11", 
+    			"testCleanPutListSuccess12", "testCleanPutListSuccess13"));
+    	assert(observationURIs.addAll(this.putObservations(baseIDs2)));
+    	
+    	// Check that we have all of the observations we have just added
+    	checkObservationList(baseIDs1, SCHEME + TEST_COLLECTION, maxRec, start, 
+    			null, SUBJECT2, 200, "OK", true);
+    	
+    	// Check that we have maxRec of the observations
+    	maxRec = 4;    	
+    	checkObservationList(baseIDs1, SCHEME + TEST_COLLECTION, maxRec, start, 
+    			null, SUBJECT2, 200, "OK", true);
+
+    	List<String> baseIDs = new ArrayList<String>();
+    	baseIDs.addAll(baseIDs1);
+    	baseIDs.addAll(baseIDs2);
+    	// Check that we have all of the observations we have just added
+    	checkObservationList(baseIDs, SCHEME + TEST_COLLECTION, maxRec, start, 
+    			end, SUBJECT2, 200, "OK", true);
+        
+        // cleanup (ok to fail)
+    	for (String uri : observationURIs)
+    	{
+	        deleteObservation(uri, SUBJECT1, null, null);
+    	}
+    }
+    
+    @Test
+    public void testListNoReadPermission() throws Throwable
+    {
+    	int maxRec = 10;    	
+    	Date start = new Date(System.currentTimeMillis());
+
+    	// Add a list of observations
+    	List<String> baseIDs1 = new ArrayList<>(Arrays.asList("testListNoReadPermission1", 
+    			"testListNoReadPermission2", "testListNoReadPermission3"));
+    	List<String> observationURIs = this.putObservations(baseIDs1);
+    	
+    	// Check that we have no permission to list the observations
+    	checkObservationList(baseIDs1, SCHEME + TEST_COLLECTION, maxRec, start, null, 
+    			SUBJECT3, 403, "permission denied: ", false);
+    	
+        // cleanup (ok to fail)
+    	for (String uri : observationURIs)
+    	{
+	        deleteObservation(uri, SUBJECT1, null, null);
+    	}
     }
     
     @Test
@@ -784,6 +915,68 @@ public class CaomRepoIntTests
         }
         
         conn.disconnect();
+    }
+    
+    private Map<String, Date> listObservationIDs(String uri, int maxRec, 
+    		Date start, Date end, Subject subject, Integer expectedResponse, 
+    		String expectedMessage, boolean exactMatch) throws Exception
+    {
+        log.debug("start list on " + uri);
+        
+        // extract the path from the uri
+        URI ouri = new URI(uri);
+        String surl = BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
+        if (subject != null)
+        {
+            surl = BASE_HTTPS_URL + "/" + ouri.getSchemeSpecificPart();
+        }
+        
+        URL url = new URL(surl);
+        ObservationReader reader = new ObservationReader();
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        HttpDownload get = new HttpDownload(url, bos);
+        //HttpURLConnection conn = openConnection(subject, urlPath);
+        //conn.setRequestMethod("GET");
+        
+        Subject.doAs(subject, new RunnableAction(get));
+        
+        int response = get.getResponseCode();
+        
+        if (expectedResponse != null)
+        {
+            Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
+        }
+        
+        if (expectedMessage != null)
+        {
+            String message = bos.toString().trim();
+            Assert.assertNotNull(message);
+            if (exactMatch)
+                Assert.assertEquals("Wrong response message", expectedMessage, message);
+            else
+                Assert.assertTrue("Wrong response message (startsWith)", message.startsWith(expectedMessage));
+        }
+        
+        if (response == 200)
+        {
+            //InputStream in = conn.getInputStream();
+            if (EXPECTED_CAOM_VERSION != null)
+            {
+                String doc = bos.toString();
+                Assert.assertTrue("document namespace="+EXPECTED_CAOM_VERSION, doc.contains(EXPECTED_CAOM_VERSION));
+            }
+            
+            InputStream in = new ByteArrayInputStream(bos.toByteArray());
+            Map<String, Date> obsrevationIDMap = reader.read(in);
+            
+            //conn.disconnect();
+            
+            return observationIDMap;
+            
+        }
+        
+        return null;
     }
 
 }

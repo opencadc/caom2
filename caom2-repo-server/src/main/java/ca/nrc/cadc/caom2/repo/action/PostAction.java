@@ -84,7 +84,10 @@ public class PostAction extends RepoAction
 {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    public PostAction() { }
+    public PostAction() 
+    { 
+    	super(true);
+    }
 
     @Override
     public void doAction()

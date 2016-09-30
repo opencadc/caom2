@@ -219,6 +219,7 @@ public class RepoActionTest
 
         TestAction(Exception ex)
         {
+        	super(true);
             this.ex = ex;
             setLogInfo(new TestLogInfo());
         }

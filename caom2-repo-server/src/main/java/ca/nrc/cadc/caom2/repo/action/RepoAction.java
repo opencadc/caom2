@@ -134,11 +134,15 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     
     private String path;
     private ObservationURI uri;
+    private boolean requiresObservationID;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
 
-    protected RepoAction() { }
+    protected RepoAction(boolean requiresObservation) 
+    { 
+    	this.requiresObservationID = requiresObservation;
+    }
 
     // this method will only downgrade the state to !readable and !writable
     // and will never restore them to true - that is intentional
@@ -428,8 +432,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
 
         throw new AccessControlException("write permission denied: " + getURI());
     }
-
-
+    
     // extract the URI from the path
     private ObservationURI getURI(String path)
     {
@@ -437,6 +440,9 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         {
             URI u = new URI("caom", path, null);
             ObservationURI ret = new ObservationURI(u);
+            if (this.requiresObservationID & (ret.getObservationID() == null))
+            	throw new IllegalArgumentException("invalid path for URI: " + path);
+            
             return ret;
         }
         catch(URISyntaxException ex)
