@@ -70,10 +70,8 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.HashUtil;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  *
@@ -86,12 +84,31 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
     public static final String SCHEME = "caom";
     
     private String collection;
-    private String observationID;
+    private String observationID = null;
     
     private transient URI uri;
 
     private ObservationURI() { }
 
+    private void validateCollection(String collection)
+    {
+        CaomValidator.assertNotNull(getClass(), "collection", collection);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        this.uri = URI.create(SCHEME + ":" + collection);
+        this.collection = collection;
+    }
+
+    private void validateCollectionAndObservationID(String collection, String observationID)
+    {
+        CaomValidator.assertNotNull(getClass(), "collection", collection);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        CaomValidator.assertNotNull(getClass(), "observationID", observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+        this.collection = collection;
+        this.observationID = observationID;
+        this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
+    }
+    
     public ObservationURI(URI uri)
     {
         if ( !SCHEME.equals(uri.getScheme()))
@@ -101,13 +118,11 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         String[] cop = ssp.split("/");
         if (cop.length == 2)
         {
-            this.collection = cop[0];
-            this.observationID = cop[1];
-            CaomValidator.assertNotNull(getClass(), "collection", collection);
-            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
-            this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
+        	validateCollectionAndObservationID(cop[0], cop[1]);
+        }
+        else if (cop.length == 1)
+        {
+            validateCollection(cop[0]);
         }
         else
             throw new IllegalArgumentException("input URI has " + cop.length + " parts ("+ssp+"), expected 2: <collection>/<observationID>");
@@ -115,13 +130,14 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
 
     public ObservationURI(String collection, String observationID)
     {
-        CaomValidator.assertNotNull(getClass(), "collection", collection);
-        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-        CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
-        this.collection = collection;
-        this.observationID = observationID;
-        this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
+    	if (observationID == null)
+    	{
+    		validateCollection(collection);
+    	}
+    	else
+    	{
+            validateCollectionAndObservationID(collection, observationID);
+    	}
     }
 
     @Override
@@ -171,6 +187,16 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         int ret = collection.compareTo(u.collection);
         if (ret != 0)
             return ret;
+        else if (observationID == null)
+        {
+        	if (u.observationID == null)
+        		return 0;
+        	else
+        		return -1;
+        }
+        else if (u.observationID == null)
+        	return 1;
+        
         return observationID.compareTo(u.observationID);
                 
     }
