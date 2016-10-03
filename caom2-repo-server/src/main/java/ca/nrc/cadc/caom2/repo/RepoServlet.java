@@ -72,6 +72,9 @@ package ca.nrc.cadc.caom2.repo;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.PrivilegedActionException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
 
 import javax.security.auth.Subject;
 import javax.servlet.ServletException;
@@ -84,9 +87,11 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.repo.action.DeleteAction;
 import ca.nrc.cadc.caom2.repo.action.GetAction;
+import ca.nrc.cadc.caom2.repo.action.ListAction;
 import ca.nrc.cadc.caom2.repo.action.PostAction;
 import ca.nrc.cadc.caom2.repo.action.PutAction;
 import ca.nrc.cadc.caom2.repo.action.RepoAction;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.security.AccessControlException;
 
@@ -166,7 +171,29 @@ public class RepoServlet extends HttpServlet
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException
     {
-        doit(request, response, new GetAction());
+    	String path = request.getPathInfo();
+    	String[] cop = path.split("/");
+    	if (cop.length == 2)
+    		doit(request, response, new GetAction());
+    	else if (cop.length == 1)
+    	{
+    		String maxRecString = request.getParameter("maxRec");
+    		if (maxRecString == null)
+    			throw new IllegalArgumentException("missing maxRec");
+    		
+    		Integer maxRec = Integer.valueOf(maxRecString);
+    		DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+    		try 
+    		{
+				Date start = df.parse(request.getParameter("start"));
+				Date end = df.parse(request.getParameter("end"));
+				doit(request, response, new ListAction(maxRec, start, end));
+			} 
+    		catch (ParseException e) 
+    		{
+				throw new IllegalArgumentException("wrong start date format", e);
+			}
+    	}    	
     }
 
     @Override

@@ -84,10 +84,7 @@ public class PutAction extends RepoAction
 {
     private static final Logger log = Logger.getLogger(PutAction.class);
 
-    public PutAction() 
-    { 
-    	super(true);
-    }
+    public PutAction() { }
 
     @Override
     public void doAction()

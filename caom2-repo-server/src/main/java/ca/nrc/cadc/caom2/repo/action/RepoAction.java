@@ -134,15 +134,11 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     
     private String path;
     private ObservationURI uri;
-    private boolean requiresObservationID;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
 
-    protected RepoAction(boolean requiresObservation) 
-    { 
-    	this.requiresObservationID = requiresObservation;
-    }
+    protected RepoAction() { }
 
     // this method will only downgrade the state to !readable and !writable
     // and will never restore them to true - that is intentional
@@ -439,10 +435,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         try
         {
             URI u = new URI("caom", path, null);
-            ObservationURI ret = new ObservationURI(u);
-            if (this.requiresObservationID & (ret.getObservationID() == null))
-            	throw new IllegalArgumentException("invalid path for URI: " + path);
-            
+            ObservationURI ret = new ObservationURI(u);            
             return ret;
         }
         catch(URISyntaxException ex)
