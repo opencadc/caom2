@@ -124,14 +124,14 @@ public class ListAction extends RepoAction
         {
         	writer.write(state.getObservationID());
         	calendar.setTime(state.getMaxLastModified());
-        	String y = Integer.toString(calendar.YEAR);
-        	String mon = Integer.toString(calendar.MONTH);
-        	String d = Integer.toString(calendar.DAY_OF_MONTH);
-        	String h = Integer.toString(calendar.HOUR);
-        	String m = Integer.toString(calendar.MINUTE);
-        	String s = Integer.toString(calendar.SECOND);
-        	String ms = Integer.toString(calendar.MILLISECOND);
-        	writer.write(y + "-" + mon +"-" + d + "-" + h + "-" + m + "-" + s + "-" + ms);
+        	String y = Integer.toString(calendar.get(Calendar.YEAR));
+        	String mon = Integer.toString(calendar.get(Calendar.MONTH));
+        	String d = Integer.toString(calendar.get(Calendar.DAY_OF_MONTH));
+        	String h = Integer.toString(calendar.get(Calendar.HOUR));
+        	String m = Integer.toString(calendar.get(Calendar.MINUTE));
+        	String s = Integer.toString(calendar.get(Calendar.SECOND));
+        	String ms = Integer.toString(calendar.get(Calendar.MILLISECOND));
+        	writer.write(y + "-" + mon +"-" + d + " " + h + ":" + m + ":" + s + "." + ms);
         	writer.endRecord();
         }
         
