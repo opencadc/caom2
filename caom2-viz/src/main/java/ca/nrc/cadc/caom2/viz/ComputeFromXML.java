@@ -113,7 +113,7 @@ public class ComputeFromXML
             {
                 log.info("plane: " + pid);
                 p.clearTransientState();
-                p.computeTransientState();
+                p.computeTransientState(o);
 
                 StringBuilder sb = new StringBuilder();
                 sb.append(p.getProductID()).append(": ");
