@@ -172,6 +172,9 @@ public class RepoServlet extends HttpServlet
         throws IOException, ServletException
     {
     	String path = request.getPathInfo();
+    	if (path.charAt(0) == '/')
+    		path = path.substring(1);
+    	
     	String[] cop = path.split("/");
     	if (cop.length == 2)
     		doit(request, response, new GetAction());
@@ -185,8 +188,18 @@ public class RepoServlet extends HttpServlet
     		DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     		try 
     		{
-				Date start = df.parse(request.getParameter("start"));
-				Date end = df.parse(request.getParameter("end"));
+                // start date is required
+                Date startDate = request.getParameter("start");
+                if (startDate == null)
+                    throw new IllegalArgumentException("missing start date");
+				Date start = df.parse(startDate);
+
+                // end date is optional
+		    	String endDate = request.getParameter("end");
+		    	Date end = null;
+		    	if (endDate != null)
+				    end = df.parse(endDate);
+		    	
 				doit(request, response, new ListAction(maxRec, start, end));
 			} 
     		catch (ParseException e) 
