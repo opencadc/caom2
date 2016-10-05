@@ -112,36 +112,38 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     /**
      * Computed position metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Position position;
     /**
      * Computed energy metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Energy energy;
     /**
      * Computed time metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Time time;
     /**
      * Computed polarization metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Polarization polarization;
     
     /**
      * Computed plane identifier. Identifers of this form are used in Provenance
      * input lists.
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient PlaneURI planeURI;
     
     /**
      * Computed globally unique identifier.
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient PublisherID publisherID;
     
