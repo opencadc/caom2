@@ -147,10 +147,7 @@ public class PublisherIDTest
     {
         try
         {
-            ObservationURI o = new ObservationURI("FOO", "obs1");
-            PlaneURI p = new PlaneURI(o, "prod1");
-            
-            PublisherID uri = new PublisherID(IVO_RESOURCE_ID, p);
+            PublisherID uri = new PublisherID(IVO_RESOURCE_ID, "obs1", "prod1");
             log.debug("created: " + uri);
             
             Assert.assertEquals(IVO_RESOURCE_ID, uri.getResourceID());
@@ -166,21 +163,28 @@ public class PublisherIDTest
 
             try
             {
-                uri = new PublisherID(null, p);
+                uri = new PublisherID(null, "obs1", "prod1");
                 Assert.fail("expected IllegalArgumentException for resourceID=null");
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
 
             try
             {
-                uri = new PublisherID(IVO_RESOURCE_ID, null);
-                Assert.fail("expected IllegalArgumentException for planeURI=null");
+                uri = new PublisherID(null, null, "prod1");
+                Assert.fail("expected IllegalArgumentException for observationID=null");
+            }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
+            
+            try
+            {
+                uri = new PublisherID(IVO_RESOURCE_ID, "obs1", null);
+                Assert.fail("expected IllegalArgumentException for productID=null");
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
 
             try
             {
-                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo");
+                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?obs1");
                 uri = new PublisherID(u);
                 Assert.fail("expected IllegalArgumentException for missing id component");
             }

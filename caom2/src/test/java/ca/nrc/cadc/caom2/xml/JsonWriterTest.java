@@ -122,7 +122,7 @@ public class JsonWriterTest
             {
                 for (Plane p : o.getPlanes())
                 {
-                    p.computeTransientState();
+                    p.computeTransientState(o);
                     Assert.assertNotNull("Plane.position", p.position);
                     Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
 
@@ -175,7 +175,7 @@ public class JsonWriterTest
             {
                 for (Plane p : o.getPlanes())
                 {
-                    p.computeTransientState();
+                    p.computeTransientState(o);
                     Assert.assertNotNull("Plane.position", p.position);
                     Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
 
