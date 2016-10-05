@@ -78,41 +78,38 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class MultiExtensionFitsTest extends AbstractTest
+public class IncludedConfigOnlyTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(MultiExtensionFitsTest.class);
+    private static final Logger log = Logger.getLogger(MetaDataTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public MultiExtensionFitsTest()
+    public IncludedConfigOnlyTest()
     {
         super();
     }
 
     @Test
-    public void testMultiExtensionFits()
+    public void testIncludedConfigOnlyTest()
     {
         try
         {
-            log.debug("testMultiExtensionFits");
+            log.debug("testIncludedConfigOnlyTest");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=MultiExtensionFits",
+                "--observationID=IncludeConfigOnly",
                 "--productID=productID",
-                "--uri=ad:MACHO/cal000312b,ad:MACHO/cal000312r",
-                "--default=test/config/fits2caom2/multiextensionfits.default"
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03"
             };
 
-            cleanup();
             doTest(args);
             doTest(args);
-            cleanup();
 
-            log.info("testMultiExtensionFits passed.");
+            log.info("testIncludedConfigOnlyTest passed.");
         }
         catch (Exception unexpected)
         {

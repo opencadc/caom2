@@ -343,30 +343,18 @@ public class IngestableFile
     	throws URISyntaxException, IOException, RuntimeException, InterruptedException
     {
         List<Protocol> protocols = new ArrayList<Protocol>();
-        URL baseURL = null;
         VOSURI src = new VOSURI(uri);
         URI serverUri = src.getServiceURI();
-        RegistryClient reg = new RegistryClient();
+        log.debug("server uri: " + serverUri);
 
         if (this.sslEnabled)
         {
             protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-            baseURL = reg.getServiceURL(serverUri, Standards.VOSPACE_PROTOCOLS_20, AuthMethod.CERT);
         }
         else
         {
             protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-            baseURL = reg.getServiceURL(serverUri, Standards.VOSPACE_PROTOCOLS_20, AuthMethod.ANON);
         }
-
-        if (baseURL == null)
-        {
-            log.error("failed to find service URL for " + serverUri);
-            throw new RuntimeException("BUG: failed to find CADC VOSpace service URL");
-        }
-
-        log.debug("server uri: " + serverUri);
-        log.debug("base url: " + baseURL.toString());
 
         // schema validation is always enabled
         VOSpaceClient client = new VOSpaceClient(serverUri);

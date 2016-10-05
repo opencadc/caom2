@@ -105,7 +105,7 @@ public class MainTest
             "--" + Argument.OBSERVATION_ID + "=arg.observationID",
             "--" + Argument.PRODUCT_ID + "=arg.productID",
             "--" + Argument.URI + "=ad:FOO/bar",
-            "--" + Argument.OUT + "=test/config/fits2caom2/out.xml"
+            "--" + Argument.OUT + "=src/test/resources/out.xml"
         };
         
         // collection, observationID, productID, uri, out,
@@ -117,20 +117,20 @@ public class MainTest
             "--" + Argument.OBSERVATION_ID + "=arg.observationID",
             "--" + Argument.PRODUCT_ID + "=arg.productID",
             "--" + Argument.URI + "=ad:FOO/bar",
-            "--" + Argument.OUT + "=test/config/fits2caom2/out.xml",
+            "--" + Argument.OUT + "=src/test/resources/out.xml",
             
             "--" + Argument.LOCAL + "=foo-bar.fits",
-            "--" + Argument.IN + "=test/config/fits2caom2/in.xml",
-            "--" + Argument.CONFIG + "=test/config/fits2caom2/userConfig.config",
-            "--" + Argument.DEFAULT + "=test/config/fits2caom2/fits2caom2-simple.default",
-            "--" + Argument.OVERRIDE + "=test/config/fits2caom2/fits2caom2.override",
+            "--" + Argument.IN + "=src/test/resources/in.xml",
+            "--" + Argument.CONFIG + "=src/test/resources/userConfig.config",
+            "--" + Argument.DEFAULT + "=src/test/resources/fits2caom2-simple.default",
+            "--" + Argument.OVERRIDE + "=src/test/resources/fits2caom2.override",
             "--" + Argument.TEMP + "=/tmp",
             "--" + Argument.IGNORE_PARTIAL_WCS,
             "-"  + Argument.NETRC_SHORT,
             "--" + Argument.NETRC,
             "--" + Argument.KEEP,
             "--" + Argument.TEST,
-            "--" + CertCmdArgUtil.ARG_CERT + "=test/config/fits2caom2/fakeproxy.pem"
+            "--" + CertCmdArgUtil.ARG_CERT + "=src/test/resources/fakeproxy.pem"
         };
     }
 
@@ -215,8 +215,8 @@ public class MainTest
             "--" + Argument.COLLECTION + "=arg.collection",
             "--" + Argument.OBSERVATION_ID + "=arg.observationID",
             "--" + Argument.PRODUCT_ID + "=arg.productID",
-            "--" + Argument.URI + "=@test/config/fits2caom2/uriAndLocal.txt",
-            "--" + Argument.OUT + "=test/config/fits2caom2/out.xml",
+            "--" + Argument.URI + "=@src/test/resources/uriAndLocal.txt",
+            "--" + Argument.OUT + "=src/test/resources/out.xml",
             "--" + Argument.LOCAL + "=foo"
         };
         ArgumentMap argsMap = new ArgumentMap(args);

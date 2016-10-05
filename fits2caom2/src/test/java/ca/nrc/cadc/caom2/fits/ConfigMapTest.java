@@ -87,7 +87,7 @@ public class ConfigMapTest
     public void testConfigFileKeysValues() throws Exception
     {
         
-        File configFile = new File("test/config/fits2caom2/configMap.config");
+        File configFile = new File("src/test/resources/configMap.config");
         FitsValuesMap defaults = new FitsValuesMap(new FileReader(configFile), "defaults");
         
         // GLOBAL Scope elements

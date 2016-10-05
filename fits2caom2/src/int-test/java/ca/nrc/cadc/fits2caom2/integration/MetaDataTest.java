@@ -69,98 +69,54 @@
 package ca.nrc.cadc.fits2caom2.integration;
 
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.sql.Connection;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class AbstractTest
+public class MetaDataTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(AbstractTest.class);
+    private static final Logger log = Logger.getLogger(MetaDataTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public AbstractTest() { }
-
-    protected Integer doTest(String[] args)
-        throws Exception
+    public MetaDataTest()
     {
-        return doTest(args, 0, "build/test/int-test-output.xml");
+        super();
     }
 
-    protected Integer doTest(String[] args, int expectedExitValue)
-        throws Exception
+    @Test
+    public void testMetaData()
     {
-        return doTest(args, expectedExitValue, "build/test/int-test-output.xml");
-    }
-
-    protected Integer doTest(String[] args, String outFilename)
-        throws Exception
-    {
-        return doTest(args, 0, outFilename);
-    }
-
-    protected Integer doTest(String[] args, int expectedExitValue, String outFilename)
-        throws Exception
-    {
-        String[] exec = new String[args.length + 3];
-        exec[0] = "./scripts/fits2caom2";
-        exec[1] = "-d";
-        exec[2] = "--out="+outFilename;
-
-        System.arraycopy(args, 0, exec, 3, args.length);
-        log.debug("\r\n");
-        for (int i = 0; i < exec.length; i++)
-        {
-            log.debug("arg[" + i + "] = " + exec[i]);
-        }
-
-        ProcessBuilder pb = new ProcessBuilder(exec);
-        Process process = pb.start();
-
-        int exitValue = process.waitFor();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null)
-        {
-            sb.append(line).append("\n");
-        }
-        String output = sb.toString();
-
-        log.debug("Exit value: " + exitValue);
-        log.debug(output);
-        Assert.assertEquals("exit value", expectedExitValue, exitValue);
-        return exitValue;
-    }
-    
-    protected void cleanup() throws Exception
-    {
-        Connection con = null;
         try
         {
-            
+            log.debug("testMetaData");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=MetaData",
+                "--productID=productID",
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/int-test/resources/metadata.default",
+                "--override=src/int-test/resources/metadata.override"
+            };
+
+            doTest(args);
+            doTest(args);
+
+            log.info("testMetaData passed.");
         }
         catch (Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-        }
-        finally
-        {
-            if (con != null)
-            {
-                con.close();
-            }
         }
     }
 
