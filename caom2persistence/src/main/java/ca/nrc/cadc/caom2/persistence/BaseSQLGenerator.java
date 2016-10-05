@@ -95,13 +95,11 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
-import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
@@ -1373,14 +1371,8 @@ public class BaseSQLGenerator implements SQLGenerator
             
             if (persistTransientState)
             {
-                // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
-                // TODO: where to get authority??
-                URI resourceID = URI.create("ivo://cadc.nrc.ca/" + obs.getCollection());
-                PlaneURI plu = new PlaneURI(obs.getURI(), plane.getProductID());
-                PublisherID pub = new PublisherID(resourceID, plu);
-                
-                safeSetString(sb, ps, col++, pub.getURI().toASCIIString());
-                safeSetString(sb, ps, col++, plu.getURI().toASCIIString());
+                safeSetURI(sb, ps, col++, plane.publisherID.getURI());
+                safeSetURI(sb, ps, col++, plane.planeURI.getURI());
 
                 //position
                 Position pos = plane.position;
@@ -2250,6 +2242,14 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(val);
             sb.append(",");
         }
+    }
+    protected void safeSetURI(StringBuilder sb, PreparedStatement ps, int col, URI val)
+        throws SQLException
+    {
+        String str = null;
+        if (val != null)
+            str = val.toASCIIString();
+        safeSetString(sb, ps, col, str);
     }
     
     // default: space-separated words in a single string
