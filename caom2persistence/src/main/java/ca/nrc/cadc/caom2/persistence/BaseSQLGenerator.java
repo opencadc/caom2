@@ -91,14 +91,17 @@ import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
@@ -194,6 +197,10 @@ public class BaseSQLGenerator implements SQLGenerator
         ObservationSkeleton.class, PlaneSkeleton.class, ArtifactSkeleton.class, PartSkeleton.class, ChunkSkeleton.class,
         ObservationMetaReadAccessSkeleton.class, PlaneMetaReadAccessSkeleton.class, PlaneDataReadAccessSkeleton.class
     };
+    protected static final Class[] STATE_CLASSES =
+    {
+        ObservationState.class
+    };
 
     static final String SIMPLE_TYPE = "S";
     static final String COMPOSITE_TYPE = "C";
@@ -273,6 +280,19 @@ public class BaseSQLGenerator implements SQLGenerator
                 tableMap.put(c, s);
             aliasMap.put(c, c.getSimpleName());
         }
+        for (Class c : STATE_CLASSES)
+        {
+            String s = c.getSimpleName();
+            s = s.replace("State", ""); // state classes read from underlying tables
+            if (fakeSchemaTablePrefix != null)
+            {
+                tableMap.put(c, fakeSchemaTablePrefix + s);
+            }
+            else
+                tableMap.put(c, s);
+            aliasMap.put(c, c.getSimpleName());
+        }
+            
         // IMPORTANT:
         // - the primary key column is LAST in the list of columns so that
         //   insert and update statements have the same argument number and order
@@ -337,6 +357,7 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             String[] computedPlaneColumns = new String[]
             {
+                "publisherID",
                 "planeURI",
                 
                 // position
@@ -540,6 +561,8 @@ public class BaseSQLGenerator implements SQLGenerator
         columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
         columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
         columnMap.put(PlaneDataReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
+        
+        columnMap.put(ObservationState.class, new String[] { "collection", "observationID", "maxLastModified" });
     }
 
     public boolean persistTransientState()
@@ -659,13 +682,25 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     // select batchSize instances of c, starting at minLastModified and in lastModified order
+    
+    @Override
     public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
+        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, null);
+    }
+
+    @Override
+    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, String collection)
     {
         DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
         String top = getTopConstraint(batchSize);
         String limit = getLimitConstraint(batchSize);
 
         String lastModifiedColumn = "lastModified";
+        if (ObservationState.class.equals(c))
+        {
+            lastModifiedColumn = "maxLastModified";
+        }
         
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(c);
@@ -678,19 +713,25 @@ public class BaseSQLGenerator implements SQLGenerator
         sb.append(getColumns(c));
         sb.append(" FROM ");
         sb.append(getFrom(c));
+        String predCombine = " WHERE ";
+        if (collection != null)
+        {
+            sb.append(predCombine);
+            predCombine = " AND ";
+            sb.append(alias).append(".collection = '").append(collection).append("'");
+        }
         if (minLastModified != null)
         {
-            sb.append(" WHERE ");
+            sb.append(predCombine);
+            predCombine = " AND ";
             sb.append(alias).append(".").append(lastModifiedColumn).append(" >= '");
             sb.append(df.format(minLastModified));
             sb.append("'");
         }
         if (maxLastModified != null)
         {
-            if (minLastModified == null)
-                sb.append(" WHERE ");
-            else
-                sb.append(" AND ");
+            sb.append(predCombine);
+            predCombine = " AND ";
             sb.append(alias).append(".").append(lastModifiedColumn).append(" <= '");
             sb.append(df.format(maxLastModified));
             sb.append("'");
@@ -1332,8 +1373,14 @@ public class BaseSQLGenerator implements SQLGenerator
             
             if (persistTransientState)
             {
-                // planeURI
-                safeSetString(sb, ps, col++, plane.getURI(obs.getURI()).getURI().toASCIIString());
+                // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
+                // TODO: where to get authority??
+                URI resourceID = URI.create("ivo://cadc.nrc.ca/" + obs.getCollection());
+                PlaneURI plu = new PlaneURI(obs.getURI(), plane.getProductID());
+                PublisherID pub = new PublisherID(resourceID, plu);
+                
+                safeSetString(sb, ps, col++, pub.getURI().toASCIIString());
+                safeSetString(sb, ps, col++, plu.getURI().toASCIIString());
 
                 //position
                 Position pos = plane.position;
@@ -2766,6 +2813,12 @@ public class BaseSQLGenerator implements SQLGenerator
         return new BaseObservationExtractor(this);
     }
 
+    @Override
+    public RowMapper getObservationStateMapper()
+    {
+        return new ObservationStateMapper();
+    }
+    
     public RowMapper getReadAccessMapper(Class<? extends ReadAccess> c)
     {
         return new ReadAccessMapper(c);
@@ -3624,6 +3677,23 @@ public class BaseSQLGenerator implements SQLGenerator
             }
         }
     }
+    
+    class ObservationStateMapper implements RowMapper
+    {
+        @Override
+        public Object mapRow(ResultSet rs, int i) 
+            throws SQLException
+        {
+            int col = 1;
+            
+            String collection = rs.getString(col++);
+            String observationID = rs.getString(col++);
+            Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);
+
+            return new ObservationState(collection, observationID, maxLastModified);
+        }
+    }
+
 
     private class SkeletonExtractor implements ResultSetExtractor
     {
