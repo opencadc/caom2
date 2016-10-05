@@ -629,7 +629,7 @@ public class CaomRepoIntTests
         // ensure we have an invalid observation
         try
         {
-            plane.computeTransientState();
+            plane.computeTransientState(observation);
             throw new IllegalStateException("Test observation not invalid.");
         }
         catch (IllegalArgumentException e)

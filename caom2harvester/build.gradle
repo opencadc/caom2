@@ -20,7 +20,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.2.1'
+version = '2.2.3'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 
@@ -33,7 +33,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:1.+'
     compile 'org.opencadc:cadc-wcs:1.+'
     compile 'org.opencadc:caom2:2.2+'
-    compile 'org.opencadc:caom2persistence:2.2+'
+    compile 'org.opencadc:caom2persistence:[2.2.3,)'
 
     // open source JDBC drivers
     runtime 'net.sourceforge.jtds:jtds:1.+'
