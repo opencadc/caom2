@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.types.TimeUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -107,31 +108,44 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     public Provenance provenance;
     public Metrics metrics;
     public DataQuality quality;
-
+    
     /**
      * Computed position metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Position position;
     /**
      * Computed energy metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Energy energy;
     /**
      * Computed time metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Time time;
     /**
      * Computed polarization metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see computeTransientState()
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Polarization polarization;
+    
+    /**
+     * Computed plane identifier. Identifers of this form are used in Provenance
+     * input lists.
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
+     */
+    public transient PlaneURI planeURI;
+    
+    /**
+     * Computed globally unique identifier.
+     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
+     */
+    public transient PublisherID publisherID;
     
     public Plane(String productID)
     {
@@ -144,6 +158,7 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
      */
     public void clearTransientState()
     {
+        this.publisherID = null;
         this.position = null;
         this.energy = null;
         this.time = null;
@@ -166,8 +181,9 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     /**
      * Force (re)computation of all computed state.
      */
-    public void computeTransientState()
+    public void computeTransientState(Observation parent)
     {
+        computeIdentifiers(parent);
         computePosition();
         computeEnergy();
         computeTime();
@@ -190,7 +206,7 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     /**
      * @param parentURI
      * @return 
-     * @deprecated use the PlaneURI constructor
+     * @deprecated use public field
      */
     public PlaneURI getURI(ObservationURI parentURI)
     {
@@ -272,6 +288,15 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return this.productID.compareTo(p.productID);
     }
 
+    protected void computeIdentifiers(Observation o)
+    {
+        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
+        // TODO: where to get authority??
+        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
+        this.planeURI = new PlaneURI(o.getURI(), productID);
+        this.publisherID = new PublisherID(resourceID, o.getObservationID(), productID);
+    }
+    
     protected void computePosition()
     {
         try

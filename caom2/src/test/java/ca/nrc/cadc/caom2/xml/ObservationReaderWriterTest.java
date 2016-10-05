@@ -537,7 +537,7 @@ public class ObservationReaderWriterTest
                     
             for (Plane p : observation.getPlanes())
             {
-                p.computeTransientState();
+                p.computeTransientState(observation);
                 Assert.assertNotNull("Plane.position", p.position);
                 Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
 

@@ -207,7 +207,7 @@ public final class CaomValidator
             try
             {
                 p.clearTransientState();
-                p.computeTransientState();
+                p.computeTransientState(obs);
                 if (p.position != null && p.position.bounds != null)
                 {
                     Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
