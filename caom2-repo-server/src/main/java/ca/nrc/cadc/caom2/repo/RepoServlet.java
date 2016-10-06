@@ -104,6 +104,7 @@ public class RepoServlet extends HttpServlet
     private static final long serialVersionUID = 201208141300L;
     
     private static final Logger log = Logger.getLogger(RepoServlet.class);
+	private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     private void doit(HttpServletRequest request, HttpServletResponse response, RepoAction action)
         throws IOException, ServletException
@@ -185,7 +186,6 @@ public class RepoServlet extends HttpServlet
     			throw new IllegalArgumentException("missing maxRec");
     		
     		Integer maxRec = Integer.valueOf(maxRecString);
-    		DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     		try 
     		{
                 // start date is required

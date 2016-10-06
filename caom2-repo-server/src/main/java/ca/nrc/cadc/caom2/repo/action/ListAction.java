@@ -72,9 +72,10 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountWriter;
 
-import java.util.Calendar;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -92,6 +93,7 @@ public class ListAction extends RepoAction
 	private Integer maxRec;
 	private Date start;
 	private Date end;
+	private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 	
     public ListAction(Integer maxRec, Date start, Date end) 
     { 
@@ -120,19 +122,10 @@ public class ListAction extends RepoAction
         syncOutput.setHeader("Content-Type", "text/csv");
         ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
         CsvWriter writer = new CsvWriter(bc, ',');
-        Calendar calendar = Calendar.getInstance();
         for (ObservationState state : states)
         {
         	writer.write(state.getObservationID());
-        	calendar.setTime(state.getMaxLastModified());
-        	String y = Integer.toString(calendar.get(Calendar.YEAR));
-        	String mon = Integer.toString(calendar.get(Calendar.MONTH));
-        	String d = Integer.toString(calendar.get(Calendar.DAY_OF_MONTH));
-        	String h = Integer.toString(calendar.get(Calendar.HOUR));
-        	String m = Integer.toString(calendar.get(Calendar.MINUTE));
-        	String s = Integer.toString(calendar.get(Calendar.SECOND));
-        	String ms = Integer.toString(calendar.get(Calendar.MILLISECOND));
-        	writer.write(y + "-" + mon +"-" + d + " " + h + ":" + m + ":" + s + "." + ms);
+        	writer.write(df.format(state.getMaxLastModified()));
         	writer.endRecord();
         }
         
