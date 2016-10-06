@@ -193,61 +193,66 @@ public class PlaneTest
     {
         try
         {
+            Observation o = new SimpleObservation("STUFF", "nonsense");
             Plane plane = new Plane("foo");
             
             int defCode = plane.getStateCode();
             log.debug("testTransientState: " + defCode);
             int nonTransientCode = plane.getStateCode(false);
             log.debug("testTransientState: " + nonTransientCode);
+            
             Assert.assertEquals("default code", defCode, nonTransientCode);
-            int transientCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + transientCode);
-            Assert.assertEquals("not computed", defCode, transientCode);
+            int notComputed = plane.getStateCode(true);
+            log.debug("testTransientState: " + notComputed);
+            Assert.assertEquals("not computed", defCode, notComputed);
 
             plane.clearTransientState();
-            plane.computeTransientState();
-            transientCode = plane.getStateCode(true);
-            Assert.assertEquals("null computed", defCode, transientCode);
+            plane.computeTransientState(o);
+            int idCode = plane.getStateCode(true);
+            Assert.assertTrue("computed identifiers", defCode != idCode);
 
-            plane.clearTransientState();
             assignPos(plane);
+            plane.computeTransientState(o);
 
             nonTransientCode = plane.getStateCode(false);
             log.debug("testTransientState: " + nonTransientCode);
             Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            transientCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + transientCode);
-            Assert.assertTrue("computed position", defCode != transientCode);
+            int compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
 
             plane.clearTransientState();
             assignEnergy(plane);
+            plane.computeTransientState(o);
 
             nonTransientCode = plane.getStateCode(false);
             log.debug("testTransientState: " + nonTransientCode);
             Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            transientCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + transientCode);
-            Assert.assertTrue("computed position", defCode != transientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
 
             plane.clearTransientState();
             assignTime(plane);
-
+            plane.computeTransientState(o);
+            
             nonTransientCode = plane.getStateCode(false);
             log.debug("testTransientState: " + nonTransientCode);
             Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            transientCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + transientCode);
-            Assert.assertTrue("computed position", defCode != transientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
 
             plane.clearTransientState();
             assignPol(plane);
-
+            plane.computeTransientState(o);
+            
             nonTransientCode = plane.getStateCode(false);
             log.debug("testTransientState: " + nonTransientCode);
             Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            transientCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + transientCode);
-            Assert.assertTrue("computed position", defCode != transientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
         }
         catch(Exception unexpected)
         {

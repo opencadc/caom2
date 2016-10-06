@@ -123,11 +123,12 @@ public class PublisherID implements Comparable<PublisherID>, Serializable
         this.resourceID = URI.create(SCHEME + "://" + auth + "/" + path);
     }
     
-    public PublisherID(URI resourceID, PlaneURI id) 
+    public PublisherID(URI resourceID, String observationID, String productID) 
     { 
         CaomValidator.assertNotNull(PublisherID.class, "resourceID", resourceID);
-        CaomValidator.assertNotNull(PublisherID.class, "id", id);
-        this.uri = URI.create(resourceID.toASCIIString() + "?" + id.getParent().getObservationID() + "/" + id.getProductID());
+        CaomValidator.assertNotNull(PublisherID.class, "observationID", observationID);
+        CaomValidator.assertNotNull(PublisherID.class, "productID", productID);
+        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID + "/" + productID);
         this.resourceID = resourceID;
     }
     
