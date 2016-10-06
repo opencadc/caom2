@@ -189,16 +189,16 @@ public class RepoServlet extends HttpServlet
     		try 
     		{
                 // start date is required
-                String startDate = request.getParameter("start");
-                if (startDate == null)
-                    throw new IllegalArgumentException("missing start date");
-				Date start = df.parse(startDate);
+                String startString = request.getParameter("start");
+                Date start = null;
+                if (startString != null)
+				   start = df.parse(startString);
 
                 // end date is optional
-		    	String endDate = request.getParameter("end");
+		    	String endString = request.getParameter("end");
 		    	Date end = null;
-		    	if (endDate != null)
-				    end = df.parse(endDate);
+		    	if (endString != null)
+				    end = df.parse(endString);
 		    	
 				doit(request, response, new ListAction(maxRec, start, end));
 			} 

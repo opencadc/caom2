@@ -110,7 +110,8 @@ public class ListAction extends RepoAction
         checkReadPermission(uri);
 
         ObservationDAO dao = getDAO();
-        List<ObservationState> states = dao.getObservationList(uri.getCollection(), start, end, null);
+        List<ObservationState> states = dao.getObservationList(
+        		uri.getCollection(), this.start, this.end, this.maxRec);
 
         if (states == null)
             throw new ObservationNotFoundException(uri);
