@@ -85,7 +85,7 @@ import com.csvreader.CsvWriter;
 
 /**
  *
- * @author pdowler
+ * @author yeuna
  */
 public class ListAction extends RepoAction
 {   
@@ -118,7 +118,7 @@ public class ListAction extends RepoAction
         if (states == null)
             throw new ObservationNotFoundException(uri);
 
-        // write with default schema        
+        // write in csv format for now        
         syncOutput.setHeader("Content-Type", "text/csv");
         ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
         CsvWriter writer = new CsvWriter(bc, ',');
@@ -129,7 +129,6 @@ public class ListAction extends RepoAction
         	writer.endRecord();
         }
         
-        // ow.write(obs, bc);
         logInfo.setBytes(bc.getByteCount());
         
         log.debug("DONE: " + uri);

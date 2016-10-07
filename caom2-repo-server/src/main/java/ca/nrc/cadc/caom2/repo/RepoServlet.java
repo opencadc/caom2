@@ -181,22 +181,25 @@ public class RepoServlet extends HttpServlet
     		doit(request, response, new GetAction());
     	else if (cop.length == 1)
     	{
+            // maxRec == null means list all 
     		String maxRecString = request.getParameter("maxRec");
-    		if (maxRecString == null)
-    			throw new IllegalArgumentException("missing maxRec");
+    		Integer maxRec = null;
+    		if (maxRecString != null)	
+    		{
+    		    maxRec = Integer.valueOf(maxRecString);
+    		}
     		
-    		Integer maxRec = Integer.valueOf(maxRecString);
     		try 
     		{
-                // start date is required
-                String startString = request.getParameter("start");
+                // start date is optional
                 Date start = null;
+                String startString = request.getParameter("start");
                 if (startString != null)
 				   start = df.parse(startString);
 
                 // end date is optional
-		    	String endString = request.getParameter("end");
 		    	Date end = null;
+		    	String endString = request.getParameter("end");
 		    	if (endString != null)
 				    end = df.parse(endString);
 		    	
@@ -204,7 +207,7 @@ public class RepoServlet extends HttpServlet
 			} 
     		catch (ParseException e) 
     		{
-				throw new IllegalArgumentException("wrong start date format", e);
+				throw new IllegalArgumentException("wrong date format", e);
 			}
     	}    	
     }
