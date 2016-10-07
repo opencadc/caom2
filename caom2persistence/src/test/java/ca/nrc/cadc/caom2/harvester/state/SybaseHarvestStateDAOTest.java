@@ -279,4 +279,33 @@ public class SybaseHarvestStateDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testTruncatedUUID()
+    {
+        try
+        {
+            long num = 5682981253784032512l; //
+            UUID trunc = new UUID(0l, num);
+            
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testTruncatedUUID", Integer.class.getName());
+            Assert.assertEquals("testTruncatedUUID", s.source);
+            Assert.assertNotNull(s);
+            Assert.assertNull(s.curLastModified);
+
+            s.curID = trunc;
+            s.curLastModified = new Date();
+            dao.put(s);
+
+            HarvestState s2 = dao.get("testTruncatedUUID", Integer.class.getName());
+            Assert.assertNotNull(s2);
+            Assert.assertEquals(trunc, s2.curID);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
