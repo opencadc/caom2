@@ -197,8 +197,16 @@ public  class Util extends CaomUtil
         if (o instanceof byte[])
         {
             byte[] b = (byte[]) o;
+            if (b.length < 16)
+            {
+                // sybase truncates trailing 0s
+                byte[] bb = new byte[16];
+                System.arraycopy(b, 0, bb, 0, b.length);
+                b = bb;
+            }
             long msb = HexUtil.toLong(b, 0);
             long lsb = HexUtil.toLong(b, 8);
+            
             return new UUID(msb, lsb);
         }
         throw new UnsupportedOperationException("converting " + o.getClass().getName() + " " + o + " to UUID");
