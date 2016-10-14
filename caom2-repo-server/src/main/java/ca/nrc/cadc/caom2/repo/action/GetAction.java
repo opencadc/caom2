@@ -90,10 +90,10 @@ public class GetAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
+        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
-        checkReadPermission(uri);
+        checkReadPermission(uri.getCollection());
 
         ObservationDAO dao = getDAO();
         Observation obs = dao.get(uri);

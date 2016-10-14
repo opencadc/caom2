@@ -175,7 +175,7 @@ public class RepoServlet extends HttpServlet
     	String path = request.getPathInfo();
     	if (path.charAt(0) == '/')
     		path = path.substring(1);
-    	
+    	log.info("PATH: " + path);
     	String[] cop = path.split("/");
     	if (cop.length == 2)
     		doit(request, response, new GetAction());
@@ -203,7 +203,8 @@ public class RepoServlet extends HttpServlet
 		    	if (endString != null)
 				    end = df.parse(endString);
 		    	
-				doit(request, response, new ListAction(maxRec, start, end));
+				doit(request, response, 
+				        new ListAction(maxRec, start, end));
 			} 
     		catch (ParseException e) 
     		{

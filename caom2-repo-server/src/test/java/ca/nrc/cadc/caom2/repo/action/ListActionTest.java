@@ -69,46 +69,123 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import org.apache.log4j.Logger;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
+import java.io.IOException;
+import java.security.AccessControlException;
+import java.security.cert.CertificateException;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.easymock.EasyMockRunner;
+import org.easymock.Mock;
+import org.easymock.MockType;
+import org.easymock.TestSubject;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.repo.TestSyncOutput;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.util.Log4jInit;
+
 
 /**
  *
- * @author pdowler
+ * @author adriand
  */
-public class PostAction extends RepoAction
+@RunWith(EasyMockRunner.class)
+public class ListActionTest 
 {
-    private static final Logger log = Logger.getLogger(PostAction.class);
+    private static final Logger log = Logger.getLogger(ListActionTest.class);
 
-    public PostAction() { }
-
-    @Override
-    public void doAction()
-        throws Exception
+    @TestSubject
+    private ListAction listAction = new TestListAction(3, null, null);
+    
+    @Mock(type = MockType.NICE, name = "mockDao", fieldName = "dao")
+    private ObservationDAO mockDao;
+    
+    
+    static
     {
-        ObservationURI uri = new ObservationURI(getURI());
-        log.debug("START: " + uri);
-
-        checkWritePermission(uri);
-
-        Observation obs = getInputObservation();
-
-        if ( !uri.equals(obs.getURI()) )
-            throw new IllegalArgumentException("request path does not match ObservationURI in content");
-        
-        ObservationDAO dao = getDAO();
-        
-        if (!dao.exists(uri))
-            throw new ObservationNotFoundException(uri);
-
-        CaomValidator.validate(obs);
-
-        dao.put(obs);
-        
-        log.debug("DONE: " + uri);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
+
+
+    @Test(expected=CollectionNotFoundException.class)
+    public void testCollectionNotFoundException() throws Exception
+    {
+
+        listAction.setPath("/BLAH");
+        reset(mockDao);
+        expect(mockDao.getObservationList("BLAH", null, null, 3))
+            .andReturn(null);
+        replay(mockDao);
+        listAction.doAction();
+    }
+    
+    @Test
+    public void testDoIt() throws Exception
+    {
+        // test the doIt method when it returns 2 observations
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, 
+                DateUtil.UTC);
+        
+        listAction.setPath("/TEST");
+        TestSyncOutput out = new TestSyncOutput();
+        listAction.setSyncOutput(out);
+        
+        reset(mockDao);
+        
+        // build the list of observations for the mock dao to return
+        List<ObservationState> obsList = new ArrayList<ObservationState>();
+        Date date1 = df.parse("2010-10-10T10:10:10.10");
+        obsList.add(new ObservationState("TEST", "1234", date1));
+        Date date2 = df.parse("2011-11-11T11:11:11.111");
+        obsList.add(new ObservationState("TEST", "6789", date2));
+        
+        expect(mockDao.getObservationList("TEST", null, null, 3))
+            .andReturn(obsList);
+        
+        replay(mockDao);
+        
+        listAction.doAction();
+        
+        String expected = "1234" + "," + df.format(date1) + "\n" +
+                          "6789" + "," + df.format(date2) + "\n";
+        Assert.assertEquals(expected, out.getContent());
+    }
+
+
+
+    private class TestLogInfo extends WebServiceLogInfo
+    {
+        
+    }
+
+    // simple test subclass that mocks checkReadPermission to always return true
+    private class TestListAction extends ListAction
+    {
+        TestListAction(Integer maxRec, Date start, Date end)
+        {
+            super(maxRec, start, end);
+            setLogInfo(new TestLogInfo());
+        }
+
+        @Override
+        protected void checkReadPermission(String collection)
+                throws AccessControlException, CertificateException, 
+                       CollectionNotFoundException, IOException
+        { }
+    }
+
 }

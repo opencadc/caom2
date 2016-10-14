@@ -90,7 +90,7 @@ public class PutAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
+        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
         checkWritePermission(uri);

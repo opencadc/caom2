@@ -69,12 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountWriter;
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -82,6 +76,11 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.csvreader.CsvWriter;
+
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.io.ByteCountWriter;
 
 /**
  *
@@ -106,17 +105,16 @@ public class ListAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
+        log.debug("START: " + getCollection());
 
-        checkReadPermission(uri);
+        checkReadPermission(getCollection());
 
         ObservationDAO dao = getDAO();
         List<ObservationState> states = dao.getObservationList(
-        		uri.getCollection(), this.start, this.end, this.maxRec);
+        		getCollection(), this.start, this.end, this.maxRec);
 
         if (states == null)
-            throw new ObservationNotFoundException(uri);
+            throw new CollectionNotFoundException(getCollection());
 
         // write in csv format for now        
         syncOutput.setHeader("Content-Type", "text/csv");
@@ -131,6 +129,6 @@ public class ListAction extends RepoAction
         
         logInfo.setBytes(bc.getByteCount());
         
-        log.debug("DONE: " + uri);
+        log.debug("DONE: " + getCollection());
     }
 }

@@ -133,7 +133,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     protected WebServiceLogInfo logInfo;
     
     private String path;
-    private ObservationURI uri;
+    private URI uri;
+    private String collection;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -177,14 +178,22 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (path.charAt(0) == '/')
             path = path.substring(1);
         this.path = path;
+        String[] cop = path.split("/");
+        try
+        {
+            this.uri = new URI("caom", path, null);
+        } catch (URISyntaxException e)
+        {
+            throw new IllegalArgumentException("invalid path for URI: " + path);
+        }
+        this.collection = cop[0];
     }
 
     public Object run()
         throws Exception
     {
         try
-        {
-            this.uri = getURI(path);
+        {            
             log.debug("URI: " + uri);
             logInfo.setSuccess(false);
             doAction();
@@ -193,7 +202,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         catch(AccessControlException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 403, "permission denied: " + uri.getURI().toASCIIString(), false);
+            handleException(ex, 403, "permission denied: " + uri, false);
         }
         catch(CertificateException ex)
         {
@@ -202,27 +211,27 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         catch(IllegalArgumentException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 400, "invalid input: caom:" + path, true);
+            handleException(ex, 400, "invalid input: " + uri, true);
         }
         catch(CollectionNotFoundException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 404, "collection not found: " + uri.getCollection(), false);
+            handleException(ex, 404, "collection not found: " + collection, false);
         }
         catch(ObservationNotFoundException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 404, "not found: " + uri.getURI().toASCIIString(), false);
+            handleException(ex, 404, "not found: " + uri, false);
         }
         catch(ObservationAlreadyExistsException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 409, "already exists: " + uri.getURI().toASCIIString(), false);
+            handleException(ex, 409, "already exists: " + uri, false);
         }
         catch(ByteLimitExceededException ex)
         {
             logInfo.setSuccess(true);
-            handleException(ex, 413, "too large: " + uri.getURI().toASCIIString(), false);
+            handleException(ex, 413, "too large: " + uri, false);
         }
         catch(TransientDataAccessResourceException ex)
         {
@@ -231,18 +240,18 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             if (lowerr.contains("attempt to insert duplicate key"))
             {
                 logInfo.setSuccess(true);
-                handleException(ex, 400, "duplicate entity: " + uri.getURI().toASCIIString(), true);
+                handleException(ex, 400, "duplicate entity: " + uri, true);
             }
             else
                 handleException(ex, 500, "unexpected failure: " + path, true);
         }
         catch(RuntimeException unexpected)
         {
-            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri.getURI().toASCIIString(), true);
+            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri, true);
         }
         catch(Error unexpected)
         {
-            handleException(unexpected, 500, "unexpected error: " + path + " " + uri.getURI().toASCIIString(), true);
+            handleException(unexpected, 500, "unexpected error: " + path + " " + uri, true);
         }
         
         return null;
@@ -281,16 +290,21 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     public abstract void doAction()
         throws Exception;
 
-    protected ObservationURI getURI()
+    protected URI getURI()
     {
         return uri;
+    }
+    
+    protected String getCollection()
+    {
+        return collection;
     }
 
     protected ObservationDAO getDAO()
         throws IOException
     {
         if (dao == null)
-            dao = getDAO(uri.getCollection());
+            dao = getDAO(getCollection());
         return dao;
     }
 
@@ -326,13 +340,13 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     /**
      * Check if the caller can read the specified resource.
      * 
-     * @param uri
+     * @param collection
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission(ObservationURI uri)
+    protected void checkReadPermission(String collection)
         throws AccessControlException, CertificateException, 
                CollectionNotFoundException, IOException
     {
@@ -344,9 +358,9 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             throw new IllegalStateException(READ_ONLY_MSG);
         }
 
-        CaomRepoConfig.Item i = getConfig(uri.getCollection());
+        CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
-            throw new CollectionNotFoundException(uri.getCollection());
+            throw new CollectionNotFoundException(collection);
         
         try
         {
@@ -427,21 +441,6 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         }
 
         throw new AccessControlException("write permission denied: " + getURI());
-    }
-    
-    // extract the URI from the path
-    private ObservationURI getURI(String path)
-    {
-        try
-        {
-            URI u = new URI("caom", path, null);
-            ObservationURI ret = new ObservationURI(u);            
-            return ret;
-        }
-        catch(URISyntaxException ex)
-        {
-            throw new IllegalArgumentException("invalid path for URI: " + path);
-        }
     }
 
     // read configuration
