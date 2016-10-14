@@ -103,6 +103,7 @@ import ca.nrc.cadc.util.Log4jInit;
  *
  * @author adriand
  */
+
 @RunWith(EasyMockRunner.class)
 public class ListActionTest 
 {
