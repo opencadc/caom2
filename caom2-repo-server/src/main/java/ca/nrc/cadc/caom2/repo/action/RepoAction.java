@@ -69,45 +69,41 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.ac.UserNotFoundException;
-import ca.nrc.cadc.ac.client.GMSClient;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
-import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.springframework.dao.TransientDataAccessResourceException;
 
+import ca.nrc.cadc.ac.UserNotFoundException;
+import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.repo.SyncInput;
-import ca.nrc.cadc.caom2.repo.SyncOutput;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.io.ByteCountReader;
-import ca.nrc.cadc.io.ByteLimitExceededException;
-import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
+import ca.nrc.cadc.rest.RestAction;
 
 /**
  *
  * @author pdowler
  */
-public abstract class RepoAction implements PrivilegedExceptionAction<Object>
+public abstract class RepoAction extends RestAction
 {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
@@ -128,13 +124,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
 
     private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
 
-    protected SyncInput syncInput;
-    protected SyncOutput syncOutput;
-    protected WebServiceLogInfo logInfo;
-    
-    private String path;
-    private URI uri;
     private String collection;
+    private URI uri;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -157,139 +148,24 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             writable = false;
         }
     }
-    
-    public void setLogInfo(WebServiceLogInfo logInfo)
-    {
-        this.logInfo = logInfo;
-    }
 
-    public void setSyncInput(SyncInput syncInput)
+    @Override
+    public void setPath(String p) throws IllegalArgumentException
     {
-        this.syncInput = syncInput;
-    }
-
-    public void setSyncOutput(SyncOutput syncOutput)
-    {
-        this.syncOutput = syncOutput;
-    }
-    
-    public void setPath(String path)
-    {
-        if (path.charAt(0) == '/')
-            path = path.substring(1);
-        this.path = path;
-        String[] cop = path.split("/");
+        super.setPath(p);
         try
         {
             this.uri = new URI("caom", path, null);
         } catch (URISyntaxException e)
         {
-            throw new IllegalArgumentException("invalid path for URI: " + path);
-        }
-        this.collection = cop[0];
-    }
-
-    public Object run()
-        throws Exception
-    {
-        try
-        {            
-            log.debug("URI: " + uri);
-            logInfo.setSuccess(false);
-            doAction();
-            logInfo.setSuccess(true);
-        }
-        catch(AccessControlException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 403, "permission denied: " + uri, false);
-        }
-        catch(CertificateException ex)
-        {
-            handleException(ex, 403, "permission denied -- reason: invalid proxy certficate", true);
-        }
-        catch(IllegalArgumentException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 400, "invalid input: " + uri, true);
-        }
-        catch(CollectionNotFoundException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 404, "collection not found: " + collection, false);
-        }
-        catch(ObservationNotFoundException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 404, "not found: " + uri, false);
-        }
-        catch(ObservationAlreadyExistsException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 409, "already exists: " + uri, false);
-        }
-        catch(ByteLimitExceededException ex)
-        {
-            logInfo.setSuccess(true);
-            handleException(ex, 413, "too large: " + uri, false);
-        }
-        catch(TransientDataAccessResourceException ex)
-        {
-            String err = ex.toString();
-            String lowerr = err.toLowerCase();
-            if (lowerr.contains("attempt to insert duplicate key"))
-            {
-                logInfo.setSuccess(true);
-                handleException(ex, 400, "duplicate entity: " + uri, true);
-            }
-            else
-                handleException(ex, 500, "unexpected failure: " + path, true);
-        }
-        catch(RuntimeException unexpected)
-        {
-            handleException(unexpected, 500, "unexpected failure: " + path + " " + uri, true);
-        }
-        catch(Error unexpected)
-        {
-            handleException(unexpected, 500, "unexpected error: " + path + " " + uri, true);
-        }
+            throw new 
+                IllegalArgumentException("Path not a correct URI: " + path);
+        }        
+        String[] cop = path.split("/");
+        collection = cop[0];
         
-        return null;
     }
     
-    private void handleException(Throwable ex, int code, String message, boolean showExceptions)
-            throws IOException
-    {
-        logInfo.setMessage(message);
-        log.debug(message, ex);
-        if (!syncOutput.isOpen())
-        {
-            syncOutput.setCode(code); // too large
-            syncOutput.setHeader("Content-Type", ERROR_MIMETYPE);
-            PrintWriter w = syncOutput.getWriter();
-            w.println(message);
-
-            if (showExceptions)
-            {
-                w.println(ex.toString());
-                Throwable cause = ex.getCause();
-                while (cause != null)
-                {
-                    w.print("cause: ");
-                    w.println(cause.toString());
-                    cause = cause.getCause();
-                }
-            }
-
-            w.flush();
-        }
-        else
-            log.error("unexpected situation: SyncOutput is open", ex);
-    }
-    
-    public abstract void doAction()
-        throws Exception;
-
     protected URI getURI()
     {
         return uri;
@@ -297,6 +173,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     
     protected String getCollection()
     {
+        
         return collection;
     }
 
@@ -348,7 +225,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      */
     protected void checkReadPermission(String collection)
         throws AccessControlException, CertificateException, 
-               CollectionNotFoundException, IOException
+               ResourceNotFoundException, IOException
     {
         initState();
         if (!readable)
@@ -360,7 +237,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
 
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
-            throw new CollectionNotFoundException(collection);
+            throw new ResourceNotFoundException(
+                    "Collection not found:" + collection);
         
         try
         {
@@ -405,7 +283,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
      */
     protected void checkWritePermission(ObservationURI uri)
         throws AccessControlException, CertificateException, 
-               CollectionNotFoundException, IOException
+               ResourceNotFoundException, IOException
     {
         initState();
         if (!writable)
@@ -417,7 +295,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
-            throw new CollectionNotFoundException(uri.getCollection());
+            throw new ResourceNotFoundException(
+                    "Collection not found: " + uri.getCollection());
 
         try
         {

@@ -73,6 +73,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
  *
@@ -96,7 +97,7 @@ public class DeleteAction extends RepoAction
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ObservationNotFoundException(uri);
+            throw new ResourceNotFoundException("Observation not found: " + uri);
 
         dao.delete(uri);
 

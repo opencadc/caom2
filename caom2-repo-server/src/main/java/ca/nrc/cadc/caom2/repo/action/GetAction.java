@@ -69,12 +69,23 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.csvreader.CsvWriter;
+
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountWriter;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
  *
@@ -84,10 +95,62 @@ public class GetAction extends RepoAction
 {
     private static final Logger log = Logger.getLogger(GetAction.class);
     
+    private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    
+    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
+    
+    public static final int MAX_OBS_LIST_SIZE = 100000;
+
+    
     public GetAction() { }
 
     @Override
-    public void doAction()
+    public void doAction() throws Exception
+    {
+        log.debug("GET ACTION");
+        String[] cop = path.split("/");
+        if (cop.length == 2)
+            doGetObservation();
+        else if (cop.length == 1)
+        {
+            // maxRec == null means list all
+            String maxRecString = syncInput.getParameter("maxRec");
+            Integer maxRec = null;
+            if (maxRecString != null)
+            {
+                maxRec = Integer.valueOf(maxRecString);
+            }
+
+            // limit the size of the batch
+            if ((maxRec == null) || (maxRec > MAX_OBS_LIST_SIZE))
+            {
+                maxRec = MAX_OBS_LIST_SIZE;
+            }
+            
+            try
+            {
+                // start date is optional
+                Date start = null;
+                String startString = syncInput.getParameter("start");
+                if (startString != null)
+                    start = df.parse(startString);
+
+                // end date is optional
+                Date end = null;
+                String endString = syncInput.getParameter("end");
+                if (endString != null)
+                    end = df.parse(endString);
+
+                doList(maxRec.intValue(), start, end);
+            } catch (ParseException e)
+            {
+                throw new IllegalArgumentException("wrong date format", e);
+            }
+        }
+    }
+    
+    
+    protected void doGetObservation()
         throws Exception
     {
         ObservationURI uri = new ObservationURI(getURI());
@@ -99,7 +162,7 @@ public class GetAction extends RepoAction
         Observation obs = dao.get(uri);
 
         if (obs == null)
-            throw new ObservationNotFoundException(uri);
+            throw new ResourceNotFoundException("Observation not found: " + uri);
 
         // write with default schema
         ObservationWriter ow = new ObservationWriter();
@@ -111,4 +174,39 @@ public class GetAction extends RepoAction
         
         log.debug("DONE: " + uri);
     }
+    
+    
+    
+    protected void doList(int maxRec, Date start, Date end)
+            throws Exception
+        {
+            log.debug("START: " + getCollection());
+
+            checkReadPermission(getCollection());
+
+            ObservationDAO dao = getDAO();
+
+            List<ObservationState> states = dao.getObservationList(
+                    getCollection(), start, end, maxRec);
+
+            if (states == null)
+                throw new ResourceNotFoundException(
+                        "Collection not found: " + getCollection());
+
+            // write in csv format for now        
+            syncOutput.setHeader("Content-Type", "text/csv");
+            ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
+            CsvWriter writer = new CsvWriter(bc, ',');
+            for (ObservationState state : states)
+            {
+                writer.write(state.getObservationID());
+                writer.write(df.format(state.getMaxLastModified()));
+                writer.endRecord();
+            }
+            
+            logInfo.setBytes(bc.getByteCount());
+            
+            log.debug("DONE: " + getCollection());
+        }
+    
 }

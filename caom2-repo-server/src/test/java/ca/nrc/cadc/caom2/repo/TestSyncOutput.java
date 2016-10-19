@@ -75,6 +75,8 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.TreeMap;
 
+import ca.nrc.cadc.rest.SyncOutput;
+
 /**
  *
  * @author pdowler
