@@ -79,7 +79,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.springframework.dao.TransientDataAccessResourceException;
 
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
@@ -220,7 +219,7 @@ public abstract class RepoAction extends RestAction
      * @param collection
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
-     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
     protected void checkReadPermission(String collection)
@@ -278,7 +277,7 @@ public abstract class RepoAction extends RestAction
      * @param uri
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
-     * @throws ca.nrc.cadc.caom2.repo.action.CollectionNotFoundException
+     * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
     protected void checkWritePermission(ObservationURI uri)
