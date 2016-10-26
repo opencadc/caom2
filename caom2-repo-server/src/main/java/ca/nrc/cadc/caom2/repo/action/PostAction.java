@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
  *
@@ -90,7 +91,7 @@ public class PostAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
+        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
         checkWritePermission(uri);
@@ -103,7 +104,7 @@ public class PostAction extends RepoAction
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ObservationNotFoundException(uri);
+            throw new ResourceNotFoundException("Observation not found:" + uri);
 
         CaomValidator.validate(obs);
 

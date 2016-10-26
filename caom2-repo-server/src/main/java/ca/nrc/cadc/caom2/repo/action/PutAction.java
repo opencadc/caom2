@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 
 /**
  *
@@ -90,7 +91,7 @@ public class PutAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
+        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
         checkWritePermission(uri);
@@ -103,7 +104,8 @@ public class PutAction extends RepoAction
         ObservationDAO dao = getDAO();
         
         if (dao.exists(uri))
-            throw new ObservationAlreadyExistsException(uri);
+            throw new ResourceAlreadyExistsException(
+                    "Observation already exists: " + uri);
 
         CaomValidator.validate(obs);
 
