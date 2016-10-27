@@ -135,7 +135,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
         super(resourceID, pem1, pem2, pem3);
     }
 
-    //@Test
+    @Test
     public void testListNoReadPermission() throws Throwable
     {
     	int maxRec = 10;    	
@@ -158,7 +158,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	}
     }
     
-    //@Test
+    @Test
     public void testListSuccess() throws Throwable
     {
     	Integer maxRec = 3;    	
@@ -203,7 +203,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	}
     }
     
-    //@Test
+    @Test
     public void testListLessThanMaxRecSuccess() throws Throwable
     {
     	Integer maxRec = 10;    	
@@ -233,7 +233,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	}
     }
     
-    //@Test
+    @Test
     public void testListMoreThanMaxRecSuccess() throws Throwable
     {
     	Integer maxRec = 2;    	
@@ -264,7 +264,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	}
     }
   
-    //@Test
+    @Test
     public void testListAllSuccess() throws Throwable
     {
     	Integer maxRec = null;    	
