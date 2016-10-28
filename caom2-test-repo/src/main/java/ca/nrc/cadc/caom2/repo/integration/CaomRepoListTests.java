@@ -147,7 +147,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	List<Observation> observations = this.putObservations(baseIDs);
     	
     	// Check that we have no permission to list the observations
-    	checkObservationList(baseIDs.size(), super.SCHEME + 
+    	checkObservationList(0, super.SCHEME + 
     			super.TEST_COLLECTION, maxRec, start, null, 
     			super.SUBJECT3, null, 403, "permission denied: ", false);
     	
