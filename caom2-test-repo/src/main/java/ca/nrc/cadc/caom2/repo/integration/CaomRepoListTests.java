@@ -382,10 +382,16 @@ public class CaomRepoListTests extends CaomRepoIntTests
         }
         else if (response == 200 && observations != null && observations.size() > 0)
         {
+        	long matchSize = observations.size();
+        	if (observations.size() > maxRec)
+        	{
+        		matchSize = Long.valueOf(maxRec);
+        	}
+        	
             String message = bos.toString().trim();
             Assert.assertNotNull(message);
             String[] lines = message.split("\\r?\\n");  
-            Assert.assertEquals("wrong number of observation states", observations.size(), lines.length);
+	        Assert.assertEquals("wrong number of observation states", matchSize, lines.length);
             for (int i = 0; i < lines.length; i++)
             {            	
             	String[] fields = lines[i].split(",");
