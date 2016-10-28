@@ -191,10 +191,6 @@ public class CaomRepoListTests extends CaomRepoIntTests
     	// Check that we only have the last observation
     	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end, 
     			null, super.SUBJECT2, observations, 200, null, true);
-    	
-    	// Check that we have maxRec of the observations
-    	checkObservationList(1, super.SCHEME + TEST_COLLECTION, maxRec, mid, 
-    			end, super.SUBJECT2, observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
