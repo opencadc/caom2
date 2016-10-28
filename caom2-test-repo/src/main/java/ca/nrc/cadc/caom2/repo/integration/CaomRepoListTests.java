@@ -383,7 +383,7 @@ public class CaomRepoListTests extends CaomRepoIntTests
         else if (response == 200 && observations != null && observations.size() > 0)
         {
         	long matchSize = observations.size();
-        	if (observations.size() > maxRec)
+        	if (maxRec != null && observations.size() > maxRec)
         	{
         		matchSize = Long.valueOf(maxRec);
         	}
