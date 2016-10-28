@@ -147,6 +147,10 @@ public class GetAction extends RepoAction
                 throw new IllegalArgumentException("wrong date format", e);
             }
         }
+        else
+        {
+        	throw new IllegalArgumentException("wrong path");
+        }
     }
     
     
