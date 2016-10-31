@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.mapper.ArtifactMapper;
 import ca.nrc.cadc.caom2ops.mapper.ChunkMapper;
 import ca.nrc.cadc.caom2ops.mapper.ObservationMapper;
@@ -157,6 +158,21 @@ public class CaomTapQuery
         
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
         return buildObservation(doc);
+    }
+    
+    // used by datalink
+    public List<Artifact> performQuery(final PublisherID uri, boolean artifactOnly)
+        throws IOException, UnexpectedContentException
+    {
+    	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
+    	
+        // generate query, do not follow redirect
+        AdqlQueryGenerator gen = new AdqlQueryGenerator();
+        String adql = gen.getADQL(uri, artifactOnly);
+        log.debug("link query: " + adql);
+
+        VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
+    	return buildArtifacts(doc);
     }
     
     // used by datalink

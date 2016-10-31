@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
 import java.net.URI;
 import org.apache.log4j.Logger;
 
@@ -122,6 +123,33 @@ public class AdqlQueryGenerator
     }
     
     // used by datalink
+    public String getADQL(final PublisherID uri, boolean artifactOnly)
+    {
+        StringBuilder sb = new StringBuilder();
+        if (artifactOnly)
+        {
+            sb.append(SELECT_ARTIFACT);
+            sb.append(" FROM ");
+            sb.append(PLANE2ARTIFACT);
+        }
+        else
+        {
+            sb.append(SELECT_ARTIFACT2CHUNK);
+            sb.append(" FROM ");
+            sb.append(PLANE2CHUNK);
+        }
+        sb.append(" WHERE Plane.publisherID = '");
+        sb.append(uri.getURI().toASCIIString());
+        sb.append("'");
+        if (!artifactOnly)
+            sb.append(" ORDER BY Artifact.artifactID, Part.partID");
+        
+        String ret = sb.toString();
+        log.info(ret);
+        return ret;
+    }
+    
+    // used by datalink
     public String getADQL(final PlaneURI uri, boolean artifactOnly)
     {
         StringBuilder sb = new StringBuilder();
@@ -138,11 +166,14 @@ public class AdqlQueryGenerator
             sb.append(PLANE2CHUNK);
         }
         sb.append(" WHERE Plane.planeURI = '");
-        sb.append(uri.toString());
+        sb.append(uri.getURI().toASCIIString());
         sb.append("'");
         if (!artifactOnly)
             sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        return sb.toString();
+        
+        String ret = sb.toString();
+        log.info(ret);
+        return ret;
     }
 
     // used by cutout
