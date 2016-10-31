@@ -110,7 +110,7 @@ import java.util.concurrent.TimeUnit;
  * @author majorb
  *
  */
-public class CaomRepoListTests extends CaomRepoIntTests
+public class CaomRepoListTests extends CaomRepoBaseIntTests
 {
     
     private static final Logger log = Logger.getLogger(CaomRepoListTests.class);
