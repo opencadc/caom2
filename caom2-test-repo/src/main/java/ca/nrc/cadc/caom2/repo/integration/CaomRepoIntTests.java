@@ -211,7 +211,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         String path =  collection + "/" + observationID;
         String uri = SCHEME + path;
         
-        getObservation(uri, SUBJECT2, 404, "Collection not found:" + collection);
+        getObservation(uri, SUBJECT2, 404, "Observation not found: " + uri);
     }
     
     @Test
