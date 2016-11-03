@@ -307,6 +307,7 @@ public class CaomRepoBaseIntTests
             if (EXPECTED_CAOM_VERSION != null)
             {
                 String doc = bos.toString();
+                Assert.assertNotNull("document is null", doc);
                 Assert.assertTrue("document namespace="+EXPECTED_CAOM_VERSION, doc.contains(EXPECTED_CAOM_VERSION));
             }
             InputStream in = new ByteArrayInputStream(bos.toByteArray());
