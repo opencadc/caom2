@@ -187,7 +187,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // get the observation using subject3
-        getObservation(uri, SUBJECT3, 403, "permission denied: " + path);
+        getObservation(uri, SUBJECT3, 403, "permission denied: " + uri);
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
@@ -200,7 +200,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
         
-        getObservation(uri, SUBJECT2, 404, "Observation not found: " + uri);
+        getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
     @Test
@@ -211,7 +211,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         String path =  collection + "/" + observationID;
         String uri = SCHEME + path;
         
-        getObservation(uri, SUBJECT2, 404, "Observation not found: " + uri);
+        getObservation(uri, SUBJECT2, 404, "collection not found: " + collection);
     }
     
     @Test
@@ -222,7 +222,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         String path =  collection + "/" + observationID + "/extraElementsInPath";
         String uri = SCHEME + path;
         
-        super.getObservation(uri, SUBJECT2, 400, "wrong path", false);
+        super.getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
     }
     
     @Test
@@ -259,7 +259,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         
         // create an observation using subject2
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT2, 403, "permission denied: " + path, null);
+        putObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
     }
     
     @Test
@@ -271,7 +271,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         
         // create an observation using subject1
         Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 413, "byte limit exceeded", null);
+        putObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
     }
     
     @Test
@@ -283,7 +283,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         
         // create an observation using subject1 but with a different path on the url
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 400, "request path does not match ObservationURI in content", path + "-alt");
+        putObservation(observation, SUBJECT1, 400, "invalid input: " + uri +"-alt", path + "-alt");
     }
     
     @Test
@@ -298,7 +298,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         putObservation(observation, SUBJECT1, null, null, null);
         
         // create it again to see the conflict
-        putObservation(observation, SUBJECT1, 409, "Observation already exists: " + uri, null);
+        putObservation(observation, SUBJECT1, 409, "already exists: " + uri, null);
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
@@ -313,7 +313,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
 
         // create an observation using subject1
         Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 400, "failed to compute metadata for plane plane", null);
+        putObservation(observation, SUBJECT1, 400, "invalid input: " + uri, null);
     }
     
     @Test
@@ -351,15 +351,15 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
         putObservation(observation, SUBJECT1, 200, "OK", null);
-        
+       
         // overwrite the observation with a post
-        postObservation(observation, SUBJECT2, 403, "permission denied: " + path, null);
+        postObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
     }
     
-    //@Test
+    @Test
     public void testPostByteLimitExceeded() throws Throwable
     {
         String observationID = generateObservationID("testPostByteLimitExceeded");
@@ -390,7 +390,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // post an observation using subject1 but with a different path on the url
-        postObservation(observation, SUBJECT1, 400, "invalid observation content", path + "-alt");
+        postObservation(observation, SUBJECT1, 400, "invalid input: " + uri + "-alt", path + "-alt");
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
@@ -422,7 +422,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
         
         // create an observation using subject1
-        postObservation(observation, SUBJECT1, 400, "invalid observation content", null);
+        postObservation(observation, SUBJECT1, 400, "invalid input: " + uri, null);
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
@@ -447,7 +447,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         deleteObservation(uri, SUBJECT1, 200, "OK");
         
         // ensure we can't find it on a get
-        getObservation(uri, SUBJECT2, 404, "Observation not found: " + uri);
+        getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
     @Test
@@ -463,7 +463,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // delete the observation using subject 2 
-        putObservation(observation, SUBJECT2, 403, "permission denied: " + path, null);
+        putObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
         
         // cleanup (ok to fail)
         deleteObservation(uri, SUBJECT1, null, null);
@@ -478,7 +478,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         String uri = SCHEME + path;
         
         // delete the non-existent observation
-        deleteObservation(uri, SUBJECT1, 404, "Observation not found: " + uri);
+        deleteObservation(uri, SUBJECT1, 404, "not found: " + uri);
     }
     
     private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;

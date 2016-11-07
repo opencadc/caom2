@@ -93,6 +93,7 @@ import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.io.ByteCountReader;
+import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
@@ -124,7 +125,7 @@ public abstract class RepoAction extends RestAction
     private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
 
     private String collection;
-    private URI uri;
+    protected URI uri;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -209,7 +210,12 @@ public abstract class RepoAction extends RestAction
         }
         catch(ObservationParsingException ex)
         {
-            throw new IllegalArgumentException("invalid observation content", ex);
+            throw new IllegalArgumentException("invalid input: " + uri, ex);
+        }
+        catch(ByteLimitExceededException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new ByteLimitExceededException("too large: " + uri, ex.getLimit());
         }
     }
 
@@ -237,7 +243,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
             throw new ResourceNotFoundException(
-                    "Collection not found:" + collection);
+                    "collection not found: " + collection);
         
         try
         {
@@ -268,7 +274,7 @@ public abstract class RepoAction extends RestAction
         {
             throw new AccessControlException("read permission denied (user not found): " + getURI());
         }
-        throw new AccessControlException("read permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + getURI());
     }
 
     /**
@@ -295,7 +301,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new ResourceNotFoundException(
-                    "Collection not found: " + uri.getCollection());
+                    "collection not found: " + uri.getCollection());
 
         try
         {
@@ -318,7 +324,7 @@ public abstract class RepoAction extends RestAction
             throw new AccessControlException("read permission denied (user not found): " + getURI());
         }
 
-        throw new AccessControlException("write permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + getURI());
     }
 
     // read configuration

@@ -149,7 +149,7 @@ public class GetAction extends RepoAction
         }
         else
         {
-        	throw new IllegalArgumentException("wrong path");
+        	throw new IllegalArgumentException("invalid input: " + uri);
         }
     }
     
@@ -166,7 +166,7 @@ public class GetAction extends RepoAction
         Observation obs = dao.get(uri);
 
         if (obs == null)
-            throw new ResourceNotFoundException("Observation not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         // write with default schema
         ObservationWriter ow = new ObservationWriter();

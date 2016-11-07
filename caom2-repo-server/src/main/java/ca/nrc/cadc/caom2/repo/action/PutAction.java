@@ -99,15 +99,28 @@ public class PutAction extends RepoAction
         Observation obs = getInputObservation();
 
         if ( !uri.equals(obs.getURI()) )
-            throw new IllegalArgumentException("request path does not match ObservationURI in content");
+            throw new IllegalArgumentException("invalid input: " + uri);
         
         ObservationDAO dao = getDAO();
         
         if (dao.exists(uri))
             throw new ResourceAlreadyExistsException(
-                    "Observation already exists: " + uri);
+                    "already exists: " + uri);
 
-        CaomValidator.validate(obs);
+        try 
+        {
+            CaomValidator.validate(obs);
+        } 
+        catch (IllegalArgumentException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new IllegalArgumentException("invalid input: " + uri);
+        }
+        catch (RuntimeException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new RuntimeException("invalid input: " + uri);
+        }
 
         dao.put(obs);
 

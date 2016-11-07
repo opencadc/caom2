@@ -97,7 +97,7 @@ public class DeleteAction extends RepoAction
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ResourceNotFoundException("Observation not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         dao.delete(uri);
 

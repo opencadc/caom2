@@ -146,7 +146,7 @@ public class RepoActionTest
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(
-                    new AccessControlException("testAccessControlException message"));
+                    new AccessControlException("permission denied: message"));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
