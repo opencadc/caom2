@@ -166,7 +166,7 @@ public class GetAction extends RepoAction
         Observation obs = dao.get(uri);
 
         if (obs == null)
-            throw new ResourceNotFoundException("not found: " + uri);
+            throw new ResourceNotFoundException("collection not found: " + uri.getCollection());
 
         // write with default schema
         ObservationWriter ow = new ObservationWriter();
