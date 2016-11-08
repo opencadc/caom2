@@ -97,6 +97,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -387,16 +388,28 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             String message = bos.toString().trim();
             Assert.assertNotNull(message);
             String[] lines = message.split("\\r?\\n");  
-	        Assert.assertEquals("wrong number of observation states", matchSize, lines.length);
+            if (start == null)
+            {
+            	Assert.assertTrue("too few observation states", lines.length >= matchSize);
+            }
+            else
+            {
+	            Assert.assertEquals("wrong number of observation states", matchSize, lines.length);
+            }
+            	
             for (int i = 0; i < lines.length; i++)
             {            	
             	String[] fields = lines[i].split(",");
             	String actualDate = fields[1];
             	
-            	Observation obs = observations.get(i);
-            	String expectedDate = df.format(obs.getLastModified());            	
-            	Assert.assertEquals("wrong date", expectedDate, actualDate);
-            	retMap.put(fields[0], obs.getLastModified());
+            	if (start != null)
+            	{
+            	    Observation obs = observations.get(i);
+            	    String expectedDate = df.format(obs.getLastModified());  
+            	    Assert.assertEquals("wrong date", expectedDate, actualDate);
+            	}
+            	
+            	retMap.put(fields[0], df.parse(actualDate));
             }
         }
         
@@ -425,22 +438,21 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
 		if (observationIDMap != null && observationIDMap.size() > 0)
     	{
-	        
-	        Iterator<Date> iter = observationIDMap.values().iterator();
-    		while (iter.hasNext())
-    		{
+			Collection<Date> dates = observationIDMap.values();
+			for (Date date : dates)
+			{
 		        if (start != null)
 		        {
 		        	// start date should not be after the date of an observationID
-		        	Assert.assertTrue("wrong timestamp", start.compareTo(iter.next()) <= 0);
+		        	Assert.assertTrue("wrong timestamp", start.compareTo(date) <= 0);
 		        }
 		        
 		        if (end != null)
 		        {
 		        	// end date should not be before the date of an observationID
-		        	Assert.assertTrue("wrong timestamp", end.compareTo(iter.next()) >= 0);
+		        	Assert.assertTrue("wrong timestamp", end.compareTo(date) >= 0);
 		        }
-    		}
+			}
     	}
     }
     
