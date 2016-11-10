@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.uws.Job;
@@ -166,44 +167,59 @@ public class DynamicTableData implements TableData
             while (!done && argIter.hasNext())
             {
                 String s = argIter.next();
+                URI uri = null;
                 PlaneURI planeURI = null;
+                PublisherID pubID = null;
                 try
                 {
                     List<DataLink> links = null;
                     try
                     {
-                        URI uri = new URI(s);
-                        planeURI = new PlaneURI(uri);
+                        uri = new URI(s);
+                        if (PublisherID.SCHEME.equals(uri.getScheme()))
+                            pubID = new PublisherID(uri);
+                        else
+                            planeURI = new PlaneURI(uri);
                     }
                     catch(Exception ex)
                     {
-                        links = new ArrayList<DataLink>(1);
+                        links = new ArrayList<>(1);
                         DataLink usage = new DataLink(s, DataLink.Term.THIS);
                         usage.errorMessage = "UsageFault: invalid ID: " + s;
                         links.add(usage);
                     }
-                    if (planeURI != null)
+                    if (pubID != null || planeURI != null)
                     {
-                        log.debug("getBatchIterator: " + planeURI);
+                        
                         try
-                        {
-                            List<Artifact> artifacts = query.performQuery(planeURI, artifactOnly);
+                        {   
+                            List<Artifact> artifacts;
+                            if (pubID != null)
+                            {
+                                log.debug("getBatchIterator: " + pubID);
+                                artifacts = query.performQuery(pubID, artifactOnly);
+                            }
+                            else
+                            {
+                                log.debug("getBatchIterator: " + planeURI);
+                                artifacts = query.performQuery(planeURI, artifactOnly);
+                            }
                             if (artifacts.isEmpty())
                             {
-                                links = new ArrayList<DataLink>(1);
+                                links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
                                 notFound.errorMessage = "NotFoundFault: " + s;
                                 links.add(notFound);
                             }
                             else
                             {
-                                log.debug("getBatchIterator: " + planeURI + ": " + artifacts.size() + " artifacts");
-                                links = ap.process(planeURI.getURI(), artifacts);
+                                log.debug("getBatchIterator: " + uri + ": " + artifacts.size() + " artifacts");
+                                links = ap.process(uri, artifacts);
                             }
                         }
                         catch(TransientFault f)
                         {
-                            links = new ArrayList<DataLink>(1);
+                            links = new ArrayList<>(1);
                             DataLink fail = new DataLink(s, DataLink.Term.THIS);
                             fail.errorMessage = f.toString();
                             links.add(fail);
@@ -213,11 +229,11 @@ public class DynamicTableData implements TableData
                     if (links != null && !links.isEmpty())
                     {
                         log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
-                        List<List<Object>> rows = new ArrayList<List<Object>>();
+                        List<List<Object>> rows = new ArrayList<>();
                         for (DataLink dl : links)
                         {
                             log.debug("adding: " + dl);
-                            List<Object> r = new ArrayList<Object>(dl.size());
+                            List<Object> r = new ArrayList<>(dl.size());
                             for (Object o : dl)
                             {
                                 r.add(o);

@@ -79,6 +79,7 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
@@ -208,8 +209,20 @@ public class PackageRunner implements JobRunner
             
             for (String suri : idList)
             {
-                PlaneURI uri = new PlaneURI(new URI(suri));
-                List<Artifact> artifacts = query.performQuery(uri, true);
+                URI uri = new URI(suri);
+                PlaneURI puri;
+                List<Artifact> artifacts;
+                if ( PublisherID.SCHEME.equals(uri.getScheme()))
+                {
+                    PublisherID p = new PublisherID(uri);
+                    artifacts = query.performQuery(p, true);
+                    puri = toPlaneURI(p);
+                }
+                else
+                {
+                    puri = new PlaneURI(uri);
+                    artifacts = query.performQuery(puri, true);
+                }
                 stripPreviews(artifacts);
                 if (idList.size() == 1 && artifacts.size() == 1)
                 {
@@ -229,11 +242,11 @@ public class PackageRunner implements JobRunner
                         // generate package name
                         String tname = generatePackageName();
                         if (idList.size() == 1)
-                            tname = generatePackageName(uri);
+                            tname = generatePackageName(puri);
                         w = initTarResponse(tname);
                     }
                     // always generate subdir name for tar file from the current plane
-                    String pname = generatePackageName(uri);
+                    String pname = generatePackageName(puri);
                     if ( artifacts.isEmpty())
                     {
                         // either the input ID was: not found, access-controlled, or has no artifacts
@@ -309,6 +322,19 @@ public class PackageRunner implements JobRunner
                 try { w.close(); }
                 catch(Exception ignore) { }
         }
+    }
+
+    // temporary hack to support both caom and ivo uris in generatePackageName
+    private PlaneURI toPlaneURI(PublisherID pid)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("caom:");
+        String collection = pid.getResourceID().getPath();
+        while (collection.charAt(0) == '/')
+            collection = collection.substring(1);
+        sb.append(collection).append("/");
+        sb.append(pid.getURI().getQuery());
+        return new PlaneURI(URI.create(sb.toString()));
     }
     
     // used in an int-test
