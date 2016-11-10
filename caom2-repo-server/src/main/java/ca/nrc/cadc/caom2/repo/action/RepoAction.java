@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
@@ -80,6 +81,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
@@ -122,7 +124,7 @@ public abstract class RepoAction extends RestAction
     // 20MB XML Doc size limit
     private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
-    private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
+    private final GroupURI CADC_GROUP_URI  = new GroupURI(URI.create("ivo://cadc.nrc.ca/gms#CADC"));
 
     private String collection;
     protected URI uri;
@@ -250,20 +252,19 @@ public abstract class RepoAction extends RestAction
             if ( CredUtil.checkCredentials() )
             {
                 LocalAuthority loc = new LocalAuthority();
-                URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient(gmsURI);
-                URI guri;
-
+                GMSClient gms = new GMSClient();                
+                GroupURI guri;
+                
                 guri = i.getReadWriteGroup();
-                if (gms.isMember(guri.getFragment()))
-                    return;
-
+                if (gms.isMember(guri))
+                	return;
+                
                 guri = i.getReadOnlyGroup();
-                if (gms.isMember(guri.getFragment()))
-                    return;
+                if (gms.isMember(guri))
+                	return;
 
-                if (gms.isMember(CADC_GROUP_URI.getFragment()))
-                    return;
+                if (gms.isMember(CADC_GROUP_URI))
+                	return;
             }
         }
         catch(AccessControlException ex)
@@ -309,9 +310,9 @@ public abstract class RepoAction extends RestAction
             {
                 LocalAuthority loc = new LocalAuthority();
                 URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient(gmsURI);
-                URI guri = i.getReadWriteGroup();
-                if (gms.isMember(guri.getFragment()))
+                GMSClient gms = new GMSClient();
+                GroupURI guri = i.getReadWriteGroup();
+                if (gms.isMember(guri))
                     return;
             }
         }

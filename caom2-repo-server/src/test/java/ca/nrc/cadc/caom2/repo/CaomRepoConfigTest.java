@@ -80,6 +80,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -129,8 +130,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group1")), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group2")), it.getReadWriteGroup());
 
             it = CaomRepoConfig.getItem("spaces", props);
             Assert.assertNotNull(it);
@@ -140,8 +141,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group1")), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group2")), it.getReadWriteGroup());
 
             it = CaomRepoConfig.getItem("tabs", props);
             Assert.assertNotNull(it);
@@ -151,8 +152,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group1")), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group2")), it.getReadWriteGroup());
 
             it = CaomRepoConfig.getItem("mix", props);
             Assert.assertNotNull(it);
@@ -162,8 +163,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group1")), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group2")), it.getReadWriteGroup());
 
         }
         catch(Exception unexpected)
@@ -263,8 +264,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group1")), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI(new URI("ivo://cadc.nrc.ca/gms#group2")), it.getReadWriteGroup());
 
         }
         catch(Exception unexpected)

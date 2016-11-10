@@ -80,6 +80,8 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.ac.GroupURI;
+
 /**
  *
  * @author pdowler
@@ -124,11 +126,11 @@ public class CaomRepoConfig
         private String database;
         private String schema;
         private String obsTableName;
-        private URI readOnlyGroup;
-        private URI readWriteGroup;
+        private GroupURI readOnlyGroup;
+        private GroupURI readWriteGroup;
 
         Item(String collection, String dataSourceName, String database, String schema, String obsTableName,
-            URI readOnlyGroup, URI readWriteGroup)
+            GroupURI readOnlyGroup, GroupURI readWriteGroup)
         {
             this.collection = collection;
             this.dataSourceName = dataSourceName;
@@ -166,12 +168,12 @@ public class CaomRepoConfig
             return database;
         }
 
-        public URI getReadOnlyGroup()
+        public GroupURI getReadOnlyGroup()
         {
             return readOnlyGroup;
         }
 
-        public URI getReadWriteGroup()
+        public GroupURI getReadWriteGroup()
         {
             return readWriteGroup;
         }
@@ -242,7 +244,7 @@ public class CaomRepoConfig
                 throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected group name in fragment");
 
             // create
-            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, ro, rw);
+            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, new GroupURI(ro), new GroupURI(rw));
             return rci;
         }
         else
