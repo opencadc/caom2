@@ -14,19 +14,17 @@ create table caom2.Artifact
 
 -- internal
     metaRelease timestamp,
-    obsID uuid not null, -- change: UUID
-    planeID uuid not null references caom2.Plane (planeID), -- change: UUID
-    artifactID uuid not null primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null,
+    planeID uuid not null references caom2.Plane (planeID),
+    artifactID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
 )
-tablespace caom_data
 ;
 
 -- this is for Plane join Artifact
 create index i_planeID on caom2.Artifact (planeID)
-tablespace caom_index
 ;
 
 -- tag the clustering index

@@ -1,6 +1,4 @@
 
-drop table if exists caom2.Part;
-
 create table caom2.Part
 (
     name varchar(1024) not null,
@@ -11,20 +9,18 @@ create table caom2.Part
 
 -- internal
     metaRelease timestamp,
-    obsID uuid not null, -- change: UUID
-    planeID uuid not null, -- change: UUID
-    artifactID uuid not null references caom2.Artifact (artifactID), -- change: UUID
-    partID uuid not null primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null,
+    planeID uuid not null,
+    artifactID uuid not null references caom2.Artifact (artifactID),
+    partID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
 )
-tablespace caom_data
 ;
 
 -- this is for Artifact join Part
 create index i_artifactID on caom2.Part (artifactID)
-tablespace caom_index
 ;
 
 -- tag the clustering index
@@ -33,6 +29,5 @@ cluster i_artifactID on caom2.Part
 
 -- this is for asset updates
 create index ip_planeID on caom2.Part (planeID)
-tablespace caom_index
 ;
 
