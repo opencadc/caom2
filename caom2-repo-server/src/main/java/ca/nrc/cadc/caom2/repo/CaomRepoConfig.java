@@ -126,11 +126,11 @@ public class CaomRepoConfig
         private String database;
         private String schema;
         private String obsTableName;
-        private GroupURI readOnlyGroup;
-        private GroupURI readWriteGroup;
+        private URI readOnlyGroup;
+        private URI readWriteGroup;
 
         Item(String collection, String dataSourceName, String database, String schema, String obsTableName,
-            GroupURI readOnlyGroup, GroupURI readWriteGroup)
+            URI readOnlyGroup, URI readWriteGroup)
         {
             this.collection = collection;
             this.dataSourceName = dataSourceName;
@@ -168,12 +168,12 @@ public class CaomRepoConfig
             return database;
         }
 
-        public GroupURI getReadOnlyGroup()
+        public URI getReadOnlyGroup()
         {
             return readOnlyGroup;
         }
 
-        public GroupURI getReadWriteGroup()
+        public URI getReadWriteGroup()
         {
             return readWriteGroup;
         }
@@ -244,7 +244,7 @@ public class CaomRepoConfig
                 throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected group name in fragment");
 
             // create
-            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, new GroupURI(ro), new GroupURI(rw));
+            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, ro, rw);
             return rci;
         }
         else

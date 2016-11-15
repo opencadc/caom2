@@ -124,7 +124,7 @@ public abstract class RepoAction extends RestAction
     // 20MB XML Doc size limit
     private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
-    private final GroupURI CADC_GROUP_URI  = new GroupURI(URI.create("ivo://cadc.nrc.ca/gms#CADC"));
+    private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
 
     private String collection;
     protected URI uri;
@@ -252,18 +252,19 @@ public abstract class RepoAction extends RestAction
             if ( CredUtil.checkCredentials() )
             {
                 LocalAuthority loc = new LocalAuthority();
-                GMSClient gms = new GMSClient();                
-                GroupURI guri;
+                URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
+                GMSClient gms = new GMSClient(gmsURI);                
+                URI guri;
                 
                 guri = i.getReadWriteGroup();
-                if (gms.isMember(guri))
+                if (gms.isMember(guri.getFragment()))
                 	return;
                 
                 guri = i.getReadOnlyGroup();
-                if (gms.isMember(guri))
+                if (gms.isMember(guri.getFragment()))
                 	return;
 
-                if (gms.isMember(CADC_GROUP_URI))
+                if (gms.isMember(CADC_GROUP_URI.getFragment()))
                 	return;
             }
         }
@@ -310,9 +311,9 @@ public abstract class RepoAction extends RestAction
             {
                 LocalAuthority loc = new LocalAuthority();
                 URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient();
-                GroupURI guri = i.getReadWriteGroup();
-                if (gms.isMember(guri))
+                GMSClient gms = new GMSClient(gmsURI);
+                URI guri = i.getReadWriteGroup();
+                if (gms.isMember(guri.getFragment()))
                     return;
             }
         }
