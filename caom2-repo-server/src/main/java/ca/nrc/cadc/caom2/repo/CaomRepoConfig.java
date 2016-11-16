@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -88,14 +90,12 @@ public class CaomRepoConfig
 {
     private static final Logger log = Logger.getLogger(CaomRepoConfig.class);
 
-    private static final String CONFIG_FILE = CaomRepoConfig.class.getSimpleName() + ".properties";
-
     private List<CaomRepoConfig.Item> config;
 
-    public CaomRepoConfig()
+    public CaomRepoConfig(File config)
         throws IOException
     {
-        this.config = loadConfig(new File(System.getProperty("user.home") + "/config", CONFIG_FILE));
+        this.config = loadConfig(config);
     }
 
     public Item getConfig(String collection)
@@ -119,6 +119,7 @@ public class CaomRepoConfig
 
     public static class Item
     {
+        private Class sqlGenerator;
         private String collection;
         private String dataSourceName;
         private String database;
@@ -127,9 +128,10 @@ public class CaomRepoConfig
         private URI readOnlyGroup;
         private URI readWriteGroup;
 
-        Item(String collection, String dataSourceName, String database, String schema, String obsTableName,
+        Item(Class sqlGenerator, String collection, String dataSourceName, String database, String schema, String obsTableName,
             URI readOnlyGroup, URI readWriteGroup)
         {
+            this.sqlGenerator = sqlGenerator;
             this.collection = collection;
             this.dataSourceName = dataSourceName;
             this.database = database;
@@ -144,6 +146,11 @@ public class CaomRepoConfig
         {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + "," + schema + "," + obsTableName + ","
                     + readOnlyGroup + "," + readWriteGroup + "]";
+        }
+
+        public Class getSqlGenerator()
+        {
+            return sqlGenerator;
         }
 
         public String getTestTable()
@@ -220,7 +227,7 @@ public class CaomRepoConfig
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
-        if (parts.length == 6)
+        if (parts.length == 7 || parts.length == 6) // 6: backwards compat
         {
             String dsName=  parts[0];
             String database = parts[1];
@@ -228,8 +235,24 @@ public class CaomRepoConfig
             String obsTable = parts[3];
             String roGroup = parts[4];
             String rwGroup = parts[5];
-
-            // validation
+            
+            // temporary default for backwards compatibility to existing config
+            Class sqlGen = SybaseSQLGenerator.class;
+            if (parts.length == 7)
+            {
+                String cname = parts[6];
+                try
+                {
+                    sqlGen = Class.forName(cname);
+                    if (!SQLGenerator.class.isAssignableFrom(sqlGen))
+                        throw new IllegalArgumentException("invalid SQLGenerator class: does not implement interface " + SQLGenerator.class.getName());
+                }
+                catch(ClassNotFoundException ex)
+                {
+                    throw new IllegalArgumentException("failed to load SQLGenerator class: " + cname, ex);
+                }
+            }
+            
             URI ro = new URI(roGroup);
             URI rw = new URI(rwGroup);
             if (!"ivo".equals(ro.getScheme()))
@@ -242,7 +265,7 @@ public class CaomRepoConfig
                 throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected group name in fragment");
 
             // create
-            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, ro, rw);
+            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database, schema, obsTable, ro, rw);
             return rci;
         }
         else

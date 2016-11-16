@@ -90,7 +90,6 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.repo.SyncInput;
 import ca.nrc.cadc.caom2.repo.SyncOutput;
@@ -102,6 +101,7 @@ import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
+import java.io.File;
 
 /**
  *
@@ -131,6 +131,8 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
     protected SyncInput syncInput;
     protected SyncOutput syncOutput;
     protected WebServiceLogInfo logInfo;
+    
+    private final String serviceName = "sc2repo"; // HACK until merge and get cadc-rest to provide this
     
     private String path;
     private ObservationURI uri;
@@ -454,7 +456,13 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
         if (repoConfig != null)
             return repoConfig;
 
-        CaomRepoConfig rc = new CaomRepoConfig();
+        File config = new File(System.getProperty("user.home") + "/config", 
+                this.serviceName + ".properties");
+        
+        //File config = new File(System.getProperty("user.home") + "/config", 
+        //        CaomRepoConfig.class.getSimpleName() + ".properties");
+        
+        CaomRepoConfig rc = new CaomRepoConfig(config);
 
         if (rc.isEmpty())
             throw new IllegalStateException("no RepoConfig.Item(s)found");
@@ -475,8 +483,7 @@ public abstract class RepoAction implements PrivilegedExceptionAction<Object>
             props.put("jndiDataSourceName", i.getDataSourceName());
             props.put("database", i.getDatabase());
             props.put("schema", i.getSchema());
-            // the SQL generator (dialect) should be configurable if caom2repo is open-sourced
-            props.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
             ret.setConfig(props);
             return ret;
         }
