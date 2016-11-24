@@ -70,6 +70,10 @@
 package ca.nrc.cadc.caom2.repo.integration;
 
 import java.net.URI;
+import java.net.URL;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.security.auth.Subject;
 
@@ -96,9 +100,16 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Integration tests for caom2repo_ws
@@ -481,8 +492,90 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         deleteObservation(uri, SUBJECT1, 404, "not found: " + uri);
     }
     
+    @Test
+    public void testPostMultipartSingleParamSuccess() throws Throwable
+    {
+	    String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+        final SimpleObservation observation = this.generateObservation(observationID);
+		Map<String, Object> params = new HashMap<String, Object>();
+	    params.put("file", convertToFile(observation));
+
+	    testPostMultipartWithParamsSuccess(observationID, params);
+    }
+    
+    @Test
+    public void testPostMultipartMultipleParamSuccess() throws Throwable
+    {
+	    String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+        final SimpleObservation observation = this.generateObservation(observationID);
+		Map<String, Object> params = new HashMap<String, Object>();
+   	    params.put("fooKey", "fooValue");
+   	    params.put("file", convertToFile(observation));
+   	    params.put("barKey", "barValue");
+
+	    testPostMultipartWithParamsSuccess(observationID, params);
+    }
+    
     private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;
     private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
+    
+    private SimpleObservation generateObservation(String observationID) throws Throwable
+    {
+        // create an observation using subject1
+        final SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        Plane plane = new Plane("foo");
+        plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
+        observation.getPlanes().add(plane);
+
+        putObservation(observation, SUBJECT1, 200, "OK", null);
+
+        // modify the plane since that also tweaks the Observation.maxLastModified
+        plane.dataProductType = DataProductType.CUBE;
+        return observation;
+    }
+    
+    private File convertToFile(SimpleObservation observation) throws IOException
+    {
+        StringBuilder sb = new StringBuilder();
+        ObservationWriter writer = new ObservationWriter();
+        writer.write(observation, sb);
+        log.debug(sb.toString());
+
+        File file = new File("build/resources/intTest/tmp/testPostMultipartSuccess.xml");
+        BufferedWriter bwr = new BufferedWriter(new FileWriter(file));
+        bwr.write(sb.toString());
+        bwr.flush();
+        bwr.close();
+        return file;
+    }
+    
+	private void testPostMultipartWithParamsSuccess(String observationID, final Map<String, Object> params) 
+			throws Throwable
+	{
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+        final URL url = new URL(BASE_HTTPS_URL + "/" + path);
+        
+        PrivilegedExceptionAction<Object> p = new PrivilegedExceptionAction<Object>()
+        {
+            @Override
+            public Object run() throws Exception
+            {
+        	    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();	    
+        	    HttpPost httpPost = new HttpPost(url, params, outputStream);
+        	    httpPost.setMaxRetries(4);
+        	    httpPost.run();
+        	    log.debug("throwable: " + httpPost.getThrowable());
+        	    Assert.assertNull("Wrong throwable", httpPost.getThrowable());
+                return null;
+            }
+        };
+        Subject.doAs(SUBJECT1, p);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
+	}
+
     private Observation createVeryLargeObservation(String collection, String observationID)
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);

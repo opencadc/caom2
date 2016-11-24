@@ -132,6 +132,7 @@ public class CaomRepoBaseIntTests
         
     // service should be written to output documents with this version
     private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
+    private static final String TEXT_XML = "text/xml";
     
     static
     {
@@ -232,6 +233,7 @@ public class CaomRepoBaseIntTests
         
         HttpURLConnection conn = openConnection(subject, urlPath);
         conn.setRequestMethod(method);
+        conn.setRequestProperty("Content-Type", TEXT_XML);
         
         OutputStream out = conn.getOutputStream();
         writer.write(observation, out);
