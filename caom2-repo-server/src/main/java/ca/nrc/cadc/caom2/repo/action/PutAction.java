@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.rest.InlineContentHandler;
 
 /**
  *
@@ -125,5 +126,11 @@ public class PutAction extends RepoAction
         dao.put(obs);
 
         log.debug("DONE: " + uri);
+    }
+    
+    @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+    	return new ObservationInlineContentHandler(new ObservationURI(getURI()));
     }
 }

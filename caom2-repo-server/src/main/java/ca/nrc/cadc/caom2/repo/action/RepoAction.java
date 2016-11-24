@@ -69,9 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
@@ -81,7 +79,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
@@ -91,14 +88,11 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.io.ByteCountReader;
-import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
+import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 
 /**
@@ -118,7 +112,6 @@ public abstract class RepoAction extends RestAction
     private boolean readable = true;
     private boolean writable  = true;
     
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
     public static final String ERROR_MIMETYPE = "text/plain";
     
     // 20MB XML Doc size limit
@@ -201,24 +194,11 @@ public abstract class RepoAction extends RestAction
             throw new IllegalArgumentException("unexpected Content-Type found: " + contentType);
         */
 
-        ObservationReader r = new ObservationReader();
-        try
-        {
-            Reader reader = syncInput.getReader();
-            ByteCountReader byteCountReader = new ByteCountReader(reader, DOCUMENT_SIZE_MAX);
-            Observation ret = r.read(byteCountReader);
-            logInfo.setBytes(byteCountReader.getByteCount());
-            return ret;
-        }
-        catch(ObservationParsingException ex)
-        {
-            throw new IllegalArgumentException("invalid input: " + uri, ex);
-        }
-        catch(ByteLimitExceededException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new ByteLimitExceededException("too large: " + uri, ex.getLimit());
-        }
+    	Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
+    	if (obs != null)
+    		return (Observation) obs;
+    	else
+    		return null;
     }
 
     /**
@@ -327,6 +307,12 @@ public abstract class RepoAction extends RestAction
         }
 
         throw new AccessControlException("permission denied: " + getURI());
+    }
+    
+    @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+    	return null;
     }
 
     // read configuration

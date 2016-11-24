@@ -137,13 +137,14 @@ public class GetActionTest
         getAction.setPath("/BLAH");
 
         reset(mockDao);
+        expect(mockRequest.getMethod()).andReturn("GET");
         expect(mockDao.getObservationList("BLAH", null, null, null))
             .andReturn(null);
         
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
         replay(mockDao, mockRequest);
-        getAction.setSyncInput(new SyncInput(mockRequest));
+        getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
     }
     
@@ -161,6 +162,8 @@ public class GetActionTest
         
         reset(mockDao);
         
+        expect(mockRequest.getMethod()).andReturn("GET");
+
         // build the list of observations for the mock dao to return
         List<ObservationState> obsList = new ArrayList<ObservationState>();
         Date date1 = df.parse("2010-10-10T10:10:10.10");
@@ -176,7 +179,7 @@ public class GetActionTest
         
         replay(mockDao, mockRequest);
         
-        getAction.setSyncInput(new SyncInput(mockRequest));
+        getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
         
         String expected = "1234" + "," + df.format(date1) + "\n" +
@@ -194,6 +197,7 @@ public class GetActionTest
         out = new TestSyncOutput();
         getAction.setSyncOutput(out);
         // build the list of observations for the mock dao to return
+        expect(mockRequest.getMethod()).andReturn("GET");
         List<String> keys = new ArrayList<String>();
         keys.add("MAXREC");
         keys.add("Start");
@@ -215,7 +219,7 @@ public class GetActionTest
         
         replay(mockDao, mockRequest);
         
-        getAction.setSyncInput(new SyncInput(mockRequest));
+        getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
         
         Assert.assertEquals(expected, out.getContent());

@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.InlineContentHandler;
 
 /**
  *
@@ -99,17 +100,36 @@ public class PostAction extends RepoAction
         Observation obs = getInputObservation();
 
         if ( !uri.equals(obs.getURI()) )
-            throw new IllegalArgumentException("request path does not match ObservationURI in content");
+            throw new IllegalArgumentException("invalid input: " + uri);
         
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ResourceNotFoundException("Observation not found:" + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
-        CaomValidator.validate(obs);
+        try 
+        {
+            CaomValidator.validate(obs);
+        } 
+        catch (IllegalArgumentException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new IllegalArgumentException("invalid input: " + uri);
+        }
+        catch (RuntimeException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new RuntimeException("invalid input: " + uri);
+        }
 
         dao.put(obs);
         
         log.debug("DONE: " + uri);
+    }
+    
+    @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+    	return new ObservationInlineContentHandler(new ObservationURI(getURI()));
     }
 }
