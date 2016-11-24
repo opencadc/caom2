@@ -34,7 +34,7 @@ dependencies {
     compile 'org.opencadc:cadc-access-control:1.+'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-rest:[1.0.2,2.0)'
+    compile 'org.opencadc:cadc-rest:[1.0.1,2.0)'
     
     runtime 'jstl:jstl:1.2+'
     
