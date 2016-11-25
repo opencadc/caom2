@@ -116,17 +116,17 @@ public class CaomRepoBaseIntTests
     protected final String TEST_COLLECTION = "TEST";
     
     // subject1 has read/write privilege on the TEST collection
-    protected Subject SUBJECT1;
+    protected final Subject SUBJECT1;
     
     // subject2 has read privilege on the TEST collection
-    protected Subject SUBJECT2;
+    protected final Subject SUBJECT2;
     
     // subject3 has not read or write permission on the TEST collection
-    protected Subject SUBJECT3;
+    protected final Subject SUBJECT3;
     
-    protected URL AVAIL_URL;
-    protected String BASE_HTTP_URL;
-    protected String BASE_HTTPS_URL;
+    protected final URL AVAIL_URL;
+    protected final String BASE_HTTP_URL;
+    protected final String BASE_HTTPS_URL;
     
     protected final String SCHEME = "caom:";
         
@@ -139,7 +139,15 @@ public class CaomRepoBaseIntTests
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    protected CaomRepoBaseIntTests() { }
+    protected CaomRepoBaseIntTests() 
+    { 
+    	SUBJECT1 = null;
+    	SUBJECT2 = null;
+    	SUBJECT3 = null;
+    	AVAIL_URL = null;
+    	BASE_HTTP_URL = null;
+    	BASE_HTTPS_URL = null;
+    }
     
     /**
      * @param resourceID resource identifier of service to test

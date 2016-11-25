@@ -115,7 +115,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     
     private static final Logger log = Logger.getLogger(CaomRepoListTests.class);
     
-    private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     
     static
     {
@@ -354,10 +354,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
         ObservationReader reader = new ObservationReader();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, bos);
-        //HttpURLConnection conn = openConnection(subject, urlPath);
-        //conn.setRequestMethod("GET");
-        
+        HttpDownload get = new HttpDownload(url, bos);        
         Subject.doAs(subject, new RunnableAction(get));
         
         int response = get.getResponseCode();

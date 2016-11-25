@@ -225,7 +225,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
             throw new ResourceNotFoundException(
-                    "collection not found: " + collection);
+                    "not found: " + uri);
         
         try
         {
@@ -234,9 +234,7 @@ public abstract class RepoAction extends RestAction
                 LocalAuthority loc = new LocalAuthority();
                 URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
                 GMSClient gms = new GMSClient(gmsURI);                
-                URI guri;
-                
-                guri = i.getReadWriteGroup();
+                URI guri = i.getReadWriteGroup();
                 if (gms.isMember(guri.getFragment()))
                 	return;
                 
@@ -283,7 +281,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new ResourceNotFoundException(
-                    "collection not found: " + uri.getCollection());
+                    "not found: " + uri);
 
         try
         {
