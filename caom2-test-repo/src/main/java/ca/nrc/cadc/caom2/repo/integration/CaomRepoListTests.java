@@ -164,8 +164,8 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Integer maxRec = 3;    	
     	
     	// Add a list of observations
-    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testCleanPutListSuccess1", 
-    			"testCleanPutListSuccess2", "testCleanPutListSuccess3"));
+    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1", 
+    			"testListSuccess2", "testListSuccess3"));
     	List<Observation> observations = this.putObservations(baseIDs);
     	Assert.assertTrue("failed to put observations", observations.size() == 3);
     	Assert.assertNotNull("failed to get first observation maxLastModified date", 
@@ -205,8 +205,8 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Integer maxRec = 10;    	
     	
     	// Add a list of observations
-    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testCleanPutListSuccess1", 
-    			"testCleanPutListSuccess2", "testCleanPutListSuccess3"));
+    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListLessThanMaxRecSuccess1", 
+    			"testListLessThanMaxRecSuccess2", "testListLessThanMaxRecSuccess3"));
     	List<Observation> observations = this.putObservations(baseIDs);
     	Assert.assertTrue("failed to put observations", observations.size() == 3);
     	Assert.assertNotNull("failed to get first observation maxLastModified date", 
@@ -235,8 +235,8 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Integer maxRec = 2;    	
     	
     	// Add a list of observations
-    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testCleanPutListSuccess1", 
-    			"testCleanPutListSuccess2", "testCleanPutListSuccess3"));
+    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListMoreThanMaxRecSuccess1", 
+    			"testListMoreThanMaxRecSuccess2", "testListMoreThanMaxRecSuccess3"));
     	List<Observation> observations = this.putObservations(baseIDs);
     	Assert.assertTrue("failed to put observations", observations.size() == 3);
     	Assert.assertNotNull("failed to get first observation maxLastModified date", 
@@ -266,8 +266,8 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Integer maxRec = null;    	
     	
     	// Add a list of observations
-    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testCleanPutListSuccess1", 
-    			"testCleanPutListSuccess2", "testCleanPutListSuccess3"));
+    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListAllSuccess1", 
+    			"testListAllSuccess2", "testListAllSuccess3"));
     	List<Observation> observations = this.putObservations(baseIDs);
     	Assert.assertTrue("failed to put observations", observations.size() == 3);
     	Assert.assertNotNull("failed to get first observation maxLastModified date", 

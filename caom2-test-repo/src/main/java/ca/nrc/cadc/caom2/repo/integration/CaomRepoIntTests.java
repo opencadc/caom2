@@ -218,7 +218,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     public void testCollectionNotFound() throws Throwable
     {
         String collection = "NoSuchCollection";
-        String observationID = generateObservationID("testGetNotFound");
+        String observationID = generateObservationID("testCollectionNotFound");
         String path =  collection + "/" + observationID;
         String uri = SCHEME + path;
         
@@ -229,7 +229,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     public void testInvalidURI() throws Throwable
     {
         String collection = TEST_COLLECTION;
-        String observationID = generateObservationID("testGetNotFound");
+        String observationID = generateObservationID("testInvalidURI");
         String path =  collection + "/" + observationID + "/extraElementsInPath";
         String uri = SCHEME + path;
         
@@ -506,7 +506,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     @Test
     public void testPostMultipartMultipleParamSuccess() throws Throwable
     {
-	    String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+	    String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
         final SimpleObservation observation = this.generateObservation(observationID);
 		Map<String, Object> params = new HashMap<String, Object>();
    	    params.put("fooKey", "fooValue");
