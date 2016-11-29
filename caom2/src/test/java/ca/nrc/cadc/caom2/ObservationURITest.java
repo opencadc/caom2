@@ -113,8 +113,12 @@ public class ObservationURITest
 
             o =  new ObservationURI(new URI("caom", "Stuff/Thing", null));
 
-            o = new ObservationURI("Stuff", null);
-            log.debug("created: " + o);
+            try
+            {
+                o =  new ObservationURI("Stuff", null);
+                Assert.fail("excpected IllegalArgumentException from " + o);
+            }
+            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
 
             try
             {
@@ -145,18 +149,12 @@ public class ObservationURITest
             ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
             ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
             ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-            ObservationURI stuff1 = new ObservationURI("Stuff", null);
-            ObservationURI stuff2 = new ObservationURI("Stuff", null);
 
             Assert.assertTrue(thing1.equals(thing1));
             Assert.assertTrue(thing1.equals(thing2));
-            Assert.assertTrue(stuff1.equals(stuff1));
-            Assert.assertTrue(stuff1.equals(stuff2));
 
             Assert.assertFalse(cat.equals(thing1));
             Assert.assertFalse(thing1.equals(cat));
-            Assert.assertFalse(stuff1.equals(thing1));
-            Assert.assertFalse(thing1.equals(stuff1));
 
             // TODO: verify that changing any other field does not effect equals()?
         }
@@ -175,14 +173,10 @@ public class ObservationURITest
             ObservationURI cat = new ObservationURI("Stuff", "CatInTheHat");
             ObservationURI thing1 = new ObservationURI("Stuff", "Thing");
             ObservationURI thing2 = new ObservationURI("Stuff", "Thing");
-            ObservationURI stuff1 = new ObservationURI("Stuff", null);
-            ObservationURI stuff2 = new ObservationURI("Stuff", null);
 
             Assert.assertTrue(thing1.hashCode() == thing2.hashCode());
-            Assert.assertTrue(stuff1.hashCode() == stuff2.hashCode());
 
             Assert.assertFalse(cat.hashCode() == thing1.hashCode());
-            Assert.assertFalse(stuff1.hashCode() == thing1.hashCode());
 
             // TODO: verify that changing any other field does not effect hashCode()?
         }
