@@ -69,9 +69,10 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -90,14 +91,13 @@ public class TestSyncOutput extends SyncOutput
     public TestSyncOutput() { super(null); }
 
     @Override
-    public PrintWriter getWriter() throws IOException
+    public OutputStream getOutputStream() throws IOException
     {
-        if (writer == null)
+        if (outputStream == null)
         {
-            this.content = new CharArrayWriter(4096);
-            this.writer = new PrintWriter(content);
+            this.outputStream = new ByteArrayOutputStream();
         }
-        return writer;
+        return outputStream;
     }
 
     @Override
