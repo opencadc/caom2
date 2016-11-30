@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -97,7 +97,7 @@ public class DeleteAction extends RepoAction
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ResourceNotFoundException("Observation not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         dao.delete(uri);
 

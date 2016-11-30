@@ -127,7 +127,7 @@ public class RepoActionTest
 
             ta.run();
             Assert.assertEquals(404, out.getCode());
-            String msg = "not found: ";
+            String msg = "Observation not found: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }
@@ -146,7 +146,7 @@ public class RepoActionTest
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(
-                    new AccessControlException("testAccessControlException message"));
+                    new AccessControlException("permission denied: message"));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
@@ -175,7 +175,7 @@ public class RepoActionTest
 
             ta.run();
             Assert.assertEquals(400, out.getCode());
-            String msg = "invalid input: ";
+            String msg = "testIllegalArgumentException message";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }
@@ -200,7 +200,7 @@ public class RepoActionTest
 
             ta.run();
             Assert.assertEquals(409, out.getCode());
-            String msg = "already exists: ";
+            String msg = "Observation already exists: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }

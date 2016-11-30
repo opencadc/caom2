@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
@@ -89,13 +88,11 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.io.ByteCountReader;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
+import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 
 /**
@@ -115,7 +112,6 @@ public abstract class RepoAction extends RestAction
     private boolean readable = true;
     private boolean writable  = true;
     
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
     public static final String ERROR_MIMETYPE = "text/plain";
     
     // 20MB XML Doc size limit
@@ -124,7 +120,7 @@ public abstract class RepoAction extends RestAction
     private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
 
     private String collection;
-    private URI uri;
+    protected URI uri;
         
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -198,19 +194,11 @@ public abstract class RepoAction extends RestAction
             throw new IllegalArgumentException("unexpected Content-Type found: " + contentType);
         */
 
-        ObservationReader r = new ObservationReader();
-        try
-        {
-            Reader reader = syncInput.getReader();
-            ByteCountReader byteCountReader = new ByteCountReader(reader, DOCUMENT_SIZE_MAX);
-            Observation ret = r.read(byteCountReader);
-            logInfo.setBytes(byteCountReader.getByteCount());
-            return ret;
-        }
-        catch(ObservationParsingException ex)
-        {
-            throw new IllegalArgumentException("invalid observation content", ex);
-        }
+    	Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
+    	if (obs != null)
+    		return (Observation) obs;
+    	else
+    		return null;
     }
 
     /**
@@ -237,7 +225,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
             throw new ResourceNotFoundException(
-                    "Collection not found:" + collection);
+                    "not found: " + uri);
         
         try
         {
@@ -245,19 +233,17 @@ public abstract class RepoAction extends RestAction
             {
                 LocalAuthority loc = new LocalAuthority();
                 URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient(gmsURI);
-                URI guri;
-
-                guri = i.getReadWriteGroup();
+                GMSClient gms = new GMSClient(gmsURI);                
+                URI guri = i.getReadWriteGroup();
                 if (gms.isMember(guri.getFragment()))
-                    return;
-
+                	return;
+                
                 guri = i.getReadOnlyGroup();
                 if (gms.isMember(guri.getFragment()))
-                    return;
+                	return;
 
                 if (gms.isMember(CADC_GROUP_URI.getFragment()))
-                    return;
+                	return;
             }
         }
         catch(AccessControlException ex)
@@ -268,7 +254,7 @@ public abstract class RepoAction extends RestAction
         {
             throw new AccessControlException("read permission denied (user not found): " + getURI());
         }
-        throw new AccessControlException("read permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + getURI());
     }
 
     /**
@@ -295,7 +281,7 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new ResourceNotFoundException(
-                    "Collection not found: " + uri.getCollection());
+                    "not found: " + uri);
 
         try
         {
@@ -318,7 +304,13 @@ public abstract class RepoAction extends RestAction
             throw new AccessControlException("read permission denied (user not found): " + getURI());
         }
 
-        throw new AccessControlException("write permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + getURI());
+    }
+    
+    @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+    	return null;
     }
 
     // read configuration

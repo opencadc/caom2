@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,11 +69,13 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-import java.io.CharArrayWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.rest.SyncOutput;
 
@@ -83,21 +85,20 @@ import ca.nrc.cadc.rest.SyncOutput;
  */
 public class TestSyncOutput extends SyncOutput
 {
-    private CharArrayWriter content;
     private int code;
     private Map<String,Object> headers = new TreeMap<String,Object>();
+    private static final Logger log = Logger.getLogger(TestSyncOutput.class);
 
     public TestSyncOutput() { super(null); }
 
     @Override
-    public PrintWriter getWriter() throws IOException
+    public OutputStream getOutputStream() throws IOException
     {
-        if (writer == null)
+        if (outputStream == null)
         {
-            this.content = new CharArrayWriter(4096);
-            this.writer = new PrintWriter(content);
+            outputStream = new ByteArrayOutputStream();
         }
-        return writer;
+        return outputStream;
     }
 
     @Override
@@ -120,7 +121,9 @@ public class TestSyncOutput extends SyncOutput
 
     public String getContent()
     {
-        return content.toString();
+        ByteArrayOutputStream myOut = (ByteArrayOutputStream) outputStream;
+        byte[] bytes = myOut.toByteArray();
+        return new String(bytes);
     }
 
     public int getCode()

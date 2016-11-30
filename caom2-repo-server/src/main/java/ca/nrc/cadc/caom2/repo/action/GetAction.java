@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -84,7 +86,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountWriter;
+import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
@@ -94,14 +96,14 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
 public class GetAction extends RepoAction
 {
     private static final Logger log = Logger.getLogger(GetAction.class);
-    
+
     private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    
+
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-    
+
     public static final int MAX_OBS_LIST_SIZE = 100000;
 
-    
+
     public GetAction() { }
 
     @Override
@@ -126,7 +128,7 @@ public class GetAction extends RepoAction
             {
                 maxRec = MAX_OBS_LIST_SIZE;
             }
-            
+
             try
             {
                 // start date is optional
@@ -147,9 +149,13 @@ public class GetAction extends RepoAction
                 throw new IllegalArgumentException("wrong date format", e);
             }
         }
+        else
+        {
+        	throw new IllegalArgumentException("invalid input: " + uri);
+        }
     }
-    
-    
+
+
     protected void doGetObservation()
         throws Exception
     {
@@ -162,51 +168,52 @@ public class GetAction extends RepoAction
         Observation obs = dao.get(uri);
 
         if (obs == null)
-            throw new ResourceNotFoundException("Observation not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         // write with default schema
         ObservationWriter ow = new ObservationWriter();
-        
+
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
         ow.write(obs, bc);
         logInfo.setBytes(bc.getByteCount());
-        
+
         log.debug("DONE: " + uri);
     }
-    
-    
-    
+
     protected void doList(int maxRec, Date start, Date end)
             throws Exception
+    {
+        log.debug("START: " + getCollection());
+
+        checkReadPermission(getCollection());
+
+        ObservationDAO dao = getDAO();
+
+        List<ObservationState> states = dao.getObservationList(
+                getCollection(), start, end, maxRec);
+
+        if (states == null)
+            throw new ResourceNotFoundException(
+                    "Collection not found: " + getCollection());
+
+        // write in csv format for now
+        syncOutput.setHeader("Content-Type", "text/csv");
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
+        for (ObservationState state : states)
         {
-            log.debug("START: " + getCollection());
-
-            checkReadPermission(getCollection());
-
-            ObservationDAO dao = getDAO();
-
-            List<ObservationState> states = dao.getObservationList(
-                    getCollection(), start, end, maxRec);
-
-            if (states == null)
-                throw new ResourceNotFoundException(
-                        "Collection not found: " + getCollection());
-
-            // write in csv format for now        
-            syncOutput.setHeader("Content-Type", "text/csv");
-            ByteCountWriter bc = new ByteCountWriter(syncOutput.getWriter());
-            CsvWriter writer = new CsvWriter(bc, ',');
-            for (ObservationState state : states)
-            {
-                writer.write(state.getObservationID());
-                writer.write(df.format(state.getMaxLastModified()));
-                writer.endRecord();
-            }
-            
-            logInfo.setBytes(bc.getByteCount());
-            
-            log.debug("DONE: " + getCollection());
+            writer.write(state.getObservationID());
+            writer.write(df.format(state.getMaxLastModified()));
+            writer.endRecord();
         }
-    
+        writer.flush();
+
+        logInfo.setBytes(bc.getByteCount());
+
+        log.debug("DONE: " + getCollection());
+    }
+
 }
