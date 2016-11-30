@@ -90,15 +90,10 @@ public class ObservationInlineContentHandler implements InlineContentHandler
     
     // 12Kb XML Doc size limit
     private static final long DOCUMENT_SIZE_MAX = 12288L;
-    
-    private ObservationURI uri;
-    
+        
     public static final String CONTENT_KEY = "obs_name";
 
-    public ObservationInlineContentHandler(ObservationURI uri) 
-    { 
-    	this.uri = uri;
-    }
+    public ObservationInlineContentHandler() { }
         
     // TODO: Put a check to ensure that this method is only called once. 
     //       For now we just assume that it is and the name associated with 
@@ -129,7 +124,7 @@ public class ObservationInlineContentHandler implements InlineContentHandler
         catch(ByteLimitExceededException ex)
         {
         	log.debug(ex.getMessage(), ex);
-        	throw new ByteLimitExceededException("too large: " + uri, ex.getLimit());
+        	throw new ByteLimitExceededException("too large: ", ex.getLimit());
         }
     }
     

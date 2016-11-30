@@ -121,7 +121,7 @@ public class GetActionTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     @Before

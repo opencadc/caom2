@@ -141,24 +141,6 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     }
     
     @Test
-    public void testAvailability()
-    {
-        try
-        {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            HttpDownload dl = new HttpDownload(super.AVAIL_URL, buf);
-            dl.run();
-            Assert.assertEquals(200, dl.getResponseCode());
-            Assert.assertEquals("text/xml", dl.getContentType());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
     public void testCleanPutGetSuccess() throws Throwable
     {
         String observationID = generateObservationID("testCleanPutGetSuccess");

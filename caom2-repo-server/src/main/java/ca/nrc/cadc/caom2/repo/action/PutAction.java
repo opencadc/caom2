@@ -131,6 +131,6 @@ public class PutAction extends RepoAction
     @Override
     protected InlineContentHandler getInlineContentHandler()
     {
-    	return new ObservationInlineContentHandler(new ObservationURI(getURI()));
+    	return new ObservationInlineContentHandler();
     }
 }
