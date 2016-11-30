@@ -70,9 +70,9 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.mock;
 
 import java.io.IOException;
 import java.security.AccessControlException;
@@ -88,11 +88,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
-import org.easymock.Mock;
 import org.easymock.MockType;
-import org.easymock.TestSubject;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -112,56 +112,60 @@ import ca.nrc.cadc.util.Log4jInit;
  */
 
 @RunWith(EasyMockRunner.class)
-public class GetActionTest 
+public class GetActionTest
 {
     private static final Logger log = Logger.getLogger(GetActionTest.class);
 
-    @TestSubject
-    private GetAction getAction = new TestGetAction();
-    
-    @Mock(type = MockType.NICE, name = "mockDao", fieldName = "dao")
     private ObservationDAO mockDao;
-    
-    
+
+
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
+    @Before
+    public void setup()
+    {
+        mockDao = EasyMock.createMock(MockType.NICE, ObservationDAO.class);
+    }
 
     @Test(expected=ResourceNotFoundException.class)
     public void testCollectionNotFoundException() throws Exception
     {
 
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+
+        GetAction getAction = new TestGetAction(mockDao);
         getAction.setPath("/BLAH");
 
         reset(mockDao);
         expect(mockRequest.getMethod()).andReturn("GET");
         expect(mockDao.getObservationList("BLAH", null, null, null))
             .andReturn(null);
-        
+
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
         replay(mockDao, mockRequest);
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
     }
-    
+
     @Test
     public void testDoIt() throws Exception
     {
         // test the doIt method when it returns 2 observations
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, 
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT,
                 DateUtil.UTC);
-        
+
+        GetAction getAction = new TestGetAction(mockDao);
         getAction.setPath("/TEST");
         TestSyncOutput out = new TestSyncOutput();
         getAction.setSyncOutput(out);
-        
+
         reset(mockDao);
-        
+
         expect(mockRequest.getMethod()).andReturn("GET");
 
         // build the list of observations for the mock dao to return
@@ -172,29 +176,30 @@ public class GetActionTest
         obsList.add(new ObservationState("TEST", "6789", date2));
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
-        
+
         // since no maxRec argument given, expect the default one
-        expect(mockDao.getObservationList("TEST", null, null, 
+        expect(mockDao.getObservationList("TEST", null, null,
                 GetAction.MAX_OBS_LIST_SIZE)).andReturn(obsList);
-        
+
         replay(mockDao, mockRequest);
-        
+
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
-        
+
         String expected = "1234" + "," + df.format(date1) + "\n" +
                           "6789" + "," + df.format(date2) + "\n";
         Assert.assertEquals(expected, out.getContent());
-        
-        
+
+
         // repeat test when start, end and maxRec specified
-        
+        getAction = new TestGetAction(mockDao);
         getAction.setPath("/TEST");
-        
+
         reset(mockDao);
         reset(mockRequest);
         // get a new OutSync
         out = new TestSyncOutput();
+
         getAction.setSyncOutput(out);
         // build the list of observations for the mock dao to return
         expect(mockRequest.getMethod()).andReturn("GET");
@@ -212,13 +217,13 @@ public class GetActionTest
             andReturn(new String[]{startDate});
         expect(mockRequest.getParameterValues("end")).
             andReturn(new String[]{endDate});
-        
+
         // all arguments given
         expect(mockDao.getObservationList("TEST", df.parse(startDate),
                 df.parse(endDate), 3)).andReturn(obsList);
-        
+
         replay(mockDao, mockRequest);
-        
+
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
         Assert.assertEquals(expected, out.getContent());
@@ -228,23 +233,32 @@ public class GetActionTest
 
     private class TestLogInfo extends WebServiceLogInfo
     {
-        
+
     }
 
     // simple test subclass that mocks checkReadPermission to always return true
     private class TestGetAction extends GetAction
     {
-        TestGetAction()
+        ObservationDAO dao;
+
+        TestGetAction(ObservationDAO dao)
         {
             super();
             setLogInfo(new TestLogInfo());
+            this.dao = dao;
         }
 
         @Override
         protected void checkReadPermission(String collection)
-                throws AccessControlException, CertificateException, 
+                throws AccessControlException, CertificateException,
                        ResourceNotFoundException, IOException
         { }
+
+        @Override
+        protected ObservationDAO getDAO()
+        {
+            return dao;
+        }
     }
 
 }

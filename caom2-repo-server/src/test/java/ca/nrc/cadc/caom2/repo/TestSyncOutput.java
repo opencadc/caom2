@@ -70,11 +70,12 @@
 package ca.nrc.cadc.caom2.repo;
 
 import java.io.ByteArrayOutputStream;
-import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.rest.SyncOutput;
 
@@ -84,9 +85,9 @@ import ca.nrc.cadc.rest.SyncOutput;
  */
 public class TestSyncOutput extends SyncOutput
 {
-    private CharArrayWriter content;
     private int code;
     private Map<String,Object> headers = new TreeMap<String,Object>();
+    private static final Logger log = Logger.getLogger(TestSyncOutput.class);
 
     public TestSyncOutput() { super(null); }
 
@@ -95,7 +96,7 @@ public class TestSyncOutput extends SyncOutput
     {
         if (outputStream == null)
         {
-            this.outputStream = new ByteArrayOutputStream();
+            outputStream = new ByteArrayOutputStream();
         }
         return outputStream;
     }
@@ -120,7 +121,9 @@ public class TestSyncOutput extends SyncOutput
 
     public String getContent()
     {
-        return content.toString();
+        ByteArrayOutputStream myOut = (ByteArrayOutputStream) outputStream;
+        byte[] bytes = myOut.toByteArray();
+        return new String(bytes);
     }
 
     public int getCode()
