@@ -264,7 +264,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         
         // create an observation using subject1
         Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
+        putObservation(observation, SUBJECT1, 413, "too large:", null);
     }
     
     @Test
@@ -364,7 +364,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         
         // create an observation using subject1
         Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        postObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
+        postObservation(observation, SUBJECT1, 413, "too large:", null);
     }
     
     @Test
