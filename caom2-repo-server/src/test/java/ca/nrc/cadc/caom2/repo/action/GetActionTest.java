@@ -180,7 +180,7 @@ public class GetActionTest
         replay(mockDao, mockRequest);
         
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
-        getAction.doAction();
+        getAction.run();
         
         String expected = "1234" + "," + df.format(date1) + "\n" +
                           "6789" + "," + df.format(date2) + "\n";
@@ -220,8 +220,7 @@ public class GetActionTest
         replay(mockDao, mockRequest);
         
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
-        getAction.doAction();
-        
+        getAction.run();
         Assert.assertEquals(expected, out.getContent());
     }
 
