@@ -75,7 +75,6 @@ import java.io.InputStream;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.io.ByteCountInputStream;
@@ -87,23 +86,23 @@ import ca.nrc.cadc.rest.InlineContentHandler;
 public class ObservationInlineContentHandler implements InlineContentHandler
 {
     private static Logger log = Logger.getLogger(ObservationInlineContentHandler.class);
-    
-    // 12Kb XML Doc size limit
-    private static final long DOCUMENT_SIZE_MAX = 12288L;
-        
+
+    // 20MB XML Doc size limit
+    private static final long DOCUMENT_SIZE_MAX = 20971520L;
+
     public static final String CONTENT_KEY = "obs_name";
 
     public ObservationInlineContentHandler() { }
-        
-    // TODO: Put a check to ensure that this method is only called once. 
-    //       For now we just assume that it is and the name associated with 
+
+    // TODO: Put a check to ensure that this method is only called once.
+    //       For now we just assume that it is and the name associated with
     //       the observation is hardcoded.
     public Content accept(String name, String contentType, InputStream inputStream)
         throws InlineContentException, IOException
     {
         if (inputStream == null)
             throw new IOException("The InputStream is closed");
-        
+
         // wrap the input stream in a byte counter to limit bytes read
         ByteCountInputStream sizeLimitInputStream =
             new ByteCountInputStream(inputStream, DOCUMENT_SIZE_MAX);
@@ -127,5 +126,5 @@ public class ObservationInlineContentHandler implements InlineContentHandler
         	throw new ByteLimitExceededException("too large: ", ex.getLimit());
         }
     }
-    
+
 }
