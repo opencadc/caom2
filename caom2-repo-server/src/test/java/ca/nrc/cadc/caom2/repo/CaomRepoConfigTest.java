@@ -118,11 +118,12 @@ public class CaomRepoConfigTest
         try
         {
             Properties props = new Properties();
-            props.setProperty("space", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("spaces", "dsname  database  schema  caom2obs  ivo://cadc.nrc.ca/gms#group1  ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("tabs", "dsname\tdatabase\tschema\tcaom2obs\tivo://cadc.nrc.ca/gms#group1\tivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("mix", "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms#group1 \t ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("def-impl", "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms#group1 \t ivo://cadc.nrc.ca/gms#group2");
+            props.setProperty("space", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("group-frag", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("spaces", "dsname  database  schema  caom2obs  ivo://cadc.nrc.ca/gms?group1  ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("tabs", "dsname\tdatabase\tschema\tcaom2obs\tivo://cadc.nrc.ca/gms?group1\tivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("mix", "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("def-impl", "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2");
 
             
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("space", props);
@@ -133,8 +134,20 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
+            Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
+            
+            it = CaomRepoConfig.getItem("group-frag", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("group-frag", it.getCollection());
+            Assert.assertEquals("dsname", it.getDataSourceName());
+            Assert.assertEquals("database", it.getDatabase());
+            Assert.assertEquals("schema", it.getSchema());
+            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
 
             it = CaomRepoConfig.getItem("spaces", props);
@@ -145,8 +158,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             
             it = CaomRepoConfig.getItem("tabs", props);
@@ -157,8 +170,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
 
             it = CaomRepoConfig.getItem("mix", props);
@@ -169,8 +182,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             
             it = CaomRepoConfig.getItem("def-impl", props);
@@ -181,8 +194,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(SybaseSQLGenerator.class, it.getSqlGenerator());
 
         }
@@ -225,24 +238,35 @@ public class CaomRepoConfigTest
         try
         {
             Properties props = new Properties();
-            props.setProperty("invalid-syntax", "dsname database schema caom2obs ivo:gms#group1#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("no-frag", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("wrong-scheme", "dsname database schema caom2obs gms://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
-            props.setProperty("no-sql-impl", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.NoImpl");
+            props.setProperty("invalid-syntax-queries", "dsname database schema caom2obs ivo:gms?group1?group1 ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("invalid-syntax-frags", "dsname database schema caom2obs ivo:gms#group1#group1 ivo://cadc.nrc.ca/gms#group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("no-name", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("wrong-scheme", "dsname database schema caom2obs gms://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+            props.setProperty("no-sql-impl", "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 ca.nrc.cadc.caom2.repo.NoImpl");
             
             try
             {
-                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("invalid-syntax", props);
+                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("invalid-syntax-queries", props);
                 Assert.fail("expected IllegalArgumentException, got: " + i1);
             }
-            catch(URISyntaxException expected)
+            catch(IllegalArgumentException expected)
+            {
+                log.debug("caught expected: " + expected);
+            }
+            
+            try
+            {
+                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("invalid-syntax-frags", props);
+                Assert.fail("expected IllegalArgumentException, got: " + i1);
+            }
+            catch(IllegalArgumentException expected)
             {
                 log.debug("caught expected: " + expected);
             }
 
             try
             {
-                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("no-frag", props);
+                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("no-name", props);
                 Assert.fail("expected IllegalArgumentException, got: " + i1);
             }
             catch(IllegalArgumentException expected)
@@ -253,6 +277,16 @@ public class CaomRepoConfigTest
             try
             {
                 CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("wrong-scheme", props);
+                Assert.fail("expected IllegalArgumentException, got: " + i1);
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.debug("caught expected: " + expected);
+            }
+            
+            try
+            {
+                CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("no-sql-impl", props);
                 Assert.fail("expected IllegalArgumentException, got: " + i1);
             }
             catch(IllegalArgumentException expected)
@@ -284,8 +318,8 @@ public class CaomRepoConfigTest
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new URI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
 
         }
