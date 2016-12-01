@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,6 +75,8 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.InlineContentHandler;
 
 /**
  *
@@ -90,7 +92,7 @@ public class PostAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = getURI();
+        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
         checkWritePermission(uri);
@@ -98,17 +100,36 @@ public class PostAction extends RepoAction
         Observation obs = getInputObservation();
 
         if ( !uri.equals(obs.getURI()) )
-            throw new IllegalArgumentException("request path does not match ObservationURI in content");
+            throw new IllegalArgumentException("invalid input: " + uri);
         
         ObservationDAO dao = getDAO();
         
         if (!dao.exists(uri))
-            throw new ObservationNotFoundException(uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
-        CaomValidator.validate(obs);
+        try 
+        {
+            CaomValidator.validate(obs);
+        } 
+        catch (IllegalArgumentException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new IllegalArgumentException("invalid input: " + uri);
+        }
+        catch (RuntimeException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new RuntimeException("invalid input: " + uri);
+        }
 
         dao.put(obs);
         
         log.debug("DONE: " + uri);
+    }
+    
+    @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+    	return new ObservationInlineContentHandler();
     }
 }

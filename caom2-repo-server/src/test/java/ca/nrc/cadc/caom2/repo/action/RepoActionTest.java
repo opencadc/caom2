@@ -79,6 +79,8 @@ import org.junit.Test;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.repo.TestSyncOutput;
 import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
@@ -118,13 +120,14 @@ public class RepoActionTest
         {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(new ObservationNotFoundException(uri));
+            TestAction ta = new TestAction(
+                new ResourceNotFoundException("Observation not found: " + uri));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
             Assert.assertEquals(404, out.getCode());
-            String msg = "not found: ";
+            String msg = "Observation not found: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }
@@ -142,7 +145,8 @@ public class RepoActionTest
         {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(new AccessControlException("testAccessControlException message"));
+            TestAction ta = new TestAction(
+                    new AccessControlException("permission denied: message"));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
@@ -165,14 +169,13 @@ public class RepoActionTest
         try
         {
             TestSyncOutput out = new TestSyncOutput();
-            ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(new IllegalArgumentException("testIllegalArgumentException message"));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
             Assert.assertEquals(400, out.getCode());
-            String msg = "invalid input: ";
+            String msg = "testIllegalArgumentException message";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }
@@ -190,13 +193,14 @@ public class RepoActionTest
         {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(new ObservationAlreadyExistsException(uri));
+            TestAction ta = new TestAction(new 
+                   ResourceAlreadyExistsException("Observation already exists: " + uri));
             ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
             Assert.assertEquals(409, out.getCode());
-            String msg = "already exists: ";
+            String msg = "Observation already exists: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
         }
@@ -219,6 +223,7 @@ public class RepoActionTest
 
         TestAction(Exception ex)
         {
+        	super();
             this.ex = ex;
             setLogInfo(new TestLogInfo());
         }

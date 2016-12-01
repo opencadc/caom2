@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -82,6 +82,8 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.ac.GroupURI;
+
 /**
  *
  * @author pdowler
@@ -125,11 +127,11 @@ public class CaomRepoConfig
         private String database;
         private String schema;
         private String obsTableName;
-        private URI readOnlyGroup;
-        private URI readWriteGroup;
+        private GroupURI readOnlyGroup;
+        private GroupURI readWriteGroup;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database, String schema, String obsTableName,
-            URI readOnlyGroup, URI readWriteGroup)
+            GroupURI readOnlyGroup, GroupURI readWriteGroup)
         {
             this.sqlGenerator = sqlGenerator;
             this.collection = collection;
@@ -173,12 +175,12 @@ public class CaomRepoConfig
             return database;
         }
 
-        public URI getReadOnlyGroup()
+        public GroupURI getReadOnlyGroup()
         {
             return readOnlyGroup;
         }
 
-        public URI getReadWriteGroup()
+        public GroupURI getReadWriteGroup()
         {
             return readWriteGroup;
         }
@@ -253,18 +255,9 @@ public class CaomRepoConfig
                 }
             }
             
-            URI ro = new URI(roGroup);
-            URI rw = new URI(rwGroup);
-            if (!"ivo".equals(ro.getScheme()))
-                throw new IllegalArgumentException("invalid GMS URI " + ro + ", expected ivo scheme");
-            if ( ro.getFragment() == null || ro.getFragment().length() == 0)
-                throw new IllegalArgumentException("invalid GMS URI " + ro + ", expected group name in fragment");
-            if (!"ivo".equals(rw.getScheme()))
-                throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected ivo scheme");
-            if ( rw.getFragment() == null || rw.getFragment().length() == 0)
-                throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected group name in fragment");
+            GroupURI ro = new GroupURI(roGroup);
+            GroupURI rw = new GroupURI(rwGroup);
 
-            // create
             CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database, schema, obsTable, ro, rw);
             return rci;
         }

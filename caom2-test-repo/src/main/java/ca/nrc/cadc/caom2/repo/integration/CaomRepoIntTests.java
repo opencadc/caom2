@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,27 +69,20 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.RunnableAction;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
 
-import ca.nrc.cadc.reg.Standards;
-import junit.framework.Assert;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
@@ -107,17 +100,16 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.ByteArrayInputStream;
+
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.util.UUID;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Integration tests for caom2repo_ws
@@ -125,31 +117,11 @@ import java.util.UUID;
  * @author majorb
  *
  */
-public class CaomRepoIntTests
+public class CaomRepoIntTests extends CaomRepoBaseIntTests
 {
     
     private static final Logger log = Logger.getLogger(CaomRepoIntTests.class);
-    
-    private static final String TEST_COLLECTION = "TEST";
-    
-    // subject1 has read/write privilege on the TEST collection
-    private Subject SUBJECT1;
-    
-    // subject2 has read privilege on the TEST collection
-    private Subject SUBJECT2;
-    
-    // subject3 has not read or write permission on the TEST collection
-    private Subject SUBJECT3;
-    
-    private URL AVAIL_URL;
-    private String BASE_HTTP_URL;
-    private String BASE_HTTPS_URL;
-    
-    private static final String SCHEME = "caom:";
-    
-    // service should be written to output documents with this version
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
-    
+                    
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
@@ -165,59 +137,7 @@ public class CaomRepoIntTests
      */
     public CaomRepoIntTests(URI resourceID, String pem1, String pem2, String pem3) 
     { 
-        try
-        {
-            File SSL_CERT1 = FileUtil.getFileFromResource(pem1, this.getClass());
-            File SSL_CERT2 = FileUtil.getFileFromResource(pem2, this.getClass());
-            File SSL_CERT3 = FileUtil.getFileFromResource(pem3, this.getClass());
-
-            SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
-            SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
-            SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
-            
-            RegistryClient rc = new RegistryClient();
-
-            URL serviceURL = rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-            AVAIL_URL = serviceURL;
-
-            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.ANON);
-            BASE_HTTP_URL = serviceURL.toExternalForm();
-
-            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
-            BASE_HTTPS_URL = serviceURL.toExternalForm();
-
-            log.debug("test service URL: " + BASE_HTTP_URL);
-            log.debug("test service URL: " + BASE_HTTPS_URL);
-        }
-        catch (Throwable t)
-        {
-            String message = "Failed int-test initialization: " + t.getMessage();
-            log.fatal(message, t);
-            throw new ExceptionInInitializerError(message);
-        }
-    }
-    
-    public String generateObservationID(String base)
-    {
-        return base + "-" + UUID.randomUUID().toString();
-    }
-    
-    @Test
-    public void testAvailability()
-    {
-        try
-        {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            HttpDownload dl = new HttpDownload(AVAIL_URL, buf);
-            dl.run();
-            Assert.assertEquals(200, dl.getResponseCode());
-            Assert.assertEquals("text/xml", dl.getContentType());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+        super(resourceID, pem1, pem2, pem3);
     }
     
     @Test
@@ -280,22 +200,22 @@ public class CaomRepoIntTests
     public void testCollectionNotFound() throws Throwable
     {
         String collection = "NoSuchCollection";
-        String observationID = generateObservationID("testGetNotFound");
+        String observationID = generateObservationID("testCollectionNotFound");
         String path =  collection + "/" + observationID;
         String uri = SCHEME + path;
         
-        getObservation(uri, SUBJECT2, 404, "collection not found: " + collection);
+        getObservation(uri, SUBJECT2, 404, "not found: " + uri);
     }
     
     @Test
     public void testInvalidURI() throws Throwable
     {
         String collection = TEST_COLLECTION;
-        String observationID = generateObservationID("testGetNotFound");
+        String observationID = generateObservationID("testInvalidURI");
         String path =  collection + "/" + observationID + "/extraElementsInPath";
         String uri = SCHEME + path;
         
-        getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
+        super.getObservation(uri, SUBJECT2, 400, "invalid input: " + uri, false);
     }
     
     @Test
@@ -344,7 +264,7 @@ public class CaomRepoIntTests
         
         // create an observation using subject1
         Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
+        putObservation(observation, SUBJECT1, 413, "too large:", null);
     }
     
     @Test
@@ -424,7 +344,7 @@ public class CaomRepoIntTests
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
         putObservation(observation, SUBJECT1, 200, "OK", null);
-        
+       
         // overwrite the observation with a post
         postObservation(observation, SUBJECT2, 403, "permission denied: " + uri, null);
         
@@ -444,7 +364,7 @@ public class CaomRepoIntTests
         
         // create an observation using subject1
         Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        postObservation(observation, SUBJECT1, 413, "too large: " + uri, null);
+        postObservation(observation, SUBJECT1, 413, "too large:", null);
     }
     
     @Test
@@ -554,33 +474,90 @@ public class CaomRepoIntTests
         deleteObservation(uri, SUBJECT1, 404, "not found: " + uri);
     }
     
-    private HttpURLConnection openConnection(Subject subject, String urlPath)
-            throws Exception
+    @Test
+    public void testPostMultipartSingleParamSuccess() throws Throwable
     {
-        HttpURLConnection conn;
-        URL url;
-        if (subject == null)
-        {
-            url = new URL(BASE_HTTP_URL + "/" + urlPath);
-            log.debug("opening connection to: " + url.toString());
-            conn = (HttpURLConnection) url.openConnection();
-        }
-        else
-        {
-            url = new URL(BASE_HTTPS_URL + "/" + urlPath);
-            log.debug("opening connection to: " + url.toString());
-            conn = (HttpsURLConnection) url.openConnection();
-            SSLSocketFactory sf = SSLUtil.getSocketFactory(subject);
-            ((HttpsURLConnection) conn).setSSLSocketFactory(sf);
-        }
-        conn.setInstanceFollowRedirects(false);
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-        return conn;
+	    String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+        final SimpleObservation observation = this.generateObservation(observationID);
+		Map<String, Object> params = new HashMap<String, Object>();
+	    params.put("file", convertToFile(observation));
+
+	    testPostMultipartWithParamsSuccess(observationID, params);
+    }
+    
+    @Test
+    public void testPostMultipartMultipleParamSuccess() throws Throwable
+    {
+	    String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
+        final SimpleObservation observation = this.generateObservation(observationID);
+		Map<String, Object> params = new HashMap<String, Object>();
+   	    params.put("fooKey", "fooValue");
+   	    params.put("file", convertToFile(observation));
+   	    params.put("barKey", "barValue");
+
+	    testPostMultipartWithParamsSuccess(observationID, params);
     }
     
     private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;
     private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
+    
+    private SimpleObservation generateObservation(String observationID) throws Throwable
+    {
+        // create an observation using subject1
+        final SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        Plane plane = new Plane("foo");
+        plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
+        observation.getPlanes().add(plane);
+
+        putObservation(observation, SUBJECT1, 200, "OK", null);
+
+        // modify the plane since that also tweaks the Observation.maxLastModified
+        plane.dataProductType = DataProductType.CUBE;
+        return observation;
+    }
+    
+    private File convertToFile(SimpleObservation observation) throws IOException
+    {
+        StringBuilder sb = new StringBuilder();
+        ObservationWriter writer = new ObservationWriter();
+        writer.write(observation, sb);
+        log.debug(sb.toString());
+
+        File file = new File("build/resources/intTest/tmp/testPostMultipartSuccess.xml");
+        BufferedWriter bwr = new BufferedWriter(new FileWriter(file));
+        bwr.write(sb.toString());
+        bwr.flush();
+        bwr.close();
+        return file;
+    }
+    
+	private void testPostMultipartWithParamsSuccess(String observationID, final Map<String, Object> params) 
+			throws Throwable
+	{
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+        final URL url = new URL(BASE_HTTPS_URL + "/" + path);
+        
+        PrivilegedExceptionAction<Object> p = new PrivilegedExceptionAction<Object>()
+        {
+            @Override
+            public Object run() throws Exception
+            {
+        	    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();	    
+        	    HttpPost httpPost = new HttpPost(url, params, outputStream);
+        	    httpPost.setMaxRetries(4);
+        	    httpPost.run();
+        	    log.debug("throwable: " + httpPost.getThrowable());
+        	    Assert.assertNull("Wrong throwable", httpPost.getThrowable());
+                return null;
+            }
+        };
+        Subject.doAs(SUBJECT1, p);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, SUBJECT1, null, null);
+	}
+
     private Observation createVeryLargeObservation(String collection, String observationID)
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
@@ -638,152 +615,11 @@ public class CaomRepoIntTests
         }
         
         return observation;
-    }
-    
-    private void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Throwable
-    {
-        sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
-    }
+    }    
     
     private void postObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
             throws Throwable
     {
-        sendObservation("POST", observation, subject, expectedResponse, expectedMessage, path);
+        super.sendObservation("POST", observation, subject, expectedResponse, expectedMessage, path);
     }
-    
-    private void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Throwable
-    {
-        log.debug("start " + method.toLowerCase() + " on " + observation.toString());
-        
-        String urlPath = path;
-        if (urlPath == null)
-        {
-            // extract the path from the observation
-            urlPath = observation.getURI().getURI().getSchemeSpecificPart();
-        }
-        
-        ObservationWriter writer = new ObservationWriter();
-        
-        HttpURLConnection conn = openConnection(subject, urlPath);
-        conn.setRequestMethod(method);
-        
-        OutputStream out = conn.getOutputStream();
-        writer.write(observation, out);
-        
-        int response = conn.getResponseCode();
-        String message = conn.getResponseMessage();
-        if (response != 200)
-            message = NetUtil.getErrorBody(conn).trim();
-        
-        log.debug(method.toLowerCase() + " response: " + message + " (" + response + ")");
-        
-        if (expectedResponse != null)
-            Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
-        if (expectedMessage != null)
-        {
-            Assert.assertNotNull(message);
-            if (expectedResponse != null && expectedResponse.intValue() == 400 )
-            {
-                // service provides extra info so check the start only
-                message = message.substring(0, expectedMessage.length());
-            }
-            Assert.assertEquals("Wrong response message", expectedMessage, message);
-        }
-        
-        conn.disconnect();
-    }
-    
-    private Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
-            throws Exception
-    {
-        return getObservation(uri, subject, expectedResponse, expectedMessage, true);
-    }
-    
-    private Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch)
-            throws Exception
-    {
-        log.debug("start get on " + uri);
-        
-        // extract the path from the uri
-        URI ouri = new URI(uri);
-        String surl = BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
-        if (subject != null)
-            surl = BASE_HTTPS_URL + "/" + ouri.getSchemeSpecificPart();
-        URL url = new URL(surl);
-        ObservationReader reader = new ObservationReader();
-        
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, bos);
-        //HttpURLConnection conn = openConnection(subject, urlPath);
-        //conn.setRequestMethod("GET");
-        
-        Subject.doAs(subject, new RunnableAction(get));
-        
-        int response = get.getResponseCode();
-        
-        if (expectedResponse != null)
-            Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
-        if (expectedMessage != null)
-        {
-            String message = bos.toString().trim();
-            Assert.assertNotNull(message);
-            if (exactMatch)
-                Assert.assertEquals("Wrong response message", expectedMessage, message);
-            else
-                Assert.assertTrue("Wrong response message (startsWith)", message.startsWith(expectedMessage));
-        }
-        
-        if (response == 200)
-        {
-            //InputStream in = conn.getInputStream();
-            if (EXPECTED_CAOM_VERSION != null)
-            {
-                String doc = bos.toString();
-                Assert.assertTrue("document namespace="+EXPECTED_CAOM_VERSION, doc.contains(EXPECTED_CAOM_VERSION));
-            }
-            InputStream in = new ByteArrayInputStream(bos.toByteArray());
-            Observation observation = reader.read(in);
-            
-            //conn.disconnect();
-            
-            return observation;
-            
-        }
-        return null;
-    }
-    
-    private void deleteObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
-            throws Throwable
-    {
-        log.debug("start delete on " + uri);
-        
-        // extract the path from the uri
-        String urlPath = uri.substring(uri.indexOf(SCHEME) + SCHEME.length());
-        
-        HttpURLConnection conn = openConnection(subject, urlPath);
-        conn.setRequestMethod("DELETE");
-        
-        int response = conn.getResponseCode();
-        String message = conn.getResponseMessage();
-        if (response != 200)
-            message = NetUtil.getErrorBody(conn).trim();
-        
-        log.debug("delete response: " + message + " (" + response + ")");
-        
-        if (expectedResponse != null)
-            Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
-        if (expectedMessage != null)
-        {
-            Assert.assertNotNull(message);
-            Assert.assertEquals("Wrong response message", expectedMessage, message);
-        }
-        
-        conn.disconnect();
-    }
-
 }
