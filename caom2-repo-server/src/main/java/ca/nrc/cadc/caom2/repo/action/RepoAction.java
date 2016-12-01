@@ -110,11 +110,8 @@ public abstract class RepoAction extends RestAction
     public static final String READ_WRITE = "ReadWrite";
     private boolean readable = true;
     private boolean writable  = true;
-    
+
     public static final String ERROR_MIMETYPE = "text/plain";
-    
-    // 20MB XML Doc size limit
-    private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
     private final GroupURI CADC_GROUP_URI  = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
 
@@ -122,7 +119,7 @@ public abstract class RepoAction extends RestAction
     
     private String collection;
     protected URI uri;
-        
+
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
 
@@ -154,22 +151,22 @@ public abstract class RepoAction extends RestAction
             this.uri = new URI("caom", path, null);
         } catch (URISyntaxException e)
         {
-            throw new 
+            throw new
                 IllegalArgumentException("Path not a correct URI: " + path);
-        }        
+        }
         String[] cop = path.split("/");
         collection = cop[0];
-        
+
     }
-    
+
     protected URI getURI()
     {
         return uri;
     }
-    
+
     protected String getCollection()
     {
-        
+
         return collection;
     }
 
@@ -204,7 +201,7 @@ public abstract class RepoAction extends RestAction
 
     /**
      * Check if the caller can read the specified resource.
-     * 
+     *
      * @param collection
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
@@ -212,7 +209,7 @@ public abstract class RepoAction extends RestAction
      * @throws java.io.IOException
      */
     protected void checkReadPermission(String collection)
-        throws AccessControlException, CertificateException, 
+        throws AccessControlException, CertificateException,
                ResourceNotFoundException, IOException
     {
         initState();
@@ -227,7 +224,7 @@ public abstract class RepoAction extends RestAction
         if (i == null)
             throw new ResourceNotFoundException(
                     "not found: " + uri);
-        
+
         try
         {
             if ( CredUtil.checkCredentials() )
@@ -271,7 +268,7 @@ public abstract class RepoAction extends RestAction
      * @throws java.io.IOException
      */
     protected void checkWritePermission(ObservationURI uri)
-        throws AccessControlException, CertificateException, 
+        throws AccessControlException, CertificateException,
                ResourceNotFoundException, IOException
     {
         initState();
@@ -281,7 +278,7 @@ public abstract class RepoAction extends RestAction
                 throw new IllegalStateException(READ_ONLY_MSG);
             throw new IllegalStateException(OFFLINE_MSG);
         }
-        
+
         CaomRepoConfig.Item i = getConfig(uri.getCollection());
         if (i == null)
             throw new ResourceNotFoundException(
@@ -309,7 +306,7 @@ public abstract class RepoAction extends RestAction
 
         throw new AccessControlException("permission denied: " + getURI());
     }
-    
+
     @Override
     protected InlineContentHandler getInlineContentHandler()
     {
