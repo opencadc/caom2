@@ -238,7 +238,7 @@ public abstract class RepoAction extends RestAction
                 if (!grw.getServiceID().equals(gro.getServiceID()))
                     gms = new GMSClient(gro.getServiceID());
                     
-                if (gms.isMember(grw.getName()))
+                if (gms.isMember(gro.getName()))
                 	return;
 
                 if (!gro.getServiceID().equals(CADC_GROUP_URI.getServiceID()))
