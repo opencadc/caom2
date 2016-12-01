@@ -220,13 +220,13 @@ public class CaomRepoBaseIntTests
     }
     
     protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Throwable
+            throws Exception
     {
         sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
     }
     
     protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Throwable
+            throws Exception
     {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
         
@@ -332,7 +332,7 @@ public class CaomRepoBaseIntTests
     }
     
     protected void deleteObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
-            throws Throwable
+            throws Exception
     {
         log.debug("start delete on " + uri);
         

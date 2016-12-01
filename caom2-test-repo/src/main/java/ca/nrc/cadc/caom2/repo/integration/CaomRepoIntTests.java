@@ -475,14 +475,22 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     }
     
     @Test
-    public void testPostMultipartSingleParamSuccess() throws Throwable
+    public void testPostMultipartSingleParamSuccess()
     {
-	    String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
-        final SimpleObservation observation = this.generateObservation(observationID);
-		Map<String, Object> params = new HashMap<String, Object>();
-	    params.put("file", convertToFile(observation));
+        try
+        {
+            String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+            final SimpleObservation observation = this.generateObservation(observationID);
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("file", convertToFile(observation));
 
-	    testPostMultipartWithParamsSuccess(observationID, params);
+            testPostMultipartWithParamsSuccess(observationID, params);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected", unexpected);
+            Assert.fail("unexpected: " + unexpected);
+        }
     }
     
     @Test
@@ -501,7 +509,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;
     private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
     
-    private SimpleObservation generateObservation(String observationID) throws Throwable
+    private SimpleObservation generateObservation(String observationID) throws Exception
     {
         // create an observation using subject1
         final SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -523,16 +531,17 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         writer.write(observation, sb);
         log.debug(sb.toString());
 
-        File file = new File("build/resources/intTest/tmp/testPostMultipartSuccess.xml");
+        File file = new File("build/tmp/testPostMultipartSuccess.xml");
         BufferedWriter bwr = new BufferedWriter(new FileWriter(file));
         bwr.write(sb.toString());
         bwr.flush();
         bwr.close();
+        log.info("created: " + file);
         return file;
     }
     
 	private void testPostMultipartWithParamsSuccess(String observationID, final Map<String, Object> params) 
-			throws Throwable
+            throws Exception
 	{
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
