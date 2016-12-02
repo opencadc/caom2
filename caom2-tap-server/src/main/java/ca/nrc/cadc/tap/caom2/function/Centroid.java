@@ -70,13 +70,11 @@
 package ca.nrc.cadc.tap.caom2.function;
 
 import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.schema.Column;
 
 /**
- * the PgSphere implementation of ADQL function
- * CENTER
+ * The CAOM implementation of ADQL function CENTROID.
  *
- * CENTROID(position_bounds)) -> position_bounds_center
+ * CENTROID(position_bounds)) is converted to position_bounds_center
  * 
  * @author zhangsa
  * 

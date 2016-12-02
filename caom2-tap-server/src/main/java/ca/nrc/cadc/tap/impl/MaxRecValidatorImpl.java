@@ -111,14 +111,6 @@ public class MaxRecValidatorImpl extends MaxRecValidator
     /**
      * Validate with the given job parameters.
      *
-     * Story 638
-     * For asynchronous queries that include a DEST parameter, ignore the
-     * MAXREC parameter as we allow an unlimited number of records to be
-     * written to a provided destination.
-     *
-     * jenkinsd 2012.07.03
-     *
-     * @param params        List of Parameter items.
      * @return              Maximum number of records to return.
      */
     @Override

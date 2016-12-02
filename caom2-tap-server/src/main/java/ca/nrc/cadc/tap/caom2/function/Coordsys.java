@@ -73,8 +73,7 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.StringValue;
 
 /**
- * the PgSphere implementation of ADQL function
- * COORDSYS.
+ * The CAOM implementation of ADQL function COORDSYS.
  * 
  * @author zhangsa
  * 

@@ -75,10 +75,6 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 
 /**
- *
- * CENTROID(position_bounds)) -> position_bounds_center
- * 
- * AREA(position_bounds)) -> position_bounds_area
  * 
  * @author zhangsa
  * 
