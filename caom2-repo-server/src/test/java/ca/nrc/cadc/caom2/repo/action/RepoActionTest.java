@@ -122,7 +122,6 @@ public class RepoActionTest
             ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(
                 new ResourceNotFoundException("Observation not found: " + uri));
-            ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
@@ -147,7 +146,6 @@ public class RepoActionTest
             ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(
                     new AccessControlException("permission denied: message"));
-            ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
@@ -170,7 +168,6 @@ public class RepoActionTest
         {
             TestSyncOutput out = new TestSyncOutput();
             TestAction ta = new TestAction(new IllegalArgumentException("testIllegalArgumentException message"));
-            ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();
@@ -195,7 +192,6 @@ public class RepoActionTest
             ObservationURI uri = new ObservationURI("FOO", "bar");
             TestAction ta = new TestAction(new 
                    ResourceAlreadyExistsException("Observation already exists: " + uri));
-            ta.setPath("/Foo/bar");
             ta.setSyncOutput(out);
 
             ta.run();

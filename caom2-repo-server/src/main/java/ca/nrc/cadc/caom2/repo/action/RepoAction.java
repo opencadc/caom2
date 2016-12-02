@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.ac.GroupURI;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
@@ -93,6 +92,7 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import java.io.File;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -115,10 +115,8 @@ public abstract class RepoAction extends RestAction
 
     private final GroupURI CADC_GROUP_URI  = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
 
-    private final String serviceName = "sc2repo"; // HACK until merge and get cadc-rest to provide this
-    
     private String collection;
-    protected URI uri;
+    protected ObservationURI uri;
 
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -142,31 +140,41 @@ public abstract class RepoAction extends RestAction
         }
     }
 
-    @Override
-    public void setPath(String p) throws IllegalArgumentException
+    private void initTarget()
     {
-        super.setPath(p);
-        try
+        if (collection == null)
         {
-            this.uri = new URI("caom", path, null);
-        } catch (URISyntaxException e)
-        {
-            throw new
-                IllegalArgumentException("Path not a correct URI: " + path);
+            String path = syncInput.getPath();
+            if (path == null)
+                throw new IllegalArgumentException("no collection specified");
+            String[] parts = path.split("/");
+            this.collection = parts[0];
+            if (parts.length > 1)
+            {
+                String suri = "caom:" + path;
+                try
+                {
+                    this.uri = new ObservationURI(new URI(suri));
+                }
+                catch(URISyntaxException | IllegalArgumentException ex)
+                {
+                    throw new IllegalArgumentException("invalid input: " + suri, ex);
+                }
+            }
         }
-        String[] cop = path.split("/");
-        collection = cop[0];
-
     }
-
-    protected URI getURI()
+    
+    // return uri for get-observation, null for get-list, and throw for invalid
+    protected ObservationURI getURI()
     {
+        initTarget();
         return uri;
     }
 
+    // return the specified collection or throw for invalid
     protected String getCollection()
     {
-
+        initTarget();
         return collection;
     }
 
@@ -222,8 +230,7 @@ public abstract class RepoAction extends RestAction
 
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
-            throw new ResourceNotFoundException(
-                    "not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         try
         {
@@ -317,16 +324,12 @@ public abstract class RepoAction extends RestAction
     private CaomRepoConfig.Item getConfig(String collection)
         throws IOException
     {
-        // TODO: if this fails, fall back to last known good config (static)
-
         if (repoConfig != null)
             return repoConfig;
-
-        File config = new File(System.getProperty("user.home") + "/config", 
-                this.serviceName + ".properties");
         
+        String serviceName = syncInput.getContextPath();
+        File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
         CaomRepoConfig rc = new CaomRepoConfig(config);
-
         if (rc.isEmpty())
             throw new IllegalStateException("no RepoConfig.Item(s)found");
 

@@ -110,23 +110,22 @@ public class GetAction extends RepoAction
     public void doAction() throws Exception
     {
         log.debug("GET ACTION");
-        String[] cop = path.split("/");
-        if (cop.length == 2)
-            doGetObservation();
-        else if (cop.length == 1)
+        ObservationURI uri = getURI();
+        if (uri != null)
+        {
+            doGetObservation(uri);
+            return;
+        }
+        else
         {
             // maxRec == null means list all
-            String maxRecString = syncInput.getParameter("maxRec");
-            Integer maxRec = null;
+            String maxRecString = syncInput.getParameter("maxrec");
+            Integer maxRec = MAX_OBS_LIST_SIZE;
             if (maxRecString != null)
             {
-                maxRec = Integer.valueOf(maxRecString);
-            }
-
-            // limit the size of the batch
-            if ((maxRec == null) || (maxRec > MAX_OBS_LIST_SIZE))
-            {
-                maxRec = MAX_OBS_LIST_SIZE;
+                int m = Integer.valueOf(maxRecString);
+                if (m < maxRec)
+                    maxRec = m;
             }
 
             try
@@ -143,23 +142,19 @@ public class GetAction extends RepoAction
                 if (endString != null)
                     end = df.parse(endString);
 
-                doList(maxRec.intValue(), start, end);
-            } catch (ParseException e)
+                doList(maxRec, start, end);
+            } 
+            catch (ParseException e)
             {
                 throw new IllegalArgumentException("wrong date format", e);
             }
         }
-        else
-        {
-        	throw new IllegalArgumentException("invalid input: " + uri);
-        }
     }
 
 
-    protected void doGetObservation()
+    protected void doGetObservation(ObservationURI uri)
         throws Exception
     {
-        ObservationURI uri = new ObservationURI(getURI());
         log.debug("START: " + uri);
 
         checkReadPermission(uri.getCollection());

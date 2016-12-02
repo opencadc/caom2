@@ -92,7 +92,7 @@ public class PostAction extends RepoAction
     public void doAction()
         throws Exception
     {
-        ObservationURI uri = new ObservationURI(getURI());
+        ObservationURI uri = getURI();
         log.debug("START: " + uri);
 
         checkWritePermission(uri);
