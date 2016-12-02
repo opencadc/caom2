@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,68 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.caom2.function;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
-import org.apache.log4j.Logger;
+import java.util.List;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Column;
 
 /**
  *
- * @author pdowler
+ * CENTROID(position_bounds)) -> position_bounds_center
+ * 
+ * AREA(position_bounds)) -> position_bounds_area
+ * 
+ * @author zhangsa
+ * 
  */
-public class EchoAction extends RestAction
+public abstract class FuntionOnBounds extends Function
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
+    // these values work for caom1 and caom2
+    public static String[] POSITION_BOUNDS = { "position_bounds", "s_region" };
+    public static String POSITION_BOUNDS_CENTER = "position_bounds_center";
+    public static String POSITION_BOUNDS_AREA = "position_bounds_area";
+    
+    protected Column column;
+    
+    protected boolean onPositionBounds = false;
 
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public FuntionOnBounds(Function adqlFunction)
     {
-        return null;
+        super();
+        setParameters(adqlFunction.getParameters());
+        convertParameters();
     }
 
-    @Override
-    public void doAction() 
-        throws Exception
+    public void setOnPositionBounds(boolean onPositionBounds)
     {
-        Stuff msg = parseStuff(syncInput.getPath());
-        
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
+        this.onPositionBounds = onPositionBounds;
+    }
+
+    public boolean isOnPositionBounds()
+    {
+        return onPositionBounds;
+    }
+
+    public Expression getExpression()
+    {
+        return column;
     }
     
-    private class Stuff
+    @SuppressWarnings("unchecked")
+    protected void convertParameters()
     {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
+        List<Expression> expressions = getParameters().getExpressions();
+        Expression expression = expressions.get(0);
+        onPositionBounds = false;
+        if (expression instanceof Column)
         {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
+            column = (Column) expression;
+            String columnName = column.getColumnName();
+            for (String s : POSITION_BOUNDS)
+                onPositionBounds = onPositionBounds || columnName.equalsIgnoreCase(s);
         }
     }
-    
 
 }

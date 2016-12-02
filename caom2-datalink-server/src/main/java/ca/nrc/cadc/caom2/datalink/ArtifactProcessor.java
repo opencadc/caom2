@@ -238,8 +238,8 @@ public class ArtifactProcessor
     {
         public String circle;
         public String poly;
-        public String band;
-        public String time;
+        public String bandMin, bandMax;
+        public String timeMin, timeMax;
         public List<PolarizationState> pol;
     }
     
@@ -270,16 +270,20 @@ public class ArtifactProcessor
         if (nrg != null) log.debug("nrg: " + nrg.bounds + " " + nrg.dimension);
         if (nrg != null && nrg.bounds != null && nrg.dimension != null && nrg.dimension > 1)
         {
-            double[] val = new double[] { nrg.bounds.getLower(), nrg.bounds.getUpper() };
-            ret.band = daf.format(val);
+            //double[] val = new double[] { nrg.bounds.getLower(), nrg.bounds.getUpper() };
+            //ret.band = daf.format(val);
+            ret.bandMin = Double.toString(nrg.bounds.getLower());
+            ret.bandMax = Double.toString(nrg.bounds.getUpper());
         }
 
         Time tim = TimeUtil.compute(aset);
         if (nrg != null) log.debug("tim: " + tim.bounds + " " + tim.dimension);
         if (tim != null && tim.bounds != null && tim.dimension != null && tim.dimension > 1)
         {
-            double[] val = new double[] { tim.bounds.getLower(), tim.bounds.getUpper() };
-            ret.time = daf.format(val);
+            //double[] val = new double[] { tim.bounds.getLower(), tim.bounds.getUpper() };
+            //ret.time = daf.format(val);
+            ret.timeMin = Double.toString(tim.bounds.getLower());
+            ret.timeMax = Double.toString(tim.bounds.getUpper());
         }
 
         Polarization pol = PolarizationUtil.compute(aset);
@@ -294,7 +298,8 @@ public class ArtifactProcessor
     
     protected ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
     {
-        if (ab.poly == null && ab.band == null && ab.time == null && ab.pol == null)
+        if (ab.poly == null && ab.bandMin == null && ab.bandMax == null
+                && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
             return null;
 
         // generate artifact-specific SODA service descriptor
@@ -330,21 +335,21 @@ public class ArtifactProcessor
             sd.getInputParams().add(sp);
         }
 
-        if (ab.band != null)
+        if (ab.bandMin != null || ab.bandMax != null)
         {
             sp = new ServiceParameter("BAND", "double", 2, false, "em.wl;stat.interval");
             sp.xtype = "interval";
             sp.unit = "m";
-            sp.setMinMax(null, ab.band);
+            sp.setMinMax(ab.bandMin, ab.bandMax);
             sd.getInputParams().add(sp);
         }
 
-        if (ab.time != null)
+        if (ab.timeMin != null || ab.timeMax != null)
         {
             sp = new ServiceParameter("TIME", "double", 2, false, "time;stat.interval");
             sp.xtype = "interval";
             sp.unit = "d";
-            sp.setMinMax(null, ab.time);
+            sp.setMinMax(ab.timeMin, ab.timeMax);
             sd.getInputParams().add(sp);
         }
 

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,33 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.caom2;
 
 
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import ca.nrc.cadc.dali.util.DefaultFormat;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class CaomKeywordsFormat extends DefaultFormat
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
+    private static final Logger log = Logger.getLogger(CaomKeywordsFormat.class);
 
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
+    public CaomKeywordsFormat() { }
 
     @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public String format(Object o)
     {
-        return null;
-    }
-
-    @Override
-    public void doAction() 
-        throws Exception
-    {
-        Stuff msg = parseStuff(syncInput.getPath());
+        if (o == null)
+            return "";
         
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
+        // tsvector object is a PGObject, but toString gives the delimited keywords
+        String s = o.toString();
+        String clean = s.replaceAll("'", "");
+        return clean;
     }
     
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
-    }
     
-
 }

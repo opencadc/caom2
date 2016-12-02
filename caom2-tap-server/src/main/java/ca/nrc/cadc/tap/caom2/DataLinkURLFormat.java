@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,103 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.caom2;
 
+import java.net.URI;
+import java.net.URL;
 
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import javax.security.auth.Subject;
+
 import org.apache.log4j.Logger;
+
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 
 /**
  *
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class DataLinkURLFormat  implements Format<Object>
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
+    private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
+    private String jobID;
+    private URL baseURL;
 
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
-    {
-        return null;
-    }
+    private static final URI DATALINK_RESOURCE_IDENTIFIER_URI;
 
-    @Override
-    public void doAction() 
-        throws Exception
+    static
     {
-        Stuff msg = parseStuff(syncInput.getPath());
-        
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
-    }
-    
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
         try
         {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
+        	DATALINK_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/caom2ops");
         }
-        catch(NumberFormatException ex)
+        catch(IllegalArgumentException bug)
         {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
+            throw new RuntimeException("BUG: invalid resourceIdentifier string", bug);
         }
-        return ret;
+        catch(NullPointerException bug)
+        {
+            throw new RuntimeException("BUG: null resourceIdentifier string", bug);
+        }
     }
-    private int getCode()
+
+    private DataLinkURLFormat() { }
+
+    public DataLinkURLFormat(String jobID)
     {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
+        if (jobID == null)
+            throw new IllegalArgumentException("null jobID");
+        this.jobID = jobID;
+
         try
         {
-            return Integer.parseInt(code);
+            Subject s = AuthenticationUtil.getCurrentSubject();
+            AuthMethod cur = AuthenticationUtil.getAuthMethod(s);
+            RegistryClient rc = new RegistryClient();
+            // TODO: should know the request protocol from the job, but don't have
+            // access to the job... for now AuthMethod is unambiguous
+            this.baseURL = rc.getServiceURL(DATALINK_RESOURCE_IDENTIFIER_URI, Standards.DATALINK_LINKS_10, cur);
         }
-        catch(NumberFormatException ex)
+        catch(Exception ex)
         {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
+            log.error("BUG", ex);
         }
     }
-    
+
+    @Override
+    public Object parse(String s)
+    {
+        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
+    }
+
+    @Override
+    public String format(Object o)
+    {
+        if (o == null)
+            return "";
+
+        String s = (String) o;
+        try
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.append(baseURL.toExternalForm());
+            sb.append("?");
+            if (jobID != null)
+                sb.append("runid=").append( NetUtil.encode(jobID) ).append("&");
+            sb.append("ID=").append( NetUtil.encode(s));
+            return sb.toString();
+        }
+        catch(Exception ex)
+        {
+            log.error("BUG", ex);
+        }
+        return "";
+    }
+
 
 }

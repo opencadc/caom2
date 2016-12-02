@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,109 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.impl;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.tap.caom2.CaomKeywordsFormat;
+import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
+import ca.nrc.cadc.tap.caom2.IntervalFormat;
+import ca.nrc.cadc.tap.schema.ColumnDesc;
+import ca.nrc.cadc.tap.schema.ParamDesc;
+import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
+import ca.nrc.cadc.tap.writer.format.SCircleFormat;
+import ca.nrc.cadc.tap.writer.format.SPointFormat;
+import ca.nrc.cadc.tap.writer.format.SPolyFormat;
 import org.apache.log4j.Logger;
 
 /**
  *
- * @author pdowler
+ *
  */
-public class EchoAction extends RestAction
+public class FormatFactoryImpl extends DefaultFormatFactory
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
+    private static Logger log = Logger.getLogger(FormatFactoryImpl.class);
 
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public FormatFactoryImpl()
     {
-        return null;
+        super();
     }
 
     @Override
-    public void doAction() 
-        throws Exception
+    public Format<Object> getFormat(ColumnDesc d)
     {
-        Stuff msg = parseStuff(syncInput.getPath());
-        
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
-    }
-    
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
+        Format<Object> ret = super.getFormat(d);
+        log.debug("fomatter: " + d + " " + ret.getClass().getName());
         return ret;
     }
-    private int getCode()
+    @Override
+    public Format<Object> getFormat(ParamDesc d)
     {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
+        Format<Object> ret = super.getFormat(d);
+        log.debug("fomatter: " + d + " " + ret.getClass().getName());
+        return ret;
+    }
+
+    @Override
+    public Format<Object> getPointFormat(ColumnDesc columnDesc)
+    {
+        log.debug("getPointFormat: " + columnDesc);
+        return new SPointFormat();
+    }
+
+    @Override
+    public Format<Object> getCircleFormat(ColumnDesc columnDesc)
+    {
+        log.debug("getCircleFormat: " + columnDesc);
+        return new SCircleFormat();
     }
     
+    @Override
+    public Format<Object> getRegionFormat(ColumnDesc columnDesc)
+    {
+        log.debug("getRegionFormat: " + columnDesc);
+        return new SPolyFormat();
+    }
 
+    @Override
+    public Format<Object> getIntervalFormat(ColumnDesc columnDesc)
+    {
+        log.debug("getIntervalFormat: " + job.getID() + " " + columnDesc);
+        return new IntervalFormat();
+    }
+    
+    @Override
+    public Format<Object> getClobFormat(ColumnDesc columnDesc)
+    {
+        log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
+
+        if (columnDesc != null)
+        {
+            if (columnDesc.getTableName().equalsIgnoreCase("caom2.Observation")
+                || columnDesc.getTableName().equalsIgnoreCase("caom2.Plane"))
+            {
+                if (columnDesc.getColumnName().endsWith("_keywords"))
+                    return new CaomKeywordsFormat();
+            }
+        }
+        
+        // function with CLOB argument
+        if (columnDesc != null)
+        {
+            // caom2.Artifact, caom2.SIAv1
+            if ( ( columnDesc.getTableName().equalsIgnoreCase("caom2.Artifact")
+                    || columnDesc.getTableName().equalsIgnoreCase("caom2.SIAv1") )
+                    && columnDesc.getColumnName().equalsIgnoreCase("accessURL"))
+                return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
+
+            // ivoa.ObsCore
+            if (columnDesc.getTableName().equalsIgnoreCase("ivoa.ObsCore"))
+            {
+                if (columnDesc.getColumnName().equalsIgnoreCase("access_url"))
+                    return new DataLinkURLFormat(job.getID());
+
+            }
+        }
+
+        return super.getClobFormat(columnDesc);
+    }
 }

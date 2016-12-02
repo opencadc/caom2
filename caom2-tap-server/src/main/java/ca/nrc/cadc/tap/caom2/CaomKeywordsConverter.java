@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,83 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.caom2;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import ca.nrc.cadc.tap.parser.FunctionFinder;
+import ca.nrc.cadc.tap.parser.ParserUtil;
+import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
+import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
+import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
+import ca.nrc.cadc.tap.parser.operator.postgresql.TextSearchMatch;
+import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Custom converter to handle the 
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class CaomKeywordsConverter  extends FunctionFinder
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
+    private static final Logger log = Logger.getLogger(CaomKeywordsConverter.class);
 
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
+    private static Set<String> KEYWORD_COLS = new TreeSet<String>(new CaseInsensitiveStringComparator());
+    static
     {
-        return null;
-    }
-
-    @Override
-    public void doAction() 
-        throws Exception
-    {
-        Stuff msg = parseStuff(syncInput.getPath());
+        KEYWORD_COLS.add("proposal_keywords");
+        KEYWORD_COLS.add("target_keywords");
+        KEYWORD_COLS.add("telescope_keywords");
+        KEYWORD_COLS.add("instrument_keywords");
         
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
+        KEYWORD_COLS.add("provenance_keywords");
     }
     
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
+    public CaomKeywordsConverter() 
+    { 
+        super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
     }
     
-
+    @Override
+    protected Expression convertToImplementation(Function func)
+    {
+        if (!func.getName().equalsIgnoreCase("lower"))
+            return func;
+        
+        List<Expression> exprs = func.getParameters().getExpressions();
+        if (exprs.size() == 1)
+        {
+            Expression arg = exprs.get(0);
+            
+            if (isKeywordsCol(arg))
+            {
+                Column col = (Column) arg;
+                col.setColumnName(col.getColumnName() + "::varchar");
+                
+            }
+        }
+        return func;
+    }
+    
+    private boolean isKeywordsCol(Expression e)
+    {
+        if (e instanceof Column)
+        {
+            Column c = (Column) e;
+            String cname = c.getColumnName();
+            return KEYWORD_COLS.contains(cname);
+        }
+        return false;
+    }
 }

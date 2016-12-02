@@ -255,16 +255,18 @@ public class LinkQueryRunner implements JobRunner
             InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
             if (is == null)
             {
-                throw new MissingResourceException(
-                    "Resource not found: " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), SERVICES_RESOURCE);
+                log.debug("resource not found: " + SERVICES_RESOURCE);
             }
-            VOTableReader reader = new VOTableReader();
-            VOTableDocument serviceDocument = reader.read(is);
-            // generic descriptors: this, cutout, maybe preview someday
-            for (VOTableResource metaResource : serviceDocument.getResources())
+            else
             {
-                setServiceURL(metaResource);
-                vot.getResources().add(metaResource);
+                VOTableReader reader = new VOTableReader();
+                VOTableDocument serviceDocument = reader.read(is);
+                // generic descriptors: this, cutout, maybe preview someday
+                for (VOTableResource metaResource : serviceDocument.getResources())
+                {
+                    setServiceURL(metaResource);
+                    vot.getResources().add(metaResource);
+                }
             }
             // dynamic link-specific descriptors
             Iterator<ServiceDescriptor> sdi = dtd.descriptors();

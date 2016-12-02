@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,90 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.impl;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.stc.Polygon;
+import ca.nrc.cadc.stc.Position;
+import ca.nrc.cadc.stc.Region;
+import ca.nrc.cadc.tap.BasicUploadManager;
+import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoint;
+import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoly;
+import ca.nrc.cadc.tap.upload.datatype.DatabaseDataType;
+import ca.nrc.cadc.tap.upload.datatype.PostgreSQLDataType;
+import java.sql.Connection;
+import java.sql.SQLException;
+import org.postgresql.util.PGobject;
 
 /**
  *
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class UploadManagerImpl extends BasicUploadManager
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
-
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
+    /**
+     * Default maximum number of rows allowed in the UPLOAD VOTable.
+     */
+    public static final int MAX_UPLOAD_ROWS = 10000;
     
-    
-    public EchoAction() { }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public UploadManagerImpl()
     {
-        return null;
+        super(MAX_UPLOAD_ROWS);
     }
 
     @Override
-    public void doAction() 
-        throws Exception
+    protected DatabaseDataType getDatabaseDataType(Connection cnctn) 
+        throws SQLException
     {
-        Stuff msg = parseStuff(syncInput.getPath());
-        
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
+        return new PostgreSQLDataType();
     }
     
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
-    }
     
+    
+    /**
+     * Create the SQL to grant select privileges to the cvopub group for the
+     * specified table.
+     * 
+     * @param databaseTableName fully qualified table name.
+     * @return SQL to grant select privileges to the cvopub group.
+     */
+    @Override
+    protected String getGrantSelectTableSQL(String databaseTableName)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("grant select on table ");
+        sb.append(databaseTableName);
+        sb.append(" to group cvopub");
+        return sb.toString();
+    }
 
+    // convert to a PGobject (spoint)
+    @Override
+    protected Object getPointObject(Position pos)
+        throws SQLException
+    {
+        Spoint sval = new Spoint(pos);
+        PGobject pgo = new PGobject();
+        String str = sval.toVertex();
+        pgo.setType("spoint");
+        pgo.setValue(str);
+        return pgo;
+    }
+
+    // convert to a PGobject (spoly)
+    // TODO: add support for regions other than polygon
+    @Override
+    protected Object getRegionObject(Region reg)
+        throws SQLException
+    {
+        if (reg instanceof Polygon)
+        {
+            Spoly sval = new Spoly((Polygon) reg);
+            PGobject pgo = new PGobject();
+            String str = sval.toVertexList();
+            pgo.setType("spoly");
+            pgo.setValue(str);
+            return pgo;
+        }
+        throw new UnsupportedOperationException("cannot convert a " + reg.getClass().getSimpleName());
+    }
 }

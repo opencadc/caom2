@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,98 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.impl;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import ca.nrc.cadc.tap.AdqlQuery;
+import ca.nrc.cadc.tap.caom2.AccessURLConverter;
+import ca.nrc.cadc.tap.caom2.CaomKeywordsConverter;
+import ca.nrc.cadc.tap.caom2.CaomReadAccessConverter;
+import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
+import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
+import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
+import ca.nrc.cadc.tap.parser.PgsphereDeParser;
+import ca.nrc.cadc.tap.parser.QuerySelectDeParser;
+import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
+import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
+import ca.nrc.cadc.tap.parser.converter.TopConverter;
+import ca.nrc.cadc.tap.parser.converter.postgresql.MatchConverter;
+import ca.nrc.cadc.tap.parser.converter.postgresql.PgFunctionNameConverter;
+import ca.nrc.cadc.tap.parser.extractor.FunctionExpressionExtractor;
+import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
+import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
+import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
+import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
+import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * AdqlQuery implementation for PostgreSQL + CAOM.
+ * 
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class AdqlQueryImpl extends AdqlQuery
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
-
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
+    private static Logger log = Logger.getLogger(AdqlQueryImpl.class);
     
-    
-    public EchoAction() { }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public AdqlQueryImpl()
     {
-        return null;
     }
-
+    
     @Override
-    public void doAction() 
-        throws Exception
+    protected void init()
     {
-        Stuff msg = parseStuff(syncInput.getPath());
+        super.init();
+
+        // convert TOP -> LIMIT
+        super.navigatorList.add(new TopConverter(
+                new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
+
+        // convert ADQL geometry function calls to alternate form
+        super.navigatorList.add(new CaomRegionConverter());
         
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
-    }
-    
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
-    }
-    
+        // convert MATCH function to TextSearch: currently unsupported i  favour of CaomKeywordsConverter below
+        //super.navigatorList.add(new MatchConverter(
+        //    new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
+        
+        // convert functions to PG-specific names
+        navigatorList.add(new FunctionExpressionExtractor(
+            new PgFunctionNameConverter(), new ReferenceNavigator(), new FromItemNavigator()));
 
+        // after CaomRegionConverter: triggering off the same column names and converting some uses
+        TableNameConverter tnc = new TableNameConverter(true);
+        tnc.put("ivoa.ObsCore", "caom2.ObsCore");
+        tnc.put("ivoa.ObsFile", "caom2.ObsFile");
+        tnc.put("ivoa.ObsPart", "caom2.ObsPart");
+        TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
+        super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
+
+        // enforce access control policy in queries - must be after TableNameConverter
+        super.navigatorList.add(new CaomReadAccessConverter());
+
+        // convert use of the isDownloadable function
+        super.navigatorList.add(new IsDownloadableConverter());
+        
+        // change caom2.Artifact.accessURL to caom2.Artifact.uri
+        super.navigatorList.add(new AccessURLConverter());
+        
+        // add cast for caom2 keywords columns so they behave like varchar
+        super.navigatorList.add(new CaomKeywordsConverter());
+        
+        //for (Object o : navigatorList)
+        //    log.debug("navigator: " + o.getClass().getName());
+    }
+    
+    @Override
+    protected BaseExpressionDeParser getExpressionDeparser(SelectDeParser dep, StringBuffer sb)
+    {
+        return new PgsphereDeParser(dep, sb);
+    }
+    
+    @Override
+    public String getSQL()
+    {
+        String sql = super.getSQL();
+        log.debug("SQL:\n" + sql); 
+        return sql;
+    }
 }

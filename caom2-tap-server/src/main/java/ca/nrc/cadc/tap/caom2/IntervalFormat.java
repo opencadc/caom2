@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,101 +67,91 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.soda;
+package ca.nrc.cadc.tap.caom2;
 
-
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.Base64;
-import java.io.PrintWriter;
+import ca.nrc.cadc.tap.writer.format.ResultSetFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class EchoAction extends RestAction
+public class IntervalFormat  implements ResultSetFormat
 {
-    private static final Logger log = Logger.getLogger(EchoAction.class);
-
-    public static final String PARAM_CODE = "CODE";
-    public static final String PARAM_TYPE = "TYPE";
-    public static final String PARAM_BODY = "BODY";
-    
-    
-    public EchoAction() { }
+    private static final Logger log = Logger.getLogger(IntervalFormat.class);
 
     @Override
-    protected InlineContentHandler getInlineContentHandler()
+    public Object parse(String s)
     {
-        return null;
+        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
     }
 
     @Override
-    public void doAction() 
-        throws Exception
+    public Object extract(ResultSet resultSet, int columnIndex)
+        throws SQLException
     {
-        Stuff msg = parseStuff(syncInput.getPath());
+        return resultSet.getString(columnIndex);
+    }
+
+    @Override
+    public String format(Object object)
+    {
+        if (object == null)
+            return "";
+        if (object instanceof String)
+        {
+            String s = (String) object;
+            log.debug("in: " + s);
+            List<Double> vals = parsePolyImpl(s);
+            StringBuilder sb = new StringBuilder();
+            for (Double d : vals)
+            {
+                sb.append(d).append(" ");
+            }
+            String ret = sb.toString();
+            log.debug("out: " + ret);
+            return ret;
+        }
         
-        syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
-            syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
-            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
-            pw.println(msg.body);
-            pw.flush();
-            pw.close();
-        }
+        return object.toString();
     }
     
-    private class Stuff
-    {
-        int code;
-        String contentType;
-        String body;
-    }
-    private Stuff parseStuff(String path)
-    {
-        Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
-                path = path.substring(1);
-            String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
-            String[] parts = msg.split("[|]");
-            for (String s : parts)
-                log.warn("msg part: " + s);
-            if (parts.length > 0)
-                ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
-                ret.contentType = parts[1];
-            if (parts.length > 2)
-                ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
-            ret.code = 400;
-            ret.contentType = "text/plain";
-            ret.body = "BUG: invalid message in URL";
-        }
-        return ret;
-    }
-    private int getCode()
-    {
-        String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
-            throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
-        }
-        catch(NumberFormatException ex)
-        {
-            throw new IllegalArgumentException("invalid CODE value: " + code, ex);
-        }
-    }
+    // this is the reader that parses the interbal-in-postgresql implementation
+    // the writer is in caom2persistence library
+    // TODO: reader and writer should be in together with a nice set of round-trip tests
     
-
+    // this parses a postgresql polygon internal representation of a caom2
+    // Interval; the generating code is in the caom2persistence where the basic 
+    // concept is that the intwerval is a comb-shape and the teeth that stick up
+    // above y=0.0 represent the subintervals... a simple interval is just a box;
+    // to reconstruct, simply find all the X values for y > 0.0 and sort them
+    private List<Double> parsePolyImpl(String s)
+    {
+        
+        s = s.replaceAll("[()]", ""); // remove all ( )
+        //log.debug("strip: '" + s + "'");
+        String[] points = s.split(",");
+        List<Double> vals = new ArrayList<Double>();
+        for (int i=0; i<points.length; i++)
+        {
+            String xs = points[i];
+            String ys = points[i+1];
+            i++; // skip y
+            //log.debug("check: " + xs + "," + ys);
+            double y = Double.parseDouble(ys);
+            if (y > 0.0)
+            {
+                vals.add(new Double(xs));
+            }
+        }
+        // sort so we don't care about winding direction of the polygon impl
+        Collections.sort(vals);
+        
+        return vals;
+    }
 }
