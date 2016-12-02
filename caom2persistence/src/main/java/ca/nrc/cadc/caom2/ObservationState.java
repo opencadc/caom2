@@ -92,6 +92,11 @@ public class ObservationState
         this.maxLastModified = maxlastModified;
     }
 
+    public String getCollection()
+    {
+        return collection;
+    }
+
     public String getObservationID()
     {
         return observationID;

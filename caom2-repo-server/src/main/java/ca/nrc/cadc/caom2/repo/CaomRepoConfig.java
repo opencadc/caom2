@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -90,14 +92,12 @@ public class CaomRepoConfig
 {
     private static final Logger log = Logger.getLogger(CaomRepoConfig.class);
 
-    private static final String CONFIG_FILE = CaomRepoConfig.class.getSimpleName() + ".properties";
-
     private List<CaomRepoConfig.Item> config;
 
-    public CaomRepoConfig()
+    public CaomRepoConfig(File config)
         throws IOException
     {
-        this.config = loadConfig(new File(System.getProperty("user.home") + "/config", CONFIG_FILE));
+        this.config = loadConfig(config);
     }
 
     public Item getConfig(String collection)
@@ -121,17 +121,19 @@ public class CaomRepoConfig
 
     public static class Item
     {
+        private Class sqlGenerator;
         private String collection;
         private String dataSourceName;
         private String database;
         private String schema;
         private String obsTableName;
-        private URI readOnlyGroup;
-        private URI readWriteGroup;
+        private GroupURI readOnlyGroup;
+        private GroupURI readWriteGroup;
 
-        Item(String collection, String dataSourceName, String database, String schema, String obsTableName,
-            URI readOnlyGroup, URI readWriteGroup)
+        Item(Class sqlGenerator, String collection, String dataSourceName, String database, String schema, String obsTableName,
+            GroupURI readOnlyGroup, GroupURI readWriteGroup)
         {
+            this.sqlGenerator = sqlGenerator;
             this.collection = collection;
             this.dataSourceName = dataSourceName;
             this.database = database;
@@ -146,6 +148,11 @@ public class CaomRepoConfig
         {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + "," + schema + "," + obsTableName + ","
                     + readOnlyGroup + "," + readWriteGroup + "]";
+        }
+
+        public Class getSqlGenerator()
+        {
+            return sqlGenerator;
         }
 
         public String getTestTable()
@@ -168,12 +175,12 @@ public class CaomRepoConfig
             return database;
         }
 
-        public URI getReadOnlyGroup()
+        public GroupURI getReadOnlyGroup()
         {
             return readOnlyGroup;
         }
 
-        public URI getReadWriteGroup()
+        public GroupURI getReadWriteGroup()
         {
             return readWriteGroup;
         }
@@ -222,7 +229,7 @@ public class CaomRepoConfig
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
-        if (parts.length == 6)
+        if (parts.length == 7 || parts.length == 6) // 6: backwards compat
         {
             String dsName=  parts[0];
             String database = parts[1];
@@ -230,21 +237,28 @@ public class CaomRepoConfig
             String obsTable = parts[3];
             String roGroup = parts[4];
             String rwGroup = parts[5];
+            
+            // temporary default for backwards compatibility to existing config
+            Class sqlGen = SybaseSQLGenerator.class;
+            if (parts.length == 7)
+            {
+                String cname = parts[6];
+                try
+                {
+                    sqlGen = Class.forName(cname);
+                    if (!SQLGenerator.class.isAssignableFrom(sqlGen))
+                        throw new IllegalArgumentException("invalid SQLGenerator class: does not implement interface " + SQLGenerator.class.getName());
+                }
+                catch(ClassNotFoundException ex)
+                {
+                    throw new IllegalArgumentException("failed to load SQLGenerator class: " + cname, ex);
+                }
+            }
+            
+            GroupURI ro = new GroupURI(roGroup);
+            GroupURI rw = new GroupURI(rwGroup);
 
-            // validation
-            URI ro = new URI(roGroup);
-            URI rw = new URI(rwGroup);
-            if (!"ivo".equals(ro.getScheme()))
-                throw new IllegalArgumentException("invalid GMS URI " + ro + ", expected ivo scheme");
-            if ( ro.getFragment() == null || ro.getFragment().length() == 0)
-                throw new IllegalArgumentException("invalid GMS URI " + ro + ", expected group name in fragment");
-            if (!"ivo".equals(rw.getScheme()))
-                throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected ivo scheme");
-            if ( rw.getFragment() == null || rw.getFragment().length() == 0)
-                throw new IllegalArgumentException("invalid GMS URI " + rw + ", expected group name in fragment");
-
-            // create
-            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(collection, dsName, database, schema, obsTable, ro, rw);
+            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database, schema, obsTable, ro, rw);
             return rci;
         }
         else

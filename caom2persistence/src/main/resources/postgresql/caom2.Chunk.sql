@@ -1,6 +1,4 @@
 
-drop table if exists caom2.Chunk;
-
 create table caom2.Chunk
 (
     productType varchar(64),
@@ -124,21 +122,19 @@ create table caom2.Chunk
 
 -- internal
     metaRelease timestamp,
-    obsID uuid not null, -- change: UUID
-    planeID uuid not null, -- change: UUID
-    artifactID uuid not null, -- change: UUID
-    partID uuid not null references caom2.Part (partID), -- change: UUID
-    chunkID uuid not null primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null,
+    planeID uuid not null,
+    artifactID uuid not null,
+    partID uuid not null references caom2.Part (partID),
+    chunkID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
 )
-tablespace caom_data
 ;
 
 -- this is for Part join Chunk
 create index i_partID on caom2.Chunk (partID)
-tablespace caom_index
 ;
 
 cluster i_partID on caom2.Chunk
@@ -146,5 +142,4 @@ cluster i_partID on caom2.Chunk
 
 -- this is for asset updates
 create index ic_planeID on caom2.Chunk (planeID)
-tablespace caom_index
 ;

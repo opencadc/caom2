@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.ac.GroupURI;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
@@ -86,14 +86,13 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import java.io.File;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -114,10 +113,10 @@ public abstract class RepoAction extends RestAction
 
     public static final String ERROR_MIMETYPE = "text/plain";
 
-    private final URI CADC_GROUP_URI  = URI.create("ivo://cadc.nrc.ca/gms#CADC");
+    private final GroupURI CADC_GROUP_URI  = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
 
     private String collection;
-    protected URI uri;
+    protected ObservationURI uri;
 
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -141,31 +140,41 @@ public abstract class RepoAction extends RestAction
         }
     }
 
-    @Override
-    public void setPath(String p) throws IllegalArgumentException
+    private void initTarget()
     {
-        super.setPath(p);
-        try
+        if (collection == null)
         {
-            this.uri = new URI("caom", path, null);
-        } catch (URISyntaxException e)
-        {
-            throw new
-                IllegalArgumentException("Path not a correct URI: " + path);
+            String path = syncInput.getPath();
+            if (path == null)
+                throw new IllegalArgumentException("no collection specified");
+            String[] parts = path.split("/");
+            this.collection = parts[0];
+            if (parts.length > 1)
+            {
+                String suri = "caom:" + path;
+                try
+                {
+                    this.uri = new ObservationURI(new URI(suri));
+                }
+                catch(URISyntaxException | IllegalArgumentException ex)
+                {
+                    throw new IllegalArgumentException("invalid input: " + suri, ex);
+                }
+            }
         }
-        String[] cop = path.split("/");
-        collection = cop[0];
-
     }
-
-    protected URI getURI()
+    
+    // return uri for get-observation, null for get-list, and throw for invalid
+    protected ObservationURI getURI()
     {
+        initTarget();
         return uri;
     }
 
+    // return the specified collection or throw for invalid
     protected String getCollection()
     {
-
+        initTarget();
         return collection;
     }
 
@@ -221,25 +230,27 @@ public abstract class RepoAction extends RestAction
 
         CaomRepoConfig.Item i = getConfig(collection);
         if (i == null)
-            throw new ResourceNotFoundException(
-                    "not found: " + uri);
+            throw new ResourceNotFoundException("not found: " + uri);
 
         try
         {
             if ( CredUtil.checkCredentials() )
             {
-                LocalAuthority loc = new LocalAuthority();
-                URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient(gmsURI);
-                URI guri = i.getReadWriteGroup();
-                if (gms.isMember(guri.getFragment()))
+                GroupURI grw = i.getReadWriteGroup();
+                GMSClient gms = new GMSClient(grw.getServiceID());                
+                if (gms.isMember(grw.getName()))
+                	return;
+                
+                GroupURI gro = i.getReadOnlyGroup();
+                if (!grw.getServiceID().equals(gro.getServiceID()))
+                    gms = new GMSClient(gro.getServiceID());
+                    
+                if (gms.isMember(gro.getName()))
                 	return;
 
-                guri = i.getReadOnlyGroup();
-                if (gms.isMember(guri.getFragment()))
-                	return;
-
-                if (gms.isMember(CADC_GROUP_URI.getFragment()))
+                if (!gro.getServiceID().equals(CADC_GROUP_URI.getServiceID()))
+                    gms = new GMSClient(CADC_GROUP_URI.getServiceID());
+                if (gms.isMember(CADC_GROUP_URI.getName()))
                 	return;
             }
         }
@@ -284,11 +295,10 @@ public abstract class RepoAction extends RestAction
         {
             if ( CredUtil.checkCredentials() )
             {
-                LocalAuthority loc = new LocalAuthority();
-                URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_01.toASCIIString());
-                GMSClient gms = new GMSClient(gmsURI);
-                URI guri = i.getReadWriteGroup();
-                if (gms.isMember(guri.getFragment()))
+                GroupURI guri = i.getReadWriteGroup();
+                URI gmsURI = guri.getServiceID();
+                GMSClient gms = new GMSClient(gmsURI);                
+                if (gms.isMember(guri.getName()))
                     return;
             }
         }
@@ -314,13 +324,12 @@ public abstract class RepoAction extends RestAction
     private CaomRepoConfig.Item getConfig(String collection)
         throws IOException
     {
-        // TODO: if this fails, fall back to last known good config (static)
-
         if (repoConfig != null)
             return repoConfig;
-
-        CaomRepoConfig rc = new CaomRepoConfig();
-
+        
+        String serviceName = syncInput.getContextPath();
+        File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
+        CaomRepoConfig rc = new CaomRepoConfig(config);
         if (rc.isEmpty())
             throw new IllegalStateException("no RepoConfig.Item(s)found");
 
@@ -340,8 +349,7 @@ public abstract class RepoAction extends RestAction
             props.put("jndiDataSourceName", i.getDataSourceName());
             props.put("database", i.getDatabase());
             props.put("schema", i.getSchema());
-            // the SQL generator (dialect) should be configurable if caom2repo is open-sourced
-            props.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
             ret.setConfig(props);
             return ret;
         }

@@ -7,13 +7,11 @@ create table caom2.HarvestSkip
     errorMessage    varchar(1024),
 
     lastModified    timestamp not null,
-    id              uuid primary key using index tablespace caom_index
+    id              uuid primary key
 )
-tablespace caom_data
 ;
 
 create unique index HarvestSkip_i1
     on caom2.HarvestSkip ( source,cname,skipID )
-tablespace caom_index
 ;
 

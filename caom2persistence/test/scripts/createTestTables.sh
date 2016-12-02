@@ -15,7 +15,7 @@
 ##
 ## sybase: none (uses cadctest and default schema == username)
 ## postgresql: replaces standard caom2 schema name with username (from .dbrc)
-##             removes tablespace declarations and uses default for cadctest db
+##             uses default for cadctest db
 ##
 
 doitSYB()
@@ -63,9 +63,6 @@ doitPG()
 
     for sqlFile in $TMPSQL/*.sql; do
         echo "modifying: $sqlFile"
-        sed -i 's/tablespace caom_data//g' $sqlFile
-        sed -i 's/using index tablespace caom_index//g' $sqlFile
-        sed -i 's/tablespace caom_index//g' $sqlFile
         sed -i 's/caom2./'"${DBUSER}".'/g' $sqlFile
     done
     
@@ -86,6 +83,8 @@ echo "create harvest tables"
     $RUNCMD < $TMPSQL/caom2.HarvestSkip.sql
 echo "create extra indices"
     $RUNCMD < $TMPSQL/caom2.extra_indices.sql
+    
+## no grants needed for library tests
 #    $RUNCMD < $TMPSQL/caom2.permissions.sql
 }
 

@@ -91,6 +91,8 @@ public class TestSyncOutput extends SyncOutput
 
     public TestSyncOutput() { super(null); }
 
+    private OutputStream outputStream;
+    
     @Override
     public OutputStream getOutputStream() throws IOException
     {

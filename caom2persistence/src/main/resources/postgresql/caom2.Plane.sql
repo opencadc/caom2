@@ -1,6 +1,4 @@
 
-drop table if exists caom2.Plane;
-
 create table caom2.Plane
 (
     publisherID varchar(512) not null,
@@ -81,47 +79,37 @@ create table caom2.Plane
 
 -- internal
     obsID uuid not null references caom2.Observation (obsID),
-    planeID uuid not null  primary key using index tablespace caom_index,
+    planeID uuid not null  primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
 )
-tablespace caom_data
 ;
 
 -- this is for Observation join Plane
 create index i_obsID on caom2.Plane (obsID)
-tablespace caom_index
 ;
 
 -- tag the clustering index
 cluster i_obsID on caom2.Plane
 ;
 
--- plane.input join support
-drop table if exists caom2.Plane_inputs;
-
 create table caom2.Plane_inputs
 (
     outputID uuid not null references caom2.Plane (planeID),
     inputID uuid not null references caom2.Plane (planeID)
 )
-tablespace caom_data
 ;
 
 create unique index i_publisherID on caom2.Plane(publisherID)
-tablespace caom_index
 ;
 
 create unique index i_planeURI on caom2.Plane(planeURI)
-tablespace caom_index
 ;
 
 create unique index i_output2input on caom2.Plane_inputs (outputID,inputID)
-tablespace caom_index
 ;
 
 create unique index i_input2output on caom2.Plane_inputs (inputID,outputID)
-tablespace caom_index
 ;
 

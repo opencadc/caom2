@@ -7,12 +7,10 @@ create table caom2.HarvestState
     curID           uuid,
 
     lastModified    timestamp not null,
-    stateID         uuid primary key using index tablespace caom_index -- change: UUID
+    stateID         uuid primary key
 )
-tablespace caom_data
 ;
 
 create unique index HarvestState_i1
     on caom2.HarvestState ( source,cname )
-tablespace caom_index
 ;

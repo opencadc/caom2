@@ -137,10 +137,10 @@ public class GetActionTest
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
         GetAction getAction = new TestGetAction(mockDao);
-        getAction.setPath("/BLAH");
 
         reset(mockDao);
         expect(mockRequest.getMethod()).andReturn("GET");
+        expect(mockRequest.getPathInfo()).andReturn("/BLAH");
         expect(mockDao.getObservationList("BLAH", null, null, null))
             .andReturn(null);
 
@@ -160,13 +160,13 @@ public class GetActionTest
                 DateUtil.UTC);
 
         GetAction getAction = new TestGetAction(mockDao);
-        getAction.setPath("/TEST");
         TestSyncOutput out = new TestSyncOutput();
         getAction.setSyncOutput(out);
 
         reset(mockDao);
 
         expect(mockRequest.getMethod()).andReturn("GET");
+        expect(mockRequest.getPathInfo()).andReturn("/TEST");
 
         // build the list of observations for the mock dao to return
         List<ObservationState> obsList = new ArrayList<ObservationState>();
@@ -193,7 +193,6 @@ public class GetActionTest
 
         // repeat test when start, end and maxRec specified
         getAction = new TestGetAction(mockDao);
-        getAction.setPath("/TEST");
 
         reset(mockDao);
         reset(mockRequest);
@@ -203,6 +202,7 @@ public class GetActionTest
         getAction.setSyncOutput(out);
         // build the list of observations for the mock dao to return
         expect(mockRequest.getMethod()).andReturn("GET");
+        expect(mockRequest.getPathInfo()).andReturn("/TEST");
         List<String> keys = new ArrayList<String>();
         keys.add("MAXREC");
         keys.add("Start");

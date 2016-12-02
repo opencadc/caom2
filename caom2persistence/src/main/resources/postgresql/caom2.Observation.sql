@@ -13,7 +13,7 @@ create table caom2.Observation
     proposal_id varchar(64),
     proposal_pi varchar(64),
     proposal_project varchar(64),
-    proposal_title citext,       -- change: varchar(256) to citext
+    proposal_title citext,
     proposal_keywords tsvector,      -- change: text to tsvector
 
     target_name varchar(64),
@@ -54,41 +54,34 @@ create table caom2.Observation
 
 -- internal
     typeCode char not null,
-    obsID uuid not null primary key using index tablespace caom_index, -- change: UUID
+    obsID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     stateCode int not null
 )
-tablespace caom_data
 ;
 
 create unique index i_observationURI on caom2.Observation (observationURI)
-tablespace caom_index
 ;
 
 create unique index i_observationURI2 on caom2.Observation (collection, observationID)
-tablespace caom_index
 ;
 
 -- harvesting index for recompute mode of caom2harvester
 create index i_maxLastModified on caom2.Observation (maxLastModified)
-tablespace caom_index
 ;
 
 -- member join support
 -- not currently used/tested
 create table caom2.Observation_members
 (
-    compositeID uuid not null references caom2.Observation (obsID), -- change: UUID
-    simpleID uuid not null references caom2.Observation (obsID)     -- change: UUID
+    compositeID uuid not null references caom2.Observation (obsID),
+    simpleID uuid not null references caom2.Observation (obsID)
 )
-tablespace caom_data
 ;
 
 create unique index i_composite2simple on caom2.Observation_members (compositeID,simpleID)
-tablespace caom_index
 ;
 
 create unique index i_simple2composite on caom2.Observation_members (simpleID,compositeID)
-tablespace caom_index
 ;
