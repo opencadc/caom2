@@ -190,7 +190,7 @@ public class Util
                     List<Group> groups = gms.getMemberships(Role.MEMBER);
                     for (Group group : groups)
                     {
-                        groupIDs.add(group.getID());
+                        groupIDs.add(group.getID().getName());
                     }
                 }
             }

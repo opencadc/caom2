@@ -36,7 +36,7 @@ dependencies {
     compile 'org.opencadc:cadc-adql:1.+'
     
     compile 'org.opencadc:cadc-vos:1.+'
-    compile 'org.opencadc:cadc-access-control:1.+'
+    compile 'org.opencadc:cadc-access-control:[1.1.1,)'
     compile 'org.opencadc:cadc-access-control-identity:1.+'
     
     compile 'org.opencadc:caom2:[2.2,3.0)'

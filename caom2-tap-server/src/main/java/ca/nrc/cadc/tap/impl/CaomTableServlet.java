@@ -81,18 +81,11 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class CvoTableServlet extends TableServlet
+public class CaomTableServlet extends TableServlet
 {
-    private static final Logger log = Logger.getLogger(CvoTableServlet.class);
+    private static final Logger log = Logger.getLogger(CaomTableServlet.class);
 
-    public CvoTableServlet() { }
-
-    @Override
-    protected DataSource getQueryDataSource() 
-        throws Exception
-    {
-        return DBUtil.findJNDIDataSource("jdbc/tapuser");
-    }
+    public CaomTableServlet() { }
 
     @Override
     protected TapSchemaDAO getTapSchemaDAO()
