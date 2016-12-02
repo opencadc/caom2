@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.soda;
 
 
+import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.Base64;
 import java.io.PrintWriter;
@@ -91,20 +92,23 @@ public class EchoAction extends RestAction
     public EchoAction() { }
 
     @Override
+    protected InlineContentHandler getInlineContentHandler()
+    {
+        return null;
+    }
+
+    @Override
     public void doAction() 
         throws Exception
     {
-        //int code = getCode();
-        //String contentType = syncInput.getParameter(PARAM_TYPE);
-        //String body = syncInput.getParameter(PARAM_BODY);
-        Stuff msg = parseStuff(path);
+        Stuff msg = parseStuff(syncInput.getPath());
         
         syncOutput.setCode(msg.code);
         if (msg.contentType != null)
             syncOutput.setHeader("Content-Type", msg.contentType);
         if (msg.body != null)
         {
-            PrintWriter pw = syncOutput.getWriter();
+            PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
             pw.println(msg.body);
             pw.flush();
             pw.close();
