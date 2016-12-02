@@ -107,6 +107,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter
      * 
      * @param left 
      * @param right
+     * @return replacement expression
      */
     @Override
     protected Expression handleContains(Expression left, Expression right)
@@ -159,6 +160,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
      * 
      * @param left
      * @param right
+     * 
+     * @return replacement expression
      */
     @Override
     protected Expression handleIntersects(Expression left, Expression right)
@@ -179,16 +182,17 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         }
     }
 
-    // netbeans doesn't like this annotation because handleInterval is not in the
-    // direct superclass... seems like a bug
-    //@Override
+    @Override
     protected Expression handleInterval(Expression lower, Expression upper)
     {
         return new Interval(lower, upper);
     }
     
     /**
-     * In CAOM, CENTROID(position_bounds) -> position_bounds_center
+     * In CAOM, CENTROID(position_bounds) is converted to position_bounds_center
+     * 
+     * @param adqlFunction
+     * @return replacement expression
      */
     @Override
     protected Expression handleCentroid(Function adqlFunction)
@@ -205,7 +209,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter
     }
 
     /**
-     * In CAOM, AREA(position_bounds) -> position_bounds_area
+     * In CAOM, AREA(position_bounds) is converted to position_bounds_area
+     * 
+     * @param adqlFunction
+     * @return replacement expression
      */
     @Override
     protected Expression handleArea(Function adqlFunction)
@@ -221,7 +228,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
     /**
      * This method is called when COORDSYS function is found.
      * 
-     * @param ex the COORDSYS expression
+     * @param adqlFunction the COORDSYS expression
+     * @return replacement expression
      */
     @Override
     protected Expression handleCoordSys(Function adqlFunction)
