@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.CircleFormat;
@@ -131,9 +132,6 @@ public class SodaJobRunner implements JobRunner
     
     private static final EnergyConverter conv = new EnergyConverter();    
 
-    static final URI TAP = URI.create("ivo://cadc.nrc.ca/tap");
-    static final URI CAOM2OPS = URI.create("ivo://cadc.nrc.ca/caom2ops");
-    
     static final String PARAM_ID = "ID";
     static final String PARAM_POS = "POS";
     static final String PARAM_CIRC = "CIRC";
@@ -157,7 +155,17 @@ public class SodaJobRunner implements JobRunner
     
     private WebServiceLogInfo logInfo;
     
-    public SodaJobRunner() { }
+    private RegistryClient reg;
+    private URI sodaURI;
+    private URI tapURI;
+            
+    public SodaJobRunner() 
+    { 
+        this.reg = new RegistryClient();
+        ServiceConfig sc = new ServiceConfig();
+        this.sodaURI = sc.getSodaID();
+        this.tapURI = sc.getTapServiceID();
+    }
 
     public void setJobUpdater(JobUpdater jobUpdater)
     {
@@ -285,22 +293,9 @@ public class SodaJobRunner implements JobRunner
             if (runID == null)
                 runID = job.getID();
             
-            // obtain credentials from CDP if the user is authorized
-            AuthMethod wsAuth = AuthMethod.ANON;
-            if ( CredUtil.checkCredentials() )
-            {
-                wsAuth= AuthMethod.CERT;
-            }
-            tList.add(System.currentTimeMillis());
-            sList.add("check credentials");
-            
-            RegistryClient reg = new RegistryClient();
-//            URL tapURL = reg.getServiceURL(TAP, tapProto, null, wsAuth);
-            URL tapURL = reg.getServiceURL(TAP, Standards.TAP_SYNC_11, wsAuth);
-            
-            CaomTapQuery query = new CaomTapQuery(tapURL, runID);
+            CaomTapQuery query = new CaomTapQuery(tapURI, runID);
             SchemeHandler sh = new CaomSchemeHandler();
-            List<Result> jobResults = new ArrayList<Result>();
+            List<Result> jobResults = new ArrayList<>();
             int serialNum = 1;
             for (URI id : ids)
             {
@@ -317,8 +312,7 @@ public class SodaJobRunner implements JobRunner
                     path.append("|").append("NotFound: "+id);
                     String msg = Base64.encodeString(path.toString());
 
-//                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                    URL serviceURL = reg.getServiceURL(CAOM2OPS, Standards.SODA_SYNC_10, AuthMethod.ANON);
+                    URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
                     URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                     jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
@@ -337,6 +331,10 @@ public class SodaJobRunner implements JobRunner
                                     List<String> cutout = CutoutUtil.computeCutout(a, pos.cut, band.cut, time.cut, pol.cut);
                                     if (cutout != null && !cutout.isEmpty())
                                     {
+                                        // TODO: we currently assume we can append cutout=[....]
+                                        // but we should pass that cutout spec to the SchemeHandler
+                                        // so that the VOS ones get done right
+                                        
                                         URL url = sh.getURL(a.getURI());
                                         int num = 0;
                                         if (url.getQuery() != null)
@@ -387,8 +385,8 @@ public class SodaJobRunner implements JobRunner
                                         path.append("|").append(sb.toString());
                                         String msg = Base64.encodeString(path.toString());
 
-//                                        URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                                        URL serviceURL = reg.getServiceURL(CAOM2OPS, Standards.SODA_SYNC_10, AuthMethod.ANON);
+                                        // hack to get base url for soda service
+                                        URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
                                         URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                         URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                         jobResults.add(new Result(RESULT_WARN+"-"+serialNum++, loc));
@@ -412,9 +410,9 @@ public class SodaJobRunner implements JobRunner
                                     path.append("|text/plain");
                                     path.append("|").append(sb.toString());
                                     String msg = Base64.encodeString(path.toString());
-
-//                                    URL url = reg.getServiceURL(SODA, "http", msg, AuthMethod.ANON);
-                                    URL serviceURL = reg.getServiceURL(CAOM2OPS, Standards.SODA_SYNC_10, AuthMethod.ANON);
+                                    
+                                    // hack to get base url for soda service
+                                    URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
                                     URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                     jobResults.add(new Result(RESULT_FAIL+"-"+serialNum++, loc));
