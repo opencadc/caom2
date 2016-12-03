@@ -146,7 +146,6 @@ public class CaomTapQueryTest
         try
         {
             CaomTapQuery query = getLinkQuery();
-            String jobID = query.getRunID();
 
             try
             {
@@ -464,13 +463,10 @@ public class CaomTapQueryTest
     	try
     	{
 	    	String runID = "testJobID";
-	    	String tapProto = "http";
 	    	RegistryClient reg = new RegistryClient();
-	    	URL tapURL = reg.getServiceURL(new URI(TAP_URI), Standards.TAP_SYNC_11, AuthMethod.ANON);
+	    	URI tapURI = new URI(TAP_URI);
 	    	
-	        query = new CaomTapQuery(tapURL, runID);    	
-	        Assert.assertEquals(runID, query.getRunID());
-	        Assert.assertEquals(tapURL, query.getTapURL());
+	        query = new CaomTapQuery(tapURI, runID);    	
     	}
         catch(Exception unexpected)
         {

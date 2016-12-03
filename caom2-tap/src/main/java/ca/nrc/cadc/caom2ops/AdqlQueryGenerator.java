@@ -145,7 +145,7 @@ public class AdqlQueryGenerator
             sb.append(" ORDER BY Artifact.artifactID, Part.partID");
         
         String ret = sb.toString();
-        log.info(ret);
+        log.debug(ret);
         return ret;
     }
     
@@ -172,7 +172,7 @@ public class AdqlQueryGenerator
             sb.append(" ORDER BY Artifact.artifactID, Part.partID");
         
         String ret = sb.toString();
-        log.info(ret);
+        log.debug(ret);
         return ret;
     }
 

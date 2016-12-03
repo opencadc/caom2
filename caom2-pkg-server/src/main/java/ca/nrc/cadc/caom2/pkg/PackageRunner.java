@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
@@ -106,7 +107,6 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.ListIterator;
 import javax.security.auth.Subject;
@@ -119,15 +119,19 @@ public class PackageRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(PackageRunner.class);
 
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
-    
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private ByteCountOutputStream counter;
     private WebServiceLogInfo logInfo;
+    
+    private final URI tapID;
 
-    public PackageRunner() { }
+    public PackageRunner() 
+    { 
+        ServiceConfig sc = new ServiceConfig();
+        this.tapID = sc.getTapServiceID();
+    }
 
     @Override
     public void setJob(Job job)
@@ -200,9 +204,7 @@ public class PackageRunner implements JobRunner
             
             List<String> idList = ParameterUtil.findParameterValues("ID", job.getParameterList());
 
-            RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, proxyAuthMethod);
-            CaomTapQuery query = new CaomTapQuery(tapURL, runID);
+            CaomTapQuery query = new CaomTapQuery(tapID, runID);
             
             SchemeHandler sh = new CaomSchemeHandler();
             sh.setAuthMethod(proxyAuthMethod); // override auth method for proxied calls

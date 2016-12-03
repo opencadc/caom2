@@ -92,14 +92,21 @@ import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
 import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.security.AccessControlException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -119,34 +126,35 @@ public class CaomTapQuery
     
     static final String VOTABLE_FORMAT = VOTableWriter.CONTENT_TYPE; // from cadcDALI
 
-    private URL tapURL;
-    private String runID;
+    private final URI tapServiceID;
+    private final String runID;
 
     /**
      * LinkQuery constructor.
      * @param runID ID of job invoking this constructor
-     * @param tapURL URL of TAP service
+     * @param tapServiceID resourceID of the TAP service to use
      */
-    public CaomTapQuery(URL tapURL, String runID)
+    public CaomTapQuery(URI tapServiceID, String runID)
     {
-    	ArgValidator.assertNotNull(getClass(), "tapURL", tapURL);
+    	ArgValidator.assertNotNull(getClass(), "tapServiceID", tapServiceID);
+        this.tapServiceID = tapServiceID;
     	this.runID = runID;
-    	this.tapURL = tapURL;
     }
 
-    String getRunID()
-    {
-        return runID;
-    }
-
-    URL getTapURL()
-    {
-    	return tapURL;
-    }
-    
-    // used by meta
+    /**
+     * Get an observation.
+     * 
+     * @param uri
+     * @return
+     * @throws IOException
+     * @throws UnexpectedContentException
+     * @throws AccessControlException
+     * @throws CertificateException 
+     */
+    // use by caom2-meta-server
     public Observation performQuery(final ObservationURI uri)
-        throws IOException, UnexpectedContentException
+        throws IOException, UnexpectedContentException, 
+            AccessControlException, CertificateException
     {
         
     	log.debug("performing query on observation URI = " + uri.toString());
@@ -160,9 +168,21 @@ public class CaomTapQuery
         return buildObservation(doc);
     }
     
-    // used by datalink
+    /**
+     * Get all artifacts for a plane.
+     * 
+     * @param uri
+     * @param artifactOnly
+     * @return
+     * @throws IOException
+     * @throws UnexpectedContentException
+     * @throws AccessControlException
+     * @throws CertificateException 
+     */
+    // used by caom2-datalink-server
     public List<Artifact> performQuery(final PublisherID uri, boolean artifactOnly)
-        throws IOException, UnexpectedContentException
+        throws IOException, UnexpectedContentException, 
+            AccessControlException, CertificateException
     {
     	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
     	
@@ -175,9 +195,21 @@ public class CaomTapQuery
     	return buildArtifacts(doc);
     }
     
-    // used by datalink
+    /**
+     * Get all artifacts for a plane.
+     * 
+     * @param uri
+     * @param artifactOnly
+     * @return
+     * @throws IOException
+     * @throws UnexpectedContentException
+     * @throws AccessControlException
+     * @throws CertificateException 
+     */
+    // used by caom2-datalink-server
     public List<Artifact> performQuery(final PlaneURI uri, boolean artifactOnly)
-        throws IOException, UnexpectedContentException
+        throws IOException, UnexpectedContentException, 
+            AccessControlException, CertificateException
     {
     	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
     	
@@ -190,9 +222,20 @@ public class CaomTapQuery
     	return buildArtifacts(doc);
     }
 
-    // used by cutout
+    /**
+     *  Get a single artifact.
+     * 
+     * @param uri
+     * @return
+     * @throws IOException
+     * @throws UnexpectedContentException
+     * @throws AccessControlException
+     * @throws CertificateException 
+     */
+    // used by caom2-soda-server
     public Artifact performQuery(final URI uri)
-        throws IOException, UnexpectedContentException
+        throws IOException, UnexpectedContentException, 
+            AccessControlException, CertificateException
     {
     	log.debug("query uri: " + uri.toString());
 
@@ -210,8 +253,18 @@ public class CaomTapQuery
     }
     
     private VOTableDocument execQuery(String uri, String adql)
-        throws IOException, UnexpectedContentException
+        throws IOException, UnexpectedContentException, 
+            AccessControlException, CertificateException
     {
+        // obtain credentials fropm CDP if the user is authorized
+        AuthMethod queryAuthMethod = AuthMethod.ANON;
+        if ( CredUtil.checkCredentials() )
+            queryAuthMethod = AuthMethod.CERT;
+        
+
+        RegistryClient reg = new RegistryClient();
+        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_SYNC_11, queryAuthMethod);
+            
         log.debug("post: " + uri + " " + tapURL);
         HttpPost httpPost = new HttpPost(tapURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
         httpPost.run();

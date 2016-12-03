@@ -83,8 +83,8 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.xml.JsonWriter;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
@@ -113,8 +113,6 @@ public class MetaQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
 
-    private static final String META_URI = "ivo://cadc.nrc.ca/caom2ops";
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
     private static final String DEFAULT_FORMAT = "text/xml";
     private static final String JSON_FORMAT = "application/json";
     
@@ -122,8 +120,16 @@ public class MetaQueryRunner implements JobRunner
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private WebServiceLogInfo logInfo;
+    
+    private final URI metaID;
+    private final URI tapID;
 
-    public MetaQueryRunner() { }
+    public MetaQueryRunner() 
+    { 
+        ServiceConfig sc = new ServiceConfig();
+        this.metaID = sc.getMetaID();
+        this.tapID = sc.getTapServiceID();
+    }
 
     @Override
     public void setJob(Job job)
@@ -197,23 +203,12 @@ public class MetaQueryRunner implements JobRunner
                 throw new IllegalArgumentException(msg.toString(), ex);
             }
             
-            // obtain credentials fropm CDP if the user is authorized
-            AuthMethod authMethod = AuthMethod.ANON;
-            if ( CredUtil.checkCredentials() )
-            {
-                authMethod = AuthMethod.CERT;
-            }
-
-            RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, authMethod);
-            log.debug("TAP: " + tapURL.toExternalForm());
-            
-            
             String runID = job.getID();
             if (job.getRunID() != null)
                 runID = job.getRunID();
-            CaomTapQuery query = new CaomTapQuery(tapURL, runID);
+            CaomTapQuery query = new CaomTapQuery(tapID, runID);
             Observation obs = query.performQuery(uri);
+            log.warn("found: " + obs);
             
             if (obs == null)
             {
@@ -230,10 +225,11 @@ public class MetaQueryRunner implements JobRunner
             }
             else
             {
-                URL metaURL = reg.getServiceURL(URI.create(META_URI), Standards.CAOM2_OBS_20, AuthMethod.ANON);
-                String styleSheetURL = metaURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
+                //RegistryClient reg = new RegistryClient();
+                //URL metaURL = reg.getServiceURL(metaID, Standards.CAOM2_OBS_20, AuthMethod.ANON);
+                //String styleSheetURL = metaURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
                 ObservationWriter writer = new ObservationWriter();
-                writer.setStylesheetURL(styleSheetURL);
+                //writer.setStylesheetURL(styleSheetURL);
                 writer.write(obs, syncOutput.getOutputStream());
             }
             

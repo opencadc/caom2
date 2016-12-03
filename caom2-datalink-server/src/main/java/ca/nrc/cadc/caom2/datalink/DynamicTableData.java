@@ -80,6 +80,7 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -251,6 +252,10 @@ public class DynamicTableData implements TableData
                     }
                 }
                 catch(IOException ex)
+                {
+                    throw new RuntimeException("query failed: " + s, ex);
+                }
+                catch(CertificateException ex)
                 {
                     throw new RuntimeException("query failed: " + s, ex);
                 }
