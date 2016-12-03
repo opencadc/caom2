@@ -75,17 +75,14 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.MissingResourceException;
 
 
-import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.MaxRecValidator;
 import ca.nrc.cadc.dali.tables.ListTableData;
 import ca.nrc.cadc.dali.tables.TableWriter;
@@ -123,8 +120,7 @@ public class LinkQueryRunner implements JobRunner
 {
     private static final Logger log = Logger.getLogger(LinkQueryRunner.class);
 
-    private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    //private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
 
     private static final int MAXREC = 100;
     private static final String GETDOWNLOAD = "getDownloadLinks";
@@ -133,8 +129,12 @@ public class LinkQueryRunner implements JobRunner
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private WebServiceLogInfo logInfo;
+    private RegistryClient regClient;
 
-    public LinkQueryRunner() { }
+    public LinkQueryRunner() 
+    { 
+        this.regClient =  new RegistryClient();
+    }
 
     @Override
     public void setJob(Job job)
@@ -205,16 +205,9 @@ public class LinkQueryRunner implements JobRunner
                 mrv.setMaxValue(MAXREC);
             }
             Integer maxrec = mrv.validate();
-
-            // obtain credentials fropm CDP if the user is authorized
-            AuthMethod queryAuthMethod = AuthMethod.ANON;
-            if ( CredUtil.checkCredentials() )
-            {
-                queryAuthMethod = AuthMethod.CERT;
-            }
-
-            RegistryClient reg = new RegistryClient();
-            URL tapURL = reg.getServiceURL(URI.create(TAP_URI), Standards.TAP_SYNC_11, queryAuthMethod);
+            
+            DataLinkConfig dlc = new DataLinkConfig();
+            URI tapServiceID = dlc.getTapServiceID();
 
             VOTableDocument vot = new VOTableDocument();
             VOTableResource vr = new VOTableResource("results");
@@ -226,8 +219,9 @@ public class LinkQueryRunner implements JobRunner
             String runID = job.getID();
             if (job.getRunID() != null)
                 runID = job.getRunID();
-            CaomTapQuery query = new CaomTapQuery(tapURL, runID);
-            ArtifactProcessor ap = new ArtifactProcessor(runID, reg);
+            
+            CaomTapQuery query = new CaomTapQuery(tapServiceID, runID);
+            ArtifactProcessor ap = new ArtifactProcessor(dlc.getSodaID(), runID);
             ap.setDownloadOnly(downloadFilesOnly); 
             DynamicTableData dtd = null;
             if (downloadFilesOnly)
@@ -252,6 +246,7 @@ public class LinkQueryRunner implements JobRunner
             }
 
             // Add the generic service descriptor(s)
+            /*
             InputStream is = LinkQueryRunner.class.getClassLoader().getResourceAsStream(SERVICES_RESOURCE);
             if (is == null)
             {
@@ -264,10 +259,12 @@ public class LinkQueryRunner implements JobRunner
                 // generic descriptors: this, cutout, maybe preview someday
                 for (VOTableResource metaResource : serviceDocument.getResources())
                 {
-                    setServiceURL(metaResource);
+                    addServiceURL(metaResource);
                     vot.getResources().add(metaResource);
                 }
             }
+            */
+            
             // dynamic link-specific descriptors
             Iterator<ServiceDescriptor> sdi = dtd.descriptors();
             while (sdi.hasNext())
@@ -276,14 +273,23 @@ public class LinkQueryRunner implements JobRunner
                 VOTableResource metaResource = new VOTableResource("meta");
                 metaResource.id = sd.getID();
                 metaResource.utype = "adhoc:service";
-                String val = sd.getResourceIdentifier().toASCIIString();
-                metaResource.getParams().add(new VOTableParam("resourceIdentifier", "char", val.length(), false, val));
-                metaResource.getParams().add(new VOTableParam("accessURL", "char", null, true, "place holder"));
+                String val = null;
+                if (sd.getResourceIdentifier() != null)
+                {
+                    val = sd.getResourceIdentifier().toASCIIString();
+                    metaResource.getParams().add(new VOTableParam("resourceIdentifier", "char", val.length(), false, val));
+                }
                 if (sd.standardID != null)
                 {
                     val = sd.standardID.toASCIIString();
                     metaResource.getParams().add(new VOTableParam("standardID", "char", val.length(), false, val));
                 }
+                if (sd.accessURL != null)
+                {
+                    val = sd.accessURL.toExternalForm();
+                    metaResource.getParams().add(new VOTableParam("accessURL", "char", val.length(), false, val));
+                }
+                
                 VOTableGroup inputParams = new VOTableGroup("inputParams");
                 for (ServiceParameter p : sd.getInputParams())
                 {
@@ -303,7 +309,8 @@ public class LinkQueryRunner implements JobRunner
                     inputParams.getParams().add(vp);
                 }
                 metaResource.getGroups().add(inputParams);
-                setServiceURL(metaResource);
+                //if (sd.accessURL == null)
+                //    addServiceURL(metaResource);
                 vot.getResources().add(metaResource);
             }
 
@@ -348,10 +355,7 @@ public class LinkQueryRunner implements JobRunner
         {
             sendError(ex, "permission denied -- reason: " + ex.getMessage(), 403);
         }
-        catch(CertificateException ex)
-        {
-            sendError(ex, "permission denied -- reason: invalid proxy certificate", 403);
-        }
+        
         catch(IllegalArgumentException ex)
         {
             sendError(ex, ex.getMessage(), 400);
@@ -389,48 +393,44 @@ public class LinkQueryRunner implements JobRunner
         }
     }
 
-    private void setServiceURL(VOTableResource metaResource)
+    /*
+    private void addServiceURL(VOTableResource metaResource)
         throws URISyntaxException, MalformedURLException
     {
-        // set the access URL
-        VOTableParam accessURLParam = null;
         VOTableParam resourceIDParam = null;
         VOTableParam standardIDParam = null;
         for (VOTableParam param :  metaResource.getParams())
         {
-            if (param.getName().equals("accessURL"))
-                accessURLParam = param;
-            else if (param.getName().equals("resourceIdentifier"))
+            if (param.getName().equals("resourceIdentifier"))
                 resourceIDParam = param;
             else if (param.getName().equals("standardID"))
                 standardIDParam = param;
         }
-        if (accessURLParam == null)
-            throw new MissingResourceException(
-                "accessURL parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "accessURL");
+
+        // generate a suitable accessURL in a static ServiceDescriptor resource
         if (resourceIDParam == null)
             throw new MissingResourceException(
                 "resourceIdentifier parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
         if (standardIDParam == null)
             throw new MissingResourceException(
-                "standardID parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
+                "standardID parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "standardID");
 
         AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
         if (am == null)
         {
             am = AuthMethod.ANON;
         }
-        RegistryClient regClient = new RegistryClient();
+        
         URI serviceID = URI.create(resourceIDParam.getValue());
         URI standardID = URI.create(standardIDParam.getValue());
         URL serviceURL = regClient.getServiceURL(serviceID, standardID, am);
 
-        VOTableParam newAccessURL = new VOTableParam(
-            accessURLParam.getName(), accessURLParam.getDatatype(), accessURLParam.getArraysize(),
-            accessURLParam.isVariableSize(), serviceURL.toString());
-        metaResource.getParams().remove(accessURLParam);
+        log.warn("addServiceURL: " + serviceID + " + " + standardID + " -> " + serviceURL);
+        
+        VOTableParam newAccessURL = new VOTableParam("accessURL", "char", null, true, serviceURL.toString());
         metaResource.getParams().add(newAccessURL);
     }
+    */
     
     private void sendError(Throwable t, int code)
     {

@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.util.ArrayList;
@@ -99,13 +98,10 @@ public class ArtifactProcessorTest
     static String PLANE_URI = "caom:FOO/bar/baz";
     static String BASE_ARTIFACT_URI = "ad:FOO/bar_baz_";
     static String RUNID = "abc123";
+    
+    static URI SODA_ID = URI.create("ivo://example.net/soda");
 
-    RegistryClient registryClient;
-
-    public ArtifactProcessorTest()
-    {
-        this.registryClient = new RegistryClient();
-    }
+    public ArtifactProcessorTest() { }
 
     //@Test
     public void testTemplate()
@@ -128,7 +124,7 @@ public class ArtifactProcessorTest
         try
         {
             URI uri = new URI(PLANE_URI);
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
 
             List<Artifact> artifacts = new ArrayList<Artifact>();
             List<DataLink> links = ap.process(uri, artifacts);
@@ -153,7 +149,7 @@ public class ArtifactProcessorTest
             List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
             Assert.assertEquals("test setup", 2, artifacts.size());
 
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
             
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
@@ -191,7 +187,7 @@ public class ArtifactProcessorTest
             List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
             Assert.assertEquals("test setup", 2, artifacts.size());
 
-            ArtifactProcessor ap = new ArtifactProcessor(null, registryClient);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, null);
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
@@ -219,7 +215,7 @@ public class ArtifactProcessorTest
     private List<Artifact> getTestArtifacts(int num, int depth, int productTypeLevel)
         throws Exception
     {
-        List<Artifact> ret = new ArrayList<Artifact>();
+        List<Artifact> ret = new ArrayList<>();
         for (int i=0; i<num; i++)
         {
             Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i), ProductType.SCIENCE, ReleaseType.DATA);

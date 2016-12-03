@@ -75,12 +75,10 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.UsageFault;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -102,12 +100,10 @@ public class DynamicTableDataTest
     }
     
     static String RUNID = "abc123";
-    RegistryClient registryClient;
 
-    public DynamicTableDataTest()
-    {
-        this.registryClient = new RegistryClient();
-    }
+    static URI SODA_ID = URI.create("ivo://example.net/soda");
+
+    public DynamicTableDataTest() { }
 
     //@Test
     public void testTemplate()
@@ -131,8 +127,8 @@ public class DynamicTableDataTest
         {
             Job job = new Job();
             
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 0);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
             
@@ -158,8 +154,8 @@ public class DynamicTableDataTest
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 0);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 0);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -188,8 +184,8 @@ public class DynamicTableDataTest
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 1);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 1);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -218,8 +214,8 @@ public class DynamicTableDataTest
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(RUNID, registryClient);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URL("http://unused.url.com/tap"), 2);
+            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 2);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -248,9 +244,9 @@ public class DynamicTableDataTest
     class TestCaomTapQuery extends CaomTapQuery
     {
         int num;
-        TestCaomTapQuery(String jobID, URL tapURL, int num)
+        TestCaomTapQuery(String jobID, URI tapURI, int num)
         {
-            super(tapURL, jobID);
+            super(tapURI, jobID);
             this.num = num;
         }
 

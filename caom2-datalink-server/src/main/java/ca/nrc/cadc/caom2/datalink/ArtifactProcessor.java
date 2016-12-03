@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -115,22 +116,24 @@ public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
     
-    private static URI SODA_SYNC = URI.create("ivo://cadc.nrc.ca/caom2ops");
-    private static URI SODA_ASYNC = URI.create("ivo://cadc.nrc.ca/caom2ops");
+    private URI sodaID;
+    private boolean initConfigDone = false;
     
+    // deprecated stuff for CADC service that is being replaced by SODA
     private static String CUTOUT = "cutout";
     private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
-//    private AuthMethod authMethod;
-    private RegistryClient registryClient;
-    private String runID;
-    private SchemeHandler schemeHandler;
+    private final RegistryClient registryClient;
+    
+    private final String runID;
+    private final SchemeHandler schemeHandler;
     private boolean downloadOnly;
 
-    public ArtifactProcessor(String runID, RegistryClient registryClient)
+    public ArtifactProcessor(URI sodaID, String runID)
     {
+        this.sodaID = sodaID;
         this.runID = runID;
-        this.registryClient = registryClient;
+        this.registryClient = new RegistryClient();
         this.schemeHandler = new CaomSchemeHandler();
     }
 
@@ -145,10 +148,10 @@ public class ArtifactProcessor
     {
         this.downloadOnly = downloadOnly;
     }
-
+    
     public List<DataLink> process(URI uri, List<Artifact> artifacts)
     {
-        List<DataLink> ret = new ArrayList<DataLink>(artifacts.size());
+        List<DataLink> ret = new ArrayList<>(artifacts.size());
         for (Artifact a : artifacts)
         {
             DataLink.Term sem = DataLink.Term.THIS;
@@ -176,7 +179,6 @@ public class ArtifactProcessor
                 dl.url = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
-                //findProductTypes(a, dl.productTypes); // TODO
                 ret.add(dl);
             }
             catch(MalformedURLException ex)
@@ -188,6 +190,7 @@ public class ArtifactProcessor
             if (!downloadOnly)
             {
                 // service links
+                /* deprecated cadc cutout service
                 boolean cutout = canCutout(a);
                 if (cutout)
                 {
@@ -196,9 +199,9 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    //findProductTypes(a, link.productTypes);
                     ret.add(link);
                 }
+                */
                 try
                 {
                     ArtifactBounds ab = generateBounds(a);
@@ -209,8 +212,7 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_SYNC, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
 
@@ -219,8 +221,7 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.fileURI = a.getURI().toString();
-                    //findProductTypes(a, link.productTypes);
-                    link.descriptor = generateServiceDescriptor(SODA_ASYNC, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
+                    link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
                 }
@@ -247,7 +248,7 @@ public class ArtifactProcessor
         throws NoSuchKeywordException
     {
         ArtifactBounds ret = new ArtifactBounds();
-        Set<Artifact> aset = new TreeSet<Artifact>();
+        Set<Artifact> aset = new TreeSet<>();
         aset.add(a);
 
         // compute artifact-specific metadata for cutout params
@@ -296,15 +297,25 @@ public class ArtifactProcessor
         return ret;
     }
     
-    protected ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
+    private ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
     {
+        if (serviceID == null)
+            return null; // no SODA support configured
+        
         if (ab.poly == null && ab.bandMin == null && ab.bandMax == null
                 && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
             return null;
 
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethodForCurrentSubject();
+        if (authMethod == null)
+            authMethod = AuthMethod.ANON;
+        
         // generate artifact-specific SODA service descriptor
         ServiceDescriptor sd = new ServiceDescriptor(id, serviceID);
         sd.standardID = standardID;
+        sd.accessURL = registryClient.getServiceURL(serviceID, standardID, authMethod);
+        if (sd.accessURL == null)
+            log.warn("failed to generate accessURL for: " + serviceID + " + " + standardID + " + " + authMethod);
 
         ServiceParameter sp;
         sp = new ServiceParameter("ID", "char", null, true, "");
@@ -367,24 +378,6 @@ public class ArtifactProcessor
         
     }
     
-    /*
-    protected void findProductTypes(Artifact a, List<ProductType> pts)
-    {
-        if (a.productType != null && !pts.contains(a.productType))
-            pts.add(a.productType);
-        for (Part p : a.getParts())
-        {
-            if (p.productType != null && !pts.contains(p.productType))
-                pts.add(p.productType);
-            for (Chunk c : p.getChunks())
-            {
-                if (c.productType != null && !pts.contains(c.productType))
-                    pts.add(c.productType);
-            }
-        }
-    }
-    */
-
     /**
      * Convert a URI to a URL. TBD: This method fails if the SchemeHandler returns multiple URLs,
      * but in principle we could make multiple DataLinks out of it.
@@ -408,24 +401,6 @@ public class ArtifactProcessor
             return new URL(surl);
         }
         return url;
-    }
-
-
-
-    protected URL getCutoutURL(Artifact a)
-        throws MalformedURLException
-    {
-        if ( canCutout(a) )
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.append("?");
-            if (runID != null)
-                sb.append("runid=").append(runID);
-            URL serviceURL = registryClient.getServiceURL(CUTOUT_SERVICE, Standards.CUTOUT_20, AuthMethod.ANON);
-            URL ret = new URL(serviceURL.toExternalForm() + sb.toString());
-            return ret;
-        }
-        return null;
     }
 
     // determine if artifact has sufficient WCS for cutout in any of the chunks
