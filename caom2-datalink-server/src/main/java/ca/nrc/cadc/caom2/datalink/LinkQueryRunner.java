@@ -69,19 +69,15 @@
 
 package ca.nrc.cadc.caom2.datalink;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.util.Date;
-import java.util.MissingResourceException;
 
 
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.MaxRecValidator;
 import ca.nrc.cadc.dali.tables.ListTableData;
@@ -89,7 +85,6 @@ import ca.nrc.cadc.dali.tables.TableWriter;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableGroup;
 import ca.nrc.cadc.dali.tables.votable.VOTableParam;
-import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
@@ -106,8 +101,6 @@ import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.util.Iterator;
 import java.util.List;
@@ -206,7 +199,7 @@ public class LinkQueryRunner implements JobRunner
             }
             Integer maxrec = mrv.validate();
             
-            DataLinkConfig dlc = new DataLinkConfig();
+            ServiceConfig dlc = new ServiceConfig();
             URI tapServiceID = dlc.getTapServiceID();
 
             VOTableDocument vot = new VOTableDocument();
