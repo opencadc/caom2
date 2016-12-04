@@ -73,6 +73,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
@@ -99,12 +100,11 @@ public class ServiceConfig
         String fname = ServiceConfig.class.getSimpleName() + ".properties";
         try
         {
-            
-            File cf = FileUtil.getFileFromResource(fname, ServiceConfig.class);
+            URL url = ServiceConfig.class.getClassLoader().getResource(fname);
             this.props = new Properties();
-            props.load(new FileReader(cf));
+            props.load(url.openStream());
         }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             throw new RuntimeException("CONFIG: failed to read " + fname + " from classpath");
         }
