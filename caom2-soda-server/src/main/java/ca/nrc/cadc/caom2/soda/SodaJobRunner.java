@@ -331,9 +331,6 @@ public class SodaJobRunner implements JobRunner
                                     List<String> cutout = CutoutUtil.computeCutout(a, pos.cut, band.cut, time.cut, pol.cut);
                                     if (cutout != null && !cutout.isEmpty())
                                     {
-                                        // TODO: we currently assume we can append cutout=[....]
-                                        // but we should pass that cutout spec to the SchemeHandler
-                                        // so that the VOS ones get done right
 
                                         URL url = sh.getURL(a.getURI(), cutout);
                                         int num = 0;
