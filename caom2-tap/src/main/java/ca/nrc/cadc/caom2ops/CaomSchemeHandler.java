@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -70,21 +70,24 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+
 /**
- * Utility class to invoke the appropriate SchemeHandler to convert a URI to URL(s). 
+ * Utility class to invoke the appropriate SchemeHandler to convert a URI to URL(s).
  * If no SchemeHandler can be found, the URI.toURL() method is called as a fallback.
- * 
+ *
  * @author pdowler
  */
 public class CaomSchemeHandler implements SchemeHandler
@@ -94,7 +97,7 @@ public class CaomSchemeHandler implements SchemeHandler
     private static final String CACHE_FILENAME = CaomSchemeHandler.class.getSimpleName() + ".properties";
 
     private final Map<String,SchemeHandler> handlers = new HashMap<String,SchemeHandler>();
-    
+
     private AuthMethod authMethod;
 
     /**
@@ -122,7 +125,7 @@ public class CaomSchemeHandler implements SchemeHandler
             log.debug("config URL is null: no custom scheme support");
             return;
         }
-        
+
         try
         {
             Properties props = new Properties();
@@ -154,7 +157,7 @@ public class CaomSchemeHandler implements SchemeHandler
         }
         finally
         {
-            
+
         }
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
@@ -168,14 +171,14 @@ public class CaomSchemeHandler implements SchemeHandler
             sh.setAuthMethod(authMethod);
         }
     }
-    
+
     /**
-     * Find and call a suitable SchemeHandler. This method gets the scheme from the 
+     * Find and call a suitable SchemeHandler. This method gets the scheme from the
      * URI and uses it to find a configured SchemeHandler. If that is successful, the
      * SchemeHandler is used to do the conversion. If no SchemeHandler can be found,
      * the URI.toURL() method is called as a fallback, which is sufficient to handle
      * URIs where the scheme is a known transport protocol (e.g. http).
-     * 
+     *
      * @param uri
      * @return a URL to the identified resource; null if the uri was null
      * @throws IllegalArgumentException if a URL cannot be generated
@@ -186,19 +189,42 @@ public class CaomSchemeHandler implements SchemeHandler
     {
         if (uri == null)
             return null;
-        
+
         SchemeHandler sh = (SchemeHandler) handlers.get(uri.getScheme());
         if (sh != null)
             return sh.getURL(uri);
-        
+
         // fallback: hope for the best
         return uri.toURL();
     }
-    
+
+    /**
+     * Convert the specified URI to one or more URL(s).
+     *
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
+     * @param uri the URI to convert
+     * @param cutouts A list of cutout strings that should be supported by the returned URL.
+     * @return a URL to the identified resource
+     */
+    public URL getURL(URI uri, List<String> cutouts)
+            throws IllegalArgumentException, MalformedURLException
+    {
+        if (uri == null)
+            return null;
+
+        SchemeHandler sh = (SchemeHandler) handlers.get(uri.getScheme());
+        if (sh != null)
+            return sh.getURL(uri, cutouts);
+
+        // fallback: hope for the best
+        return uri.toURL();
+    }
+
     /**
      * Add a new SchemeHandler to the converter. If this handler has the same scheme as an
      * existing handler, it will replace the previous one.
-     * 
+     *
      * @param scheme
      * @param handler
      */
