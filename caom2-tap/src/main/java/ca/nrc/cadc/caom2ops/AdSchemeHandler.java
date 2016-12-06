@@ -28,23 +28,27 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+
 /**
- * SchemeHandler implementation for the Archive Directory (ad) system. 
+ * SchemeHandler implementation for the Archive Directory (ad) system.
  * This class can convert an AD URI into a URL. This is an alternate version
  * that uses the RegistryClient to find the data web service base URL.
- * 
+ *
  * @author pdowler
  */
 public class AdSchemeHandler implements SchemeHandler
@@ -52,7 +56,7 @@ public class AdSchemeHandler implements SchemeHandler
     private static final Logger log = Logger.getLogger(AdSchemeHandler.class);
 
     public static final String SCHEME = "ad";
-    
+
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
 
     private RegistryClient rc;
@@ -75,6 +79,11 @@ public class AdSchemeHandler implements SchemeHandler
 
     public URL getURL(URI uri)
     {
+        return getURL(uri, null);
+    }
+
+    public URL getURL(URI uri, List<String> cutouts)
+    {
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
@@ -87,7 +96,22 @@ public class AdSchemeHandler implements SchemeHandler
                 am = AuthMethod.ANON;
             }
             URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10, am);
-            URL url = new URL(serviceURL.toExternalForm() + path);
+
+            StringBuilder query = new StringBuilder("");
+            if (cutouts != null && !cutouts.isEmpty())
+            {
+                query.append("?");
+                int cutoutIndex = 0;
+                for (String cutout : cutouts)
+                {
+                    if (cutoutIndex > 0)
+                        query.append("&");
+                    cutoutIndex++;
+                    query.append("cutout=" + NetUtil.encode(cutout));
+                }
+            }
+
+            URL url = new URL(serviceURL.toExternalForm() + path + query.toString());
             log.debug(uri + " --> " + url);
             return url;
         }
@@ -101,8 +125,8 @@ public class AdSchemeHandler implements SchemeHandler
     {
         this.authMethod = authMethod;
     }
-    
-    
+
+
     private String getPath(URI uri)
     {
         String[]  path = uri.getSchemeSpecificPart().split("/");
@@ -116,10 +140,10 @@ public class AdSchemeHandler implements SchemeHandler
         sb.append(encodeString(arc));
         sb.append("/");
         sb.append(encodeString(fid));
-        
+
         return sb.toString();
     }
-    
+
     private static String encodeString(String str)
     {
         try { return URLEncoder.encode(str, "UTF-8"); }

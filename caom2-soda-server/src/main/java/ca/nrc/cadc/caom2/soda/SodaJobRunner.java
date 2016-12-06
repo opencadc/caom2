@@ -69,6 +69,21 @@
 
 package ca.nrc.cadc.caom2.soda;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -85,13 +100,11 @@ import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
-import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.CircleFormat;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.dali.util.PolygonFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -107,30 +120,17 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import org.apache.log4j.Logger;
 
 /**
  * This JobRunner implements IVOA WD-SODA-1.0 job semantics.
- * 
+ *
  * @author pdowler
  */
 public class SodaJobRunner implements JobRunner
 {
     private static Logger log = Logger.getLogger(SodaJobRunner.class);
-    
-    private static final EnergyConverter conv = new EnergyConverter();    
+
+    private static final EnergyConverter conv = new EnergyConverter();
 
     static final String PARAM_ID = "ID";
     static final String PARAM_POS = "POS";
@@ -140,11 +140,11 @@ public class SodaJobRunner implements JobRunner
     static final String PARAM_TIME = "TIME";
     static final String PARAM_POL = "POL";
     static final String PARAM_RUNID = "RUNID";
-    
+
     static final String RESULT_OK = "ok";
     static final String RESULT_WARN = "warn";
     static final String RESULT_FAIL = "fail";
-    
+
     static final List<String> SODA_PARAMS = Arrays.asList(
             PARAM_ID, PARAM_POS, PARAM_CIRC, PARAM_POLY, PARAM_BAND, PARAM_TIME, PARAM_POL
     );
@@ -152,15 +152,15 @@ public class SodaJobRunner implements JobRunner
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private Job job;
-    
+
     private WebServiceLogInfo logInfo;
-    
+
     private RegistryClient reg;
     private URI sodaURI;
     private URI tapURI;
-            
-    public SodaJobRunner() 
-    { 
+
+    public SodaJobRunner()
+    {
         this.reg = new RegistryClient();
         ServiceConfig sc = new ServiceConfig();
         this.sodaURI = sc.getSodaID();
@@ -200,7 +200,7 @@ public class SodaJobRunner implements JobRunner
         logInfo.setElapsedTime(System.currentTimeMillis() - start);
         log.info(logInfo.end());
     }
-    
+
     void doit()
         throws IOException // failed to write to SyncOutput
     {
@@ -209,7 +209,7 @@ public class SodaJobRunner implements JobRunner
 
         tList.add(System.currentTimeMillis());
         sList.add("start");
-        
+
         try
         {
             // phase->EXECUTING
@@ -225,20 +225,20 @@ public class SodaJobRunner implements JobRunner
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             tList.add(System.currentTimeMillis());
             sList.add("QUEUED -> EXECUTING: ");
-            
+
             // validate params
             ParamExtractor pex = new ParamExtractor(SODA_PARAMS);
             Map<String,List<String>> params = pex.getParameters(job.getParameterList());
             log.debug("soda params: " + SODA_PARAMS.size() +" map params: " + params.size());
             List<String> idList = params.get(PARAM_ID);
-            
+
             List<Cutout<Shape>> posCut = getSpatialCuts(params);
             List<Cutout<Interval>> bandCut = getEnergyCuts(params);
             List<Cutout<Interval>> timeCut = getTimeCuts(params);
             Cutout<List<PolarizationState>> polCut = getPolarizationCuts(params);
-            
+
             StringBuilder esb = new StringBuilder();
-            
+
             // single-valued for sync execution
             if (syncOutput != null)
             {
@@ -250,16 +250,16 @@ public class SodaJobRunner implements JobRunner
                     esb.append("found ").append(bandCut.size()).append(" BAND values, expected 0-1\n");
                 if (timeCut.size() > 1)
                     esb.append("found ").append(timeCut.size()).append(" TIME values, expected 0-1\n");
-                
+
                 if (esb.length() > 0)
                 {
                     throw new IllegalArgumentException("sync: " + esb.toString());
                 }
             }
-            
+
             if (idList.isEmpty())
                 throw new IllegalArgumentException("missing required param ID");
-            
+
             List<URI> ids = new ArrayList<URI>();
             esb = new StringBuilder();
             for (String i : idList)
@@ -277,7 +277,7 @@ public class SodaJobRunner implements JobRunner
             {
                 throw new IllegalArgumentException("invalid ID(s) found\n" + esb.toString());
             }
-            
+
             // add  single null element to make subsequent loops easier
             if (posCut.isEmpty())
                 posCut.add(new Cutout<Shape>());
@@ -285,14 +285,14 @@ public class SodaJobRunner implements JobRunner
                 bandCut.add(new Cutout<Interval>());
             if (timeCut.isEmpty())
                 timeCut.add(new Cutout<Interval>());
-            
+
             tList.add(System.currentTimeMillis());
             sList.add("parse parameters");
-                
+
             String runID = job.getRunID();
             if (runID == null)
                 runID = job.getID();
-            
+
             CaomTapQuery query = new CaomTapQuery(tapURI, runID);
             SchemeHandler sh = new CaomSchemeHandler();
             List<Result> jobResults = new ArrayList<>();
@@ -303,7 +303,7 @@ public class SodaJobRunner implements JobRunner
                 Artifact a = query.performQuery(id);
                 tList.add(System.currentTimeMillis());
                 sList.add("query tap for artifact " + id);
-                
+
                 if (a == null)
                 {
                     StringBuilder path = new StringBuilder();
@@ -331,11 +331,8 @@ public class SodaJobRunner implements JobRunner
                                     List<String> cutout = CutoutUtil.computeCutout(a, pos.cut, band.cut, time.cut, pol.cut);
                                     if (cutout != null && !cutout.isEmpty())
                                     {
-                                        // TODO: we currently assume we can append cutout=[....]
-                                        // but we should pass that cutout spec to the SchemeHandler
-                                        // so that the VOS ones get done right
-                                        
-                                        URL url = sh.getURL(a.getURI());
+
+                                        URL url = sh.getURL(a.getURI(), cutout);
                                         int num = 0;
                                         if (url.getQuery() != null)
                                             num = 1;
@@ -348,16 +345,6 @@ public class SodaJobRunner implements JobRunner
                                             else
                                                 sb.append("&");
                                             sb.append("runid=").append(runID);
-                                            num++;
-                                        }
-
-                                        for (String c : cutout)
-                                        {
-                                            if (num == 0)
-                                                sb.append("?");
-                                            else
-                                                sb.append("&");
-                                            sb.append("cutout=").append( NetUtil.encode(c) );
                                             num++;
                                         }
 
@@ -394,6 +381,7 @@ public class SodaJobRunner implements JobRunner
                                 }
                                 catch(Exception ex) // fail to compute cutout in this case
                                 {
+                                    log.error("unexpected", ex);
                                     StringBuilder sb = new StringBuilder();
                                     sb.append("Error: ").append(id).append(" vs");
                                     if (pos.name != null)
@@ -410,19 +398,19 @@ public class SodaJobRunner implements JobRunner
                                     path.append("|text/plain");
                                     path.append("|").append(sb.toString());
                                     String msg = Base64.encodeString(path.toString());
-                                    
+
                                     // hack to get base url for soda service
                                     URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
                                     URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
                                     URI loc = new URI(url.toExternalForm().replace("/sync", "/soda-echo"));
                                     jobResults.add(new Result(RESULT_FAIL+"-"+serialNum++, loc));
                                 }
-                            }                            
+                            }
                         }
                     }
                 }
             }
-            
+
             // sync: redirect
             if (syncOutput != null)
             {
@@ -430,7 +418,7 @@ public class SodaJobRunner implements JobRunner
                 syncOutput.setHeader("Location", r0.getURI().toASCIIString());
                 syncOutput.setResponseCode(303);
             }
-            
+
             // phase -> COMPLETED
             ExecutionPhase fep = ExecutionPhase.COMPLETED;
             log.debug("setting ExecutionPhase = " + fep + " with results");
@@ -468,7 +456,7 @@ public class SodaJobRunner implements JobRunner
         {
             handleError(400, ex.getMessage());
         }
-        finally 
+        finally
         {
             tList.add(System.currentTimeMillis());
             sList.add("set final job state: ");
@@ -480,7 +468,7 @@ public class SodaJobRunner implements JobRunner
             }
         }
     }
-    
+
     private class Cutout<T>
     {
         String name, value;
@@ -493,7 +481,7 @@ public class SodaJobRunner implements JobRunner
             this.cut = cut;
         }
     }
-    
+
     List<Cutout<Interval>> getEnergyCuts(Map<String,List<String>> params)
     {
         List<String> vals = params.get(PARAM_BAND);
@@ -510,7 +498,7 @@ public class SodaJobRunner implements JobRunner
             else
                 throw new IllegalArgumentException("invalid " + PARAM_BAND + ": " + s);
         }
-        
+
         return ret;
     }
     List<Cutout<Interval>> getTimeCuts(Map<String,List<String>> params)
@@ -623,10 +611,10 @@ public class SodaJobRunner implements JobRunner
                 throw new IllegalArgumentException("invalid " + PARAM_POLY + ": " + s);
             }
         }
-        
+
         return posCut;
     }
-    
+
     private void handleError(int code, String msg)
         throws IOException
     {
@@ -639,7 +627,7 @@ public class SodaJobRunner implements JobRunner
             w.println(msg);
             w.flush();
         }
-        
+
         ExecutionPhase fep = ExecutionPhase.ERROR;
         ErrorSummary es = new ErrorSummary(msg, ErrorType.FATAL);
         log.debug("setting ExecutionPhase = " + fep + " with results");
