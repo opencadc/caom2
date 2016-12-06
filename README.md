@@ -1,6 +1,6 @@
 # caom2service
 
-Common Archive Observation Model service implementations
+Common Archive Observation Model service implementation libraries.
 
 ## CAOM TAP service
 
@@ -15,4 +15,4 @@ Common Archive Observation Model service implementations
 * caom2-soda-server: IVOA SODA implementation for CAOM-2.x
 
 These server-side libraries make use of the cadc-uws-server package and provide a JobRunner implementation to use 
-with that framework. The exceptions are: 
+with that framework. They use the caom2-tap client library to query a CAOM TAP service.
