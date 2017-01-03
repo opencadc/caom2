@@ -69,8 +69,19 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.Direction;
@@ -80,12 +91,6 @@ import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -96,22 +101,28 @@ public class VOSpaceSchemeHandler implements SchemeHandler
     private static final Logger log = Logger.getLogger(VOSpaceSchemeHandler.class);
 
     public static final String SCHEME = "vos";
-    
+    public static final String CUTOUT_VIEW = "ivo://cadc.nrc.ca/vospace/view#cutout";
+
     private AuthMethod authMethod;
-    
-    public VOSpaceSchemeHandler() 
-    { 
+
+    public VOSpaceSchemeHandler()
+    {
         this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
     }
 
     public URL getURL(URI uri)
+    {
+        return getURL(uri, null);
+    }
+
+    public URL getURL(URI uri, List<String> cutouts)
     {
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
         try
         {
-            String s = createURL(uri);
+            String s = createURL(uri, cutouts);
             URL url = null;
             if (s != null)
                 url = new URL(s);
@@ -124,14 +135,23 @@ public class VOSpaceSchemeHandler implements SchemeHandler
         }
     }
 
+
     public void setAuthMethod(AuthMethod authMethod)
     {
         this.authMethod = authMethod;
     }
 
-    
-    private String createURL(URI uri)
+
+    private String createURL(URI uri, List<String> cutouts)
     {
+        // Temporary: because the VOSpace client doesn't support
+        // cutouts through document posting, create cutout urls
+        // using synctrans
+        if (cutouts != null)
+        {
+            return createSynctransURL(uri, cutouts);
+        }
+
         String errorMessage = null;
         try
         {
@@ -145,6 +165,7 @@ public class VOSpaceSchemeHandler implements SchemeHandler
                 protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
 
             Transfer trans = new Transfer(vuri.getURI(), Direction.pullFromVoSpace, protocols);
+
             ClientTransfer ct = vosClient.createTransfer(trans);
             trans = ct.getTransfer();
             for (Protocol p : trans.getProtocols())
@@ -164,9 +185,56 @@ public class VOSpaceSchemeHandler implements SchemeHandler
             throw new RuntimeException("failed to convert " + uri + " -> URL", t);
         }
         finally { }
-        
+
         if (errorMessage != null)
             throw new RuntimeException("failed to convert " + uri + " -> URL: " + errorMessage);
         return null;
+    }
+
+    private String createSynctransURL(URI uri, List<String> cutouts)
+    {
+        try
+        {
+            VOSURI vuri = new VOSURI(uri);
+            RegistryClient registryClient = new RegistryClient();
+            URL baseURL = registryClient.getServiceURL(vuri.getServiceURI(), Standards.VOSPACE_SYNC_21, authMethod);
+
+            String direction = Direction.pullFromVoSpaceValue;
+            String scheme = baseURL.getProtocol();
+            String protocol = null;
+            if (scheme.equalsIgnoreCase("http"))
+                protocol = VOS.PROTOCOL_HTTP_GET;
+            else
+                protocol = VOS.PROTOCOL_HTTPS_GET;
+
+            StringBuilder query = new StringBuilder();
+            query.append(baseURL);
+
+            if (cutouts != null && !cutouts.isEmpty())
+            {
+                query.append("?");
+                query.append("view=cutout");
+                query.append("&");
+                for (String cutout : cutouts)
+                {
+                    query.append("cutout");
+                    query.append("=");
+                    query.append(NetUtil.encode(cutout));
+                    query.append("&");
+                }
+            }
+
+            query.append("TARGET=").append(NetUtil.encode(vuri.toString()));
+            query.append("&");
+            query.append("DIRECTION=").append(NetUtil.encode(direction));
+            query.append("&");
+            query.append("PROTOCOL=").append(NetUtil.encode(protocol));
+
+            return query.toString();
+        }
+        catch(Throwable t)
+        {
+            throw new RuntimeException("failed to convert " + uri + " and cutouts -> URL", t);
+        }
     }
 }
