@@ -43,6 +43,7 @@
                 <description>the intent of this observation was to create calibration data</description>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>TargetType</vodml-id>
             <name>TargetType</name>
@@ -58,6 +59,7 @@
                 <description>the target of the observation is a defined region on the sky</description>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>Status</vodml-id>
             <name>Status</name>
@@ -90,6 +92,7 @@
                 <name>v_3</name>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>DataProductType</vodml-id>
             <name>DataProductType</name>
@@ -123,6 +126,7 @@
                 <name>catalog</name>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>EnergyBand</vodml-id>
             <name>EnergyBand</name>
@@ -162,6 +166,7 @@
                 <name>Gammaray</name>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>Quality</vodml-id>
             <name>Quality</name>
@@ -171,6 +176,7 @@
                 <name>junk</name>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>PolarizationState</vodml-id>
             <name>PolarizationState</name>
@@ -287,6 +293,7 @@
                 <name>auxiliary</name>
             </literal>
         </enumeration>
+        
         <enumeration>
             <vodml-id>ReleaseType</vodml-id>
             <name>ReleaseType</name>
@@ -552,19 +559,19 @@
             <extends>
                 <vodml-ref>caom:Observation</vodml-ref>
             </extends>
-            <collection>
+            <attribute>
                 <vodml-id>CompositeObservation.members</vodml-id>
                 <name>members</name>
                 <description>members are the observations grouped together by the algorithm that defines the composite</description>
                 <datatype>
-                    <!-- this should be a loosely coupled reference, eg ObservationURI -->
-                    <vodml-ref>caom:Observation</vodml-ref>
+                    <!-- TODO: should be ObservationURI -->
+                    <vodml-ref>ivoa:anyURI</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>666</maxOccurs>
                 </multiplicity>
-            </collection>
+            </attribute>
         </objectType>
         
         <objectType>
@@ -704,6 +711,18 @@
                 <description>description of the polarization(s) included in the data</description>
                 <datatype>
                     <vodml-ref>caom:Polarization</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </collection>
+            <collection>
+                <vodml-id>Plane.provenance</vodml-id>
+                <name>provenance</name>
+                <description>description of the provenance of the data</description>
+                <datatype>
+                    <vodml-ref>caom:Provenance</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1033,6 +1052,7 @@
                 </multiplicity>
             </attribute>
         </objectType>
+        
         <objectType>
             <vodml-id>Telescope</vodml-id>
             <name>Telescope</name>
@@ -1429,6 +1449,124 @@
                 <multiplicity>
                     <minOccurs>1</minOccurs>
                     <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+        </objectType>
+        
+        <objectType>
+            <vodml-id>Provenance</vodml-id>
+            <name>Provenance</name>
+            <description>description of how this data was produced</description>
+            <attribute>
+                <vodml-id>Provenance.name</vodml-id>
+                <name>name</name>
+                <description>collection-specific common name of the process</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>1</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.reference</vodml-id>
+                <name>reference</name>
+                <description>collection-specific common name of the process</description>
+                <datatype>
+                    <vodml-ref>ivoa:anyURI</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.version</vodml-id>
+                <name>version</name>
+                <description>version of the software or process that produced the data</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.project</vodml-id>
+                <name>project</name>
+                <description>name of the project that produced the data; data produced in a uniform way are
+                    typically labelled with the same project name</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.producer</vodml-id>
+                <name>producer</name>
+                <description>common name of the entity (person, institute, etc) responsible for producing the data</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.runID</vodml-id>
+                <name>runID</name>
+                <description>collection-specific identifier for the processing instance that produced the data;
+                    this identifier can typcially be traced in log files or logging systems</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.lastExecuted</vodml-id>
+                <name>lastExecuted</name>
+                <description>timestamp describing when this process last ran and produced data</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.keywords</vodml-id>
+                <name>keywords</name>
+                <description>addituional keywords that describe the processing; this may include both general
+                    descriptive words and those specific to this particular execution of the processing</description>
+                <datatype>
+                    <vodml-ref>ivoa:string</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            <attribute>
+                <vodml-id>Provenance.inputs</vodml-id>
+                <name>inputs</name>
+                <description>version of the software or process that produced the data</description>
+                <datatype>
+                    <!-- TODO: should be a PlaneURI or PublisherID -->
+                    <vodml-ref>ivoa:anyURI</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>666</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -1839,6 +1977,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType abstract="true">
                 <vodml-id>Shape</vodml-id>
                 <name>Shape</name>
@@ -1877,6 +2016,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>Circle</vodml-id>
                 <name>Circle</name>
@@ -1895,6 +2035,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>Polygon</vodml-id>
                 <name>Polygon</name>
@@ -1913,6 +2054,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>SubInterval</vodml-id>
                 <name>SubInterval</name>
@@ -1939,6 +2081,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>Interval</vodml-id>
                 <name>Interval</name>
@@ -2048,6 +2191,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>RefCoord</vodml-id>
                 <name>RefCoord</name>
@@ -2074,6 +2218,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordError</vodml-id>
                 <name>CoordError</name>
@@ -2100,6 +2245,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>Slice</vodml-id>
                 <name>Slice</name>
@@ -2126,6 +2272,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>EnergyTransition</vodml-id>
                 <name>EnergyTransition</name>
@@ -2152,6 +2299,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>Coord2D</vodml-id>
                 <name>Coord2D</name>
@@ -2178,6 +2326,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordRange1D</vodml-id>
                 <name>CoordRange1D</name>
@@ -2204,6 +2353,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordBounds1D</vodml-id>
                 <name>CoordBounds1D</name>
@@ -2219,6 +2369,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordFunction1D</vodml-id>
                 <name>CoordFunction1D</name>
@@ -2256,6 +2407,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordAxis1D</vodml-id>
                 <name>CoordAxis1D</name>
@@ -2315,6 +2467,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordRange2D</vodml-id>
                 <name>CoordRange2D</name>
@@ -2341,6 +2494,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordBounds2D</vodml-id>
                 <name>CoordBounds2D</name>
@@ -2356,6 +2510,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordFunction2D</vodml-id>
                 <name>CoordFunction2D</name>
@@ -2426,6 +2581,7 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            
             <dataType>
                 <vodml-id>CoordAxis2D</vodml-id>
                 <name>CoordAxis2D</name>
@@ -2693,6 +2849,7 @@
                     </multiplicity>
                 </attribute>
             </objectType>
+            
             <objectType>
                 <vodml-id>TemporalWCS</vodml-id>
                 <name>TemporalWCS</name>
@@ -2763,6 +2920,7 @@
                     </multiplicity>
                 </attribute>
             </objectType>
+            
             <objectType>
                 <vodml-id>PolarizationWCS</vodml-id>
                 <name>PolarizationWCS</name>
@@ -2778,6 +2936,7 @@
                     </multiplicity>
                 </attribute>
             </objectType>
+            
             <objectType>
                 <vodml-id>ObservableAxis</vodml-id>
                 <name>ObservableAxis</name>
