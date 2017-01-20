@@ -20,12 +20,18 @@
         <extends>
             <vodml-ref>ivoa:string</vodml-ref>
         </extends>
+        <!-- TODO: restrict format like we do in the xsd -->
     </primitiveType>
         
+    <!--
+        Notes:
+        * multiplicity/maxOccurs=666 is used to work around the fact that maxOccurs is required by the xsd
+        * it is not clear what effect the package name and vodml-id have
+    -->
     <package>
         <vodml-id>caom2</vodml-id>
         <name>caom2</name>
-        <description>the main package containing top-level CAOM classes</description>
+        <description>the main package containing top-level CAOM-2.x classes</description>
         
         <!-- observation enums -->
         <enumeration>
@@ -76,20 +82,24 @@
             <name>Status</name>
             <description>the degree to which data has been calibrated to remove instrumental effects</description>
             <literal>
-                <vodml-id>Status.RAW_INSTRUMENTAL</vodml-id>
+                <vodml-id>CalibrationLevel.RAW_INSTRUMENTAL</vodml-id>
                 <name>v_0</name>
+                <description>raw data in some opaque instrument-specific format</description>
             </literal>
             <literal>
-                <vodml-id>Status.RAW_STANDARD</vodml-id>
+                <vodml-id>CalibrationLevel.RAW_STANDARD</vodml-id>
                 <name>v_1</name>
+                <description>raw data in a common format</description>
             </literal>
             <literal>
-                <vodml-id>Status.CALIBRATED</vodml-id>
+                <vodml-id>CalibrationLevel.CALIBRATED</vodml-id>
                 <name>v_2</name>
+                <description>standard calibration steps have been applied</description>
             </literal>
             <literal>
-                <vodml-id>Status.PRODUCT</vodml-id>
+                <vodml-id>CalibrationLevel.PRODUCT</vodml-id>
                 <name>v_3</name>
+                <description>additional non-standard calibration steps have been applied</description>
             </literal>
         </enumeration>
         
@@ -100,30 +110,37 @@
             <literal>
                 <vodml-id>DataProductType.IMAGE</vodml-id>
                 <name>image</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.SPECTRUM</vodml-id>
                 <name>spectrum</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.TIMESERIES</vodml-id>
                 <name>timeseries</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.VISIBILITY</vodml-id>
                 <name>visibility</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.EVENTLIST</vodml-id>
                 <name>eventlist</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.CUBE</vodml-id>
                 <name>cube</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>DataProductType.CATALOG</vodml-id>
                 <name>catalog</name>
+                <description>TODO</description>
             </literal>
         </enumeration>
         
@@ -134,36 +151,44 @@
             <literal>
                 <vodml-id>EnergyBand.RADIO</vodml-id>
                 <name>Radio</name>
+                <description>wavelength greater than ~10mm</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.MILLIMETER</vodml-id>
                 <name>Millimeter</name>
+                <description>wavelength from 0.1 to 10mm</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.INFRARED</vodml-id>
                 <name>Infrared</name>
+                <description>wavelength from 1um to 0.1mm</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.OPTICAL</vodml-id>
                 <name>Optical</name>
+                <description>wavelength from 300nm to 1um</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.UV</vodml-id>
                 <name>UV</name>
+                <description>wavelength from 100 to 300nm</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.EUV</vodml-id>
                 <name>EUV</name>
+                <description>wavelength from 10 to 100nm</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.XRAY</vodml-id>
                 <!-- <name>X-ray</name> -->
                 <name>Xray</name>
+                <description>energy from 0.12 to 120keV</description>
             </literal>
             <literal>
                 <vodml-id>EnergyBand.GAMMARAY</vodml-id>
                 <!-- <name>Gamma-ray</name> -->
                 <name>Gammaray</name>
+                <description>energy greater than ~120keV</description>
             </literal>
         </enumeration>
         
@@ -174,6 +199,7 @@
             <literal>
                 <vodml-id>Quality.JUNK</vodml-id>
                 <name>junk</name>
+                <description>this data cannot be used for anything</description>
             </literal>
         </enumeration>
         
@@ -184,74 +210,92 @@
             <literal>
                 <vodml-id>PolarizationState.I</vodml-id>
                 <name>I</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.Q</vodml-id>
                 <name>Q</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.U</vodml-id>
                 <name>U</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.V</vodml-id>
                 <name>V</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.RR</vodml-id>
                 <name>RR</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.LL</vodml-id>
                 <name>LL</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.RL</vodml-id>
                 <name>RL</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.LR</vodml-id>
                 <name>LR</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.XX</vodml-id>
                 <name>XX</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.YY</vodml-id>
                 <name>YY</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.XY</vodml-id>
                 <name>XY</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.YX</vodml-id>
                 <name>YX</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.POLI</vodml-id>
                 <name>POLI</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.FPOLI</vodml-id>
                 <name>FPOLI</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.POLA</vodml-id>
                 <name>POLA</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.EPOLI</vodml-id>
                 <name>EPOLI</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.CPOLI</vodml-id>
                 <name>CPOLI</name>
+                <description>TODO</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.NPOLI</vodml-id>
                 <name>NPOLI</name>
+                <description>TODO</description>
             </literal>
         </enumeration>
         
@@ -263,34 +307,46 @@
             <literal>
                 <vodml-id>ProductType.SCIENCE</vodml-id>
                 <name>science</name>
+                <description>this is the science data; data values come from extraterrestrial photons</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.CALIBRATION</vodml-id>
                 <name>calibration</name>
+                <description>this is calibration data; </description>
             </literal>
             <literal>
                 <vodml-id>ProductType.INFO</vodml-id>
                 <name>info</name>
+                <description>the content provides additional information: explanations, logs, etc</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.PREVIEW</vodml-id>
                 <name>preview</name>
+                <description>this is non-science preview data</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.THUMBNAIL</vodml-id>
                 <name>thumbnail</name>
+                <description>this is a small non-science preview data; small means that this preview is suitable to display
+                    in a popup window or with multiple displayed together</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.NOISE</vodml-id>
                 <name>noise</name>
+                <description>this is auxiliary data with some measure of the noise;
+                    to be used when analysing the science data</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.WEIGHT</vodml-id>
                 <name>weight</name>
+                <description>this is auxiliary data which provides weight values;
+                    to be used when analysing the science data</description>
             </literal>
             <literal>
                 <vodml-id>ProductType.AUXILIARY</vodml-id>
                 <name>auxiliary</name>
+                <description>this is auxiliary data;
+                    to be used when analysing the science data</description>
             </literal>
         </enumeration>
         
@@ -301,10 +357,12 @@
             <literal>
                 <vodml-id>ReleaseType.DATA</vodml-id>
                 <name>data</name>
+                <description>access permission checks assume the protected item is data</description>
             </literal>
             <literal>
                 <vodml-id>ReleaseType.META</vodml-id>
                 <name>meta</name>
+                <description>access permission checks assume the protected item is metadata</description>
             </literal>
         </enumeration>
         
@@ -597,7 +655,7 @@
                 <vodml-id>Plane.metaRelease</vodml-id>
                 <name>metaRelease</name>
                 <description>timestamp after which metadata for the plane is public; this metaRelease timestamp
-                    applies to all children of the plane</description>
+                    applies to all children of the plane and to artifacts with releaseType=meta</description>
                 <datatype>
                     <vodml-ref>ivoa:datetime</vodml-ref>
                 </datatype>
@@ -610,7 +668,7 @@
                 <vodml-id>Plane.dataRelease</vodml-id>
                 <name>dataRelease</name>
                 <description>timestamp after which data for the plane is public; this dataRelease timestamp
-                    applies to all children of the plane</description>
+                    applies to all children of the plane and to artifacts with releaseType=data</description>
                 <datatype>
                     <vodml-ref>ivoa:datetime</vodml-ref>
                 </datatype>
@@ -829,13 +887,16 @@
         <objectType>
             <vodml-id>Part</vodml-id>
             <name>Part</name>
-            <description>format-specific name of this part; this is typically something like a FITS extension name or number</description>
+            <description>format-specific name of this part;
+                this is typically something like a FITS extension or a file within a container</description>
             <extends>
                 <vodml-ref>caom:CaomEntity</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>Part.name</vodml-id>
-                <name>uri</name>
+                <name>name</name>
+                <description>the name of this part of the artifact;
+                    this is typically something like a FITS extension name or number or a filename</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -874,7 +935,8 @@
         <objectType>
             <vodml-id>Chunk</vodml-id>
             <name>Chunk</name>
-            <description>a quantitatively defined subsection of a data array; the part contains the whole array</description>
+            <description>a quantitatively defined subsection of a data array;
+                the part contains the whole array</description>
             <extends>
                 <vodml-ref>caom:CaomEntity</vodml-ref>
             </extends>
