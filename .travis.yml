@@ -4,17 +4,9 @@ jdk:
   - openjdk7
   - oraclejdk8
 
-mod:
-  #- caom2-dm
-  - caom2
-  - caom2-viz
-  - fits2caom2
-
-#matrix:
-#   exclude:
-#   - jdk: openjdk7  
-#     mod: caom2-dm
-
 script: 
-  - cd $mod; gradle --info assemble javadoc install || break -1; cd ..
+  - cd caom2; gradle --info assemble javadoc install || exit -1; cd ..
+  - cd fits2caom2; gradle --info build javadoc || exit -1; cd ..
+  - cd caom2-viz; gradle --info build || exit -1; cd ..
+  - cd caom2-dm; gradle --info build || exit -1; cd ..
 
