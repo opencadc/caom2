@@ -1,6 +1,20 @@
 language: java
+
 jdk:
   - openjdk7
   - oraclejdk8
-script: for mod in caom2 caom2-viz fits2caom2; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
+
+mod:
+  #- caom2-dm
+  - caom2
+  - caom2-viz
+  - fits2caom2
+
+#matrix:
+#   exclude:
+#   - jdk: openjdk7  
+#     mod: caom2-dm
+
+script: 
+  - cd $mod; gradle --info assemble javadoc install || break -1; cd ..
 
