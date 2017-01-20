@@ -1,6 +1,14 @@
 language: java
+
 jdk:
   - openjdk7
   - oraclejdk8
-script: for mod in caom2 caom2-viz fits2caom2; do cd $mod; gradle --info assemble javadoc install || break -1; cd ..; done
+
+script: 
+  - cd caom2; gradle --info assemble javadoc install || exit -1; cd ..
+  - cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
+  - cd caom2-viz; gradle --info build || exit -1; cd ..
+  # hack: switch to jdk8 for this last job
+  - jdk_switcher use oraclejdk8
+  - cd caom2-dm; gradle --info build || exit -1; cd ..
 
