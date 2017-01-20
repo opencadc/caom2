@@ -4,11 +4,19 @@ jdk:
   - openjdk7
   - oraclejdk8
 
+matrix:
+  include:
+    - jdk: openjdk7
+      env: MODS="caom2 fits2caom2 caom2-viz"
+    - jdk: oraclejdk8
+      env: MODS="caom2-dm caom2 fits2caom2 caom2-viz"
+  
 script: 
-  - cd caom2; gradle --info assemble javadoc install || exit -1; cd ..
-  - cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
-  - cd caom2-viz; gradle --info build || exit -1; cd ..
+  #- cd caom2; gradle --info assemble javadoc install || exit -1; cd ..
+  #- cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
+  #- cd caom2-viz; gradle --info build || exit -1; cd ..
   # hack: switch to jdk8 for this last job
-  - jdk_switcher use oraclejdk8
-  - cd caom2-dm; gradle --info build || exit -1; cd ..
+  #- jdk_switcher use oraclejdk8
+  #- cd caom2-dm; gradle --info build || exit -1; cd ..
+  - for mod in $MODS; do cd caom2; gradle --info build javadoc install || break -1; cd ..
 
