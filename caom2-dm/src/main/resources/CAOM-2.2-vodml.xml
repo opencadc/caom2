@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <vo-dml:model xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema">
-    <name>caom</name>
+    <name>caom2</name>
     <description>a general purpose data model for use as the core data model of an astronomical data centre</description>
     <title>Common Archive Observation Model</title>
+    <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
     <version>2.2</version>
-    <lastModified>2016-08-23T07:52:00</lastModified>
+    <lastModified>2017-01-26T15:00:00</lastModified>
     
     <import>
         <name>ivoa</name>
@@ -26,18 +27,22 @@
     <!--
         Notes:
         * multiplicity/maxOccurs=666 is used to work around the fact that maxOccurs is required by the xsd
-        * it is not clear what effect the package name and vodml-id have
+        * experimented with putting the really core classes (observation-plane-artifact-part-chunk) into
+          the root package but it only changes the documentation organisation; that should be done by 
+          improving the vo-dml2html transform to organise things according to a configurable policy
     -->
+    
     <package>
         <vodml-id>caom2</vodml-id>
         <name>caom2</name>
-        <description>the main package containing top-level CAOM-2.x classes</description>
+        <description>this package contains the CAOM object types and enumerations</description>
         
         <!-- observation enums -->
         <enumeration>
             <vodml-id>ObservationIntentType</vodml-id>
             <name>ObservationIntentType</name>
-            <description>the intent of the original observer in acquiring this observation</description>
+            <description>the intent of the original observer in acquiring this observation;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>ObservationIntentType.SCIENCE</vodml-id>
                 <name>science</name>
@@ -53,7 +58,8 @@
         <enumeration>
             <vodml-id>TargetType</vodml-id>
             <name>TargetType</name>
-            <description>the type of target being observed; qualifies target name</description>
+            <description>the type of target being observed; qualifies target name;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>TargetType.OBJECT</vodml-id>
                 <name>object</name>
@@ -69,7 +75,8 @@
         <enumeration>
             <vodml-id>Status</vodml-id>
             <name>Status</name>
-            <description>a status flag indicating degree of success</description>
+            <description>a status flag indicating degree of success;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>Status.FAIL</vodml-id>
                 <name>fail</name>
@@ -79,26 +86,27 @@
         <!-- plane enums -->
         <enumeration>
             <vodml-id>CalibrationLevel</vodml-id>
-            <name>Status</name>
-            <description>the degree to which data has been calibrated to remove instrumental effects</description>
+            <name>CalibrationLevel</name>
+            <description>the degree to which data has been calibrated to remove instrumental effects;
+                issue: there is no way to convey the integer serialised values here</description>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_INSTRUMENTAL</vodml-id>
-                <name>v_0</name>
+                <name>RAW_INSTRUMENTAL</name>
                 <description>raw data in some opaque instrument-specific format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_STANDARD</vodml-id>
-                <name>v_1</name>
+                <name>RAW_STANDARD</name>
                 <description>raw data in a common format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.CALIBRATED</vodml-id>
-                <name>v_2</name>
+                <name>CALIBRATED</name>
                 <description>standard calibration steps have been applied</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.PRODUCT</vodml-id>
-                <name>v_3</name>
+                <name>PRODUCT</name>
                 <description>additional non-standard calibration steps have been applied</description>
             </literal>
         </enumeration>
@@ -106,7 +114,8 @@
         <enumeration>
             <vodml-id>DataProductType</vodml-id>
             <name>DataProductType</name>
-            <description>a general description of the type or structure of the data</description>
+            <description>a general description of the type or structure of the data;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>DataProductType.IMAGE</vodml-id>
                 <name>image</name>
@@ -147,7 +156,8 @@
         <enumeration>
             <vodml-id>EnergyBand</vodml-id>
             <name>EnergyBand</name>
-            <description>a general set of energy regions that span the electromagnetic spectrum</description>
+            <description>a general set of energy regions that span the electromagnetic spectrum;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>EnergyBand.RADIO</vodml-id>
                 <name>Radio</name>
@@ -195,7 +205,8 @@
         <enumeration>
             <vodml-id>Quality</vodml-id>
             <name>Quality</name>
-            <description>a general indicator of data quality</description>
+            <description>a general indicator of data quality;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>Quality.JUNK</vodml-id>
                 <name>junk</name>
@@ -206,7 +217,8 @@
         <enumeration>
             <vodml-id>PolarizationState</vodml-id>
             <name>PolarizationState</name>
-            <description>a classification of polarization (Stokes states plus other related quantities)</description>
+            <description>a classification of polarization (Stokes states plus other related quantities);
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>PolarizationState.I</vodml-id>
                 <name>I</name>
@@ -303,7 +315,8 @@
         <enumeration>
             <vodml-id>ProductType</vodml-id>
             <name>ProductType</name>
-            <description>a general classification of the content of data files or parts thereof</description>
+            <description>a general classification of the content of data files or parts thereof;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>ProductType.SCIENCE</vodml-id>
                 <name>science</name>
@@ -353,7 +366,8 @@
         <enumeration>
             <vodml-id>ReleaseType</vodml-id>
             <name>ReleaseType</name>
-            <description>a flag indicating how an artifact is classified to determine access permissions</description>
+            <description>a flag indicating how an artifact is classified to determine access permissions;
+                work-around: using the name of the literal to convey the serialised value</description>
             <literal>
                 <vodml-id>ReleaseType.DATA</vodml-id>
                 <name>data</name>
@@ -369,21 +383,22 @@
         <objectType abstract="true">
             <vodml-id>CaomEntity</vodml-id>
             <name>CaomEntity</name>
-            <description>base entity class to support persistence</description>
-            
+            <description>base entity class to support persistence;
+                entity attributes are generally set or updated by persistence implementations</description>
+
             <attribute>
                 <vodml-id>CaomEntity.id</vodml-id>
                 <name>id</name>
                 <description>globally unique identifier (primary key)</description>
                 <datatype>
-                    <vodml-ref>caom:uuid</vodml-ref>
+                    <vodml-ref>caom2:uuid</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
+
             <attribute>
                 <vodml-id>CaomEntity.lastModified</vodml-id>
                 <name>lastModified</name>
@@ -409,13 +424,13 @@
                 </multiplicity>
             </attribute>
         </objectType>
-        
+
         <objectType abstract="true">
             <vodml-id>Observation</vodml-id>
             <name>Observation</name>
             <description>an observation is a single top-level entry in an astronomy data centre</description>
             <extends>
-                <vodml-ref>caom:CaomEntity</vodml-ref>
+                <vodml-ref>caom2:CaomEntity</vodml-ref>
             </extends>
 
             <attribute>
@@ -483,122 +498,122 @@
                 <name>intent</name>
                 <description>the intent of the original observer in acquiring this data</description>
                 <datatype>
-                    <vodml-ref>caom:ObservationIntentType</vodml-ref>
+                    <vodml-ref>caom2:ObservationIntentType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
-            <collection>
+
+            <composition>
                 <vodml-id>Observation.algorithm</vodml-id>
                 <name>algorithm</name>
                 <description>the algorithm or process that created this observation</description>
                 <datatype>
-                    <vodml-ref>caom:Algorithm</vodml-ref>
+                    <vodml-ref>caom2:Algorithm</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.telescope</vodml-id>
                 <name>telescope</name>
                 <description>the telescope or facility where this observation was created</description>
                 <datatype>
-                    <vodml-ref>caom:Telescope</vodml-ref>
+                    <vodml-ref>caom2:Telescope</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.instrument</vodml-id>
                 <name>instrument</name>
                 <description>the instrument or detector used to acquire the data</description>
                 <datatype>
-                    <vodml-ref>caom:Instrument</vodml-ref>
+                    <vodml-ref>caom2:Instrument</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.environment</vodml-id>
                 <name>environment</name>
                 <description>the environmental conditions at the time of observation</description>
                 <datatype>
-                    <vodml-ref>caom:Environment</vodml-ref>
+                    <vodml-ref>caom2:Environment</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.Proposal</vodml-id>
                 <name>proposal</name>
                 <description>the science proposal underwhich this observation was created</description>
                 <datatype>
-                    <vodml-ref>caom:Proposal</vodml-ref>
+                    <vodml-ref>caom2:Proposal</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.target</vodml-id>
                 <name>target</name>
                 <description>the intended target of the observation</description>
                 <datatype>
-                    <vodml-ref>caom:Target</vodml-ref>
+                    <vodml-ref>caom2:Target</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.targetPosition</vodml-id>
                 <name>targetPosition</name>
                 <description>the intended target position for this observation</description>
                 <datatype>
-                    <vodml-ref>caom:TargetPosition</vodml-ref>
+                    <vodml-ref>caom2:TargetPosition</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.requirements</vodml-id>
                 <name>requirements</name>
                 <description>the observational requirements specified by the observer or proposal</description>
                 <datatype>
-                    <vodml-ref>caom:Requirements</vodml-ref>
+                    <vodml-ref>caom2:Requirements</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Observation.planes</vodml-id>
                 <name>planes</name>
                 <description>the component planes belonging to this observation</description>
                 <datatype>
-                    <vodml-ref>caom:Plane</vodml-ref>
+                    <vodml-ref>caom2:Plane</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>666</maxOccurs>
                 </multiplicity>
-            </collection>
+            </composition>
         </objectType>
 
         <objectType>
@@ -606,16 +621,16 @@
             <name>SimpleObservation</name>
             <description>an observation created directly by operating an instrument or process</description>
             <extends>
-                <vodml-ref>caom:Observation</vodml-ref>
+                <vodml-ref>caom2:Observation</vodml-ref>
             </extends>
         </objectType>
-        
+
         <objectType>
             <vodml-id>CompositeObservation</vodml-id>
             <name>CompositeObservation</name>
             <description>an observation made by combining other observations</description>
             <extends>
-                <vodml-ref>caom:Observation</vodml-ref>
+                <vodml-ref>caom2:Observation</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>CompositeObservation.members</vodml-id>
@@ -631,13 +646,13 @@
                 </multiplicity>
             </attribute>
         </objectType>
-        
+
         <objectType>
             <vodml-id>Plane</vodml-id>
             <name>Plane</name>
             <description>a component of an observation that describes one product of the observation</description>
             <extends>
-                <vodml-ref>caom:CaomEntity</vodml-ref>
+                <vodml-ref>caom2:CaomEntity</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>Plane.productID</vodml-id>
@@ -683,7 +698,7 @@
                 <description>standard classification of the type of data product; describes the logical data type
                     for the main artifacts</description>
                 <datatype>
-                    <vodml-ref>caom:DataProductType</vodml-ref>
+                    <vodml-ref>caom2:DataProductType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -695,119 +710,119 @@
                 <name>calibrationLevel</name>
                 <description>standard classification of the degree to which the data is calibrated</description>
                 <datatype>
-                    <vodml-ref>caom:CalibrationLevel</vodml-ref>
+                    <vodml-ref>caom2:CalibrationLevel</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
-            <collection>
+
+            <composition>
                 <vodml-id>Plane.quality</vodml-id>
                 <name>quality</name>
                 <description>flag indicating the quality of the data</description>
                 <datatype>
-                    <vodml-ref>caom:DataQuality</vodml-ref>
+                    <vodml-ref>caom2:DataQuality</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.metrics</vodml-id>
                 <name>metrics</name>
                 <description>collection of measured quantities that describe the content of the data</description>
                 <datatype>
-                    <vodml-ref>caom:Metrics</vodml-ref>
+                    <vodml-ref>caom2:Metrics</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.position</vodml-id>
                 <name>position</name>
                 <description>description of the position(s) included in the data</description>
                 <datatype>
-                    <vodml-ref>caom:Position</vodml-ref>
+                    <vodml-ref>caom2:Position</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.energy</vodml-id>
                 <name>energy</name>
                 <description>descritpion of the energy(ies) included in the data</description>
                 <datatype>
-                    <vodml-ref>caom:Energy</vodml-ref>
+                    <vodml-ref>caom2:Energy</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.time</vodml-id>
                 <name>time</name>
                 <description>description of the time(s) included in the data</description>
                 <datatype>
-                    <vodml-ref>caom:Time</vodml-ref>
+                    <vodml-ref>caom2:Time</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.polarization</vodml-id>
                 <name>polarization</name>
                 <description>description of the polarization(s) included in the data</description>
                 <datatype>
-                    <vodml-ref>caom:Polarization</vodml-ref>
+                    <vodml-ref>caom2:Polarization</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Plane.provenance</vodml-id>
                 <name>provenance</name>
                 <description>description of the provenance of the data</description>
                 <datatype>
-                    <vodml-ref>caom:Provenance</vodml-ref>
+                    <vodml-ref>caom2:Provenance</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            
-            <collection>
+            </composition>
+
+            <composition>
                 <vodml-id>Plane.artifacts</vodml-id>
                 <name>artifacts</name>
                 <description>the component artifacts belonging to this plane</description>
                 <datatype>
-                    <vodml-ref>caom:Artifact</vodml-ref>
+                    <vodml-ref>caom2:Artifact</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>666</maxOccurs>
                 </multiplicity>
-            </collection>
+            </composition>
         </objectType>
-        
+
         <objectType>
             <vodml-id>Artifact</vodml-id>
             <name>Artifact</name>
             <description>a physical product (typically a file)</description>
             <extends>
-                <vodml-ref>caom:CaomEntity</vodml-ref>
+                <vodml-ref>caom2:CaomEntity</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>Artifact.uri</vodml-id>
@@ -822,11 +837,11 @@
                 </multiplicity>
             </attribute>
             <attribute>
-                <vodml-id>Arifact.productType</vodml-id>
+                <vodml-id>Artifact.productType</vodml-id>
                 <name>productType</name>
                 <description>TODO: define this</description>
                 <datatype>
-                    <vodml-ref>caom:ProductType</vodml-ref>
+                    <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
@@ -834,11 +849,11 @@
                 </multiplicity>
             </attribute>
             <attribute>
-                <vodml-id>Arifact.releaseType</vodml-id>
+                <vodml-id>Artifact.releaseType</vodml-id>
                 <name>releaseType</name>
                 <description>field indicating how access permissions for this artifact are determined</description>
                 <datatype>
-                    <vodml-ref>caom:ReleaseType</vodml-ref>
+                    <vodml-ref>caom2:ReleaseType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
@@ -846,7 +861,7 @@
                 </multiplicity>
             </attribute>
             <attribute>
-                <vodml-id>Arifact.contentType</vodml-id>
+                <vodml-id>Artifact.contentType</vodml-id>
                 <name>contentType</name>
                 <description>label specifying the format of the resolved artifact; typically a MIME-type</description>
                 <datatype>
@@ -858,7 +873,7 @@
                 </multiplicity>
             </attribute>
             <attribute>
-                <vodml-id>Arifact.contentLength</vodml-id>
+                <vodml-id>Artifact.contentLength</vodml-id>
                 <name>contentLength</name>
                 <description>the size of the resolved artifact; typically file size in bytes)</description>
                 <datatype>
@@ -869,28 +884,28 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
-            <collection>
+
+            <composition>
                 <vodml-id>Artifact.parts</vodml-id>
                 <name>parts</name>
                 <description>the component parts of this artifact</description>
                 <datatype>
-                    <vodml-ref>caom:Part</vodml-ref>
+                    <vodml-ref>caom2:Part</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>666</maxOccurs>
                 </multiplicity>
-            </collection>
+            </composition>
         </objectType>
-        
+
         <objectType>
             <vodml-id>Part</vodml-id>
             <name>Part</name>
             <description>format-specific name of this part;
                 this is typically something like a FITS extension or a file within a container</description>
             <extends>
-                <vodml-ref>caom:CaomEntity</vodml-ref>
+                <vodml-ref>caom2:CaomEntity</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>Part.name</vodml-id>
@@ -910,42 +925,42 @@
                 <name>productType</name>
                 <description>product type of this part when it differs from the parent artifact</description>
                 <datatype>
-                    <vodml-ref>caom:ProductType</vodml-ref>
+                    <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
-            <collection>
+
+            <composition>
                 <vodml-id>Part.chunks</vodml-id>
                 <name>chunks</name>
                 <description>component chunks that belong to this part</description>
                 <datatype>
-                    <vodml-ref>caom:Chunk</vodml-ref>
+                    <vodml-ref>caom2:Chunk</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>666</maxOccurs>
                 </multiplicity>
-            </collection>
+            </composition>
         </objectType>
-        
+
         <objectType>
             <vodml-id>Chunk</vodml-id>
             <name>Chunk</name>
             <description>a quantitatively defined subsection of a data array;
                 the part contains the whole array</description>
             <extends>
-                <vodml-ref>caom:CaomEntity</vodml-ref>
+                <vodml-ref>caom2:CaomEntity</vodml-ref>
             </extends>
             <attribute>
                 <vodml-id>Chunk.productType</vodml-id>
                 <name>productType</name>
                 <description>product type where it differs from the parent part</description>
                 <datatype>
-                    <vodml-ref>caom:ProductType</vodml-ref>
+                    <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1036,66 +1051,66 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            <collection>
+            <composition>
                 <vodml-id>Chunk.position</vodml-id>
                 <name>position</name>
                 <description>spatial WCS description of the data array or subsection thereof</description>
                 <datatype>
-                    <vodml-ref>caom:SpatialWCS</vodml-ref>
+                    <vodml-ref>caom2:SpatialWCS</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Chunk.energy</vodml-id>
                 <name>energy</name>
                 <description>spectral WCS description of the data array or subsection thereof</description>
                 <datatype>
-                    <vodml-ref>caom:SpectralWCS</vodml-ref>
+                    <vodml-ref>caom2:SpectralWCS</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Chunk.time</vodml-id>
                 <name>time</name>
                 <description>temporal WCS description of the data array or subsection thereof</description>
                 <datatype>
-                    <vodml-ref>caom:TemporalWCS</vodml-ref>
+                    <vodml-ref>caom2:TemporalWCS</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Chunk.poslarization</vodml-id>
                 <name>polarization</name>
                 <description>polarization WCS description of the data array or subsection thereof</description>
                 <datatype>
-                    <vodml-ref>caom:PolarizationWCS</vodml-ref>
+                    <vodml-ref>caom2:PolarizationWCS</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
-            <collection>
+            </composition>
+            <composition>
                 <vodml-id>Chunk.observable</vodml-id>
                 <name>observable</name>
                 <description>observable description of the data array or subsection thereof</description>
                 <datatype>
-                    <vodml-ref>caom:ObservableAxis</vodml-ref>
+                    <vodml-ref>caom2:ObservableAxis</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </collection>
+            </composition>
         </objectType>
         
         <objectType>
@@ -1396,7 +1411,7 @@
                 <description>type of target; typically used to figure out what the target name means
                     and where to look for additional information about it</description>
                 <datatype>
-                    <vodml-ref>caom:TargetType</vodml-ref>
+                    <vodml-ref>caom2:TargetType</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1488,7 +1503,7 @@
                 <name>coordinates</name>
                 <description>the coordinates</description>
                 <datatype>
-                    <vodml-ref>caom:Point</vodml-ref>
+                    <vodml-ref>caom2:Point</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
@@ -1506,7 +1521,7 @@
                 <name>flag</name>
                 <description>flag indicating degree to which requirements were satisfied</description>
                 <datatype>
-                    <vodml-ref>caom:Status</vodml-ref>
+                    <vodml-ref>caom2:Status</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
@@ -1642,7 +1657,7 @@
                 <name>flag</name>
                 <description>flag indicating the data quality</description>
                 <datatype>
-                    <vodml-ref>caom:Quality</vodml-ref>
+                    <vodml-ref>caom2:Quality</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>1</minOccurs>
@@ -1724,9 +1739,9 @@
             <attribute>
                 <vodml-id>Position.bounds</vodml-id>
                 <name>bounds</name>
-                <description>boundary that includes the data</description>
+                <description>spatial boundary that includes the data</description>
                 <datatype>
-                    <vodml-ref>caom:Shape</vodml-ref>
+                    <vodml-ref>caom2:Shape</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1738,7 +1753,7 @@
                 <name>dimension</name>
                 <description>number of separate measurements (pixels) along each axis</description>
                 <datatype>
-                    <vodml-ref>caom:Dimension2D</vodml-ref>
+                    <vodml-ref>caom2:Dimension2D</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1792,9 +1807,9 @@
             <attribute>
                 <vodml-id>Energy.bounds</vodml-id>
                 <name>bounds</name>
-                <description>interval bounds that include the data</description>
+                <description>energy bounds that include the data</description>
                 <datatype>
-                    <vodml-ref>caom:Interval</vodml-ref>
+                    <vodml-ref>caom2:Interval</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1806,7 +1821,7 @@
                 <name>emBand</name>
                 <description>standard name of the energy regime included in the data</description>
                 <datatype>
-                    <vodml-ref>caom:EnergyBand</vodml-ref>
+                    <vodml-ref>caom2:EnergyBand</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1866,7 +1881,7 @@
                 <name>transition</name>
                 <description>target energy transition for this data</description>
                 <datatype>
-                    <vodml-ref>caom:EnergyTransition</vodml-ref>
+                    <vodml-ref>caom2:EnergyTransition</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1919,9 +1934,9 @@
             <attribute>
                 <vodml-id>Time.bounds</vodml-id>
                 <name>bounds</name>
-                <description>interval bounds that include the data</description>
+                <description>time bounds that include the data</description>
                 <datatype>
-                    <vodml-ref>caom:Interval</vodml-ref>
+                    <vodml-ref>caom2:Interval</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1987,7 +2002,7 @@
                 <name>states</name>
                 <description>standard polarization states included</description>
                 <datatype>
-                    <vodml-ref>caom:PolarizationState</vodml-ref>
+                    <vodml-ref>caom2:PolarizationState</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -2011,7 +2026,7 @@
         <package>
             <vodml-id>types</vodml-id>
             <name>types</name>
-            <description>CAOM data types</description>
+            <description>data types</description>
         
             <dataType>
                 <vodml-id>Point</vodml-id>
@@ -2048,7 +2063,7 @@
                     <vodml-id>Shape.center</vodml-id>
                     <name>center</name>
                     <datatype>
-                        <vodml-ref>caom:Point</vodml-ref>
+                        <vodml-ref>caom2:Point</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2083,7 +2098,7 @@
                 <vodml-id>Circle</vodml-id>
                 <name>Circle</name>
                 <extends>
-                    <vodml-ref>caom:Shape</vodml-ref>
+                    <vodml-ref>caom2:Shape</vodml-ref>
                 </extends>
                 <attribute>
                     <vodml-id>Circle.radius</vodml-id>
@@ -2102,16 +2117,16 @@
                 <vodml-id>Polygon</vodml-id>
                 <name>Polygon</name>
                 <extends>
-                    <vodml-ref>caom:Shape</vodml-ref>
+                    <vodml-ref>caom2:Shape</vodml-ref>
                 </extends>
                 <attribute>
                     <vodml-id>Polygon.vertices</vodml-id>
                     <name>vertices</name>
                     <datatype>
-                        <vodml-ref>caom:Point</vodml-ref>
+                        <vodml-ref>caom2:Point</vodml-ref>
                     </datatype>
                     <multiplicity>
-                        <minOccurs>1</minOccurs>
+                        <minOccurs>3</minOccurs>
                         <maxOccurs>666</maxOccurs>
                     </multiplicity>
                 </attribute>
@@ -2173,7 +2188,7 @@
                     <vodml-id>Interval.samples</vodml-id>
                     <name>samples</name>
                     <datatype>
-                        <vodml-ref>caom:SubInterval</vodml-ref>
+                        <vodml-ref>caom2:SubInterval</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2198,7 +2213,7 @@
         <package>
             <vodml-id>wcs</vodml-id>
             <name>wcs</name>
-            <description>CAOM World Coordinate System (WCS)</description>
+            <description>World Coordinate System (WCS) data types</description>
             
             <dataType>
                 <vodml-id>Axis</vodml-id>
@@ -2315,7 +2330,7 @@
                     <vodml-id>Slice.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:Axis</vodml-ref>
+                        <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2369,7 +2384,7 @@
                     <vodml-id>Coord2D.coord1</vodml-id>
                     <name>coord1</name>
                     <datatype>
-                        <vodml-ref>caom:RefCoord</vodml-ref>
+                        <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2380,7 +2395,7 @@
                     <vodml-id>Coord2D.coord2</vodml-id>
                     <name>coord2</name>
                     <datatype>
-                        <vodml-ref>caom:RefCoord</vodml-ref>
+                        <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2396,7 +2411,7 @@
                     <vodml-id>CoordRange1D.start</vodml-id>
                     <name>start</name>
                     <datatype>
-                        <vodml-ref>caom:RefCoord</vodml-ref>
+                        <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2407,7 +2422,7 @@
                     <vodml-id>CoordRange1D.end</vodml-id>
                     <name>end</name>
                     <datatype>
-                        <vodml-ref>caom:RefCoord</vodml-ref>
+                        <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2423,7 +2438,7 @@
                     <vodml-id>CoordBounds1D.samples</vodml-id>
                     <name>vertices</name>
                     <datatype>
-                        <vodml-ref>caom:CoordRange1D</vodml-ref>
+                        <vodml-ref>caom2:CoordRange1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2450,7 +2465,7 @@
                     <vodml-id>CoordFunction1D.refCoord</vodml-id>
                     <name>refCoord</name>
                     <datatype>
-                        <vodml-ref>caom:RefCoord</vodml-ref>
+                        <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2477,7 +2492,7 @@
                     <vodml-id>CoordAxis1D.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:Axis</vodml-ref>
+                        <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2488,7 +2503,7 @@
                     <vodml-id>CoordAxis2D.error</vodml-id>
                     <name>error</name>
                     <datatype>
-                        <vodml-ref>caom:CoordError</vodml-ref>
+                        <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2499,7 +2514,7 @@
                     <vodml-id>CoordAxis1D.range</vodml-id>
                     <name>range</name>
                     <datatype>
-                        <vodml-ref>caom:CoordRange1D</vodml-ref>
+                        <vodml-ref>caom2:CoordRange1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2510,7 +2525,7 @@
                     <vodml-id>CoordAxis1D.bounds</vodml-id>
                     <name>bounds</name>
                     <datatype>
-                        <vodml-ref>caom:CoordBounds1D</vodml-ref>
+                        <vodml-ref>caom2:CoordBounds1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2521,7 +2536,7 @@
                     <vodml-id>CoordAxis1D.function</vodml-id>
                     <name>function</name>
                     <datatype>
-                        <vodml-ref>caom:CoordFunction1D</vodml-ref>
+                        <vodml-ref>caom2:CoordFunction1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2537,7 +2552,7 @@
                     <vodml-id>CoordRange2D.start</vodml-id>
                     <name>start</name>
                     <datatype>
-                        <vodml-ref>caom:Coord2D</vodml-ref>
+                        <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2548,7 +2563,7 @@
                     <vodml-id>CoordRange2D.end</vodml-id>
                     <name>end</name>
                     <datatype>
-                        <vodml-ref>caom:Coord2D</vodml-ref>
+                        <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2564,7 +2579,7 @@
                     <vodml-id>CoordBounds2D.vertices</vodml-id>
                     <name>vertices</name>
                     <datatype>
-                        <vodml-ref>caom:Coord2D</vodml-ref>
+                        <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2580,7 +2595,7 @@
                     <vodml-id>CoordFunction2D.dimension</vodml-id>
                     <name>dimension</name>
                     <datatype>
-                        <vodml-ref>caom:Dimension2D</vodml-ref>
+                        <vodml-ref>caom2:Dimension2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2591,7 +2606,7 @@
                     <vodml-id>CoordFunction2D.refCoord</vodml-id>
                     <name>refCoord</name>
                     <datatype>
-                        <vodml-ref>caom:Coord2D</vodml-ref>
+                        <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2651,7 +2666,7 @@
                     <vodml-id>CoordAxis2D.axis1</vodml-id>
                     <name>axis1</name>
                     <datatype>
-                        <vodml-ref>caom:Axis</vodml-ref>
+                        <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2662,7 +2677,7 @@
                     <vodml-id>CoordAxis2D.axis2</vodml-id>
                     <name>axis2</name>
                     <datatype>
-                        <vodml-ref>caom:Axis</vodml-ref>
+                        <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2673,7 +2688,7 @@
                     <vodml-id>CoordAxis2D.error1</vodml-id>
                     <name>error1</name>
                     <datatype>
-                        <vodml-ref>caom:CoordError</vodml-ref>
+                        <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2684,7 +2699,7 @@
                     <vodml-id>CoordAxis2D.error2</vodml-id>
                     <name>error2</name>
                     <datatype>
-                        <vodml-ref>caom:CoordError</vodml-ref>
+                        <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2695,7 +2710,7 @@
                     <vodml-id>CoordAxis2D.range</vodml-id>
                     <name>range</name>
                     <datatype>
-                        <vodml-ref>caom:CoordRange2D</vodml-ref>
+                        <vodml-ref>caom2:CoordRange2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2706,7 +2721,7 @@
                     <vodml-id>CoordAxis2D.bounds</vodml-id>
                     <name>bounds</name>
                     <datatype>
-                        <vodml-ref>caom:CoordBounds2D</vodml-ref>
+                        <vodml-ref>caom2:CoordBounds2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2717,7 +2732,7 @@
                     <vodml-id>CoordAxis2D.function</vodml-id>
                     <name>function</name>
                     <datatype>
-                        <vodml-ref>caom:CoordFunction2D</vodml-ref>
+                        <vodml-ref>caom2:CoordFunction2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2733,7 +2748,7 @@
                     <vodml-id>SpatialWCS.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:CoordAxis2D</vodml-ref>
+                        <vodml-ref>caom2:CoordAxis2D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2782,7 +2797,7 @@
                     <vodml-id>SpectralWCS.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:CoordAxis1D</vodml-ref>
+                        <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2892,7 +2907,7 @@
                     <vodml-id>SpectralWCS.transition</vodml-id>
                     <name>transition</name>
                     <datatype>
-                        <vodml-ref>caom:EnergyTransition</vodml-ref>
+                        <vodml-ref>caom2:EnergyTransition</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
@@ -2919,7 +2934,7 @@
                     <vodml-id>TemporalWCS.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:CoordAxis1D</vodml-ref>
+                        <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -2990,7 +3005,7 @@
                     <vodml-id>PolarizationWCS.axis</vodml-id>
                     <name>axis</name>
                     <datatype>
-                        <vodml-ref>caom:CoordAxis1D</vodml-ref>
+                        <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -3006,7 +3021,7 @@
                     <vodml-id>ObservableAxis.dependent</vodml-id>
                     <name>dependent</name>
                     <datatype>
-                        <vodml-ref>caom:Slice</vodml-ref>
+                        <vodml-ref>caom2:Slice</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
@@ -3017,7 +3032,7 @@
                     <vodml-id>ObservableAxis.independent</vodml-id>
                     <name>independent</name>
                     <datatype>
-                        <vodml-ref>caom:Slice</vodml-ref>
+                        <vodml-ref>caom2:Slice</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>0</minOccurs>
