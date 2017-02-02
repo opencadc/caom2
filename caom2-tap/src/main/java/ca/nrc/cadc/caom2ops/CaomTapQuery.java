@@ -105,8 +105,6 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -159,7 +157,6 @@ public class CaomTapQuery
         
     	log.debug("performing query on observation URI = " + uri.toString());
         
-        // generate query, do not follow redirect
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getADQL(uri);
         log.debug("observation query: " + adql);
@@ -169,7 +166,6 @@ public class CaomTapQuery
     }
     
     /**
-     * Get all artifacts for a plane.
      * 
      * @param uri
      * @param artifactOnly
@@ -179,12 +175,11 @@ public class CaomTapQuery
      * @throws AccessControlException
      * @throws CertificateException 
      */
-    // used by caom2-datalink-server
-    public List<Artifact> performQuery(final PublisherID uri, boolean artifactOnly)
+    public ArtifactQueryResult performQuery(final PublisherID uri, boolean artifactOnly)
         throws IOException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
-    	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
+    	log.debug("performing query on plane URI = " + uri.toString() + " artifactOnly=" + artifactOnly);
     	
         // generate query, do not follow redirect
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
@@ -192,7 +187,8 @@ public class CaomTapQuery
         log.debug("link query: " + adql);
 
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
-    	return buildArtifacts(doc);
+        ArtifactQueryResult ret = buildArtifacts(doc);
+        return ret;
     }
     
     /**
@@ -207,7 +203,7 @@ public class CaomTapQuery
      * @throws CertificateException 
      */
     // used by caom2-datalink-server
-    public List<Artifact> performQuery(final PlaneURI uri, boolean artifactOnly)
+    public ArtifactQueryResult performQuery(final PlaneURI uri, boolean artifactOnly)
         throws IOException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
@@ -221,6 +217,7 @@ public class CaomTapQuery
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
     	return buildArtifacts(doc);
     }
+    
 
     /**
      *  Get a single artifact.
@@ -244,10 +241,10 @@ public class CaomTapQuery
         log.debug("cutout query: " + adql);
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
-        List<Artifact> artifacts = buildArtifacts(doc);
-        if (artifacts.isEmpty())
+        ArtifactQueryResult ar = buildArtifacts(doc);
+        if (ar.getArtifacts().isEmpty())
             return null;
-        Artifact a = artifacts.get(0);
+        Artifact a = ar.getArtifacts().get(0);
         log.debug("found: " + a.getURI());
         return a;
     }
@@ -441,11 +438,10 @@ public class CaomTapQuery
         return obs.get(0);
     }
     
-    private List<Artifact> buildArtifacts(final VOTableDocument vot) 
+    private ArtifactQueryResult buildArtifacts(final VOTableDocument vot) 
     {
     	log.debug("building artifacts from VOTable");
         //logHeader(votable);
-    	List<Artifact> artifacts = new ArrayList<Artifact>();
 
         VOTableResource vr = vot.getResourceByType("results");
         VOTableTable vt = vr.getTable();
@@ -460,10 +456,27 @@ public class CaomTapQuery
         ChunkMapper cm = new ChunkMapper(utypeMap);
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     	
+        
+        
+        ArtifactQueryResult ret = new ArtifactQueryResult();
     	while (rowIterator.hasNext())
     	{
             List<Object> row = rowIterator.next();
             //logRow(row);
+            
+            Integer mrCol = utypeMap.get("column-name:metaReadable");
+            Integer drCol = utypeMap.get("column-name:dataReadable");
+            if (mrCol != null)
+            {
+                Object o = row.get(mrCol);
+                ret.metaReadable = (o != null);
+            }
+            if (drCol != null)
+            {
+                Object o = row.get(drCol);
+                ret.dataReadable = (o != null);
+            }
+            log.debug("found metaReadable: " + ret.metaReadable + " dataReadable: " + ret.dataReadable);
             
             Artifact a = am.mapRow(row, df);
             if (a != null)
@@ -473,7 +486,7 @@ public class CaomTapQuery
                     if (curArtifact != null) // found first row of next artifact in same plane
                         log.debug("END artifact: " + curArtifact.getID());
                     curArtifact = a;
-                    artifacts.add(curArtifact);
+                    ret.getArtifacts().add(curArtifact);
                     log.debug("START artifact: " + curArtifact.getID());
                 }
                 // else a == curArtifact
@@ -520,7 +533,7 @@ public class CaomTapQuery
             }
     	}
     	    	
-    	return artifacts;
+    	return ret;
     }
     
     private Map<String, Object> getQueryParameters(final String format, final String adql)

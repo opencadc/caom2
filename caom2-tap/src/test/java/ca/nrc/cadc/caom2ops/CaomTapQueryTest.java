@@ -181,9 +181,9 @@ public class CaomTapQueryTest
             buildArtifacts.setAccessible(true);
             
             int i = 1;
-            List<Artifact> artifacts = (List<Artifact>) buildArtifacts.invoke(query, votable);
-            Assert.assertEquals(ARTIFACT_SIZE, artifacts.size() );
-            for (Artifact artifact : artifacts)
+            ArtifactQueryResult ar = (ArtifactQueryResult) buildArtifacts.invoke(query, votable);
+            Assert.assertEquals(ARTIFACT_SIZE, ar.getArtifacts().size() );
+            for (Artifact artifact : ar.getArtifacts())
             {
             	Assert.assertEquals(Long.parseLong(ARTIFACT_ID) + i, artifact.getID().getLeastSignificantBits());
             	Assert.assertEquals(ARTIFACT_URI, artifact.getURI().toString());
