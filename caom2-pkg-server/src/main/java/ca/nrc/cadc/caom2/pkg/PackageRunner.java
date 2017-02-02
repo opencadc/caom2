@@ -74,12 +74,12 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import java.util.Date;
 
-import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
@@ -89,7 +89,6 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.ThrowableUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -213,18 +212,20 @@ public class PackageRunner implements JobRunner
             {
                 URI uri = new URI(suri);
                 PlaneURI puri;
-                List<Artifact> artifacts;
+                ArtifactQueryResult result;
                 if ( PublisherID.SCHEME.equals(uri.getScheme()))
                 {
                     PublisherID p = new PublisherID(uri);
-                    artifacts = query.performQuery(p, true);
+                    result = query.performQuery(p, true);
                     puri = toPlaneURI(p);
                 }
                 else
                 {
                     puri = new PlaneURI(uri);
-                    artifacts = query.performQuery(puri, true);
+                    result = query.performQuery(puri, true);
                 }
+                List<Artifact> artifacts = result.getArtifacts();
+                
                 stripPreviews(artifacts);
                 if (idList.size() == 1 && artifacts.size() == 1)
                 {

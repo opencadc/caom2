@@ -83,36 +83,40 @@ public class AdqlQueryGenerator
 {
     private static final Logger log = Logger.getLogger(AdqlQueryGenerator.class);
 
-    private static final String SELECT_ARTIFACT = "SELECT Artifact.*";
+    // use the obsID FK column and an alias because FK columns don't have a utype 
+    // and thus we won't accidentally effect result parsing
+    private static final String SELECT_READABLE = "Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
+    
+    private static final String SELECT_ARTIFACT = "Artifact.*";
     private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";
-    private static final String SELECT_OBS2CHUNK = "SELECT Observation.*, Plane.*, Artifact.*, Part.*, Chunk.*";
+    private static final String SELECT_OBS2CHUNK = "Observation.*, Plane.*, Artifact.*, Part.*, Chunk.*";
     
     private static final String ARTIFACT2CHUNK =
-        "caom2.Artifact AS Artifact "
+        "caom2.Artifact AS Artifact"
         + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
         + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
     
     private static final String PLANE2CHUNK =
-        "caom2.Plane AS Plane "
-        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
+        "caom2.Plane AS Plane"
+        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
         + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
         + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
     
     private static final String OBS2CHUNK = 
-        "caom2.Observation AS Observation "
-        + " JOIN caom2.Plane AS Plane ON Observation.obsID = Plane.obsID"
-        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
+        "caom2.Observation AS Observation"
+        + " LEFT OUTER JOIN caom2.Plane AS Plane ON Observation.obsID = Plane.obsID"
+        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
         + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
         + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
     
     private static final String PLANE2ARTIFACT =
-        "caom2.Plane AS Plane "
-        + " JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
+        "caom2.Plane AS Plane"
+        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
     
     // used by meta
     public String getADQL(final ObservationURI uri)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("SELECT ");
         sb.append(SELECT_OBS2CHUNK);
         sb.append(" FROM ");
         sb.append(OBS2CHUNK);
@@ -125,7 +129,8 @@ public class AdqlQueryGenerator
     // used by datalink
     public String getADQL(final PublisherID uri, boolean artifactOnly)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("SELECT ");
+        sb.append(SELECT_READABLE).append(",");
         if (artifactOnly)
         {
             sb.append(SELECT_ARTIFACT);
@@ -152,7 +157,8 @@ public class AdqlQueryGenerator
     // used by datalink
     public String getADQL(final PlaneURI uri, boolean artifactOnly)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("SELECT ");
+        sb.append(SELECT_READABLE).append(",");
         if (artifactOnly)
         {
             sb.append(SELECT_ARTIFACT);
@@ -180,6 +186,7 @@ public class AdqlQueryGenerator
     public String getArtifactADQL(final URI uri)
     {
         StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
         sb.append(SELECT_ARTIFACT2CHUNK);
         sb.append(" FROM ");
         sb.append(ARTIFACT2CHUNK);
