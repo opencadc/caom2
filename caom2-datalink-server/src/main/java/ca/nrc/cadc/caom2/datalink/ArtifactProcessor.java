@@ -329,7 +329,7 @@ public class ArtifactProcessor
 
         if (ab.circle != null)
         {
-            sp = new ServiceParameter("CIRC", "double", 3, false, "obs.field");
+            sp = new ServiceParameter("CIRCLE", "double", 3, false, "obs.field");
             sp.xtype = "circle";
             sp.unit = "deg";
             sp.setMinMax(null, ab.circle);
@@ -338,7 +338,7 @@ public class ArtifactProcessor
 
         if (ab.poly != null)
         {
-            sp = new ServiceParameter("POLY", "double", null, true, "obs.field");
+            sp = new ServiceParameter("POLYGON", "double", null, true, "obs.field");
             sp.xtype = "polygon";
             sp.unit = "deg";
             sp.setMinMax(null, ab.poly);
