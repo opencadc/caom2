@@ -134,8 +134,8 @@ public class SodaJobRunner implements JobRunner
 
     static final String PARAM_ID = "ID";
     static final String PARAM_POS = "POS";
-    static final String PARAM_CIRC = "CIRC";
-    static final String PARAM_POLY = "POLY";
+    static final String PARAM_CIRC = "CIRCLE";
+    static final String PARAM_POLY = "POLYGON";
     static final String PARAM_BAND = "BAND";
     static final String PARAM_TIME = "TIME";
     static final String PARAM_POL = "POL";
@@ -541,34 +541,21 @@ public class SodaJobRunner implements JobRunner
         List<String> circList = params.get(PARAM_CIRC);
         List<String> polyList = params.get(PARAM_POLY);
         DoubleArrayFormat daf = new DoubleArrayFormat();
-        List<Cutout<Shape>> posCut = new ArrayList<Cutout<Shape>>();
+        List<Cutout<Shape>> posCut = new ArrayList<>();
         for (String s : posList)
         {
             s = s.trim();
             if (s.startsWith("circle"))
             {
                 s = s.substring(7); // remove keyword
-                CircleFormat cf = new CircleFormat();
-                ca.nrc.cadc.dali.Circle c = cf.parse(s);
-                Circle cc = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
-                posCut.add(new Cutout(PARAM_POS, s, cc));
+                circList.add(s);
             }
             else if (s.startsWith("polygon"))
             {
                 s = s.substring(8); // remove keyword
-                PolygonFormat pf = new PolygonFormat();
-                ca.nrc.cadc.dali.Polygon p = pf.parse(s);
-                Polygon pp = new Polygon();
-                SegmentType seg = SegmentType.MOVE;
-                for (ca.nrc.cadc.dali.Point coord : p.getVertices())
-                {
-                    Vertex v = new Vertex(coord.getLongitude(), coord.getLatitude(), seg);
-                    pp.getVertices().add(v);
-                    seg = SegmentType.LINE;
-                }
-                pp.getVertices().add(Vertex.CLOSE);
-                posCut.add(new Cutout(PARAM_POS, s, pp));
+                posList.add(s);
             }
+            // TODO: support range?
             else
                 throw new IllegalArgumentException("unexpected shape type in: " + s);
         }
