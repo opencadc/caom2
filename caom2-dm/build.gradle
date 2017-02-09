@@ -19,7 +19,7 @@ version = '2.2'
 jar {
     enabled = false
 }
-defaultTasks 'build', 'initHTML', 'xslt'
+defaultTasks 'build', 'xslt'
 
 task initHTML(type: Copy, dependsOn: test) {
     
@@ -31,9 +31,9 @@ task initHTML(type: Copy, dependsOn: test) {
 }
 
 xslt {
-    dependsOn test
+    dependsOn test, initHTML
     
-    stylesheet 'src/main/xsl/vo-dml2html.xsl'
+    stylesheet file('src/main/xsl/vo-dml2html.xsl')
     input file('src/main/resources/CAOM-2.2-vodml.xml')
     output file('build/html/index.html')
     
