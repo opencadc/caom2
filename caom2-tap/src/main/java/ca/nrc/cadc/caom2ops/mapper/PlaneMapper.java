@@ -165,7 +165,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             }
             
             Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
-            Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
+            Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.upper"));
             List<Double> eSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.energy.bounds"));
             if (nrgBounds1 != null && nrgBounds2 != null)
             {
