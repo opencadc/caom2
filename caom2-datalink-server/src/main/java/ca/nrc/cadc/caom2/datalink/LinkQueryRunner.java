@@ -116,18 +116,14 @@ public class LinkQueryRunner implements JobRunner
     //private static final String SERVICES_RESOURCE = "cutoutMetaResource.xml";
 
     private static final int MAXREC = 100;
-    private static final String GETDOWNLOAD = "getDownloadLinks";
+    private static final String GETDOWNLOAD = "downloads-only";
     
     private Job job;
     private JobUpdater jobUpdater;
     private SyncOutput syncOutput;
     private WebServiceLogInfo logInfo;
-    private RegistryClient regClient;
 
-    public LinkQueryRunner() 
-    { 
-        this.regClient =  new RegistryClient();
-    }
+    public LinkQueryRunner() { }
 
     @Override
     public void setJob(Job job)
@@ -386,45 +382,6 @@ public class LinkQueryRunner implements JobRunner
         }
     }
 
-    /*
-    private void addServiceURL(VOTableResource metaResource)
-        throws URISyntaxException, MalformedURLException
-    {
-        VOTableParam resourceIDParam = null;
-        VOTableParam standardIDParam = null;
-        for (VOTableParam param :  metaResource.getParams())
-        {
-            if (param.getName().equals("resourceIdentifier"))
-                resourceIDParam = param;
-            else if (param.getName().equals("standardID"))
-                standardIDParam = param;
-        }
-
-        // generate a suitable accessURL in a static ServiceDescriptor resource
-        if (resourceIDParam == null)
-            throw new MissingResourceException(
-                "resourceIdentifier parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "resourceIdentifier");
-        if (standardIDParam == null)
-            throw new MissingResourceException(
-                "standardID parameter missing from " + SERVICES_RESOURCE, LinkQueryRunner.class.getName(), "standardID");
-
-        AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-        if (am == null)
-        {
-            am = AuthMethod.ANON;
-        }
-        
-        URI serviceID = URI.create(resourceIDParam.getValue());
-        URI standardID = URI.create(standardIDParam.getValue());
-        URL serviceURL = regClient.getServiceURL(serviceID, standardID, am);
-
-        log.warn("addServiceURL: " + serviceID + " + " + standardID + " -> " + serviceURL);
-        
-        VOTableParam newAccessURL = new VOTableParam("accessURL", "char", null, true, serviceURL.toString());
-        metaResource.getParams().add(newAccessURL);
-    }
-    */
-    
     private void sendError(Throwable t, int code)
     {
         if (code >= 500)

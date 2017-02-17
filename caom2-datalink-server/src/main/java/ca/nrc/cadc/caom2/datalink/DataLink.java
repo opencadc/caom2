@@ -87,7 +87,8 @@ import ca.nrc.cadc.dali.tables.votable.VOTableField;
 public class DataLink implements Iterable<Object>
 {
     /**
-     * Terms from the http://www.ivoa.net/rdf/datalink/core vocabulary.
+     * Terms from the http://www.ivoa.net/rdf/datalink/core vocabulary plus
+     * CAOM extensions.
      */
     public enum Term
     {
@@ -97,7 +98,8 @@ public class DataLink implements Iterable<Object>
         PROGENITOR("#progenitor"),
         DERIVATION("#derivation"),
         PROC("#proc"),
-        CUTOUT("#cutout");
+        CUTOUT("#cutout"),
+        THUMBNAIL("http://www.openadc.org/caom2#thumbnail");
         
         private final String value;
         private Term(String value) { this.value = value; }
@@ -117,8 +119,9 @@ public class DataLink implements Iterable<Object>
     public String errorMessage;
 
     // custom CADC fields
-    //public List<ProductType> productTypes = new ArrayList<ProductType>();
-    public String fileURI;
+    public Boolean readable; // predict that the current user is allowed to download
+    
+    // associated object that turns into a new resource
     public ServiceDescriptor descriptor; // link-specific service descriptor
 
     public DataLink(String id, Term semantics)
@@ -159,6 +162,7 @@ public class DataLink implements Iterable<Object>
                 cur++;
                 switch(n)
                 {
+                    // this MUST match the order of the fields in getFields() below
                     case 0: return id;
                     case 1: return safeToString(url);
                     case 2: return serviceDef;
@@ -167,8 +171,7 @@ public class DataLink implements Iterable<Object>
                     case 5: return description;
                     case 6: return contentType;
                     case 7: return contentLength;
-                    case 8: return fileURI;
-                    //case 9: return toProductTypeMask(productTypes);
+                    case 8: return readable;
                 }
                 throw new NoSuchElementException();
             }
@@ -195,21 +198,6 @@ public class DataLink implements Iterable<Object>
         return url.toExternalForm();
     }
 
-    /*
-    private String toProductTypeMask(List<ProductType> productTypes)
-    {
-        StringBuilder sb = new StringBuilder();
-        for (ProductType p : productTypes)
-        {
-            sb.append(p.getValue());
-            sb.append(",");
-        }
-        if (sb.length() > 0)
-            return sb.substring(0, sb.length() - 1);
-        return null;
-    }
-    */
-    
     /**
      * Get list of table fields that matches the iteration order of the DataLink.
      *
@@ -261,16 +249,10 @@ public class DataLink implements Iterable<Object>
         fields.add(f);
 
         // custom
-        f = new VOTableField("file_uri", "char");
-        f.id = "fileURIRef";
-        f.setVariableSize(true);
+        f = new VOTableField("readable", "boolean");
+        f.description = "the caller is allowed to use this link with the current authentication";
         fields.add(f);
         
-        //f = new VOTableField("product_type", "char");
-        //f.setVariableSize(true);
-        //f.utype = "caom:Artifact.productType";
-        //fields.add(f);
-
         return fields;
     }
 

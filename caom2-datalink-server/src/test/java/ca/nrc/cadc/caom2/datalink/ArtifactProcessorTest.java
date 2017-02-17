@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.util.ArrayList;
@@ -126,7 +127,7 @@ public class ArtifactProcessorTest
             URI uri = new URI(PLANE_URI);
             ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
 
-            List<Artifact> artifacts = new ArrayList<Artifact>();
+            ArtifactQueryResult artifacts = new ArtifactQueryResult();
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
             Assert.assertTrue(links.isEmpty());
@@ -146,8 +147,9 @@ public class ArtifactProcessorTest
         {
             URI uri = new URI(PLANE_URI);
             
-            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
-            Assert.assertEquals("test setup", 2, artifacts.size());
+            ArtifactQueryResult artifacts = new ArtifactQueryResult();
+            artifacts.getArtifacts().addAll(getTestArtifacts(2, 1, 1));
+            Assert.assertEquals("test setup", 2, artifacts.getArtifacts().size());
 
             ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
             
@@ -184,9 +186,10 @@ public class ArtifactProcessorTest
         {
             URI uri = new URI(PLANE_URI);
 
-            List<Artifact> artifacts = getTestArtifacts(2, 1, 1);
-            Assert.assertEquals("test setup", 2, artifacts.size());
-
+            ArtifactQueryResult artifacts = new ArtifactQueryResult();
+            artifacts.getArtifacts().addAll(getTestArtifacts(2, 1, 1));
+            Assert.assertEquals("test setup", 2, artifacts.getArtifacts().size());
+            
             ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, null);
 
             List<DataLink> links = ap.process(uri, artifacts);

@@ -71,9 +71,9 @@ package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.uws.Job;
@@ -194,18 +194,18 @@ public class DynamicTableData implements TableData
                         
                         try
                         {   
-                            List<Artifact> artifacts;
+                            ArtifactQueryResult ar;
                             if (pubID != null)
                             {
                                 log.debug("getBatchIterator: " + pubID);
-                                artifacts = query.performQuery(pubID, artifactOnly);
+                                ar = query.performQuery(pubID, artifactOnly);
                             }
                             else
                             {
                                 log.debug("getBatchIterator: " + planeURI);
-                                artifacts = query.performQuery(planeURI, artifactOnly);
+                                ar = query.performQuery(planeURI, artifactOnly);
                             }
-                            if (artifacts.isEmpty())
+                            if (ar.getArtifacts().isEmpty())
                             {
                                 links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
@@ -214,8 +214,8 @@ public class DynamicTableData implements TableData
                             }
                             else
                             {
-                                log.debug("getBatchIterator: " + uri + ": " + artifacts.size() + " artifacts");
-                                links = ap.process(uri, artifacts);
+                                log.debug("getBatchIterator: " + uri + ": " + ar.getArtifacts().size() + " artifacts");
+                                links = ap.process(uri, ar);
                             }
                         }
                         catch(TransientFault f)

@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.EnergyUtil;
@@ -97,6 +98,7 @@ import ca.nrc.cadc.caom2.types.PolygonUtil;
 import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.TimeUtil;
 import ca.nrc.cadc.caom2.util.CutoutUtil;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
@@ -149,16 +151,19 @@ public class ArtifactProcessor
         this.downloadOnly = downloadOnly;
     }
     
-    public List<DataLink> process(URI uri, List<Artifact> artifacts)
+    public List<DataLink> process(URI uri, ArtifactQueryResult ar)
     {
-        List<DataLink> ret = new ArrayList<>(artifacts.size());
-        for (Artifact a : artifacts)
+        List<DataLink> ret = new ArrayList<>(ar.getArtifacts().size());
+        for (Artifact a : ar.getArtifacts())
         {
             DataLink.Term sem = DataLink.Term.THIS;
-            if (ProductType.PREVIEW.equals(a.getProductType())
-                    || ProductType.THUMBNAIL.equals(a.getProductType()))
+            if (ProductType.PREVIEW.equals(a.getProductType()))
             {
                 sem = DataLink.Term.PREVIEW;
+            }
+            else if (ProductType.THUMBNAIL.equals(a.getProductType()))
+            {
+                sem = DataLink.Term.THUMBNAIL;
             }
             else if (ProductType.CATALOG.equals(a.getProductType()))
             {
@@ -171,7 +176,14 @@ public class ArtifactProcessor
             {
                 sem = DataLink.Term.AUXILIARY;
             }
-                        
+            
+            Boolean readable  = null;
+            if (ReleaseType.DATA.equals(a.getReleaseType()))
+                readable = ar.dataReadable;
+            else if (ReleaseType.META.equals(a.getReleaseType()))
+                readable = ar.metaReadable;
+            // else: new releaseType is not likely without major caom design change
+            
             // direct download links
             try
             {
@@ -179,6 +191,7 @@ public class ArtifactProcessor
                 dl.url = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
+                dl.readable = readable;
                 ret.add(dl);
             }
             catch(MalformedURLException ex)
@@ -189,19 +202,6 @@ public class ArtifactProcessor
 
             if (!downloadOnly)
             {
-                // service links
-                /* deprecated cadc cutout service
-                boolean cutout = canCutout(a);
-                if (cutout)
-                {
-                    DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    link.serviceDef = CUTOUT;
-                    link.contentType = a.contentType; // unchanged
-                    link.contentLength = null; // unknown
-                    link.fileURI = a.getURI().toString();
-                    ret.add(link);
-                }
-                */
                 try
                 {
                     ArtifactBounds ab = generateBounds(a);
@@ -211,7 +211,7 @@ public class ArtifactProcessor
                     link.serviceDef = "soda-" + UUID.randomUUID();
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
-                    link.fileURI = a.getURI().toString();
+                    link.readable = readable;
                     link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
@@ -220,7 +220,7 @@ public class ArtifactProcessor
                     link.serviceDef = "soda-" + UUID.randomUUID();
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
-                    link.fileURI = a.getURI().toString();
+                    link.readable = readable;
                     link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
                     if (link.descriptor != null)
                         ret.add(link);
@@ -229,7 +229,6 @@ public class ArtifactProcessor
                 {
                     throw new RuntimeException("FAIL: invalid WCS", ex);
                 }
-
             }
         }
         return ret;
@@ -330,7 +329,7 @@ public class ArtifactProcessor
 
         if (ab.circle != null)
         {
-            sp = new ServiceParameter("CIRC", "double", 3, false, "obs.field");
+            sp = new ServiceParameter("CIRCLE", "double", 3, false, "obs.field");
             sp.xtype = "circle";
             sp.unit = "deg";
             sp.setMinMax(null, ab.circle);
@@ -339,7 +338,7 @@ public class ArtifactProcessor
 
         if (ab.poly != null)
         {
-            sp = new ServiceParameter("POLY", "double", null, true, "obs.field");
+            sp = new ServiceParameter("POLYGON", "double", null, true, "obs.field");
             sp.xtype = "polygon";
             sp.unit = "deg";
             sp.setMinMax(null, ab.poly);

@@ -73,13 +73,13 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Level;
@@ -251,9 +251,9 @@ public class DynamicTableDataTest
         }
 
         @Override
-        public List<Artifact> performQuery(PlaneURI planeURI, boolean artifactOnly)
+        public ArtifactQueryResult performQuery(PlaneURI planeURI, boolean artifactOnly)
         {
-            List<Artifact> ret = new ArrayList<Artifact>();
+            ArtifactQueryResult ret = new ArtifactQueryResult();
             try
             {
                 for (int i=0; i<num; i++)
@@ -263,14 +263,14 @@ public class DynamicTableDataTest
                         ProductType.SCIENCE, ReleaseType.DATA);
                     a.contentLength = 123L;
                     a.contentType = "text/plain";
-                    ret.add(a);
+                    ret.getArtifacts().add(a);
                 }
             }
             catch(Exception ex)
             {
                 throw new RuntimeException("test setup failed", ex);
             }
-            log.debug("TestCaomTapQuery.getArtifacts: " + ret.size());
+            log.debug("TestCaomTapQuery.getArtifacts: " + ret.getArtifacts().size());
             return  ret;
         }
     }

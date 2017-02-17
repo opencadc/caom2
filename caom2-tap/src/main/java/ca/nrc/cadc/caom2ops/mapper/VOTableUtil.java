@@ -24,11 +24,11 @@ public class VOTableUtil
      * can be used with a VOTableRowMapper to construct an object from a row.
      * 
      * @param fields
-     * @return a map of utype to column-index
+     * @return a map of utype or column name to column-index
      */
     public static Map<String,Integer> buildUTypeMap(final List<VOTableField> fields)
     {
-        Map<String,Integer> rowMap = new HashMap<String,Integer>();
+        Map<String,Integer> rowMap = new HashMap<>();
         for (int index = 0; index < fields.size(); index++)
         {
             VOTableField field = fields.get(index);
@@ -41,6 +41,14 @@ public class VOTableUtil
                             + ": " + cur + " and " + index);
                 log.debug(field.utype + " -> " + index);
                 rowMap.put(field.utype, index);
+            }
+            else
+            {
+                // add field name to map if no utype
+                String fake = "column-name:"+field.getName();
+                log.debug(fake + " -> " + index);
+                
+                rowMap.put(fake, index);
             }
         }
 
