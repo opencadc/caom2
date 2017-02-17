@@ -67,7 +67,7 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 
 ( 'caom2.Observation', 'proposal_id', 'collection-specific unique proposal identifier', 'caom2:Observation.proposal.id', NULL, NULL, 'adql:VARCHAR', 128, 0,1,0 , 20),
 ( 'caom2.Observation', 'proposal_pi', 'proposal principal investigator', 'caom2:Observation.proposal.pi', NULL, NULL, 'adql:VARCHAR', 128, 0,0,0 , 21),
-( 'caom2.Observation', 'proposal_project', 'project that created/acquired the observation', 'caom2:Observation.proprosal.project', NULL, NULL, 'adql:VARCHAR', 32, 1,0,0 , 22),
+( 'caom2.Observation', 'proposal_project', 'project that created/acquired the observation', 'caom2:Observation.proposal.project', NULL, NULL, 'adql:VARCHAR', 32, 1,0,0 , 22),
 ( 'caom2.Observation', 'proposal_title', 'proposal title', 'caom2:Observation.proposal.title', NULL, NULL, 'adql:VARCHAR', 256, 0,0,0 , 23),
 ( 'caom2.Observation', 'proposal_keywords', 'proposal keywords (space-separated list)', 'caom2:Observation.proposal.keywords', NULL, NULL, 'adql:VARCHAR', 512, 0,0,0 , 24),
 
