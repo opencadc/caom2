@@ -67,7 +67,7 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 
 ( 'caom2.Observation', 'proposal_id', 'collection-specific unique proposal identifier', 'caom2:Observation.proposal.id', NULL, NULL, 'char', 128, NULL, 0,1,0 , 20),
 ( 'caom2.Observation', 'proposal_pi', 'proposal principal investigator', 'caom2:Observation.proposal.pi', NULL, NULL, 'char', 128, 0,0,0 , 21),
-( 'caom2.Observation', 'proposal_project', 'project that created/acquired the observation', 'caom2:Observation.proprosal.project', NULL, NULL, 'char', 32, NULL, 1,0,0 , 22),
+( 'caom2.Observation', 'proposal_project', 'project that created/acquired the observation', 'caom2:Observation.proposal.project', NULL, NULL, 'char', 32, NULL, 1,0,0 , 22),
 ( 'caom2.Observation', 'proposal_title', 'proposal title', 'caom2:Observation.proposal.title', NULL, NULL, 'char', 256, NULL, 0,0,0 , 23),
 ( 'caom2.Observation', 'proposal_keywords', 'proposal keywords (space-separated list)', 'caom2:Observation.proposal.keywords', NULL, NULL, 'char', 512, NULL, 0,0,0 , 24),
 
@@ -101,7 +101,6 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 
 ( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', 21, 'timestamp', 1,0,0 , 90)
 ;
-
 
 -- Plane
 insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
