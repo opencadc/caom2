@@ -77,11 +77,9 @@ import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
 import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
 import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
 import ca.nrc.cadc.tap.parser.PgsphereDeParser;
-import ca.nrc.cadc.tap.parser.QuerySelectDeParser;
 import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
 import ca.nrc.cadc.tap.parser.converter.TopConverter;
-import ca.nrc.cadc.tap.parser.converter.postgresql.MatchConverter;
 import ca.nrc.cadc.tap.parser.converter.postgresql.PgFunctionNameConverter;
 import ca.nrc.cadc.tap.parser.extractor.FunctionExpressionExtractor;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
@@ -92,7 +90,7 @@ import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import org.apache.log4j.Logger;
 
 /**
- * AdqlQuery implementation for PostgreSQL + CAOM.
+ * AdqlQuery implementation for PostgreSQL + pg_sphere + CAOM-2.
  * 
  * @author pdowler
  */
@@ -100,9 +98,7 @@ public class AdqlQueryImpl extends AdqlQuery
 {
     private static Logger log = Logger.getLogger(AdqlQueryImpl.class);
     
-    public AdqlQueryImpl()
-    {
-    }
+    public AdqlQueryImpl() { }
     
     @Override
     protected void init()
@@ -129,6 +125,12 @@ public class AdqlQueryImpl extends AdqlQuery
         tnc.put("ivoa.ObsCore", "caom2.ObsCore");
         tnc.put("ivoa.ObsFile", "caom2.ObsFile");
         tnc.put("ivoa.ObsPart", "caom2.ObsPart");
+        // TAP-1.1 version of tap_schema
+        tnc.put("tap_schema.schemas", "tap_schema.schemas11");
+        tnc.put("tap_schema.tables", "tap_schema.tables11");
+        tnc.put("tap_schema.columns", "tap_schema.columns11");
+        tnc.put("tap_schema.keys", "tap_schema.keys11");
+        tnc.put("tap_schema.key_columns", "tap_schema.key_columns11");
         TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
 

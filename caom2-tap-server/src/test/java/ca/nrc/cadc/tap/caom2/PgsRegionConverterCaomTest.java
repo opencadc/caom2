@@ -72,6 +72,7 @@
  */
 package ca.nrc.cadc.tap.caom2;
 
+import ca.nrc.cadc.tap.AdqlQuery;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -79,21 +80,17 @@ import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ca.nrc.cadc.tap.TapQuery;
-import ca.nrc.cadc.tap.impl.AdqlQueryImpl;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Parameter;
 
 /**
- * test convertion of ADQL function to pgsphere implementation 
+ * Test convertion of ADQL function to pgsphere implementation 
  * @author Sailor Zhang
  *
  */
@@ -116,30 +113,21 @@ public class PgsRegionConverterCaomTest
         TAP_SCHEMA = TestUtil.loadTapSchema();
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception
+    
+    private class TestAdqlQueryImpl extends AdqlQuery
     {
+
+        @Override
+        protected void init()
+        {
+            // DO NOT call super.init()
+            // convert ADQL geometry function calls to alternate form
+            super.navigatorList.add(new CaomRegionConverter());
+        }
+        
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
-    @Before
-    public void setUp() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception
-    {
-    }
-
+    
     private void doit()
     {
         doit(true);
@@ -155,7 +143,7 @@ public class PgsRegionConverterCaomTest
             paramList.add(para);
             log.info("input query: " + _query);
 
-            TapQuery tapQuery = new AdqlQueryImpl();
+            TapQuery tapQuery = new TestAdqlQueryImpl();
             tapQuery.setTapSchema(TAP_SCHEMA);
             TestUtil.job.getParameterList().addAll(paramList);
             tapQuery.setJob(TestUtil.job);
@@ -220,156 +208,155 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
-    public void testIntersectsColumn()
+    @Test
+    public void testIntersectsColumn() // code casts position_bounds_center to scircle
     {
         _query = "select * from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 1";
-        _expected = "select * from caom2.plane where position_bounds_center && position_bounds";
+        _expected = "select * from caom2.plane where position_bounds_center::scircle && position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotIntersectsColumn()
     {
         _query = "select * from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 0";
-        _expected = "select * from caom2.plane where position_bounds_center !&& position_bounds";
+        _expected = "select * from caom2.plane where position_bounds_center::scircle !&& position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testIntersectsValue()
     {
         _query = "select * from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
-        _expected = "select * from caom2.plane where position_bounds && scircle '<(1d,2d),3d>'";
+        _expected = "select * from caom2.plane where position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotIntersectsValue()
     {
         _query = "select * from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 0";
-        _expected = "select * from caom2.plane where position_bounds !&& scircle '<(1d,2d),3d>'";
+        _expected = "select * from caom2.plane where position_bounds !&& scircle(spoint(radians(1), radians(2)), radians(3))";
         doit(false);
 
         _query = "select * from caom2.plane where NOT (INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1)";
-        _expected = "select * from caom2.plane where not (position_bounds && scircle '<(1d,2d),3d>')";
+        _expected = "select * from caom2.plane where not (position_bounds && scircle(spoint(radians(1), radians(2)), radians(3)))";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testIntersectsRegion()
     {
-        _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 1.0 2.0')) = 1";
-        _expected = "select * from caom2.plane where position_bounds && scircle '<(1.0d,1.0d),2.0d>'";
+        _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 1";
+        _expected = "select * from caom2.plane where position_bounds && scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotIntersectsRegion()
     {
-        _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 1.0 2.0')) = 0";
-        _expected = "select * from caom2.plane where position_bounds !&& scircle '<(1.0d,1.0d),2.0d>'";
+        _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 0";
+        _expected = "select * from caom2.plane where position_bounds !&& scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testIntersectsRegionPos()
     {
         // spoint has special handling in a predicate
         _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 1";
-        _expected = "select * from caom2.plane where position_bounds && cast(spoint '(1.0d,2.0d)' as scircle)";
+        _expected = "select * from caom2.plane where position_bounds && cast(spoint(radians(1.0), radians(2.0)) as scircle)";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotIntersectsRegionPos()
     {
         // spoint has special handling in a predicate
         _query = "select * from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 0";
-        _expected = "select * from caom2.plane where position_bounds !&& cast(spoint '(1.0d,2.0d)' as scircle)";
+        _expected = "select * from caom2.plane where position_bounds !&& cast(spoint(radians(1.0), radians(2.0)) as scircle)";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testIntersectsPoint()
     {
         // spoint has special handling in a predicate
-        _query = "select * from caom2.plane where INTERSECTS(POINT('',1,2), position_bounds) = 1";
-        _expected = "select * from caom2.plane where cast(spoint '(1d,2d)' as scircle) && position_bounds";
+        _query = "select * from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 1";
+        _expected = "select * from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) && position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotIntersectsPoint()
     {
         // spoint has special handling in a predicate
-        _query = "select * from caom2.plane where INTERSECTS(POINT('',1,2), position_bounds) = 0";
-        _expected = "select * from caom2.plane where cast(spoint '(1d,2d)' as scircle) !&& position_bounds";
+        _query = "select * from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 0";
+        _expected = "select * from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) !&& position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testContainsColumn()
     {
 
         _query = "select * from caom2.plane where CONTAINS(position_bounds_center, position_bounds) = 1";
-        _expected = "select * from caom2.plane where position_bounds_center @ position_bounds";
+        _expected = "select * from caom2.plane where position_bounds_center <@ position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotContainsColumn()
     {
 
         _query = "select * from caom2.plane where CONTAINS(position_bounds_center, position_bounds) = 0";
-        _expected = "select * from caom2.plane where position_bounds_center !@ position_bounds";
+        _expected = "select * from caom2.plane where position_bounds_center !<@ position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testContainsValue()
     {
 
-        _query = "select * from caom2.plane where CONTAINS(CIRCLE('',1,2,3), energy_bounds) = 1";
-        _expected = "select * from caom2.plane where scircle '<(1d,2d),3d>' @ energy_bounds";
+        _query = "select * from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
+        _expected = "select * from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotContainsValue()
     {
 
         _query = "select * from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
-        _expected = "select * from caom2.plane where scircle '<(1d,2d),3d>' !@ position_bounds";
+        _expected = "select * from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ position_bounds";
         doit(false);
 
-        _query = "select * from caom2.plane where NOT (CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0)";
-        _expected = "select * from caom2.plane where not (scircle '<(1d,2d),3d>' !@ position_bounds)";
+        _query = "select * from caom2.plane where NOT (CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1)";
+        _expected = "select * from caom2.plane where not (scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds)";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testContainsPoint()
     {
-        // spoint has special handling in a predicate
-        _query = "select * from caom2.plane where CONTAINS(POINT('',1,2), energy_bounds) = 1";
-        _expected = "select * from caom2.plane where cast(spoint '(1d,2d)' as scircle) @ position_bounds";
+        _query = "select * from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
+        _expected = "select * from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) <@ position_bounds";
         doit(false);
-        _query = "select * from caom2.plane where CONTAINS(energy_bounds, POINT('',1,2)) = 1";
-        _expected = "select * from caom2.plane where energy_bounds @ cast(spoint '(1d,2d)' as scircle)";
+        _query = "select * from caom2.plane where CONTAINS(position_bounds, POINT('',1,2)) = 1";
+        _expected = "select * from caom2.plane where position_bounds <@ cast(spoint(radians(1), radians(2)) as scircle)";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testNotContainsPoint()
     {
         // spoint has special handling in a predicate
-        _query = "select * from caom2.plane where CONTAINS(POINT('',1,2), energy_bounds) = 0";
-        _expected = "select * from caom2.plane where cast(spoint '(1d,2d)' as scircle) !@ position_bounds";
+        _query = "select * from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 0";
+        _expected = "select * from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) !<@ position_bounds";
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testJoinAliasIntersects()
     {
 
@@ -378,7 +365,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testPoint()
     {
         _query = "select POINT('ICRS GEOCENTER', 1, 2) from caom2.plane";
@@ -386,7 +373,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testCircle()
     {
         _query = "select CIRCLE('ICRS GEOCENTER', 10, 10, 1) from caom2.plane";
@@ -394,7 +381,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testBox()
     {
         _query = "select BOX('ICRS GEOCENTER', 10, 20, 1, 2) from caom2.plane";
@@ -402,7 +389,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testPolygon()
     {
         _query = "select POLYGON('ICRS GEOCENTER', 2,2,3,3,1,4) from caom2.plane";
@@ -410,7 +397,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testRegionBox()
     {
         _query = "select REGION('BOX ICRS GEOCENTER 11 22 10 20') from caom2.plane";
@@ -418,7 +405,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testRegionPolygon()
     {
         _query = "select REGION('POLYGON ICRS GEOCENTER 1 2 3 4 5 6 7 8') from caom2.plane";
@@ -426,7 +413,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testRegionCircle()
     {
         _query = "select REGION('CIRCLE ICRS GEOCENTER 11 22 0.5') from caom2.plane";
@@ -434,7 +421,7 @@ public class PgsRegionConverterCaomTest
         doit(false);
     }
 
-    //@Test
+    @Test
     public void testRegionPosition()
     {
         _query = "select REGION('POSITION GALACTIC 11 22') from caom2.plane";

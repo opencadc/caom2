@@ -100,21 +100,11 @@ public class TapSchemaDAOImpl extends TapSchemaDAO
     {
         List<FunctionDesc> ret = super.getFunctionDescs();
 
-        // change the count function to be a BIGINT
-        Iterator<FunctionDesc> i = ret.iterator();
-        while (i.hasNext())
-        {
-            FunctionDesc next = i.next();
-            if (next.name.equals("COUNT"))
-            {
-                next.datatype = "adql:BIGINT";
-            }
-        }
-
-        ret.add(new FunctionDesc("LOWER", "", "adql:VARCHAR")); // ignoreCase query support
-        ret.add(new FunctionDesc("isDownloadable", null));
-        ret.add(new FunctionDesc("RANGE_S2D", "", "adql:DOUBLE"));
+        ret.add(new FunctionDesc("LOWER", new TapDataType("char", null, true, null)));
+        ret.add(new FunctionDesc("isDownloadable", TapDataType.FUNCTION_ARG));
+        ret.add(new FunctionDesc("RANGE_S2D", new TapDataType("double", 4, false, "range")));
         //ret.add(new FunctionDesc("MATCH", "", "adql:INTEGER"));
+        
         return ret;
     }
 }

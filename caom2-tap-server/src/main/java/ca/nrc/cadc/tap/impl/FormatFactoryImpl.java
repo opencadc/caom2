@@ -70,11 +70,10 @@
 package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.tap.TapSelectItem;
 import ca.nrc.cadc.tap.caom2.CaomKeywordsFormat;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
-import ca.nrc.cadc.tap.schema.ColumnDesc;
-import ca.nrc.cadc.tap.schema.ParamDesc;
 import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
 import ca.nrc.cadc.tap.writer.format.SCircleFormat;
 import ca.nrc.cadc.tap.writer.format.SPointFormat;
@@ -94,15 +93,9 @@ public class FormatFactoryImpl extends DefaultFormatFactory
         super();
     }
 
+    
     @Override
-    public Format<Object> getFormat(ColumnDesc d)
-    {
-        Format<Object> ret = super.getFormat(d);
-        log.debug("fomatter: " + d + " " + ret.getClass().getName());
-        return ret;
-    }
-    @Override
-    public Format<Object> getFormat(ParamDesc d)
+    public Format<Object> getFormat(TapSelectItem d)
     {
         Format<Object> ret = super.getFormat(d);
         log.debug("fomatter: " + d + " " + ret.getClass().getName());
@@ -110,44 +103,53 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     }
 
     @Override
-    public Format<Object> getPointFormat(ColumnDesc columnDesc)
+    public Format<Object> getPointFormat(TapSelectItem columnDesc)
     {
         log.debug("getPointFormat: " + columnDesc);
         return new SPointFormat();
     }
 
     @Override
-    public Format<Object> getCircleFormat(ColumnDesc columnDesc)
+    public Format<Object> getCircleFormat(TapSelectItem columnDesc)
     {
         log.debug("getCircleFormat: " + columnDesc);
         return new SCircleFormat();
     }
+
+    @Override
+    protected Format<Object> getPolygonFormat(TapSelectItem columnDesc)
+    {
+        log.debug("getPolygonFormat: " + columnDesc);
+        return new SPolyFormat();
+    }
+    
     
     @Override
-    public Format<Object> getRegionFormat(ColumnDesc columnDesc)
+    public Format<Object> getRegionFormat(TapSelectItem columnDesc)
     {
         log.debug("getRegionFormat: " + columnDesc);
         return new SPolyFormat();
     }
 
     @Override
-    public Format<Object> getIntervalFormat(ColumnDesc columnDesc)
+    public Format<Object> getIntervalFormat(TapSelectItem columnDesc)
     {
         log.debug("getIntervalFormat: " + job.getID() + " " + columnDesc);
         return new IntervalFormat();
     }
     
     @Override
-    public Format<Object> getClobFormat(ColumnDesc columnDesc)
+    public Format<Object> getClobFormat(TapSelectItem columnDesc)
     {
         log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
-
+        
         if (columnDesc != null)
         {
-            if (columnDesc.getTableName().equalsIgnoreCase("caom2.Observation")
-                || columnDesc.getTableName().equalsIgnoreCase("caom2.Plane"))
+            if ("caom2.Observation".equalsIgnoreCase(columnDesc.tableName)
+                || "caom2.Plane".equalsIgnoreCase(columnDesc.tableName))
             {
-                if (columnDesc.getColumnName().endsWith("_keywords"))
+                if (columnDesc.getColumnName() != null
+                        && columnDesc.getColumnName().endsWith("_keywords"))
                     return new CaomKeywordsFormat();
             }
         }
@@ -156,17 +158,18 @@ public class FormatFactoryImpl extends DefaultFormatFactory
         if (columnDesc != null)
         {
             // caom2.Artifact, caom2.SIAv1
-            if ( ( columnDesc.getTableName().equalsIgnoreCase("caom2.Artifact")
-                    || columnDesc.getTableName().equalsIgnoreCase("caom2.SIAv1") )
-                    && columnDesc.getColumnName().equalsIgnoreCase("accessURL"))
-                return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
-
-            // ivoa.ObsCore
-            if (columnDesc.getTableName().equalsIgnoreCase("ivoa.ObsCore"))
+            if ( "caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
+                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName) )
             {
-                if (columnDesc.getColumnName().equalsIgnoreCase("access_url"))
+                if ( "accessURL".equalsIgnoreCase(columnDesc.getColumnName()))
+                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
+            }
+            
+            // ivoa.ObsCore
+            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName))
+            {
+                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName()))
                     return new DataLinkURLFormat(job.getID());
-
             }
         }
 
