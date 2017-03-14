@@ -108,6 +108,7 @@ import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.security.auth.Subject;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -305,7 +306,8 @@ public class ArtifactProcessor
                 && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
             return null;
 
-        AuthMethod authMethod = AuthenticationUtil.getAuthMethodForCurrentSubject();
+        Subject caller = AuthenticationUtil.getCurrentSubject();
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null)
             authMethod = AuthMethod.ANON;
         
