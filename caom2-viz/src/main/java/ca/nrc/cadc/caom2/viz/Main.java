@@ -107,6 +107,7 @@ public class Main
                 
             Log4jInit.setLevel("ca.nrc.cadc.caom2.viz", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.types", lvl);
+            Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", lvl);
                 
             String fname = am.getValue("in");
             String productID = am.getValue("productID");

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,18 +62,25 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.types.Box;
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.IllegalPolygonException;
+import ca.nrc.cadc.caom2.types.Location;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Shape;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;

@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.util.HexUtil;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.omg.PortableServer.POAPackage.InvalidPolicy;
@@ -182,7 +183,7 @@ public class Polygon implements Shape
     private void initProps()
     {
         validate();
-        PolygonUtil.PolygonProperties pp = PolygonUtil.computePolygonProperties(this);
+        PolygonProperties pp = computePolygonProperties(this);
         this.area = pp.area;
         this.center = pp.center;
         this.minimumSpanningCircle = pp.minSpanCircle;
@@ -209,6 +210,101 @@ public class Polygon implements Shape
         return sb.toString();
     }
 
+    public static class PolygonProperties implements Serializable
+    {
+        private static final long serialVersionUID = 201703221500L;
+        
+        boolean windCounterClockwise;
+        Double area;
+        Point center;
+        Circle minSpanCircle;
+    }
+    
+    // used by Polygon
+    public PolygonProperties computePolygonProperties(Polygon poly)
+    {
+        //log.debug("computePolygonProperties: " + poly);
+        // the transform needed for computing things in long/lat using cartesian approximation
+        CartesianTransform trans = CartesianTransform.getTransform(poly);
+        Polygon tpoly = trans.transform(poly);
+       
+        // algorithm from
+        // http://astronomy.swin.edu.au/~pbourke/geometry/polyarea/
+        double a = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        int lastMoveTo = 0;
+        for (int i = 0; i < tpoly.getVertices().size(); i++)
+        {
+            Vertex v2 = (Vertex) tpoly.getVertices().get(i);
+            if (SegmentType.MOVE.equals(v2.getType()))
+                lastMoveTo = i;
+            else
+            {
+                Vertex v1 = (Vertex) tpoly.getVertices().get(i-1);
+                if (SegmentType.CLOSE.equals(v2.getType()))
+                    // pretend it is a LINE_TO the lastMoveTo vertex
+                    v2 = (Vertex) tpoly.getVertices().get(lastMoveTo);
+
+                double tmp = v1.cval1 * v2.cval2 - v2.cval1 * v1.cval2;
+                a += tmp;
+                cx += (v1.cval1 + v2.cval1) * tmp;
+                cy += (v1.cval2 + v2.cval2) * tmp;
+                //log.debug("[computePolygonProperties] " + v1 + "," + v2 + "," + tmp + " " + cx + "," + cy);
+            }
+        }
+
+        a *= 0.5;
+        cx = cx / (6.0 * a);
+        cy = cy / (6.0 * a);
+
+        // quick and dirty minimum spanning circle computation
+        double d = 0.0;
+        Vertex e1 = null;
+        Vertex e2 = null;
+        for (int i = 0; i < tpoly.getVertices().size(); i++)
+        {
+            Vertex vi = (Vertex) tpoly.getVertices().get(i);
+            if (!SegmentType.CLOSE.equals(vi.getType()))
+            {
+                for (int j = i+1; j < tpoly.getVertices().size(); j++)
+                {
+                    Vertex vj = (Vertex) tpoly.getVertices().get(j);
+                    if (!SegmentType.CLOSE.equals(vj.getType()))
+                    {
+                        double d1 = vi.cval1 - vj.cval1;
+                        double d2 = vi.cval2 - vj.cval2;
+                        double dd = Math.sqrt(d1*d1 + d2*d2);
+                        if (dd > d)
+                        {
+                            d = dd;
+                            e1 = vi;
+                            e2 = vj;
+                            
+                        }
+                    }
+                }
+            }
+        }
+        
+        CartesianTransform inv = trans.getInverseTransform();
+        
+        PolygonProperties ret = new PolygonProperties();
+        ret.windCounterClockwise = (a < 0.0); // RA-DEC increases left-up
+        if (a < 0.0) a *= -1.0;
+        ret.area = a;
+        ret.center = inv.transform(new Point(cx, cy));
+        
+        // midpoint between vertices
+        if (e1 != null && e2 != null && d > 0.0)
+        {
+            Point cen = new Point(0.5*Math.abs(e1.cval1 + e2.cval1), 0.5*Math.abs(e1.cval2 + e2.cval2));
+            Point mscc = inv.transform(cen);
+            ret.minSpanCircle = new Circle(mscc, d/2.0);
+        }
+        
+        return ret;
+    }
 
     /**
      * Decode a previously encoded polygon. This method is supplied to aid in

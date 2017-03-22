@@ -67,8 +67,13 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;

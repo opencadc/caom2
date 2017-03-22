@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,12 +62,10 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.util;
+package ca.nrc.cadc.caom2.compute;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,18 +76,14 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.EnergyUtil;
 import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.PositionUtil;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
 public final class CutoutUtil
 {
-	private static final Logger log = Logger.getLogger(CutoutUtil.class);
+    private static final Logger log = Logger.getLogger(CutoutUtil.class);
 
     private static final String POS1_CUT = "px";
     private static final String POS2_CUT = "py";
