@@ -19,7 +19,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.2.5'
+version = '2.2.6'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -27,7 +27,8 @@ dependencies {
     compile 'org.postgresql:postgresql:9.4.1209.jre7'
     
     compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:caom2:[2.2.3,)'
+    compile 'org.opencadc:caom2:[2.2.5,)'
+    compile 'org.opencadc:caom2-compute:[2.2.5,)'
 
     testCompile 'junit:junit:4.+'
     

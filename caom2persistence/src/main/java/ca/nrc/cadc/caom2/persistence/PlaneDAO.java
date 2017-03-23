@@ -110,13 +110,13 @@ class PlaneDAO extends AbstractCaomEntityDAO<Plane>
         try
         {
             // always clear transient state
-            p.clearTransientState();
+            ca.nrc.cadc.caom2.compute.Util.clearTransientState(p);
             // force recompute here so the stateCode in call to super.put() below includes
             // all correctly computed transient state
             if ( gen.persistTransientState() )
             {
                 Observation o = (Observation) parents.getFirst();
-                p.computeTransientState(o);
+                ca.nrc.cadc.caom2.compute.Util.computeTransientState(o, p);
             }
             
             // delete obsolete children
