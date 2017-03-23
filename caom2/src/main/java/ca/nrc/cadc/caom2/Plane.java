@@ -70,9 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
-import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
