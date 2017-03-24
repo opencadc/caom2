@@ -68,126 +68,127 @@
 package ca.nrc.cadc.caom2.compute;
 
 
-import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.Time;
-import java.util.ArrayList;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URI;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- *
+ * Utility class to compute Plane metadata from Artifact-Part-Chunk metadata.
+ * 
  * @author pdowler
  */
-public class TransientStateTest 
+public class ComputeUtil 
 {
-    private static final Logger log = Logger.getLogger(TransientStateTest.class);
+    private static final Logger log = Logger.getLogger(ComputeUtil.class);
 
-    public TransientStateTest() { }
+    private ComputeUtil() { }
     
-    @Test
-    public void testTransientState()
+    private static void computeIdentifiers(Observation o, Plane p)
+    {
+        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
+        // TODO: where to get authority??
+        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
+        p.planeURI = new PlaneURI(o.getURI(), p.getProductID());
+        p.publisherID = new PublisherID(resourceID, o.getObservationID(), p.getProductID());
+    }
+     
+    public static void clearTransientState(Plane p)
+    {
+        p.publisherID = null;
+        p.position = null;
+        p.energy = null;
+        p.time = null;
+        p.polarization = null;
+        // clear metaRelease to children
+        for (Artifact a : p.getArtifacts())
+        {
+            a.metaRelease = null;
+            for (Part pp : a.getParts())
+            {
+                pp.metaRelease = null;
+                for (Chunk c : pp.getChunks())
+                {
+                    c.metaRelease = null;
+                }
+            }
+        }
+    }
+    
+    public static void computeTransientState(Observation o, Plane p)
+    {
+        computeIdentifiers(o, p);
+        computePosition(p);
+        computeEnergy(p);
+        computeTime(p);
+        computePolarization(p);
+        
+        propagateMetaRelease(p);
+    }
+    
+    private static void computePosition(Plane p)
     {
         try
         {
-            Observation o = new SimpleObservation("STUFF", "nonsense");
-            Plane plane = new Plane("foo");
-            
-            int defCode = plane.getStateCode();
-            log.debug("testTransientState: " + defCode);
-            int nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            
-            Assert.assertEquals("default code", defCode, nonTransientCode);
-            int notComputed = plane.getStateCode(true);
-            log.debug("testTransientState: " + notComputed);
-            Assert.assertEquals("not computed", defCode, notComputed);
-
-            Util.clearTransientState(plane);
-            Util.computeTransientState(o, plane);
-            int idCode = plane.getStateCode(true);
-            Assert.assertTrue("computed identifiers", defCode != idCode);
-
-            assignPos(plane);
-            Util.computeTransientState(o, plane);
-
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            int compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            Util.clearTransientState(plane);
-            assignEnergy(plane);
-            Util.computeTransientState(o, plane);
-
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            Util.clearTransientState(plane);
-            assignTime(plane);
-            Util.computeTransientState(o, plane);
-            
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            Util.clearTransientState(plane);
-            assignPol(plane);
-            Util.computeTransientState(o, plane);
-            
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
+            p.position = PositionUtil.compute(p.getArtifacts());
         }
-        catch(Exception unexpected)
+        catch(NoSuchKeywordException ex)
         {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            throw new IllegalArgumentException("failed to compute Plane.position", ex);
+        }
+        catch(WCSLibRuntimeException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.position", ex);
         }
     }
 
-    private void assignPos(Plane p)
+    private static void computeEnergy(Plane p)
     {
-        p.position = new Position();
-        p.position.resolution = 0.01;
+        try
+        {
+            p.energy = EnergyUtil.compute(p.getArtifacts());
+        }
+        catch(NoSuchKeywordException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
+        }
+        catch(WCSLibRuntimeException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
+        }
     }
 
-    private void assignEnergy(Plane p)
+    private static void computeTime(Plane p)
     {
-        p.energy = new Energy();
-        p.energy.bandpassName = "foo123";
+        p.time = TimeUtil.compute(p.getArtifacts());
     }
 
-    private void assignTime(Plane p)
+    private static void computePolarization(Plane p)
     {
-        p.time = new Time();
-        p.time.exposure = new Double(123.0);
+        p.polarization = PolarizationUtil.compute(p.getArtifacts());
     }
 
-    private void assignPol(Plane p)
+    private static void propagateMetaRelease(Plane p)
     {
-        Polarization pol = new Polarization();
-        pol.states = new ArrayList<PolarizationState>();
-        pol.states.add(PolarizationState.I);
-        pol.dimension = new Integer(1);
-        p.polarization = pol;
+        // propagate metaRelease to children of the plane
+        for (Artifact a : p.getArtifacts())
+        {
+            a.metaRelease = p.metaRelease;
+            for (Part pp : a.getParts())
+            {
+                pp.metaRelease = p.metaRelease;
+                for (Chunk c : pp.getChunks())
+                {
+                    c.metaRelease = p.metaRelease;
+                }
+            }
+        }
     }
 }

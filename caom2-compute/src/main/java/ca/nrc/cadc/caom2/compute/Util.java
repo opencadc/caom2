@@ -69,12 +69,8 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -84,16 +80,13 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
-import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
- * TODO.
+ * Internal utility methods.
  *
  * @author pdowler
  */
@@ -103,107 +96,6 @@ public final class Util
     
     private Util() { }
 
-    private static void computeIdentifiers(Observation o, Plane p)
-    {
-        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
-        // TODO: where to get authority??
-        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
-        p.planeURI = new PlaneURI(o.getURI(), p.getProductID());
-        p.publisherID = new PublisherID(resourceID, o.getObservationID(), p.getProductID());
-    }
-     
-    public static void clearTransientState(Plane p)
-    {
-        p.publisherID = null;
-        p.position = null;
-        p.energy = null;
-        p.time = null;
-        p.polarization = null;
-        // clear metaRelease to children
-        for (Artifact a : p.getArtifacts())
-        {
-            a.metaRelease = null;
-            for (Part pp : a.getParts())
-            {
-                pp.metaRelease = null;
-                for (Chunk c : pp.getChunks())
-                {
-                    c.metaRelease = null;
-                }
-            }
-        }
-    }
-    
-    public static void computeTransientState(Observation o, Plane p)
-    {
-        computeIdentifiers(o, p);
-        computePosition(p);
-        computeEnergy(p);
-        computeTime(p);
-        computePolarization(p);
-        
-        propagateMetaRelease(p);
-    }
-    
-    private static void computePosition(Plane p)
-    {
-        try
-        {
-            p.position = PositionUtil.compute(p.getArtifacts());
-        }
-        catch(NoSuchKeywordException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        }
-    }
-
-    private static void computeEnergy(Plane p)
-    {
-        try
-        {
-            p.energy = EnergyUtil.compute(p.getArtifacts());
-        }
-        catch(NoSuchKeywordException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
-        }
-    }
-
-    private static void computeTime(Plane p)
-    {
-        p.time = TimeUtil.compute(p.getArtifacts());
-    }
-
-    private static void computePolarization(Plane p)
-    {
-        p.polarization = PolarizationUtil.compute(p.getArtifacts());
-    }
-
-    private static void propagateMetaRelease(Plane p)
-    {
-        // propagate metaRelease to children of the plane
-        for (Artifact a : p.getArtifacts())
-        {
-            a.metaRelease = p.metaRelease;
-            for (Part pp : a.getParts())
-            {
-                pp.metaRelease = p.metaRelease;
-                for (Chunk c : pp.getChunks())
-                {
-                    c.metaRelease = p.metaRelease;
-                }
-            }
-        }
-    }
-    
     static double roundToNearest(double d)
     {
         return Math.floor(d+0.5);

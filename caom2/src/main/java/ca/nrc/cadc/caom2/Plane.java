@@ -140,26 +140,6 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         this.productID = productID;
     }
 
-    /**
-     * Clear all computed state.
-     * 
-     * @deprecated no-op
-     */
-    public void clearTransientState()
-    {
-        
-    }
-
-    /**
-     * Force (re)computation of all computed state.
-     * 
-     * @deprecated no-op
-     */
-    public void computeTransientState(Observation parent)
-    {
-        
-    }
-
     @Override
     public String toString()
     {
@@ -171,65 +151,11 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return productID;
     }
 
-    /**
-     * @param parentURI
-     * @return 
-     * @deprecated use public field
-     */
-    public PlaneURI getURI(ObservationURI parentURI)
-    {
-        return new PlaneURI(parentURI, productID);
-    }
-
     public Set<Artifact> getArtifacts()
     {
         return artifacts;
     }
 
-    /**
-     * Get the computed position metadata. Note that computeTransientState must 
-     * be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Position getPosition()
-    {
-        return position;
-    }
-
-    /**
-     * Get the computed energy metadata. Note that computeTransientState must 
-     * be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is public
-     */
-    public Energy getEnergy()
-    {
-        return energy;
-    }
-
-    /**
-     * Get the computed time metadata. Note that computeTransientState must be 
-     * called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Time getTime()
-    {
-        return time;
-    }
-
-    /**
-     * Get the computed polarization metadata. Note that computeTransientState 
-     * must be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Polarization getPolarization()
-    {
-        return polarization;
-    }
-    
     @Override
     public boolean equals(Object o)
     {

@@ -141,7 +141,7 @@ public class ObservationReaderWriterTest
     
     public ObservationReaderWriterTest() { }
 
-    //@Test
+    @Test
     public void testTemplate()
     {
         try
@@ -399,7 +399,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testCompleteSimple()
     {
         try
@@ -446,7 +446,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testMinimalComposite()
     {
         try
@@ -482,7 +482,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testCompleteComposite()
     {
         try
@@ -537,7 +537,8 @@ public class ObservationReaderWriterTest
                     
             for (Plane p : observation.getPlanes())
             {
-                p.computeTransientState(observation);
+                // TODO: create dummy values for all computed plane metadata
+                
                 Assert.assertNotNull("Plane.position", p.position);
                 Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
 
