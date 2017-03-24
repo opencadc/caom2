@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
@@ -110,13 +111,13 @@ class PlaneDAO extends AbstractCaomEntityDAO<Plane>
         try
         {
             // always clear transient state
-            ca.nrc.cadc.caom2.compute.Util.clearTransientState(p);
+            ComputeUtil.clearTransientState(p);
             // force recompute here so the stateCode in call to super.put() below includes
             // all correctly computed transient state
             if ( gen.persistTransientState() )
             {
                 Observation o = (Observation) parents.getFirst();
-                ca.nrc.cadc.caom2.compute.Util.computeTransientState(o, p);
+                ComputeUtil.computeTransientState(o, p);
             }
             
             // delete obsolete children

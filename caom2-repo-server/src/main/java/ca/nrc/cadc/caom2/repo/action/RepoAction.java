@@ -84,6 +84,7 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -332,8 +333,8 @@ public abstract class RepoAction extends RestAction
             {
                 try
                 {
-                    ca.nrc.cadc.caom2.compute.Util.clearTransientState(p);
-                    ca.nrc.cadc.caom2.compute.Util.computeTransientState(obs, p);
+                    ComputeUtil.clearTransientState(p);
+                    ComputeUtil.computeTransientState(obs, p);
                     if (p.position != null && p.position.bounds != null)
                     {
                         Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
@@ -354,12 +355,12 @@ public abstract class RepoAction extends RestAction
         catch (IllegalArgumentException ex)
         {
         	log.debug(ex.getMessage(), ex);
-        	throw new IllegalArgumentException("invalid input: " + uri);
+        	throw new IllegalArgumentException("invalid input: " + uri, ex);
         }
         catch (RuntimeException ex)
         {
         	log.debug(ex.getMessage(), ex);
-        	throw new RuntimeException("invalid input: " + uri);
+        	throw new RuntimeException("invalid input: " + uri, ex);
         }
     }
 
