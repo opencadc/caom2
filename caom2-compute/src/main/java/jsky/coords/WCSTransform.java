@@ -52,20 +52,20 @@ import java.awt.geom.Point2D;
  * WCSTranform is the main class. It can construct a proper transform
  * using a WCSKeywordProvider object. The methods pix2wcs and wcs2pix
  * do the actual conversions between image pixel values and WCS coordinates.
- * <p/>
+ * 
  * <P>In porting the code to Java, I attempted to change as little as possible,
  * hoping that this would make it easier to keep up-to-date with the C version.
- * <p/>
- * <P>See the <A HREF="http://tdc-www.harvard.edu/software/wcstools/">WCSTools page</A>
+ * </p>
+ * <p>See the <A HREF="http://tdc-www.harvard.edu/software/wcstools/">WCSTools page</A>
  * for more information.
- * <p/>
- * <P>Original file:
+ * </p>
+ * <p>Original file:
  * <BR>libwcs/wcs.c
  * <BR>February 6, 1998
  * <BR>By Doug Mink, Harvard-Smithsonian Center for Astrophysics
- * <p/>
- * <P>This code was developed by NASA, Goddard Space Flight Center, Code 588
- * for the Scientist's Expert Assistant (SEA) project.
+ * </p>
+ * <p>This code was developed by NASA, Goddard Space Flight Center, Code 588
+ * for the Scientist's Expert Assistant (SEA) project.</p>
  *
  * @author J. Jones / 588
  * @author A. Brighton (changes for JSky)

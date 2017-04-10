@@ -293,18 +293,18 @@ public class slasubs {
 
     /**
      * slDE2H code from Starlink adopted to Java for testing
-     * EquatorialToHorizonPositionMap class against
+     * EquatorialToHorizonPositionMap class against.
      * Notes:
-     * <p/>
+     * <p>
      * 1)  All the arguments are angles in radians.
-     * <p/>
+     * </p><p>
      * 2)  Azimuth is returned in the range 0-2pi;  north is zero,
      * and east is +pi/2.  Elevation is returned in the range
      * +/-pi/2.
-     * <p/>
+     * </p><p>
      * 3)  The latitude must be geodetic.  In critical applications,
      * corrections for polar motion should be applied.
-     * <p/>
+     * </p><p>
      * 4)  In some applications it will be important to specify the
      * correct type of hour angle and declination in order to
      * produce the required type of azimuth and elevation.  In
@@ -315,14 +315,14 @@ public class slasubs {
      * If the effects of diurnal aberration can be neglected, the
      * "apparent" HA,Dec may be used instead of the topocentric
      * HA,Dec.
-     * <p/>
+     * </p><p>
      * 5)  No range checking of arguments is carried out.
-     * <p/>
+     * </p><p>
      * 6)  In applications which involve many such calculations, rather
      * than calling the present routine it will be more efficient to
      * use inline code, having previously computed fixed terms such
      * as sine and cosine of latitude, and (for tracking a star)
-     * sine and cosine of declination.
+     * sine and cosine of declination.</p>
      *
      * @param HA  double containing the hour angle in radians
      * @param DEC double containing the declination angle (rad.)
@@ -368,35 +368,35 @@ public class slasubs {
      * Given the direction cosines of a star and of the
      * tangent point, determine the star's tangent-plane
      * coordinates.
-     * <p/>
+     * <p>
      * (double precision)
-     * <p/>
+     * </p><p>
      * Given:
      * V         d(3)   direction cosines of star
      * V0        d(3)   direction cosines of tangent point
-     * <p/>
+     * </p><p>
      * Returned:
      * XI,ETA    d      tangent plane coordinates of star
      * J         i      status:   0 = OK
      * 1 = error, star too far from axis
      * 2 = error, antistar on tangent plane
      * 3 = error, antistar too far from axis
-     * <p/>
+     * </p><p>
      * Notes:
-     * <p/>
+     * </p><p>
      * 1  If vector V0 is not of unit length, or if vector V is of zero
      * length, the results will be wrong.
-     * <p/>
+     * </p><p>
      * 2  If V0 points at a pole, the returned XI,ETA will be based on the
      * arbitrary assumption that the RA of the tangent point is zero.
-     * <p/>
+     * </p><p>
      * 3  This routine is the Cartesian equivalent of the routine slDSTP.
-     * <p/>
+     * </p><p>
      * P.T.Wallace   Starlink   27 November 1996
-     * <p/>
+     * </p><p>
      * Copyright (C) 1996 Rutherford Appleton Laboratory
      * Copyright (C) 1995 Association of Universities for Research in
-     * Astronomy Inc.
+     * Astronomy Inc.</p>
      */
     public static double[] slDVTP(double[] V, double[] V0) {
         int J;              // identifies errors

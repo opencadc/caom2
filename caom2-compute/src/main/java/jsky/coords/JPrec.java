@@ -12,16 +12,16 @@ package jsky.coords;
 
 /**
  * Precession of Coordinates in new IAU system.
- * <p/>
+ * <p>
  * This class is based on C routintes by Francois Ochsenbein [ESO-IPG].
  * It uses the IAU 76 precession constants and assumes the FK5 system.
- * <p/>
+ * </p><p>
  * Precession constants are taken from Lederle and Schwan (Astron. Astrophys.
  * <b>134</b>, 1, 1984), Liske J.H. (Astron. Astrophys. <b>73</b>, 282, 1979).
  * Dates must be expressed in <em>Julian Years</em>.
- * <p/>
+ * </p><p>
  * The precession may be applied on unit vectors (mnemonic <tt>u</tt>), or
- * on equatorial coordinates (mnemonic <tt>q</tt>).
+ * on equatorial coordinates (mnemonic <tt>q</tt>).</p>
  */
 public class JPrec {
 
