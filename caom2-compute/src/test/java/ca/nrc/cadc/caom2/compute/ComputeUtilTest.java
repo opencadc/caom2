@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,140 +62,132 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.xml;
+package ca.nrc.cadc.caom2.compute;
 
 
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
+import ca.nrc.cadc.caom2.Time;
+import java.util.ArrayList;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 import org.junit.Assert;
-import static org.junit.Assert.fail;
 import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class JsonWriterTest 
+public class ComputeUtilTest 
 {
-    private static final Logger log = Logger.getLogger(JsonWriterTest.class);
+    private static final Logger log = Logger.getLogger(ComputeUtilTest.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
-    }
-    
-    public JsonWriterTest() { }
-    
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-            
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
+    public ComputeUtilTest() { }
     
     @Test
-    public void testSimple()
+    public void testTransientState()
     {
         try
         {
-            int i = 5;
-            Observation o = getCompleteSimple(i, true);
+            Observation o = new SimpleObservation("STUFF", "nonsense");
+            Plane plane = new Plane("foo");
             
-            JsonWriter jw = new JsonWriter();
-            StringBuilder sb = new StringBuilder();
-            jw.write(o, sb);
-            String str = sb.toString();
-            log.info("\n" + str);
+            int defCode = plane.getStateCode();
+            log.debug("testTransientState: " + defCode);
+            int nonTransientCode = plane.getStateCode(false);
+            log.debug("testTransientState: " + nonTransientCode);
             
-            JSONObject doc = new JSONObject(str);
+            Assert.assertEquals("default code", defCode, nonTransientCode);
+            int notComputed = plane.getStateCode(true);
+            log.debug("testTransientState: " + notComputed);
+            Assert.assertEquals("not computed", defCode, notComputed);
+
+            ComputeUtil.clearTransientState(plane);
+            ComputeUtil.computeTransientState(o, plane);
+            int idCode = plane.getStateCode(true);
+            Assert.assertTrue("computed identifiers", defCode != idCode);
+
+            assignPos(plane);
+            ComputeUtil.computeTransientState(o, plane);
+
+            nonTransientCode = plane.getStateCode(false);
+            log.debug("testTransientState: " + nonTransientCode);
+            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
+            int compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
+
+            ComputeUtil.clearTransientState(plane);
+            assignEnergy(plane);
+            ComputeUtil.computeTransientState(o, plane);
+
+            nonTransientCode = plane.getStateCode(false);
+            log.debug("testTransientState: " + nonTransientCode);
+            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
+
+            ComputeUtil.clearTransientState(plane);
+            assignTime(plane);
+            ComputeUtil.computeTransientState(o, plane);
             
-            JSONObject obs = doc.getJSONObject("caom2:Observation");
-            Assert.assertNotNull(obs);
+            nonTransientCode = plane.getStateCode(false);
+            log.debug("testTransientState: " + nonTransientCode);
+            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
+
+            ComputeUtil.clearTransientState(plane);
+            assignPol(plane);
+            ComputeUtil.computeTransientState(o, plane);
             
-            String xmlns = obs.getString("@xmlns:caom2");
-            Assert.assertNotNull(xmlns);
-            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
-            
-            String otype = obs.getString("@xsi:type");
-            Assert.assertNotNull(otype);
-            Assert.assertEquals("caom2:SimpleObservation", otype);
+            nonTransientCode = plane.getStateCode(false);
+            log.debug("testTransientState: " + nonTransientCode);
+            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
+            compCode = plane.getStateCode(true);
+            log.debug("testTransientState: " + compCode);
+            Assert.assertTrue("computed position", defCode != compCode);
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testComposite()
-    {
-        try
-        {
-            int i = 5;
-            Observation o = getCompleteComposite(i, true);
-            
-            JsonWriter jw = new JsonWriter();
-            StringBuilder sb = new StringBuilder();
-            jw.write(o, sb);
-            String str = sb.toString();
-            log.info("\n" + str);
-            
-            JSONObject doc = new JSONObject(str);
-            
-            JSONObject obs = doc.getJSONObject("caom2:Observation");
-            Assert.assertNotNull(obs);
-            
-            String xmlns = obs.getString("@xmlns:caom2");
-            Assert.assertNotNull(xmlns);
-            Assert.assertEquals("vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2", xmlns);
-            
-            String otype = obs.getString("@xsi:type");
-            Assert.assertNotNull(otype);
-            Assert.assertEquals("caom2:CompositeObservation", otype);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    protected SimpleObservation getCompleteSimple(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
-        Caom2TestInstances instances = new Caom2TestInstances();
-        instances.setComplete(true);
-        instances.setDepth(depth);
-        instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getSimpleObservation();
+    private void assignPos(Plane p)
+    {
+        p.position = new Position();
+        p.position.resolution = 0.01;
     }
-    
-    protected CompositeObservation getCompleteComposite(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
-        Caom2TestInstances instances = new Caom2TestInstances();
-        instances.setComplete(true);
-        instances.setDepth(depth);
-        instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getCompositeObservation();
+
+    private void assignEnergy(Plane p)
+    {
+        p.energy = new Energy();
+        p.energy.bandpassName = "foo123";
+    }
+
+    private void assignTime(Plane p)
+    {
+        p.time = new Time();
+        p.time.exposure = new Double(123.0);
+    }
+
+    private void assignPol(Plane p)
+    {
+        Polarization pol = new Polarization();
+        pol.states = new ArrayList<PolarizationState>();
+        pol.states.add(PolarizationState.I);
+        pol.dimension = new Integer(1);
+        p.polarization = pol;
     }
 }

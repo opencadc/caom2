@@ -69,18 +69,12 @@
 
 package ca.nrc.cadc.caom2.viz;
 
-import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -112,8 +106,8 @@ public class ComputeFromXML
             if (productID == null || productID.equals(pid))
             {
                 log.info("plane: " + pid);
-                p.clearTransientState();
-                p.computeTransientState(o);
+                ComputeUtil.clearTransientState(p);
+                ComputeUtil.computeTransientState(o, p);
 
                 StringBuilder sb = new StringBuilder();
                 sb.append(p.getProductID()).append(": ");

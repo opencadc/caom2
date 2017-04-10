@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,124 +62,98 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.util.Date;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
+import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Set;
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * A Plane is a specific science data product resulting from an observation. As
- * the data for an observation is processed in different ways this makes new
- * data products (e.g. new Planes) with different characteristics.
- * 
+ *
  * @author pdowler
  */
-public class Plane extends AbstractCaomEntity implements Comparable<Plane>
+public final class PolarizationUtil
 {
-    private static final long serialVersionUID = 201604081100L;
-    private static final Logger log = Logger.getLogger(Plane.class);
+    private static final Logger log = Logger.getLogger(PolarizationUtil.class);
     
-    // immutable state
-    private final String productID;
-    
-    // mutable contents
-    private final Set<Artifact> artifacts = new TreeSet<Artifact>();
+    private PolarizationUtil() { }
 
-    // mutable state
-    public Date metaRelease;
-    public Date dataRelease;
-    public DataProductType dataProductType;
-    public CalibrationLevel calibrationLevel;
-    public Provenance provenance;
-    public Metrics metrics;
-    public DataQuality quality;
-    
-    /**
-     * Computed position metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Position position;
-    /**
-     * Computed energy metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Energy energy;
-    /**
-     * Computed time metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Time time;
-    /**
-     * Computed polarization metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Polarization polarization;
-    
-    /**
-     * Computed plane identifier. Identifers of this form are used in Provenance
-     * input lists.
-     */
-    public transient PlaneURI planeURI;
-    
-    /**
-     * Computed globally unique identifier.
-     */
-    public transient PublisherID publisherID;
-    
-    public Plane(String productID)
+    public static Polarization compute(Set<Artifact> artifacts)
     {
-        CaomValidator.assertNotNull(getClass(), "productID", productID);
-        this.productID = productID;
-    }
-
-    @Override
-    public String toString()
-    {
-        return getClass().getSimpleName() + "[" + productID + "]";
-    }
-
-    public String getProductID()
-    {
-        return productID;
-    }
-
-    public Set<Artifact> getArtifacts()
-    {
-        return artifacts;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
-            return false;
-        if (this == o)
-            return true;
-        if (o instanceof Plane)
+        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
+        ProductType productType = Util.choseProductType(artifacts);
+        log.debug("compute: " + productType);
+        int numPixels = 0;
+        for (Artifact a : artifacts)
         {
-            Plane p = (Plane) o;
-            return ( this.hashCode() == p.hashCode() );
+            for (Part p : a.getParts())
+            {
+                for (Chunk c : p.getChunks())
+                {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
+                    {
+                        if (c.polarization != null)
+                        {
+                            numPixels += Util.getNumPixels(c.polarization.getAxis());
+                            CoordRange1D range = c.polarization.getAxis().range;
+                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
+                            CoordFunction1D function = c.polarization.getAxis().function;
+                            if (range != null)
+                            {
+                                int lb = (int) range.getStart().val;
+                                int ub = (int) range.getEnd().val;
+                                for (int i=lb; i <= ub; i++)
+                                {
+                                    pol.add(PolarizationState.toValue(i));
+                                }
+                            }
+                            else if (bounds != null)
+                            {
+                                for (CoordRange1D cr : bounds.getSamples())
+                                {
+                                    int lb = (int) cr.getStart().val;
+                                    int ub = (int) cr.getEnd().val;
+                                    for (int i=lb; i <= ub; i++)
+                                    {
+                                        pol.add(PolarizationState.toValue(i));
+                                    }
+                                }
+                            }
+                            else if (function != null)
+                            {
+                                for (int i=1; i <= function.getNaxis(); i++)
+                                {
+                                    double pix = (double) i;
+                                    int val = (int) Util.pix2val(function, pix);
+                                    pol.add(PolarizationState.toValue(val));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-        return false;
-    }
 
-    @Override
-    public int hashCode()
-    {
-        return productID.hashCode();
-    }
-
-    @Override
-    public int compareTo(Plane p)
-    {
-        return this.productID.compareTo(p.productID);
+        Polarization p = new Polarization();
+        if ( !pol.isEmpty() )
+        {
+            p.states = new ArrayList<PolarizationState>();
+            p.states.addAll(pol);
+            p.dimension = new Integer(numPixels);
+        }
+        return p;
     }
 }

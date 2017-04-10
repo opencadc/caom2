@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,100 +62,133 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.compute;
+
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Set;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URI;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Utility class to compute Plane metadata from Artifact-Part-Chunk metadata.
+ * 
  * @author pdowler
  */
-public final class PolarizationUtil
+public class ComputeUtil 
 {
-    private static final Logger log = Logger.getLogger(PolarizationUtil.class);
-    
-    private PolarizationUtil() { }
+    private static final Logger log = Logger.getLogger(ComputeUtil.class);
 
-    public static Polarization compute(Set<Artifact> artifacts)
+    private ComputeUtil() { }
+    
+    private static void computeIdentifiers(Observation o, Plane p)
     {
-        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
-        ProductType productType = Util.choseProductType(artifacts);
-        log.debug("compute: " + productType);
-        int numPixels = 0;
-        for (Artifact a : artifacts)
+        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
+        // TODO: where to get authority??
+        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
+        p.planeURI = new PlaneURI(o.getURI(), p.getProductID());
+        p.publisherID = new PublisherID(resourceID, o.getObservationID(), p.getProductID());
+    }
+     
+    public static void clearTransientState(Plane p)
+    {
+        p.publisherID = null;
+        p.position = null;
+        p.energy = null;
+        p.time = null;
+        p.polarization = null;
+        // clear metaRelease to children
+        for (Artifact a : p.getArtifacts())
         {
-            for (Part p : a.getParts())
+            a.metaRelease = null;
+            for (Part pp : a.getParts())
             {
-                for (Chunk c : p.getChunks())
+                pp.metaRelease = null;
+                for (Chunk c : pp.getChunks())
                 {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.polarization != null)
-                        {
-                            numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            CoordRange1D range = c.polarization.getAxis().range;
-                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
-                            CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null)
-                            {
-                                int lb = (int) range.getStart().val;
-                                int ub = (int) range.getEnd().val;
-                                for (int i=lb; i <= ub; i++)
-                                {
-                                    pol.add(PolarizationState.toValue(i));
-                                }
-                            }
-                            else if (bounds != null)
-                            {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
-                                    int lb = (int) cr.getStart().val;
-                                    int ub = (int) cr.getEnd().val;
-                                    for (int i=lb; i <= ub; i++)
-                                    {
-                                        pol.add(PolarizationState.toValue(i));
-                                    }
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                for (int i=1; i <= function.getNaxis(); i++)
-                                {
-                                    double pix = (double) i;
-                                    int val = (int) Util.pix2val(function, pix);
-                                    pol.add(PolarizationState.toValue(val));
-                                }
-                            }
-                        }
-                    }
+                    c.metaRelease = null;
                 }
             }
         }
-
-        Polarization p = new Polarization();
-        if ( !pol.isEmpty() )
+    }
+    
+    public static void computeTransientState(Observation o, Plane p)
+    {
+        computeIdentifiers(o, p);
+        computePosition(p);
+        computeEnergy(p);
+        computeTime(p);
+        computePolarization(p);
+        
+        propagateMetaRelease(p);
+    }
+    
+    private static void computePosition(Plane p)
+    {
+        try
         {
-            p.states = new ArrayList<PolarizationState>();
-            p.states.addAll(pol);
-            p.dimension = new Integer(numPixels);
+            p.position = PositionUtil.compute(p.getArtifacts());
         }
-        return p;
+        catch(NoSuchKeywordException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.position", ex);
+        }
+        catch(WCSLibRuntimeException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.position", ex);
+        }
+    }
+
+    private static void computeEnergy(Plane p)
+    {
+        try
+        {
+            p.energy = EnergyUtil.compute(p.getArtifacts());
+        }
+        catch(NoSuchKeywordException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
+        }
+        catch(WCSLibRuntimeException ex)
+        {
+            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
+        }
+    }
+
+    private static void computeTime(Plane p)
+    {
+        p.time = TimeUtil.compute(p.getArtifacts());
+    }
+
+    private static void computePolarization(Plane p)
+    {
+        p.polarization = PolarizationUtil.compute(p.getArtifacts());
+    }
+
+    private static void propagateMetaRelease(Plane p)
+    {
+        // propagate metaRelease to children of the plane
+        for (Artifact a : p.getArtifacts())
+        {
+            a.metaRelease = p.metaRelease;
+            for (Part pp : a.getParts())
+            {
+                pp.metaRelease = p.metaRelease;
+                for (Chunk c : pp.getChunks())
+                {
+                    c.metaRelease = p.metaRelease;
+                }
+            }
+        }
     }
 }

@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
@@ -105,7 +105,7 @@ public class TimeUtilTest
     }
 
 
-    //@Test
+    ////@Test
     public void testTemplate()
     {
         try
@@ -262,6 +262,7 @@ public class TimeUtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     @Test
     public void testComputeFromMultipleFunction()
     {

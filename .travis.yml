@@ -5,7 +5,8 @@ jdk:
   - oraclejdk8
 
 script: 
-  - cd caom2; gradle --info assemble javadoc install || exit -1; cd ..
+  - cd caom2; gradle --info build javadoc install || exit -1; cd ..
+  - cd caom2-compute; gradle --info assemble javadoc install || exit -1; cd ..
   - cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
   - cd caom2-viz; gradle --info build || exit -1; cd ..
   # hack: switch to jdk8 for this last job
