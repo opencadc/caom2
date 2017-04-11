@@ -40,7 +40,7 @@ xslt {
     parameters(
         project_name: 'Common Archive Observation Model',
         preamble: '../resources/preamble.html',
-        graphviz_png: 'CAOM-UML.png'
+        graphviz_png: 'CAOM-' + project.version + '.png'
     )
     
 }
