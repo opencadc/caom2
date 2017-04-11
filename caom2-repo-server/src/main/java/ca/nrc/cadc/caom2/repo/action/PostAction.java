@@ -107,20 +107,7 @@ public class PostAction extends RepoAction
         if (!dao.exists(uri))
             throw new ResourceNotFoundException("not found: " + uri);
 
-        try 
-        {
-            CaomValidator.validate(obs);
-        } 
-        catch (IllegalArgumentException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new IllegalArgumentException("invalid input: " + uri);
-        }
-        catch (RuntimeException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new RuntimeException("invalid input: " + uri);
-        }
+        validate(obs);
 
         dao.put(obs);
         

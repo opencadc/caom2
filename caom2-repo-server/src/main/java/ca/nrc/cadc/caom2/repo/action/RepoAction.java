@@ -83,10 +83,15 @@ import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
+import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -312,6 +317,51 @@ public abstract class RepoAction extends RestAction
         }
 
         throw new AccessControlException("permission denied: " + getURI());
+    }
+    
+    protected void validate(Observation obs)
+    {
+        try 
+        {
+            CaomValidator.validate(obs);
+
+            // start: temporary
+            // this used to be in the CaomValidator but computation was removed from the core model
+            // however the concept of transient state is likely to be removed in the near future so
+            // this is temporary to keep current behaviour
+            for (Plane p : obs.getPlanes())
+            {
+                try
+                {
+                    ComputeUtil.clearTransientState(p);
+                    ComputeUtil.computeTransientState(obs, p);
+                    if (p.position != null && p.position.bounds != null)
+                    {
+                        Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
+                        PolygonUtil.getOuterHull(poly);
+                    }
+                }
+                catch(Error er)
+                {
+                    throw new RuntimeException("failed to compute metadata for plane " + p.getProductID(), er);
+                }
+                catch(Exception ex)
+                {
+                    throw new IllegalArgumentException("failed to compute metadata for plane " + p.getProductID(), ex);
+                }
+            }
+            // end: temporary
+        } 
+        catch (IllegalArgumentException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new IllegalArgumentException("invalid input: " + uri, ex);
+        }
+        catch (RuntimeException ex)
+        {
+        	log.debug(ex.getMessage(), ex);
+        	throw new RuntimeException("invalid input: " + uri, ex);
+        }
     }
 
     @Override

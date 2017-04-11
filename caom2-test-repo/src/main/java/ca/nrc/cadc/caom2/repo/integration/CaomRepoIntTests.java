@@ -94,6 +94,8 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
+import ca.nrc.cadc.caom2.compute.Util;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
@@ -101,7 +103,6 @@ import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -237,6 +238,18 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         artifact.getParts().add(part);
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
+        
+        // verify wcs computation works
+        try
+        {
+            ComputeUtil.computeTransientState(observation, plane);
+            ComputeUtil.clearTransientState(plane);
+        }
+        catch(Exception bug)
+        {
+            throw new IllegalStateException("BUG in test setup ", bug);
+        }
+            
         putObservation(observation, SUBJECT1, 200, "OK", null);
         
         // cleanup (ok to fail)
@@ -615,8 +628,8 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         // ensure we have an invalid observation
         try
         {
-            plane.computeTransientState(observation);
-            throw new IllegalStateException("Test observation not invalid.");
+            ComputeUtil.computeTransientState(observation, plane);
+            throw new IllegalStateException("BUG: Test setup - observation not invalid.");
         }
         catch (IllegalArgumentException e)
         {

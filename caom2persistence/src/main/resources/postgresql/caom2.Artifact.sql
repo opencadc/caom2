@@ -1,6 +1,4 @@
 
-drop table if exists caom2.Artifact;
-
 create table caom2.Artifact
 (
     uri varchar(1024) not null,

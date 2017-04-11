@@ -73,7 +73,10 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -108,20 +111,7 @@ public class PutAction extends RepoAction
             throw new ResourceAlreadyExistsException(
                     "already exists: " + uri);
 
-        try 
-        {
-            CaomValidator.validate(obs);
-        } 
-        catch (IllegalArgumentException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new IllegalArgumentException("invalid input: " + uri);
-        }
-        catch (RuntimeException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new RuntimeException("invalid input: " + uri);
-        }
+        validate(obs);
 
         dao.put(obs);
 
