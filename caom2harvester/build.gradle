@@ -9,11 +9,6 @@ plugins {
 repositories {
     jcenter()
     mavenLocal()
-
-    // repo for jsky    
-    maven {
-        url = 'http://java.freehep.org/maven2'
-    }
 }
 
 sourceCompatibility = 1.7
