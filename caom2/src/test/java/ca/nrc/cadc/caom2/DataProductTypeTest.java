@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.log4j.Level;
@@ -114,6 +115,7 @@ public class DataProductTypeTest
                 log.debug("testing: " + c);
                 String s = c.getValue();
                 DataProductType c2 = DataProductType.toValue(s);
+                log.info(c + " -> " + s + " -> " + c2);
                 Assert.assertEquals(c, c2);
             }
             
@@ -128,6 +130,24 @@ public class DataProductTypeTest
             }
             
             
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testRoundtripCustom()
+    {
+        try
+        {
+            String s1 = "http://example.com/foo#bar";
+            DataProductType c2 = DataProductType.toValue(s1);
+            String s2 = c2.getValue();
+            log.info(s1 + " == " + s2);
+            Assert.assertEquals(s1, s2);
         }
         catch(Exception unexpected)
         {

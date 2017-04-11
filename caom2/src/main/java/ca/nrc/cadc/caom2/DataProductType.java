@@ -69,42 +69,83 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
- *
+ * An extensible vocabulary masquerading as an enumeration, or the other way around.
+ * 
  * @author pdowler
  */
-public enum DataProductType implements CaomEnum
+public class DataProductType extends VocabularyTerm implements CaomEnum, Serializable
 {
-    IMAGE("image"),
-    SPECTRUM("spectrum"),
-    TIMESERIES("timeseries"),
-    VISIBILITY("visibility"),
-    EVENTLIST("eventlist"),
-    CUBE("cube"),
-    CATALOG("catalog");
+    private static final long serialVersionUID = 201704061700L;
+    
+    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2");
+    
+    // ObsCore-1.0
+    public static final DataProductType IMAGE = new DataProductType("image");
+    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
+    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
+    public static final DataProductType VISIBILITY = new DataProductType("visibility");
+    public static final DataProductType EVENTLIST = new DataProductType("eventlist");
+    public static final DataProductType CUBE = new DataProductType("cube");
+    
+    // ObsCore-1.1
+    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
+    
+    // CAOM-2.3
+    public static final DataProductType CATALOG = new DataProductType(CAOM, "catalog");
 
-    private String value;
-
-    private DataProductType(String value) { this.value = value; }
+    public static final DataProductType[] values()
+    {
+        return new DataProductType[]
+        {
+            IMAGE, SPECTRUM, TIMESERIES, VISIBILITY, EVENTLIST, CUBE, MEASUREMENTS, CATALOG
+        };
+    }
+    private DataProductType(String value)
+    {
+        super(OBSCORE, value, true);
+    }
+    private DataProductType(URI namespace, String value)
+    {
+        super(namespace, value);
+    }
 
     public static DataProductType toValue(String s)
     {
+        if ("catalog".equals(s))
+            return CATALOG; // backwards compatibility
+        
         for (DataProductType d : values())
-            if (d.value.equals(s))
+            if (d.getValue().equals(s))
                 return d;
-        throw new IllegalArgumentException("invalid value: " + s);
+        
+        // custom term
+        try
+        {
+            URI u = new URI(s);
+            String t = u.getFragment();
+            if (t == null)
+                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
+            String[] ss = u.toASCIIString().split("#");
+            URI ns = new URI(ss[0]);
+            return new DataProductType(ns, t);
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new IllegalArgumentException("invalid value: " + s, ex);
+        }
     }
-
-    public int checksum()
-    {
-        return value.hashCode();
-    }
-
-    public String getValue() { return value; }
 
     @Override
-    public String toString()
+    public int checksum()
     {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return getValue().hashCode();
     }
+    
+    
 }
