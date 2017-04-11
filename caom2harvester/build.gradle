@@ -9,11 +9,6 @@ plugins {
 repositories {
     jcenter()
     mavenLocal()
-
-    // repo for jsky    
-    maven {
-        url = 'http://java.freehep.org/maven2'
-    }
 }
 
 sourceCompatibility = 1.7
@@ -27,7 +22,6 @@ mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.jdom:jdom2:2.+'
-    compile 'jsky:jsky-coords:1.+'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
     compile 'org.opencadc:cadc-util:1.+'
