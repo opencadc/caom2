@@ -486,19 +486,10 @@
             <extends>
                 <vodml-ref>caom2:VocabularyTerm</vodml-ref>
             </extends>
-            
-            <attribute>
-                <vodml-id>DataProductType.IMAGE</vodml-id>
-                <name>IMAGE</name>
-                <description>http://www.ivoa.net/std/ObsCore#image</description>
-                <datatype>
-                    <vodml-ref>ivoa:anyURI</vodml-ref>
-                </datatype>
-                <multiplicity>
-                    <minOccurs>1</minOccurs>
-                    <maxOccurs>1</maxOccurs>
-                </multiplicity>
-            </attribute>
+            <!-- intent is to define constants of type DataProductType in this class so
+                it behaves more or less like an enum but is extensible
+                TODO: can that be done in VODML?
+            -->
         </objectType>
         
         <objectType abstract="true">
