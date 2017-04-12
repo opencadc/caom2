@@ -381,6 +381,7 @@
 
             <xs:element name="contentType" type="xs:string" minOccurs="0"/>
             <xs:element name="contentLength" type="xs:long" minOccurs="0"/>
+            <xs:element name="contentChecksum" type="xs:anyURI" minOccurs="0"/>
             <xs:element name="parts" type="caom2:Parts" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
