@@ -310,6 +310,7 @@ public class Caom2TestInstances
         Plane plane = new Plane("productID");
         if (complete)
         {
+            plane.creatorID = new URI("http://foo/bar");
             plane.metaRelease = ivoaDate;
             plane.dataRelease = ivoaDate;
             plane.dataProductType = DataProductType.IMAGE;

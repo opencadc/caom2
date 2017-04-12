@@ -70,6 +70,8 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
+
+import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -84,13 +86,14 @@ import org.apache.log4j.Logger;
  */
 public class Plane extends AbstractCaomEntity implements Comparable<Plane>
 {
-    private static final long serialVersionUID = 201604081100L;
+    private static final long serialVersionUID = 201704121420L;
     private static final Logger log = Logger.getLogger(Plane.class);
     
     // immutable state
     private final String productID;
-    
+
     // mutable contents
+    public URI creatorID;
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
 
     // mutable state

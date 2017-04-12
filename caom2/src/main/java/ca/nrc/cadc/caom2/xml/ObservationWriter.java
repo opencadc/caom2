@@ -196,11 +196,16 @@ public class ObservationWriter implements Serializable
         
         if (namespace == null)
         {
-            namespace = XmlConstants.CAOM2_2_NAMESPACE; // default
+            namespace = XmlConstants.CAOM2_3_NAMESPACE; // default
             log.debug("default namespace: " + namespace);
         }
-        
-        if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
+
+        if ( XmlConstants.CAOM2_3_NAMESPACE.equals(namespace))
+        {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_3_NAMESPACE);
+            docVersion = 23;
+        }
+        else if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
         {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_2_NAMESPACE);
             docVersion = 22;
@@ -598,6 +603,12 @@ public class ObservationWriter implements Serializable
             Element planeElement = getCaom2Element("plane");
             addEntityAttributes(plane, planeElement, dateFormat);
             addElement("productID", plane.getProductID(), planeElement);
+
+            if (docVersion >= 23 && plane.creatorID != null)
+            {
+                addURIElement("creatorID", plane.creatorID, planeElement);
+            }
+
             addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
             addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
             if (plane.dataProductType != null)

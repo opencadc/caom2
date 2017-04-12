@@ -207,6 +207,15 @@ public class ObservationReaderWriterTest
             log.info("caom-2.2 XML:\n" + caom22);
             assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
             obs22 = nonvalidatingReader.read(caom22);
+
+//            //
+            ObservationWriter w23 = new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w23.write(obs, bos);
+            String caom23 = bos.toString();
+            log.info("caom-2.3 XML:\n" + caom23);
+            assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
+            Observation obs23 = nonvalidatingReader.read(caom23);
         }
         //catch(ObservationParsingException expected)
         //{
@@ -553,7 +562,7 @@ public class ObservationReaderWriterTest
                 Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
             }
 
-            // CAOM-2.2 is now the default
+            // CAOM-2.3 is now the default
             testObservation(observation, true);
             
             testObservation(observation, false);
@@ -819,6 +828,10 @@ public class ObservationReaderWriterTest
                 assertEquals("Plane.lastModified", expectedPlane.getLastModified().getTime(), actualPlane.getLastModified().getTime());
 
             assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
+            if ((expectedPlane.creatorID != null) && (actualPlane.creatorID != null))
+            {
+                assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
+            }
             assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
             assertEquals(expectedPlane.dataRelease, actualPlane.dataRelease);
             assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
