@@ -135,7 +135,7 @@ public class ObservationReaderWriterTest
     private static Logger log = Logger.getLogger(ObservationReaderWriterTest.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.DEBUG);
         Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
     }
     
@@ -1049,7 +1049,11 @@ public class ObservationReaderWriterTest
             
             assertEquals(expectedArtifact.contentType, actualArtifact.contentType);
             assertEquals(expectedArtifact.contentLength, actualArtifact.contentLength);
-            
+            if (expectedArtifact.contentChecksum != null && actualArtifact.contentChecksum != null)
+            {
+                assertEquals(expectedArtifact.contentChecksum, actualArtifact.contentChecksum);
+            }
+
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
         }
     }

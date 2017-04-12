@@ -99,6 +99,7 @@ public class Artifact extends AbstractCaomEntity implements Comparable<Artifact>
     // mutable state
     public String contentType;
     public Long contentLength;
+    public URI contentChecksum;
     
     // computed state
     public transient Date metaRelease;

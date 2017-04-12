@@ -371,6 +371,7 @@ public class Caom2TestInstances
         {
             artifact.contentType = "application/fits";
             artifact.contentLength = 12345L;
+            artifact.contentChecksum = new URI("md5:1234567");
         }
         if (depth > 3)
             artifact.getParts().addAll(getParts());

@@ -967,6 +967,12 @@ public class ObservationWriter implements Serializable
             
             if (docVersion < 22)
                 addElement("productType", artifact.getProductType().getValue(), artifactElement);
+
+
+            if (docVersion > 22)
+            {
+                addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
+            }
             
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
             element.addContent(artifactElement);

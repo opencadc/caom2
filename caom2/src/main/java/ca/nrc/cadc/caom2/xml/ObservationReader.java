@@ -1129,6 +1129,18 @@ public class ObservationReader implements Serializable
 
             artifact.contentType = getChildText("contentType", artifactElement, namespace, false);
             artifact.contentLength = getChildTextAsLong("contentLength", artifactElement, namespace, false);
+
+            String contentChecksumStr = getChildText("contentChecksum", artifactElement, namespace, false);
+            if (contentChecksumStr != null) {
+                try {
+                    artifact.contentChecksum = new URI(contentChecksumStr);
+                } catch (URISyntaxException e) {
+                    String error = "Unable to parse contentChecksum " + uri + " into a URI in element " +
+                            artifactElement.getName() + " because " + e.getMessage();
+                    throw new ObservationParsingException(error, e);
+                }
+            }
+
             addParts(artifact.getParts(), artifactElement, namespace, rc);
 
             assignEntityAttributes(artifactElement, artifact, rc);
