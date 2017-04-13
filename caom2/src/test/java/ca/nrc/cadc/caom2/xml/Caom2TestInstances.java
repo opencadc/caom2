@@ -202,6 +202,31 @@ public class Caom2TestInstances
      
         return observation;
     }
+
+    public SimpleObservation getSimpleObservationSetAlgorithm()
+            throws Exception
+    {
+        SimpleObservation observation = new SimpleObservation(collection, observationID, getAlgorithm());
+        if (complete)
+        {
+            observation.type = "flat";
+            observation.intent = ObservationIntentType.CALIBRATION;
+            observation.metaRelease = ivoaDate;
+            observation.sequenceNumber = new Integer(123);
+            observation.setAlgorithm(getAlgorithm());
+            observation.proposal = getProposal();
+            observation.target = getTarget();
+            observation.targetPosition = getTargetPosition("ICRS", null);
+            observation.requirements = new Requirements(Status.FAIL);
+            observation.telescope = getTelescope();
+            observation.instrument = getInstrument();
+            observation.environment = getEnvironment();
+        }
+        if (depth > 1)
+            observation.getPlanes().addAll(getPlanes());
+
+        return observation;
+    }
     
     public CompositeObservation getCompositeObservation()
         throws Exception

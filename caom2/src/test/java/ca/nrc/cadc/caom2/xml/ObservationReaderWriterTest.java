@@ -454,6 +454,53 @@ public class ObservationReaderWriterTest
             fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testCompleteSimpleSetAlgorithm()
+    {
+        try
+        {
+            log.debug("testCompleteSimpleSetAlgorithm");
+            for (int i = 1; i < 6; i++)
+            {
+                // CoordBounds2D as CoordCircle2D
+                boolean boundsIsCircle = true;
+                SimpleObservation observation = getCompleteSimpleSetAlgorithm(i, boundsIsCircle);
+
+                // Write empty elements.
+                testObservation(observation, true);
+
+                // Do not write empty elements.
+                testObservation(observation, false);
+
+                // CoordBounds2D as CoordPolygon2D
+                boundsIsCircle = false;
+                observation = getCompleteSimpleSetAlgorithm(i, boundsIsCircle);
+
+                // Write empty elements.
+                testObservation(observation, true);
+
+                // Do not write empty elements.
+                testObservation(observation, false);
+            }
+
+            SimpleObservation observation = getCompleteSimpleSetAlgorithm(5, true);
+            testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
+
+            // nullify fields introduced after 2.0 so the comparison will work
+            observation.requirements = null;
+            for (Plane p : observation.getPlanes())
+            {
+                p.quality = null;
+            }
+            testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
     
     @Test
     public void testMinimalComposite()
@@ -592,6 +639,16 @@ public class ObservationReaderWriterTest
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
         return instances.getSimpleObservation();
+    }
+
+    protected SimpleObservation getCompleteSimpleSetAlgorithm(int depth, boolean boundsIsCircle)
+            throws Exception
+    {
+        Caom2TestInstances instances = new Caom2TestInstances();
+        instances.setComplete(true);
+        instances.setDepth(depth);
+        instances.setBoundsIsCircle(boundsIsCircle);
+        return instances.getSimpleObservationSetAlgorithm();
     }
     
     protected CompositeObservation getMinimalComposite(int depth, boolean boundsIsCircle)
