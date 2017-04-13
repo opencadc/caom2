@@ -699,10 +699,12 @@
     
     <xs:simpleType name="CalibrationLevel">
         <xs:restriction base="xs:integer">
+            <xs:enumeration value="-1"/>
             <xs:enumeration value="0"/>
             <xs:enumeration value="1"/>
             <xs:enumeration value="2"/>
             <xs:enumeration value="3"/>
+            <xs:enumeration value="4"/>
         </xs:restriction>
     </xs:simpleType>
     
