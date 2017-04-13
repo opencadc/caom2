@@ -84,7 +84,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class Plane extends AbstractCaomEntity implements Comparable<Plane>
+public class Plane extends CaomEntity implements Comparable<Plane>
 {
     private static final long serialVersionUID = 201704121420L;
     private static final Logger log = Logger.getLogger(Plane.class);

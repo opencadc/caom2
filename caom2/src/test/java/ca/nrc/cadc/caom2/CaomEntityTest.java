@@ -88,7 +88,7 @@ import org.junit.Test;
 
 /**
  * This tests the methods defined in the CaomEntity interface. The code is typically in
- * the AbstractCaomEntity class.
+ * the CaomEntity class.
  * 
  * @author pdowler
  */
@@ -101,7 +101,7 @@ public class CaomEntityTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    AbstractCaomEntity[] entities;
+    CaomEntity[] entities;
 
     public CaomEntityTest()
     {
@@ -127,7 +127,7 @@ public class CaomEntityTest
             ar.getParts().add(pa);
             pa.getChunks().add(ch);
             
-            entities = new AbstractCaomEntity[] {
+            entities = new CaomEntity[] {
                 so,
                 co,
                 pl,
@@ -244,7 +244,7 @@ public class CaomEntityTest
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField("id");
+            Field f = CaomEntity.class.getDeclaredField("id");
             f.setAccessible(true);
             f.set(ce, id);
         }
@@ -315,9 +315,9 @@ public class CaomEntityTest
         {
             Date d1 = new Date(100000L);
             Date d2 = new Date(200000L);
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d1, d2));
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d2, d1));
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d2, d2));
+            Assert.assertEquals(d2, CaomEntity.max(d1, d2));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d1));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d2));
         }
         catch(Exception unexpected)
         {
@@ -338,12 +338,12 @@ public class CaomEntityTest
                 Object o = entities[i];
                 Class c = o.getClass();
                 log.debug("class: " + c.getName());
-                SortedSet<Field> fields = AbstractCaomEntity.getStateFields(c, false);
+                SortedSet<Field> fields = CaomEntity.getStateFields(c, false);
                 for (Field f : fields)
                     log.debug("state: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of state fields:  " + c.getName(), expectedStateFields[i], fields.size());
 
-                fields = AbstractCaomEntity.getStateFields(c, true);
+                fields = CaomEntity.getStateFields(c, true);
                 for (Field f : fields)
                     log.debug("state: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of state fields (w/ transient):  " + c.getName(), expectedStateFieldsWithTrans[i], fields.size());
@@ -367,7 +367,7 @@ public class CaomEntityTest
                 Object o = entities[i];
                 Class c = o.getClass();
                 log.debug("class: " + c.getName());
-                List<Field> fields = AbstractCaomEntity.getChildFields(c);
+                List<Field> fields = CaomEntity.getChildFields(c);
                 for (Field f : fields)
                     log.debug("children: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of child fields:  " + c.getName(), expectedChildFields[i], fields.size());
@@ -385,7 +385,7 @@ public class CaomEntityTest
     {
         try
         {
-            for (AbstractCaomEntity ce : entities)
+            for (CaomEntity ce : entities)
             {
                 int c = ce.getStateCode();
                 log.debug("entity: " + ce.getClass().getName() + " checksum: " + c);
