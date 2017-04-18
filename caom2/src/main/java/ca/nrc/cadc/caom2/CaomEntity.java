@@ -76,6 +76,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -93,7 +94,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class CaomEntity implements Serializable
 {
-    private static final long serialVersionUID = 201202141220L;
+    private static final long serialVersionUID = 201704181300L;
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     private static final boolean SC_DEBUG = false;
@@ -102,6 +103,10 @@ public abstract class CaomEntity implements Serializable
     private UUID id;
     private Date lastModified;
     private Date maxLastModified;
+
+    // checksums
+    private URI metaChecksum;
+    private URI accMetaChecksum;
     
     protected CaomEntity()
     {
@@ -113,6 +118,9 @@ public abstract class CaomEntity implements Serializable
             this.id = UUID.randomUUID();
         else
             this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+
+        // metaChecksum and accMetaChecksum will be calculated as
+        // part of this constructor.
     }
 
     /**
@@ -202,6 +210,28 @@ public abstract class CaomEntity implements Serializable
     public int getStateCode(boolean includeTransient)
     {
         return checksum(this.getClass(), this, includeTransient);
+    }
+
+
+    private void calcuMetaChecksum()
+    {
+        // New calculation using MD5 from java.security.MessageDigest goes here...
+    }
+
+    public URI getMetaChecksum()
+    {
+        return this.metaChecksum;
+    }
+
+    private void calcAccMetaChecksum() {
+        // New calculation using MD5 from java.security.MessageDigest
+        // compounded over all children of this entity (excluding
+        // some fields) goes here...
+    }
+
+    public URI getAccMetaChecksum()
+    {
+        return this.accMetaChecksum;
     }
 
     // recursive compute checksum
