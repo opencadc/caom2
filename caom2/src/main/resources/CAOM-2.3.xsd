@@ -36,6 +36,10 @@
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+
+        <!-- Calculated checksums  -->
+        <xs:attribute name="metaChecksum" type="xs:anyURI" />
+        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
     
     <xs:simpleType name="UUID">
@@ -200,6 +204,10 @@
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+
+        <!-- Calculated checksums  -->
+        <xs:attribute name="metaChecksum" type="xs:anyURI" />
+        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
 
     <xs:complexType name="Provenance">
@@ -386,6 +394,10 @@
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+
+        <!-- Calculated checksums  -->
+        <xs:attribute name="metaChecksum" type="xs:anyURI" />
+        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
     
     <!-- Part -->
@@ -404,6 +416,10 @@
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+
+        <!-- Calculated checksums  -->
+        <xs:attribute name="metaChecksum" type="xs:anyURI" />
+        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
     
     <!-- Chunk -->
@@ -432,6 +448,10 @@
         </xs:sequence>
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+
+        <!-- Calculated checksums  -->
+        <xs:attribute name="metaChecksum" type="xs:anyURI" />
+        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
     
     <!-- WCS -->
