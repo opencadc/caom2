@@ -139,72 +139,39 @@
             <vodml-id>CalibrationLevel</vodml-id>
             <name>CalibrationLevel</name>
             <description>the degree to which data has been calibrated to remove instrumental effects;
-                issue: there is no way to convey the integer serialised values here</description>
+                issue: there is no way to convey the integer serialised values here so it is in the
+                description of each value</description>
+            <literal>
+                <vodml-id>CalibrationLevel.PLANNED</vodml-id>
+                <name>PLANNED</name>
+                <description>-1 : planned data product that does not yet exist</description>
+            </literal>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_INSTRUMENTAL</vodml-id>
                 <name>RAW_INSTRUMENTAL</name>
-                <description>raw data in some opaque instrument-specific format</description>
+                <description>0 : raw data in some opaque instrument-specific format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_STANDARD</vodml-id>
                 <name>RAW_STANDARD</name>
-                <description>raw data in a common format</description>
+                <description>1 : raw data in a common format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.CALIBRATED</vodml-id>
                 <name>CALIBRATED</name>
-                <description>standard calibration steps have been applied</description>
+                <description>2 : standard calibration steps have been applied</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.PRODUCT</vodml-id>
                 <name>PRODUCT</name>
-                <description>additional non-standard calibration steps have been applied</description>
+                <description>3 : additional non-standard calibration steps have been applied</description>
+            </literal>
+            <literal>
+                <vodml-id>CalibrationLevel.ANALYSIS_PRODUCT</vodml-id>
+                <name>ANALYSIS_PRODUCT</name>
+                <description>4 : data product from scientific analysis</description>
             </literal>
         </enumeration>
-        
-        <!--
-        <enumeration>
-            <vodml-id>DataProductType</vodml-id>
-            <name>DataProductType</name>
-            <description>a general description of the type or structure of the data;
-                work-around: using the name of the literal to convey the serialised value</description>
-            <literal>
-                <vodml-id>DataProductType.IMAGE</vodml-id>
-                <name>image</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.SPECTRUM</vodml-id>
-                <name>spectrum</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.TIMESERIES</vodml-id>
-                <name>timeseries</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.VISIBILITY</vodml-id>
-                <name>visibility</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.EVENTLIST</vodml-id>
-                <name>eventlist</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.CUBE</vodml-id>
-                <name>cube</name>
-                <description>TODO</description>
-            </literal>
-            <literal>
-                <vodml-id>DataProductType.CATALOG</vodml-id>
-                <name>catalog</name>
-                <description>TODO</description>
-            </literal>
-        </enumeration>
-        -->
         
         <enumeration>
             <vodml-id>EnergyBand</vodml-id>
@@ -364,58 +331,6 @@
             </literal>
         </enumeration>
         
-        <!-- artifact enums -->
-        <enumeration>
-            <vodml-id>ProductType</vodml-id>
-            <name>ProductType</name>
-            <description>a general classification of the content of data files or parts thereof;
-                work-around: using the name of the literal to convey the serialised value</description>
-            <literal>
-                <vodml-id>ProductType.SCIENCE</vodml-id>
-                <name>science</name>
-                <description>this is the science data; data values come from extraterrestrial photons</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.CALIBRATION</vodml-id>
-                <name>calibration</name>
-                <description>this is calibration data; </description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.INFO</vodml-id>
-                <name>info</name>
-                <description>the content provides additional information: explanations, logs, etc</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.PREVIEW</vodml-id>
-                <name>preview</name>
-                <description>this is non-science preview data</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.THUMBNAIL</vodml-id>
-                <name>thumbnail</name>
-                <description>this is a small non-science preview data; small means that this preview is suitable to display
-                    in a popup window or with multiple displayed together</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.NOISE</vodml-id>
-                <name>noise</name>
-                <description>this is auxiliary data with some measure of the noise;
-                    to be used when analysing the science data</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.WEIGHT</vodml-id>
-                <name>weight</name>
-                <description>this is auxiliary data which provides weight values;
-                    to be used when analysing the science data</description>
-            </literal>
-            <literal>
-                <vodml-id>ProductType.AUXILIARY</vodml-id>
-                <name>auxiliary</name>
-                <description>this is auxiliary data;
-                    to be used when analysing the science data</description>
-            </literal>
-        </enumeration>
-        
         <enumeration>
             <vodml-id>ReleaseType</vodml-id>
             <name>ReleaseType</name>
@@ -433,7 +348,7 @@
             </literal>
         </enumeration>
         
-        <objectType abstract="true">
+        <dataType abstract="true">
             <vodml-id>VocabularyTerm</vodml-id>
             <name>VocabularyTerm</name>
             <description>base class of a single term (word) in a vocabulary
@@ -474,9 +389,9 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-        </objectType>
+        </dataType>
         
-        <objectType abstract="false">
+        <dataType abstract="false">
             <vodml-id>DataProductType</vodml-id>
             <name>DataProductType</name>
             <description>vocabulary term used in CAOM; this class defines constants for the CAOM
@@ -490,7 +405,21 @@
                 it behaves more or less like an enum but is extensible
                 TODO: can that be done in VODML?
             -->
-        </objectType>
+        </dataType>
+        
+        <dataType abstract="false">
+            <vodml-id>ProductType</vodml-id>
+            <name>ProductType</name>
+            <description>this class defines constants for the CAOM ProductType vocabulary
+                (CHANGED in CAOM-2.3)</description>
+            <extends>
+                <vodml-ref>caom2:VocabularyTerm</vodml-ref>
+            </extends>
+            <!-- intent is to define constants of type ProductType in this class so
+                it behaves more or less like an enum but is extensible
+                TODO: can that be done in VODML?
+            -->
+        </dataType>
         
         <objectType abstract="true">
             <vodml-id>CaomEntity</vodml-id>
@@ -861,8 +790,7 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            
-            <composition>
+            <attribute>
                 <vodml-id>Plane.dataProductType</vodml-id>
                 <name>dataProductType</name>
                 <description>standard classification of the type of data product; describes the logical data type
@@ -874,7 +802,8 @@
                     <minOccurs>0</minOccurs>
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
-            </composition>
+            </attribute>
+            
             <composition>
                 <vodml-id>Plane.quality</vodml-id>
                 <name>quality</name>
@@ -1095,7 +1024,7 @@
             <attribute>
                 <vodml-id>Part.productType</vodml-id>
                 <name>productType</name>
-                <description>product type of this part when it differs from the parent artifact</description>
+                <description>TODO: define this</description>
                 <datatype>
                     <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
@@ -1104,7 +1033,7 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-
+            
             <composition>
                 <vodml-id>Part.chunks</vodml-id>
                 <name>chunks</name>
@@ -1130,7 +1059,7 @@
             <attribute>
                 <vodml-id>Chunk.productType</vodml-id>
                 <name>productType</name>
-                <description>product type where it differs from the parent part</description>
+                <description>TODO: define this</description>
                 <datatype>
                     <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
