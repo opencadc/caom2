@@ -81,7 +81,7 @@ public class ProductType extends VocabularyTerm implements CaomEnum, Serializabl
 {
     private static final long serialVersionUID = 2017040200800L;
     
-    private static final URI CAOM2 = URI.create("http://www.opencadc.org/caom2");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
     
     public static ProductType SCIENCE = new ProductType("science");
     public static ProductType CALIBRATION = new ProductType("calibration");
@@ -91,6 +91,10 @@ public class ProductType extends VocabularyTerm implements CaomEnum, Serializabl
     public static ProductType NOISE = new ProductType("noise");
     public static ProductType WEIGHT = new ProductType("weight");
     public static ProductType THUMBNAIL = new ProductType("thumbnail");
+    public static ProductType BIAS = new ProductType("bias");
+    public static ProductType DARK = new ProductType("dark");
+    public static ProductType FLAT = new ProductType("flat");
+
     
     /**
      * @deprecated
@@ -101,13 +105,14 @@ public class ProductType extends VocabularyTerm implements CaomEnum, Serializabl
     {
         return new ProductType[]
         {
-            SCIENCE, CALIBRATION, AUXILIARY, INFO, PREVIEW, CATALOG, NOISE, WEIGHT, THUMBNAIL
+            SCIENCE, CALIBRATION, AUXILIARY, INFO, PREVIEW, CATALOG, NOISE, WEIGHT, THUMBNAIL,
+            BIAS, DARK, FLAT
         };
     }
 
     private ProductType(String term)
     {
-        super(CAOM2, term, true);
+        super(CAOM, term, true);
     }
     protected ProductType(URI namespace, String term) 
     { 

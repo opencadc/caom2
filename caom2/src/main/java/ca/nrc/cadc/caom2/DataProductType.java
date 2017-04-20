@@ -83,7 +83,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum, Seriali
     private static final long serialVersionUID = 201704061700L;
     
     private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
-    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/DataProductType");
     
     // ObsCore-1.0
     public static final DataProductType IMAGE = new DataProductType("image");
