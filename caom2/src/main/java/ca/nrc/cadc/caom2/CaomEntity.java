@@ -312,11 +312,60 @@ public abstract class CaomEntity implements Serializable
         return this.metaChecksum;
     }
 
-    private void calcAccMetaChecksum(Class c, Object o) {
-        // New calculation using MD5 from java.security.MessageDigest
-        // compounded over all children of this entity (excluding
-        // some fields) goes here...
+
+    public void computeAccMetaChecksum(boolean includeTransient, MessageDigest digest) {
+
+        try {
+            byte[] accMetaChecksumBytes = calcAccMetaChecksum(this.getClass(), this, includeTransient, digest);
+            String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
+            this.accMetaChecksum = new URI("md5:" + accHexMetaChecksum);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to calculate accMetaChecksum for class " + this.getClass().getName(), e);
+        }
     }
+
+    private byte[] calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest) {
+        // Depth first summation of the metaChecksums for this class.
+        // Do sum at any individual step alphabetically *after*
+
+        try
+        {
+            // Check to see if any children exist, process them first
+            SortedSet<Field> fields = getStateFields(c, includeTransient);
+            for (Field f : fields) {
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null) {
+                    if (SC_DEBUG) log.debug("checksum: value type is " + fo.getClass().getName());
+                    if (fo instanceof Collection) {
+                        Collection stuff = (Collection) fo;
+                        Iterator i = stuff.iterator();
+                        while (i.hasNext()) {
+                            Object co = i.next();
+                            Class cc = co.getClass();
+                            if (co instanceof CaomEntity) {
+                                msgDigest.update(calcAccMetaChecksum(cc, co, includeTransient, msgDigest));
+                            }
+                        }
+                    }
+                }
+                else if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+            }
+
+            // Add this object's metaChecksum value to the msgDigest
+            CaomEntity ce = (CaomEntity) o;
+            String metaChecksumStr = ce.getMetaChecksum().getSchemeSpecificPart();
+            msgDigest.update(metaChecksumStr.getBytes());
+
+        }
+        catch(IllegalAccessException bug)
+        {
+            throw new RuntimeException("Unable to calculate metaChecksum for class " + c.getName(), bug);
+        }
+
+        return msgDigest.digest();
+    }
+
 
     public URI getAccMetaChecksum()
     {
