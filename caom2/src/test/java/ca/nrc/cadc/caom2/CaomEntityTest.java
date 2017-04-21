@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedSet;
@@ -111,7 +112,7 @@ public class CaomEntityTest
             SimpleObservation so = new SimpleObservation("FOO", "bar");
             CompositeObservation co = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
             co.getMembers().add(new ObservationURI("foo", "baz"));
-            
+
             Plane pl = new Plane("thing");
             pl.provenance = new Provenance("doit");
             pl.provenance.getInputs().add(new PlaneURI(uri, "thing"));
@@ -126,7 +127,7 @@ public class CaomEntityTest
             pl.getArtifacts().add(ar);
             ar.getParts().add(pa);
             pa.getChunks().add(ch);
-            
+
             entities = new CaomEntity[] {
                 so,
                 co,
@@ -159,50 +160,50 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testUUID()
     {
         try
         {
             UUID id;
-                    
+
             id = new UUID(0L, 0L);
             log.debug("[0,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0L, 1L);
             log.debug("[0,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, 0L);
             log.debug("[1,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, 1L);
             log.debug("[1,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0L, -1L);
             log.debug("[0,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, 0L);
             log.debug("[-1,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, -1L);
             log.debug("[1,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, 1L);
             log.debug("[-1,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, -1L);
             log.debug("[-1,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0, 666L);
             log.info("[0,666] as UUID: " + id.toString());
         }
@@ -212,7 +213,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testEquals()
     {
@@ -221,15 +222,15 @@ public class CaomEntityTest
             // only Chunk does not override equals/compareTo/hasCode
             Chunk o1 = new Chunk();
             Chunk o2 = new Chunk();
-            
+
             Assert.assertTrue(o1.equals(o1));
-            
+
             Assert.assertFalse(o1.equals(null));
-            
+
             Assert.assertFalse(o1.equals("foo"));
-            
+
             Assert.assertFalse(o1.equals(o2));
-            
+
             // simulate serialize/deserialize so different object with same numeric id
             assignID(o2, o1.getID());
             Assert.assertTrue(o1.equals(o2));
@@ -251,7 +252,7 @@ public class CaomEntityTest
         catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
-    
+
     @Test
     public void testDateFieldInStateCode()
     {
@@ -269,7 +270,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testCaomEnumInStateCode()
     {
@@ -288,7 +289,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testKeywordsInStateCode()
     {
@@ -329,7 +330,7 @@ public class CaomEntityTest
     @Test
     public void testGetStateFields()
     {
-        
+
         try
         {
             Assert.assertEquals("test setup", entities.length, expectedStateFields.length);
@@ -422,4 +423,33 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testMetaChecksum()
+    {
+        try
+        {
+            MessageDigest msgDg = MessageDigest.getInstance("MD5");
+
+            for (CaomEntity ce : entities)
+            {
+                ce.computeMetaChecksum(false, msgDg);
+                log.info("entity: " + ce.getClass().getName() + " meta checksum: " + ce.getMetaChecksum());
+
+            }
+
+            Assert.assertEquals("SimpleObservation metaChecksum", "md5:918f80b11f258e9a58fee10a1c5ec611", entities[0].getMetaChecksum().toString());
+            Assert.assertEquals("CompositeObservation metaChecksum", "md5:7bf4fb51de90559c5228e0f865215de4", entities[1].getMetaChecksum().toString());
+            Assert.assertEquals("Plane metaChecksum", "md5:141d71504ed6f1d49dfe7aaecb7a4c5c", entities[2].getMetaChecksum().toString());
+            Assert.assertEquals("Artifact metaChecksum", "md5:736369656e6365", entities[3].getMetaChecksum().toString());
+            Assert.assertEquals("Part metaChecksum", "md5:6130ef4aca3aeb227ea3c5b2fdfdd5c3", entities[4].getMetaChecksum().toString());
+            Assert.assertEquals("Chunk metaChecksum", "md5:d41d8cd98f00b204e9800998ecf8427e", entities[5].getMetaChecksum().toString());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

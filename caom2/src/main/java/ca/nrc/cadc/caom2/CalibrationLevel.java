@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.util.HexUtil;
+
 /**
  *
  * @author pdowler
@@ -122,6 +124,11 @@ public enum CalibrationLevel implements CaomEnum
     public int checksum()
     {
         return value;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return HexUtil.toBytes(value);
     }
 
     @Override

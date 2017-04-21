@@ -71,12 +71,17 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HashUtil;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -86,6 +91,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+
+import ca.nrc.cadc.util.HexUtil;
 import org.apache.log4j.Logger;
 
 /**
@@ -104,9 +111,15 @@ public abstract class CaomEntity implements Serializable
     private Date lastModified;
     private Date maxLastModified;
 
-    // checksums
-    private URI metaChecksum;
-    private URI accMetaChecksum;
+    /*
+     * Computed (MD5) checksum for this entity
+     */
+    private transient URI metaChecksum;
+
+    /*
+     * Accumulated computed checksum for this eneity and all it's children.
+     */
+    private transient URI accMetaChecksum;
     
     protected CaomEntity()
     {
@@ -212,10 +225,86 @@ public abstract class CaomEntity implements Serializable
         return checksum(this.getClass(), this, includeTransient);
     }
 
+    public void computeMetaChecksum(boolean includeTransient, MessageDigest digest) {
 
-    private void calcuMetaChecksum()
+        try {
+            byte[] metaChecksumBytes = calcMetaChecksum(this.getClass(), this, includeTransient, digest);
+            String hexMetaChecksum = HexUtil.toHex(metaChecksumBytes);
+            this.metaChecksum = new URI("md5:" + hexMetaChecksum);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to calculate metaChecksum for class " + this.getClass().getName(), e);
+        }
+    }
+
+    private byte[] calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
     {
-        // New calculation using MD5 from java.security.MessageDigest goes here...
+        try
+        {
+            SortedSet<Field> fields = getStateFields(c, includeTransient);
+            for (Field f : fields) {
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null) {
+                    if (SC_DEBUG) log.debug("checksum: value type is " + fo.getClass().getName());
+                    Class ac = fo.getClass(); // actual class
+                    if (fo instanceof CaomEnum) {
+                        // use ce.getValue
+                        CaomEnum ce = (CaomEnum) fo;
+                        return ce.getBytes();
+                    } else if (isLocalClass(ac)) {
+                        //only merge the checksum if there is state (cs != 0)
+                        msgDigest.update(calcMetaChecksum(ac, fo, includeTransient, msgDigest));
+
+                    } else if (fo instanceof Collection) {
+                        Collection stuff = (Collection) fo;
+                        Iterator i = stuff.iterator();
+                        while (i.hasNext()) {
+                            Object co = i.next();
+                            Class cc = co.getClass();
+                            if (isLocalClass(cc)) {
+                                //only merge the checksum if there is state (cs != 0)
+                                msgDigest.update(calcMetaChecksum(cc, co, includeTransient, msgDigest));
+                            } else // non-caom2 class
+                            {
+
+                                try (ByteArrayOutputStream b = new ByteArrayOutputStream()) {
+                                    try (ObjectOutputStream outStrm = new ObjectOutputStream(b)) {
+                                        outStrm.writeObject(fo);
+                                    }
+                                    msgDigest.update(b.toByteArray());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    } else if (fo instanceof Date) {
+                        // only compare down to seconds
+                        Date date = (Date) fo;
+                        long sec = (date.getTime() / 1000L);
+                        msgDigest.update(HexUtil.toBytes(sec));
+                    } else // non-caom2 class
+                    {
+                        try (ByteArrayOutputStream b = new ByteArrayOutputStream()) {
+                            try (ObjectOutputStream outStrm = new ObjectOutputStream(b)) {
+                                outStrm.writeObject(fo);
+                            }
+                            msgDigest.update(b.toByteArray());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                else if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+            }
+
+        }
+        catch(IllegalAccessException bug)
+        {
+            throw new RuntimeException("Unable to calculate metaChecksum for class " + c.getName(), bug);
+        }
+
+        return msgDigest.digest();
+
     }
 
     public URI getMetaChecksum()
@@ -223,7 +312,7 @@ public abstract class CaomEntity implements Serializable
         return this.metaChecksum;
     }
 
-    private void calcAccMetaChecksum() {
+    private void calcAccMetaChecksum(Class c, Object o) {
         // New calculation using MD5 from java.security.MessageDigest
         // compounded over all children of this entity (excluding
         // some fields) goes here...
