@@ -9,30 +9,23 @@ plugins {
 repositories {
     jcenter()
     mavenLocal()
-
-    // repo for jsky    
-    maven {
-        url = 'http://java.freehep.org/maven2'
-    }
 }
 
 sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.2'
+version = '2.2.1'
 
 mainClassName = 'ca.nrc.cadc.fits2caom2.Main'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.jdom:jdom2:2.+'
-    compile 'jsky:jsky-coords:1.+'
     compile 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.+'
     
     compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-wcs:1.+'
-    compile 'org.opencadc:caom2:2.2+'
+    compile 'org.opencadc:caom2:[2.2.5,)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vos:1.+'
 

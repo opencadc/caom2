@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    //id 'maven'
+    //id 'maven-publish'
+    id "com.github.eerohele.saxon-gradle" version "0.2.1"
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+sourceCompatibility = 1.8
+
+group = 'org.opencadc'
+
+version = '2.2'
+
+jar {
+    enabled = false
+}
+defaultTasks 'build', 'xslt'
+
+task initHTML(type: Copy, dependsOn: test) {
+    
+    project.mkdir('build/html')
+        
+    from 'src/main/resources'
+    into 'build/html'
+    include '**/*.png'
+}
+
+xslt {
+    dependsOn test, initHTML
+    
+    stylesheet file('src/main/xsl/vo-dml2html.xsl')
+    input file('src/main/resources/CAOM-2.2-vodml.xml')
+    output file('build/html/index.html')
+    
+    parameters(
+        project_name: 'Common Archive Observation Model',
+        preamble: '../resources/preamble.html',
+        graphviz_png: 'CAOM-UML.png'
+    )
+    
+}
+
+dependencies {
+    testCompile 'org.opencadc:cadc-vodml:[1.0.1,)'
+
+    testCompile 'junit:junit:4.+' 
+}

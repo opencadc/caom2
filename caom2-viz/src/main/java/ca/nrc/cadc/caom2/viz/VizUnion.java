@@ -77,10 +77,10 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.PolygonUtil;
-import ca.nrc.cadc.caom2.types.PositionUtil;
+import ca.nrc.cadc.caom2.compute.PolygonUtil;
+import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Util;
+import ca.nrc.cadc.caom2.compute.Util;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 

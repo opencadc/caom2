@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.PolygonUtil;
 import java.util.Set;
 
 /**
@@ -201,27 +200,5 @@ public final class CaomValidator
         validateKeywords(obs);
         
         validateIntent(obs);
-        
-        for (Plane p : obs.getPlanes())
-        {
-            try
-            {
-                p.clearTransientState();
-                p.computeTransientState(obs);
-                if (p.position != null && p.position.bounds != null)
-                {
-                    Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
-                    PolygonUtil.getOuterHull(poly);
-                }
-            }
-            catch(Error er)
-            {
-                throw new RuntimeException("failed to compute metadata for plane " + p.getProductID(), er);
-            }
-            catch(Exception ex)
-            {
-                throw new IllegalArgumentException("failed to compute metadata for plane " + p.getProductID(), ex);
-            }
-        }
     }
 }

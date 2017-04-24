@@ -69,14 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.EnergyUtil;
-import ca.nrc.cadc.caom2.types.PolarizationUtil;
-import ca.nrc.cadc.caom2.types.PositionUtil;
-import ca.nrc.cadc.caom2.types.TimeUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
-import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -112,38 +105,32 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     /**
      * Computed position metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Position position;
     /**
      * Computed energy metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Energy energy;
     /**
      * Computed time metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Time time;
     /**
      * Computed polarization metadata. Computed state is always qualified as transient
      * since it does not (always) need to be stored or serialised.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient Polarization polarization;
     
     /**
      * Computed plane identifier. Identifers of this form are used in Provenance
      * input lists.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient PlaneURI planeURI;
     
     /**
      * Computed globally unique identifier.
-     * @see Plane#computeTransientState(ca.nrc.cadc.caom2.Observation) 
      */
     public transient PublisherID publisherID;
     
@@ -151,45 +138,6 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
     {
         CaomValidator.assertNotNull(getClass(), "productID", productID);
         this.productID = productID;
-    }
-
-    /**
-     * Clear all computed state.
-     */
-    public void clearTransientState()
-    {
-        this.publisherID = null;
-        this.position = null;
-        this.energy = null;
-        this.time = null;
-        this.polarization = null;
-        // clear metaRelease to children
-        for (Artifact a : artifacts)
-        {
-            a.metaRelease = null;
-            for (Part p : a.getParts())
-            {
-                p.metaRelease = null;
-                for (Chunk c : p.getChunks())
-                {
-                    c.metaRelease = null;
-                }
-            }
-        }
-    }
-
-    /**
-     * Force (re)computation of all computed state.
-     */
-    public void computeTransientState(Observation parent)
-    {
-        computeIdentifiers(parent);
-        computePosition();
-        computeEnergy();
-        computeTime();
-        computePolarization();
-        
-        propagateMetaRelease();
     }
 
     @Override
@@ -203,65 +151,11 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return productID;
     }
 
-    /**
-     * @param parentURI
-     * @return 
-     * @deprecated use public field
-     */
-    public PlaneURI getURI(ObservationURI parentURI)
-    {
-        return new PlaneURI(parentURI, productID);
-    }
-
     public Set<Artifact> getArtifacts()
     {
         return artifacts;
     }
 
-    /**
-     * Get the computed position metadata. Note that computeTransientState must 
-     * be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Position getPosition()
-    {
-        return position;
-    }
-
-    /**
-     * Get the computed energy metadata. Note that computeTransientState must 
-     * be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is public
-     */
-    public Energy getEnergy()
-    {
-        return energy;
-    }
-
-    /**
-     * Get the computed time metadata. Note that computeTransientState must be 
-     * called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Time getTime()
-    {
-        return time;
-    }
-
-    /**
-     * Get the computed polarization metadata. Note that computeTransientState 
-     * must be called first (no lazy computation triggered here).
-     * @return 
-     * @deprecated field is now public
-     */
-    public Polarization getPolarization()
-    {
-        return polarization;
-    }
-    
     @Override
     public boolean equals(Object o)
     {
@@ -283,77 +177,9 @@ public class Plane extends AbstractCaomEntity implements Comparable<Plane>
         return productID.hashCode();
     }
 
+    @Override
     public int compareTo(Plane p)
     {
         return this.productID.compareTo(p.productID);
     }
-
-    protected void computeIdentifiers(Observation o)
-    {
-        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
-        // TODO: where to get authority??
-        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
-        this.planeURI = new PlaneURI(o.getURI(), productID);
-        this.publisherID = new PublisherID(resourceID, o.getObservationID(), productID);
-    }
-    
-    protected void computePosition()
-    {
-        try
-        {
-            this.position = PositionUtil.compute(artifacts);
-        }
-        catch(NoSuchKeywordException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        }
-    }
-
-    protected void computeEnergy()
-    {
-        try
-        {
-            this.energy = EnergyUtil.compute(artifacts);
-        }
-        catch(NoSuchKeywordException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
-            throw new IllegalArgumentException("failed to compute Plane.energy", ex);
-        }
-    }
-
-    protected void computeTime()
-    {
-        this.time = TimeUtil.compute(artifacts);
-    }
-
-    protected void computePolarization()
-    {
-        this.polarization = PolarizationUtil.compute(artifacts);
-    }
-
-    protected void propagateMetaRelease()
-    {
-        // propagate metaRelease to children of the plane
-        for (Artifact a : artifacts)
-        {
-            a.metaRelease = metaRelease;
-            for (Part p : a.getParts())
-            {
-                p.metaRelease = metaRelease;
-                for (Chunk c : p.getChunks())
-                {
-                    c.metaRelease = metaRelease;
-                }
-            }
-        }
-    }
-
 }

@@ -118,25 +118,6 @@ public class JsonWriterTest
         {
             int i = 5;
             Observation o = getCompleteSimple(i, true);
-            if (i == 5)
-            {
-                for (Plane p : o.getPlanes())
-                {
-                    p.computeTransientState(o);
-                    Assert.assertNotNull("Plane.position", p.position);
-                    Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
-
-                    Assert.assertNotNull("Plane.energy", p.energy);
-                    Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
-
-                    Assert.assertNotNull("Plane.time", p.time);
-                    Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
-
-                    Assert.assertNotNull("Plane.polarization", p.polarization);
-                    Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
-                    Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
-                }
-            }
             
             JsonWriter jw = new JsonWriter();
             StringBuilder sb = new StringBuilder();
@@ -171,25 +152,6 @@ public class JsonWriterTest
         {
             int i = 5;
             Observation o = getCompleteComposite(i, true);
-            if (i == 5)
-            {
-                for (Plane p : o.getPlanes())
-                {
-                    p.computeTransientState(o);
-                    Assert.assertNotNull("Plane.position", p.position);
-                    Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
-
-                    Assert.assertNotNull("Plane.energy", p.energy);
-                    Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
-
-                    Assert.assertNotNull("Plane.time", p.time);
-                    Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
-
-                    Assert.assertNotNull("Plane.polarization", p.polarization);
-                    Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
-                    Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
-                }
-            }
             
             JsonWriter jw = new JsonWriter();
             StringBuilder sb = new StringBuilder();
