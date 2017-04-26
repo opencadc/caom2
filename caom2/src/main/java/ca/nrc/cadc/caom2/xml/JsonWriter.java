@@ -98,7 +98,7 @@ public class JsonWriter extends ObservationWriter implements Serializable
     
     public JsonWriter(boolean prettyPrint)
     {
-        super("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+        super("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
         this.prettyPrint = prettyPrint;
     }
     

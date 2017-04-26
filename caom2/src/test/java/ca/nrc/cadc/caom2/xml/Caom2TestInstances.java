@@ -202,6 +202,31 @@ public class Caom2TestInstances
      
         return observation;
     }
+
+    public SimpleObservation getSimpleObservationSetAlgorithm()
+            throws Exception
+    {
+        SimpleObservation observation = new SimpleObservation(collection, observationID, getAlgorithm());
+        if (complete)
+        {
+            observation.type = "flat";
+            observation.intent = ObservationIntentType.CALIBRATION;
+            observation.metaRelease = ivoaDate;
+            observation.sequenceNumber = new Integer(123);
+            observation.setAlgorithm(getAlgorithm());
+            observation.proposal = getProposal();
+            observation.target = getTarget();
+            observation.targetPosition = getTargetPosition("ICRS", null);
+            observation.requirements = new Requirements(Status.FAIL);
+            observation.telescope = getTelescope();
+            observation.instrument = getInstrument();
+            observation.environment = getEnvironment();
+        }
+        if (depth > 1)
+            observation.getPlanes().addAll(getPlanes());
+
+        return observation;
+    }
     
     public CompositeObservation getCompositeObservation()
         throws Exception
@@ -310,6 +335,7 @@ public class Caom2TestInstances
         Plane plane = new Plane("productID");
         if (complete)
         {
+            plane.creatorID = new URI("http://foo/bar");
             plane.metaRelease = ivoaDate;
             plane.dataRelease = ivoaDate;
             plane.dataProductType = DataProductType.IMAGE;
@@ -370,6 +396,7 @@ public class Caom2TestInstances
         {
             artifact.contentType = "application/fits";
             artifact.contentLength = 12345L;
+            artifact.contentChecksum = new URI("md5:1234567");
         }
         if (depth > 3)
             artifact.getParts().addAll(getParts());

@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -126,12 +126,12 @@ public class CaomUtil implements Serializable
                 
     }
     
-    // methods to assign to private field in AbstractCaomEntity
+    // methods to assign to private field in CaomEntity
     public static void assignID(Object ce, UUID id)
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField("id");
+            Field f = CaomEntity.class.getDeclaredField("id");
             f.setAccessible(true);
             f.set(ce, id);
         }
@@ -143,7 +143,7 @@ public class CaomUtil implements Serializable
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
+            Field f = CaomEntity.class.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, d);
             //log.debug("assignLastModified: " + d.getTime() + " -> " + ce.getClass().getSimpleName() + "." + fieldName);
@@ -161,7 +161,7 @@ public class CaomUtil implements Serializable
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
+            Field f = CaomEntity.class.getDeclaredField(fieldName);
             f.setAccessible(true);
             return (Date) f.get(ce);
         }

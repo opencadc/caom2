@@ -100,6 +100,11 @@ public enum EnergyBand implements CaomEnum
     {
         return value.hashCode();
     }
+
+    @Override
+    public byte[] getBytes() {
+        return value.getBytes();
+    }
     
     public static EnergyBand toValue(String s)
     {

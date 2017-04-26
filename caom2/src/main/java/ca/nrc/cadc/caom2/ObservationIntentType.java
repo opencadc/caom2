@@ -99,6 +99,11 @@ public enum ObservationIntentType implements CaomEnum
     }
 
     @Override
+    public byte[] getBytes() {
+        return value.getBytes();
+    }
+
+    @Override
     public String toString()
     {
         return this.getClass().getSimpleName() + "[" + value + "]";

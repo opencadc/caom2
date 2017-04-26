@@ -79,7 +79,7 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public abstract class Observation extends AbstractCaomEntity implements Comparable<Observation>
+public abstract class Observation extends CaomEntity implements Comparable<Observation>
 {
     private static final long serialVersionUID = 201604081100L;
 

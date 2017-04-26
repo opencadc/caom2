@@ -95,6 +95,11 @@ public enum ReleaseType implements CaomEnum
     {
         return value.hashCode();
     }
+
+    @Override
+    public byte[] getBytes() {
+        return value.getBytes();
+    }
     
     @Override
     public String toString()

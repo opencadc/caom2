@@ -94,6 +94,11 @@ public enum Status implements CaomEnum
         return value.hashCode();
     }
 
+    @Override
+    public byte[] getBytes() {
+        return getValue().getBytes();
+    }
+
     public String getValue() { return value; }
 
     @Override

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,102 +62,84 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.access;
+package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.CaomEntity;
+
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.StringUtil;
+import java.io.Serializable;
 import java.net.URI;
-import java.util.UUID;
 
 /**
  *
  * @author pdowler
  */
-public class ReadAccess extends CaomEntity implements Comparable<ReadAccess>
+public class VocabularyTerm implements Serializable
 {
-    private static final long serialVersionUID = 201202081620L;
+    private static final long serialVersionUID = 201704061700L;
     
-    private UUID assetID;
-
-    private URI groupID;
+    private final URI namespace;
+    private final String term;
+    private boolean base;
     
-    private ReadAccess() { }
-
-    public ReadAccess(UUID assetID, URI groupID)
+    /**
+     * Constructor. This creates a term in the specified vocabulary namepsace
+     * with default base = false.
+     * 
+     * @param namespace
+     * @param term 
+     */
+    public VocabularyTerm(URI namespace, String term)
     {
-        super(true);
-        CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
-        CaomValidator.assertNotNull(this.getClass(), "groupID", groupID);
-        this.assetID = assetID;
-        this.groupID = groupID;
-        String name = getGroupName();
-        if (name == null)
-            throw new IllegalArgumentException("invalid groupID (no group name found in query string or fragment): " + groupID);
-    }
-
-    public UUID getAssetID()
-    {
-        return assetID;
-    }
-
-    public URI getGroupID()
-    {
-        return groupID;
+        this(namespace, term, false);
     }
     
-    public final String getGroupName()
-    {
-        // canonical form: ivo://<authority>/<path>?<name>
-        
-        String ret = groupID.getQuery();
-        if (StringUtil.hasText(ret))
-            return ret;
-        
-        // backwards compat
-        ret = groupID.getFragment();
-        if (StringUtil.hasText(ret))
-            return ret;
-        
-        // temporary backwards compat for caom2ac usage hack
-        return groupID.toASCIIString();
+    /**
+     * Constructor. This creates a term in the specified vocabulary namespace. If the value
+     * of base is false (default for convenience constructor) then the string value 
+     * (from getValue()) will just be the namespace URI plus the term added as a fragment.
+     * If the value of base is true, then this is a term in a base vocabulary and the value
+     * will be just the term (without the namespace).
+     * 
+     * @param namespace
+     * @param term
+     * @param base 
+     */
+    public VocabularyTerm(URI namespace, String term, boolean base) 
+    { 
+        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace", namespace);
+        CaomValidator.assertNotNull(VocabularyTerm.class, "term", term);
+        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term", term);
+        if (namespace.getFragment() != null)
+            throw new IllegalArgumentException("vocabulary namespace canniot have a fragment");
+        this.namespace = namespace;
+        this.term = term;
+        this.base = base;
     }
 
-    @Override
-    public boolean equals(Object o)
+    public URI getNamespace()
     {
-        if (o == null)
-            return false;
-        if (this == o)
-            return true;
-        if ( !this.getClass().equals(o.getClass()) ) // only exact class match
-            return false;
-
-        ReadAccess ra = (ReadAccess) o;
-        return this.groupID.equals(ra.groupID)
-                && this.assetID.equals(ra.assetID);
+        return namespace;
     }
 
-    public int compareTo(ReadAccess o)
+    public String getTerm()
     {
-        // groupID,assetID,classname==permission type
-        int ret = this.groupID.compareTo(o.groupID);
-        if (ret == 0)
-            ret = this.assetID.compareTo(o.assetID);
-        if (ret == 0)
-            ret = this.getClass().getName().compareTo(o.getClass().getName());
-        return ret;
+        return term;
     }
-
+    
+    public String getValue()
+    {
+        if (base)
+            return term;
+        URI tmp = URI.create(namespace.toASCIIString() + "#" + term);
+        return tmp.toASCIIString();
+    }
+    
     @Override
     public String toString()
     {
-        return this.getClass().getSimpleName()
-                + "[" + assetID + "," + groupID + "]";
+        return this.getClass().getSimpleName() + "[" + term + "]";
     }
 }

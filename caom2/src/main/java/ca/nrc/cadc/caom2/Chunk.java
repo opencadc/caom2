@@ -86,7 +86,7 @@ import java.util.Date;
  * 
  * @author pdowler
  */
-public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
+public class Chunk extends CaomEntity implements Comparable<Chunk>
 {
     private static final long serialVersionUID = 201110261400L;
 
@@ -123,7 +123,7 @@ public class Chunk extends AbstractCaomEntity implements Comparable<Chunk>
         return getID().compareTo(o.getID());
     }
 
-    // the AbstractCaomEntity implementations of equals() and hashCode() are sufficient
+    // the CaomEntity implementations of equals() and hashCode() are sufficient
 
 
 }
