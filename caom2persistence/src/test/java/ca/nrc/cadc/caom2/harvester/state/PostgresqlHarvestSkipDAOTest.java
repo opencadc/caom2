@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -104,12 +105,15 @@ public class PostgresqlHarvestSkipDAOTest
     {
         try
         {
-            DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
-            this.dataSource = DBUtil.getDataSource(cc);
             this.database = "cadctest";
-            this.schema = System.getProperty("user.name");
-
+            this.schema = "caom2";
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+            this.dataSource = DBUtil.getDataSource(cc);
+            
+            InitDatabase init = new InitDatabase(dataSource, "cadctest", "caom2");
+            init.doInit();
+        
             String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
             log.debug("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);

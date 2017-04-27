@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import static ca.nrc.cadc.caom2.persistence.AbstractDatabaseReadAccessDAOTest.log;
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Constructor;
 import java.net.URI;
@@ -108,13 +109,16 @@ public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTe
     public PostgresqlReadAccessDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", System.getProperty("user.name"), false, false);
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
         this.entityClasses = new Class[]
         {
             ObservationMetaReadAccess.class,
             PlaneMetaReadAccess.class,
             PlaneDataReadAccess.class
         };
+        
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        init.doInit();
     }
 
     @Test

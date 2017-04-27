@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -89,6 +90,9 @@ public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAO
     public PostgresqlObservationDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", System.getProperty("user.name"), false, false);
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
+        
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        init.doInit();
     }
 }
