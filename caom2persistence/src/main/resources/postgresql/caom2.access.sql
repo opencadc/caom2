@@ -2,7 +2,7 @@
 -- ObservationMetaReadAccess --
 create table caom2.ObservationMetaReadAccess
 (
-    assetID         uuid not null, -- change: UUID
+    assetID         uuid not null,
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key,
@@ -18,7 +18,7 @@ create unique index i_omra_tuple
 -- PlaneMetaReadAccess --
 create table caom2.PlaneMetaReadAccess
 (
-    assetID         uuid not null, -- change: UUID
+    assetID         uuid not null,
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key,
@@ -34,7 +34,7 @@ create unique index i_pmra_tuple
 -- PlaneDataReadAccess --
 create table caom2.PlaneDataReadAccess
 (
-    assetID         uuid not null, -- change: UUID
+    assetID         uuid not null, 
     groupID         varchar(128) not null,
 
     readAccessID    uuid not null primary key,

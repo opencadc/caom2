@@ -15,9 +15,6 @@ drop table if exists caom2.Observation;
 drop table if exists caom2.ObservationMetaReadAccess;
 drop table if exists caom2.PlaneMetaReadAccess;
 drop table if exists caom2.PlaneDataReadAccess;
-drop table if exists caom2.ArtifactMetaReadAccess;
-drop table if exists caom2.PartMetaReadAccess;
-drop table if exists caom2.ChunkMetaReadAccess;
 
 drop table if exists caom2.DeletedObservation;
 drop table if exists caom2.DeletedObservationMetaReadAccess;
@@ -26,3 +23,4 @@ drop table if exists caom2.DeletedPlaneDataReadAccess;
 
 drop table if exists caom2.HarvestState;
 drop table if exists caom2.HarvestSkip;
+drop table if exists caom2.ModelVersion;
