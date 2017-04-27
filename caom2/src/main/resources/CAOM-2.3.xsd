@@ -10,38 +10,46 @@
     <xs:element name="Observation" type="caom2:ObsType" />
 
     <xs:complexType name="ObsType" abstract="true">
-        <xs:sequence>
-            <xs:element name="collection" type="xs:string"/>
-            <xs:element name="observationID" type="xs:string"/>
-            <xs:element name="metaRelease" type="xs:string" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        The metaRelease date is expected to be in IVOA date format: 
-                        yyyy-MM-dd'T'HH:mm:ss.SSS
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="sequenceNumber" type="xs:integer" minOccurs="0"/>
-            <xs:element name="algorithm" type="caom2:Algorithm"/>
-            <xs:element name="type" type="xs:string" minOccurs="0"/>
-            <xs:element name="intent" type="caom2:ObservationIntentType" minOccurs="0"/>
-            <xs:element name="proposal" type="caom2:Proposal" minOccurs="0"/>
-            <xs:element name="target" type="caom2:Target" minOccurs="0"/>
-            <xs:element name="targetPosition" type="caom2:TargetPosition" minOccurs="0"/>
-            <xs:element name="requirements" type="caom2:Requirements" minOccurs="0"/>
-            <xs:element name="telescope" type="caom2:Telescope" minOccurs="0"/>
-            <xs:element name="instrument" type="caom2:Instrument" minOccurs="0"/>
-            <xs:element name="environment" type="caom2:Environment" minOccurs="0"/>
-            <xs:element name="planes" type="caom2:Planes" minOccurs="0"/>
-        </xs:sequence>
+        <xs:complexContent>
+            <xs:extension base="caom2:CaomEntity">
+                <xs:sequence>
+                    <xs:element name="collection" type="xs:string"/>
+                    <xs:element name="observationID" type="xs:string"/>
+                    <xs:element name="metaRelease" type="xs:string" minOccurs="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The metaRelease date is expected to be in IVOA date format: 
+                                yyyy-MM-dd'T'HH:mm:ss.SSS
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="sequenceNumber" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="algorithm" type="caom2:Algorithm"/>
+                    <xs:element name="type" type="xs:string" minOccurs="0"/>
+                    <xs:element name="intent" type="caom2:ObservationIntentType" minOccurs="0"/>
+                    <xs:element name="proposal" type="caom2:Proposal" minOccurs="0"/>
+                    <xs:element name="target" type="caom2:Target" minOccurs="0"/>
+                    <xs:element name="targetPosition" type="caom2:TargetPosition" minOccurs="0"/>
+                    <xs:element name="requirements" type="caom2:Requirements" minOccurs="0"/>
+                    <xs:element name="telescope" type="caom2:Telescope" minOccurs="0"/>
+                    <xs:element name="instrument" type="caom2:Instrument" minOccurs="0"/>
+                    <xs:element name="environment" type="caom2:Environment" minOccurs="0"/>
+                    <xs:element name="planes" type="caom2:Planes" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="CaomEntity">
         <xs:attribute name="id" type="caom2:UUID" use="required"/>
         <xs:attribute name="lastModified" type="xs:string"/>
+        <xs:attribute name="maxLastModified" type="xs:string"/>
 
         <!-- Calculated checksums  -->
         <xs:attribute name="metaChecksum" type="xs:anyURI" />
         <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
     </xs:complexType>
-    
+
     <xs:simpleType name="UUID">
         <xs:restriction base="xs:string">
             <xs:pattern value="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"/>
@@ -167,47 +175,45 @@
     </xs:complexType>
     
     <xs:complexType name="Plane">
-        <xs:sequence>
-            <xs:element name="productID" type="xs:string"/>
-            <xs:element name="creatorID" type="xs:anyURI" minOccurs="0"/>
-            <xs:element name="metaRelease" type="xs:string" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        The metaRelease date is expected to be in IVOA date format: 
-                        yyyy-MM-dd'T'HH:mm:ss.SSS
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="dataRelease" type="xs:string" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        The dataRelease date is expected to be in IVOA date format: 
-                        yyyy-MM-dd'T'HH:mm:ss.SSS
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="dataProductType" type="caom2:DataProductType" minOccurs="0"/>
-            <xs:element name="calibrationLevel" type="caom2:CalibrationLevel" minOccurs="0"/>
-            <xs:element name="provenance" type="caom2:Provenance" minOccurs="0"/>
-            <xs:element name="metrics" type="caom2:Metrics" minOccurs="0"/>
-            <xs:element name="quality" type="caom2:DataQuality" minOccurs="0"/>
-            <!-- computed position metadata -->
-            <xs:element name="position" type="caom2:Position" minOccurs="0" maxOccurs="1"/>
-            <!-- computed energy metadata -->
-            <xs:element name="energy" type="caom2:Energy" minOccurs="0" maxOccurs="1"/>
-            <!-- computed time metadata -->
-            <xs:element name="time" type="caom2:Time" minOccurs="0" maxOccurs="1"/>
-            <!-- computed polarization metadata -->
-            <xs:element name="polarization" type="caom2:Polarization" minOccurs="0" maxOccurs="1"/>
+        <xs:complexContent>
+            <xs:extension base="caom2:CaomEntity">
+                <xs:sequence>
+                    <xs:element name="productID" type="xs:string"/>
+                    <xs:element name="creatorID" type="xs:anyURI" minOccurs="0"/>
+                    <xs:element name="metaRelease" type="xs:string" minOccurs="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The metaRelease date is expected to be in IVOA date format: 
+                                yyyy-MM-dd'T'HH:mm:ss.SSS
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="dataRelease" type="xs:string" minOccurs="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The dataRelease date is expected to be in IVOA date format: 
+                                yyyy-MM-dd'T'HH:mm:ss.SSS
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="dataProductType" type="caom2:DataProductType" minOccurs="0"/>
+                    <xs:element name="calibrationLevel" type="caom2:CalibrationLevel" minOccurs="0"/>
+                    <xs:element name="provenance" type="caom2:Provenance" minOccurs="0"/>
+                    <xs:element name="metrics" type="caom2:Metrics" minOccurs="0"/>
+                    <xs:element name="quality" type="caom2:DataQuality" minOccurs="0"/>
+                    <!-- computed position metadata -->
+                    <xs:element name="position" type="caom2:Position" minOccurs="0" maxOccurs="1"/>
+                    <!-- computed energy metadata -->
+                    <xs:element name="energy" type="caom2:Energy" minOccurs="0" maxOccurs="1"/>
+                    <!-- computed time metadata -->
+                    <xs:element name="time" type="caom2:Time" minOccurs="0" maxOccurs="1"/>
+                    <!-- computed polarization metadata -->
+                    <xs:element name="polarization" type="caom2:Polarization" minOccurs="0" maxOccurs="1"/>
 
-            <xs:element name="artifacts" type="caom2:Artifacts"  minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="id" type="caom2:UUID" use="required"/>
-        <xs:attribute name="lastModified" type="xs:string"/>
-
-        <!-- Calculated checksums  -->
-        <xs:attribute name="metaChecksum" type="xs:anyURI" />
-        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
+                    <xs:element name="artifacts" type="caom2:Artifacts"  minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="Provenance">
@@ -382,22 +388,20 @@
     </xs:complexType>
     
     <xs:complexType name="Artifact">
-        <xs:sequence>
-            <xs:element name="uri" type="xs:anyURI"/>
-            <xs:element name="productType" type="caom2:ProductType"/>
-            <xs:element name="releaseType" type="caom2:ReleaseType"/>
+        <xs:complexContent>
+            <xs:extension base="caom2:CaomEntity">
+                <xs:sequence>
+                    <xs:element name="uri" type="xs:anyURI"/>
+                    <xs:element name="productType" type="caom2:ProductType"/>
+                    <xs:element name="releaseType" type="caom2:ReleaseType"/>
 
-            <xs:element name="contentType" type="xs:string" minOccurs="0"/>
-            <xs:element name="contentLength" type="xs:long" minOccurs="0"/>
-            <xs:element name="contentChecksum" type="xs:anyURI" minOccurs="0"/>
-            <xs:element name="parts" type="caom2:Parts" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="id" type="caom2:UUID" use="required"/>
-        <xs:attribute name="lastModified" type="xs:string"/>
-
-        <!-- Calculated checksums  -->
-        <xs:attribute name="metaChecksum" type="xs:anyURI" />
-        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
+                    <xs:element name="contentType" type="xs:string" minOccurs="0"/>
+                    <xs:element name="contentLength" type="xs:long" minOccurs="0"/>
+                    <xs:element name="contentChecksum" type="xs:anyURI" minOccurs="0"/>
+                    <xs:element name="parts" type="caom2:Parts" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
     
     <!-- Part -->
@@ -409,17 +413,15 @@
     </xs:complexType>
     
     <xs:complexType name="Part">
-        <xs:sequence>
-            <xs:element name="name" type="xs:string" minOccurs="1"/>
-            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
-            <xs:element name="chunks" type="caom2:Chunks" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="id" type="caom2:UUID" use="required"/>
-        <xs:attribute name="lastModified" type="xs:string"/>
-
-        <!-- Calculated checksums  -->
-        <xs:attribute name="metaChecksum" type="xs:anyURI" />
-        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
+        <xs:complexContent>
+            <xs:extension base="caom2:CaomEntity">
+                <xs:sequence>
+                    <xs:element name="name" type="xs:string" minOccurs="1"/>
+                    <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+                    <xs:element name="chunks" type="caom2:Chunks" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
     
     <!-- Chunk -->
@@ -431,27 +433,25 @@
     </xs:complexType>
     
     <xs:complexType name="Chunk">
-        <xs:sequence>
-            <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
-            <xs:element name="naxis" type="xs:integer" minOccurs="0"/>
-            <xs:element name="observableAxis" type="xs:integer" minOccurs="0"/>
-            <xs:element name="positionAxis1" type="xs:integer" minOccurs="0"/>
-            <xs:element name="positionAxis2" type="xs:integer" minOccurs="0"/>
-            <xs:element name="energyAxis" type="xs:integer" minOccurs="0"/>
-            <xs:element name="timeAxis" type="xs:integer" minOccurs="0"/>
-            <xs:element name="polarizationAxis" type="xs:integer" minOccurs="0"/>
-            <xs:element name="observable" type="caom2:ObservableAxis" minOccurs="0"/>
-            <xs:element name="position" type="caom2:SpatialWCS" minOccurs="0"/>
-            <xs:element name="energy" type="caom2:SpectralWCS" minOccurs="0"/>
-            <xs:element name="time" type="caom2:TemporalWCS" minOccurs="0"/>
-            <xs:element name="polarization" type="caom2:PolarizationWCS" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="id" type="caom2:UUID" use="required"/>
-        <xs:attribute name="lastModified" type="xs:string"/>
-
-        <!-- Calculated checksums  -->
-        <xs:attribute name="metaChecksum" type="xs:anyURI" />
-        <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
+        <xs:complexContent>
+            <xs:extension base="caom2:CaomEntity">
+                <xs:sequence>
+                    <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+                    <xs:element name="naxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="observableAxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="positionAxis1" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="positionAxis2" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="energyAxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="timeAxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="polarizationAxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="observable" type="caom2:ObservableAxis" minOccurs="0"/>
+                    <xs:element name="position" type="caom2:SpatialWCS" minOccurs="0"/>
+                    <xs:element name="energy" type="caom2:SpectralWCS" minOccurs="0"/>
+                    <xs:element name="time" type="caom2:TemporalWCS" minOccurs="0"/>
+                    <xs:element name="polarization" type="caom2:PolarizationWCS" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
     
     <!-- WCS -->
