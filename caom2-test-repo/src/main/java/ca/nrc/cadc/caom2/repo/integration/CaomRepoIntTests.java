@@ -95,7 +95,6 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.compute.Util;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
@@ -125,6 +124,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
                     
     static
     {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo", Level.DEBUG);
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
@@ -269,15 +269,23 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     }
     
     @Test
-    public void testPutByteLimitExceeded() throws Throwable
+    public void testPutByteLimitExceeded()
     {
-        String observationID = generateObservationID("testPutByteLimitExceeded");
-        String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
-        
-        // create an observation using subject1
-        Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, SUBJECT1, 413, "too large:", null);
+        try
+        {
+            String observationID = generateObservationID("testPutByteLimitExceeded");
+            String path = TEST_COLLECTION + "/" + observationID;
+            String uri = SCHEME + path;
+
+            // create an observation using subject1
+            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
+            putObservation(observation, SUBJECT1, 413, "too large:", null);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
     
     @Test
@@ -366,18 +374,26 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     }
     
     @Test
-    public void testPostByteLimitExceeded() throws Throwable
+    public void testPostByteLimitExceeded()
     {
-        String observationID = generateObservationID("testPostByteLimitExceeded");
-        String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
-        
-        // (byte limit exception will happen before 'doesnt exist'
-        // exception)
-        
-        // create an observation using subject1
-        Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-        postObservation(observation, SUBJECT1, 413, "too large:", null);
+        try
+        {
+            String observationID = generateObservationID("testPostByteLimitExceeded");
+            String path = TEST_COLLECTION + "/" + observationID;
+            String uri = SCHEME + path;
+
+            // (byte limit exception will happen before 'doesnt exist'
+            // exception)
+
+            // create an observation using subject1
+            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
+            postObservation(observation, SUBJECT1, 413, "too large:", null);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
     
     @Test
@@ -519,7 +535,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
 	    testPostMultipartWithParamsSuccess(observationID, params);
     }
     
-    private long DOCUMENT_SIZE_MAX = (long) 1.1*20971520L;
+    private long DOCUMENT_SIZE_MAX = (long) 20*1024*1024; // 20MB limit in caom2-repo-server
     private String KW_STR = "abcdefghijklmnopqrstuvwxyz0123456789";
     
     private SimpleObservation generateObservation(String observationID) throws Exception
@@ -584,7 +600,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         observation.instrument = new Instrument("FOO");
-        long num = DOCUMENT_SIZE_MAX/KW_STR.length();
+        long num = (long) (1.5 * DOCUMENT_SIZE_MAX)/KW_STR.length();
         log.debug("createVeryLargeObservation: " + num + " keywords");
         long len = 0L;
         for (long i=0; i<num; i++)
@@ -640,7 +656,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
     }    
     
     private void postObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Throwable
+            throws Exception
     {
         super.sendObservation("POST", observation, subject, expectedResponse, expectedMessage, path);
     }

@@ -93,6 +93,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -100,6 +101,7 @@ import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -244,9 +246,25 @@ public class CaomRepoBaseIntTests
         conn.setRequestProperty("Content-Type", TEXT_XML);
         
         OutputStream out = conn.getOutputStream();
-        writer.write(observation, out);
+        log.debug("write: " + observation);
+        ByteCountOutputStream bcos = new ByteCountOutputStream(out);
+        writer.write(observation, bcos);
+        log.debug(" wrote: " + bcos.getByteCount() + " bytes");
         
-        int response = conn.getResponseCode();
+        int response = -1;
+        try
+        {
+            log.debug("getResponseCode()");
+            response = conn.getResponseCode();
+            log.debug("getResponseCode() returned " + response);
+        }
+        catch(IOException ex)
+        {
+            if (expectedResponse != null && expectedResponse.intValue() == 413)
+                log.warn("expected 413 and getResponseCode() threw " + ex + ": known issue in JDK http lib");
+            return;
+        }
+        
         String message = conn.getResponseMessage();
         if (response != 200)
             message = NetUtil.getErrorBody(conn).trim();
@@ -291,8 +309,6 @@ public class CaomRepoBaseIntTests
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpDownload get = new HttpDownload(url, bos);
-        //HttpURLConnection conn = openConnection(subject, urlPath);
-        //conn.setRequestMethod("GET");
         
         Subject.doAs(subject, new RunnableAction(get));
         
