@@ -1908,7 +1908,7 @@
             <attribute>
                 <vodml-id>Energy.bounds</vodml-id>
                 <name>bounds</name>
-                <description>energy bounds that include the data</description>
+                <description>energy bounds that include the data (barycentric vacuum wavelength)</description>
                 <datatype>
                     <vodml-ref>caom2:Interval</vodml-ref>
                 </datatype>
@@ -2017,7 +2017,7 @@
             <attribute>
                 <vodml-id>Energy.freqSampleSize</vodml-id>
                 <name>freqSampleSize</name>
-                <description>median pixekl size expressed in frequency</description>
+                <description>median pixel size (sampleSize) expressed in frequency</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
