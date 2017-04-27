@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:xlink="http://www.w3.org/1999/xlink"
-           xmlns:caom2="vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.3"
-           targetNamespace="vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.3"
+           xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.3"
+           targetNamespace="http://www.opencadc.org/caom2/xml/v2.3"
            elementFormDefault="qualified"
            attributeFormDefault="qualified">
 
