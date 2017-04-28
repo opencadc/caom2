@@ -137,6 +137,24 @@ public class ProductTypeTest
     }
     
     @Test
+    public void testRoundtripCustom()
+    {
+        try
+        {
+            String s1 = "http://example.com/foo#bar";
+            DataProductType c2 = DataProductType.toValue(s1);
+            String s2 = c2.getValue();
+            log.info(s1 + " == " + s2);
+            Assert.assertEquals(s1, s2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testChecksum()
     {
         try
