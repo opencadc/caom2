@@ -44,6 +44,7 @@ public class ReadAccessHarvester extends Harvester
         throws IOException
     {
         super(entityClass, src, dest, batchSize, full, dryrun);
+        init();
     }
 
     public void setMaxDate(Date maxDate)
@@ -85,7 +86,7 @@ public class ReadAccessHarvester extends Harvester
         log.info("START: " + entityClass.getSimpleName());
         try
         {
-            init();
+            //init();
         }
         catch(Throwable oops)
         {

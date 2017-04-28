@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,37 +62,40 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.version.InitDatabase;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
+
+import java.util.Date;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAOTest
+public class ModelVersion 
 {
-    static
-    {
-        log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+    private static final Logger log = Logger.getLogger(ModelVersion.class);
+
+    private final String model;
+    public String version;
+    Date lastModified; 
+    
+    public ModelVersion(String model) 
+    { 
+        this.model = model;
     }
 
-    public PostgresqlObservationDAOTest()
-        throws Exception
+    public String getModel()
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
-        init.doInit();
+        return model;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ModelVersion[" + model + "," + version + "]";
     }
 }

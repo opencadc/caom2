@@ -50,7 +50,6 @@ public class Main
                 System.exit(0);
             }
 
-            boolean init = am.isSet("init");
             boolean test = am.isSet("test");
             boolean recomp = am.isSet("recompute");
             boolean full = am.isSet("full");
@@ -174,8 +173,6 @@ public class Main
                 System.exit(exitValue);
             }
             
-            ch.setInitHarvesters(init);
-            
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
             ch.run();
@@ -211,12 +208,10 @@ public class Main
         sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
         sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
         sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)" );
-        sb.append("\n     --init : init destination (assume it is empty and skip precessing past deletions)" );
         sb.append("\n\nOptional modifiers:");
         sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
-        //sb.append("\n     --forceUpdate : force update of destination row even if checksum says it did not change");
         sb.append("\n     --dryrun : check for work but don't do anything");
         log.warn(sb.toString());
     }

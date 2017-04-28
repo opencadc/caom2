@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -95,37 +96,27 @@ public class PostgresqlHarvestStateDAOTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
-    static DataSource dataSource;
-    static String database;
-    static String schema;
+    DataSource dataSource;
+    String database;
+    String schema;
 
     public PostgresqlHarvestStateDAOTest()
         throws Exception
     {
+        this.database = "cadctest";
+        this.schema = "caom2";
+        DBConfig dbrc = new DBConfig();
+        ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+        this.dataSource = DBUtil.getDataSource(cc);
         
+        InitDatabase init = new InitDatabase(dataSource, "cadctest", "caom2");
+        init.doInit();
+        
+        String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
+        log.info("cleanup: " + sql);
+        dataSource.getConnection().createStatement().execute(sql);
     }
     
-    @BeforeClass
-    public static void cleanup()
-    {
-        try
-        {
-            DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
-            dataSource = DBUtil.getDataSource(cc);
-            database = "cadctest";
-            schema = System.getProperty("user.name");
-
-            String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
-            log.info("cleanup: " + sql);
-            dataSource.getConnection().createStatement().execute(sql);
-        }
-        catch(Exception ex)
-        {
-            log.error("failed to init DataSource", ex);
-        }
-    }
-
     //@Test
     public void testTemplate()
     {

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,37 +62,114 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.version.InitDatabase;
+
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAOTest
+public class ModelVersionDAOTest 
 {
+    private static final Logger log = Logger.getLogger(ModelVersionDAOTest.class);
+
     static
     {
-        log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.DEBUG);
     }
-
-    public PostgresqlObservationDAOTest()
-        throws Exception
+    
+    private static final String MODEL = "FOO";
+    private static final String V1 = "1.0";
+    private static final String V2 = "2.0";
+    
+    private DataSource dataSource;
+    private String database;
+    private String schema;
+    
+    
+    public ModelVersionDAOTest()
+    { 
+        try
+        {
+            database = "cadctest";
+            //schema = System.getProperty("user.name");
+            schema = "caom2";
+            
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+            dataSource = DBUtil.getDataSource(cc);
+            
+        }
+        catch(Exception ex)
+        {
+            log.error("failed to init DataSource", ex);
+        }
+    }
+    
+    @Test
+    public void testRountrip()
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
+        try
+        {
+            ModelVersionDAO dao = new ModelVersionDAO(dataSource, database, schema);
+            
+            // get && cleanup if necessary
+            ModelVersion mv = dao.get(MODEL);
+            if (mv != null)
+            {
+                String sql = "delete from caom2.ModelVersion where model = '"+MODEL+"'";
+                log.info("cleanup: " + sql);
+                dataSource.getConnection().createStatement().execute(sql);
+            }
         
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
-        init.doInit();
+            // get null
+            mv = dao.get(MODEL);
+            Assert.assertNotNull(mv);
+            Assert.assertNull(mv.version);   // new
+            Assert.assertNull(mv.lastModified); // new
+            
+            // insert
+            mv.version = V1;
+            dao.put(mv);
+            
+            ModelVersion inserted = dao.get(MODEL);
+            Assert.assertNotNull(inserted);
+            Assert.assertEquals(mv.getModel(), inserted.getModel());
+            Assert.assertEquals(V1, inserted.version);
+            Assert.assertNotNull(inserted.lastModified);
+            
+            Thread.sleep(50l);
+            
+            // update
+            mv.version = V2;
+            dao.put(mv);
+            
+            ModelVersion updated = dao.get(MODEL);
+            Assert.assertNotNull(updated);
+            Assert.assertEquals(mv.getModel(), updated.getModel());
+            Assert.assertEquals(V2, updated.version);
+            Assert.assertTrue(inserted.lastModified.getTime() < updated.lastModified.getTime());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
     }
+    
 }
