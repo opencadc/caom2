@@ -332,6 +332,27 @@
         </enumeration>
         
         <enumeration>
+            <vodml-id>SegmentType</vodml-id>
+            <name>SegmentType</name>
+            <description>code used in CAG description of polygons</description>
+            <literal>
+                <vodml-id>SegmentType.LINE</vodml-id>
+                <name>LINE</name>
+                <description>(0) line from previous to this vertex</description>
+            </literal>
+            <literal>
+                <vodml-id>SegmentType.MOVE</vodml-id>
+                <name>MOVE</name>
+                <description>(1) move from previous to this vertex</description>
+            </literal>
+            <literal>
+                <vodml-id>SegmentType.CLOSE</vodml-id>
+                <name>CLOSE</name>
+                <description>(2) line from previous vertex to last vertex with type MOVE</description>
+            </literal>
+        </enumeration>
+        
+        <enumeration>
             <vodml-id>ReleaseType</vodml-id>
             <name>ReleaseType</name>
             <description>a flag indicating how an artifact is classified to determine access permissions;
@@ -2155,11 +2176,38 @@
                     </multiplicity>
                 </attribute>
             </dataType>
+            <dataType>
+                <vodml-id>Vertex</vodml-id>
+                <name>Vertex</name>
+                <extends>
+                    <vodml-ref>caom2:Point</vodml-ref>
+                </extends>
+                <attribute>
+                    <vodml-id>Vertex.type</vodml-id>
+                    <name>type</name>
+                    <datatype>
+                        <vodml-ref>caom2:SegmentType</vodml-ref>
+                    </datatype>
+                    <multiplicity>
+                        <minOccurs>1</minOccurs>
+                        <maxOccurs>1</maxOccurs>
+                    </multiplicity>
+                </attribute>
+                
+            </dataType>
             
             <dataType abstract="true">
                 <vodml-id>Shape</vodml-id>
                 <name>Shape</name>
-                <!-- these attributes may be core or computed from other attributes -->
+                <!-- tagging base class -->
+            </dataType>
+            
+            <dataType>
+                <vodml-id>Circle</vodml-id>
+                <name>Circle</name>
+                <extends>
+                    <vodml-ref>caom2:Shape</vodml-ref>
+                </extends>
                 <attribute>
                     <vodml-id>Shape.center</vodml-id>
                     <name>center</name>
@@ -2171,36 +2219,6 @@
                         <maxOccurs>1</maxOccurs>
                     </multiplicity>
                 </attribute>
-                <attribute>
-                    <vodml-id>Shape.area</vodml-id>
-                    <name>area</name>
-                    <datatype>
-                        <vodml-ref>ivoa:real</vodml-ref>
-                    </datatype>
-                    <multiplicity>
-                        <minOccurs>1</minOccurs>
-                        <maxOccurs>1</maxOccurs>
-                    </multiplicity>
-                </attribute>
-                <attribute>
-                    <vodml-id>Shape.size</vodml-id>
-                    <name>size</name>
-                    <datatype>
-                        <vodml-ref>ivoa:real</vodml-ref>
-                    </datatype>
-                    <multiplicity>
-                        <minOccurs>1</minOccurs>
-                        <maxOccurs>1</maxOccurs>
-                    </multiplicity>
-                </attribute>
-            </dataType>
-            
-            <dataType>
-                <vodml-id>Circle</vodml-id>
-                <name>Circle</name>
-                <extends>
-                    <vodml-ref>caom2:Shape</vodml-ref>
-                </extends>
                 <attribute>
                     <vodml-id>Circle.radius</vodml-id>
                     <name>radius</name>
@@ -2224,7 +2242,7 @@
                     <vodml-id>Polygon.vertices</vodml-id>
                     <name>vertices</name>
                     <datatype>
-                        <vodml-ref>caom2:Point</vodml-ref>
+                        <vodml-ref>caom2:Vertex</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>3</minOccurs>
