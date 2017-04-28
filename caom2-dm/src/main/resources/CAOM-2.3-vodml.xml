@@ -2022,31 +2022,6 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            <!-- alternate representations -->
-            <attribute>
-                <vodml-id>Energy.freqWidth</vodml-id>
-                <name>freqWidth</name>
-                <description>width of the bounding interval expressed in frequency</description>
-                <datatype>
-                    <vodml-ref>ivoa:real</vodml-ref>
-                </datatype>
-                <multiplicity>
-                    <minOccurs>0</minOccurs>
-                    <maxOccurs>1</maxOccurs>
-                </multiplicity>
-            </attribute>
-            <attribute>
-                <vodml-id>Energy.freqSampleSize</vodml-id>
-                <name>freqSampleSize</name>
-                <description>median pixel size (sampleSize) expressed in frequency</description>
-                <datatype>
-                    <vodml-ref>ivoa:real</vodml-ref>
-                </datatype>
-                <multiplicity>
-                    <minOccurs>0</minOccurs>
-                    <maxOccurs>1</maxOccurs>
-                </multiplicity>
-            </attribute>
         </objectType>
         
         <objectType>
@@ -2312,18 +2287,6 @@
                     <multiplicity>
                         <minOccurs>1</minOccurs>
                         <maxOccurs>666</maxOccurs>
-                    </multiplicity>
-                </attribute>
-                <!-- computed -->
-                <attribute>
-                    <vodml-id>Interval.width</vodml-id>
-                    <name>width</name>
-                    <datatype>
-                        <vodml-ref>ivoa:real</vodml-ref>
-                    </datatype>
-                    <multiplicity>
-                        <minOccurs>1</minOccurs>
-                        <maxOccurs>1</maxOccurs>
                     </multiplicity>
                 </attribute>
             </dataType>
