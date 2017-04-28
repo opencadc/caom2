@@ -8,9 +8,13 @@ import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
-import ca.nrc.cadc.wcs.Transform;
+import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import java.io.IOException;
 import java.util.Date;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
@@ -22,6 +26,8 @@ public class CaomHarvester implements Runnable
 {
     private static Logger log = Logger.getLogger(CaomHarvester.class);
 
+    private InitDatabase initdb;
+    
     private ObservationHarvester obsHarvester;
     private DeletionHarvester obsDeleter;
 
@@ -32,8 +38,6 @@ public class CaomHarvester implements Runnable
     private DeletionHarvester observationMetaDeleter;
     private DeletionHarvester planeDataDeleter;
     private DeletionHarvester planeMetaDeleter;
-    
-    private boolean init;
     
     private CaomHarvester() { }
 
@@ -55,6 +59,11 @@ public class CaomHarvester implements Runnable
         throws IOException
     {
         Integer entityBatchSize = batchSize*batchFactor;
+        
+        DBConfig dbrc = new DBConfig();
+        ConnectionConfig cc = dbrc.getConnectionConfig(dest[0], dest[1]);
+        DataSource ds = DBUtil.getDataSource(cc);
+        this.initdb = new InitDatabase(ds, dest[1], dest[2]);
         
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
@@ -88,12 +97,6 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
-    public void setInitHarvesters(boolean init)
-    {
-        this.init = init;
-    }
-
-    
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, 
             Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxdate)
         throws IOException
@@ -123,17 +126,12 @@ public class CaomHarvester implements Runnable
             throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
         }
 
-        // delete observations before harvest to avoid observationURI conflicts 
-        // from delete+create
-        if (obsDeleter != null)
+        boolean init = false;
+        if (initdb != null)
         {
-            obsDeleter.setInitHarvestState(init);
-            obsDeleter.run();
-        }
-        if (obsHarvester != null)
-        {
-            obsHarvester.setInitHarvest(init);
-            obsHarvester.run();
+            boolean created = initdb.doInit();
+            if (created)
+                init = true; // database is empty so can bypass processing old deletions
         }
         
         // clean up old access control tuples before harvest to avoid conflicts
@@ -154,8 +152,19 @@ public class CaomHarvester implements Runnable
             planeMetaDeleter.run();
         }
         
-        if (init)
-            return; // no point in trying to harvest a batch of ReadAccess tuples
+        // delete observations before harvest to avoid observationURI conflicts 
+        // from delete+create
+        if (obsDeleter != null)
+        {
+            obsDeleter.setInitHarvestState(init);
+            obsDeleter.run();
+        }
+        
+        if (obsHarvester != null)
+        {
+            //obsHarvester.setInitHarvest(init);
+            obsHarvester.run();
+        }
         
         // make sure access control tuples are harvested after observations
         // because they update asset tables and fail if asset is missing

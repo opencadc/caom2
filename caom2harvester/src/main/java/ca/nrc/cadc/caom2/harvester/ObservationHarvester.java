@@ -42,7 +42,6 @@ public class ObservationHarvester extends Harvester
     private boolean skipped;
     private Date maxDate;
     private boolean doCollisionCheck = false;
-    private boolean initHarvest = false;
 
     private ObservationHarvester() { }
     
@@ -53,11 +52,6 @@ public class ObservationHarvester extends Harvester
         Date d = new Date();
     }
 
-    public void setInitHarvest(boolean initHarvest)
-    {
-        this.initHarvest = initHarvest;
-    }
-    
     public void setSkipped(boolean skipped)
     {
         this.skipped = skipped;
@@ -137,8 +131,6 @@ public class ObservationHarvester extends Harvester
             full = false; // do not start at beginning again
             if (dryrun)
                 go = false; // no state update -> infinite loop
-            if (initHarvest)
-                go = false; // single batch
         }
         try
         {
