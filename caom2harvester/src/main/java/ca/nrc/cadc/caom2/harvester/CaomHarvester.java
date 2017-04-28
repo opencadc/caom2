@@ -197,9 +197,9 @@ public class CaomHarvester implements Runnable
             obsDeleter.run();
         }
         
+        // harvest observations
         if (obsHarvester != null)
         {
-            //obsHarvester.setInitHarvest(init);
             obsHarvester.run();
         }
         
