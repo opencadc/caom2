@@ -8,6 +8,7 @@ import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
@@ -138,25 +139,61 @@ public class CaomHarvester implements Runnable
         // from delete+create
         if (observationMetaDeleter != null)
         {
-            observationMetaDeleter.setInitHarvestState(init);
+            boolean initDel = init;
+            if (!init)
+            {
+                // check if we have ever harvested before
+                HarvestState hs = observationMetaHarvester.harvestState.get(
+                        observationMetaHarvester.source, observationMetaHarvester.cname);
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested from source before
+            }
+            observationMetaDeleter.setInitHarvestState(initDel);
             observationMetaDeleter.run();
+            log.info("init: " + observationMetaDeleter.cname);
         }
         if (planeDataDeleter != null)
         {
-            planeDataDeleter.setInitHarvestState(init);
+            boolean initDel = init;
+            if (!init)
+            {
+                // check if we have ever harvested before
+                HarvestState hs = planeDataHarvester.harvestState.get(
+                        planeDataHarvester.source, planeDataHarvester.cname);
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested from source before
+            }
+            planeDataDeleter.setInitHarvestState(initDel);
             planeDataDeleter.run();
+            log.info("init: " + planeDataDeleter.cname);
         }
         if (planeMetaDeleter != null)
         {
-            planeMetaDeleter.setInitHarvestState(init);
+            boolean initDel = init;
+            if (!init)
+            {
+                // check if we have ever harvested before
+                HarvestState hs = planeMetaHarvester.harvestState.get(
+                        planeMetaHarvester.source, planeMetaHarvester.cname);
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested from source before
+            }
+            planeMetaDeleter.setInitHarvestState(initDel);
             planeMetaDeleter.run();
+            log.info("init: " + planeMetaDeleter.cname);
         }
         
         // delete observations before harvest to avoid observationURI conflicts 
         // from delete+create
         if (obsDeleter != null)
         {
-            obsDeleter.setInitHarvestState(init);
+            boolean initDel = init;
+            if (!init)
+            {
+                // check if we have ever harvested before
+                HarvestState hs = obsHarvester.harvestState.get(
+                        obsHarvester.source, obsHarvester.cname);
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested from source before
+            }
+            log.info("init: " + obsDeleter.source + " " + obsDeleter.cname);
+            obsDeleter.setInitHarvestState(initDel);
             obsDeleter.run();
         }
         

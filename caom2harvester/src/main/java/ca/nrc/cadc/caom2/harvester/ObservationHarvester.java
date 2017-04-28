@@ -49,7 +49,7 @@ public class ObservationHarvester extends Harvester
         throws IOException
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
-        Date d = new Date();
+        init();
     }
 
     public void setSkipped(boolean skipped)
@@ -103,7 +103,7 @@ public class ObservationHarvester extends Harvester
         log.info("START: " + Observation.class.getSimpleName());
         try
         {
-            init();
+            //init();
         }
         catch(Throwable oops)
         {
