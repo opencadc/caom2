@@ -83,6 +83,11 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.ac.GroupURI;
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
+import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.db.DBUtil;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 
 /**
  *
@@ -107,7 +112,18 @@ public class CaomRepoConfig
         {
             Item item = i.next();
             if (item.collection.equals(collection))
+            {
+                try 
+                { 
+                    initDB(item); 
+                }
+                catch(Exception ex)
+                {
+                    log.error("CAOM database INIT FAILED", ex);
+                    return null;
+                }
                 return item;
+            }
         }
         return null;
     }
@@ -116,7 +132,54 @@ public class CaomRepoConfig
 
     public Iterator<Item> iterator()
     {
-        return config.iterator();
+        return new Initerator(config.iterator());
+    }
+    // need this so availability test loop does init
+    private class Initerator implements Iterator<Item>
+    {
+        private Iterator<Item> iter;
+        public Initerator(Iterator<Item> iter)
+        {
+            this.iter = iter;
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return iter.hasNext();
+        }
+
+        @Override
+        public Item next()
+        {
+            Item ret = iter.next();
+            try 
+            { 
+                initDB(ret); 
+            }
+            catch(Exception ex)
+            {
+                log.error("CAOM database INIT FAILED", ex);
+            }
+            return ret;
+        }
+    }
+    
+    private void initDB(CaomRepoConfig.Item i)
+    {
+        if ( PostgreSQLGenerator.class.equals(i.getSqlGenerator()))
+        {
+            try
+            {
+                DataSource ds = DBUtil.findJNDIDataSource(i.getDataSourceName());
+                InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
+                init.doInit();
+            }
+            catch(NamingException ex)
+            {
+                throw new IllegalArgumentException("unknown collection: " + i.getCollection());
+            }
+        }
     }
 
     public static class Item
