@@ -107,14 +107,25 @@ public class ObservationTest
     {
         try
         {
+            Algorithm testAlgorithm = new Algorithm("doIt");
+
             Observation o = new SimpleObservation("Stuff", "Thing");
             log.debug("created: " + o);
             Assert.assertEquals("Stuff", o.getURI().getCollection());
             Assert.assertEquals("Thing", o.getURI().getObservationID());
+            // Should be set to the default 'exposure' value
+            Assert.assertEquals(SimpleObservation.ALGORITHM, o.getAlgorithm());
 
-            o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
+            o = new SimpleObservation("Stuff", "Thing", testAlgorithm);
+            log.debug("created: " + o);
             Assert.assertEquals("Stuff", o.getURI().getCollection());
             Assert.assertEquals("Thing", o.getURI().getObservationID());
+            Assert.assertEquals(testAlgorithm, o.getAlgorithm());
+
+            o = new CompositeObservation("Stuff", "Thing", testAlgorithm);
+            Assert.assertEquals("Stuff", o.getURI().getCollection());
+            Assert.assertEquals("Thing", o.getURI().getObservationID());
+            Assert.assertEquals(testAlgorithm, o.getAlgorithm());
             
             try 
             {
@@ -191,6 +202,9 @@ public class ObservationTest
 
             o.setAlgorithm(SimpleObservation.ALGORITHM);
             Assert.assertEquals(SimpleObservation.ALGORITHM.getName(), o.getAlgorithm().getName());
+
+            o.setAlgorithm(new Algorithm("observationTest"));
+            Assert.assertEquals("observationTest", o.getAlgorithm().getName());
             
             o.setAlgorithm(new Algorithm("exposure"));
             Assert.assertEquals(SimpleObservation.ALGORITHM.getName(), o.getAlgorithm().getName());
@@ -203,13 +217,6 @@ public class ObservationTest
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
             Assert.assertEquals(SimpleObservation.ALGORITHM.getName(), o.getAlgorithm().getName());
 
-            try 
-            {
-                o.setAlgorithm(new Algorithm("foo"));
-                Assert.fail("excpected IllegalArgumentException for foo");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-            Assert.assertEquals(SimpleObservation.ALGORITHM.getName(), o.getAlgorithm().getName());
         }
         catch(Exception unexpected)
         {

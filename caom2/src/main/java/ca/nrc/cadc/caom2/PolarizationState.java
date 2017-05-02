@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.util.HexUtil;
+
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -179,6 +181,11 @@ public enum PolarizationState implements CaomEnum
     public int checksum()
     {
         return value;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return HexUtil.toBytes(value);
     }
     
     public static class PolStateComparator implements Comparator<PolarizationState>, Serializable

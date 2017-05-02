@@ -78,7 +78,10 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
  */
 public class SimpleObservation extends Observation
 {
-    private static final long serialVersionUID = 201110261400L;
+    private static final long serialVersionUID = 201704131000L;
+
+    // Can be used as a default unless an algorithm is
+    // explicitly assigned.
     public static final Algorithm ALGORITHM = new Algorithm("exposure");
 
     /**
@@ -89,13 +92,10 @@ public class SimpleObservation extends Observation
     {
         super(collection, observationID, ALGORITHM);
     }
-    
-    @Override
-    public void setAlgorithm(Algorithm a)
+
+    public SimpleObservation(String collection, String observationID, Algorithm algorithm)
     {
-        CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
-        if (ALGORITHM.getName().equals(a.getName()))
-            return;
-        throw new IllegalArgumentException("cannot set SimpleObservation.algorithm to " + a);
+        super(collection, observationID, algorithm);
     }
+
 }

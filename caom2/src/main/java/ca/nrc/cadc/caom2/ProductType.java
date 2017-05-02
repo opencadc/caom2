@@ -148,4 +148,9 @@ public class ProductType extends VocabularyTerm implements CaomEnum, Serializabl
     {
         return getValue().hashCode();
     }
+
+    @Override
+    public byte[] getBytes() {
+        return getValue().getBytes();
+    }
 }

@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
 
 /**
  * An extensible vocabulary masquerading as an enumeration, or the other way around.
@@ -146,6 +147,10 @@ public class DataProductType extends VocabularyTerm implements CaomEnum, Seriali
     {
         return getValue().hashCode();
     }
-    
+
+    @Override
+    public byte[] getBytes() {
+        return getValue().getBytes();
+    }
     
 }

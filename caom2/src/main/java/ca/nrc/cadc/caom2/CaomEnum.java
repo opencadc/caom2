@@ -76,4 +76,7 @@ package ca.nrc.cadc.caom2;
 public interface CaomEnum 
 {
     int checksum();
+
+    byte[] getBytes();
+
 }

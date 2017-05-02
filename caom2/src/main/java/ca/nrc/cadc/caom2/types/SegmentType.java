@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.caom2.CaomEnum;
+import ca.nrc.cadc.util.HexUtil;
 
 /**
  *
@@ -92,7 +93,10 @@ public enum SegmentType implements CaomEnum
        return value;
     }
 
-
+    @Override
+    public byte[] getBytes() {
+        return HexUtil.toBytes(value);
+    }
 
     public static SegmentType toValue(int i)
     {

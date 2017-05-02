@@ -81,6 +81,8 @@ public final class XmlConstants
     
     public static final String CAOM2_2_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2";
 
+    public static final String CAOM2_3_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.3";
+
     public static final String XMLSCHEMA = "http://www.w3.org/2001/XMLSchema-instance";
 
     public static final String XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";

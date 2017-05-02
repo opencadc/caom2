@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.access;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
@@ -79,7 +79,7 @@ import java.util.UUID;
  *
  * @author pdowler
  */
-public class ReadAccess extends AbstractCaomEntity implements Comparable<ReadAccess>
+public class ReadAccess extends CaomEntity implements Comparable<ReadAccess>
 {
     private static final long serialVersionUID = 201202081620L;
     
