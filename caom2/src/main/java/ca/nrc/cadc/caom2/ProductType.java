@@ -143,14 +143,4 @@ public class ProductType extends VocabularyTerm implements CaomEnum, Serializabl
             throw new IllegalArgumentException("invalid value: " + s, ex);
         }
     }
-
-    public int checksum()
-    {
-        return getValue().hashCode();
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return getValue().getBytes();
-    }
 }

@@ -137,6 +137,19 @@ public class VocabularyTerm implements Serializable
         return tmp.toASCIIString();
     }
     
+    /**
+     * @deprecated 
+     * @return 
+     */
+    public int checksum()
+    {
+        return getValue().hashCode();
+    }
+
+    public byte[] getBytes() {
+        return getValue().getBytes();
+    }
+    
     @Override
     public String toString()
     {

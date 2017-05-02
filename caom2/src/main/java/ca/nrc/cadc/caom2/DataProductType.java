@@ -141,16 +141,4 @@ public class DataProductType extends VocabularyTerm implements CaomEnum, Seriali
             throw new IllegalArgumentException("invalid value: " + s, ex);
         }
     }
-
-    @Override
-    public int checksum()
-    {
-        return getValue().hashCode();
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return getValue().getBytes();
-    }
-    
 }
