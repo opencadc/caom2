@@ -59,8 +59,8 @@
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
 *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
+*  <http:www.gnu.org/licenses/>.      pas le cas, consultez :
+*                                       <http:www.gnu.org/licenses/>.
 *
 *  $Revision: 5 $
 *
@@ -79,7 +79,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.UUID;
 import org.apache.log4j.Level;
@@ -147,339 +147,318 @@ public class CaomEntityTest
     static int[] expectedStateFieldsWithTrans = { 14, 15, 15, 7, 3, 14 };
     static int[] expectedChildFields = { 1, 1, 1, 1, 1, 0 };
 
-//    //@Test
-//    public void testTemplate()
-//    {
-//        try
-//        {
-//
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//public void testUUID()
-//{
-//    try
-//    {
-//        UUID id;
-//
-//        id = new UUID(0L, 0L);
-//        log.debug("[0,0] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(0L, 1L);
-//        log.debug("[0,1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(1L, 0L);
-//        log.debug("[1,0] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(1L, 1L);
-//        log.debug("[1,1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(0L, -1L);
-//        log.debug("[0,-1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(-1L, 0L);
-//        log.debug("[-1,0] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(1L, -1L);
-//        log.debug("[1,-1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(-1L, 1L);
-//        log.debug("[-1,1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(-1L, -1L);
-//        log.debug("[-1,-1] as UUID: " + id.toString());
-//        Assert.assertEquals(id, UUID.fromString(id.toString()));
-//
-//        id = new UUID(0, 666L);
-//        log.info("[0,666] as UUID: " + id.toString());
-//    }
-//    catch(Exception unexpected)
-//    {
-//        log.error("unexpected exception", unexpected);
-//        Assert.fail("unexpected exception: " + unexpected);
-//    }
-//}
-//
-//    @Test
-//    public void testEquals()
-//    {
-//        try
-//        {
-//            // only Chunk does not override equals/compareTo/hasCode
-//            Chunk o1 = new Chunk();
-//            Chunk o2 = new Chunk();
-//
-//            Assert.assertTrue(o1.equals(o1));
-//
-//            Assert.assertFalse(o1.equals(null));
-//
-//            Assert.assertFalse(o1.equals("foo"));
-//
-//            Assert.assertFalse(o1.equals(o2));
-//
-//            // simulate serialize/deserialize so different object with same numeric id
-//            assignID(o2, o1.getID());
-//            Assert.assertTrue(o1.equals(o2));
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//    private static void assignID(Object ce, UUID id)
-//    {
-//        try
-//        {
-//            Field f = CaomEntity.class.getDeclaredField("id");
-//            f.setAccessible(true);
-//            f.set(ce, id);
-//        }
-//        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-//        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-//    }
-//
-//    @Test
-//    public void testDateFieldInStateCode()
-//    {
-//        try
-//        {
-//            Observation o = new SimpleObservation("FOO", "bar");
-//            int cs1 = o.getStateCode();
-//            o.metaRelease = new Date();
-//            int cs2 = o.getStateCode();
-//            Assert.assertTrue("state code changed", cs1 != cs2);
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testCaomEnumInStateCode()
-//    {
-//        try
-//        {
-//            Observation o = new SimpleObservation("FOO", "bar");
-//            o.target = new Target("foo");
-//            int cs1 = o.getStateCode();
-//            o.target.type = TargetType.OBJECT;
-//            int cs2 = o.getStateCode();
-//            Assert.assertTrue("state code changed", cs1 != cs2);
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testKeywordsInStateCode()
-//    {
-//        try
-//        {
-//            Observation o = new SimpleObservation("FOO", "bar");
-//            o.telescope = new Telescope("fooscope");
-//            int cs1 = o.getStateCode();
-//            o.telescope.getKeywords().add("foo=2");
-//            int cs2 = o.getStateCode();
-//            Assert.assertTrue("state code changed", cs1 != cs2);
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testMaxDate()
-//    {
-//        try
-//        {
-//            Date d1 = new Date(100000L);
-//            Date d2 = new Date(200000L);
-//            Assert.assertEquals(d2, CaomEntity.max(d1, d2));
-//            Assert.assertEquals(d2, CaomEntity.max(d2, d1));
-//            Assert.assertEquals(d2, CaomEntity.max(d2, d2));
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testGetStateFields()
-//    {
-//
-//        try
-//        {
-//            Assert.assertEquals("test setup", entities.length, expectedStateFields.length);
-//            for (int i=0; i<entities.length; i++)
-//            {
-//                Object o = entities[i];
-//                Class c = o.getClass();
-//                log.debug("class: " + c.getName());
-//                SortedSet<Field> fields = CaomEntity.getStateFields(c, false);
-//                for (Field f : fields)
-//                    log.debug("state: " + f.getName() + " type: " + f.getType().getName());
-//                Assert.assertEquals("number of state fields:  " + c.getName(), expectedStateFields[i], fields.size());
-//
-//                fields = CaomEntity.getStateFields(c, true);
-//                for (Field f : fields)
-//                    log.debug("state: " + f.getName() + " type: " + f.getType().getName());
-//                Assert.assertEquals("number of state fields (w/ transient):  " + c.getName(), expectedStateFieldsWithTrans[i], fields.size());
-//            }
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testGetChildFields()
-//    {
-//        try
-//        {
-//            Assert.assertEquals("test setup", entities.length, expectedChildFields.length);
-//            for (int i=0; i<entities.length; i++)
-//            {
-//                Object o = entities[i];
-//                Class c = o.getClass();
-//                log.debug("class: " + c.getName());
-//                List<Field> fields = CaomEntity.getChildFields(c);
-//                for (Field f : fields)
-//                    log.debug("children: " + f.getName() + " type: " + f.getType().getName());
-//                Assert.assertEquals("number of child fields:  " + c.getName(), expectedChildFields[i], fields.size());
-//            }
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testChecksum()
-//    {
-//        try
-//        {
-//            for (CaomEntity ce : entities)
-//            {
-//                int c = ce.getStateCode();
-//                log.debug("entity: " + ce.getClass().getName() + " checksum: " + c);
-//            }
-//
-//            // check that an "empty" objects checksum is equal to the hashCode of the class name
-//            Chunk chunk = new Chunk();
-//            int expected = 0;
-//            int actual = chunk.getStateCode();
-//            Assert.assertEquals("empty Chunk code", expected, actual);
-//
-//            // try something with primitive types
-//            CoordAxis1D axis = new CoordAxis1D(new Axis("WAV", "m"));
-//            axis.range = new CoordRange1D(new RefCoord(1.0, 1.0), new RefCoord(10.0, 10.0));
-//            chunk.energy = new SpectralWCS(axis, "TOPOCENT");
-//            actual = chunk.getStateCode();
-//            Assert.assertFalse("changed Chunk code", expected == actual);
-//
-//            Observation o = new SimpleObservation("FOO", "bar");
-//            expected = o.getStateCode();
-//            o.environment = new Environment();
-//            actual = o.getStateCode();
-//            Assert.assertEquals("empty Environment code", expected, actual);
-//
-//            Plane p = new Plane("baz");
-//            expected = p.getStateCode();
-//            p.metrics = new Metrics();
-//            actual = p.getStateCode();
-//            Assert.assertEquals("empty Metrics code", expected, actual);
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testMetaChecksum()
-//    {
-//        try
-//        {
-//            MessageDigest msgDg = MessageDigest.getInstance("MD5");
-//
-//            for (CaomEntity ce : entities)
-//            {
-//                ce.computeMetaChecksum(false, msgDg);
-//                log.info("entity: " + ce.getClass().getName() + " meta checksum: " + ce.getMetaChecksum());
-//
-//            }
-//
-//            Assert.assertEquals("SimpleObservation metaChecksum", "md5:918f80b11f258e9a58fee10a1c5ec611", entities[0].getMetaChecksum().toString());
-//            Assert.assertEquals("CompositeObservation metaChecksum", "md5:7bf4fb51de90559c5228e0f865215de4", entities[1].getMetaChecksum().toString());
-//            Assert.assertEquals("Plane metaChecksum", "md5:141d71504ed6f1d49dfe7aaecb7a4c5c", entities[2].getMetaChecksum().toString());
-//            Assert.assertEquals("Artifact metaChecksum", "md5:736369656e6365", entities[3].getMetaChecksum().toString());
-//            Assert.assertEquals("Part metaChecksum", "md5:6130ef4aca3aeb227ea3c5b2fdfdd5c3", entities[4].getMetaChecksum().toString());
-//            Assert.assertEquals("Chunk metaChecksum", "md5:d41d8cd98f00b204e9800998ecf8427e", entities[5].getMetaChecksum().toString());
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-
     @Test
-    public void testAccMetaChecksum()
+    public void testTemplate()
     {
         try
         {
-            MessageDigest msgDg = MessageDigest.getInstance("MD5");
 
-            // Se the meta checksums in case they aren't already
-            // May have to set up more complicated object to truly test this. In this bare test
-            // the objects in 'entities' do not have any children.
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testUUID()
+    {
+        try
+        {
+            UUID id;
+
+            id = new UUID(0L, 0L);
+            log.debug("[0,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(0L, 1L);
+            log.debug("[0,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(1L, 0L);
+            log.debug("[1,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(1L, 1L);
+            log.debug("[1,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(0L, -1L);
+            log.debug("[0,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(-1L, 0L);
+            log.debug("[-1,0] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(1L, -1L);
+            log.debug("[1,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(-1L, 1L);
+            log.debug("[-1,1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(-1L, -1L);
+            log.debug("[-1,-1] as UUID: " + id.toString());
+            Assert.assertEquals(id, UUID.fromString(id.toString()));
+
+            id = new UUID(0, 666L);
+            log.info("[0,666] as UUID: " + id.toString());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+}
+
+    @Test
+    public void testEquals()
+    {
+        try
+        {
+             // only Chunk does not override equals/compareTo/hasCode
+            Chunk o1 = new Chunk();
+            Chunk o2 = new Chunk();
+
+            Assert.assertTrue(o1.equals(o1));
+
+            Assert.assertFalse(o1.equals(null));
+
+            Assert.assertFalse(o1.equals("foo"));
+
+            Assert.assertFalse(o1.equals(o2));
+
+            // simulate serialize/deserialize so different object with same numeric id
+            assignID(o2, o1.getID());
+            Assert.assertTrue(o1.equals(o2));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    private static void assignID(Object ce, UUID id)
+    {
+        try
+        {
+            Field f = CaomEntity.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(ce, id);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
+
+    @Test
+    public void testDateFieldInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            int cs1 = o.getStateCode();
+            o.metaRelease = new Date();
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testCaomEnumInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.target = new Target("foo");
+            int cs1 = o.getStateCode();
+            o.target.type = TargetType.OBJECT;
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testKeywordsInStateCode()
+    {
+        try
+        {
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.telescope = new Telescope("fooscope");
+            int cs1 = o.getStateCode();
+            o.telescope.getKeywords().add("foo=2");
+            int cs2 = o.getStateCode();
+            Assert.assertTrue("state code changed", cs1 != cs2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testMaxDate()
+    {
+        try
+        {
+            Date d1 = new Date(100000L);
+            Date d2 = new Date(200000L);
+            Assert.assertEquals(d2, CaomEntity.max(d1, d2));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d1));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d2));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGetStateFields()
+    {
+
+        try
+        {
+            Assert.assertEquals("test setup", entities.length, expectedStateFields.length);
+            for (int i=0; i<entities.length; i++)
+            {
+                Object o = entities[i];
+                Class c = o.getClass();
+                log.debug("class: " + c.getName());
+                SortedSet<Field> fields = CaomEntity.getStateFields(c, false);
+                for (Field f : fields)
+                    log.debug("state: " + f.getName() + " type: " + f.getType().getName());
+                Assert.assertEquals("number of state fields:  " + c.getName(), expectedStateFields[i], fields.size());
+
+                fields = CaomEntity.getStateFields(c, true);
+                for (Field f : fields)
+                    log.debug("state: " + f.getName() + " type: " + f.getType().getName());
+                Assert.assertEquals("number of state fields (w/ transient):  " + c.getName(), expectedStateFieldsWithTrans[i], fields.size());
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGetChildFields()
+    {
+        try
+        {
+            Assert.assertEquals("test setup", entities.length, expectedChildFields.length);
+            for (int i=0; i<entities.length; i++)
+            {
+                Object o = entities[i];
+                Class c = o.getClass();
+                log.debug("class: " + c.getName());
+                Set<Field> fields = CaomEntity.getChildFields(c);
+                for (Field f : fields)
+                    log.debug("children: " + f.getName() + " type: " + f.getType().getName());
+                Assert.assertEquals("number of child fields:  " + c.getName(), expectedChildFields[i], fields.size());
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testChecksum()
+    {
+        try
+        {
             for (CaomEntity ce : entities)
             {
-                ce.computeMetaChecksum(false, msgDg);
-                log.debug("entity: " + ce.getClass().getName() + " meta checksum: " + ce.getMetaChecksum());
+                int c = ce.getStateCode();
+                log.debug("entity: " + ce.getClass().getName() + " checksum: " + c);
             }
 
+            // check that an "empty" objects checksum is equal to the hashCode of the class name
+            Chunk chunk = new Chunk();
+            int expected = 0;
+            int actual = chunk.getStateCode();
+            Assert.assertEquals("empty Chunk code", expected, actual);
+
+            // try something with primitive types
+            CoordAxis1D axis = new CoordAxis1D(new Axis("WAV", "m"));
+            axis.range = new CoordRange1D(new RefCoord(1.0, 1.0), new RefCoord(10.0, 10.0));
+            chunk.energy = new SpectralWCS(axis, "TOPOCENT");
+            actual = chunk.getStateCode();
+            Assert.assertFalse("changed Chunk code", expected == actual);
+
+            Observation o = new SimpleObservation("FOO", "bar");
+            expected = o.getStateCode();
+            o.environment = new Environment();
+            actual = o.getStateCode();
+            Assert.assertEquals("empty Environment code", expected, actual);
+
+            Plane p = new Plane("baz");
+            expected = p.getStateCode();
+            p.metrics = new Metrics();
+            actual = p.getStateCode();
+            Assert.assertEquals("empty Metrics code", expected, actual);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testMetaChecksum()
+    {
+        try
+        {
             for (CaomEntity ce : entities)
             {
-                ce.computeAccMetaChecksum(false, msgDg);
-                log.info("entity: " + ce.getClass().getName() + " accumulated meta checksum: " + ce.getAccMetaChecksum());
+                URI mc = ce.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+                log.info("entity: " + ce.getClass().getName() + " metaChecksum: " + mc);
             }
 
-            Assert.assertEquals("SimpleObservation metaChecksum", "md5:913ea329220ec60a803130b6286d1e8d", entities[0].getAccMetaChecksum().toString());
-            Assert.assertEquals("CompositeObservation metaChecksum", "md5:7f3380ecf71c61bb3d289fdfcef8ebde", entities[1].getAccMetaChecksum().toString());
-            Assert.assertEquals("Plane metaChecksum", "md5:5a8f4f2d067af0d9f8d997cf7d5ee520", entities[2].getAccMetaChecksum().toString());
-            Assert.assertEquals("Artifact metaChecksum", "md5:7f6eb679d66ba0cc4c263e9d280c8fe9", entities[3].getAccMetaChecksum().toString());
-            Assert.assertEquals("Part metaChecksum", "md5:183013da38afe387b2ea921a668ba835", entities[4].getAccMetaChecksum().toString());
-            Assert.assertEquals("Chunk metaChecksum", "md5:74be16979710d4c4e7c6647856088456", entities[5].getAccMetaChecksum().toString());
+            log.warn("TODO: modify entities and make sure metaChecksum changes");
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testAccumulatedMetaChecksum()
+    {
+        try
+        {
+            for (CaomEntity ce : entities)
+            {
+                URI mc = ce.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+                log.info("entity: " + ce.getClass().getName() + " accumulatedMetaChecksum: " + mc);
+            }
+
+            log.warn("TODO: modify entities and make sure accumulatedMetaChecksum propagates upward correctly");
+            
         }
         catch(Exception unexpected)
         {
