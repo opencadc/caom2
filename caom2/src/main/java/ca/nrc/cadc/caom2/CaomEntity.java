@@ -95,6 +95,7 @@ import java.util.UUID;
 import ca.nrc.cadc.util.HexUtil;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import org.apache.log4j.Logger;
 
 /**
@@ -106,7 +107,7 @@ public abstract class CaomEntity implements Serializable
     private static final long serialVersionUID = 201704181300L;
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
-    private static final boolean SC_DEBUG = false;
+    private static final boolean SC_DEBUG = false; // way to much debug when true
     
     // state
     private UUID id;
@@ -250,7 +251,8 @@ public abstract class CaomEntity implements Serializable
     {
         try 
         {
-            byte[] metaChecksumBytes = calcMetaChecksum(this.getClass(), this, includeTransient, digest);
+            calcMetaChecksum(this.getClass(), this, includeTransient, digest);
+            byte[] metaChecksumBytes = digest.digest();
             String hexMetaChecksum = HexUtil.toHex(metaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
             return new URI(alg, hexMetaChecksum, null);
@@ -262,13 +264,14 @@ public abstract class CaomEntity implements Serializable
         finally { }
     }
 
-    private byte[] calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
+    private void calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
     {
         try
         {
             SortedSet<Field> fields = getStateFields(c, includeTransient);
             for (Field f : fields) 
             {
+                if (SC_DEBUG) log.debug("check: " + c.getName() + "." + f.getName());
                 f.setAccessible(true);
                 Object fo = f.get(o);
                 if (fo != null) 
@@ -279,13 +282,11 @@ public abstract class CaomEntity implements Serializable
                     {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        return ce.getBytes();
+                        msgDigest.update(ce.getBytes());
                     } 
                     else if (isLocalClass(ac)) 
                     {
-                        //only merge the checksum if there is state (cs != 0)
-                        msgDigest.update(calcMetaChecksum(ac, fo, includeTransient, msgDigest));
-
+                        calcMetaChecksum(ac, fo, includeTransient, msgDigest);
                     } 
                     else if (fo instanceof Collection) 
                     {
@@ -297,21 +298,13 @@ public abstract class CaomEntity implements Serializable
                             Class cc = co.getClass();
                             if (isLocalClass(cc)) 
                             {
-                                //only merge the checksum if there is state (cs != 0)
-                                msgDigest.update(calcMetaChecksum(cc, co, includeTransient, msgDigest));
+                                calcMetaChecksum(cc, co, includeTransient, msgDigest);
                             } 
                             else // non-caom2 class ~primtive value
                             {
                                 msgDigest.update(primtiveValueToBytes(co));
                             }
                         }
-                    } 
-                    else if (fo instanceof Date) 
-                    {
-                        // only compare down to seconds
-                        Date date = (Date) fo;
-                        long sec = (date.getTime() / 1000L);
-                        msgDigest.update(HexUtil.toBytes(sec));
                     } 
                     else // non-caom2 class ~primtive value
                     {
@@ -326,24 +319,41 @@ public abstract class CaomEntity implements Serializable
         {
             throw new RuntimeException("Unable to calculate metaChecksum for class " + c.getName(), bug);
         }
-
-        return msgDigest.digest();
-
     }
     
     private byte[] primtiveValueToBytes(Object o)
     {
         if (o instanceof Byte)
             return HexUtil.toBytes((Byte) o); // auto-unbox
+        
         if (o instanceof Short)
             return HexUtil.toBytes((Short) o); // auto-unbox
+        
         if (o instanceof Integer)
             return HexUtil.toBytes((Integer) o); // auto-unbox
+        
         if (o instanceof Long)
             return HexUtil.toBytes((Long) o); // auto-unbox
         
+        if (o instanceof Boolean)
+        {
+            Boolean b = (Boolean) o;
+            if (b)
+                return HexUtil.toBytes((byte) 1);
+            return HexUtil.toBytes((byte) 0);
+        }
+        
+        if (o instanceof Date) 
+        {
+            // only compare down to seconds
+            Date date = (Date) o;
+            long sec = (date.getTime() / 1000L);
+            return HexUtil.toBytes(sec);
+        } 
+        
         if (o instanceof Float)
             return HexUtil.toBytes(Float.floatToIntBits((Float) o)); // auto-unbox, IEEE754 single
+        
         if (o instanceof Double)
             return HexUtil.toBytes(Double.doubleToLongBits((Double) o)); // auto-unbox, IEEE754 double
         
@@ -355,6 +365,7 @@ public abstract class CaomEntity implements Serializable
                 throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
         }
+        
         if (o instanceof URI)
         {
             try { return ((URI) o).toASCIIString().getBytes("UTF-8"); }
@@ -381,7 +392,8 @@ public abstract class CaomEntity implements Serializable
     {
         try 
         {
-            byte[] accMetaChecksumBytes = calcAccMetaChecksum(this.getClass(), this, includeTransient, digest);
+            calcAccMetaChecksum(this.getClass(), this, includeTransient, digest);
+            byte[] accMetaChecksumBytes = digest.digest();
             String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
             return new URI(alg, accHexMetaChecksum, null);
@@ -392,16 +404,18 @@ public abstract class CaomEntity implements Serializable
         }
     }
 
-    private byte[] calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest) 
+    private void calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
     {
-        // add this object's metaChecksum value to the msgDigest
-        CaomEntity ce = (CaomEntity) o;
-        byte[] cs = calcMetaChecksum(c, o, includeTransient, msgDigest);
-        msgDigest.update(cs);
-            
+        
         // add acccumulated checksum of child entities in id order
         try
         {
+            // clone for use with child entities
+            MessageDigest md = MessageDigest.getInstance(msgDigest.getAlgorithm());
+        
+            // add this object's complete metadata
+            calcMetaChecksum(c, o, includeTransient, msgDigest);
+        
             SortedSet<Field> fields = getChildFields(c);
             if (SC_DEBUG) log.debug("calcAccMetaChecksum: " + c.getClass().getName() + " has " + fields.size() + " child fields");
             
@@ -414,14 +428,21 @@ public abstract class CaomEntity implements Serializable
                     if (SC_DEBUG) log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
                     if (fo instanceof Collection) 
                     {
-                        Collection stuff = (Collection) fo;
+                        Collection<CaomEntity> stuff = (Collection<CaomEntity>) fo;
                         Iterator i = stuff.iterator();
                         while (i.hasNext()) 
                         {
                             Object co = i.next();
                             Class cc = co.getClass();
-                            msgDigest.update(calcAccMetaChecksum(cc, co, includeTransient, msgDigest));
+                            
+                            calcAccMetaChecksum(cc, co, includeTransient, md);
+                            msgDigest.update(md.digest());
+                            md.reset();
                         }
+                    }
+                    else
+                    {
+                        throw new UnsupportedOperationException("found single child field " + f.getName() + " in " + c.getName());
                     }
                 }
                 // child sets are never null
@@ -432,8 +453,10 @@ public abstract class CaomEntity implements Serializable
         {
             throw new RuntimeException("BUG: Unable to calculate metaChecksum for class " + c.getName(), bug);
         }
-
-        return msgDigest.digest();
+        catch(NoSuchAlgorithmException oops)
+        {
+            throw new RuntimeException("BUG: Unable to clone MessageDigest " + msgDigest.getAlgorithm(), oops);
+        }
     }
 
     // recursive compute checksum
