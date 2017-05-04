@@ -56,7 +56,7 @@
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
     <version>2.3</version>
-    <lastModified>2017-04-10T15:00:00</lastModified>
+    <lastModified>2017-05-05T12:00:00</lastModified>
     
     <import>
         <name>ivoa</name>
@@ -144,32 +144,32 @@
             <literal>
                 <vodml-id>CalibrationLevel.PLANNED</vodml-id>
                 <name>PLANNED</name>
-                <description>-1 : planned data product that does not yet exist</description>
+                <description>(-1) planned data product that does not yet exist</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_INSTRUMENTAL</vodml-id>
                 <name>RAW_INSTRUMENTAL</name>
-                <description>0 : raw data in some opaque instrument-specific format</description>
+                <description>(0) raw data in some opaque instrument-specific format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.RAW_STANDARD</vodml-id>
                 <name>RAW_STANDARD</name>
-                <description>1 : raw data in a common format</description>
+                <description>(1) raw data in a common format</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.CALIBRATED</vodml-id>
                 <name>CALIBRATED</name>
-                <description>2 : standard calibration steps have been applied</description>
+                <description>(2) standard calibration steps have been applied</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.PRODUCT</vodml-id>
                 <name>PRODUCT</name>
-                <description>3 : additional non-standard calibration steps have been applied</description>
+                <description>(3) additional non-standard calibration steps have been applied</description>
             </literal>
             <literal>
                 <vodml-id>CalibrationLevel.ANALYSIS_PRODUCT</vodml-id>
                 <name>ANALYSIS_PRODUCT</name>
-                <description>4 : data product from scientific analysis</description>
+                <description>(4) : data product from scientific analysis</description>
             </literal>
         </enumeration>
         
@@ -464,7 +464,9 @@
             <attribute>
                 <vodml-id>CaomEntity.lastModified</vodml-id>
                 <name>lastModified</name>
-                <description>timestamp of last modification of this entity</description>
+                <description>timestamp of last modification of this entity; the timestamp is intended to be applied
+                    or updated when the entity is stored 
+                    (e.g. in a database)</description>
                 <datatype>
                     <vodml-ref>ivoa:datetime</vodml-ref>
                 </datatype>
@@ -476,7 +478,9 @@
             <attribute>
                 <vodml-id>CaomEntity.maxLastModified</vodml-id>
                 <name>maxLastModified</name>
-                <description>maximum timestamp of last modification of this entity and all child entities</description>
+                <description>maximum timestamp of last modification of this entity and all child entities;
+                    the timestamp is intended to be applied or updated when the entity is stored 
+                    (e.g. in a database)</description>
                 <datatype>
                     <vodml-ref>ivoa:datetime</vodml-ref>
                 </datatype>
@@ -489,9 +493,26 @@
             <attribute>
                 <vodml-id>CaomEntity.metaChecksum</vodml-id>
                 <name>metaChecksum</name>
-                <description>checksum of this entity;
-                    the URI must conform to the pattern {algorithm}:{value}, for example: md5:4be91751541fd804e7207663a0822f56
-                    (NEW in CAOM-2.3)</description>
+                <description>checksum of this entity; (NEW in CAOM-2.3)
+                    
+                    The URI must conform to the pattern {algorithm}:{value}, for example: md5:4be91751541fd804e7207663a0822f56.
+                    The checksum of an entity is computed by accumulating byte representation of individual metadata values in
+                    the following order: (1) CaomEntity.id for entities, (2) state fields in alphabetic order (foo.a comes before 
+                    foo.b) and using depth-first recursion (foo.abc.x comes before foo.def). Null values are ignored so that the 
+                    addition of new fields in future versions will not change/invalidate existing checksums until values are assigned.
+                    Non-null values are converted to bytes as follows. 
+                    
+                    string: UTF-8 encoded bytes
+                    URI: UTF-8 encoded bytes of string representation
+                    float: IEEE754 single (4 bytes)
+                    double: IEEE754 double (8 bytes)
+                    boolean: convert to single byte, false=0, true=1 (1 bytes)
+                    byte: as-is (1 byte)
+                    short: (2 bytes, network byte order == big endian))
+                    integer: (4 bytes, network byte order == big endian)
+                    long: (8 bytes, network byte order == big endian)
+                    date: truncate time to whole number of seconds and treat as a long (seconds since 1970-01-01 00:00:00 UTC)
+                    </description>
                 <datatype>
                     <!-- TODO: should be ChecksumURI -->
                     <vodml-ref>ivoa:anyURI</vodml-ref>
@@ -504,9 +525,15 @@
             <attribute>
                 <vodml-id>CaomEntity.accMetaChecksum</vodml-id>
                 <name>accMetaChecksum</name>
-                <description>accumulated checksum of the metadata of this entity and all child entities;
-                    the URI must conform to the pattern {algorithm}:{value}, for example: md5:4be91751541fd804e7207663a0822f56
-                    (NEW in CAOM-2.3)</description>
+                <description>accumulated checksum of the metadata of this entity and all child entities; (NEW in CAOM-2.3)
+                    
+                    The URI must conform to the pattern {algorithm}:{value}, for example: md5:4be91751541fd804e7207663a0822f56.
+                    The accumulated checksum of an entity is computed by accumulating the byte representation of entity checksums
+                    in the following order: (1) the metaChecksum of the current entity, (2) the accMetaChecksum of all child entities
+                    accumulated in order of the child's CaomEntity.id. For an entity with no children, the accMetaChecksum is derived
+                    only from the metaChecksum but it is not equal to it because it is a checksum of that checksum and not a checksum
+                    of the same metadata directly.
+                    </description>
                 <datatype>
                     <!-- TODO: should be ChecksumURI -->
                     <vodml-ref>ivoa:anyURI</vodml-ref>
