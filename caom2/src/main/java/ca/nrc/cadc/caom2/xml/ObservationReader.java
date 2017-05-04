@@ -344,7 +344,7 @@ public class ObservationReader implements Serializable
                 if (acc != null)
                 {
                     URI accCS = new URI(acc.getValue());
-                    CaomUtil.assignMetaChecksum(ce, accCS, "accumulatedMetaChecksum");
+                    CaomUtil.assignMetaChecksum(ce, accCS, "accMetaChecksum");
                 }
             }
         }

@@ -343,8 +343,8 @@ public class ObservationWriter implements Serializable
         if (docVersion >= 23 && ce.getMetaChecksum() != null)
             el.setAttribute("metaChecksum", ce.getMetaChecksum().toASCIIString(), el.getNamespace());
         
-        if (docVersion >= 23 && ce.getAccumulatedMetaChecksum() != null)
-            el.setAttribute("accMetaChecksum", ce.getAccumulatedMetaChecksum().toASCIIString(), el.getNamespace());
+        if (docVersion >= 23 && ce.getAccMetaChecksum() != null)
+            el.setAttribute("accMetaChecksum", ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
     }
     
     /**

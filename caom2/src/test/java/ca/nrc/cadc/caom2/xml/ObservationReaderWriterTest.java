@@ -244,7 +244,7 @@ public class ObservationReaderWriterTest
             URI ocs = obs.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
             URI oacs = obs.computeAccumulatedMetaChecksum(true, MessageDigest.getInstance("MD5"));
             CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
-            CaomUtil.assignMetaChecksum(obs, oacs, "accumulatedMetaChecksum");
+            CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
             bos = new ByteArrayOutputStream();
             w23.write(obs, bos);
             caom23 = bos.toString();
@@ -764,10 +764,10 @@ public class ObservationReaderWriterTest
             assertNotNull(t+".metaChecksum", actual.getMetaChecksum());
             assertEquals(t+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
         }
-        if (expected.getAccumulatedMetaChecksum()!= null)
+        if (expected.getAccMetaChecksum()!= null)
         {
-            assertNotNull(t+".accMetaChecksum", actual.getAccumulatedMetaChecksum());
-            assertEquals(t+".accMetaChecksum", expected.getAccumulatedMetaChecksum(), actual.getAccumulatedMetaChecksum());
+            assertNotNull(t+".accMetaChecksum", actual.getAccMetaChecksum());
+            assertEquals(t+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
         }
     
     }

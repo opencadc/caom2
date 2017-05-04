@@ -497,7 +497,7 @@ public class CaomEntityTest
             Assert.assertEquals("add to parent does not change child", ac1, ac2);
             
             Assert.assertNull("compute does not effect stored checksum", obs.getMetaChecksum());
-            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccumulatedMetaChecksum());
+            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccMetaChecksum());
             
         }
         catch(Exception unexpected)
@@ -579,7 +579,7 @@ public class CaomEntityTest
             Assert.assertNotEquals("add child changes acc checksum", pac1, pac2);
                         
             Assert.assertNull("compute does not effect stored checksum", obs.getMetaChecksum());
-            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccumulatedMetaChecksum());
+            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccMetaChecksum());
             
         }
         catch(Exception unexpected)

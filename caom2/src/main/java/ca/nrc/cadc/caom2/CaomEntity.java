@@ -112,7 +112,7 @@ public abstract class CaomEntity implements Serializable
     private Date lastModified;
     private Date maxLastModified;
     private URI metaChecksum;
-    private URI accumulatedMetaChecksum;
+    private URI accMetaChecksum;
     
     protected CaomEntity()
     {
@@ -175,9 +175,9 @@ public abstract class CaomEntity implements Serializable
      * 
      * @return checksum URI in the form algorithm:value
      */
-    public URI getAccumulatedMetaChecksum()
+    public URI getAccMetaChecksum()
     {
-        return accumulatedMetaChecksum;
+        return accMetaChecksum;
     }
     
     /**
