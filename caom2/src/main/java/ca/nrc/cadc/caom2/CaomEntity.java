@@ -72,9 +72,6 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HashUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -82,11 +79,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -96,6 +91,9 @@ import ca.nrc.cadc.util.HexUtil;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
@@ -453,16 +451,25 @@ public abstract class CaomEntity implements Serializable
                     if (fo instanceof Collection) 
                     {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
-                        Iterator i = children.iterator();
+                        SortedMap<UUID,byte[]> sorted = new TreeMap<>();
+                        Iterator<CaomEntity> i = children.iterator();
                         while (i.hasNext()) 
                         {
-                            Object co = i.next();
-                            Class cc = co.getClass();
-                            
-                            calcAccMetaChecksum(cc, co, includeTransient, md);
-                            digest.update(md.digest());
+                            CaomEntity ce = i.next();
+                            Class cc = ce.getClass();
+                            log.debug("calculate: " + ce.getID());
+                            calcAccMetaChecksum(cc, ce, includeTransient, md);
+                            byte[] bb = md.digest();
                             // call to digest also resets
                             //md.reset();
+                            sorted.put(ce.getID(), bb);
+                        }
+                        Iterator<Map.Entry<UUID,byte[]>> si = sorted.entrySet().iterator();
+                        while (si.hasNext())
+                        {
+                            Map.Entry<UUID,byte[]> me = si.next();
+                            log.debug("accumulate: " + me.getKey());
+                            digest.update(me.getValue());
                         }
                     }
                     else
