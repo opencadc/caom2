@@ -308,6 +308,9 @@ public class ObservationReader implements Serializable
     {
         Attribute aid = e.getAttribute("id", e.getNamespace());
         Attribute alastModified = e.getAttribute("lastModified", e.getNamespace());
+        Attribute aMaxLastModified = e.getAttribute("maxLastModified", e.getNamespace());
+        Attribute mcs = e.getAttribute("metaChecksum", e.getNamespace());
+        Attribute acc = e.getAttribute("accMetaChecksum", e.getNamespace());
         try
         {
             UUID uuid;
@@ -325,6 +328,25 @@ public class ObservationReader implements Serializable
                 Date lastModified = rc.dateFormat.parse(alastModified.getValue());
                 CaomUtil.assignLastModified(ce, lastModified, "lastModified");
             }
+            
+            if (rc.docVersion >= 23)
+            {
+                if (aMaxLastModified != null)
+                {
+                    Date lastModified = rc.dateFormat.parse(aMaxLastModified.getValue());
+                    CaomUtil.assignLastModified(ce, lastModified, "maxLastModified");
+                }
+                if (mcs != null)
+                {
+                    URI metaCS = new URI(mcs.getValue());
+                    CaomUtil.assignMetaChecksum(ce, metaCS, "metaChecksum");
+                }
+                if (acc != null)
+                {
+                    URI accCS = new URI(acc.getValue());
+                    CaomUtil.assignMetaChecksum(ce, accCS, "accumulatedMetaChecksum");
+                }
+            }
         }
         catch(DataConversionException ex)
         {
@@ -333,6 +355,10 @@ public class ObservationReader implements Serializable
         catch(ParseException ex)
         {
             throw new ObservationParsingException("invalid lastModified: " + alastModified.getValue());
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new ObservationParsingException("invalid checksum uri: " + aid.getValue());
         }
     }
 

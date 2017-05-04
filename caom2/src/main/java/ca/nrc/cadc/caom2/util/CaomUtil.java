@@ -151,6 +151,19 @@ public class CaomUtil implements Serializable
         catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
+    
+    public static void assignMetaChecksum(Object ce, URI v, String fieldName)
+    {
+        try
+        {
+            Field f = CaomEntity.class.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            f.set(ce, v);
+            //log.debug("assignLastModified: " + d.getTime() + " -> " + ce.getClass().getSimpleName() + "." + fieldName);
+        }
+        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
+        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
+    }
 
     public static Date getLastModified(Object ce)
     {

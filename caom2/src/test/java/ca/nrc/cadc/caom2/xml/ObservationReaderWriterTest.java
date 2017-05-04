@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
@@ -92,6 +93,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -118,6 +120,9 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.log4j.Level;
@@ -171,8 +176,21 @@ public class ObservationReaderWriterTest
             String caom20 = bos.toString();
             log.info("caom-2.0 XML:\n" + caom20);
             assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
-            
             Observation obs20 = validatingReader.read(caom20);
+            compareObservations(obs, obs20);
+            
+            // add timestamps
+            long t1 = new Date().getTime();
+            long t2 = t1 + 2000l;
+            CaomUtil.assignLastModified(obs, new Date(t1), "lastModified");
+            bos = new ByteArrayOutputStream();
+            w20.write(obs, bos);
+            caom20 = bos.toString();
+            log.info("caom-2.0 XML:\n" + caom20);
+            assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
+            obs20 = validatingReader.read(caom20);
+            compareObservations(obs, obs20);
+            
             
             ObservationWriter w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
@@ -181,6 +199,7 @@ public class ObservationReaderWriterTest
             log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             Observation obs21 = validatingReader.read(caom21);
+            compareObservations(obs, obs21);
             
             // new writer
             w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
@@ -190,6 +209,7 @@ public class ObservationReaderWriterTest
             log.info("caom-2.1 XML:\n" + caom21);
             assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
             obs21 = validatingReader.read(caom21);
+            compareObservations(obs, obs21);
             
             ObservationWriter w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
@@ -198,6 +218,7 @@ public class ObservationReaderWriterTest
             log.info("caom-2.2 XML:\n" + caom22);
             assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
             Observation obs22 = nonvalidatingReader.read(caom22);
+            compareObservations(obs, obs22);
             
             // new writer
             w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
@@ -207,8 +228,8 @@ public class ObservationReaderWriterTest
             log.info("caom-2.2 XML:\n" + caom22);
             assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
             obs22 = nonvalidatingReader.read(caom22);
+            compareObservations(obs, obs22);
 
-//            //
             ObservationWriter w23 = new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
             w23.write(obs, bos);
@@ -216,6 +237,22 @@ public class ObservationReaderWriterTest
             log.info("caom-2.3 XML:\n" + caom23);
             assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
             Observation obs23 = nonvalidatingReader.read(caom23);
+            compareObservations(obs, obs23);
+            
+            // add maxLastModified and meta checksums
+            CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
+            URI ocs = obs.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            URI oacs = obs.computeAccumulatedMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
+            CaomUtil.assignMetaChecksum(obs, oacs, "accumulatedMetaChecksum");
+            bos = new ByteArrayOutputStream();
+            w23.write(obs, bos);
+            caom23 = bos.toString();
+            log.info("caom-2.3 XML:\n" + caom23);
+            assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
+            obs23 = nonvalidatingReader.read(caom23);
+            compareObservations(obs, obs23);
+            
         }
         //catch(ObservationParsingException expected)
         //{
@@ -707,14 +744,38 @@ public class ObservationReaderWriterTest
         compareObservations(observation, returned);
     }
     
+    protected void compareEntity(CaomEntity expected, CaomEntity actual)
+    {
+        assertEquals("type", expected.getClass().getName(), actual.getClass().getName());
+        String t = expected.getClass().getSimpleName();
+        assertEquals(expected.getID(), actual.getID());
+        if (expected.getLastModified() != null)
+        {
+            assertNotNull(t+".lastModified", actual.getLastModified());
+            assertEquals(t+".lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
+        }
+        if (expected.getMaxLastModified() != null)
+        {
+            assertNotNull(t+".maxLastModified", actual.getMaxLastModified());
+            assertEquals(t+".maxLastModified", expected.getMaxLastModified().getTime(), actual.getMaxLastModified().getTime());
+        }
+        if (expected.getMetaChecksum() != null)
+        {
+            assertNotNull(t+".metaChecksum", actual.getMetaChecksum());
+            assertEquals(t+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
+        }
+        if (expected.getAccumulatedMetaChecksum()!= null)
+        {
+            assertNotNull(t+".accMetaChecksum", actual.getAccumulatedMetaChecksum());
+            assertEquals(t+".accMetaChecksum", expected.getAccumulatedMetaChecksum(), actual.getAccumulatedMetaChecksum());
+        }
+    
+    }
+    
     protected void compareObservations(Observation expected, Observation actual)
     {
-        assertEquals("obs type", expected.getClass().getName(), actual.getClass().getName());
-
-        assertEquals(expected.getID(), actual.getID());
-        if (expected.getLastModified() != null && actual.getLastModified() != null)
-            assertEquals("Observation.lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
-    
+        compareEntity(expected, actual);
+        
         assertNotNull(expected.getURI().getCollection());
         assertNotNull(actual.getURI().getCollection());
         assertEquals(expected.getURI().getCollection(), actual.getURI().getCollection());
@@ -880,9 +941,7 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedPlane);
             assertNotNull(actualPlane);
 
-            assertEquals(expectedPlane.getID(), actualPlane.getID());
-            if (expectedPlane.getLastModified() != null && actualPlane.getLastModified() != null)
-                assertEquals("Plane.lastModified", expectedPlane.getLastModified().getTime(), actualPlane.getLastModified().getTime());
+            compareEntity(expectedPlane, actualPlane);
 
             assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
             if ((expectedPlane.creatorID != null) && (actualPlane.creatorID != null))
@@ -1096,9 +1155,7 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedArtifact);
             assertNotNull(actualArtifact);
 
-            assertEquals(expectedArtifact.getID(), actualArtifact.getID());
-            if (expectedArtifact.getLastModified() != null && actualArtifact.getLastModified() != null)
-                assertEquals("Artifact.lastModified", expectedArtifact.getLastModified().getTime(), actualArtifact.getLastModified().getTime());
+            compareEntity(expectedArtifact, actualArtifact);
             
             assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
             assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
@@ -1134,9 +1191,7 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedPart);
             assertNotNull(actualPart);
 
-            assertEquals(expectedPart.getID(), actualPart.getID());
-            if (expectedPart.getLastModified() != null && actualPart.getLastModified() != null)
-                assertEquals("Part.lastModified", expectedPart.getLastModified().getTime(), actualPart.getLastModified().getTime());
+            compareEntity(expectedPart, actualPart);
             
             assertEquals(expectedPart.getName(), actualPart.getName());
             assertEquals(expectedPart.productType, actualPart.productType);
@@ -1164,9 +1219,7 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedChunk);
             assertNotNull(actualChunk);
 
-            assertEquals(expectedChunk.getID(), actualChunk.getID());
-            if (expectedChunk.getLastModified() != null && actualChunk.getLastModified() != null)
-                assertEquals("Chunk.lastModified", expectedChunk.getLastModified().getTime(), actualChunk.getLastModified().getTime());
+            compareEntity(expectedChunk, actualChunk);
             
             assertEquals(expectedChunk.productType, actualChunk.productType);
             assertEquals(expectedChunk.naxis, actualChunk.naxis);

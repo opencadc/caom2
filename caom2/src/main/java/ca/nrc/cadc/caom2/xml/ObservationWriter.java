@@ -87,7 +87,6 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
@@ -337,6 +336,15 @@ public class ObservationWriter implements Serializable
             
         if (ce.getLastModified() != null)
             el.setAttribute("lastModified", df.format(ce.getLastModified()), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getMaxLastModified() != null)
+            el.setAttribute("maxLastModified", df.format(ce.getMaxLastModified()), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getMetaChecksum() != null)
+            el.setAttribute("metaChecksum", ce.getMetaChecksum().toASCIIString(), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getAccumulatedMetaChecksum() != null)
+            el.setAttribute("accMetaChecksum", ce.getAccumulatedMetaChecksum().toASCIIString(), el.getNamespace());
     }
     
     /**
