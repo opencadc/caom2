@@ -517,7 +517,68 @@ public class CaomEntityTest
                 Assert.assertNotNull("minimal entity acc checksum: " + ce.getClass().getName(), mc);
             }
 
-            log.warn("TODO: modify entities and make sure accumulatedMetaChecksum propagates upward correctly");
+            Observation obs = new SimpleObservation("FOO", "bar");
+            URI oc1 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc1: " + oc1);
+            Assert.assertNotNull(oc1);
+            
+            // plane
+            Plane pl = new Plane("baz");
+            obs.getPlanes().add(pl);
+            URI pc1 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(pc1);
+            
+            URI oc2 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc2: " + oc2);
+            Assert.assertNotEquals("add child changes acc checksum", oc1, oc2);
+            
+            // artifact
+            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), ProductType.SCIENCE, ReleaseType.DATA);
+            pl.getArtifacts().add(a);
+            URI ac1 = a.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(ac1);
+            
+            URI oc3 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc3: " + oc3);
+            Assert.assertNotEquals("add child changes acc checksum", oc2, oc3);
+            URI pc2 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("pc2: " + pc2);
+            Assert.assertNotEquals("add child changes acc checksum", pc1, pc2);
+            
+            Part pa = new Part("comp");
+            a.getParts().add(pa);
+            URI pac1 = pa.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(pac1);
+            
+            URI oc4 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc4: " + oc4);
+            Assert.assertNotEquals("add child changes acc checksum", oc3, oc4);
+            URI pc3 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("pc3: " + pc3);
+            Assert.assertNotEquals("add child changes acc checksum", pc2, pc3);
+            URI ac2 = a.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotEquals("add child changes acc checksum", ac1, ac2);
+            
+            Chunk ch = new Chunk();
+            pa.getChunks().add(ch);
+            URI chc1 = ch.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(chc1);
+            
+            URI oc5 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc5: " + oc5);
+            Assert.assertNotEquals("add child changes acc checksum", oc4, oc5);
+            URI pc4 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("pc4: " + pc4);
+            Assert.assertNotEquals("add child changes acc checksum", pc3, pc4);
+            URI ac3 = a.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("ac3: " + ac3);
+            Assert.assertNotEquals("add child changes acc checksum", ac2, ac3);
+            URI pac2 = pa.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("pac2: " + pac2);
+            Assert.assertNotEquals("add child changes acc checksum", pac1, pac2);
+                        
+            Assert.assertNull("compute does not effect stored checksum", obs.getMetaChecksum());
+            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccumulatedMetaChecksum());
             
         }
         catch(Exception unexpected)
@@ -527,6 +588,77 @@ public class CaomEntityTest
         }
     }
 
+    @Test
+    public void testMetaChecksumIncludesUUID()
+    {
+        try
+        {
+            Assert.assertNotEquals("two planes with same metadata have different checksum", 
+                    new SimpleObservation("FOO", "bar").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new SimpleObservation("FOO", "bar").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two planes with same metadata have different checksum", 
+                    new Plane("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Plane("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two artifacts with same metadata have different checksum", 
+                    new Artifact(new URI("foo:baz"), ProductType.PREVIEW, ReleaseType.META).computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Artifact(new URI("foo:baz"), ProductType.PREVIEW, ReleaseType.META).computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two parts with same metadata have different checksum", 
+                    new Part("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Part("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two chunks (empty) have different checksum", 
+                    new Chunk().computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Chunk().computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testAccMetaCheckIncludesUUID()
+    {
+        try
+        {
+            // test accumulated
+            Observation obs = new SimpleObservation("FOO", "bar");
+            URI orig = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("oc1: " + orig + " id1: " + obs.getID());
+            Assert.assertNotNull(orig);
+            
+            // plane
+            obs.getPlanes().add(new Plane("baz"));
+            
+            URI baz1 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("baz1: " + baz1);
+            Assert.assertNotEquals("add child changes acc checksum", orig, baz1);
+            
+            obs.getPlanes().clear();
+            Assert.assertTrue("clear worked", obs.getPlanes().isEmpty());
+            
+            URI nobaz = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("nobaz: " + nobaz);
+            Assert.assertNotEquals("remove child changes acc checksum", baz1, nobaz);
+            
+            Assert.assertEquals("remove child reverts acc checksum", orig, nobaz);
+            
+            obs.getPlanes().add(new Plane("baz"));
 
+            URI baz2 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.info("baz2: " + baz2);
+            Assert.assertNotEquals("add child changes acc checksum", nobaz, baz2);
+            Assert.assertNotEquals("add child with different UUID changes acc checksum", baz1, baz2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
 }

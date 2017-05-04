@@ -126,9 +126,6 @@ public abstract class CaomEntity implements Serializable
             this.id = UUID.randomUUID();
         else
             this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
-
-        // metaChecksum and accMetaChecksum will be calculated as
-        // part of this constructor.
     }
 
     /**
@@ -264,29 +261,51 @@ public abstract class CaomEntity implements Serializable
         finally { }
     }
 
-    private void calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
+    private void calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
     {
+        // calculation order:
+        // 1. CaomEntity.id for entities
+        // 2. state fields in alphabetic order; depth-first recursion so foo.abc.x comes before foo.def
+        // value handling:
+        // Date: truncate time to whole number of seconds and treat as a long
+        // String: UTF-8 encoded bytes
+        // URI: UTF-8 encoded bytes of string representation
+        // float: IEEE754 single (4 bytes)
+        // double: IEEE754 double (8 bytes)
+        // boolean: convert to single byte, false=0, true=1 (1 bytes)
+        // byte: as-is (1 byte)
+        // short: (2 bytes, network byte order == big endian))
+        // integer: (4 bytes, network byte order == big endian)
+        // long: (8 bytes, network byte order == big endian)
         try
         {
+            if (o instanceof CaomEntity)
+            {
+                CaomEntity ce = (CaomEntity) o;
+                digest.update(HexUtil.toBytes(ce.id.getMostSignificantBits()));
+                digest.update(HexUtil.toBytes(ce.id.getLeastSignificantBits()));
+            }
+            
             SortedSet<Field> fields = getStateFields(c, includeTransient);
             for (Field f : fields) 
             {
-                if (SC_DEBUG) log.debug("check: " + c.getName() + "." + f.getName());
+                String cf = c.getSimpleName() + "." + f.getName();
+                //if (SC_DEBUG) log.debug("check: " + cf);
                 f.setAccessible(true);
                 Object fo = f.get(o);
                 if (fo != null) 
                 {
-                    if (SC_DEBUG) log.debug("checksum: value type is " + fo.getClass().getName());
+                    if (SC_DEBUG) log.debug("checksum: " + cf + " is a " + fo.getClass().getName());
                     Class ac = fo.getClass(); // actual class
                     if (fo instanceof CaomEnum) 
                     {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        msgDigest.update(ce.getBytes());
+                        digest.update(ce.getBytes());
                     } 
                     else if (isLocalClass(ac)) 
                     {
-                        calcMetaChecksum(ac, fo, includeTransient, msgDigest);
+                        calcMetaChecksum(ac, fo, includeTransient, digest);
                     } 
                     else if (fo instanceof Collection) 
                     {
@@ -298,20 +317,20 @@ public abstract class CaomEntity implements Serializable
                             Class cc = co.getClass();
                             if (isLocalClass(cc)) 
                             {
-                                calcMetaChecksum(cc, co, includeTransient, msgDigest);
+                                calcMetaChecksum(cc, co, includeTransient, digest);
                             } 
                             else // non-caom2 class ~primtive value
                             {
-                                msgDigest.update(primtiveValueToBytes(co));
+                                digest.update(primtiveValueToBytes(co));
                             }
                         }
                     } 
                     else // non-caom2 class ~primtive value
                     {
-                        msgDigest.update(primtiveValueToBytes(fo));
+                        digest.update(primtiveValueToBytes(fo));
                     }
                 }
-                else if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+                else if (SC_DEBUG) log.debug("skip: " + cf);
             }
 
         }
@@ -404,20 +423,25 @@ public abstract class CaomEntity implements Serializable
         }
     }
 
-    private void calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest msgDigest)
+    private void calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
     {
         
-        // add acccumulated checksum of child entities in id order
+        // calculation order:
+        // 1. bytes of the metaChecksum of the entity
+        // 2. bytes of the accMetaChecksum of child entities accumulated in CaomEntity.id order
         try
         {
             // clone for use with child entities
-            MessageDigest md = MessageDigest.getInstance(msgDigest.getAlgorithm());
+            MessageDigest md = MessageDigest.getInstance(digest.getAlgorithm());
         
             // add this object's complete metadata
-            calcMetaChecksum(c, o, includeTransient, msgDigest);
+            calcMetaChecksum(c, o, includeTransient, md);
+            digest.update(md.digest());
+            // call to digest also resets
+            //md.reset();
         
             SortedSet<Field> fields = getChildFields(c);
-            if (SC_DEBUG) log.debug("calcAccMetaChecksum: " + c.getClass().getName() + " has " + fields.size() + " child fields");
+            if (SC_DEBUG) log.debug("calcAccMetaChecksum: " + c.getName() + " has " + fields.size() + " child fields");
             
             for (Field f : fields) 
             {
@@ -428,16 +452,17 @@ public abstract class CaomEntity implements Serializable
                     if (SC_DEBUG) log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
                     if (fo instanceof Collection) 
                     {
-                        Collection<CaomEntity> stuff = (Collection<CaomEntity>) fo;
-                        Iterator i = stuff.iterator();
+                        Set<CaomEntity> children = (Set<CaomEntity>) fo;
+                        Iterator i = children.iterator();
                         while (i.hasNext()) 
                         {
                             Object co = i.next();
                             Class cc = co.getClass();
                             
                             calcAccMetaChecksum(cc, co, includeTransient, md);
-                            msgDigest.update(md.digest());
-                            md.reset();
+                            digest.update(md.digest());
+                            // call to digest also resets
+                            //md.reset();
                         }
                     }
                     else
@@ -455,7 +480,7 @@ public abstract class CaomEntity implements Serializable
         }
         catch(NoSuchAlgorithmException oops)
         {
-            throw new RuntimeException("BUG: Unable to clone MessageDigest " + msgDigest.getAlgorithm(), oops);
+            throw new RuntimeException("BUG: Unable to clone MessageDigest " + digest.getAlgorithm(), oops);
         }
     }
 
