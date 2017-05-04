@@ -405,7 +405,7 @@ public abstract class CaomEntity implements Serializable
      * @param digest
      * @return 
      */
-    public URI computeAccumulatedMetaChecksum(boolean includeTransient, MessageDigest digest) 
+    public URI computeAccMetaChecksum(boolean includeTransient, MessageDigest digest) 
     {
         try 
         {

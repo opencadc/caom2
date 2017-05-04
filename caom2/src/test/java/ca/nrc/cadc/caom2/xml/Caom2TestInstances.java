@@ -141,6 +141,7 @@ public class Caom2TestInstances
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
     
+    private int childCount;
     private int depth;
     private boolean complete;
     private boolean boundsIsCircle;
@@ -159,9 +160,15 @@ public class Caom2TestInstances
 
     public Caom2TestInstances()
     {
+        this.childCount = 1;
         this.depth = 5;
         this.complete = true;
         this.boundsIsCircle = true;
+    }
+
+    public void setChildCount(int childCount)
+    {
+        this.childCount = childCount;
     }
     
     public void setDepth(int depth)
@@ -332,22 +339,25 @@ public class Caom2TestInstances
     {
         Set<Plane> planes = new TreeSet<Plane>();
         
-        Plane plane = new Plane("productID");
-        if (complete)
+        for (int i=0; i<childCount; i++)
         {
-            plane.creatorID = new URI("http://foo/bar");
-            plane.metaRelease = ivoaDate;
-            plane.dataRelease = ivoaDate;
-            plane.dataProductType = DataProductType.IMAGE;
-            plane.calibrationLevel = CalibrationLevel.PRODUCT;
-            plane.provenance = getProvenance();
-            plane.metrics = getMetrics();
-            plane.quality = new DataQuality(Quality.JUNK);
-        }
-        if (depth > 2)
-            plane.getArtifacts().addAll(getArtifacts());
+            Plane plane = new Plane("productID"+i);
+            if (complete)
+            {
+                plane.creatorID = new URI("http://foo/bar");
+                plane.metaRelease = ivoaDate;
+                plane.dataRelease = ivoaDate;
+                plane.dataProductType = DataProductType.IMAGE;
+                plane.calibrationLevel = CalibrationLevel.PRODUCT;
+                plane.provenance = getProvenance();
+                plane.metrics = getMetrics();
+                plane.quality = new DataQuality(Quality.JUNK);
+            }
+            if (depth > 2)
+                plane.getArtifacts().addAll(getArtifacts());
         
-        planes.add(plane);
+            planes.add(plane);
+        }
         return planes;
     }
     
@@ -391,17 +401,20 @@ public class Caom2TestInstances
     {
         Set<Artifact> artifacts = new TreeSet<Artifact>();
         
-        Artifact artifact = new Artifact(new URI("ad:foo/bar1"), ProductType.SCIENCE, ReleaseType.DATA);
-        if (complete)
+        for (int i=0; i<childCount; i++)
         {
-            artifact.contentType = "application/fits";
-            artifact.contentLength = 12345L;
-            artifact.contentChecksum = new URI("md5:1234567");
+            Artifact artifact = new Artifact(new URI("ad:foo/bar"+i), ProductType.SCIENCE, ReleaseType.DATA);
+            if (complete)
+            {
+                artifact.contentType = "application/fits";
+                artifact.contentLength = 12345L;
+                artifact.contentChecksum = new URI("md5:1234567");
+            }
+            if (depth > 3)
+                artifact.getParts().addAll(getParts());
+
+            artifacts.add(artifact);
         }
-        if (depth > 3)
-            artifact.getParts().addAll(getParts());
-        
-        artifacts.add(artifact);
         return artifacts;
     }
     
@@ -409,40 +422,47 @@ public class Caom2TestInstances
         throws Exception
     {
         Set<Part> parts = new TreeSet<Part>();
-        
-        Part part = new Part("x");
-        if (complete)
+        for (int i=0; i<childCount; i++)
         {
-            part.productType = ProductType.SCIENCE;
+            Part part = new Part("x"+i);
+            if (complete)
+            {
+                part.productType = ProductType.SCIENCE;
+            }
+            if (depth > 4)
+                part.getChunks().addAll(getChunks());
+
+            parts.add(part);
         }
-        if (depth > 4)
-            part.getChunks().add(getChunk());
-        
-        parts.add(part);
         return parts;
     }
     
-    protected Chunk getChunk()
+    protected Set<Chunk> getChunks()
         throws Exception
     {
-        Chunk chunk = new Chunk();
-        if (complete)
+        Set<Chunk> chunks = new TreeSet<Chunk>();
+        for (int i=0; i<childCount; i++)
         {
-            chunk.naxis = 5;
-            chunk.observableAxis = 1;
-            chunk.positionAxis1 = 1;
-            chunk.positionAxis2 = 2;
-            chunk.energyAxis = 3;
-            chunk.timeAxis = 4;
-            chunk.polarizationAxis = 5;
-            
-            chunk.observable = getObservableAxis();
-            chunk.position = getSpatialWCS();
-            chunk.energy = getSpectralWCS();
-            chunk.time = getTemporalWCS();
-            chunk.polarization = getPolarizationWCS();
+            Chunk chunk = new Chunk();
+            if (complete)
+            {
+                chunk.naxis = 5;
+                chunk.observableAxis = 1;
+                chunk.positionAxis1 = 1;
+                chunk.positionAxis2 = 2;
+                chunk.energyAxis = 3;
+                chunk.timeAxis = 4;
+                chunk.polarizationAxis = 5;
+
+                chunk.observable = getObservableAxis();
+                chunk.position = getSpatialWCS();
+                chunk.energy = getSpectralWCS();
+                chunk.time = getTemporalWCS();
+                chunk.polarization = getPolarizationWCS();
+            }
+            chunks.add(chunk);
         }
-        return chunk;
+        return chunks;
     }
     
     protected ObservableAxis getObservableAxis()

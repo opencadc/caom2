@@ -118,6 +118,8 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
@@ -152,6 +154,69 @@ public class ObservationReaderWriterTest
         try
         {
             
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    // this "test" writes out a pretty complete document to use in comparison with python round-trip
+    // and python meta checksum computations
+    //@Test
+    public void doWriteCompleteComposite()
+    {
+        try
+        {
+            Caom2TestInstances ti = new Caom2TestInstances();
+            ti.setComplete(true);
+            ti.setDepth(5);
+            ti.setChildCount(2);
+            Observation o = ti.getCompositeObservation();
+            
+            long t1 = new Date().getTime();
+            long t2 = t1 + 2000l;
+            CaomUtil.assignLastModified(o, new Date(t1), "lastModified");
+            CaomUtil.assignLastModified(o, new Date(t2), "maxLastModified");
+            URI ocs = o.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            URI oacs = o.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            CaomUtil.assignMetaChecksum(o, ocs, "metaChecksum");
+            CaomUtil.assignMetaChecksum(o, oacs, "accMetaChecksum");
+            for (Plane pl : o.getPlanes())
+            {
+                CaomUtil.assignLastModified(pl, new Date(t1), "lastModified");
+                CaomUtil.assignLastModified(pl, new Date(t2), "maxLastModified");
+                CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
+                CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                for (Artifact ar : pl.getArtifacts())
+                {
+                    CaomUtil.assignLastModified(ar, new Date(t1), "lastModified");
+                    CaomUtil.assignLastModified(ar, new Date(t2), "maxLastModified");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                    for (Part pa : ar.getParts())
+                    {
+                        CaomUtil.assignLastModified(pa, new Date(t1), "lastModified");
+                        CaomUtil.assignLastModified(pa, new Date(t2), "maxLastModified");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                        for (Chunk ch : pa.getChunks())
+                        {
+                            CaomUtil.assignLastModified(ch, new Date(t1), "lastModified");
+                            CaomUtil.assignLastModified(ch, new Date(t2), "maxLastModified");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                        }
+                    }
+                }
+            }
+            
+            File f = new File("sample-composite-caom23.xml");
+            FileOutputStream fos = new FileOutputStream(f);
+            ObservationWriter w = new ObservationWriter();
+            w.write(o, fos);
+            fos.close();
         }
         catch(Exception unexpected)
         {
@@ -242,7 +307,7 @@ public class ObservationReaderWriterTest
             // add maxLastModified and meta checksums
             CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
             URI ocs = obs.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
-            URI oacs = obs.computeAccumulatedMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            URI oacs = obs.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5"));
             CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
             bos = new ByteArrayOutputStream();

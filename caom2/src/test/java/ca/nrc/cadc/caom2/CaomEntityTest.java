@@ -514,22 +514,22 @@ public class CaomEntityTest
         {
             for (CaomEntity ce : entities)
             {
-                URI mc = ce.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+                URI mc = ce.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
                 Assert.assertNotNull("minimal entity acc checksum: " + ce.getClass().getName(), mc);
             }
 
             Observation obs = new SimpleObservation("FOO", "bar");
-            URI oc1 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI oc1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc1: " + oc1);
             Assert.assertNotNull(oc1);
             
             // plane
             Plane pl = new Plane("baz");
             obs.getPlanes().add(pl);
-            URI pc1 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pc1 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(pc1);
             
-            URI oc2 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI oc2 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc2: " + oc2);
             Assert.assertNotEquals("add child changes acc checksum", oc1, oc2);
             
@@ -539,42 +539,42 @@ public class CaomEntityTest
             URI ac1 = a.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(ac1);
             
-            URI oc3 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI oc3 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc3: " + oc3);
             Assert.assertNotEquals("add child changes acc checksum", oc2, oc3);
-            URI pc2 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pc2 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("pc2: " + pc2);
             Assert.assertNotEquals("add child changes acc checksum", pc1, pc2);
             
             Part pa = new Part("comp");
             a.getParts().add(pa);
-            URI pac1 = pa.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pac1 = pa.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(pac1);
             
-            URI oc4 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI oc4 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc4: " + oc4);
             Assert.assertNotEquals("add child changes acc checksum", oc3, oc4);
-            URI pc3 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pc3 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("pc3: " + pc3);
             Assert.assertNotEquals("add child changes acc checksum", pc2, pc3);
-            URI ac2 = a.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI ac2 = a.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             Assert.assertNotEquals("add child changes acc checksum", ac1, ac2);
             
             Chunk ch = new Chunk();
             pa.getChunks().add(ch);
-            URI chc1 = ch.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI chc1 = ch.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(chc1);
             
-            URI oc5 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI oc5 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc5: " + oc5);
             Assert.assertNotEquals("add child changes acc checksum", oc4, oc5);
-            URI pc4 = pl.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pc4 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("pc4: " + pc4);
             Assert.assertNotEquals("add child changes acc checksum", pc3, pc4);
-            URI ac3 = a.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI ac3 = a.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("ac3: " + ac3);
             Assert.assertNotEquals("add child changes acc checksum", ac2, ac3);
-            URI pac2 = pa.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI pac2 = pa.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("pac2: " + pac2);
             Assert.assertNotEquals("add child changes acc checksum", pac1, pac2);
                         
@@ -628,21 +628,21 @@ public class CaomEntityTest
         {
             // test accumulated
             Observation obs = new SimpleObservation("FOO", "bar");
-            URI orig = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI orig = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc1: " + orig + " id1: " + obs.getID());
             Assert.assertNotNull(orig);
             
             // plane
             obs.getPlanes().add(new Plane("baz"));
             
-            URI baz1 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI baz1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("baz1: " + baz1);
             Assert.assertNotEquals("add child changes acc checksum", orig, baz1);
             
             obs.getPlanes().clear();
             Assert.assertTrue("clear worked", obs.getPlanes().isEmpty());
             
-            URI nobaz = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI nobaz = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("nobaz: " + nobaz);
             Assert.assertNotEquals("remove child changes acc checksum", baz1, nobaz);
             
@@ -650,7 +650,7 @@ public class CaomEntityTest
             
             obs.getPlanes().add(new Plane("baz"));
 
-            URI baz2 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI baz2 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("baz2: " + baz2);
             Assert.assertNotEquals("add child changes acc checksum", nobaz, baz2);
             Assert.assertNotEquals("add child with different UUID changes acc checksum", baz1, baz2);
@@ -670,7 +670,7 @@ public class CaomEntityTest
             // test accumulated
             Observation obs = new SimpleObservation("FOO", "bar");
             CaomUtil.assignID(obs, new UUID(0l, 666l));
-            URI orig = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI orig = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("oc1: " + orig + " id1: " + obs.getID());
             Assert.assertNotNull(orig);
             
@@ -689,7 +689,7 @@ public class CaomEntityTest
             obs.getPlanes().add(p1); 
             obs.getPlanes().add(p2);
             
-            URI c1 = obs.computeAccumulatedMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI c1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
             log.debug("multi-plane accumulated checksum: " + c1);
             
             // this test only verifies that none of the values above including hard-coded UUIDs changed
