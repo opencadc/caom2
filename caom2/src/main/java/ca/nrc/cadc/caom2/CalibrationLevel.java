@@ -77,7 +77,7 @@ import ca.nrc.cadc.util.HexUtil;
  */
 public enum CalibrationLevel implements CaomEnum
 {
-    PROPOSED(-1),
+    PLANNED(-1),
     RAW_INSTRUMENTAL(0),
     RAW_STANDARD(1),
     CALIBRATED(2),
@@ -94,7 +94,7 @@ public enum CalibrationLevel implements CaomEnum
     {
         switch(i)
         {
-            case -1: return PROPOSED;
+            case -1: return PLANNED;
             case 0: return RAW_INSTRUMENTAL;
             case 1: return RAW_STANDARD;
             case 2: return CALIBRATED;
@@ -106,8 +106,8 @@ public enum CalibrationLevel implements CaomEnum
     
     public String stringValue()
     {
-        if (this == PROPOSED)
-            return "PROPOSED";
+        if (this == PLANNED)
+            return "PLANNED";
         if (this == RAW_INSTRUMENTAL)
            return "RAW_INSTRUMENTAL";
         if (this == RAW_STANDARD)
