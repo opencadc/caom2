@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,37 +62,120 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.version.InitDatabase;
+
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.List;
+import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class PostgresqlObservationDAOTest extends AbstractDatabaseObservationDAOTest
+public class InitDatabaseTest 
 {
+    private static final Logger log = Logger.getLogger(InitDatabaseTest.class);
+
     static
     {
-        log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
     }
-
-    public PostgresqlObservationDAOTest()
-        throws Exception
+    
+    private DataSource dataSource;
+    private String database;
+    private String schema;
+    
+    public InitDatabaseTest() 
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
-        init.doInit();
+        try
+        {
+            database = "cadctest";
+            schema = "caom2";
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+            dataSource = DBUtil.getDataSource(cc);
+        }
+        catch(Exception ex)
+        {
+            log.error("failed to init DataSource", ex);
+        }
+    }
+    
+    // NOTE: tests are currently commented out because the other Postgresql*Test(s)
+    // all use InitDatabase.doInit and one of them will have done this anyway; this
+    // test will have some value if/when the TODOs are implemented.
+    
+    //@Test
+    public void testNewInstall()
+    {
+        try
+        {
+            // TODO: nuke all tables and re-create
+            InitDatabase init = new InitDatabase(dataSource, database, schema);
+            init.doInit();
+            
+            // TODO: verify that tables were created with test queries
+            
+            // TODO: verify that init is idempotent
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    //@Test
+    public void testUpgradeInstall()
+    {
+        try
+        {
+            // when we have an upgrade to worry about (CAOM-2.3) we will want to be able to
+            // create CAOM-2.2 and then test upgrade to CAOM-2.3 ... in general version N
+            // of caom2persistence only needs to support upgrade from N-1 and larger steps
+            // can be done by using version  N-1 to upgrade from N-2
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testParseDDL() 
+    {
+        try
+        {
+            int[] numStatementsPerFile = new int[]
+            {
+                1, 7, 8, 3, 4, 4, 2, 2, 6, 8, 32
+            };
+            Assert.assertEquals("BUG: testParseDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
+            
+            for (int i = 0; i<numStatementsPerFile.length; i++)
+            {
+                String fname = InitDatabase.CREATE_SQL[i];
+                log.info("process file: " + fname);
+                List<String> statements = InitDatabase.parseDDL(fname);
+                Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
