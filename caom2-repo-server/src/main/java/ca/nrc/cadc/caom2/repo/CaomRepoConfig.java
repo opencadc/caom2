@@ -163,6 +163,10 @@ public class CaomRepoConfig
             }
             return ret;
         }
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
     }
     
     private void initDB(CaomRepoConfig.Item i)
