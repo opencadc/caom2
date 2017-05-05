@@ -29,7 +29,7 @@ dependencies {
     compile 'org.opencadc:cadc-access-control:[1.1.4,)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-rest:[1.1.2,2.0)'
+    compile 'org.opencadc:cadc-rest:[1.1.1,2.0)'
     
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:[3.2,4.0)'
