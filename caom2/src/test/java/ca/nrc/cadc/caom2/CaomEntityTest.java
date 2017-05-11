@@ -59,8 +59,8 @@
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
 *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
+*  <http:www.gnu.org/licenses/>.      pas le cas, consultez :
+*                                       <http:www.gnu.org/licenses/>.
 *
 *  $Revision: 5 $
 *
@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -77,8 +78,9 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.security.MessageDigest;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.UUID;
 import org.apache.log4j.Level;
@@ -88,7 +90,7 @@ import org.junit.Test;
 
 /**
  * This tests the methods defined in the CaomEntity interface. The code is typically in
- * the AbstractCaomEntity class.
+ * the CaomEntity class.
  * 
  * @author pdowler
  */
@@ -101,7 +103,7 @@ public class CaomEntityTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    AbstractCaomEntity[] entities;
+    CaomEntity[] entities;
 
     public CaomEntityTest()
     {
@@ -111,7 +113,7 @@ public class CaomEntityTest
             SimpleObservation so = new SimpleObservation("FOO", "bar");
             CompositeObservation co = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
             co.getMembers().add(new ObservationURI("foo", "baz"));
-            
+
             Plane pl = new Plane("thing");
             pl.provenance = new Provenance("doit");
             pl.provenance.getInputs().add(new PlaneURI(uri, "thing"));
@@ -126,8 +128,8 @@ public class CaomEntityTest
             pl.getArtifacts().add(ar);
             ar.getParts().add(pa);
             pa.getChunks().add(ch);
-            
-            entities = new AbstractCaomEntity[] {
+
+            entities = new CaomEntity[] {
                 so,
                 co,
                 pl,
@@ -142,8 +144,8 @@ public class CaomEntityTest
         }
     }
 
-    static int[] expectedStateFields = { 14, 15, 8, 5, 2, 13 };
-    static int[] expectedStateFieldsWithTrans = { 14, 15, 14, 6, 3, 14 };
+    static int[] expectedStateFields = { 14, 15, 9, 6, 2, 13 };
+    static int[] expectedStateFieldsWithTrans = { 14, 15, 15, 7, 3, 14 };
     static int[] expectedChildFields = { 1, 1, 1, 1, 1, 0 };
 
     //@Test
@@ -159,77 +161,77 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testUUID()
     {
         try
         {
             UUID id;
-                    
+
             id = new UUID(0L, 0L);
             log.debug("[0,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0L, 1L);
             log.debug("[0,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, 0L);
             log.debug("[1,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, 1L);
             log.debug("[1,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0L, -1L);
             log.debug("[0,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, 0L);
             log.debug("[-1,0] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(1L, -1L);
             log.debug("[1,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, 1L);
             log.debug("[-1,1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(-1L, -1L);
             log.debug("[-1,-1] as UUID: " + id.toString());
             Assert.assertEquals(id, UUID.fromString(id.toString()));
-            
+
             id = new UUID(0, 666L);
-            log.info("[0,666] as UUID: " + id.toString());
+            log.debug("[0,666] as UUID: " + id.toString());
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
-    }
-    
+}
+
     @Test
     public void testEquals()
     {
         try
         {
-            // only Chunk does not override equals/compareTo/hasCode
+             // only Chunk does not override equals/compareTo/hasCode
             Chunk o1 = new Chunk();
             Chunk o2 = new Chunk();
-            
+
             Assert.assertTrue(o1.equals(o1));
-            
+
             Assert.assertFalse(o1.equals(null));
-            
+
             Assert.assertFalse(o1.equals("foo"));
-            
+
             Assert.assertFalse(o1.equals(o2));
-            
+
             // simulate serialize/deserialize so different object with same numeric id
             assignID(o2, o1.getID());
             Assert.assertTrue(o1.equals(o2));
@@ -240,18 +242,19 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     private static void assignID(Object ce, UUID id)
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField("id");
+            Field f = CaomEntity.class.getDeclaredField("id");
             f.setAccessible(true);
             f.set(ce, id);
         }
         catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
-    
+
     @Test
     public void testDateFieldInStateCode()
     {
@@ -269,7 +272,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testCaomEnumInStateCode()
     {
@@ -288,7 +291,7 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testKeywordsInStateCode()
     {
@@ -315,9 +318,9 @@ public class CaomEntityTest
         {
             Date d1 = new Date(100000L);
             Date d2 = new Date(200000L);
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d1, d2));
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d2, d1));
-            Assert.assertEquals(d2, AbstractCaomEntity.max(d2, d2));
+            Assert.assertEquals(d2, CaomEntity.max(d1, d2));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d1));
+            Assert.assertEquals(d2, CaomEntity.max(d2, d2));
         }
         catch(Exception unexpected)
         {
@@ -329,7 +332,7 @@ public class CaomEntityTest
     @Test
     public void testGetStateFields()
     {
-        
+
         try
         {
             Assert.assertEquals("test setup", entities.length, expectedStateFields.length);
@@ -338,12 +341,12 @@ public class CaomEntityTest
                 Object o = entities[i];
                 Class c = o.getClass();
                 log.debug("class: " + c.getName());
-                SortedSet<Field> fields = AbstractCaomEntity.getStateFields(c, false);
+                SortedSet<Field> fields = CaomEntity.getStateFields(c, false);
                 for (Field f : fields)
                     log.debug("state: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of state fields:  " + c.getName(), expectedStateFields[i], fields.size());
 
-                fields = AbstractCaomEntity.getStateFields(c, true);
+                fields = CaomEntity.getStateFields(c, true);
                 for (Field f : fields)
                     log.debug("state: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of state fields (w/ transient):  " + c.getName(), expectedStateFieldsWithTrans[i], fields.size());
@@ -367,7 +370,7 @@ public class CaomEntityTest
                 Object o = entities[i];
                 Class c = o.getClass();
                 log.debug("class: " + c.getName());
-                List<Field> fields = AbstractCaomEntity.getChildFields(c);
+                Set<Field> fields = CaomEntity.getChildFields(c);
                 for (Field f : fields)
                     log.debug("children: " + f.getName() + " type: " + f.getType().getName());
                 Assert.assertEquals("number of child fields:  " + c.getName(), expectedChildFields[i], fields.size());
@@ -381,11 +384,11 @@ public class CaomEntityTest
     }
 
     @Test
-    public void testChecksum()
+    public void testStateCode()
     {
         try
         {
-            for (AbstractCaomEntity ce : entities)
+            for (CaomEntity ce : entities)
             {
                 int c = ce.getStateCode();
                 log.debug("entity: " + ce.getClass().getName() + " checksum: " + c);
@@ -422,4 +425,283 @@ public class CaomEntityTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testMetaChecksum()
+    {
+        try
+        {
+            for (CaomEntity ce : entities)
+            {
+                URI mc = ce.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+                Assert.assertNotNull("minimal entity checksum: " + ce.getClass().getName(), mc);
+            }
+
+            Observation obs = new SimpleObservation("FOO", "bar");
+            URI mc1 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc1: " + mc1);
+            Assert.assertNotNull(mc1);
+            
+            // enum
+            obs.intent = ObservationIntentType.SCIENCE;
+            URI mc2 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc2: " + mc2);
+            Assert.assertNotEquals("CaomEnum changes checksum", mc1, mc2);
+            
+            // date
+            obs.metaRelease = new Date();
+            URI mc3 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc3: " + mc3);
+            Assert.assertNotEquals("Date changes checksum", mc2, mc3);
+            
+            // empty substructure
+            obs.environment = new Environment();
+            URI mc4 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc4: " + mc4);
+            Assert.assertEquals("empty substructure does not change checksum", mc3, mc4);
+            
+            // non-empty substructure with double
+            obs.environment.ambientTemp = 2.0;
+            URI mc5 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc5: " + mc5);
+            Assert.assertNotEquals("double value in substructure changes checksum", mc4, mc5);
+            
+            // boolean
+            obs.environment.photometric = Boolean.TRUE;
+            URI mc6 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc6: " + mc6);
+            Assert.assertNotEquals("boolean value in substructure changes checksum", mc5, mc6);
+            
+            // child
+            Plane p = new Plane("baz");
+            URI pc1 = p.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pc1: " + pc1);
+            Assert.assertNotNull(pc1);
+            
+            obs.getPlanes().add(p);
+            URI pc2 = p.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pc2: " + pc2);
+            Assert.assertEquals("add to parent does not change child", pc1, pc2);
+            
+            URI mc7 = obs.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("mc7: " + mc7);
+            Assert.assertEquals("add child does not change checksum of parent", mc6, mc7);
+            
+            // add artifact to test URI primitive
+            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), ProductType.SCIENCE, ReleaseType.DATA);
+            URI ac1 = a.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(ac1);
+            
+            p.getArtifacts().add(a);
+            URI ac2 = a.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertEquals("add to parent does not change child", ac1, ac2);
+            
+            Assert.assertNull("compute does not effect stored checksum", obs.getMetaChecksum());
+            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccMetaChecksum());
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testAccumulatedMetaChecksum()
+    {
+        try
+        {
+            for (CaomEntity ce : entities)
+            {
+                URI mc = ce.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+                Assert.assertNotNull("minimal entity acc checksum: " + ce.getClass().getName(), mc);
+            }
+
+            Observation obs = new SimpleObservation("FOO", "bar");
+            URI oc1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc1: " + oc1);
+            Assert.assertNotNull(oc1);
+            
+            // plane
+            Plane pl = new Plane("baz");
+            obs.getPlanes().add(pl);
+            URI pc1 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(pc1);
+            
+            URI oc2 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc2: " + oc2);
+            Assert.assertNotEquals("add child changes acc checksum", oc1, oc2);
+            
+            // artifact
+            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), ProductType.SCIENCE, ReleaseType.DATA);
+            pl.getArtifacts().add(a);
+            URI ac1 = a.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(ac1);
+            
+            URI oc3 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc3: " + oc3);
+            Assert.assertNotEquals("add child changes acc checksum", oc2, oc3);
+            URI pc2 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pc2: " + pc2);
+            Assert.assertNotEquals("add child changes acc checksum", pc1, pc2);
+            
+            Part pa = new Part("comp");
+            a.getParts().add(pa);
+            URI pac1 = pa.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(pac1);
+            
+            URI oc4 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc4: " + oc4);
+            Assert.assertNotEquals("add child changes acc checksum", oc3, oc4);
+            URI pc3 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pc3: " + pc3);
+            Assert.assertNotEquals("add child changes acc checksum", pc2, pc3);
+            URI ac2 = a.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotEquals("add child changes acc checksum", ac1, ac2);
+            
+            Chunk ch = new Chunk();
+            pa.getChunks().add(ch);
+            URI chc1 = ch.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertNotNull(chc1);
+            
+            URI oc5 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc5: " + oc5);
+            Assert.assertNotEquals("add child changes acc checksum", oc4, oc5);
+            URI pc4 = pl.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pc4: " + pc4);
+            Assert.assertNotEquals("add child changes acc checksum", pc3, pc4);
+            URI ac3 = a.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("ac3: " + ac3);
+            Assert.assertNotEquals("add child changes acc checksum", ac2, ac3);
+            URI pac2 = pa.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("pac2: " + pac2);
+            Assert.assertNotEquals("add child changes acc checksum", pac1, pac2);
+                        
+            Assert.assertNull("compute does not effect stored checksum", obs.getMetaChecksum());
+            Assert.assertNull("compute does not effect stored acc checksum", obs.getAccMetaChecksum());
+            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testMetaChecksumIncludesUUID()
+    {
+        try
+        {
+            Assert.assertNotEquals("two planes with same metadata have different checksum", 
+                    new SimpleObservation("FOO", "bar").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new SimpleObservation("FOO", "bar").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two planes with same metadata have different checksum", 
+                    new Plane("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Plane("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two artifacts with same metadata have different checksum", 
+                    new Artifact(new URI("foo:baz"), ProductType.PREVIEW, ReleaseType.META).computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Artifact(new URI("foo:baz"), ProductType.PREVIEW, ReleaseType.META).computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two parts with same metadata have different checksum", 
+                    new Part("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Part("baz").computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+            
+            Assert.assertNotEquals("two chunks (empty) have different checksum", 
+                    new Chunk().computeMetaChecksum(false, MessageDigest.getInstance("MD5")),
+                    new Chunk().computeMetaChecksum(false, MessageDigest.getInstance("MD5")));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testAccMetaCheckIncludesUUID()
+    {
+        try
+        {
+            // test accumulated
+            Observation obs = new SimpleObservation("FOO", "bar");
+            URI orig = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc1: " + orig + " id1: " + obs.getID());
+            Assert.assertNotNull(orig);
+            
+            // plane
+            obs.getPlanes().add(new Plane("baz"));
+            
+            URI baz1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("baz1: " + baz1);
+            Assert.assertNotEquals("add child changes acc checksum", orig, baz1);
+            
+            obs.getPlanes().clear();
+            Assert.assertTrue("clear worked", obs.getPlanes().isEmpty());
+            
+            URI nobaz = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("nobaz: " + nobaz);
+            Assert.assertNotEquals("remove child changes acc checksum", baz1, nobaz);
+            
+            Assert.assertEquals("remove child reverts acc checksum", orig, nobaz);
+            
+            obs.getPlanes().add(new Plane("baz"));
+
+            URI baz2 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("baz2: " + baz2);
+            Assert.assertNotEquals("add child changes acc checksum", nobaz, baz2);
+            Assert.assertNotEquals("add child with different UUID changes acc checksum", baz1, baz2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testAccMetaCheckChildOrder()
+    {
+        try
+        {
+            // test accumulated
+            Observation obs = new SimpleObservation("FOO", "bar");
+            CaomUtil.assignID(obs, new UUID(0l, 666l));
+            URI orig = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("oc1: " + orig + " id1: " + obs.getID());
+            Assert.assertNotNull(orig);
+            
+            // plane
+            UUID uuid1 = new UUID(0l, 1l);
+            UUID uuid2 = new UUID(0l, 2l);
+            Plane p1 = new Plane("baz1");
+            Plane p2 = new Plane("baz2");
+            
+            // important: Observation.getPlanes() Set sorts by productID so we have to reverse
+            // the uuid order so this test will pass/fail correctly
+            CaomUtil.assignID(p2, uuid1);
+            CaomUtil.assignID(p1, uuid2);
+            
+            // add in reverse uuid order so that a List impl will fail test without explicit sort
+            obs.getPlanes().add(p1); 
+            obs.getPlanes().add(p2);
+            
+            URI c1 = obs.computeAccMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            log.debug("multi-plane accumulated checksum: " + c1);
+            
+            // this test only verifies that none of the values above including hard-coded UUIDs changed
+            // and the accumulation order in the code did not change... feels icky
+            URI expected = URI.create("md5:5a634dbc198c7e61c247f0049f1a0356");
+            Assert.assertEquals("hard coded accumulated checksum", expected, c1);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

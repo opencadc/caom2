@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.util.Comparator;
@@ -148,7 +148,7 @@ public class ComparatorTest
         }
     }
     
-    private class TestEntity extends AbstractCaomEntity
+    private class TestEntity extends CaomEntity
     {
         TestEntity(Date lm, Date mlm)
         {
@@ -161,7 +161,7 @@ public class ComparatorTest
     {
         try
         {
-            Field f = AbstractCaomEntity.class.getDeclaredField(fieldName);
+            Field f = CaomEntity.class.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, d);
         }

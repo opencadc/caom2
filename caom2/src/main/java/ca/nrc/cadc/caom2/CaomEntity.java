@@ -69,48 +69,600 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.util.FieldComparator;
+import ca.nrc.cadc.util.HashUtil;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
+import ca.nrc.cadc.util.HexUtil;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import org.apache.log4j.Logger;
+
 /**
- * Base interface for CAOM entities. Entities are objects stored in and
- * retrived from a persistent store.
  *
  * @author pdowler
  */
-public interface CaomEntity
+public abstract class CaomEntity implements Serializable
 {
-    /**
-     * Get the unique identifier for the CAOM object. The ID value may
-     * be null until the entity has been persisted.
-     *
-     * @return unique ID for this entity, possibly null
-     */
-    public UUID getID();
+    private static final long serialVersionUID = 201704181300L;
+    private static final Logger log = Logger.getLogger(CaomEntity.class);
+    private static final String CAOM2 = CaomEntity.class.getPackage().getName();
+    private static final boolean SC_DEBUG = false; // way to much debug when true
+    
+    // state
+    private UUID id;
+    private Date lastModified;
+    private Date maxLastModified;
+    private URI metaChecksum;
+    private URI accMetaChecksum;
+    
+    protected CaomEntity()
+    {
+        this(false); // default: 64-bit consistent with CAOM-2.0 use of Long
+    }
+    protected CaomEntity(boolean fullUUID)
+    {
+        if (fullUUID)
+            this.id = UUID.randomUUID();
+        else
+            this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
+    }
 
     /**
-     * Get the timestamp of the last modification of the state of
-     * this entity in the persistent store. The timestamp value may
-     * be null until the entity has been persisted.
-     *
-     * @return last modification timestamp, possibly null
+     * Get the unique persistent numeric identifier for this object.
+     * @return
      */
-    public Date getLastModified();
+    public final UUID getID()
+    {
+        return id;
+    }
 
     /**
-     * Get the timestamp of the last modification of the state of this entity
-     * and all child entities. This convenient aggregate timestamp is useful for
-     * finding (harvesting) changed entities from a persistent store.
-     *
-     * @return aggregate last modification timestamp, possibly null
+     * Get the timestamp of the last modification of the state of this object.
+     * The last modified date includes all local state but not the state
+     * of child objects contained in collections.
+     * 
+     * @return
      */
-    public Date getMaxLastModified();
+    public final Date getLastModified()
+    {
+        return lastModified;
+    }
 
+    /**
+     * Get the maximum timestamp of the last modification of the state of this
+     * object and any child entities..
+     *
+     * @return
+     */
+    public final Date getMaxLastModified()
+    {
+        return maxLastModified;
+    }
+
+    /**
+     * Get the checksum for the state of this entity. This checksum does not 
+     * include child entities.
+     * 
+     * @return checksum URI in the form algorithm:value
+     */
+    public URI getMetaChecksum()
+    {
+        return metaChecksum;
+    }
+
+    /**
+     * Get the accumulated checksum for the state of this entity. The accumulated 
+     * checksum includes the state of this entity and all child entities.
+     * 
+     * @return checksum URI in the form algorithm:value
+     */
+    public URI getAccMetaChecksum()
+    {
+        return accMetaChecksum;
+    }
+    
+    /**
+     * The base implementation compares numeric IDs.
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+            return true;
+        if (o == null)
+            return false;
+        if (o instanceof CaomEntity)
+        {
+            CaomEntity a = (CaomEntity) o;
+            return this.id.equals(a.id);
+        }
+        return false;
+    }
+
+    /**
+     * The base implementation uses the hash code of the numeric ID.
+     * @return hashCode
+     */
+    @Override
+    public int hashCode()
+    {
+        return this.id.hashCode();
+    }
+
+    /**
+     * Compute and return a hash code of the non-transient state of the entity.
+     *
+     * @return 32-bit checksum of all non-null fields, 0 for an empty entity
+     * @deprecated
+     */
+    public int getStateCode()
+    {
+        return getStateCode(false);
+    }
+    
     /**
      * Compute and return a hash code of the entire state of the entity.
      *
-     * @return 32-bit checksum from all non-null fields, 0 for an empty entity
+     * @param includeTransient fields in checksum calculation
+     * @return 32-bit checksum of all non-null fields, 0 for an empty entity
+     * @deprecated
      */
-    public int getStateCode();
+    public int getStateCode(boolean includeTransient)
+    {
+        return checksum(this.getClass(), this, includeTransient);
+    }
 
+    /**
+     * Compute new metadata checksum for this entity. The computed value is based on
+     * the current state and is returned without changing the stored value that is
+     * accessed via the getMetaChecksum() method.
+     * 
+     * @param includeTransient
+     * @param digest
+     * @return 
+     */
+    public URI computeMetaChecksum(boolean includeTransient, MessageDigest digest) 
+    {
+        try 
+        {
+            calcMetaChecksum(this.getClass(), this, includeTransient, digest);
+            byte[] metaChecksumBytes = digest.digest();
+            String hexMetaChecksum = HexUtil.toHex(metaChecksumBytes);
+            String alg = digest.getAlgorithm().toLowerCase();
+            return new URI(alg, hexMetaChecksum, null);
+        } 
+        catch (URISyntaxException e) 
+        {
+            throw new RuntimeException("Unable to create metadata checksum URI for " + this.getClass().getName(), e);
+        }
+        finally { }
+    }
+
+    private void calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
+    {
+        // calculation order:
+        // 1. CaomEntity.id for entities
+        // 2. state fields in alphabetic order; depth-first recursion so foo.abc.x comes before foo.def
+        // value handling:
+        // Date: truncate time to whole number of seconds and treat as a long
+        // String: UTF-8 encoded bytes
+        // URI: UTF-8 encoded bytes of string representation
+        // float: IEEE754 single (4 bytes)
+        // double: IEEE754 double (8 bytes)
+        // boolean: convert to single byte, false=0, true=1 (1 bytes)
+        // byte: as-is (1 byte)
+        // short: (2 bytes, network byte order == big endian))
+        // integer: (4 bytes, network byte order == big endian)
+        // long: (8 bytes, network byte order == big endian)
+        try
+        {
+            if (o instanceof CaomEntity)
+            {
+                CaomEntity ce = (CaomEntity) o;
+                digest.update(HexUtil.toBytes(ce.id.getMostSignificantBits()));
+                digest.update(HexUtil.toBytes(ce.id.getLeastSignificantBits()));
+            }
+            
+            SortedSet<Field> fields = getStateFields(c, includeTransient);
+            for (Field f : fields) 
+            {
+                String cf = c.getSimpleName() + "." + f.getName();
+                //if (SC_DEBUG) log.debug("check: " + cf);
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null) 
+                {
+                    if (SC_DEBUG) log.debug("checksum: " + cf + " is a " + fo.getClass().getName());
+                    Class ac = fo.getClass(); // actual class
+                    if (fo instanceof CaomEnum) 
+                    {
+                        // use ce.getValue
+                        CaomEnum ce = (CaomEnum) fo;
+                        digest.update(ce.getBytes());
+                    } 
+                    else if (isLocalClass(ac)) 
+                    {
+                        calcMetaChecksum(ac, fo, includeTransient, digest);
+                    } 
+                    else if (fo instanceof Collection) 
+                    {
+                        Collection stuff = (Collection) fo;
+                        Iterator i = stuff.iterator();
+                        while (i.hasNext()) 
+                        {
+                            Object co = i.next();
+                            Class cc = co.getClass();
+                            if (isLocalClass(cc)) 
+                            {
+                                calcMetaChecksum(cc, co, includeTransient, digest);
+                            } 
+                            else // non-caom2 class ~primtive value
+                            {
+                                digest.update(primtiveValueToBytes(co));
+                            }
+                        }
+                    } 
+                    else // non-caom2 class ~primtive value
+                    {
+                        digest.update(primtiveValueToBytes(fo));
+                    }
+                }
+                else if (SC_DEBUG) log.debug("skip: " + cf);
+            }
+
+        }
+        catch(IllegalAccessException bug)
+        {
+            throw new RuntimeException("Unable to calculate metaChecksum for class " + c.getName(), bug);
+        }
+    }
+    
+    private byte[] primtiveValueToBytes(Object o)
+    {
+        if (o instanceof Byte)
+            return HexUtil.toBytes((Byte) o); // auto-unbox
+        
+        if (o instanceof Short)
+            return HexUtil.toBytes((Short) o); // auto-unbox
+        
+        if (o instanceof Integer)
+            return HexUtil.toBytes((Integer) o); // auto-unbox
+        
+        if (o instanceof Long)
+            return HexUtil.toBytes((Long) o); // auto-unbox
+        
+        if (o instanceof Boolean)
+        {
+            Boolean b = (Boolean) o;
+            if (b)
+                return HexUtil.toBytes((byte) 1);
+            return HexUtil.toBytes((byte) 0);
+        }
+        
+        if (o instanceof Date) 
+        {
+            // only compare down to seconds
+            Date date = (Date) o;
+            long sec = (date.getTime() / 1000L);
+            return HexUtil.toBytes(sec);
+        } 
+        
+        if (o instanceof Float)
+            return HexUtil.toBytes(Float.floatToIntBits((Float) o)); // auto-unbox, IEEE754 single
+        
+        if (o instanceof Double)
+            return HexUtil.toBytes(Double.doubleToLongBits((Double) o)); // auto-unbox, IEEE754 double
+        
+        if (o instanceof String)
+        {
+            try { return ((String) o).getBytes("UTF-8"); }
+            catch(UnsupportedEncodingException ex)
+            {
+                throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
+            }
+        }
+        
+        if (o instanceof URI)
+        {
+            try { return ((URI) o).toASCIIString().getBytes("UTF-8"); }
+            catch(UnsupportedEncodingException ex)
+            {
+                throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
+            }
+        }
+        
+        throw new UnsupportedOperationException("unexpected primitive/value type: " + o.getClass().getName());
+    }
+
+    /**
+     * Compute new accumulated metadata checksum for this entity. The computed value 
+     * is based on the current state of this entity and all child entities. The value
+     * is returned without changing the stored value that is accessed via the 
+     * getAccumulatedMetaChecksum() method.
+     * 
+     * @param includeTransient
+     * @param digest
+     * @return 
+     */
+    public URI computeAccMetaChecksum(boolean includeTransient, MessageDigest digest) 
+    {
+        try 
+        {
+            calcAccMetaChecksum(this.getClass(), this, includeTransient, digest);
+            byte[] accMetaChecksumBytes = digest.digest();
+            String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
+            String alg = digest.getAlgorithm().toLowerCase();
+            return new URI(alg, accHexMetaChecksum, null);
+        } 
+        catch (URISyntaxException e) 
+        {
+            throw new RuntimeException("Unable to create metadata checksum URI for " + this.getClass().getName(), e);
+        }
+    }
+
+    private void calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
+    {
+        
+        // calculation order:
+        // 1. bytes of the metaChecksum of the entity
+        // 2. bytes of the accMetaChecksum of child entities accumulated in CaomEntity.id order
+        try
+        {
+            // clone for use with child entities
+            MessageDigest md = MessageDigest.getInstance(digest.getAlgorithm());
+        
+            // add this object's complete metadata
+            calcMetaChecksum(c, o, includeTransient, md);
+            digest.update(md.digest());
+            // call to digest also resets
+            //md.reset();
+        
+            SortedSet<Field> fields = getChildFields(c);
+            if (SC_DEBUG) log.debug("calcAccMetaChecksum: " + c.getName() + " has " + fields.size() + " child fields");
+            
+            for (Field f : fields) 
+            {
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null) 
+                {
+                    if (SC_DEBUG) log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
+                    if (fo instanceof Collection) 
+                    {
+                        Set<CaomEntity> children = (Set<CaomEntity>) fo;
+                        SortedMap<UUID,byte[]> sorted = new TreeMap<>();
+                        Iterator<CaomEntity> i = children.iterator();
+                        while (i.hasNext()) 
+                        {
+                            CaomEntity ce = i.next();
+                            Class cc = ce.getClass();
+                            log.debug("calculate: " + ce.getID());
+                            calcAccMetaChecksum(cc, ce, includeTransient, md);
+                            byte[] bb = md.digest();
+                            // call to digest also resets
+                            //md.reset();
+                            sorted.put(ce.getID(), bb);
+                        }
+                        Iterator<Map.Entry<UUID,byte[]>> si = sorted.entrySet().iterator();
+                        while (si.hasNext())
+                        {
+                            Map.Entry<UUID,byte[]> me = si.next();
+                            log.debug("accumulate: " + me.getKey());
+                            digest.update(me.getValue());
+                        }
+                    }
+                    else
+                    {
+                        throw new UnsupportedOperationException("found single child field " + f.getName() + " in " + c.getName());
+                    }
+                }
+                // child sets are never null
+                //else if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+            }
+        }
+        catch(IllegalAccessException bug)
+        {
+            throw new RuntimeException("BUG: Unable to calculate metaChecksum for class " + c.getName(), bug);
+        }
+        catch(NoSuchAlgorithmException oops)
+        {
+            throw new RuntimeException("BUG: Unable to clone MessageDigest " + digest.getAlgorithm(), oops);
+        }
+    }
+
+    // recursive compute checksum
+    int checksum(Class c, Object o, boolean includeTransient)
+    {
+        int ret = 0;
+        try
+        {
+            SortedSet<Field> fields = getStateFields(c, includeTransient);
+            for (Field f : fields)
+            {
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null)
+                {
+                    if (SC_DEBUG) log.debug("checksum: value type is " + fo.getClass().getName());
+                    Class ac = fo.getClass(); // actual class
+                    if (fo instanceof CaomEnum)
+                    {
+                        CaomEnum ce = (CaomEnum) fo;
+                        ret = HashUtil.hash(ret, ce.checksum());
+                    }
+                    else if(isLocalClass(ac))
+                    {
+                        //only merge the checksum if there is state (cs != 0)
+                        int cs = checksum(ac, fo, includeTransient);
+                        if (cs != 0)
+                        {
+                            ret = HashUtil.hash(ret, cs);
+                            if (SC_DEBUG) log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + cs + " -> " + ret);
+                        }
+                        else
+                            if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+                    }
+                    else if (fo instanceof Collection)
+                    {
+                        Collection stuff = (Collection) fo;
+                        Iterator i = stuff.iterator();
+                        while ( i.hasNext() )
+                        {
+                            Object co = i.next();
+                            Class cc = co.getClass();
+                            if (isLocalClass(cc))
+                            {
+                                //only merge the checksum if there is state (cs != 0)
+                                int cs = checksum(cc, co, includeTransient);
+                                if (cs != 0)
+                                {
+                                    ret = HashUtil.hash(ret, cs);
+                                    if (SC_DEBUG) log.debug("checksum: " + cc.getName() + " = " + cs + " -> " + ret);
+                                }
+                                else
+                                    if (SC_DEBUG) log.debug("skip: " + cc.getName());
+                            }
+                            else // non-caom2 class
+                            {
+                                int hc = fo.hashCode();
+                                ret = HashUtil.hash(ret, hc);
+                                if (SC_DEBUG) log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + hc + " -> " + ret);
+                            }
+                        }
+                    }
+                    else if (fo instanceof Date)
+                    {
+                        // only compare down to seconds
+                        Date date = (Date) fo;
+                        long sec = (date.getTime() / 1000L);
+                        ret = HashUtil.hash(ret, sec);
+                        if (SC_DEBUG) log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + sec + " -> " + ret);
+                    }
+                    else // non-caom2 class
+                    {
+                        int hc = fo.hashCode();
+                        if (hc != 0)
+                        {
+                            ret = HashUtil.hash(ret, hc);
+                            if (SC_DEBUG) log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + hc +  " -> " + ret);
+                        }
+                    }
+                }
+                else
+                    if (SC_DEBUG) log.debug("skip: " + c.getName() + "." + f.getName());
+            }
+        }
+        catch(IllegalAccessException bug)
+        {
+            throw new RuntimeException("BUG accessing field via reflection", bug);
+        }
+        return ret;
+    }
+
+    private boolean isLocalClass(Class c)
+    {
+        if ( c.isPrimitive() || c.isArray() )
+            return false;
+        String pname = c.getPackage().getName();
+        return pname.startsWith(CAOM2);
+    }
+
+    // child is a CaomEntity
+    static boolean isChildEntity(Field f)
+        throws IllegalAccessException
+    {
+        return ( CaomEntity.class.isAssignableFrom(f.getType()));
+    }
+    
+    // child collection is a non-empty Set<CaomEntity>
+    static boolean isChildCollection(Field f)
+        throws IllegalAccessException
+    {
+        if ( Set.class.isAssignableFrom(f.getType()) )
+        {
+            if (f.getGenericType() instanceof ParameterizedType)
+            {
+                ParameterizedType pt = (ParameterizedType) f.getGenericType();
+                Type[] ptypes = pt.getActualTypeArguments();
+                Class genType = (Class) ptypes[0];
+                if ( CaomEntity.class.isAssignableFrom(genType))
+                    return true;
+            }
+        }
+        return false;
+    }
+    
+    static SortedSet<Field> getStateFields(Class c, boolean includeTransient)
+        throws IllegalAccessException
+    {
+        SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
+        Field[] fields = c.getDeclaredFields();
+        for (Field f : fields)
+        {
+            int m = f.getModifiers();
+            boolean inc = true;
+            inc = inc && (includeTransient || !Modifier.isTransient(m));
+            inc = inc && !Modifier.isStatic(m);
+            inc = inc && !isChildCollection(f); // 0..* relations to other CaomEntity
+            inc = inc && !isChildEntity(f); // 0..1 relation to other CaomEntity
+            if (inc)
+                ret.add(f);
+        }
+        Class sc = c.getSuperclass();
+        while (sc != null && !CaomEntity.class.equals(sc))
+        {
+            ret.addAll(getStateFields(sc, includeTransient));
+            sc = sc.getSuperclass();
+        }
+        return ret;
+    }
+
+    static SortedSet<Field> getChildFields(Class c)
+        throws IllegalAccessException
+    {
+        SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
+        Field[] fields = c.getDeclaredFields();
+        for (Field f : fields)
+        {
+            int m = f.getModifiers();
+            if ( !Modifier.isTransient(m) && !Modifier.isStatic(m)
+                    && (isChildCollection(f) || isChildEntity(f)) )
+                ret.add(f);
+        }
+        Class sc = c.getSuperclass();
+        while (sc != null && !CaomEntity.class.equals(sc))
+        {
+            ret.addAll(getChildFields(sc));
+            sc = sc.getSuperclass();
+        }
+        return ret;
+    }
+
+    static Date max(Date d1, Date d2)
+    {
+        if (d1.compareTo(d2) >= 0)
+            return d1;
+        return d2;
+    }
 }

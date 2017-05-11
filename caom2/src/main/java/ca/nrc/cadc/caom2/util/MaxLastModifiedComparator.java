@@ -69,7 +69,8 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
+
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -78,13 +79,13 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public class MaxLastModifiedComparator implements Comparator<AbstractCaomEntity>, Serializable
+public class MaxLastModifiedComparator implements Comparator<CaomEntity>, Serializable
 {
     private static final long serialVersionUID = 201311261300L;
 
     public MaxLastModifiedComparator() { }
 
-    public int compare(AbstractCaomEntity o1, AbstractCaomEntity o2)
+    public int compare(CaomEntity o1, CaomEntity o2)
     {
         return o1.getMaxLastModified().compareTo(o2.getMaxLastModified());
     }

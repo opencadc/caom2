@@ -69,16 +69,20 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.util.HexUtil;
+
 /**
  *
  * @author pdowler
  */
 public enum CalibrationLevel implements CaomEnum
 {
+    PLANNED(-1),
     RAW_INSTRUMENTAL(0),
     RAW_STANDARD(1),
     CALIBRATED(2),
-    PRODUCT(3);
+    PRODUCT(3),
+    ANALYSIS_PRODUCT(4);
 
     private int value;
 
@@ -90,16 +94,20 @@ public enum CalibrationLevel implements CaomEnum
     {
         switch(i)
         {
+            case -1: return PLANNED;
             case 0: return RAW_INSTRUMENTAL;
             case 1: return RAW_STANDARD;
             case 2: return CALIBRATED;
             case 3: return PRODUCT;
+            case 4: return ANALYSIS_PRODUCT;
         }
         throw new IllegalArgumentException("invalid value: "+i);
     }
     
     public String stringValue()
     {
+        if (this == PLANNED)
+            return "PLANNED";
         if (this == RAW_INSTRUMENTAL)
            return "RAW_INSTRUMENTAL";
         if (this == RAW_STANDARD)
@@ -108,12 +116,19 @@ public enum CalibrationLevel implements CaomEnum
             return "CALIBRATED";
         if (this == PRODUCT)
             return "PRODUCT";
+        if (this == ANALYSIS_PRODUCT)
+            return "ANALYSIS_PRODUCT";
         throw new IllegalStateException("BUG: unexpected value: " + value);
     }
 
     public int checksum()
     {
         return value;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return HexUtil.toBytes(value);
     }
 
     @Override

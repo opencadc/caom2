@@ -75,5 +75,17 @@ package ca.nrc.cadc.caom2;
  */
 public interface CaomEnum 
 {
+    /**
+     * @deprecated 
+     * @return 
+     */
     int checksum();
+
+    /**
+     * Get bytes for use in metadata checksum computation.
+     * 
+     * @return 
+     */
+    byte[] getBytes();
+
 }

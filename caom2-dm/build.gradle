@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.2'
+version = '2.3'
 
 jar {
     enabled = false
@@ -34,13 +34,13 @@ xslt {
     dependsOn test, initHTML
     
     stylesheet file('src/main/xsl/vo-dml2html.xsl')
-    input file('src/main/resources/CAOM-2.2-vodml.xml')
+    input file('src/main/resources/CAOM-' + project.version + '-vodml.xml')
     output file('build/html/index.html')
     
     parameters(
         project_name: 'Common Archive Observation Model',
         preamble: '../resources/preamble.html',
-        graphviz_png: 'CAOM-UML.png'
+        graphviz_png: 'CAOM-' + project.version + '.png'
     )
     
 }

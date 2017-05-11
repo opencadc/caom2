@@ -83,7 +83,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class Part extends AbstractCaomEntity implements Comparable<Part>
+public class Part extends CaomEntity implements Comparable<Part>
 {
     private static final long serialVersionUID = 201110261400L;
     private static final Logger log = Logger.getLogger(Part.class);

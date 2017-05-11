@@ -87,7 +87,6 @@ import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
@@ -196,11 +195,16 @@ public class ObservationWriter implements Serializable
         
         if (namespace == null)
         {
-            namespace = XmlConstants.CAOM2_2_NAMESPACE; // default
+            namespace = XmlConstants.CAOM2_3_NAMESPACE; // default
             log.debug("default namespace: " + namespace);
         }
-        
-        if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
+
+        if ( XmlConstants.CAOM2_3_NAMESPACE.equals(namespace))
+        {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_3_NAMESPACE);
+            docVersion = 23;
+        }
+        else if ( XmlConstants.CAOM2_2_NAMESPACE.equals(namespace))
         {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_2_NAMESPACE);
             docVersion = 22;
@@ -332,6 +336,15 @@ public class ObservationWriter implements Serializable
             
         if (ce.getLastModified() != null)
             el.setAttribute("lastModified", df.format(ce.getLastModified()), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getMaxLastModified() != null)
+            el.setAttribute("maxLastModified", df.format(ce.getMaxLastModified()), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getMetaChecksum() != null)
+            el.setAttribute("metaChecksum", ce.getMetaChecksum().toASCIIString(), el.getNamespace());
+        
+        if (docVersion >= 23 && ce.getAccMetaChecksum() != null)
+            el.setAttribute("accMetaChecksum", ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
     }
     
     /**
@@ -598,6 +611,12 @@ public class ObservationWriter implements Serializable
             Element planeElement = getCaom2Element("plane");
             addEntityAttributes(plane, planeElement, dateFormat);
             addElement("productID", plane.getProductID(), planeElement);
+
+            if (docVersion >= 23 && plane.creatorID != null)
+            {
+                addURIElement("creatorID", plane.creatorID, planeElement);
+            }
+
             addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
             addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
             if (plane.dataProductType != null)
@@ -956,6 +975,12 @@ public class ObservationWriter implements Serializable
             
             if (docVersion < 22)
                 addElement("productType", artifact.getProductType().getValue(), artifactElement);
+
+
+            if (docVersion > 22)
+            {
+                addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
+            }
             
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
             element.addContent(artifactElement);

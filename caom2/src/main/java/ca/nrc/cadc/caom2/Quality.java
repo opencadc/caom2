@@ -97,6 +97,11 @@ public enum Quality implements CaomEnum
     public String getValue() { return value; }
 
     @Override
+    public byte[] getBytes() {
+        return value.getBytes();
+    }
+
+    @Override
     public String toString()
     {
         return this.getClass().getSimpleName() + "[" + value + "]";

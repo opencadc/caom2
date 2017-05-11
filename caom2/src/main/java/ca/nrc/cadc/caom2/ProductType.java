@@ -69,44 +69,78 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  *
  * @author pdowler
  */
-public enum ProductType implements CaomEnum
+public class ProductType extends VocabularyTerm implements CaomEnum, Serializable
 {
-    SCIENCE("science"),
-    CALIBRATION("calibration"),
-    AUXILIARY("auxiliary"),
-    INFO("info"),
-    PREVIEW("preview"),
-    CATALOG("catalog"),
-    NOISE("noise"),
-    WEIGHT("weight"),
-    THUMBNAIL("thumbnail");
+    private static final long serialVersionUID = 2017040200800L;
+    
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
+    
+    public static ProductType SCIENCE = new ProductType("science");
+    public static ProductType CALIBRATION = new ProductType("calibration");
+    public static ProductType AUXILIARY = new ProductType("auxiliary");
+    public static ProductType INFO = new ProductType("info");
+    public static ProductType PREVIEW = new ProductType("preview");
+    public static ProductType NOISE = new ProductType("noise");
+    public static ProductType WEIGHT = new ProductType("weight");
+    public static ProductType THUMBNAIL = new ProductType("thumbnail");
+    public static ProductType BIAS = new ProductType("bias");
+    public static ProductType DARK = new ProductType("dark");
+    public static ProductType FLAT = new ProductType("flat");
 
-    private String value;
+    
+    /**
+     * @deprecated
+     */
+    public static ProductType CATALOG = new ProductType("catalog");
+    
+    public static final ProductType[] values()
+    {
+        return new ProductType[]
+        {
+            SCIENCE, CALIBRATION, AUXILIARY, INFO, PREVIEW, CATALOG, NOISE, WEIGHT, THUMBNAIL,
+            BIAS, DARK, FLAT
+        };
+    }
 
-    private ProductType(String value) { this.value = value; }
+    private ProductType(String term)
+    {
+        super(CAOM, term, true);
+    }
+    protected ProductType(URI namespace, String term) 
+    { 
+        super(namespace, term, false);
+    }
 
     public static ProductType toValue(String s)
     {
         for (ProductType d : values())
-            if (d.value.equals(s))
+        {
+            if (d.getValue().equals(s))
                 return d;
-        throw new IllegalArgumentException("invalid value: " + s);
-    }
-
-    public String getValue() { return value; }
-
-    public int checksum()
-    {
-        return value.hashCode();
-    }
-    
-    @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        }
+        
+        // custom term
+        try
+        {
+            URI u = new URI(s);
+            String t = u.getFragment();
+            if (t == null)
+                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
+            String[] ss = u.toASCIIString().split("#");
+            URI ns = new URI(ss[0]);
+            return new ProductType(ns, t);
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new IllegalArgumentException("invalid value: " + s, ex);
+        }
     }
 }
