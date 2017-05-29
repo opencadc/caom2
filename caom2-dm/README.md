@@ -8,7 +8,7 @@ current version uses some experimental changes (compared to the IVOA proposed re
 
 The currently released documentation generated from this description:
 
-<a href="http://www.opencadc.org/caom2/beta">http://www.opencadc.org/caom2/beta</a>
+<a href="http://www.opencadc.org/caom2/">http://www.opencadc.org/caom2/</a>
 
 Immediate goals:
 - add some missing classes to the VO-DML 
