@@ -575,8 +575,8 @@
     
     <xs:complexType name="CoordError">
         <xs:sequence>
-            <xs:element name="syser" type="xs:double"/>
-            <xs:element name="rnder" type="xs:double"/>
+            <xs:element name="syser" type="xs:double" minOccurs="0"/>
+            <xs:element name="rnder" type="xs:double" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     

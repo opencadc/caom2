@@ -2409,24 +2409,24 @@
                 <vodml-id>CoordError</vodml-id>
                 <name>CoordError</name>
                 <attribute>
-                    <vodml-id>CoordError.crder</vodml-id>
+                    <vodml-id>CoordError.rnder</vodml-id>
                     <name>crder</name>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
                     <multiplicity>
-                        <minOccurs>1</minOccurs>
+                        <minOccurs>0</minOccurs>
                         <maxOccurs>1</maxOccurs>
                     </multiplicity>
                 </attribute>
                 <attribute>
-                    <vodml-id>CoordError.csyer</vodml-id>
+                    <vodml-id>CoordError.syser</vodml-id>
                     <name>csyer</name>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
                     <multiplicity>
-                        <minOccurs>1</minOccurs>
+                        <minOccurs>0</minOccurs>
                         <maxOccurs>1</maxOccurs>
                     </multiplicity>
                 </attribute>
