@@ -69,12 +69,13 @@
 
 package ca.nrc.cadc.caom2.persistence.skel;
 
+import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 
 /**
- * Simple class to capture the internal IDs, lastModified timestamops, and parent-child
- * relations of the CAOM model.
+ * Simple class to capture the internal IDs, lastModified timestamps, metadata 
+ * checksums and parent-child relations of the CAOM model.
  *
  * @author pdowler
  */
@@ -83,6 +84,9 @@ public class Skeleton
     public UUID id;
     public Date lastModified;
     public Date maxLastModified;
+    public URI metaChecksum;
+    public URI accMetaChecksum;
+    
     public Integer stateCode;
     public Class targetClass;
 
@@ -91,6 +95,7 @@ public class Skeleton
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + id + "," + lastModified + "," + stateCode + "]";
+        return getClass().getSimpleName() + "[" + id + "," + lastModified + "," 
+                + stateCode + "," + metaChecksum + "]";
     }
 }

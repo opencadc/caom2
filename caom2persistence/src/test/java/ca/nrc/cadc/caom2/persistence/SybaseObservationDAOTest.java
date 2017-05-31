@@ -90,4 +90,12 @@ public class SybaseObservationDAOTest extends AbstractDatabaseObservationDAOTest
     {
         super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true, true);
     }
+
+    @Override
+    public void testNestedTransaction()
+    {
+        log.warn("testNestedTransaction: skip because jtds driver doesn't support it");
+    }
+    
+    
 }

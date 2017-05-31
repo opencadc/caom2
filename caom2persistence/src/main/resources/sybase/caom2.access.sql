@@ -12,7 +12,8 @@ create table caom2_ObservationMetaReadAccess
     lastModified      datetime not null,
 
     readAccessID      binary(16) primary key nonclustered,
-    stateCode         int null
+    stateCode         int null,
+    metaChecksum varchar(36) null
 )
 lock datarows
 partition by roundrobin 16
@@ -34,7 +35,8 @@ create table caom2_PlaneMetaReadAccess
     lastModified      datetime not null,
 
     readAccessID      binary(16) primary key nonclustered,
-    stateCode         int null
+    stateCode         int null,
+    metaChecksum varchar(36) null
 )
 lock datarows
 partition by roundrobin 16
@@ -56,7 +58,8 @@ create table caom2_PlaneDataReadAccess
     lastModified      datetime not null,
 
     readAccessID      binary(16) primary key nonclustered,
-    stateCode         int null
+    stateCode         int null,
+    metaChecksum varchar(36) null
 )
 lock datarows
 partition by roundrobin 16

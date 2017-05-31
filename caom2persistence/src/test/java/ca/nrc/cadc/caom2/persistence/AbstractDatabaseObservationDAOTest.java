@@ -87,7 +87,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
@@ -247,7 +246,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    //@Test
+    @Test
     public void testTemplate()
     {
         try
@@ -898,6 +897,7 @@ public abstract class AbstractDatabaseObservationDAOTest
 
             Observation retrieved = dao.get(orig.getURI());
             Assert.assertNotNull("found", retrieved);
+            log.info("retrieved: " + retrieved.getPlanes().size());
             testEqual(orig, retrieved);
 
             Plane rem = orig.getPlanes().iterator().next();
@@ -908,7 +908,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             //txnManager.commitTransaction();
 
             Observation smaller = dao.get(orig.getURI());
-            Assert.assertNotNull("found", retrieved);
+            Assert.assertNotNull("found", smaller);
+            log.info("smaller: " + smaller.getPlanes().size());
             testEqual(orig, smaller);
         }
         catch(Exception unexpected)
@@ -1033,12 +1034,12 @@ public abstract class AbstractDatabaseObservationDAOTest
     {
         try
         {
-            Method m = AbstractCaomEntity.class.getDeclaredMethod("checksum");
+            Method m = CaomEntity.class.getDeclaredMethod("checksum");
             m.setAccessible(true);
             // TODO: if we could get the return here, would not need to access private field below
             m.invoke(e);
 
-            Field f = AbstractCaomEntity.class.getDeclaredField("stateCode");
+            Field f = CaomEntity.class.getDeclaredField("stateCode");
             f.setAccessible(true);
             return f.getInt(e);
         }
@@ -1048,13 +1049,33 @@ public abstract class AbstractDatabaseObservationDAOTest
         }
     }
     
-    private void testEqual(Observation expected, Observation actual)
+    private void testEntity(CaomEntity expected, CaomEntity actual)
     {
         log.debug("testEqual: " + expected + " == " + actual);
         Assert.assertFalse("same objects", expected == actual);
         String cn = expected.getClass().getSimpleName();
-        Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
-
+        
+        Assert.assertEquals(cn+".ID", expected.getID(), actual.getID());
+        
+        // read from database should always have checksums
+        Assert.assertNotNull(cn+".metaChecksum", actual.getMetaChecksum());
+        Assert.assertNotNull(cn+".accMetaChecksum", actual.getAccMetaChecksum());
+        
+        // all checksums are computed and assigned on expected as a side effect of calling put
+        Assert.assertEquals(cn+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
+        Assert.assertEquals(cn+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
+        
+        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
+        
+        testEqual(cn+".lastModified", expected.getLastModified(), actual.getLastModified());
+        
+        // some tests rely on insert + add child + remove child and compare orig to final so 
+        // maxLastModified changes
+        //testEqual(cn+".maxLastModified", expected.getMaxLastModified(), actual.getMaxLastModified());
+    }
+    
+    private void testEqual(Observation expected, Observation actual)
+    {
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals("algorithm.name", expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
 
@@ -1125,11 +1146,8 @@ public abstract class AbstractDatabaseObservationDAOTest
         Iterator<Plane> a = actual.getPlanes().iterator();
         while ( e.hasNext() || a.hasNext() )
             testEqual(e.next(), a.next());
-
-        //debugStateCodes(expected, actual);
         
-        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
-        testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
+        testEntity(expected, actual);
     }
 
     private void testEqual(String name, Collection<String> expected, Collection<String> actual)
@@ -1139,19 +1157,12 @@ public abstract class AbstractDatabaseObservationDAOTest
     
     private void testEqual(Plane expected, Plane actual)
     {
-        log.debug("testEqual: " + expected + " == " + actual);
-        Assert.assertFalse("same objects", expected == actual);
-        String cn = expected.getClass().getSimpleName();
-        Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
-        
         Assert.assertEquals(expected.getProductID(), actual.getProductID());
+        Assert.assertEquals(expected.creatorID, actual.creatorID);
         Assert.assertEquals(expected.calibrationLevel, actual.calibrationLevel);
         Assert.assertEquals(expected.dataProductType, actual.dataProductType);
         testEqualSeconds("plane.metaRelease", expected.metaRelease, actual.metaRelease);
         testEqualSeconds("plane.dataRelease", expected.dataRelease, actual.dataRelease);
-        //Assert.assertEquals(expected.getObservable().getName(), actual.getObservable().getName());
-        //Assert.assertEquals(expected.getObservable().dimension, actual.getObservable().dimension);
-        //Assert.assertEquals(expected.getObservable().unit, actual.getObservable().unit);
         if (expected.provenance != null)
         {
             Assert.assertEquals(expected.provenance.getName(), actual.provenance.getName());
@@ -1189,20 +1200,15 @@ public abstract class AbstractDatabaseObservationDAOTest
             testEqual(ex, ac);
         }
         
-        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
-        testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
+        testEntity(expected, actual);
     }
     
     private void testEqual(Artifact expected, Artifact actual)
     {
-        log.debug("testEqual: " + expected + " == " + actual);
-        Assert.assertFalse("same objects", expected == actual);
-        String cn = expected.getClass().getSimpleName();
-        Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
-
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals(expected.contentLength, actual.contentLength);
         Assert.assertEquals(expected.contentType, actual.contentType);
+        Assert.assertEquals(expected.contentChecksum, actual.contentChecksum);
         Assert.assertEquals(expected.getProductType(), actual.getProductType());
         Assert.assertEquals(expected.getReleaseType(), actual.getReleaseType());
 
@@ -1216,17 +1222,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             Part ac = aa.next();
             testEqual(ex, ac);
         }
-
-        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
-        testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
+        
+        testEntity(expected, actual);
     }
     private void testEqual(Part expected, Part actual)
     {
-        log.debug("testEqual: " + expected + " == " + actual);
-        Assert.assertFalse("same objects", expected == actual);
-        String cn = expected.getClass().getSimpleName();
-        Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
-
         log.debug("num Chunks: " + expected.getChunks().size() + " == " + actual.getChunks().size());
         Assert.assertEquals("number of chunks", expected.getChunks().size(), actual.getChunks().size());
         Iterator<Chunk> ea = expected.getChunks().iterator();
@@ -1237,17 +1237,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             Chunk ac = aa.next();
             testEqual(ex, ac);
         }
-
-        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
-        //testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
+        
+        testEntity(expected, actual);
     }
     private void testEqual(Chunk expected, Chunk actual)
     {
-        log.debug("testEqual: " + expected + " == " + actual);
-        Assert.assertFalse("same objects", expected == actual);
-        String cn = expected.getClass().getSimpleName();
-        Assert.assertEquals(cn+".getID", expected.getID(), actual.getID());
-
         Assert.assertEquals("productType", expected.productType, actual.productType);
         Assert.assertEquals("naxis", expected.naxis, actual.naxis);
         Assert.assertEquals("positionAxis1", expected.positionAxis1, actual.positionAxis1);
@@ -1328,9 +1322,8 @@ public abstract class AbstractDatabaseObservationDAOTest
                         actual.observable.independent.getBin());
             }
         }
-
-        //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
-        testEqual(cn+".getLastModified", expected.getLastModified(), actual.getLastModified());
+        
+        testEntity(expected, actual);
     }
 
     private void testEqual(String s, CoordAxis1D expected, CoordAxis1D actual)
@@ -1499,6 +1492,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         Plane p = new Plane(productID);
         if (full)
         {
+            p.creatorID = URI.create("ivo://example.com/TEST?"+productID);
             p.calibrationLevel = CalibrationLevel.CALIBRATED;
             p.dataProductType = DataProductType.IMAGE;
             p.metaRelease = TEST_DATE;
@@ -1542,6 +1536,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         {
             a.contentType = "application/fits";
             a.contentLength = TEST_LONG;
+            a.contentChecksum = URI.create("md5:fb696fe6e2fbb98dee340bd1e8811dcb");
         }
         
         if (depth <= 3)

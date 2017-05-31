@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2.persistence;
 
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
@@ -150,6 +149,8 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -314,7 +315,9 @@ public class BaseSQLGenerator implements SQLGenerator
             "environment_photometric",
             "members",
 
-            "lastModified", "maxLastModified", "stateCode", "obsID"
+            "lastModified", "maxLastModified", 
+            "stateCode", "metaChecksum", "accMetaChecksum", 
+            "obsID"
         };
         if (persistTransientState)
         {
@@ -326,12 +329,12 @@ public class BaseSQLGenerator implements SQLGenerator
             int n = obsColumns.length + computedObsColumns.length;
             String[] allCols = new String[n];
 
-            // insert the computed columns before the CaomEntity columns and PK (last 4)
-            System.arraycopy(obsColumns, 0, allCols, 0, obsColumns.length - 4);
-            int num = obsColumns.length - 4;
+            // insert the computed columns before the CaomEntity columns and PK (last 6)
+            System.arraycopy(obsColumns, 0, allCols, 0, obsColumns.length - 6);
+            int num = obsColumns.length - 6;
             System.arraycopy(computedObsColumns, 0, allCols, num, computedObsColumns.length);
             num += computedObsColumns.length;
-            System.arraycopy(obsColumns, obsColumns.length - 4, allCols, num, 4);
+            System.arraycopy(obsColumns, obsColumns.length - 6, allCols, num, 6);
             obsColumns = allCols;
         }
         columnMap.put(Observation.class, obsColumns);
@@ -340,6 +343,7 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             "obsID", 
             "productID",
+            "creatorID",
             "metaRelease", "dataRelease", "dataProductType", "calibrationLevel",
             "provenance_name", "provenance_reference", "provenance_version", "provenance_project",
             "provenance_producer", "provenance_runID", "provenance_lastExecuted",
@@ -348,7 +352,9 @@ public class BaseSQLGenerator implements SQLGenerator
             "metrics_fluxDensityLimit", "metrics_magLimit",
             "quality_flag",
 
-            "lastModified", "maxLastModified", "stateCode", "planeID"
+            "lastModified", "maxLastModified", 
+            "stateCode", "metaChecksum", "accMetaChecksum", 
+            "planeID"
         };
 
         if (persistTransientState)
@@ -381,12 +387,12 @@ public class BaseSQLGenerator implements SQLGenerator
             int n = planeColumns.length + computedPlaneColumns.length;
             String[] allCols = new String[n];
 
-            // insert the computed columns before the CaomEntity columns and PK (last 4)
-            System.arraycopy(planeColumns, 0, allCols, 0, planeColumns.length - 4);
-            int num = planeColumns.length - 4;
+            // insert the computed columns before the CaomEntity columns and PK (last 6)
+            System.arraycopy(planeColumns, 0, allCols, 0, planeColumns.length - 6);
+            int num = planeColumns.length - 6;
             System.arraycopy(computedPlaneColumns, 0, allCols, num, computedPlaneColumns.length);
             num += computedPlaneColumns.length;
-            System.arraycopy(planeColumns, planeColumns.length - 4, allCols, num, 4);
+            System.arraycopy(planeColumns, planeColumns.length - 6, allCols, num, 6);
             planeColumns = allCols;
         }
         columnMap.put(Plane.class, planeColumns);
@@ -394,8 +400,12 @@ public class BaseSQLGenerator implements SQLGenerator
         String[] artifactColumns = new String[]
         {
             "planeID", "obsID",
-            "uri", "productType", "releaseType", "contentType", "contentLength",
-            "lastModified", "maxLastModified", "stateCode", "artifactID"
+            "uri", "productType", "releaseType", 
+            "contentType", "contentLength", "contentChecksum",
+            
+            "lastModified", "maxLastModified", 
+            "stateCode", "metaChecksum", "accMetaChecksum", 
+            "artifactID"
         };
         if (persistTransientState)
         {
@@ -407,12 +417,12 @@ public class BaseSQLGenerator implements SQLGenerator
             int n = artifactColumns.length + computedColumns.length;
             String[] allCols = new String[n];
 
-            // insert the computed columns before the CaomEntity columns and PK (last 4)
-            System.arraycopy(artifactColumns, 0, allCols, 0, artifactColumns.length - 4);
-            int num = artifactColumns.length - 4;
+            // insert the computed columns before the CaomEntity columns and PK (last 6)
+            System.arraycopy(artifactColumns, 0, allCols, 0, artifactColumns.length - 6);
+            int num = artifactColumns.length - 6;
             System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
             num += computedColumns.length;
-            System.arraycopy(artifactColumns, artifactColumns.length - 4, allCols, num, 4);
+            System.arraycopy(artifactColumns, artifactColumns.length - 6, allCols, num, 6);
             artifactColumns = allCols;
         }
         columnMap.put(Artifact.class, artifactColumns);
@@ -421,7 +431,10 @@ public class BaseSQLGenerator implements SQLGenerator
         {
             "artifactID", "planeID", "obsID",
             "name", "productType",
-            "lastModified", "maxLastModified", "stateCode", "partID"
+            
+            "lastModified", "maxLastModified", 
+            "stateCode", "metaChecksum", "accMetaChecksum", 
+            "partID"
         };
         if (persistTransientState)
         {
@@ -433,12 +446,12 @@ public class BaseSQLGenerator implements SQLGenerator
             int n = partColumns.length + computedColumns.length;
             String[] allCols = new String[n];
 
-            // insert the computed columns before the CaomEntity columns and PK (last 4)
-            System.arraycopy(partColumns, 0, allCols, 0, partColumns.length - 4);
-            int num = partColumns.length - 4;
+            // insert the computed columns before the CaomEntity columns and PK (last 6)
+            System.arraycopy(partColumns, 0, allCols, 0, partColumns.length - 6);
+            int num = partColumns.length - 6;
             System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
             num += computedColumns.length;
-            System.arraycopy(partColumns, partColumns.length - 4, allCols, num, 4);
+            System.arraycopy(partColumns, partColumns.length - 6, allCols, num, 6);
             partColumns = allCols;
         }
         columnMap.put(Part.class, partColumns);
@@ -511,7 +524,9 @@ public class BaseSQLGenerator implements SQLGenerator
             "observable_independent_axis_cunit",
             "observable_independent_bin",
 
-            "lastModified", "maxLastModified", "stateCode", "chunkID"
+            "lastModified", "maxLastModified", 
+            "stateCode", "metaChecksum", "accMetaChecksum",
+            "chunkID"
         };
         if (persistTransientState)
         {
@@ -523,19 +538,19 @@ public class BaseSQLGenerator implements SQLGenerator
             int n = chunkColumns.length + computedColumns.length;
             String[] allCols = new String[n];
 
-            // insert the computed columns before the CaomEntity columns and PK (last 4)
-            System.arraycopy(chunkColumns, 0, allCols, 0, chunkColumns.length - 4);
-            int num = chunkColumns.length - 4;
+            // insert the computed columns before the CaomEntity columns and PK (last 6)
+            System.arraycopy(chunkColumns, 0, allCols, 0, chunkColumns.length - 6);
+            int num = chunkColumns.length - 6;
             System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
             num += computedColumns.length;
-            System.arraycopy(chunkColumns, chunkColumns.length - 4, allCols, num, 4);
+            System.arraycopy(chunkColumns, chunkColumns.length - 6, allCols, num, 6);
             chunkColumns = allCols;
         }
         columnMap.put(Chunk.class, chunkColumns);
 
         String[] metaReadAccessCols = new String[]
         {
-            "assetID", "groupID", "lastModified", "stateCode", "readAccessID"
+            "assetID", "groupID", "lastModified", "stateCode", "metaChecksum", "readAccessID"
         };
         columnMap.put(ObservationMetaReadAccess.class, metaReadAccessCols);
         columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
@@ -550,17 +565,22 @@ public class BaseSQLGenerator implements SQLGenerator
         columnMap.put(DeletedPlaneMetaReadAccess.class, deletedCols);
         columnMap.put(DeletedPlaneDataReadAccess.class, deletedCols);
 
-        columnMap.put(ObservationSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "obsID" });
-        columnMap.put(PlaneSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "planeID" });
-        columnMap.put(ArtifactSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "artifactID" });
-        columnMap.put(PartSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "partID" });
-        columnMap.put(ChunkSkeleton.class, new String[] { "lastModified", "maxLastModified", "stateCode", "chunkID" });
+        columnMap.put(ObservationSkeleton.class, new String[] 
+            { "lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "obsID" });
+        columnMap.put(PlaneSkeleton.class, new String[] 
+            { "lastModified", "maxLastModified", "stateCode", "metaChecksum",  "accMetaChecksum", "planeID" });
+        columnMap.put(ArtifactSkeleton.class, new String[] 
+            { "lastModified", "maxLastModified", "stateCode", "metaChecksum",  "accMetaChecksum", "artifactID" });
+        columnMap.put(PartSkeleton.class, new String[] 
+            { "lastModified", "maxLastModified", "stateCode", "metaChecksum",  "accMetaChecksum", "partID" });
+        columnMap.put(ChunkSkeleton.class, new String[] 
+            { "lastModified", "maxLastModified", "stateCode", "metaChecksum",  "accMetaChecksum", "chunkID" });
         
-        columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
-        columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
-        columnMap.put(PlaneDataReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "readAccessID" });
+        columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "metaChecksum", "readAccessID" });
+        columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "metaChecksum", "readAccessID" });
+        columnMap.put(PlaneDataReadAccessSkeleton.class, new String[] { "lastModified", "stateCode", "metaChecksum", "readAccessID" });
         
-        columnMap.put(ObservationState.class, new String[] { "collection", "observationID", "maxLastModified" });
+        columnMap.put(ObservationState.class, new String[] { "collection", "observationID", "maxLastModified", "accMetaChecksum" });
     }
 
     public boolean persistTransientState()
@@ -938,7 +958,7 @@ public class BaseSQLGenerator implements SQLGenerator
         return "metaReadAccessGroups";
     }
 
-    public EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate)
+    public EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate)
     {
         if ( Observation.class.isAssignableFrom(c))
             return new ObservationPut(isUpdate);
@@ -961,7 +981,7 @@ public class BaseSQLGenerator implements SQLGenerator
         throw new UnsupportedOperationException();
     }
 
-    public EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey)
+    public EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey)
     {
         if (ReadAccess.class.isAssignableFrom(c))
             return new ReadAccessEntityDelete(c, true);
@@ -969,13 +989,13 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
     // delete single entity by primary key or foreign key
-    private class BaseEntityDelete implements EntityDelete<AbstractCaomEntity>
+    private class BaseEntityDelete implements EntityDelete<CaomEntity>
     {
-        private Class<? extends AbstractCaomEntity> clz;
+        private Class<? extends CaomEntity> clz;
         private boolean byPK;
         private UUID id;
 
-        public BaseEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        public BaseEntityDelete(Class<? extends CaomEntity> c, boolean byPK)
         {
             this.clz = c;
             this.byPK = byPK;
@@ -995,7 +1015,7 @@ public class BaseSQLGenerator implements SQLGenerator
             this.id = id;
         }
 
-        public void setValue(AbstractCaomEntity value)
+        public void setValue(CaomEntity value)
         {
             throw new UnsupportedOperationException(); 
         }
@@ -1007,13 +1027,13 @@ public class BaseSQLGenerator implements SQLGenerator
         ReadAccess ra;
         Class assetClass;
         
-        public ReadAccessEntityDelete(Class<? extends AbstractCaomEntity> c, boolean byPK)
+        public ReadAccessEntityDelete(Class<? extends CaomEntity> c, boolean byPK)
         {
             super(c, byPK);
         }
 
         @Override
-        public void setValue(AbstractCaomEntity value)
+        public void setValue(CaomEntity value)
         {
             this.ra = (ReadAccess) value;
         }
@@ -1249,6 +1269,9 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, obs.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, obs.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, obs.getStateCode());
+            safeSetURI(sb, ps, col++, obs.getMetaChecksum());
+            safeSetURI(sb, ps, col++, obs.getAccMetaChecksum());
+            
             if (useLongForUUID)
                 safeSetLongUUID(sb, ps, col++, obs.getID());
             else
@@ -1308,6 +1331,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetUUID(sb, ps, col++, obs.getID()); // obsID
             
             safeSetString(sb, ps, col++, plane.getProductID());
+            safeSetURI(sb, ps, col++, plane.creatorID);
             safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
             safeSetDate(sb, ps, col++, Util.truncate(plane.dataRelease), UTC_CAL);
             if (plane.dataProductType != null)
@@ -1474,6 +1498,9 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, plane.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, plane.getStateCode());
+            safeSetURI(sb, ps, col++, plane.getMetaChecksum());
+            safeSetURI(sb, ps, col++, plane.getAccMetaChecksum());
+            
             if (useLongForUUID)
                 safeSetLongUUID(sb, ps, col++, plane.getID());
             else
@@ -1545,6 +1572,7 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
             safeSetString(sb, ps, col++, artifact.contentType);
             safeSetLong(sb, ps, col++, artifact.contentLength);
+            safeSetURI(sb, ps, col++, artifact.contentChecksum);
             
             if (persistTransientState)
                 safeSetDate(sb, ps, col++, Util.truncate(artifact.metaRelease), UTC_CAL);
@@ -1552,6 +1580,9 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, artifact.getStateCode());
+            safeSetURI(sb, ps, col++, artifact.getMetaChecksum());
+            safeSetURI(sb, ps, col++, artifact.getAccMetaChecksum());
+            
             if (useLongForUUID)
                 safeSetLongUUID(sb, ps, col++, artifact.getID());
             else
@@ -1636,6 +1667,10 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, part.getStateCode());
+            
+            safeSetURI(sb, ps, col++, part.getMetaChecksum());
+            safeSetURI(sb, ps, col++, part.getAccMetaChecksum());
+            
             if (useLongForUUID)
                 safeSetLongUUID(sb, ps, col++, part.getID());
             else
@@ -1983,6 +2018,9 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, chunk.getStateCode());
+            safeSetURI(sb, ps, col++, chunk.getMetaChecksum());
+            safeSetURI(sb, ps, col++, chunk.getAccMetaChecksum());
+            
             if (useLongForUUID)
                 safeSetLongUUID(sb, ps, col++, chunk.getID());
             else
@@ -2200,6 +2238,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
                 safeSetDate(sb, ps, col++, ra.getLastModified(), UTC_CAL);
                 safeSetInteger(sb, ps, col++, ra.getStateCode());
+                safeSetURI(sb, ps, col++, ra.getMetaChecksum());
                 safeSetUUID(sb, ps, col++, ra.getID());
             }
             else // putCount > 1 : update asset table
@@ -3065,6 +3104,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: observation.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: observation.stateCode = " + stateCode);
+            
+            URI metaChecksum = Util.getURI(rs, col++);
+            URI accMetaChecksum = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: observation.id = " + id);
 
@@ -3072,6 +3115,8 @@ public class BaseSQLGenerator implements SQLGenerator
             //Util.assignStateCode(o, stateCode);
             Util.assignLastModified(o, lastModified, "lastModified");
             Util.assignLastModified(o, maxLastModified, "maxLastModified");
+            Util.assignMetaChecksum(o, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
 
             return o;
         }
@@ -3122,7 +3167,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found p.productID = " + productID);
 
             Plane p = new Plane(productID);
-
+            
+            p.creatorID = Util.getURI(rs, col++);
+            log.debug("found p.creatorID = " + p.creatorID);
+            
             p.metaRelease = Util.getRoundedDate(rs, col++, UTC_CAL);
             log.debug("found p.metaRelease = " + p.metaRelease);
             p.dataRelease = Util.getRoundedDate(rs, col++, UTC_CAL);
@@ -3192,6 +3240,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: plane.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: plane.stateCode = " + stateCode);
+            
+            URI metaChecksum = Util.getURI(rs, col++);
+            URI accMetaChecksum = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: plane.id = " + id);
 
@@ -3199,6 +3251,8 @@ public class BaseSQLGenerator implements SQLGenerator
             //Util.assignStateCode(p, stateCode);
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
+            Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
             
             return p;
         }
@@ -3257,6 +3311,8 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found a.contentType = " + a.contentType);
             a.contentLength = Util.getLong(rs, col++);
             log.debug("found a.contentLength = " + a.contentLength);
+            a.contentChecksum = Util.getURI(rs, col++);
+            log.debug("found a.contentChecksum = " + a.contentChecksum);
             
             if (persistTransientState)
                 col += numComputedArtifactColumns;
@@ -3267,6 +3323,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: artifact.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: artifact.stateCode = " + stateCode);
+            
+            URI metaChecksum = Util.getURI(rs, col++);
+            URI accMetaChecksum = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found artifact.id = " + id);
             
@@ -3274,7 +3334,9 @@ public class BaseSQLGenerator implements SQLGenerator
             //Util.assignStateCode(a, stateCode);
             Util.assignLastModified(a, lastModified, "lastModified");
             Util.assignLastModified(a, maxLastModified, "maxLastModified");
-
+            Util.assignMetaChecksum(a, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
+            
             return a;
         }
     }
@@ -3329,6 +3391,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: part.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: part.stateCode = " + stateCode);
+            
+            URI metaChecksum = Util.getURI(rs, col++);
+            URI accMetaChecksum = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: part.id = " + id);
             
@@ -3336,6 +3402,8 @@ public class BaseSQLGenerator implements SQLGenerator
             //Util.assignStateCode(p, stateCode);
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
+            Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
             
             return p;
         }
@@ -3596,6 +3664,10 @@ public class BaseSQLGenerator implements SQLGenerator
             log.debug("found: chunk.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
             log.debug("found: chunk.stateCode = " + stateCode);
+            
+            URI metaChecksum = Util.getURI(rs, col++);
+            URI accMetaChecksum = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: chunk.id = " + id);
 
@@ -3603,7 +3675,9 @@ public class BaseSQLGenerator implements SQLGenerator
             //Util.assignStateCode(c, stateCode);
             Util.assignLastModified(c, lastModified, "lastModified");
             Util.assignLastModified(c, maxLastModified, "maxLastModified");
-
+            Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
+            
             return c;
         }
     }
@@ -3662,12 +3736,16 @@ public class BaseSQLGenerator implements SQLGenerator
                 log.debug("found: ra.lastModified = " + lastModified);
                 Integer stateCode = Util.getInteger(rs, col++);
                 log.debug("found: ra.stateCode = " + stateCode);
+                
+                URI metaChecksum = Util.getURI(rs, col++);
+                log.debug("found: ra.metaChecksum = " + metaChecksum);
+                
                 UUID id = Util.getUUID(rs, col++);
                 log.debug("found: ra.id = " + id);
 
                 Util.assignID(ret, id);
-                //Util.assignStateCode(ret, stateCode);
                 Util.assignLastModified(ret, lastModified, "lastModified");
+                Util.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
 
                 return ret;
             }
@@ -3689,8 +3767,9 @@ public class BaseSQLGenerator implements SQLGenerator
             String collection = rs.getString(col++);
             String observationID = rs.getString(col++);
             Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);
+            URI accMetaChecksum = Util.getURI(rs, col++);
 
-            return new ObservationState(collection, observationID, maxLastModified);
+            return new ObservationState(collection, observationID, maxLastModified, accMetaChecksum);
         }
     }
 
@@ -3719,7 +3798,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 int col = 1;
                 Skeleton ret = c.newInstance();
                 ret.lastModified = Util.getDate(rs, col++, UTC_CAL);
+                ret.maxLastModified = Util.getDate(rs, col++, UTC_CAL);
                 ret.stateCode = Util.getInteger(rs, col++);
+                ret.metaChecksum = Util.getURI(rs, col++);
+                // no accMetaChecksum in ReadAccess tables
                 ret.id = Util.getUUID(rs, col++);
                 log.debug("found: " + ret);
                 return ret;

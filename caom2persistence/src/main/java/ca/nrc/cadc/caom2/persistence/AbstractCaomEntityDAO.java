@@ -69,12 +69,14 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.MaxLastModifiedComparator;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -89,17 +91,30 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author pdowler
  */
-abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends AbstractDAO
+abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
 {
     private static final Logger log = Logger.getLogger(AbstractCaomEntityDAO.class);
     protected boolean computeLastModified = true;
+    
+    protected MessageDigest digest;
 
-    protected AbstractCaomEntityDAO() { }
+    protected AbstractCaomEntityDAO() 
+    { 
+        try
+        {
+            this.digest =  MessageDigest.getInstance("MD5");
+        }
+        catch(NoSuchAlgorithmException ex)
+        {
+            throw new RuntimeException("FATAL: no MD5 digest algorithm available", ex);
+        }
+    }
 
     // constructor for utility classes that share the same settings instead of being
     // configured
     protected AbstractCaomEntityDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
     {
+        this();
         this.gen = gen;
         this.forceUpdate = forceUpdate;
         this.readOnly = readOnly;
@@ -253,28 +268,52 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
             throw new UnsupportedOperationException("put in readOnly mode");
         checkInit();
                
-        int sc1 = -1;
-        if (cur != null)
-            sc1 = cur.stateCode.intValue();
+        // transition from stateCode to metaChecksum
+        boolean delta = false;
+        String cmp = " [new]";
         int sc2 = val.getStateCode(gen.persistTransientState());
-        
-        log.debug("PUT: " + val.getClass().getSimpleName() + ": " + sc1 + " vs " + sc2);
+        if (cur != null)
+        {
+            if (cur.metaChecksum != null)
+            {
+                delta = !cur.metaChecksum.equals(val.getMetaChecksum());
+                cmp = " " + cur.metaChecksum + " vs " + val.getMetaChecksum();
+                
+                // check accMetaChecksum to see if it and maxLastModified have changed
+                // this correctly maintains accMetaChecksum and maxLastModified without
+                // over-using force whcih only worked for Observation
+                if (!delta && cur.accMetaChecksum != null)
+                {
+                    delta = !cur.accMetaChecksum.equals(val.getAccMetaChecksum());
+                    cmp = cmp + "/" + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
+                }
+            }
+            else // fall back to stateCode
+            {
+                delta = (cur.stateCode != sc2);
+                cmp = " " + cur.stateCode + " vs " + sc2;
+            }
+            
+            log.info("PUT: " + val.getClass().getSimpleName() + cmp);
+        }
+        else
+            log.info("PUT: " + val.getClass().getSimpleName() + cmp);
 
         boolean isUpdate = (cur != null);
 
         // insert || forceUpdate mode || caller force || state changed
-        if ( cur == null || forceUpdate || force || sc1 != sc2)
+        if ( cur == null || forceUpdate || force || delta)
         {
             if (isUpdate)
-                log.debug("PUT update: " + val.getClass().getSimpleName() + " " + val.getID());
+                log.info("PUT update: " + val.getClass().getSimpleName() + " " + val.getID());
             else
-                log.debug("PUT insert: " + val.getClass().getSimpleName() + " " + val.getID());
+                log.info("PUT insert: " + val.getClass().getSimpleName() + " " + val.getID());
             EntityPut<T> op = gen.getEntityPut(val.getClass(), isUpdate);
             op.setValue(val, parents);
             op.execute(jdbc);
         }
         else
-            log.debug("PUT skip: " + val.getClass().getSimpleName() + " " + val.getID());
+            log.info("PUT skip: " + val.getClass().getSimpleName() + " " + val.getID());
     }
 
     protected void delete(Skeleton ce, JdbcTemplate jdbc)

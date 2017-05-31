@@ -53,7 +53,9 @@ create table caom2_Observation
     obsID bigint not null primary key nonclustered,
     lastModified datetime not null,
     maxLastModified datetime not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136),
+    accMetaChecksum varchar(136)
 )
 lock datarows
 partition by roundrobin 16

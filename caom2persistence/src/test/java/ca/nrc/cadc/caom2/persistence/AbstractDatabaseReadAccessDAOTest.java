@@ -337,7 +337,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            obsDAO.delete(obs.getID());
+            try { obsDAO.delete(obs.getID()); }
+            catch(Exception ex)
+            {
+                log.error("unexpected cleanup exception", ex);
+            }
         }
     }
     

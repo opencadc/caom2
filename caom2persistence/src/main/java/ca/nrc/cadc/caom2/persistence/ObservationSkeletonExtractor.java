@@ -75,7 +75,7 @@ import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.date.DateUtil;
-import java.lang.Long;
+import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
@@ -112,6 +112,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
             Date d, md;
             Integer sc;
             UUID id;
+            URI cs, acs;
             int col = 1;
 
             if (ret.id == null) // first row
@@ -119,20 +120,25 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                 d = Util.getDate(rs, col++, CAL);
                 md = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
+                cs = Util.getURI(rs, col++);
+                acs = Util.getURI(rs, col++);
                 id = Util.getUUID(rs, col++);
-
                 ret.id = id;
                 ret.lastModified = d;
                 ret.maxLastModified = md;
                 ret.stateCode = sc;
+                ret.metaChecksum = cs;
+                ret.accMetaChecksum = acs;
             }
             else
-                col += 4; // skip
+                col += 6; // skip
 
             // plane
             d = Util.getDate(rs, col++, CAL);
             md = Util.getDate(rs, col++, CAL);
             sc = Util.getInteger(rs, col++);
+            cs = Util.getURI(rs, col++);
+            acs = Util.getURI(rs, col++);
             id = Util.getUUID(rs, col++);
             if (id != null)
             {
@@ -143,6 +149,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                     curPlane.lastModified = d;
                     curPlane.maxLastModified = md;
                     curPlane.stateCode = sc;
+                    curPlane.metaChecksum = cs;
+                    curPlane.accMetaChecksum = acs;
                     log.debug("add: " + curPlane + " to " + ret);
                     ret.planes.add(curPlane);
                 }
@@ -151,6 +159,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                 d = Util.getDate(rs, col++, CAL);
                 md = Util.getDate(rs, col++, CAL);
                 sc = Util.getInteger(rs, col++);
+                cs = Util.getURI(rs, col++);
+                acs = Util.getURI(rs, col++);
                 id = Util.getUUID(rs, col++);
                 if (id != null)
                 {
@@ -161,6 +171,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                         curArtifact.lastModified = d;
                         curArtifact.maxLastModified = md;
                         curArtifact.stateCode = sc;
+                        curArtifact.metaChecksum = cs;
+                        curArtifact.accMetaChecksum = acs;
                         log.debug("add: " + curArtifact + " to " + curPlane);
                         curPlane.artifacts.add(curArtifact);
                     }
@@ -169,6 +181,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                     d = Util.getDate(rs, col++, CAL);
                     md = Util.getDate(rs, col++, CAL);
                     sc = Util.getInteger(rs, col++);
+                    cs = Util.getURI(rs, col++);
+                    acs = Util.getURI(rs, col++);
                     id = Util.getUUID(rs, col++);
                     if (id != null)
                     {
@@ -179,6 +193,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                             curPart.lastModified = d;
                             curPart.maxLastModified = md;
                             curPart.stateCode = sc;
+                            curPart.metaChecksum = cs;
+                            curPart.accMetaChecksum = acs;
                             log.debug("add: " + curPart + " to " + curArtifact);
                             curArtifact.parts.add(curPart);
                         }
@@ -187,6 +203,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                         d = Util.getDate(rs, col++, CAL);
                         md = Util.getDate(rs, col++, CAL);
                         sc = Util.getInteger(rs, col++);
+                        cs = Util.getURI(rs, col++);
+                        acs = Util.getURI(rs, col++);
                         id = Util.getUUID(rs, col++);
                         if (id != null)
                         {
@@ -195,6 +213,8 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor
                             curChunk.lastModified = d;
                             curChunk.maxLastModified = md;
                             curChunk.stateCode = sc;
+                            curChunk.metaChecksum = cs;
+                            curChunk.accMetaChecksum = acs;
                             log.debug("add: " + curChunk + " to " + curPart);
                             curPart.chunks.add(curChunk);
                         }
