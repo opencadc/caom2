@@ -111,20 +111,20 @@ import ca.nrc.cadc.util.Log4jInit;
  * @author majorb
  *
  */
-public class CaomRepoListTests extends CaomRepoBaseIntTests
+public class CaomRepoListTests22 extends CaomRepoBaseIntTests
 {
 
-    private static final Logger log = Logger.getLogger(CaomRepoListTests.class);
+    private static final Logger log = Logger.getLogger(CaomRepoListTests22.class);
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_3_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
 
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    private CaomRepoListTests() { }
+    private CaomRepoListTests22() { }
 
     /**
      * @param resourceID resource identifier of service to test
@@ -132,9 +132,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
      * @param pem2 PEM file for user with read-only permission
      * @param pem3 PEM file for user with no permissions
      */
-    public CaomRepoListTests(URI resourceID, String pem1, String pem2, String pem3)
+    public CaomRepoListTests22(URI resourceID, String pem1, String pem2, String pem3)
     {
-        super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
+        super(resourceID, Standards.CAOM2REPO_OBS_20, pem1, pem2, pem3);
     }
 
     @Test
@@ -396,7 +396,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
             for (int i = 0; i < lines.length; i++)
             {
-            	String[] fields = lines[i].split(" ");
+            	String[] fields = lines[i].split(",");
             	String actualDate = fields[1];
 
             	if (start != null)

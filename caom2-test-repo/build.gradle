@@ -19,7 +19,7 @@ version = '1.0.8'
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-registry:[1.2.2,)'
     compile 'org.opencadc:caom2:[2.2.5,)'
     compile 'org.opencadc:caom2-compute:[2.2.5,)'
 
