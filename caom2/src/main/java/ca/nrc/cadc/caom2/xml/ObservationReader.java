@@ -729,11 +729,15 @@ public class ObservationReader implements Serializable
             plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
             plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
 
-            String creatorIDStr = getChildText("creatorId", planeElement, namespace, false);
-            if (creatorIDStr != null) {
-                try {
+            String creatorIDStr = getChildText("creatorID", planeElement, namespace, false);
+            if (creatorIDStr != null) 
+            {
+                try 
+                {
                     plane.creatorID = new URI(creatorIDStr);
-                } catch (URISyntaxException e) {
+                } 
+                catch (URISyntaxException e) 
+                {
                     String error = "Unable to parse creatorID " + creatorIDStr +
                             " to URI in element " + element.getName() +
                             " because " + e.getMessage();
