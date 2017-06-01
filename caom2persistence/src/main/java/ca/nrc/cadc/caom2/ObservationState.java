@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 
+import java.net.URI;
 import java.util.Date;
 
 /**
@@ -84,12 +85,14 @@ public class ObservationState
     private final String collection;
     private final String observationID;
     private final Date maxLastModified;
+    private final URI accMetaChecksum;
     
-    public ObservationState(String collection, String observationID, Date maxlastModified) 
+    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum) 
     { 
         this.collection = collection;
         this.observationID = observationID;
         this.maxLastModified = maxlastModified;
+        this.accMetaChecksum = accMetaChecksum;
     }
 
     public String getCollection()
@@ -105,6 +108,11 @@ public class ObservationState
     public Date getMaxLastModified()
     {
         return maxLastModified;
+    }
+
+    public URI getAccMetaChecksum()
+    {
+        return accMetaChecksum;
     }
 
     @Override

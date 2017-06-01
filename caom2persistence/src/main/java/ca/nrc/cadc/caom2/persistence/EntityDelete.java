@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -78,7 +78,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author pdowler
  * @param <T>
  */
-public interface EntityDelete<T extends AbstractCaomEntity>
+public interface EntityDelete<T extends CaomEntity>
 {
     void execute(JdbcTemplate jdbc);
     

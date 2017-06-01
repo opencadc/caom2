@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.CaomEntity;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -78,7 +78,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author pdowler
  * @param <T>
  */
-public interface EntityPut<T extends AbstractCaomEntity>
+public interface EntityPut<T extends CaomEntity>
 {
     void execute(JdbcTemplate jdbc);
     

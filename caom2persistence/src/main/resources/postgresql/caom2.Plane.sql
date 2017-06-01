@@ -1,9 +1,10 @@
 
 create table caom2.Plane
 (
+    productID varchar(64) not null,
     publisherID varchar(512) not null,
     planeURI varchar(512) not null,
-    productID varchar(64) not null,
+    creatorID varchar(512),
 
     metaRelease timestamp,
     dataRelease timestamp,
@@ -82,7 +83,9 @@ create table caom2.Plane
     planeID uuid not null  primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136) not null,
+    accMetaChecksum varchar(136) not null
 )
 ;
 
@@ -104,7 +107,7 @@ create table caom2.Plane_inputs
 create unique index i_publisherID on caom2.Plane(publisherID)
 ;
 
-create unique index i_planeURI on caom2.Plane(planeURI)
+create unique index i_creatorID on caom2.Plane(creatorID)
 ;
 
 create unique index i_output2input on caom2.Plane_inputs (outputID,inputID)
