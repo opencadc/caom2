@@ -93,10 +93,10 @@ public class Plane extends CaomEntity implements Comparable<Plane>
     private final String productID;
 
     // mutable contents
-    public URI creatorID;
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
 
     // mutable state
+    public URI creatorID;
     public Date metaRelease;
     public Date dataRelease;
     public DataProductType dataProductType;

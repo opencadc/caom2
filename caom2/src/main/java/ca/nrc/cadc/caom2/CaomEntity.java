@@ -280,8 +280,7 @@ public abstract class CaomEntity implements Serializable
             if (o instanceof CaomEntity)
             {
                 CaomEntity ce = (CaomEntity) o;
-                digest.update(HexUtil.toBytes(ce.id.getMostSignificantBits()));
-                digest.update(HexUtil.toBytes(ce.id.getLeastSignificantBits()));
+                digest.update(primtiveValueToBytes(ce.id));
             }
             
             SortedSet<Field> fields = getStateFields(c, includeTransient);
@@ -390,6 +389,17 @@ public abstract class CaomEntity implements Serializable
             {
                 throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
+        }
+        
+        if (o instanceof UUID)
+        {
+            UUID uuid = (UUID) o;
+            byte[] msb = HexUtil.toBytes(uuid.getMostSignificantBits());
+            byte[] lsb = HexUtil.toBytes(uuid.getLeastSignificantBits());
+            byte[] ret = new byte[16];
+            System.arraycopy(msb, 0, ret, 0, 8);
+            System.arraycopy(lsb, 0, ret, 8, 8);
+            return ret;
         }
         
         throw new UnsupportedOperationException("unexpected primitive/value type: " + o.getClass().getName());
