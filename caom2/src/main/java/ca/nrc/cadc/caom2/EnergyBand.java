@@ -79,7 +79,7 @@ import java.util.List;
  *
  * @author pdowler
  */
-public enum EnergyBand implements CaomEnum
+public enum EnergyBand implements CaomEnum<String>
 {   
     RADIO("Radio"),
     MILLIMETER("Millimeter"),
@@ -101,11 +101,6 @@ public enum EnergyBand implements CaomEnum
         return value.hashCode();
     }
 
-    @Override
-    public byte[] getBytes() {
-        return value.getBytes();
-    }
-    
     public static EnergyBand toValue(String s)
     {
         for (EnergyBand eb : values())

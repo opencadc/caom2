@@ -298,7 +298,7 @@ public abstract class CaomEntity implements Serializable
                     {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        digest.update(ce.getBytes());
+                        digest.update(primtiveValueToBytes(ce.getValue()));
                     } 
                     else if (isLocalClass(ac)) 
                     {

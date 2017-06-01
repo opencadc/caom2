@@ -83,7 +83,7 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public enum PolarizationState implements CaomEnum
+public enum PolarizationState implements CaomEnum<Integer>
 {
     I(1),
     Q(2),
@@ -108,7 +108,7 @@ public enum PolarizationState implements CaomEnum
 
     private PolarizationState(int value) { this.value = value; }
 
-    public int getValue() { return value; }
+    public Integer getValue() { return value; }
     
     public String stringValue()
     {
@@ -183,11 +183,6 @@ public enum PolarizationState implements CaomEnum
         return value;
     }
 
-    @Override
-    public byte[] getBytes() {
-        return HexUtil.toBytes(value);
-    }
-    
     public static class PolStateComparator implements Comparator<PolarizationState>, Serializable
     {
         private static final long serialVersionUID = 201401131450L;

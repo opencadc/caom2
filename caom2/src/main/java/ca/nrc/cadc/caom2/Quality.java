@@ -73,7 +73,7 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public enum Quality implements CaomEnum
+public enum Quality implements CaomEnum<String>
 {
     JUNK("junk");
 
@@ -95,11 +95,6 @@ public enum Quality implements CaomEnum
     }
 
     public String getValue() { return value; }
-
-    @Override
-    public byte[] getBytes() {
-        return value.getBytes();
-    }
 
     @Override
     public String toString()

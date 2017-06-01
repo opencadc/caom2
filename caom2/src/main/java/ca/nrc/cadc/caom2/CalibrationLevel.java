@@ -75,7 +75,7 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public enum CalibrationLevel implements CaomEnum
+public enum CalibrationLevel implements CaomEnum<Integer>
 {
     PLANNED(-1),
     RAW_INSTRUMENTAL(0),
@@ -88,7 +88,7 @@ public enum CalibrationLevel implements CaomEnum
 
     private CalibrationLevel(int s) { this.value = s; }
 
-    public int getValue() { return value; }
+    public Integer getValue() { return value; }
 
     public static CalibrationLevel toValue(int i)
     {
@@ -124,11 +124,6 @@ public enum CalibrationLevel implements CaomEnum
     public int checksum()
     {
         return value;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return HexUtil.toBytes(value);
     }
 
     @Override

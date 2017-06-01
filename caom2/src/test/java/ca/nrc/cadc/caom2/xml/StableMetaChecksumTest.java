@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,85 +62,102 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.xml;
 
-import java.io.Serializable;
+
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import static org.junit.Assert.fail;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class ProductType extends VocabularyTerm implements CaomEnum<String>, Serializable
+public class StableMetaChecksumTest 
 {
-    private static final long serialVersionUID = 2017040200800L;
-    
-    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
-    
-    public static ProductType SCIENCE = new ProductType("science");
-    public static ProductType CALIBRATION = new ProductType("calibration");
-    public static ProductType AUXILIARY = new ProductType("auxiliary");
-    public static ProductType INFO = new ProductType("info");
-    public static ProductType PREVIEW = new ProductType("preview");
-    public static ProductType NOISE = new ProductType("noise");
-    public static ProductType WEIGHT = new ProductType("weight");
-    public static ProductType THUMBNAIL = new ProductType("thumbnail");
-    public static ProductType BIAS = new ProductType("bias");
-    public static ProductType DARK = new ProductType("dark");
-    public static ProductType FLAT = new ProductType("flat");
+    private static final Logger log = Logger.getLogger(StableMetaChecksumTest.class);
 
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
+    }
     
-    /**
-     * @deprecated
-     */
-    public static ProductType CATALOG = new ProductType("catalog");
+    public StableMetaChecksumTest() { }
     
-    public static final ProductType[] values()
+    @Test
+    public void testStableChecksums()
     {
-        return new ProductType[]
-        {
-            SCIENCE, CALIBRATION, AUXILIARY, INFO, PREVIEW, CATALOG, NOISE, WEIGHT, THUMBNAIL,
-            BIAS, DARK, FLAT
-        };
-    }
-
-    private ProductType(String term)
-    {
-        super(CAOM, term, true);
-    }
-    protected ProductType(URI namespace, String term) 
-    { 
-        super(namespace, term, false);
-    }
-
-    public static ProductType toValue(String s)
-    {
-        for (ProductType d : values())
-        {
-            if (d.getValue().equals(s))
-                return d;
-        }
-        
-        // custom term
         try
         {
-            URI u = new URI(s);
-            String t = u.getFragment();
-            if (t == null)
-                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
-            String[] ss = u.toASCIIString().split("#");
-            URI ns = new URI(ss[0]);
-            return new ProductType(ns, t);
+            // read stored file with computed checksums and verify
+            File f = new File("prev-caom23.xml");
+            if (!f.exists())
+            {
+                log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
+                return;
+            }
+            
+            Reader r = new FileReader(f);
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(r);
+            Assert.assertNotNull(o);
+            
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            URI mcs = o.computeMetaChecksum(true, digest);
+            Assert.assertEquals("observation.metaChecksum", o.getMetaChecksum(), mcs);
+            URI acs = o.computeAccMetaChecksum(true, digest);
+            Assert.assertEquals("observation.metaChecksum", o.getAccMetaChecksum(), acs);
+            
+            for (Plane pl : o.getPlanes())
+            {
+                mcs = pl.computeMetaChecksum(true, digest);
+                Assert.assertEquals("plane.metaChecksum", pl.getMetaChecksum(), mcs);
+                acs = pl.computeAccMetaChecksum(true, digest);
+                Assert.assertEquals("plane.accMetaChecksum", pl.getAccMetaChecksum(), acs);
+                for (Artifact ar : pl.getArtifacts())
+                {
+                    mcs = ar.computeMetaChecksum(true, digest);
+                    Assert.assertEquals("artifact.metaChecksum", ar.getMetaChecksum(), mcs);
+                    acs = ar.computeAccMetaChecksum(true, digest);
+                    Assert.assertEquals("artifact.accMetaChecksum", ar.getAccMetaChecksum(), acs);
+                    for (Part pa : ar.getParts())
+                    {
+                        mcs = pa.computeMetaChecksum(true, digest);
+                        Assert.assertEquals("part.metaChecksum", pa.getMetaChecksum(), mcs);
+                        acs = pa.computeAccMetaChecksum(true, digest);
+                        Assert.assertEquals("part.accMetaChecksum", pa.getAccMetaChecksum(), acs);
+                        for (Chunk ch : pa.getChunks())
+                        {
+                            mcs = ch.computeMetaChecksum(true, digest);
+                            Assert.assertEquals("chunk.metaChecksum", ch.getMetaChecksum(), mcs);
+                            acs = ch.computeAccMetaChecksum(true, digest);
+                            Assert.assertEquals("chunk.accMetaChecksum", ch.getAccMetaChecksum(), acs);
+                        }
+                    }
+                }
+            }
         }
-        catch(URISyntaxException ex)
+        catch(Exception unexpected)
         {
-            throw new IllegalArgumentException("invalid value: " + s, ex);
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
         }
     }
 }

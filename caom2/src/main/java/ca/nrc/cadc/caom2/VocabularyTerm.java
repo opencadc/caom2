@@ -145,10 +145,6 @@ public class VocabularyTerm implements Serializable
     {
         return getValue().hashCode();
     }
-
-    public byte[] getBytes() {
-        return getValue().getBytes();
-    }
     
     @Override
     public String toString()
