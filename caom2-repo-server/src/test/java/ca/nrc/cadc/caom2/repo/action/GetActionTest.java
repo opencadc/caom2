@@ -189,8 +189,8 @@ public class GetActionTest
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
 
-        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(date1) + "\t" + check1.toString() + "\r\n" +
-                          "TEST" + "\t" + "6789" + "\t" + df.format(date2) + "\t" + check2.toString();
+        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(date1) + "\t" + check1.toString() + "\n" +
+                          "TEST" + "\t" + "6789" + "\t" + df.format(date2) + "\t" + check2.toString() + "\n";
         String content = out.getContent();
         log.debug("\n--list content start--\n" + content + "\n--list content end--");
         Assert.assertEquals(expected, content);

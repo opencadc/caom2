@@ -404,7 +404,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
             for (int i = 0; i < lines.length; i++)
             {
-            	String[] fields = lines[i].split(" ");
+            	String[] fields = lines[i].split("\t");
             	String actualDate = fields[2];
 
             	if (start != null)

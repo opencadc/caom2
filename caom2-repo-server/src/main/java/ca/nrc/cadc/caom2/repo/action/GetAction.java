@@ -71,7 +71,7 @@ package ca.nrc.cadc.caom2.repo.action;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -211,11 +211,17 @@ public class GetAction extends RepoAction
         syncOutput.setHeader("Content-Type", "text/tsv");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        CsvWriter writer = new CsvWriter(bc, '\t', Charset.defaultCharset());
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
         for (ObservationState state : states)
         {
+            writer.write(state.getCollection());
             writer.write(state.getObservationID());
             writer.write(df.format(state.getMaxLastModified()));
+            if (state.getAccMetaChecksum() != null)
+            {
+                writer.write(state.getAccMetaChecksum().toString());
+            }
             writer.endRecord();
         }
         writer.flush();
