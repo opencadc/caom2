@@ -71,13 +71,15 @@ package ca.nrc.cadc.caom2.repo.action;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import com.csvreader.CsvWriter;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
@@ -205,23 +207,18 @@ public class GetAction extends RepoAction
 
     protected long writeObservationList(List<ObservationState> states) throws IOException
     {
-        // write in space separated format
-        syncOutput.setHeader("Content-Type", "text/plain");
+        // write in tsv format
+        syncOutput.setHeader("Content-Type", "text/tsv");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        PrintStream ps = new PrintStream(bc);
+        CsvWriter writer = new CsvWriter(bc, '\t', Charset.defaultCharset());
         for (ObservationState state : states)
         {
-            ps.print(state.getCollection());
-            ps.print(" ");
-            ps.print(state.getObservationID());
-            ps.print(" ");
-            ps.print(df.format(state.getMaxLastModified()));
-            ps.print(" ");
-            ps.print(state.getAccMetaChecksum());
-            ps.print("\n");
+            writer.write(state.getObservationID());
+            writer.write(df.format(state.getMaxLastModified()));
+            writer.endRecord();
         }
-        ps.flush();
+        writer.flush();
         return bc.getByteCount();
     }
 

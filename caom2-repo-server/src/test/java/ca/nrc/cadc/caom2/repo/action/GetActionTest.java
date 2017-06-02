@@ -75,6 +75,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
@@ -171,9 +172,11 @@ public class GetActionTest
         // build the list of observations for the mock dao to return
         List<ObservationState> obsList = new ArrayList<ObservationState>();
         Date date1 = df.parse("2010-10-10T10:10:10.10");
-        obsList.add(new ObservationState("TEST", "1234", date1));
+        URI check1 = URI.create("md5:5b71d023d4729575d550536dce8439e6");
+        obsList.add(new ObservationState("TEST", "1234", date1, check1));
         Date date2 = df.parse("2011-11-11T11:11:11.111");
-        obsList.add(new ObservationState("TEST", "6789", date2));
+        URI check2 = URI.create("md5:aedbcf5e27a17fc2daa5a0e0d7840009");
+        obsList.add(new ObservationState("TEST", "6789", date2, check2));
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
 
@@ -186,9 +189,11 @@ public class GetActionTest
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
 
-        String expected = "1234" + "," + df.format(date1) + "\n" +
-                          "6789" + "," + df.format(date2) + "\n";
-        Assert.assertEquals(expected, out.getContent());
+        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(date1) + "\t" + check1.toString() + "\r\n" +
+                          "TEST" + "\t" + "6789" + "\t" + df.format(date2) + "\t" + check2.toString();
+        String content = out.getContent();
+        log.debug("\n--list content start--\n" + content + "\n--list content end--");
+        Assert.assertEquals(expected, content);
 
 
         // repeat test when start, end and maxRec specified

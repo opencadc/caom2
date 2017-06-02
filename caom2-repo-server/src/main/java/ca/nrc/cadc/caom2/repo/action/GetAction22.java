@@ -96,6 +96,9 @@ public class GetAction22 extends GetAction
         return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
 
+    /**
+     * Write in CSV format
+     */
     @Override
     protected long writeObservationList(List<ObservationState> states) throws IOException
     {

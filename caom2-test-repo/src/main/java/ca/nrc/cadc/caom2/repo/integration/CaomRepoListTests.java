@@ -163,42 +163,50 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     @Test
     public void testListSuccess() throws Throwable
     {
-    	Integer maxRec = 3;
+        try
+        {
+        	Integer maxRec = 3;
 
-    	// Add a list of observations
-    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1",
-    			"testListSuccess2", "testListSuccess3"));
-    	List<Observation> observations = this.putObservations(baseIDs);
-    	Assert.assertTrue("failed to put observations", observations.size() == 3);
-    	Assert.assertNotNull("failed to get first observation maxLastModified date",
-    			observations.get(0).getLastModified());
-    	Assert.assertNotNull("failed to get first observation maxLastModified date",
-    			observations.get(1).getLastModified());
-    	Assert.assertNotNull("failed to get first observation maxLastModified date",
-    			observations.get(2).getLastModified());
-    	Date start = getTime(observations.get(0).getLastModified());
-    	Date mid = getTime(observations.get(1).getLastModified());
-    	Date end = getTime(observations.get(2).getLastModified());
+        	// Add a list of observations
+        	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1",
+        			"testListSuccess2", "testListSuccess3"));
+        	List<Observation> observations = this.putObservations(baseIDs);
+        	Assert.assertTrue("failed to put observations", observations.size() == 3);
+        	Assert.assertNotNull("failed to get first observation maxLastModified date",
+        			observations.get(0).getLastModified());
+        	Assert.assertNotNull("failed to get first observation maxLastModified date",
+        			observations.get(1).getLastModified());
+        	Assert.assertNotNull("failed to get first observation maxLastModified date",
+        			observations.get(2).getLastModified());
+        	Date start = getTime(observations.get(0).getLastModified());
+        	Date mid = getTime(observations.get(1).getLastModified());
+        	Date end = getTime(observations.get(2).getLastModified());
 
-    	// Check that we have maxRec of the observations
-    	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			null, super.SUBJECT2, observations, 200, null, true);
+        	// Check that we have maxRec of the observations
+        	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
+        			null, super.SUBJECT2, observations, 200, null, true);
 
-    	observations.remove(0);
-    	// Check that we only have the last two observations
-    	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
-    			null, super.SUBJECT2, observations, 200, null, true);
+        	observations.remove(0);
+        	// Check that we only have the last two observations
+        	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
+        			null, super.SUBJECT2, observations, 200, null, true);
 
-    	observations.remove(0);
-    	// Check that we only have the last observation
-    	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
-    			null, super.SUBJECT2, observations, 200, null, true);
+        	observations.remove(0);
+        	// Check that we only have the last observation
+        	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
+        			null, super.SUBJECT2, observations, 200, null, true);
 
-    	// cleanup (ok to fail)
-    	for (Observation obs : observations)
-    	{
-	        deleteObservation(obs.getURI().toString(), super.SUBJECT1, null, null);
-    	}
+        	// cleanup (ok to fail)
+        	for (Observation obs : observations)
+        	{
+    	        deleteObservation(obs.getURI().toString(), super.SUBJECT1, null, null);
+        	}
+        }
+        catch (Throwable t)
+        {
+            log.error("unexpected", t);
+            Assert.fail();
+        }
     }
 
     @Test
@@ -397,7 +405,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             for (int i = 0; i < lines.length; i++)
             {
             	String[] fields = lines[i].split(" ");
-            	String actualDate = fields[1];
+            	String actualDate = fields[2];
 
             	if (start != null)
             	{
@@ -406,7 +414,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             	    Assert.assertEquals("wrong date", expectedDate, actualDate);
             	}
 
-            	retMap.put(fields[0], df.parse(actualDate));
+            	retMap.put(fields[1], df.parse(actualDate));
             }
         }
 
