@@ -218,9 +218,6 @@ public class CaomUtilTest
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
-            
-            Date d = CaomUtil.getLastModified(ce);
-            Assert.assertEquals(expected, d);
         }
         catch(Exception unexpected)
         {
