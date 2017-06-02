@@ -136,6 +136,24 @@ public class VocabularyTerm implements Serializable
         URI tmp = URI.create(namespace.toASCIIString() + "#" + term);
         return tmp.toASCIIString();
     }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof VocabularyTerm)
+        {
+            VocabularyTerm rhs = (VocabularyTerm) obj;
+            return (this.term.equals(rhs.term) && this.namespace.equals(rhs.namespace));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return getValue().hashCode();
+    }
+    
     
     /**
      * @deprecated 

@@ -180,7 +180,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 11, 3, 0, 4, 1, 3, 0, 7, 5, 1, 2, 13
+            0, 0, 11, 3, 0, 4, 1, 3, 0, 8, 5, 1, 3, 13
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -272,7 +272,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            1, 1, 1
+            1, 0, 1
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -524,7 +524,7 @@ public class FitsMapperTest
             Assert.assertEquals("theProductID", plane.getProductID());
             Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", plane.metaRelease.toString());
             Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", plane.dataRelease.toString());
-            Assert.assertEquals(DataProductType.IMAGE.getValue(), plane.dataProductType.getValue());
+            Assert.assertEquals(DataProductType.IMAGE, plane.dataProductType);
             Assert.assertEquals(CalibrationLevel.PRODUCT, plane.calibrationLevel);
 
             Assert.assertNotNull(plane.provenance);
