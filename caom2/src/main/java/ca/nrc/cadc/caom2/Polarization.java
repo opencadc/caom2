@@ -82,7 +82,7 @@ public class Polarization implements Serializable
 
     public List<PolarizationState> states;
 
-    public Integer dimension;
+    public Long dimension;
     
      @Override
     public String toString()

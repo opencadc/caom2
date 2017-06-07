@@ -957,7 +957,7 @@ public class ObservationReader implements Serializable
             //String extype = namespace.getPrefix() + ":" + Integer.class.getSimpleName();
             //if ( extype.equals(tval) )
             //{
-                pol.dimension = getChildTextAsInteger("dimension", element, namespace, true);
+                pol.dimension = getChildTextAsLong("dimension", element, namespace, true);
             //}
             //else
             //    throw new ObservationParsingException("unsupported dimension type: " + tval);

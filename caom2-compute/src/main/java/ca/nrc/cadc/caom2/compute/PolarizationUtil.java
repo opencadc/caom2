@@ -152,7 +152,7 @@ public final class PolarizationUtil
         {
             p.states = new ArrayList<PolarizationState>();
             p.states.addAll(pol);
-            p.dimension = new Integer(numPixels);
+            p.dimension = new Long(numPixels);
         }
         return p;
     }

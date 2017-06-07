@@ -734,7 +734,7 @@ public class ObservationReaderWriterTest
             p.energy.transition = new EnergyTransition("H", "alpha");
             
             p.polarization = new Polarization();
-            p.polarization.dimension = 3;
+            p.polarization.dimension = 3l;
             p.polarization.states = new ArrayList<>();
             p.polarization.states.add(PolarizationState.I);
             p.polarization.states.add(PolarizationState.Q);
@@ -761,7 +761,10 @@ public class ObservationReaderWriterTest
             p.time.resolution = 0.5;
             p.time.sampleSize = 0.15;
 
-            
+            //p.energy = null;
+            //p.polarization = null;
+            //p.position = null;
+            //p.time = null;
         }
     }
     

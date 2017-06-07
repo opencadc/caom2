@@ -187,7 +187,7 @@ public class ComputeUtilTest
         Polarization pol = new Polarization();
         pol.states = new ArrayList<PolarizationState>();
         pol.states.add(PolarizationState.I);
-        pol.dimension = new Integer(1);
+        pol.dimension = new Long(1);
         p.polarization = pol;
     }
 }
