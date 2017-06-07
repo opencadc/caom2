@@ -72,7 +72,7 @@ create table caom2.Plane
 
 -- polarization
     polarization_states     varchar(34),
-    polarization_dimension  integer,
+    polarization_dimension  bigint,
 
 -- optimisation
     dataReadAccessGroups tsvector default '',

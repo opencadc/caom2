@@ -8,7 +8,8 @@ alter table caom2.Observation
 alter table caom2.Plane
     add column creatorID varchar(512),
     add column metaChecksum varchar(136),
-    add column accMetaChecksum varchar(136);
+    add column accMetaChecksum varchar(136),
+    alter column polarization_dimension TYPE bigint;
 
 alter table caom2.Artifact
     add column contentChecksum varchar(136),

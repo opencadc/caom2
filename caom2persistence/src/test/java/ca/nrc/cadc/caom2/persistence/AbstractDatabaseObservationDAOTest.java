@@ -137,6 +137,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -597,6 +598,7 @@ public abstract class AbstractDatabaseObservationDAOTest
                 Observation ret1 = dao.get(orig.getURI());
 
                 Assert.assertNotNull("found", ret1);
+                log.info("testUpdateSimpleObservation/created: orig vs ret1");
                 testEqual(orig, ret1);
 
                 // the lastModified timestamps are maintained by the DAO, so lets set them to null here
@@ -615,7 +617,7 @@ public abstract class AbstractDatabaseObservationDAOTest
                         }
                     }
                 }
-
+                
                 // now modify the objects
                 ret1.proposal.getKeywords().add("something=new");
                 if (i > 1)
@@ -650,6 +652,7 @@ public abstract class AbstractDatabaseObservationDAOTest
                         
                 Observation ret2 = dao.get(orig.getURI());
                 Assert.assertNotNull("found", ret2);
+                log.info("testUpdateSimpleObservation/updated: ret1 vs ret2");
                 testEqual(ret1, ret2);
 
                 if (i > 1)
@@ -701,6 +704,7 @@ public abstract class AbstractDatabaseObservationDAOTest
                         }
                     }
 
+                    log.info("testUpdateSimpleObservation/updated-timestamps: ret1 vs ret3");
                     testEqual(ret1, ret3); // this makes sure the lastModified values assigned in the put match the ones in the DB
                 }
 
@@ -1064,6 +1068,22 @@ public abstract class AbstractDatabaseObservationDAOTest
         // all checksums are computed and assigned on expected as a side effect of calling put
         Assert.assertEquals(cn+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
         Assert.assertEquals(cn+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
+        /*
+        try
+        {
+            // above verifies that checksum was written to and read from database
+            // below checks that all values included in the checksum were faithfully written/read
+            // in case some other asser is not catching it - fail  means there is a bug in the
+            // comparisons this should catch it
+            URI mcs = actual.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            Assert.assertEquals(cn + " recomputed metaChecksum", actual.getMetaChecksum(), mcs);
+        }
+        catch(Exception ex)
+        {
+            log.error(cn + " failed to compute metaChecksum", ex);
+            Assert.fail(cn + " failed to compute metaChecksum: " + ex);
+        }
+        */
         
         //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
         
