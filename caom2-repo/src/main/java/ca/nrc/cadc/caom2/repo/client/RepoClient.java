@@ -1,6 +1,8 @@
 package ca.nrc.cadc.caom2.repo.client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -10,19 +12,24 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.security.auth.Subject;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 
-public class RepoClient {
+public class RepoClient  {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
     private URI resourceId = null;
@@ -31,35 +38,38 @@ public class RepoClient {
     private URLConnection urlConnection = null;
     private List<ObservationState> observationStates = new ArrayList<ObservationState>();
     private List<Observation> observations = new ArrayList<Observation>();
+    private Subject subject = null;
 
     // constructor takes service identifier arg
     public RepoClient(URI resourceID) {
         this.resourceId = resourceID;
 
         rc = new RegistryClient();
+        
+        log.info("******"+System.getProperty("user.home"));
 
-        // User RegistryClient to go from resourceID to service URL
-        serviceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
 
-        if (serviceURL != null) {
-            log.info("SERVICE URL: " + serviceURL.toString());
 
-            // try {
-            // // I am not sure if below part is needed or it is managed by HttpDownload
-            // this.urlConnection = serviceURL.openConnection();
-            // System.out.println("URL connection opened");
-            //
-            // this.urlConnection.connect();
-            // System.out.println("Connected to URL");
-            //
-            // } catch (IOException e) {
-            // // TODO Auto-generated catch block
-            // e.printStackTrace();
-            // }
 
-        } else {
-            log.error("Service URL is NULL");
-        }
+            
+
+            // setup optional authentication for harvesting from a web service
+                
+            subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+
+            if (subject != null)
+            {
+            	AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+                // User RegistryClient to go from resourceID to service URL
+                serviceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, meth);
+                log.info("SERVICE URL: " + serviceURL.toString());
+                log.info("authentication using: " + meth);
+            } else {
+            	log.error("Subject is NULL");
+            }
+              
+
+         
 
     }
 
@@ -68,9 +78,31 @@ public class RepoClient {
         // Use HttpDownload to make the http GET calls (because it handles a lot of the
         // authentication stuff)
 
-        File f = new File("/home/iguerrero/kk/test");
-        HttpDownload httpD = new HttpDownload(serviceURL, f);
-        httpD.run();
+    	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        //HttpDownload get = new HttpDownload(serviceURL, bos);
+    	URL url;
+		try {
+			url = new URL("http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2repo/auth/IRIS?maxrec=5");
+
+    	
+    	HttpDownload get = new HttpDownload(url, bos);
+    	
+        if (subject != null)
+        {    
+            Subject.doAs(subject, new RunnableAction(get));
+            
+            log.info("Get run within subject");
+        } else {
+        	get.run();
+        	log.info("Subject is null");
+        }
+        
+        log.info("Got from URL: "+ bos.toString());
+        
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
         // log.info("http Download run: " + f.gets);
         return null;
@@ -95,7 +127,7 @@ public class RepoClient {
     public static void main(String[] args) {
 
         Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.TRACE);
         Log4jInit.setLevel("ca.nrc.cadc.reg.client.RegistryClient", Level.DEBUG);
 
         log.info("TEST CAOM2REPO");
@@ -110,5 +142,6 @@ public class RepoClient {
         }
 
     }
+
 
 }
