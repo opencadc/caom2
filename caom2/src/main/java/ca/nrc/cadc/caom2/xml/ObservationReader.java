@@ -108,6 +108,7 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -797,7 +798,7 @@ public class ObservationReader implements Serializable
                     double cval1 = getChildTextAsDouble("cval1", ve, namespace, true);
                     double cval2 = getChildTextAsDouble("cval2", ve, namespace, true);
                     int sv = getChildTextAsInteger("type", ve, namespace, true);
-                    poly.getVertices().add(new Vertex(cval1, cval1, SegmentType.toValue(sv)));
+                    poly.getVertices().add(new Vertex(cval1, cval2, SegmentType.toValue(sv)));
                 }
                 pos.bounds = poly;
             }
@@ -839,31 +840,16 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
-            //Attribute type = cur.getAttribute("type", xsiNamespace);
-            //String tval = type.getValue();
-            //String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            //if ( extype.equals(tval) )
-            //{
-                double lb = getChildTextAsDouble("lower", cur, namespace, true);
-                double ub = getChildTextAsDouble("upper", cur, namespace, true);
-                nrg.bounds = new Interval(lb, ub);
-            //}
-            //else
-            //    throw new ObservationParsingException("unsupported bounds type: " + tval);
+            double lb = getChildTextAsDouble("lower", cur, namespace, true);
+            double ub = getChildTextAsDouble("upper", cur, namespace, true);
+            nrg.bounds = new Interval(lb, ub);
+            addSamples(nrg.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null)
         {
-            //Attribute type = cur.getAttribute("type", xsiNamespace);
-            //String tval = type.getValue();
-            //String extype = namespace.getPrefix() + ":" + Long.class.getSimpleName();
-            //if ( extype.equals(tval) )
-            //{
-                nrg.dimension = getChildTextAsLong("dimension", element, namespace, true);
-            //}
-            //else
-            //    throw new ObservationParsingException("unsupported dimension type: " + tval);
+            nrg.dimension = getChildTextAsLong("dimension", element, namespace, true);
         }
         
         nrg.resolvingPower = getChildTextAsDouble("resolvingPower", element, namespace, false);
@@ -898,17 +884,10 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
-            //Attribute type = cur.getAttribute("type", xsiNamespace);
-            //String tval = type.getValue();
-            //String extype = namespace.getPrefix() + ":" + Interval.class.getSimpleName();
-            //if ( extype.equals(tval) )
-            //{
-                double lb = getChildTextAsDouble("lower", cur, namespace, true);
-                double ub = getChildTextAsDouble("upper", cur, namespace, true);
-                tim.bounds = new Interval(lb, ub);
-            //}
-            //else
-            //    throw new ObservationParsingException("unsupported bounds type: " + tval);
+            double lb = getChildTextAsDouble("lower", cur, namespace, true);
+            double ub = getChildTextAsDouble("upper", cur, namespace, true);
+            tim.bounds = new Interval(lb, ub);
+            addSamples(tim.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
@@ -932,6 +911,21 @@ public class ObservationReader implements Serializable
         tim.exposure = getChildTextAsDouble("exposure", element, namespace, false);
         
         return tim;        
+    }
+    
+    private void addSamples(List<SubInterval> samples, Element sampleElement, Namespace namespace)
+        throws ObservationParsingException
+    {
+        if (sampleElement != null)
+        {
+            List<Element> sse = sampleElement.getChildren("sample", namespace);
+            for (Element se : sse)
+            {
+                double lb = getChildTextAsDouble("lower", se, namespace, true);
+                double ub = getChildTextAsDouble("upper", se, namespace, true);
+                samples.add(new SubInterval(lb, ub));
+            }
+        }
     }
     
     protected Polarization getPolarization(Element parent, Namespace namespace, ReadContext rc)

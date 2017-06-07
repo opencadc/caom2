@@ -281,6 +281,7 @@ public abstract class CaomEntity implements Serializable
             {
                 CaomEntity ce = (CaomEntity) o;
                 digest.update(primtiveValueToBytes(ce.id));
+                log.warn("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
             }
             
             SortedSet<Field> fields = getStateFields(c, includeTransient);
@@ -292,13 +293,13 @@ public abstract class CaomEntity implements Serializable
                 Object fo = f.get(o);
                 if (fo != null) 
                 {
-                    if (SC_DEBUG) log.debug("checksum: " + cf + " is a " + fo.getClass().getName());
                     Class ac = fo.getClass(); // actual class
                     if (fo instanceof CaomEnum) 
                     {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
                         digest.update(primtiveValueToBytes(ce.getValue()));
+                        log.warn("metaChecksum: " + cf + ".getValue() " + ce.getValue());
                     } 
                     else if (isLocalClass(ac)) 
                     {
@@ -312,19 +313,28 @@ public abstract class CaomEntity implements Serializable
                         {
                             Object co = i.next();
                             Class cc = co.getClass();
-                            if (isLocalClass(cc)) 
+                            if (co instanceof CaomEnum) 
+                            {
+                                // use ce.getValue
+                                CaomEnum ce = (CaomEnum) co;
+                                digest.update(primtiveValueToBytes(ce.getValue()));
+                                log.warn("metaChecksum: " + cf + ".getValue() " + ce.getValue());
+                            } 
+                            else if (isLocalClass(cc)) 
                             {
                                 calcMetaChecksum(cc, co, includeTransient, digest);
                             } 
                             else // non-caom2 class ~primtive value
                             {
                                 digest.update(primtiveValueToBytes(co));
+                                log.warn("metaChecksum: " + cf + " " + co);
                             }
                         }
                     } 
                     else // non-caom2 class ~primtive value
                     {
                         digest.update(primtiveValueToBytes(fo));
+                        log.warn("metaChecksum: " + cf + " " + fo);
                     }
                 }
                 else if (SC_DEBUG) log.debug("skip: " + cf);

@@ -85,11 +85,8 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
 
     public static final String SCHEME = "caom";
     
-    private String collection;
-    private String observationID;
+    private URI uri;
     
-    private transient URI uri;
-
     private ObservationURI() { }
 
     public ObservationURI(URI uri)
@@ -101,8 +98,8 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         String[] cop = ssp.split("/");
         if (cop.length == 2)
         {
-            this.collection = cop[0];
-            this.observationID = cop[1];
+            String collection = cop[0];
+            String observationID = cop[1];
             CaomValidator.assertNotNull(getClass(), "collection", collection);
             CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
             CaomValidator.assertNotNull(getClass(), "observationID", observationID);
@@ -119,8 +116,6 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
         CaomValidator.assertNotNull(getClass(), "observationID", observationID);
         CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
-        this.collection = collection;
-        this.observationID = observationID;
         this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
     }
 
@@ -132,12 +127,12 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
 
     public String getCollection()
     {
-        return collection;
+        return uri.getSchemeSpecificPart().split("/")[0];
     }
 
     public String getObservationID()
     {
-        return observationID;
+        return uri.getSchemeSpecificPart().split("/")[1];
     }
 
     public URI getURI()
@@ -166,12 +161,9 @@ public class ObservationURI implements Comparable<ObservationURI>, Serializable
         return uri.hashCode();
     }
 
+    @Override
     public int compareTo(ObservationURI u)
     {
-        int ret = collection.compareTo(u.collection);
-        if (ret != 0)
-            return ret;
-        return observationID.compareTo(u.observationID);
-                
+        return this.uri.compareTo(u.uri);
     }
 }

@@ -119,7 +119,7 @@ public class CaomUtilTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     Random rnd = new Random();
@@ -263,8 +263,6 @@ public class CaomUtilTest
     {
         try
         {
-            try
-        {
             Set<PlaneURI> uris = new TreeSet<PlaneURI>();
             String actual = CaomUtil.encodePlaneURIs(uris);
             Assert.assertNull(actual);
@@ -276,18 +274,17 @@ public class CaomUtilTest
             uris.add(new PlaneURI(ouri, "foo1"));
             uris.add(new PlaneURI(ouri, "foo2"));
             uris.add(new PlaneURI(ouri, "foo3"));
+            for (PlaneURI u : uris)
+                log.debug("orig: " + u);
             actual = CaomUtil.encodePlaneURIs(uris);
+            log.debug("encoded: " + actual);
             Assert.assertNotNull(actual);
             CaomUtil.decodePlaneURIs(actual, uris2);
+            for (PlaneURI u : uris2)
+                log.debug("decoded: " + u);
             Assert.assertEquals(3, uris2.size());
             Assert.assertTrue( uris.containsAll(uris2));
             Assert.assertTrue( uris2.containsAll(uris));
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
         }
         catch(Exception unexpected)
         {

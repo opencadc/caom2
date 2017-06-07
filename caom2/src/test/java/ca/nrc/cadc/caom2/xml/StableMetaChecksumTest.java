@@ -95,7 +95,7 @@ public class StableMetaChecksumTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
     }
     
@@ -119,36 +119,53 @@ public class StableMetaChecksumTest
             Observation o = or.read(r);
             Assert.assertNotNull(o);
             
+            boolean verifyAcc = true;
+            
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI mcs = o.computeMetaChecksum(true, digest);
             Assert.assertEquals("observation.metaChecksum", o.getMetaChecksum(), mcs);
-            URI acs = o.computeAccMetaChecksum(true, digest);
-            Assert.assertEquals("observation.metaChecksum", o.getAccMetaChecksum(), acs);
+            if (verifyAcc)
+            {
+                URI acs = o.computeAccMetaChecksum(true, digest);
+                Assert.assertEquals("observation.metaChecksum", o.getAccMetaChecksum(), acs);
+            }
             
             for (Plane pl : o.getPlanes())
             {
                 mcs = pl.computeMetaChecksum(true, digest);
                 Assert.assertEquals("plane.metaChecksum", pl.getMetaChecksum(), mcs);
-                acs = pl.computeAccMetaChecksum(true, digest);
-                Assert.assertEquals("plane.accMetaChecksum", pl.getAccMetaChecksum(), acs);
+                if (verifyAcc)
+                {
+                    URI acs = pl.computeAccMetaChecksum(true, digest);
+                    Assert.assertEquals("plane.accMetaChecksum", pl.getAccMetaChecksum(), acs);
+                }
                 for (Artifact ar : pl.getArtifacts())
                 {
                     mcs = ar.computeMetaChecksum(true, digest);
                     Assert.assertEquals("artifact.metaChecksum", ar.getMetaChecksum(), mcs);
-                    acs = ar.computeAccMetaChecksum(true, digest);
-                    Assert.assertEquals("artifact.accMetaChecksum", ar.getAccMetaChecksum(), acs);
+                    if (verifyAcc)
+                    {
+                        URI acs = ar.computeAccMetaChecksum(true, digest);
+                        Assert.assertEquals("artifact.accMetaChecksum", ar.getAccMetaChecksum(), acs);
+                    }
                     for (Part pa : ar.getParts())
                     {
                         mcs = pa.computeMetaChecksum(true, digest);
                         Assert.assertEquals("part.metaChecksum", pa.getMetaChecksum(), mcs);
-                        acs = pa.computeAccMetaChecksum(true, digest);
-                        Assert.assertEquals("part.accMetaChecksum", pa.getAccMetaChecksum(), acs);
+                        if (verifyAcc)
+                        {
+                            URI acs = pa.computeAccMetaChecksum(true, digest);
+                            Assert.assertEquals("part.accMetaChecksum", pa.getAccMetaChecksum(), acs);
+                        }
                         for (Chunk ch : pa.getChunks())
                         {
                             mcs = ch.computeMetaChecksum(true, digest);
                             Assert.assertEquals("chunk.metaChecksum", ch.getMetaChecksum(), mcs);
-                            acs = ch.computeAccMetaChecksum(true, digest);
-                            Assert.assertEquals("chunk.accMetaChecksum", ch.getAccMetaChecksum(), acs);
+                            if (verifyAcc)
+                            {
+                                URI acs = ch.computeAccMetaChecksum(true, digest);
+                                Assert.assertEquals("chunk.accMetaChecksum", ch.getAccMetaChecksum(), acs);
+                            }
                         }
                     }
                 }

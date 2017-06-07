@@ -74,6 +74,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
+import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -92,7 +94,12 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -124,8 +131,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -164,7 +173,7 @@ public class ObservationReaderWriterTest
     
     // this "test" writes out a pretty complete document to use in comparison with python round-trip
     // and python meta checksum computations
-    //@Test
+    @Test
     public void doWriteCompleteComposite()
     {
         try
@@ -174,6 +183,9 @@ public class ObservationReaderWriterTest
             ti.setDepth(5);
             ti.setChildCount(2);
             Observation o = ti.getCompositeObservation();
+            
+            // include computed metadata
+            addComputedPlaneMetadata(o.getPlanes());
             
             long t1 = new Date().getTime();
             long t2 = t1 + 2000l;
@@ -673,7 +685,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testComputedSimple()
     {
         try
@@ -690,25 +702,8 @@ public class ObservationReaderWriterTest
             
             log.debug("computing transient metadata for planes...");
                     
-            for (Plane p : observation.getPlanes())
-            {
-                // TODO: create dummy values for all computed plane metadata
-                
-                Assert.assertNotNull("Plane.position", p.position);
-                Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
+            addComputedPlaneMetadata(observation.getPlanes());
 
-                Assert.assertNotNull("Plane.energy", p.energy);
-                Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
-
-                Assert.assertNotNull("Plane.time", p.time);
-                Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
-
-                Assert.assertNotNull("Plane.polarization", p.polarization);
-                Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
-                Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
-            }
-
-            // CAOM-2.3 is now the default
             testObservation(observation, true);
             
             testObservation(observation, false);
@@ -717,6 +712,56 @@ public class ObservationReaderWriterTest
         {
             log.error("unexpected exception", unexpected);
             fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    protected void addComputedPlaneMetadata(Set<Plane> planes)
+    {
+        for (Plane p : planes)
+        {
+            // alphabetical so easier to trace and debug metaChecksum computation
+            
+            p.energy = new Energy();
+            p.energy.bandpassName = "V";
+            p.energy.bounds = new Interval(400e-6, 900e-6);
+            p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
+            p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
+            p.energy.dimension = 2l;
+            p.energy.emBand = EnergyBand.OPTICAL;
+            p.energy.resolvingPower = 2.0;
+            p.energy.restwav = 600e-9;
+            p.energy.sampleSize = 100e-6;
+            p.energy.transition = new EnergyTransition("H", "alpha");
+            
+            p.polarization = new Polarization();
+            p.polarization.dimension = 3;
+            p.polarization.states = new ArrayList<>();
+            p.polarization.states.add(PolarizationState.I);
+            p.polarization.states.add(PolarizationState.Q);
+            p.polarization.states.add(PolarizationState.U);
+            
+            p.position = new Position();
+            Polygon poly = new Polygon();
+            poly.getVertices().add(new Vertex(2.0, 3.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(3.0, 4.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(1.0, 5.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p.position.bounds = poly;
+            p.position.dimension = new Dimension2D(1024, 2048);
+            p.position.resolution = 0.05;
+            p.position.sampleSize = 0.025;
+            p.position.timeDependent = false;
+
+            p.time = new Time();
+            p.time.bounds = new Interval(50000.25, 50000.75);
+            p.time.bounds.getSamples().add(new SubInterval(50000.25, 50000.40));
+            p.time.bounds.getSamples().add(new SubInterval(50000.50, 50000.75));
+            p.time.dimension = 2l;
+            p.time.exposure = 666.0;
+            p.time.resolution = 0.5;
+            p.time.sampleSize = 0.15;
+
+            
         }
     }
     

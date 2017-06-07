@@ -109,57 +109,22 @@ public class PolarizationStateTest
     {
         try
         {
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
             for (PolarizationState c : PolarizationState.values())
             {
                 log.debug("testing: " + c);
-                int i = c.getValue();
-                PolarizationState c2 = PolarizationState.toValue(i);
+                String s = c.getValue();
+                PolarizationState c2 = PolarizationState.toValue(s);
                 Assert.assertEquals(c, c2);
-                min = Math.min(min, i);
-                max = Math.max(max, i);
             }
             
             try 
             {
-                PolarizationState c = PolarizationState.toValue(min - 1);
+                PolarizationState c = PolarizationState.toValue("FOO");
                 Assert.fail("expected IllegalArgumentException, got: " + c);
             } 
             catch(IllegalArgumentException expected) 
             {
                 log.debug("caught expected exception: " + expected);
-            }
-            
-            try 
-            {
-                PolarizationState c = PolarizationState.toValue(max + 1);
-                Assert.fail("expected IllegalArgumentException, got: " + c);
-            } 
-            catch(IllegalArgumentException expected) 
-            {
-                log.debug("caught expected exception: " + expected);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testStringValue()
-    {
-        try
-        {
-            // just testing that the method can turn any value into a string so that a new
-            // value is correctly added to the stringValue() method
-            // correctness is a 100% duplicate of the enum code itself
-            for (PolarizationState c : PolarizationState.values())
-            {
-                String s = c.stringValue();
-                log.debug("found value: " + s);
             }
         }
         catch(Exception unexpected)
@@ -182,6 +147,53 @@ public class PolarizationStateTest
                 int i = c.checksum();
                 boolean added = values.add(i);
                 Assert.assertTrue("added " + i, added);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testFromWCS()
+    {
+        try
+        {
+            Assert.assertEquals(PolarizationState.I, PolarizationState.toValue(1));
+            Assert.assertEquals(PolarizationState.Q, PolarizationState.toValue(2));
+            Assert.assertEquals(PolarizationState.U, PolarizationState.toValue(3));
+            Assert.assertEquals(PolarizationState.V, PolarizationState.toValue(4));
+            
+            Assert.assertEquals(PolarizationState.POLI, PolarizationState.toValue(5));
+            Assert.assertEquals(PolarizationState.FPOLI, PolarizationState.toValue(6));
+            Assert.assertEquals(PolarizationState.POLA, PolarizationState.toValue(7));
+            Assert.assertEquals(PolarizationState.EPOLI, PolarizationState.toValue(8));
+            Assert.assertEquals(PolarizationState.CPOLI, PolarizationState.toValue(9));
+            Assert.assertEquals(PolarizationState.NPOLI, PolarizationState.toValue(10));
+            
+            Assert.assertEquals(PolarizationState.RR, PolarizationState.toValue(-1));
+            Assert.assertEquals(PolarizationState.LL, PolarizationState.toValue(-2));
+            Assert.assertEquals(PolarizationState.RL, PolarizationState.toValue(-3));
+            Assert.assertEquals(PolarizationState.LR, PolarizationState.toValue(-4));
+            Assert.assertEquals(PolarizationState.XX, PolarizationState.toValue(-5));
+            Assert.assertEquals(PolarizationState.YY, PolarizationState.toValue(-6));
+            Assert.assertEquals(PolarizationState.XY, PolarizationState.toValue(-7));
+            Assert.assertEquals(PolarizationState.YX, PolarizationState.toValue(-8));
+            
+            
+            try 
+            {
+                for (int i : new int[] { 0, 11, -9})
+                {   
+                    PolarizationState c = PolarizationState.toValue(i);
+                    Assert.fail("expected IllegalArgumentException, got: " + c);
+                }
+            } 
+            catch(IllegalArgumentException expected) 
+            {
+                log.debug("caught expected exception: " + expected);
             }
         }
         catch(Exception unexpected)
