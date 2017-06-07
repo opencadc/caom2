@@ -309,7 +309,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
 
             boolean updateMax = false;
             if (computeLastModified)
-                updateMax = DatabaseObservationDAO.this.updateEntity(obs, cur);
+                updateMax = updateEntity(obs, cur);
             
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
@@ -505,8 +505,9 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     }
 
     // update CaomEntity state: 
-    // lastModified, maxLastModified
-    // metaCheclsum, accMetaChecksum
+    // always compute and assign: metaChecksum, accMetaChecksum
+    // assign if metaChecksum changes: lastModified
+    // assign if lastModified changed or a child's maxLastModified changes
     private boolean updateEntity(Observation entity, ObservationSkeleton s)
     {
         if (s != null)
@@ -529,7 +530,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (plane.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = DatabaseObservationDAO.this.updateEntity(plane, skel, now);
+            boolean ulm = updateEntity(plane, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -587,7 +588,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (artifact.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = DatabaseObservationDAO.this.updateEntity(artifact, skel, now);
+            boolean ulm = updateEntity(artifact, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -645,7 +646,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (part.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = DatabaseObservationDAO.this.updateEntity(part, skel, now);
+            boolean ulm = updateEntity(part, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)

@@ -281,7 +281,7 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
                 
                 // check accMetaChecksum to see if it and maxLastModified have changed
                 // this correctly maintains accMetaChecksum and maxLastModified without
-                // over-using force whcih only worked for Observation
+                // over-using force which only worked for Observation
                 if (!delta && cur.accMetaChecksum != null)
                 {
                     delta = !cur.accMetaChecksum.equals(val.getAccMetaChecksum());
