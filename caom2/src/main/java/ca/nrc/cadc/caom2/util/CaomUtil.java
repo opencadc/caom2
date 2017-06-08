@@ -165,23 +165,6 @@ public class CaomUtil implements Serializable
         catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
     }
 
-    public static Date getLastModified(Object ce)
-    {
-        return getLastModified(ce, "lastModified");
-    }
-    
-    public static Date getLastModified(Object ce, String fieldName)
-    {
-        try
-        {
-            Field f = CaomEntity.class.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            return (Date) f.get(ce);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
-    
     // IVOA ObsCore-1.0 Data Model, B.6.6
     public static String encodeStates(List<PolarizationState> states)
     {

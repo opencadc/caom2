@@ -65,95 +65,122 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.compute;
+package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Set;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.MissingResourceException;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- *
+ * 
  * @author pdowler
  */
-public final class PolarizationUtil
+public class StableMetaChecksumTest 
 {
-    private static final Logger log = Logger.getLogger(PolarizationUtil.class);
-    
-    private PolarizationUtil() { }
+    private static final Logger log = Logger.getLogger(StableMetaChecksumTest.class);
 
-    public static Polarization compute(Set<Artifact> artifacts)
+    static
     {
-        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
-        ProductType productType = Util.choseProductType(artifacts);
-        log.debug("compute: " + productType);
-        int numPixels = 0;
-        for (Artifact a : artifacts)
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
+    
+    public StableMetaChecksumTest() { }
+    
+    @Test
+    public void testStableChecksums()
+    {
+        try
         {
-            for (Part p : a.getParts())
+            // read stored file with computed checksums and verify
+            File f = FileUtil.getFileFromResource("sample-composite-caom23.xml", StableMetaChecksumTest.class);
+            if (!f.exists())
             {
-                for (Chunk c : p.getChunks())
+                log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
+                return;
+            }
+            
+            Reader r = new FileReader(f);
+            ObservationReader or = new ObservationReader();
+            Observation o = or.read(r);
+            Assert.assertNotNull(o);
+            
+            boolean verifyAcc = true;
+            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
+            
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            URI mcs = o.computeMetaChecksum(true, digest);
+            Assert.assertEquals("observation.metaChecksum", o.getMetaChecksum(), mcs);
+            if (verifyAcc)
+            {
+                URI acs = o.computeAccMetaChecksum(true, digest);
+                Assert.assertEquals("observation.metaChecksum", o.getAccMetaChecksum(), acs);
+            }
+            
+            for (Plane pl : o.getPlanes())
+            {
+                mcs = pl.computeMetaChecksum(true, digest);
+                Assert.assertEquals("plane.metaChecksum", pl.getMetaChecksum(), mcs);
+                if (verifyAcc)
                 {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
+                    URI acs = pl.computeAccMetaChecksum(true, digest);
+                    Assert.assertEquals("plane.accMetaChecksum", pl.getAccMetaChecksum(), acs);
+                }
+                for (Artifact ar : pl.getArtifacts())
+                {
+                    mcs = ar.computeMetaChecksum(true, digest);
+                    Assert.assertEquals("artifact.metaChecksum", ar.getMetaChecksum(), mcs);
+                    if (verifyAcc)
                     {
-                        if (c.polarization != null)
+                        URI acs = ar.computeAccMetaChecksum(true, digest);
+                        Assert.assertEquals("artifact.accMetaChecksum", ar.getAccMetaChecksum(), acs);
+                    }
+                    for (Part pa : ar.getParts())
+                    {
+                        mcs = pa.computeMetaChecksum(true, digest);
+                        Assert.assertEquals("part.metaChecksum", pa.getMetaChecksum(), mcs);
+                        if (verifyAcc)
                         {
-                            numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            CoordRange1D range = c.polarization.getAxis().range;
-                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
-                            CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null)
+                            URI acs = pa.computeAccMetaChecksum(true, digest);
+                            Assert.assertEquals("part.accMetaChecksum", pa.getAccMetaChecksum(), acs);
+                        }
+                        for (Chunk ch : pa.getChunks())
+                        {
+                            mcs = ch.computeMetaChecksum(true, digest);
+                            Assert.assertEquals("chunk.metaChecksum", ch.getMetaChecksum(), mcs);
+                            if (verifyAcc)
                             {
-                                int lb = (int) range.getStart().val;
-                                int ub = (int) range.getEnd().val;
-                                for (int i=lb; i <= ub; i++)
-                                {
-                                    pol.add(PolarizationState.toValue(i));
-                                }
-                            }
-                            else if (bounds != null)
-                            {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
-                                    int lb = (int) cr.getStart().val;
-                                    int ub = (int) cr.getEnd().val;
-                                    for (int i=lb; i <= ub; i++)
-                                    {
-                                        pol.add(PolarizationState.toValue(i));
-                                    }
-                                }
-                            }
-                            else if (function != null)
-                            {
-                                for (int i=1; i <= function.getNaxis(); i++)
-                                {
-                                    double pix = (double) i;
-                                    int val = (int) Util.pix2val(function, pix);
-                                    pol.add(PolarizationState.toValue(val));
-                                }
+                                URI acs = ch.computeAccMetaChecksum(true, digest);
+                                Assert.assertEquals("chunk.accMetaChecksum", ch.getAccMetaChecksum(), acs);
                             }
                         }
                     }
                 }
             }
+            
+            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc + " [OK]");
         }
-
-        Polarization p = new Polarization();
-        if ( !pol.isEmpty() )
+        catch(MissingResourceException oops)
         {
-            p.states = new ArrayList<PolarizationState>();
-            p.states.addAll(pol);
-            p.dimension = new Long(numPixels);
+            log.warn("SKIPPING TEST: " + oops);
         }
-        return p;
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

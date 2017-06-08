@@ -72,7 +72,7 @@ package ca.nrc.cadc.caom2;
 /**
  * @author pdowler
  */
-public enum ReleaseType implements CaomEnum
+public enum ReleaseType implements CaomEnum<String>
 {
     DATA("data"),
     META("meta");
@@ -96,11 +96,6 @@ public enum ReleaseType implements CaomEnum
         return value.hashCode();
     }
 
-    @Override
-    public byte[] getBytes() {
-        return value.getBytes();
-    }
-    
     @Override
     public String toString()
     {

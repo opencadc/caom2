@@ -220,7 +220,6 @@ public class Caom2TestInstances
             observation.intent = ObservationIntentType.CALIBRATION;
             observation.metaRelease = ivoaDate;
             observation.sequenceNumber = new Integer(123);
-            observation.setAlgorithm(getAlgorithm());
             observation.proposal = getProposal();
             observation.target = getTarget();
             observation.targetPosition = getTargetPosition("ICRS", null);
@@ -245,7 +244,6 @@ public class Caom2TestInstances
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
             observation.sequenceNumber = new Integer(123);
-            observation.setAlgorithm(getAlgorithm());
             observation.proposal = getProposal();
             observation.target = getTarget();
             observation.targetPosition = getTargetPosition("FK5", 2000.0);
@@ -344,7 +342,7 @@ public class Caom2TestInstances
             Plane plane = new Plane("productID"+i);
             if (complete)
             {
-                plane.creatorID = new URI("http://foo/bar");
+                plane.creatorID = new URI("ivo://example.org/foo?"+plane.getProductID());
                 plane.metaRelease = ivoaDate;
                 plane.dataRelease = ivoaDate;
                 plane.dataProductType = DataProductType.IMAGE;

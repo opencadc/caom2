@@ -81,11 +81,7 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
 {
     private static final long serialVersionUID = 201202091030L;
 
-    // immutable state
-    private ObservationURI parent;
-    private String productID;
-    
-    private transient URI uri;
+    private URI uri;
 
     private PlaneURI() { }
 
@@ -98,12 +94,16 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
         String[] cop = ssp.split("/");
         if (cop.length == 3)
         {
-            this.parent = new ObservationURI(cop[0], cop[1]);
-            this.productID = cop[2];
-            CaomValidator.assertNotNull(getClass(), "parent", parent);
+            String collection = cop[0];
+            String observationID = cop[1];
+            String productID = cop[2];
+           CaomValidator.assertNotNull(getClass(), "collection", collection);
+            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
             CaomValidator.assertNotNull(getClass(), "productID", productID);
             CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-            this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
+            this.uri = URI.create(ObservationURI.SCHEME + ":" + collection + "/" + observationID + "/" + productID);
         }
         else
             throw new IllegalArgumentException("input URI has " + cop.length
@@ -115,9 +115,6 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
         CaomValidator.assertNotNull(getClass(), "parent", parent);
         CaomValidator.assertNotNull(getClass(), "productID", productID);
         CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-
-        this.parent = parent;
-        this.productID = productID;
         this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
         
     }
@@ -135,12 +132,14 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
 
     public ObservationURI getParent()
     {
-        return parent;
+        String collection = uri.getSchemeSpecificPart().split("/")[0];
+        String observationID = uri.getSchemeSpecificPart().split("/")[1];
+        return new ObservationURI(collection, observationID);
     }
 
     public String getProductID()
     {
-        return productID;
+        return uri.getSchemeSpecificPart().split("/")[2];
     }
 
     @Override
@@ -164,6 +163,7 @@ public class PlaneURI implements Comparable<PlaneURI>, Serializable
         return uri.hashCode();
     }
 
+    @Override
     public int compareTo(PlaneURI u)
     {
         return this.uri.compareTo(u.uri);

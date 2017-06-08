@@ -74,6 +74,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
+import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -92,7 +94,12 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -124,8 +131,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -164,7 +173,7 @@ public class ObservationReaderWriterTest
     
     // this "test" writes out a pretty complete document to use in comparison with python round-trip
     // and python meta checksum computations
-    //@Test
+    @Test
     public void doWriteCompleteComposite()
     {
         try
@@ -175,38 +184,43 @@ public class ObservationReaderWriterTest
             ti.setChildCount(2);
             Observation o = ti.getCompositeObservation();
             
+            // include computed metadata
+            addComputedPlaneMetadata(o.getPlanes());
+            
             long t1 = new Date().getTime();
             long t2 = t1 + 2000l;
+            
+            MessageDigest digest = MessageDigest.getInstance("MD5");
             CaomUtil.assignLastModified(o, new Date(t1), "lastModified");
             CaomUtil.assignLastModified(o, new Date(t2), "maxLastModified");
-            URI ocs = o.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
-            URI oacs = o.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            URI ocs = o.computeMetaChecksum(true, digest);
+            URI oacs = o.computeAccMetaChecksum(true, digest);
             CaomUtil.assignMetaChecksum(o, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(o, oacs, "accMetaChecksum");
             for (Plane pl : o.getPlanes())
             {
                 CaomUtil.assignLastModified(pl, new Date(t1), "lastModified");
                 CaomUtil.assignLastModified(pl, new Date(t2), "maxLastModified");
-                CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
-                CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(true, digest), "metaChecksum");
+                CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(true, digest), "accMetaChecksum");
                 for (Artifact ar : pl.getArtifacts())
                 {
                     CaomUtil.assignLastModified(ar, new Date(t1), "lastModified");
                     CaomUtil.assignLastModified(ar, new Date(t2), "maxLastModified");
-                    CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
-                    CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(true, digest), "metaChecksum");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(true, digest), "accMetaChecksum");
                     for (Part pa : ar.getParts())
                     {
                         CaomUtil.assignLastModified(pa, new Date(t1), "lastModified");
                         CaomUtil.assignLastModified(pa, new Date(t2), "maxLastModified");
-                        CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
-                        CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(true, digest), "metaChecksum");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(true, digest), "accMetaChecksum");
                         for (Chunk ch : pa.getChunks())
                         {
                             CaomUtil.assignLastModified(ch, new Date(t1), "lastModified");
                             CaomUtil.assignLastModified(ch, new Date(t2), "maxLastModified");
-                            CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(true, MessageDigest.getInstance("MD5")), "metaChecksum");
-                            CaomUtil.assignMetaChecksum(ch, ch.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5")), "accMetaChecksum");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(true, digest), "metaChecksum");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeAccMetaChecksum(true, digest), "accMetaChecksum");
                         }
                     }
                 }
@@ -306,8 +320,9 @@ public class ObservationReaderWriterTest
             
             // add maxLastModified and meta checksums
             CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
-            URI ocs = obs.computeMetaChecksum(true, MessageDigest.getInstance("MD5"));
-            URI oacs = obs.computeAccMetaChecksum(true, MessageDigest.getInstance("MD5"));
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            URI ocs = obs.computeMetaChecksum(true, digest);
+            URI oacs = obs.computeAccMetaChecksum(true, digest);
             CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
             bos = new ByteArrayOutputStream();
@@ -516,7 +531,7 @@ public class ObservationReaderWriterTest
         try
         {
             log.debug("testCompleteSimple");
-            for (int i = 1; i < 6; i++)
+            for (int i = 1; i <= 5; i++)
             {
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
@@ -542,11 +557,16 @@ public class ObservationReaderWriterTest
             SimpleObservation observation = getCompleteSimple(5, true);
             testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
 
-            // nullify fields introduced after 2.0 so the comparison will work
+            // nullify optional fields introduced after 2.0 so the comparison will work
             observation.requirements = null;
             for (Plane p : observation.getPlanes())
             {
                 p.quality = null;
+                p.creatorID = null;
+                for (Artifact a : p.getArtifacts())
+                {
+                    a.contentChecksum = null;
+                }
             }
             testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }
@@ -563,7 +583,7 @@ public class ObservationReaderWriterTest
         try
         {
             log.debug("testCompleteSimpleSetAlgorithm");
-            for (int i = 1; i < 6; i++)
+            for (int i = 1; i <= 1; i++)
             {
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
@@ -585,17 +605,6 @@ public class ObservationReaderWriterTest
                 // Do not write empty elements.
                 testObservation(observation, false);
             }
-
-            SimpleObservation observation = getCompleteSimpleSetAlgorithm(5, true);
-            testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
-
-            // nullify fields introduced after 2.0 so the comparison will work
-            observation.requirements = null;
-            for (Plane p : observation.getPlanes())
-            {
-                p.quality = null;
-            }
-            testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }
         catch(Exception unexpected)
         {
@@ -676,7 +685,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    //@Test
+    @Test
     public void testComputedSimple()
     {
         try
@@ -693,25 +702,8 @@ public class ObservationReaderWriterTest
             
             log.debug("computing transient metadata for planes...");
                     
-            for (Plane p : observation.getPlanes())
-            {
-                // TODO: create dummy values for all computed plane metadata
-                
-                Assert.assertNotNull("Plane.position", p.position);
-                Assert.assertNotNull("Plane.position.bounds", p.position.bounds);
+            addComputedPlaneMetadata(observation.getPlanes());
 
-                Assert.assertNotNull("Plane.energy", p.energy);
-                Assert.assertNotNull("Plane.energy.bounds", p.energy.bounds);
-
-                Assert.assertNotNull("Plane.time", p.time);
-                Assert.assertNotNull("Plane.time.bounds", p.time.bounds);
-
-                Assert.assertNotNull("Plane.polarization", p.polarization);
-                Assert.assertNotNull("Plane.polarization.states", p.polarization.states);
-                Assert.assertTrue("Plane.polarization.states non-empty", !p.polarization.states.isEmpty());
-            }
-
-            // CAOM-2.3 is now the default
             testObservation(observation, true);
             
             testObservation(observation, false);
@@ -720,6 +712,59 @@ public class ObservationReaderWriterTest
         {
             log.error("unexpected exception", unexpected);
             fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    protected void addComputedPlaneMetadata(Set<Plane> planes)
+    {
+        for (Plane p : planes)
+        {
+            // alphabetical so easier to trace and debug metaChecksum computation
+            
+            p.energy = new Energy();
+            p.energy.bandpassName = "V";
+            p.energy.bounds = new Interval(400e-6, 900e-6);
+            p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
+            p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
+            p.energy.dimension = 2l;
+            p.energy.emBand = EnergyBand.OPTICAL;
+            p.energy.resolvingPower = 2.0;
+            p.energy.restwav = 600e-9;
+            p.energy.sampleSize = 100e-6;
+            p.energy.transition = new EnergyTransition("H", "alpha");
+            
+            p.polarization = new Polarization();
+            p.polarization.dimension = 3l;
+            p.polarization.states = new ArrayList<>();
+            p.polarization.states.add(PolarizationState.I);
+            p.polarization.states.add(PolarizationState.Q);
+            p.polarization.states.add(PolarizationState.U);
+            
+            p.position = new Position();
+            Polygon poly = new Polygon();
+            poly.getVertices().add(new Vertex(2.0, 3.0, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(3.0, 4.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(1.0, 5.0, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p.position.bounds = poly;
+            p.position.dimension = new Dimension2D(1024, 2048);
+            p.position.resolution = 0.05;
+            p.position.sampleSize = 0.025;
+            p.position.timeDependent = false;
+
+            p.time = new Time();
+            p.time.bounds = new Interval(50000.25, 50000.75);
+            p.time.bounds.getSamples().add(new SubInterval(50000.25, 50000.40));
+            p.time.bounds.getSamples().add(new SubInterval(50000.50, 50000.75));
+            p.time.dimension = 2l;
+            p.time.exposure = 666.0;
+            p.time.resolution = 0.5;
+            p.time.sampleSize = 0.15;
+
+            //p.energy = null;
+            //p.polarization = null;
+            //p.position = null;
+            //p.time = null;
         }
     }
     
@@ -996,8 +1041,8 @@ public class ObservationReaderWriterTest
         assertNotNull(actual);
         assertEquals(expected.size(), actual.size());
         
-        Iterator actualIter = expected.iterator();
-        Iterator expectedIter = actual.iterator();
+        Iterator expectedIter = expected.iterator();
+        Iterator actualIter = actual.iterator();
         while (expectedIter.hasNext())
         {
             Plane expectedPlane = (Plane) expectedIter.next();
@@ -1009,10 +1054,7 @@ public class ObservationReaderWriterTest
             compareEntity(expectedPlane, actualPlane);
 
             assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
-            if ((expectedPlane.creatorID != null) && (actualPlane.creatorID != null))
-            {
-                assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
-            }
+            assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
             assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
             assertEquals(expectedPlane.dataRelease, actualPlane.dataRelease);
             assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);

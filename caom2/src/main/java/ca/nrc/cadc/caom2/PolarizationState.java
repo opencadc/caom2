@@ -83,63 +83,46 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public enum PolarizationState implements CaomEnum
+public enum PolarizationState implements CaomEnum<String>
 {
-    I(1),
-    Q(2),
-    U(3),
-    V(4),
-    POLI(5),   // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
-    FPOLI(6),  // fractional linear polarization POLI/I, code used in AIPS
-    POLA(7),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
-    EPOLI(8),  // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
-    CPOLI(9),  // circular polarization intensity |V|
-    NPOLI(10), // unpolarized intensity I - EPOLI
-    RR(-1),
-    LL(-2),
-    RL(-3),
-    LR(-4),
-    XX(-5),
-    YY(-6),
-    XY(-7),
-    YX(-8);
+    I("I"),
+    Q("Q"),
+    U("U"),
+    V("V"),
+    POLI("POLI"),   // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
+    FPOLI("FPOLI"), // fractional linear polarization POLI/I, code used in AIPS
+    POLA("POLA"),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
+    EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
+    CPOLI("CPOLI"), // circular polarization intensity |V|
+    NPOLI("NPOLI"), // unpolarized intensity I - EPOLI
+    RR("RR"),
+    LL("LL"),
+    RL("RL"),
+    LR("LR"),
+    XX("XX"),
+    YY("YY"),
+    XY("XY"),
+    YX("YX");
 
-    private int value;
+    private String value;
 
-    private PolarizationState(int value) { this.value = value; }
+    private PolarizationState(String value) { this.value = value; }
 
-    public int getValue() { return value; }
+    public String getValue() { return value; }
     
+    /**
+     * @deprecated use getValue()
+     * @return 
+     */
     public String stringValue()
     {
-        switch(value)
-        {
-            case 1: return "I";
-            case 2: return "Q";
-            case 3: return "U";
-            case 4: return "V";
-            case 5: return "POLI";
-            case 6: return "FPOLI"; 
-            case 7: return "POLA";  
-            case 8: return "EPOLI"; 
-            case 9: return "CPOLI"; 
-            case 10: return "NPOLI"; 
-            case -1: return "RR";
-            case -2: return "LL";
-            case -3: return "RL";
-            case -4: return "LR";
-            case -5: return "XX";
-            case -6: return "YY";
-            case -7: return "XY";
-            case -8: return "YX";
-        }
-        throw new IllegalStateException("BUG: unexpected polarization code: " + value);
+        return value;
     }
 
     @Override
     public String toString()
     {
-        return this.getClass().getSimpleName() + "[" + stringValue() + "]";
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 
     public static PolarizationState toValue(int val)
@@ -168,11 +151,37 @@ public enum PolarizationState implements CaomEnum
         throw new IllegalArgumentException("invalid polarization code: " + val);
     }
     
+    public static int intValue(PolarizationState ps)
+    {
+        switch(ps)
+        {
+            case I: return 1;
+            case Q: return 2;
+            case U: return 3;
+            case V: return 4;
+            case POLI: return 5; 
+            case FPOLI: return 6;
+            case POLA: return 7; 
+            case EPOLI: return 8; 
+            case CPOLI: return 9;
+            case NPOLI: return 10;
+            case RR: return -1;
+            case LL: return -2;
+            case RL: return -3;
+            case LR: return -4;
+            case XX: return -5;
+            case YY: return -6;
+            case XY: return -7;
+            case YX: return -8;
+        }
+        throw new IllegalArgumentException("invalid polarization code: " + ps);
+    }
+    
      public static PolarizationState toValue(String s)
     {
         for (PolarizationState ps : values())
         {
-            if ( ps.stringValue().equals(s))
+            if ( ps.value.equals(s))
                 return ps;
         }
         throw new IllegalArgumentException("invalid value: " + s);
@@ -180,25 +189,20 @@ public enum PolarizationState implements CaomEnum
 
     public int checksum()
     {
-        return value;
+        return intValue(this);
     }
 
-    @Override
-    public byte[] getBytes() {
-        return HexUtil.toBytes(value);
-    }
-    
     public static class PolStateComparator implements Comparator<PolarizationState>, Serializable
     {
-        private static final long serialVersionUID = 201401131450L;
+        private static final long serialVersionUID = 201706071000L;
         
         public int compare(PolarizationState lhs, PolarizationState rhs)
         {
-            // Java 1.7:
-            //return Integer.compare(lhs.value, rhs.value);
-            if (lhs.value < rhs.value)
+            int ri = intValue(rhs);
+            int li = intValue(lhs);
+            if (li < ri)
                 return -1;
-            if (lhs.value > rhs.value)
+            if (li > ri)
                 return 1;
             return 0;
         }

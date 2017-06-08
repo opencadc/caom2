@@ -76,7 +76,7 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public enum SegmentType implements CaomEnum
+public enum SegmentType implements CaomEnum<Integer>
 {
     CLOSE(0),
     LINE(1),
@@ -86,16 +86,11 @@ public enum SegmentType implements CaomEnum
 
     private SegmentType(int s) { this.value = s; }
 
-    public int getValue() { return value; }
+    public Integer getValue() { return value; }
 
     public int checksum()
     {
        return value;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return HexUtil.toBytes(value);
     }
 
     public static SegmentType toValue(int i)

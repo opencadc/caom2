@@ -844,7 +844,7 @@ public class ObservationWriter implements Serializable
             Element ce = getCaom2Element("dimension");
             //String xsiType = caom2Namespace.getPrefix() + ":" + Integer.class.getSimpleName();
             //ce.setAttribute("type", xsiType, xsiNamespace);
-            ce.addContent(Integer.toString(comp.dimension));
+            ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
         

@@ -72,7 +72,7 @@ package ca.nrc.cadc.caom2;
 /**
  * @author pdowler
  */
-public enum TargetType implements CaomEnum
+public enum TargetType implements CaomEnum<String>
 {
     OBJECT("object"),
     FIELD("field");
@@ -96,11 +96,6 @@ public enum TargetType implements CaomEnum
         return value.hashCode();
     }
 
-    @Override
-    public byte[] getBytes() {
-        return value.getBytes();
-    }
-    
     @Override
     public String toString()
     {

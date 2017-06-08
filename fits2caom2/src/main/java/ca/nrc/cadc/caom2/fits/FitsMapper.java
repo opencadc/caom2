@@ -132,7 +132,11 @@ public class FitsMapper
         log.debug("populate " + className + "[" + utype + "]");
         
         // Can't populate an enum.
-        if (instanceClass.isEnum())
+        //if (instanceClass.isEnum())
+        //    return instance;
+        
+        //CaomEnum is used to tag real enum and VocabularyTerm
+        if (CaomEnum.class.isAssignableFrom(instanceClass))
             return instance;
         
         // Instance is null, primitive type or Number.
@@ -187,7 +191,8 @@ public class FitsMapper
                 // If it's a caom field
                 if (field.getType().getName().startsWith("ca.nrc.cadc.caom2"))
                 {
-                    if (field.getType().isEnum())
+                    //if (field.getType().isEnum())
+                    if (CaomEnum.class.isAssignableFrom(field.getType()))
                     {
                         String value = mapping.getMapping(fieldUtype);
                         if (value != null)
@@ -462,7 +467,8 @@ public class FitsMapper
         // The new instance.
         Object instance;
             
-        if (c.isEnum())
+        //if (c.isEnum())
+        if (CaomEnum.class.isAssignableFrom(c))
         {
             instance = createEnumInstance(c, utype, mapping);
         }

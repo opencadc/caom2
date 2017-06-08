@@ -235,8 +235,8 @@ public class PolarizationUtilTest
             {
                 CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
                 PolarizationWCS w = new PolarizationWCS(axis);
-                RefCoord c1 = new RefCoord(0.5, pol.getValue());
-                RefCoord c2 = new RefCoord(1.5, pol.getValue());
+                RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(pol));
+                RefCoord c2 = new RefCoord(1.5, PolarizationState.intValue(pol));
                 w.getAxis().range = new CoordRange1D(c1, c2);
 
                 c.polarization = w;
@@ -271,8 +271,8 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
-            RefCoord c2 = new RefCoord(3.5, PolarizationState.U.getValue());
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.I));
+            RefCoord c2 = new RefCoord(3.5, PolarizationState.intValue(PolarizationState.U));
             w.getAxis().range = new CoordRange1D(c1, c2);
             
             c.polarization = w;
@@ -306,7 +306,7 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.I));
             w.getAxis().function = new CoordFunction1D(new Long(4L), new Double(1.0), c1);
 
             c.polarization = w;
@@ -342,7 +342,7 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(0.5, PolarizationState.RR.getValue());
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.RR));
             w.getAxis().function = new CoordFunction1D(new Long(2L), new Double(-1.0), c1);
 
             c.polarization = w;
@@ -376,7 +376,7 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(1.0, PolarizationState.V.getValue());
+            RefCoord c1 = new RefCoord(1.0, PolarizationState.intValue(PolarizationState.V));
             w.getAxis().function = new CoordFunction1D(new Long(4L), new Double(-1.0), c1);
 
             c.polarization = w;
@@ -413,8 +413,8 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
-            RefCoord c2 = new RefCoord(2.5, PolarizationState.Q.getValue());
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.I));
+            RefCoord c2 = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.Q));
             w.getAxis().range = new CoordRange1D(c1, c2);
             c.polarization = w;
             
@@ -428,8 +428,8 @@ public class PolarizationUtilTest
             pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
             ch.polarization = new PolarizationWCS(axist);
-            RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
-            RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
+            RefCoord c1t = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.U));
+            RefCoord c2t = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.V));
             ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             
@@ -464,8 +464,8 @@ public class PolarizationUtilTest
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
-            RefCoord c1 = new RefCoord(0.5, PolarizationState.I.getValue());
-            RefCoord c2 = new RefCoord(2.5, PolarizationState.Q.getValue());
+            RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.I));
+            RefCoord c2 = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.Q));
             w.getAxis().range = new CoordRange1D(c1, c2);
             c.polarization = w;
             
@@ -478,8 +478,8 @@ public class PolarizationUtilTest
             pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
             ch.polarization = new PolarizationWCS(axist);
-            RefCoord c1t = new RefCoord(0.5, PolarizationState.U.getValue());
-            RefCoord c2t = new RefCoord(2.5, PolarizationState.V.getValue());
+            RefCoord c1t = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.U));
+            RefCoord c2t = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.V));
             ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
             
             

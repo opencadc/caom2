@@ -106,6 +106,7 @@ public abstract class CaomEntity implements Serializable
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     private static final boolean SC_DEBUG = false; // way to much debug when true
+    private static final boolean MCS_DEBUG = false; // way to much debug when true
     
     // state
     private UUID id;
@@ -280,7 +281,8 @@ public abstract class CaomEntity implements Serializable
             if (o instanceof CaomEntity)
             {
                 CaomEntity ce = (CaomEntity) o;
-                digest.update(primtiveValueToBytes(ce.id));
+                digest.update(primitiveValueToBytes(ce.id));
+                if (MCS_DEBUG) log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
             }
             
             SortedSet<Field> fields = getStateFields(c, includeTransient);
@@ -292,13 +294,13 @@ public abstract class CaomEntity implements Serializable
                 Object fo = f.get(o);
                 if (fo != null) 
                 {
-                    if (SC_DEBUG) log.debug("checksum: " + cf + " is a " + fo.getClass().getName());
                     Class ac = fo.getClass(); // actual class
                     if (fo instanceof CaomEnum) 
                     {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        digest.update(ce.getBytes());
+                        digest.update(primitiveValueToBytes(ce.getValue()));
+                        if (MCS_DEBUG) log.debug("metaChecksum: " + cf + ".getValue() " + ce.getValue());
                     } 
                     else if (isLocalClass(ac)) 
                     {
@@ -312,22 +314,31 @@ public abstract class CaomEntity implements Serializable
                         {
                             Object co = i.next();
                             Class cc = co.getClass();
-                            if (isLocalClass(cc)) 
+                            if (co instanceof CaomEnum) 
+                            {
+                                // use ce.getValue
+                                CaomEnum ce = (CaomEnum) co;
+                                digest.update(primitiveValueToBytes(ce.getValue()));
+                                if (MCS_DEBUG) log.debug("metaChecksum: " + cf + ".getValue() " + ce.getValue());
+                            } 
+                            else if (isLocalClass(cc)) 
                             {
                                 calcMetaChecksum(cc, co, includeTransient, digest);
                             } 
                             else // non-caom2 class ~primtive value
                             {
-                                digest.update(primtiveValueToBytes(co));
+                                digest.update(primitiveValueToBytes(co));
+                                if (MCS_DEBUG) log.debug("metaChecksum: " + cf + " " + co);
                             }
                         }
                     } 
                     else // non-caom2 class ~primtive value
                     {
-                        digest.update(primtiveValueToBytes(fo));
+                        digest.update(primitiveValueToBytes(fo));
+                        if (MCS_DEBUG) log.debug("metaChecksum: " + cf + " " + fo);
                     }
                 }
-                else if (SC_DEBUG) log.debug("skip: " + cf);
+                else if (MCS_DEBUG) log.debug("skip: " + cf);
             }
 
         }
@@ -337,68 +348,75 @@ public abstract class CaomEntity implements Serializable
         }
     }
     
-    private byte[] primtiveValueToBytes(Object o)
+    private byte[] primitiveValueToBytes(Object o)
     {
+        byte[] ret = null;
         if (o instanceof Byte)
-            return HexUtil.toBytes((Byte) o); // auto-unbox
+            ret = HexUtil.toBytes((Byte) o); // auto-unbox
         
-        if (o instanceof Short)
-            return HexUtil.toBytes((Short) o); // auto-unbox
+        else if (o instanceof Short)
+            ret = HexUtil.toBytes((Short) o); // auto-unbox
         
-        if (o instanceof Integer)
-            return HexUtil.toBytes((Integer) o); // auto-unbox
+        else if (o instanceof Integer)
+            ret = HexUtil.toBytes((Integer) o); // auto-unbox
         
-        if (o instanceof Long)
-            return HexUtil.toBytes((Long) o); // auto-unbox
+        else if (o instanceof Long)
+            ret = HexUtil.toBytes((Long) o); // auto-unbox
         
-        if (o instanceof Boolean)
+        else if (o instanceof Boolean)
         {
             Boolean b = (Boolean) o;
             if (b)
-                return HexUtil.toBytes((byte) 1);
-            return HexUtil.toBytes((byte) 0);
+                ret = HexUtil.toBytes((byte) 1);
+            else
+                ret = HexUtil.toBytes((byte) 0);
         }
         
-        if (o instanceof Date) 
+        else if (o instanceof Date) 
         {
             // only compare down to seconds
             Date date = (Date) o;
             long sec = (date.getTime() / 1000L);
-            return HexUtil.toBytes(sec);
+            ret = HexUtil.toBytes(sec);
         } 
         
-        if (o instanceof Float)
-            return HexUtil.toBytes(Float.floatToIntBits((Float) o)); // auto-unbox, IEEE754 single
+        else if (o instanceof Float)
+            ret = HexUtil.toBytes(Float.floatToIntBits((Float) o)); // auto-unbox, IEEE754 single
         
-        if (o instanceof Double)
-            return HexUtil.toBytes(Double.doubleToLongBits((Double) o)); // auto-unbox, IEEE754 double
+        else if (o instanceof Double)
+            ret = HexUtil.toBytes(Double.doubleToLongBits((Double) o)); // auto-unbox, IEEE754 double
         
-        if (o instanceof String)
+        else if (o instanceof String)
         {
-            try { return ((String) o).getBytes("UTF-8"); }
+            try { ret = ((String) o).getBytes("UTF-8"); }
             catch(UnsupportedEncodingException ex)
             {
                 throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
         }
         
-        if (o instanceof URI)
+        else if (o instanceof URI)
         {
-            try { return ((URI) o).toASCIIString().getBytes("UTF-8"); }
+            try { ret = ((URI) o).toASCIIString().getBytes("UTF-8"); }
             catch(UnsupportedEncodingException ex)
             {
                 throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
         }
         
-        if (o instanceof UUID)
+        else if (o instanceof UUID)
         {
             UUID uuid = (UUID) o;
             byte[] msb = HexUtil.toBytes(uuid.getMostSignificantBits());
             byte[] lsb = HexUtil.toBytes(uuid.getLeastSignificantBits());
-            byte[] ret = new byte[16];
+            ret = new byte[16];
             System.arraycopy(msb, 0, ret, 0, 8);
             System.arraycopy(lsb, 0, ret, 8, 8);
+        }
+        
+        if (ret != null)
+        {
+            if (MCS_DEBUG) log.debug(o.getClass().getSimpleName() + " " + o.toString() + " " + ret.length);
             return ret;
         }
         
@@ -449,7 +467,7 @@ public abstract class CaomEntity implements Serializable
             //md.reset();
         
             SortedSet<Field> fields = getChildFields(c);
-            if (SC_DEBUG) log.debug("calcAccMetaChecksum: " + c.getName() + " has " + fields.size() + " child fields");
+            if (MCS_DEBUG) log.debug("calcAccMetaChecksum: " + c.getName() + " has " + fields.size() + " child fields");
             
             for (Field f : fields) 
             {
@@ -457,7 +475,7 @@ public abstract class CaomEntity implements Serializable
                 Object fo = f.get(o);
                 if (fo != null) 
                 {
-                    if (SC_DEBUG) log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
+                    if (MCS_DEBUG) log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
                     if (fo instanceof Collection) 
                     {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
@@ -467,7 +485,7 @@ public abstract class CaomEntity implements Serializable
                         {
                             CaomEntity ce = i.next();
                             Class cc = ce.getClass();
-                            log.debug("calculate: " + ce.getID());
+                            if (MCS_DEBUG) log.debug("calculate: " + ce.getID());
                             calcAccMetaChecksum(cc, ce, includeTransient, md);
                             byte[] bb = md.digest();
                             // call to digest also resets
@@ -478,7 +496,7 @@ public abstract class CaomEntity implements Serializable
                         while (si.hasNext())
                         {
                             Map.Entry<UUID,byte[]> me = si.next();
-                            log.debug("accumulate: " + me.getKey());
+                            if (MCS_DEBUG) log.debug("accumulate: " + me.getKey());
                             digest.update(me.getValue());
                         }
                     }

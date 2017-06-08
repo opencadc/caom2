@@ -73,7 +73,7 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public enum Status implements CaomEnum
+public enum Status implements CaomEnum<String>
 {
     FAIL("fail");
 
@@ -92,11 +92,6 @@ public enum Status implements CaomEnum
     public int checksum()
     {
         return value.hashCode();
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return getValue().getBytes();
     }
 
     public String getValue() { return value; }

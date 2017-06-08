@@ -77,7 +77,7 @@ import java.net.URISyntaxException;
  *
  * @author pdowler
  */
-public class ProductType extends VocabularyTerm implements CaomEnum, Serializable
+public class ProductType extends VocabularyTerm implements CaomEnum<String>, Serializable
 {
     private static final long serialVersionUID = 2017040200800L;
     

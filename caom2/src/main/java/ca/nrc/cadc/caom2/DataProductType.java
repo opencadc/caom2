@@ -79,7 +79,7 @@ import java.security.MessageDigest;
  * 
  * @author pdowler
  */
-public class DataProductType extends VocabularyTerm implements CaomEnum, Serializable
+public class DataProductType extends VocabularyTerm implements CaomEnum<String>, Serializable
 {
     private static final long serialVersionUID = 201704061700L;
     
