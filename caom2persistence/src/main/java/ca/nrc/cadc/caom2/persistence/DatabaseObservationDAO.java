@@ -307,9 +307,8 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             log.debug("PUT: " + sql);
             ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
-            boolean updateMax = false;
-            if (computeLastModified)
-                updateMax = updateEntity(obs, cur);
+            // update metadata checksums, maybe modified timestamps
+            boolean updateMax = updateEntity(obs, cur);
             
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
@@ -336,9 +335,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 for (Plane p : obs.getPlanes())
                     pairs.add(new Pair<Plane>(null, p));
 
-            // TEMPORARY: continue to use updateMax to force Observation update
-            // until accMetaChecksum is persisted for all observations
-            super.put(cur, obs, null, jdbc, updateMax);
+            super.put(cur, obs, null, jdbc);
 
             // insert/update children
             LinkedList<CaomEntity> parents = new LinkedList<CaomEntity>();
@@ -510,9 +507,9 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     // assign if lastModified changed or a child's maxLastModified changes
     private boolean updateEntity(Observation entity, ObservationSkeleton s)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            // keep timestamps from database, distrust input
+            // keep timestamps from database
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
@@ -556,15 +553,15 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         else if (s.metaChecksum != null)
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         else
-            delta = (s.stateCode != nsc); // fallback
+            delta = (s.stateCode != nsc); // fallback for null checksum in database
                 
-        if (delta)        
+        if (computeLastModified && delta)        
         {
             Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
         
-        if (updateMax)
+        if (computeLastModified && updateMax)
             Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
@@ -572,7 +569,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
     
     private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -616,13 +613,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         else
             delta = (s.stateCode != nsc); // fallback
                 
-        if (delta)        
+        if (computeLastModified && delta)        
         {
             Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
 
-        if (updateMax)
+        if (computeLastModified && updateMax)
             Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
@@ -630,7 +627,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
 
     private boolean updateEntity(Artifact entity, ArtifactSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -674,13 +671,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         else
             delta = (s.stateCode != nsc); // fallback
                 
-        if (delta)        
+        if (computeLastModified && delta)        
         {
             Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
 
-        if (updateMax)
+        if (computeLastModified && updateMax)
             Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
@@ -688,7 +685,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
 
     private boolean updateEntity(Part entity, PartSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -732,13 +729,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         else
             delta = (s.stateCode != nsc); // fallback
                 
-        if (delta)        
+        if (computeLastModified && delta)        
         {
             Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
         
-        if (updateMax)
+        if (computeLastModified && updateMax)
             Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
@@ -746,7 +743,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
 
     private boolean updateEntity(Chunk entity, ChunkSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -768,13 +765,13 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         else
             delta = (s.stateCode != nsc); // fallback
                 
-        if (delta)        
+        if (computeLastModified && delta)        
         {
             Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
         
-        if (updateMax)
+        if (computeLastModified && updateMax)
             Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
