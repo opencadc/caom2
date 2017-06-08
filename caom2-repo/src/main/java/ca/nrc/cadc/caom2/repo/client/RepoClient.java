@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
@@ -32,13 +34,20 @@ import ca.nrc.cadc.util.Log4jInit;
 public class RepoClient  {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
+    private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     private URI resourceId = null;
     private RegistryClient rc = null;
-    private URL serviceURL = null;
-    private URLConnection urlConnection = null;
+    private URL baseServiceURL = null;
     private List<ObservationState> observationStates = new ArrayList<ObservationState>();
     private List<Observation> observations = new ArrayList<Observation>();
     private Subject subject = null;
+    private AuthMethod meth;
+    
+    protected final String BASE_HTTP_URL;
+    
+    public RepoClient () {
+    	BASE_HTTP_URL = null;
+    }
 
     // constructor takes service identifier arg
     public RepoClient(URI resourceID) {
@@ -46,65 +55,67 @@ public class RepoClient  {
 
         rc = new RegistryClient();
         
-        log.info("******"+System.getProperty("user.home"));
 
+        // setup optional authentication for harvesting from a web service
+        // get current subject
+    	subject = AuthenticationUtil.getCurrentSubject();    	
+        if (subject != null)
+        {
+        	meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            // User RegistryClient to go from resourceID to service URL
+        } else {
+        	meth = AuthMethod.ANON;
 
-
-
-            
-
-            // setup optional authentication for harvesting from a web service
-                
-            subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-
-            if (subject != null)
-            {
-            	AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-                // User RegistryClient to go from resourceID to service URL
-                serviceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, meth);
-                log.info("SERVICE URL: " + serviceURL.toString());
-                log.info("authentication using: " + meth);
-            } else {
-            	log.error("Subject is NULL");
-            }
-              
-
-         
+           
+            log.info("No current subject found");
+        }
+          
+        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, meth);
+        BASE_HTTP_URL = baseServiceURL.toExternalForm();
+        log.info("BASE SERVICE URL: " + baseServiceURL.toString());
+        log.info("Authentication used: " + meth);
+        
 
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end,
-            Integer maxrec) {
+            Integer maxrec)  {
         // Use HttpDownload to make the http GET calls (because it handles a lot of the
         // authentication stuff)
 
+    	 	
     	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        //HttpDownload get = new HttpDownload(serviceURL, bos);
+    	String surl = BASE_HTTP_URL+"/"+collection;
+        if (maxrec != null)
+        	surl = surl + "?maxRec=" + maxrec;
+        if (start != null)
+            surl = surl + "&start=" + df.format(start);
+        if (end != null)
+            surl = surl + "&end=" + df.format(end);
     	URL url;
 		try {
-			url = new URL("http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/caom2repo/auth/IRIS?maxrec=5");
+			url = new URL(surl);
+	        HttpDownload get = new HttpDownload(url, bos);
+	        
+	        if (subject != null)
+	        {    
+	            Subject.doAs(subject, new RunnableAction(get));
+	            
+	            log.info("Query run within subject");
+	        } else {
+	        	get.run();
+	        	log.info("Query run");
+	        }
 
-    	
-    	HttpDownload get = new HttpDownload(url, bos);
-    	
-        if (subject != null)
-        {    
-            Subject.doAs(subject, new RunnableAction(get));
-            
-            log.info("Get run within subject");
-        } else {
-        	get.run();
-        	log.info("Subject is null");
-        }
-        
-        log.info("Got from URL: "+ bos.toString());
-        
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+			log.error("Exception in getObservationList: "+e.getMessage());
 			e.printStackTrace();
 		}
-
-        // log.info("http Download run: " + f.gets);
+    	
+       
+        log.info("Got from URL: "+ bos.toString());
+        
+	
         return null;
 
     }
@@ -124,24 +135,7 @@ public class RepoClient  {
 
     }
 
-    public static void main(String[] args) {
-
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.TRACE);
-        Log4jInit.setLevel("ca.nrc.cadc.reg.client.RegistryClient", Level.DEBUG);
-
-        log.info("TEST CAOM2REPO");
-        try {
-            RepoClient repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"));
-
-            repoC.getObservationList(null, null, null, null);
-
-        } catch (URISyntaxException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-    }
+   
 
 
 }
