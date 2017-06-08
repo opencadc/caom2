@@ -208,7 +208,7 @@ public class GetAction extends RepoAction
     protected long writeObservationList(List<ObservationState> states) throws IOException
     {
         // write in tsv format
-        syncOutput.setHeader("Content-Type", "text/tsv");
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
