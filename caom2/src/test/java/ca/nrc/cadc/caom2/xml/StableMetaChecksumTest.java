@@ -67,26 +67,26 @@
 
 package ca.nrc.cadc.caom2.xml;
 
-
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.util.MissingResourceException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import static org.junit.Assert.fail;
 import org.junit.Test;
 
 /**
- *
+ * 
  * @author pdowler
  */
 public class StableMetaChecksumTest 
@@ -96,7 +96,6 @@ public class StableMetaChecksumTest
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
     }
     
     public StableMetaChecksumTest() { }
@@ -107,7 +106,7 @@ public class StableMetaChecksumTest
         try
         {
             // read stored file with computed checksums and verify
-            File f = new File("prev-caom23.xml");
+            File f = FileUtil.getFileFromResource("sample-composite-caom23.xml", StableMetaChecksumTest.class);
             if (!f.exists())
             {
                 log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
@@ -120,6 +119,7 @@ public class StableMetaChecksumTest
             Assert.assertNotNull(o);
             
             boolean verifyAcc = true;
+            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
             
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI mcs = o.computeMetaChecksum(true, digest);
@@ -170,11 +170,17 @@ public class StableMetaChecksumTest
                     }
                 }
             }
+            
+            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc + " [OK]");
+        }
+        catch(MissingResourceException oops)
+        {
+            log.warn("SKIPPING TEST: " + oops);
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 }
