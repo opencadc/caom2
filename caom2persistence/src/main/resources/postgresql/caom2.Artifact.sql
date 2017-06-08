@@ -6,6 +6,7 @@ create table caom2.Artifact
     releaseType varchar(16) not null,
     contentType varchar(128),
     contentLength bigint,
+    contentChecksum varchar(136),
 
 -- optimisation
     metaReadAccessGroups tsvector default '',

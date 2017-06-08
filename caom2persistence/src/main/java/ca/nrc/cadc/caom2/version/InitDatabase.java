@@ -158,7 +158,7 @@ public class InitDatabase
             {
                 ddls = UPGRADE_SQL;
             }
-            else    
+            else if (cur.version != null)   
                 throw new UnsupportedOperationException("doInit: version upgrade not supported: " + cur.version + " -> " + MODEL_VERSION);
             
             // start transaction

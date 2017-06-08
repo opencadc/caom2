@@ -149,8 +149,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -173,7 +171,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-
 
 /**
  *
@@ -1492,7 +1489,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 //polarization
                 Polarization pol = plane.polarization;
                 safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
-                safeSetInteger(sb, ps, col++, pol.dimension);
+                safeSetLong(sb, ps, col++, pol.dimension);
             }
 
             safeSetDate(sb, ps, col++, plane.getLastModified(), UTC_CAL);

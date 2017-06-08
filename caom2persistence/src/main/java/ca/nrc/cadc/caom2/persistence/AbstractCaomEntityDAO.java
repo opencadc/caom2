@@ -271,33 +271,22 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
         // transition from stateCode to metaChecksum
         boolean delta = false;
         String cmp = " [new]";
-        int sc2 = val.getStateCode(gen.persistTransientState());
         if (cur != null)
         {
-            if (cur.metaChecksum != null)
-            {
-                delta = !cur.metaChecksum.equals(val.getMetaChecksum());
-                cmp = " " + cur.metaChecksum + " vs " + val.getMetaChecksum();
+            delta = !val.getMetaChecksum().equals(cur.metaChecksum);
+            cmp = " " + cur.metaChecksum + " vs " + val.getMetaChecksum();
                 
-                // check accMetaChecksum to see if it and maxLastModified have changed
-                // this correctly maintains accMetaChecksum and maxLastModified without
-                // over-using force whcih only worked for Observation
-                if (!delta && cur.accMetaChecksum != null)
-                {
-                    delta = !cur.accMetaChecksum.equals(val.getAccMetaChecksum());
-                    cmp = cmp + "/" + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
-                }
-            }
-            else // fall back to stateCode
+            // change in accMetaChecksum means maxLastModified changed
+            // this correctly maintains accMetaChecksum and maxLastModified
+            if (!delta)
             {
-                delta = (cur.stateCode != sc2);
-                cmp = " " + cur.stateCode + " vs " + sc2;
+                delta = !val.getAccMetaChecksum().equals(cur.accMetaChecksum);
+                cmp = cmp + " -- " + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
             }
-            
-            log.info("PUT: " + val.getClass().getSimpleName() + cmp);
+            log.debug("PUT: " + val.getClass().getSimpleName() + cmp);
         }
         else
-            log.info("PUT: " + val.getClass().getSimpleName() + cmp);
+            log.debug("PUT: " + val.getClass().getSimpleName() + cmp);
 
         boolean isUpdate = (cur != null);
 
@@ -305,15 +294,15 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
         if ( cur == null || forceUpdate || force || delta)
         {
             if (isUpdate)
-                log.info("PUT update: " + val.getClass().getSimpleName() + " " + val.getID());
+                log.debug("PUT update: " + val.getClass().getSimpleName() + " " + val.getID());
             else
-                log.info("PUT insert: " + val.getClass().getSimpleName() + " " + val.getID());
+                log.debug("PUT insert: " + val.getClass().getSimpleName() + " " + val.getID());
             EntityPut<T> op = gen.getEntityPut(val.getClass(), isUpdate);
             op.setValue(val, parents);
             op.execute(jdbc);
         }
         else
-            log.info("PUT skip: " + val.getClass().getSimpleName() + " " + val.getID());
+            log.debug("PUT skip: " + val.getClass().getSimpleName() + " " + val.getID());
     }
 
     protected void delete(Skeleton ce, JdbcTemplate jdbc)
