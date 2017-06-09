@@ -69,80 +69,77 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.RunnableAction;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
 
-import ca.nrc.cadc.reg.Standards;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.UUID;
 
 /**
  * Integration tests for caom2repo_ws
- * 
+ *
  * @author majorb
  *
  */
 public class CaomRepoBaseIntTests
 {
-    
+
     private static final Logger log = Logger.getLogger(CaomRepoBaseIntTests.class);
-    
+
     protected final String TEST_COLLECTION = "TEST";
-    
+
     // subject1 has read/write privilege on the TEST collection
     protected final Subject SUBJECT1;
-    
+
     // subject2 has read privilege on the TEST collection
     protected final Subject SUBJECT2;
-    
+
     // subject3 has not read or write permission on the TEST collection
     protected final Subject SUBJECT3;
-    
+
     protected final URL AVAIL_URL;
-    protected final String BASE_HTTP_URL;
-    protected final String BASE_HTTPS_URL;
-    
+    public final String BASE_HTTP_URL;
+    public final String BASE_HTTPS_URL;
+
     protected final String SCHEME = "caom:";
-        
+
     // service should be written to output documents with this version
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
     private static final String TEXT_XML = "text/xml";
-    
+
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    protected CaomRepoBaseIntTests() 
-    { 
+    protected CaomRepoBaseIntTests()
+    {
     	SUBJECT1 = null;
     	SUBJECT2 = null;
     	SUBJECT3 = null;
@@ -150,15 +147,15 @@ public class CaomRepoBaseIntTests
     	BASE_HTTP_URL = null;
     	BASE_HTTPS_URL = null;
     }
-    
+
     /**
      * @param resourceID resource identifier of service to test
      * @param pem1 PEM file for user with read-write permission
      * @param pem2 PEM file for user with read-only permission
      * @param pem3 PEM file for user with no permissions
      */
-    public CaomRepoBaseIntTests(URI resourceID, String pem1, String pem2, String pem3) 
-    { 
+    public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, String pem1, String pem2, String pem3)
+    {
         try
         {
             File SSL_CERT1 = FileUtil.getFileFromResource(pem1, this.getClass());
@@ -168,16 +165,16 @@ public class CaomRepoBaseIntTests
             SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
             SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
             SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
-            
+
             RegistryClient rc = new RegistryClient();
 
             URL serviceURL = rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             AVAIL_URL = serviceURL;
 
-            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.ANON);
+            serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.ANON);
             BASE_HTTP_URL = serviceURL.toExternalForm();
 
-            serviceURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_OBS_20, AuthMethod.CERT);
+            serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.CERT);
             BASE_HTTPS_URL = serviceURL.toExternalForm();
 
             log.debug("test service URL: " + BASE_HTTP_URL);
@@ -190,12 +187,12 @@ public class CaomRepoBaseIntTests
             throw new ExceptionInInitializerError(message);
         }
     }
-    
+
     public String generateObservationID(String base)
     {
         return base + "-" + UUID.randomUUID().toString();
     }
-    
+
     private HttpURLConnection openConnection(Subject subject, String urlPath)
             throws Exception
     {
@@ -220,37 +217,37 @@ public class CaomRepoBaseIntTests
         conn.setDoInput(true);
         return conn;
     }
-    
+
     protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
             throws Exception
     {
         sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
     }
-    
+
     protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
             throws Exception
     {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
-        
+
         String urlPath = path;
         if (urlPath == null)
         {
             // extract the path from the observation
             urlPath = observation.getURI().getURI().getSchemeSpecificPart();
         }
-        
+
         ObservationWriter writer = new ObservationWriter();
-        
+
         HttpURLConnection conn = openConnection(subject, urlPath);
         conn.setRequestMethod(method);
         conn.setRequestProperty("Content-Type", TEXT_XML);
-        
+
         OutputStream out = conn.getOutputStream();
         log.debug("write: " + observation);
         ByteCountOutputStream bcos = new ByteCountOutputStream(out);
         writer.write(observation, bcos);
         log.debug(" wrote: " + bcos.getByteCount() + " bytes");
-        
+
         int response = -1;
         try
         {
@@ -264,16 +261,16 @@ public class CaomRepoBaseIntTests
                 log.warn("expected 413 and getResponseCode() threw " + ex + ": known issue in JDK http lib");
             return;
         }
-        
+
         String message = conn.getResponseMessage();
         if (response != 200)
             message = NetUtil.getErrorBody(conn).trim();
-        
+
         log.debug(method.toLowerCase() + " response: " + message + " (" + response + ")");
-        
+
         if (expectedResponse != null)
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
+
         if (expectedMessage != null)
         {
             Assert.assertNotNull(message);
@@ -284,21 +281,21 @@ public class CaomRepoBaseIntTests
             }
             Assert.assertEquals("Wrong response message", expectedMessage, message);
         }
-        
+
         conn.disconnect();
     }
-    
-    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
+
+    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, String expectedCaomVersion)
             throws Exception
     {
-        return getObservation(uri, subject, expectedResponse, expectedMessage, true);
+        return getObservation(uri, subject, expectedResponse, expectedMessage, true, expectedCaomVersion);
     }
-    
-    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch)
+
+    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch, String expectedCaomVersion)
             throws Exception
     {
         log.debug("start get on " + uri);
-        
+
         // extract the path from the uri
         URI ouri = new URI(uri);
         String surl = BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
@@ -306,17 +303,17 @@ public class CaomRepoBaseIntTests
             surl = BASE_HTTPS_URL + "/" + ouri.getSchemeSpecificPart();
         URL url = new URL(surl);
         ObservationReader reader = new ObservationReader();
-        
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpDownload get = new HttpDownload(url, bos);
-        
+
         Subject.doAs(subject, new RunnableAction(get));
-        
+
         int response = get.getResponseCode();
-        
+
         if (expectedResponse != null)
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
+
         if (expectedMessage != null)
         {
             String message = bos.toString().trim();
@@ -330,54 +327,54 @@ public class CaomRepoBaseIntTests
                 Assert.assertEquals("Wrong response message (startsWith)", expectedMessage, cmpPart);
             }
         }
-        
+
         if (response == 200)
         {
             //InputStream in = conn.getInputStream();
-            if (EXPECTED_CAOM_VERSION != null)
+            if (expectedCaomVersion != null)
             {
                 String doc = bos.toString();
                 Assert.assertNotNull("document is null", doc);
-                Assert.assertTrue("document namespace="+EXPECTED_CAOM_VERSION, doc.contains(EXPECTED_CAOM_VERSION));
+                Assert.assertTrue("document namespace="+expectedCaomVersion, doc.contains(expectedCaomVersion));
             }
             InputStream in = new ByteArrayInputStream(bos.toByteArray());
             Observation observation = reader.read(in);
-            
+
             //conn.disconnect();
-            
+
             return observation;
-            
+
         }
         return null;
     }
-    
+
     protected void deleteObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
             throws Exception
     {
         log.debug("start delete on " + uri);
-        
+
         // extract the path from the uri
         String urlPath = uri.substring(uri.indexOf(SCHEME) + SCHEME.length());
-        
+
         HttpURLConnection conn = openConnection(subject, urlPath);
         conn.setRequestMethod("DELETE");
-        
+
         int response = conn.getResponseCode();
         String message = conn.getResponseMessage();
         if (response != 200)
             message = NetUtil.getErrorBody(conn).trim();
-        
+
         log.debug("delete response: " + message + " (" + response + ")");
-        
+
         if (expectedResponse != null)
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
-        
+
         if (expectedMessage != null)
         {
             Assert.assertNotNull(message);
             Assert.assertEquals("Wrong response message", expectedMessage, message);
         }
-        
+
         conn.disconnect();
     }
 }

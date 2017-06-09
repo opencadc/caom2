@@ -111,20 +111,20 @@ import ca.nrc.cadc.util.Log4jInit;
  * @author majorb
  *
  */
-public class CaomRepoListTests extends CaomRepoBaseIntTests
+public class CaomRepoListTests22 extends CaomRepoBaseIntTests
 {
 
-    private static final Logger log = Logger.getLogger(CaomRepoListTests.class);
+    private static final Logger log = Logger.getLogger(CaomRepoListTests22.class);
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_3_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
 
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    private CaomRepoListTests() { }
+    private CaomRepoListTests22() { }
 
     /**
      * @param resourceID resource identifier of service to test
@@ -132,9 +132,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
      * @param pem2 PEM file for user with read-only permission
      * @param pem3 PEM file for user with no permissions
      */
-    public CaomRepoListTests(URI resourceID, String pem1, String pem2, String pem3)
+    public CaomRepoListTests22(URI resourceID, String pem1, String pem2, String pem3)
     {
-        super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
+        super(resourceID, Standards.CAOM2REPO_OBS_20, pem1, pem2, pem3);
     }
 
     @Test
@@ -163,50 +163,42 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     @Test
     public void testListSuccess() throws Throwable
     {
-        try
-        {
-        	Integer maxRec = 3;
+    	Integer maxRec = 3;
 
-        	// Add a list of observations
-        	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1",
-        			"testListSuccess2", "testListSuccess3"));
-        	List<Observation> observations = this.putObservations(baseIDs);
-        	Assert.assertTrue("failed to put observations", observations.size() == 3);
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(0).getLastModified());
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(1).getLastModified());
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(2).getLastModified());
-        	Date start = getTime(observations.get(0).getLastModified());
-        	Date mid = getTime(observations.get(1).getLastModified());
-        	Date end = getTime(observations.get(2).getLastModified());
+    	// Add a list of observations
+    	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1",
+    			"testListSuccess2", "testListSuccess3"));
+    	List<Observation> observations = this.putObservations(baseIDs);
+    	Assert.assertTrue("failed to put observations", observations.size() == 3);
+    	Assert.assertNotNull("failed to get first observation maxLastModified date",
+    			observations.get(0).getLastModified());
+    	Assert.assertNotNull("failed to get first observation maxLastModified date",
+    			observations.get(1).getLastModified());
+    	Assert.assertNotNull("failed to get first observation maxLastModified date",
+    			observations.get(2).getLastModified());
+    	Date start = getTime(observations.get(0).getLastModified());
+    	Date mid = getTime(observations.get(1).getLastModified());
+    	Date end = getTime(observations.get(2).getLastModified());
 
-        	// Check that we have maxRec of the observations
-        	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-        			null, super.SUBJECT2, observations, 200, null, true);
+    	// Check that we have maxRec of the observations
+    	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
+    			null, super.SUBJECT2, observations, 200, null, true);
 
-        	observations.remove(0);
-        	// Check that we only have the last two observations
-        	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
-        			null, super.SUBJECT2, observations, 200, null, true);
+    	observations.remove(0);
+    	// Check that we only have the last two observations
+    	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
+    			null, super.SUBJECT2, observations, 200, null, true);
 
-        	observations.remove(0);
-        	// Check that we only have the last observation
-        	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
-        			null, super.SUBJECT2, observations, 200, null, true);
+    	observations.remove(0);
+    	// Check that we only have the last observation
+    	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
+    			null, super.SUBJECT2, observations, 200, null, true);
 
-        	// cleanup (ok to fail)
-        	for (Observation obs : observations)
-        	{
-    	        deleteObservation(obs.getURI().toString(), super.SUBJECT1, null, null);
-        	}
-        }
-        catch (Throwable t)
-        {
-            log.error("unexpected", t);
-            Assert.fail();
-        }
+    	// cleanup (ok to fail)
+    	for (Observation obs : observations)
+    	{
+	        deleteObservation(obs.getURI().toString(), super.SUBJECT1, null, null);
+    	}
     }
 
     @Test
@@ -404,8 +396,8 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
             for (int i = 0; i < lines.length; i++)
             {
-            	String[] fields = lines[i].split("\t");
-            	String actualDate = fields[2];
+            	String[] fields = lines[i].split(",");
+            	String actualDate = fields[1];
 
             	if (start != null)
             	{
@@ -414,7 +406,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             	    Assert.assertEquals("wrong date", expectedDate, actualDate);
             	}
 
-            	retMap.put(fields[1], df.parse(actualDate));
+            	retMap.put(fields[0], df.parse(actualDate));
             }
         }
 

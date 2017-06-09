@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,7 +62,7 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
@@ -71,157 +71,46 @@ package ca.nrc.cadc.caom2.repo.action;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.Date;
+import java.nio.charset.Charset;
 import java.util.List;
-
-import org.apache.log4j.Logger;
 
 import com.csvreader.CsvWriter;
 
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
- *
- * @author pdowler
+ * For CAOM 2.2 support.
  */
-public class GetAction extends RepoAction
+public class GetAction22 extends GetAction
 {
-    private static final Logger log = Logger.getLogger(GetAction.class);
 
-    protected DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-
-    public static final int MAX_OBS_LIST_SIZE = 100000;
-
-
-    public GetAction() { }
-
+    /**
+     * Return the CAOM 2.2 version of the observation writer.
+     */
     @Override
-    public void doAction() throws Exception
-    {
-        log.debug("GET ACTION");
-        ObservationURI uri = getURI();
-        if (uri != null)
-        {
-            doGetObservation(uri);
-            return;
-        }
-        else
-        {
-            // maxRec == null means list all
-            String maxRecString = syncInput.getParameter("maxrec");
-            Integer maxRec = MAX_OBS_LIST_SIZE;
-            if (maxRecString != null)
-            {
-                int m = Integer.valueOf(maxRecString);
-                if (m < maxRec)
-                    maxRec = m;
-            }
-
-            try
-            {
-                // start date is optional
-                Date start = null;
-                String startString = syncInput.getParameter("start");
-                if (startString != null)
-                    start = df.parse(startString);
-
-                // end date is optional
-                Date end = null;
-                String endString = syncInput.getParameter("end");
-                if (endString != null)
-                    end = df.parse(endString);
-
-                doList(maxRec, start, end);
-            }
-            catch (ParseException e)
-            {
-                throw new IllegalArgumentException("wrong date format", e);
-            }
-        }
-    }
-
-
-    protected void doGetObservation(ObservationURI uri)
-        throws Exception
-    {
-        log.debug("START: " + uri);
-
-        checkReadPermission(uri.getCollection());
-
-        ObservationDAO dao = getDAO();
-        Observation obs = dao.get(uri);
-
-        if (obs == null)
-            throw new ResourceNotFoundException("not found: " + uri);
-
-        // write with default schema
-        ObservationWriter ow = getObservationWriter();
-
-        syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(obs, bc);
-        logInfo.setBytes(bc.getByteCount());
-
-        log.debug("DONE: " + uri);
-    }
-
-    protected void doList(int maxRec, Date start, Date end)
-            throws Exception
-    {
-        log.debug("START: " + getCollection());
-
-        checkReadPermission(getCollection());
-
-        ObservationDAO dao = getDAO();
-
-        List<ObservationState> states = dao.getObservationList(
-                getCollection(), start, end, maxRec);
-
-        if (states == null)
-            throw new ResourceNotFoundException(
-                    "Collection not found: " + getCollection());
-
-        long byteCount = writeObservationList(states);
-        logInfo.setBytes(byteCount);
-
-        log.debug("DONE: " + getCollection());
-    }
-
     protected ObservationWriter getObservationWriter()
     {
-        return new ObservationWriter();
+        return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
 
+    /**
+     * Write in CSV format
+     */
+    @Override
     protected long writeObservationList(List<ObservationState> states) throws IOException
     {
-        // write in tsv format
-        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        // write in csv format for now
+        syncOutput.setHeader("Content-Type", "text/csv");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
-        CsvWriter writer = new CsvWriter(out, '\t');
+        CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
         for (ObservationState state : states)
         {
-            writer.write(state.getCollection());
             writer.write(state.getObservationID());
             writer.write(df.format(state.getMaxLastModified()));
-            if (state.getAccMetaChecksum() != null)
-            {
-                writer.write(state.getAccMetaChecksum().toString());
-            }
             writer.endRecord();
         }
         writer.flush();
