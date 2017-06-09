@@ -409,6 +409,9 @@ public class Ingest implements Runnable
                 if (a.equals(artifact))
                 {
                     artifact = a;
+                    // assign non-identifying constructor args
+                    artifact.setProductType(ptype);
+                    artifact.setReleaseType(rtype);
                     break;
                 }
             }
@@ -420,7 +423,7 @@ public class Ingest implements Runnable
             setContentType(artifact, ingestFile);
 
             // If FITS file, get details about parts and chunks
-            // TODO: we maye have to combine this with the read loop to avoid excessive
+            // TODO: we may have to combine this with the read loop to avoid excessive
             // memory usage
             Integer extension = 0;
             ListIterator<Header> hiter = headers.listIterator();
