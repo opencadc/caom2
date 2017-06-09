@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,40 +62,59 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence.skel;
+package ca.nrc.cadc.caom2.repo.action;
 
-import java.net.URI;
-import java.util.Date;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.List;
+
+import com.csvreader.CsvWriter;
+
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.io.ByteCountOutputStream;
 
 /**
- * Simple class to capture the internal IDs, lastModified timestamps, metadata 
- * checksums and parent-child relations of the CAOM model.
- *
- * @author pdowler
+ * For CAOM 2.2 support.
  */
-public class Skeleton
+public class GetAction22 extends GetAction
 {
-    public UUID id;
-    public Date lastModified;
-    public Date maxLastModified;
-    public URI metaChecksum;
-    public URI accMetaChecksum;
-    
-    public Integer stateCode;
-    public Class targetClass;
 
-    protected Skeleton(Class c) { this.targetClass = c; }
-    
+    /**
+     * Return the CAOM 2.2 version of the observation writer.
+     */
     @Override
-    public String toString()
+    protected ObservationWriter getObservationWriter()
     {
-        return getClass().getSimpleName() + "[" + id + "," + lastModified + "," 
-                + stateCode + "," + metaChecksum + "]";
+        return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
+
+    /**
+     * Write in CSV format
+     */
+    @Override
+    protected long writeObservationList(List<ObservationState> states) throws IOException
+    {
+        // write in csv format for now
+        syncOutput.setHeader("Content-Type", "text/csv");
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
+        for (ObservationState state : states)
+        {
+            writer.write(state.getObservationID());
+            writer.write(df.format(state.getMaxLastModified()));
+            writer.endRecord();
+        }
+        writer.flush();
+        return bc.getByteCount();
+    }
+
 }

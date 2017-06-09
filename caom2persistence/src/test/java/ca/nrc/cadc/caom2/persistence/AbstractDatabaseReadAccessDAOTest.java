@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -93,7 +92,6 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
@@ -177,7 +175,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     {
         try
         {
-            UUID id = UUID.randomUUID();
+            UUID id = genID();
             for (int i=0; i<entityClasses.length; i++)
             {
                 ReadAccess ra = dao.get(entityClasses[i], id);
@@ -197,8 +195,8 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         Assert.assertNotNull(s, actual);
         Assert.assertEquals(s+".assetID", expected.getAssetID(), actual.getAssetID());
         Assert.assertEquals(s+".groupID", expected.getGroupID(), actual.getGroupID());
+        Assert.assertEquals(s+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
         testEqual(s+".lastModified", expected.getLastModified(), actual.getLastModified());
-        //Assert.assertEquals(s+".getStateCode", expected.getStateCode(), actual.getStateCode());
     }
     
     // overridable in subclass to extend checks
@@ -337,7 +335,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         }
         finally
         {
-            obsDAO.delete(obs.getID());
+            try { obsDAO.delete(obs.getID()); }
+            catch(Exception ex)
+            {
+                log.error("unexpected cleanup exception", ex);
+            }
         }
     }
     

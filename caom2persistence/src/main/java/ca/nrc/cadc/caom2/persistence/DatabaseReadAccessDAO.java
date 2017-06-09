@@ -201,7 +201,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
             Skeleton cur = (Skeleton) jdbc.query(sql, gen.getSkeletonExtractor(skel));
 
             if (computeLastModified)
-                updateLastModified(ra, cur);
+                updateEntity(ra, cur);
 
             super.put(cur, ra, null, jdbc);
         }
@@ -243,9 +243,6 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
                 op.setID(id);
                 op.setValue(cur);
                 op.execute(jdbc);
-                //String sql = gen.getDeleteSQL(c, id, true);
-                //log.debug("DELETE: " + sql);
-                //jdbc.update(sql);
             }
         }
         finally
@@ -255,15 +252,22 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         }
     }
 
-    private void updateLastModified(ReadAccess ra, Skeleton s)
+    private void updateEntity(ReadAccess ra, Skeleton s)
     {
-        boolean updateMax = false;
-
-        // new or changed
-        if (s == null || s.stateCode.intValue() != ra.getStateCode())
-        {
+        int nsc = ra.getStateCode();
+        
+        digest.reset();
+        Util.assignMetaChecksum(ra, ra.computeMetaChecksum(false, digest), "metaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !ra.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback
+                
+        if (delta)        
             Util.assignLastModified(ra, new Date(), "lastModified");
-            //Util.assignLastModified(ra, ra.getLastModified(), "maxLastModified");
-        }
     }
 }

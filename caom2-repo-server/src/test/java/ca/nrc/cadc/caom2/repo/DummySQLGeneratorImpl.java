@@ -70,7 +70,15 @@
 package ca.nrc.cadc.caom2.repo;
 
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import java.net.URI;
+import java.util.Date;
+import java.util.UUID;
+
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
+
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
@@ -78,12 +86,6 @@ import ca.nrc.cadc.caom2.persistence.EntityDelete;
 import ca.nrc.cadc.caom2.persistence.EntityPut;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import java.net.URI;
-import java.util.Date;
-import java.util.UUID;
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -198,13 +200,13 @@ public class DummySQLGeneratorImpl implements SQLGenerator
     }
 
     @Override
-    public EntityPut getEntityPut(Class<? extends AbstractCaomEntity> type, boolean bln)
+    public EntityPut getEntityPut(Class<? extends CaomEntity> type, boolean bln)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> type, boolean bln)
+    public EntityDelete getEntityDelete(Class<? extends CaomEntity> type, boolean bln)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -226,6 +228,6 @@ public class DummySQLGeneratorImpl implements SQLGenerator
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-    
+
+
 }

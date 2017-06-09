@@ -7,7 +7,8 @@ create table caom2.ObservationMetaReadAccess
 
     readAccessID    uuid not null primary key,
     lastModified    timestamp not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136) not null
 )
 ;
 
@@ -23,7 +24,8 @@ create table caom2.PlaneMetaReadAccess
 
     readAccessID    uuid not null primary key,
     lastModified    timestamp not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136) not null
 )
 ;
 
@@ -39,7 +41,8 @@ create table caom2.PlaneDataReadAccess
 
     readAccessID    uuid not null primary key,
     lastModified    timestamp not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136) not null
 )
 ;
 

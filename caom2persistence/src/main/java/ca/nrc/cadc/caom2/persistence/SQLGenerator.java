@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
+import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
@@ -150,9 +150,9 @@ public interface SQLGenerator
 
     RowMapper getTimestampRowMapper();
     
-    EntityPut getEntityPut(Class<? extends AbstractCaomEntity> c, boolean isUpdate);
+    EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate);
     
-    EntityDelete getEntityDelete(Class<? extends AbstractCaomEntity> c, boolean primaryKey);
+    EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey);
 
     //String getDeleteSQL(Class c, UUID id, boolean primaryKey);
     

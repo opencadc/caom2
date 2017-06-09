@@ -92,7 +92,8 @@ public class InitDatabase
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.2";
+    public static final String MODEL_VERSION = "2.3";
+    public static final String PREV_MODEL_VERSION = "2.2";
     
     static String[] CREATE_SQL = new String[]
     {
@@ -106,8 +107,12 @@ public class InitDatabase
         "caom2.HarvestSkip.sql",
         "caom2.access.sql",
         "caom2.deleted.sql",
-        "caom2.extra_indices.sql",
-        //"caom2.permissions.sql"
+        "caom2.extra_indices.sql"
+    };
+    
+    static String[] UPGRADE_SQL = new String[]
+    {
+        "caom2.upgrade-23.sql"
     };
     
     private final DataSource dataSource;
@@ -143,19 +148,24 @@ public class InitDatabase
             prevVersion = cur.version;
             
             // select SQL to execute
+            String[] ddls = CREATE_SQL; // default
             if (cur.version != null && MODEL_VERSION.equals(cur.version))
             {
                 log.debug("doInit: already up to date - nothing to do");
                 return false;
             }
-            if (cur.version != null)
-                throw new UnsupportedOperationException("doInit: version upgrade not supported");
+            if (cur.version != null && cur.version.equals(PREV_MODEL_VERSION))
+            {
+                ddls = UPGRADE_SQL;
+            }
+            else if (cur.version != null)   
+                throw new UnsupportedOperationException("doInit: version upgrade not supported: " + cur.version + " -> " + MODEL_VERSION);
             
             // start transaction
             txn.startTransaction();
             
             // execute SQL
-            for (String fname : CREATE_SQL)
+            for (String fname : ddls)
             {
                 log.info("process file: " + fname);
                 List<String> statements = parseDDL(fname);
@@ -176,7 +186,6 @@ public class InitDatabase
         catch(Exception ex)
         {
             log.debug("epic fail", ex);
-            // rollback transaction
             
             if (txn.isOpen())
                 try { txn.rollbackTransaction(); }

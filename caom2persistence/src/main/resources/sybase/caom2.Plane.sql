@@ -2,6 +2,7 @@
 create table caom2_Plane
 (
     productID varchar(64) not null,
+    creatorID varchar(512) null,
 
     metaRelease datetime null,
     dataRelease datetime null,
@@ -31,7 +32,9 @@ create table caom2_Plane
     planeID bigint not null  primary key nonclustered,
     lastModified datetime not null,
     maxLastModified datetime not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(36),
+    accMetaChecksum varchar(36)
 )
 lock datarows
 ;

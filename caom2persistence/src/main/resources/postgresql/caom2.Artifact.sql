@@ -6,6 +6,7 @@ create table caom2.Artifact
     releaseType varchar(16) not null,
     contentType varchar(128),
     contentLength bigint,
+    contentChecksum varchar(136),
 
 -- optimisation
     metaReadAccessGroups tsvector default '',
@@ -17,7 +18,9 @@ create table caom2.Artifact
     artifactID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
-    stateCode int not null
+    stateCode int not null,
+    metaChecksum varchar(136) not null,
+    accMetaChecksum varchar(136) not null
 )
 ;
 

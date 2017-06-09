@@ -69,12 +69,14 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.AbstractCaomEntity;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.MaxLastModifiedComparator;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -89,17 +91,30 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author pdowler
  */
-abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends AbstractDAO
+abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
 {
     private static final Logger log = Logger.getLogger(AbstractCaomEntityDAO.class);
     protected boolean computeLastModified = true;
+    
+    protected MessageDigest digest;
 
-    protected AbstractCaomEntityDAO() { }
+    protected AbstractCaomEntityDAO() 
+    { 
+        try
+        {
+            this.digest =  MessageDigest.getInstance("MD5");
+        }
+        catch(NoSuchAlgorithmException ex)
+        {
+            throw new RuntimeException("FATAL: no MD5 digest algorithm available", ex);
+        }
+    }
 
     // constructor for utility classes that share the same settings instead of being
     // configured
     protected AbstractCaomEntityDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
     {
+        this();
         this.gen = gen;
         this.forceUpdate = forceUpdate;
         this.readOnly = readOnly;
@@ -253,17 +268,30 @@ abstract class AbstractCaomEntityDAO<T extends AbstractCaomEntity> extends Abstr
             throw new UnsupportedOperationException("put in readOnly mode");
         checkInit();
                
-        int sc1 = -1;
+        // transition from stateCode to metaChecksum
+        boolean delta = false;
+        String cmp = " [new]";
         if (cur != null)
-            sc1 = cur.stateCode.intValue();
-        int sc2 = val.getStateCode(gen.persistTransientState());
-        
-        log.debug("PUT: " + val.getClass().getSimpleName() + ": " + sc1 + " vs " + sc2);
+        {
+            delta = !val.getMetaChecksum().equals(cur.metaChecksum);
+            cmp = " " + cur.metaChecksum + " vs " + val.getMetaChecksum();
+                
+            // change in accMetaChecksum means maxLastModified changed
+            // this correctly maintains accMetaChecksum and maxLastModified
+            if (!delta)
+            {
+                delta = !val.getAccMetaChecksum().equals(cur.accMetaChecksum);
+                cmp = cmp + " -- " + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
+            }
+            log.debug("PUT: " + val.getClass().getSimpleName() + cmp);
+        }
+        else
+            log.debug("PUT: " + val.getClass().getSimpleName() + cmp);
 
         boolean isUpdate = (cur != null);
 
         // insert || forceUpdate mode || caller force || state changed
-        if ( cur == null || forceUpdate || force || sc1 != sc2)
+        if ( cur == null || forceUpdate || force || delta)
         {
             if (isUpdate)
                 log.debug("PUT update: " + val.getClass().getSimpleName() + " " + val.getID());

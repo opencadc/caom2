@@ -136,7 +136,7 @@ public class InitDatabaseTest
         }
     }
     
-    //@Test
+    @Test
     public void testUpgradeInstall()
     {
         try
@@ -145,6 +145,13 @@ public class InitDatabaseTest
             // create CAOM-2.2 and then test upgrade to CAOM-2.3 ... in general version N
             // of caom2persistence only needs to support upgrade from N-1 and larger steps
             // can be done by using version  N-1 to upgrade from N-2
+            InitDatabase init = new InitDatabase(dataSource, database, schema);
+            init.doInit();
+            
+            // TODO: verify that tables were created with test queries
+            
+            // TODO: verify that init is idempotent
+            
         }
         catch(Exception unexpected)
         {
@@ -154,7 +161,7 @@ public class InitDatabaseTest
     }
     
     @Test
-    public void testParseDDL() 
+    public void testParseCreateDDL() 
     {
         try
         {
@@ -162,11 +169,37 @@ public class InitDatabaseTest
             {
                 1, 7, 8, 3, 4, 4, 2, 2, 6, 8, 32
             };
-            Assert.assertEquals("BUG: testParseDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
+            Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
             
             for (int i = 0; i<numStatementsPerFile.length; i++)
             {
                 String fname = InitDatabase.CREATE_SQL[i];
+                log.info("process file: " + fname);
+                List<String> statements = InitDatabase.parseDDL(fname);
+                Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testParseUpgradeDDL() 
+    {
+        try
+        {
+            int[] numStatementsPerFile = new int[]
+            {
+                9
+            };
+            Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
+            
+            for (int i = 0; i<numStatementsPerFile.length; i++)
+            {
+                String fname = InitDatabase.UPGRADE_SQL[i];
                 log.info("process file: " + fname);
                 List<String> statements = InitDatabase.parseDDL(fname);
                 Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
