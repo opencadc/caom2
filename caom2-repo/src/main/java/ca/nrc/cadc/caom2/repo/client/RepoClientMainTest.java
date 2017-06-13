@@ -3,6 +3,7 @@ package ca.nrc.cadc.caom2.repo.client;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.UUID;
 
 import javax.security.auth.Subject;
 
@@ -13,6 +14,7 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -61,11 +63,18 @@ public class RepoClientMainTest implements Runnable {
             log.info(os.toString());
         }
 
-        List<Observation> l = repoC.getList(Observation.class, null, null, 5);
+        List<Observation> l = repoC.getList(Observation.class, null, null, 5, 1);
 
         for (Observation o : l) {
-            log.info(o.toString());
+            log.info(o.getID() + " " + o.getID().getLeastSignificantBits() + o.getURI().toString());
         }
+
+        Observation o = repoC.get(new ObservationURI("IRIS", "f005h000"));
+
+        repoC.get(new UUID(l.get(0).getID().getMostSignificantBits(),
+                l.get(0).getID().getLeastSignificantBits()));
+
+        repoC.getID(new ObservationURI("IRIS", "f005h000"));
 
     }
 

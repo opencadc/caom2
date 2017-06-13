@@ -10,33 +10,32 @@ import javax.security.auth.Subject;
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
 public class WorkerThread implements Callable<Observation> {
 
-    private ObservationState observationState = null;
+    private String id = null;
     private Subject subject = null;
-    private ByteArrayOutputStream bos = null;
     private String collection = null;
     private String BASE_HTTP_URL = null;
 
-    public WorkerThread(ObservationState os, Subject subject, String url, String collection,
-            ByteArrayOutputStream bos) {
-        this.observationState = os;
+    public WorkerThread(String id, Subject subject, String url, String collection) {
+        this.id = id;
         this.subject = subject;
         this.collection = collection;
         this.BASE_HTTP_URL = url;
-        this.bos = bos;
     }
 
     @Override
     public Observation call() throws Exception {
-        String id = observationState.getObservationID();
 
-        bos = new ByteArrayOutputStream();
+        return getObservation();
+    }
+
+    public Observation getObservation() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         String surl = BASE_HTTP_URL + File.separator + collection + File.separator + id;
         URL url = null;
         try {

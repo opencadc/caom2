@@ -149,7 +149,7 @@ public class RepoClient extends DatabaseObservationDAO {
         List<Callable<Observation>> tasks = new ArrayList<Callable<Observation>>();
 
         for (ObservationState os : stateList) {
-            tasks.add(new WorkerThread(os, subject, BASE_HTTP_URL, collection, bos));
+            tasks.add(new WorkerThread(os.getObservationID(), subject, BASE_HTTP_URL, collection));
         }
 
         // Run tasks in a fixed thread pool
@@ -207,6 +207,7 @@ public class RepoClient extends DatabaseObservationDAO {
     public Observation get(UUID id) {
         if (id == null)
             throw new IllegalArgumentException("id cannot be null");
+        // TODO: redo in a more efficient way
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
 
@@ -214,30 +215,22 @@ public class RepoClient extends DatabaseObservationDAO {
     public Observation get(ObservationURI uri) {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
-        return get(uri, null, SQLGenerator.MAX_DEPTH);
+        WorkerThread wt = new WorkerThread(uri.getObservationID(), subject, BASE_HTTP_URL,
+                collection);
+        return wt.getObservation();
     }
 
     private Observation get(ObservationURI uri, UUID id, int depth) {
-        Observation o = null;
         if (id == null && uri == null) {
             throw new RuntimeException("uri and id cannot be null at the same time");
         }
-        List<Observation> list = getList(Observation.class, null, null, null, 1);
-        for (Observation o1 : list) {
-            if (id != null) {
-                if (o1.getID().equals(id)) {
-                    o = o1;
-                    break;
-                }
-            } else if (uri != null) {
-                if (o1.getURI().equals(uri)) {
-                    o = o1;
-                    break;
-                }
-            }
+        Observation o = null;
+        if (uri != null) {
+            o = get(uri);
+        } else if (id != null) {
+            o = get(id);
         }
         return o;
-
     }
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
