@@ -2,6 +2,7 @@ package ca.nrc.cadc.caom2.repo.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -24,6 +25,8 @@ import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
@@ -36,8 +39,7 @@ public class RepoClient {
     private URI resourceId = null;
     private RegistryClient rc = null;
     private URL baseServiceURL = null;
-    private List<ObservationState> observationStates = new ArrayList<ObservationState>();
-    private List<Observation> observations = new ArrayList<Observation>();
+
     private Subject subject = null;
     private AuthMethod meth;
     private String collection = null;
@@ -152,7 +154,10 @@ public class RepoClient {
     }
 
     public List<Observation> getList(Class<Observation> c, Date startDate, Date end,
-            int numberOfObservations) throws ParseException, MalformedURLException {
+            int numberOfObservations)
+            throws ParseException, IOException, ObservationParsingException {
+
+        List<Observation> list = new ArrayList<Observation>();
 
         List<ObservationState> stateList = getObservationList(collection, startDate, end,
                 numberOfObservations);
@@ -184,9 +189,14 @@ public class RepoClient {
                 throw e;
             }
             log.info("ID = " + id + " = \n" + bos.toString());
+
+            ObservationReader obsReader = new ObservationReader();
+            Observation o = obsReader.read(bos.toString());
+
+            list.add(o);
         }
 
-        return observations;
+        return list;
     }
 
     public ObservationURI getURI(UUID curID) {
