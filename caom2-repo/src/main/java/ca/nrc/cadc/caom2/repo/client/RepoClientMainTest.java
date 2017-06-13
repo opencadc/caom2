@@ -71,10 +71,10 @@ public class RepoClientMainTest implements Runnable {
 
         Observation o = repoC.get(new ObservationURI("IRIS", "f005h000"));
 
-        repoC.get(new UUID(l.get(0).getID().getMostSignificantBits(),
-                l.get(0).getID().getLeastSignificantBits()));
+        // repoC.get(new UUID(l.get(0).getID().getMostSignificantBits(),
+        // l.get(0).getID().getLeastSignificantBits()));
 
-        repoC.getID(new ObservationURI("IRIS", "f005h000"));
+        UUID uuid = repoC.getID(new ObservationURI("IRIS", "f005h000"));
 
     }
 
