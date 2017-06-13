@@ -22,7 +22,6 @@ import java.util.concurrent.Future;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
@@ -32,7 +31,6 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
@@ -189,26 +187,6 @@ public class RepoClient extends DatabaseObservationDAO {
         return list;
     }
 
-    private List<ObservationState> checkResults(List<Observation> observationList,
-            List<ObservationState> stateList) {
-        List<ObservationState> erroneous = new ArrayList<ObservationState>();
-
-        boolean found = false;
-        for (ObservationState os : stateList) {
-            found = false;
-            for (Observation o : observationList) {
-                if (o.getObservationID().equals(os.getObservationID())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                erroneous.add(os);
-            }
-        }
-        return erroneous;
-    }
-
     @Override
     public UUID getID(ObservationURI uri) {
         Observation observation = get(uri, null, 1);
@@ -232,17 +210,34 @@ public class RepoClient extends DatabaseObservationDAO {
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
 
-    /**
-     * Get a stored observation by URI.
-     *
-     * @param uri
-     * @return the complete observation
-     */
     @Override
     public Observation get(ObservationURI uri) {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
         return get(uri, null, SQLGenerator.MAX_DEPTH);
+    }
+
+    private Observation get(ObservationURI uri, UUID id, int depth) {
+        Observation o = null;
+        List<Observation> list = getList(Observation.class, null, null, null, 1);
+        if (id == null && uri == null) {
+            throw new RuntimeException("uri and id cannot be null at the same time");
+        }
+        for (Observation o1 : list) {
+            if (id != null) {
+                if (o1.getID().equals(id)) {
+                    o = o1;
+                    break;
+                }
+            } else if (uri != null) {
+                if (o1.getURI().equals(uri)) {
+                    o = o1;
+                    break;
+                }
+            }
+        }
+        return o;
+
     }
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
@@ -272,48 +267,24 @@ public class RepoClient extends DatabaseObservationDAO {
         return list;
     }
 
-    private Observation get(ObservationURI uri, UUID id, int depth) {
-        checkInit();
-        if (uri == null && id == null)
-            throw new IllegalArgumentException("args cannot be null");
-        log.debug("GET: " + uri);
-        long t = System.currentTimeMillis();
+    private List<ObservationState> checkResults(List<Observation> observationList,
+            List<ObservationState> stateList) {
+        List<ObservationState> erroneous = new ArrayList<ObservationState>();
 
-        try {
-            String sql;
-            if (uri != null)
-                sql = gen.getSelectSQL(uri, depth);
-            else
-                sql = gen.getSelectSQL(id, depth, false);
-
-            if (log.isDebugEnabled())
-                log.debug("GET: " + Util.formatSQL(sql));
-
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            Object result = jdbc.query(sql, gen.getObservationExtractor());
-            if (result == null)
-                return null;
-            if (result instanceof List) {
-                List obs = (List) result;
-                if (obs.isEmpty())
-                    return null;
-                if (obs.size() > 1)
-                    throw new RuntimeException(
-                            "BUG: get " + uri + " query returned " + obs.size() + " observations");
-                Object o = obs.get(0);
-                if (o instanceof Observation) {
-                    Observation ret = (Observation) obs.get(0);
-                    return ret;
-                } else
-                    throw new RuntimeException(
-                            "BUG: query returned an unexpected type " + o.getClass().getName());
+        boolean found = false;
+        for (ObservationState os : stateList) {
+            found = false;
+            for (Observation o : observationList) {
+                if (o.getObservationID().equals(os.getObservationID())) {
+                    found = true;
+                    break;
+                }
             }
-            throw new RuntimeException(
-                    "BUG: query returned an unexpected type " + result.getClass().getName());
-        } finally {
-            long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + uri + " " + dt + "ms");
+            if (!found) {
+                erroneous.add(os);
+            }
         }
+        return erroneous;
     }
 
 }
