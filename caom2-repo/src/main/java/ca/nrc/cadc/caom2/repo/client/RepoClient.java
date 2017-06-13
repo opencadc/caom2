@@ -1,10 +1,12 @@
 package ca.nrc.cadc.caom2.repo.client;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -38,6 +40,7 @@ public class RepoClient {
     private List<Observation> observations = new ArrayList<Observation>();
     private Subject subject = null;
     private AuthMethod meth;
+    private String collection = null;
 
     protected final String BASE_HTTP_URL;
 
@@ -46,7 +49,7 @@ public class RepoClient {
     }
 
     // constructor takes service identifier arg
-    public RepoClient(URI resourceID) {
+    public RepoClient(URI resourceID, String collection) {
         this.resourceId = resourceID;
 
         rc = new RegistryClient();
@@ -65,18 +68,19 @@ public class RepoClient {
 
         baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, meth);
         BASE_HTTP_URL = baseServiceURL.toExternalForm();
+        this.collection = collection;
         log.info("BASE SERVICE URL: " + baseServiceURL.toString());
         log.info("Authentication used: " + meth);
 
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end,
-            Integer maxrec) {
+            Integer maxrec) throws ParseException {
         // Use HttpDownload to make the http GET calls (because it handles a lot of the
         // authentication stuff)
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + "/" + collection;
+        String surl = BASE_HTTP_URL + File.separator + collection;
         if (maxrec != null)
             surl = surl + "?maxRec=" + maxrec;
         if (start != null)
@@ -102,10 +106,35 @@ public class RepoClient {
             e.printStackTrace();
         }
 
-        log.info("Got from URL: \n" + bos.toString());
+        return transformByteArrayOutputStreamIntoListOfObservationState(collection, bos, df, ',',
+                '\n');
+    }
 
-        return null;
+    private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
+            String collection, ByteArrayOutputStream bos, DateFormat sdf, char separator,
+            char endOfLine) throws ParseException {
 
+        List<ObservationState> list = new ArrayList<ObservationState>();
+        String id = null;
+        String sdate = null;
+
+        String aux = "";
+        for (int i = 0; i < bos.toString().length(); i++) {
+            char c = bos.toString().charAt(i);
+            if (c != separator && c != endOfLine) {
+                aux += c;
+            } else if (c == separator) {
+                id = aux;
+                aux = "";
+            } else if (c == endOfLine) {
+                sdate = aux;
+                aux = "";
+                Date date = sdf.parse(sdate);
+                ObservationState os = new ObservationState(collection, id, date, resourceId);
+                list.add(os);
+            }
+        }
+        return list;
     }
 
     public Observation get(ObservationURI obs) {
@@ -123,8 +152,41 @@ public class RepoClient {
     }
 
     public List<Observation> getList(Class<Observation> c, Date startDate, Date end,
-            int numberOfObservations) {
-        return null;
+            int numberOfObservations) throws ParseException, MalformedURLException {
+
+        List<ObservationState> stateList = getObservationList(collection, startDate, end,
+                numberOfObservations);
+
+        ByteArrayOutputStream bos = null;
+
+        for (ObservationState os : stateList) {
+            String id = os.getObservationID();
+
+            bos = new ByteArrayOutputStream();
+            String surl = BASE_HTTP_URL + File.separator + collection + File.separator + id;
+            URL url;
+            try {
+                url = new URL(surl);
+                HttpDownload get = new HttpDownload(url, bos);
+
+                if (subject != null) {
+                    Subject.doAs(subject, new RunnableAction(get));
+
+                    log.info("Query run within subject");
+                } else {
+                    get.run();
+                    log.info("Query run");
+                }
+
+            } catch (MalformedURLException e) {
+                log.error("Exception in getList: " + e.getMessage());
+                e.printStackTrace();
+                throw e;
+            }
+            log.info("ID = " + id + " = \n" + bos.toString());
+        }
+
+        return observations;
     }
 
     public ObservationURI getURI(UUID curID) {

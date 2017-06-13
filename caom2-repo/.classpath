@@ -5,6 +5,5 @@
 	<classpathentry kind="src" path="src/test/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
-	<classpathentry kind="lib" path="/Users/jduran/.gradle/caches/modules-2/files-2.1/org.opencadc/caom2persistence/2.2.7/56dd4d8134d27d9e2feb28d8bf05345905966ad/caom2persistence-2.2.7.jar" sourcepath="/Users/jduran/.gradle/caches/modules-2/files-2.1/org.opencadc/caom2persistence/2.2.7/301015f096fbbd1206cef33b311fe214d8f39a60/caom2persistence-2.2.7-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
