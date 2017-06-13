@@ -219,10 +219,10 @@ public class RepoClient extends DatabaseObservationDAO {
 
     private Observation get(ObservationURI uri, UUID id, int depth) {
         Observation o = null;
-        List<Observation> list = getList(Observation.class, null, null, null, 1);
         if (id == null && uri == null) {
             throw new RuntimeException("uri and id cannot be null at the same time");
         }
+        List<Observation> list = getList(Observation.class, null, null, null, 1);
         for (Observation o1 : list) {
             if (id != null) {
                 if (o1.getID().equals(id)) {
