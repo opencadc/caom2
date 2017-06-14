@@ -78,7 +78,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -105,6 +104,7 @@ public class InitDatabase
         "caom2.Chunk.sql",
         "caom2.HarvestState.sql",
         "caom2.HarvestSkip.sql",
+        "caom2.HarvestSkipURI.sql",
         "caom2.access.sql",
         "caom2.deleted.sql",
         "caom2.extra_indices.sql"
@@ -112,7 +112,8 @@ public class InitDatabase
     
     static String[] UPGRADE_SQL = new String[]
     {
-        "caom2.upgrade-23.sql"
+        "caom2.upgrade-23.sql",    // alter existing tables
+        "caom2.HarvestSkipURI.sql" // new table
     };
     
     private final DataSource dataSource;
@@ -149,6 +150,7 @@ public class InitDatabase
             
             // select SQL to execute
             String[] ddls = CREATE_SQL; // default
+            boolean upgrade = false;
             if (cur.version != null && MODEL_VERSION.equals(cur.version))
             {
                 log.debug("doInit: already up to date - nothing to do");
@@ -157,6 +159,7 @@ public class InitDatabase
             if (cur.version != null && cur.version.equals(PREV_MODEL_VERSION))
             {
                 ddls = UPGRADE_SQL;
+                upgrade = true;
             }
             else if (cur.version != null)   
                 throw new UnsupportedOperationException("doInit: version upgrade not supported: " + cur.version + " -> " + MODEL_VERSION);
@@ -171,7 +174,10 @@ public class InitDatabase
                 List<String> statements = parseDDL(fname);
                 for (String sql : statements)
                 {
-                    log.debug("execute:\n"+sql);
+                    if (upgrade)
+                        log.info("execute:\n"+sql);
+                    else
+                        log.debug("execute:\n"+sql);
                     jdbc.execute(sql);
                 }
             }

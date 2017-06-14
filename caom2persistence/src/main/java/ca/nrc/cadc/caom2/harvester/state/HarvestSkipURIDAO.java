@@ -66,10 +66,12 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -90,7 +92,7 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author pdowler
  */
-public class HarvestSkipDAO
+public class HarvestSkipURIDAO
 {
     private static Logger log = Logger.getLogger(HarvestSkipURIDAO.class);
 
@@ -107,36 +109,36 @@ public class HarvestSkipDAO
 
     private Calendar CAL = Calendar.getInstance(DateUtil.UTC);
 
-    public HarvestSkipDAO(DataSource dataSource, String database, String schema, Integer batchSize)
+    public HarvestSkipURIDAO(DataSource dataSource, String database, String schema, Integer batchSize)
     {
         this.jdbc = new JdbcTemplate(dataSource);
-        this.tableName = database + "." +  schema + ".HarvestSkip";
+        this.tableName = database + "." +  schema + ".HarvestSkipURI";
         this.batchSize = batchSize;
         this.extractor = new HarvestSkipMapper();
     }
 
-    public HarvestSkip get(String source, String cname, UUID skipID)
+    public HarvestSkipURI get(String source, String cname, URI skipID)
     {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, skipID, null, null);
         List result = jdbc.query(sel, extractor);
         if (result.isEmpty())
             return null;
-        return (HarvestSkip) result.get(0);
+        return (HarvestSkipURI) result.get(0);
     }
     
-    public List<HarvestSkip> get(String source, String cname, Date start)
+    public List<HarvestSkipURI> get(String source, String cname, Date start)
     {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, null, batchSize, start);
         List result = jdbc.query(sel, extractor);
-        List<HarvestSkip> ret = new ArrayList<HarvestSkip>(result.size());
+        List<HarvestSkipURI> ret = new ArrayList<HarvestSkipURI>(result.size());
         for (Object o : result)
-            ret.add((HarvestSkip) o);
+            ret.add((HarvestSkipURI) o);
         return ret;
     }
     
-    public void put(HarvestSkip skip)
+    public void put(HarvestSkipURI skip)
     {
         boolean update = true;
         if (skip.id == null)
@@ -150,7 +152,7 @@ public class HarvestSkipDAO
         jdbc.update(put);
     }
 
-    public void delete(HarvestSkip skip)
+    public void delete(HarvestSkipURI skip)
     {
         if (skip == null || skip.id == null)
             throw new IllegalArgumentException("cannot delete: " + skip);
@@ -165,12 +167,12 @@ public class HarvestSkipDAO
         private String source;
         private String cname;
         private Integer batchSize;
-        private UUID skipID;
+        private URI skipID;
         private Date start;
 
         public SelectStatementCreator() { }
 
-        public void setValues(String source, String cname, UUID skipID, Integer batchSize, Date start)
+        public void setValues(String source, String cname, URI skipID, Integer batchSize, Date start)
         {
             this.source = source;
             this.cname = cname;
@@ -207,7 +209,7 @@ public class HarvestSkipDAO
             ps.setString(1, source);
             ps.setString(2, cname);
             if (skipID != null)
-                ps.setObject(3, skipID);
+                ps.setString(3, skipID.toASCIIString());
             else if (start != null)
                 ps.setTimestamp(3, new Timestamp(start.getTime()), CAL);
         }
@@ -216,11 +218,11 @@ public class HarvestSkipDAO
     private class PutStatementCreator implements PreparedStatementCreator
     {
         private boolean update;
-        private HarvestSkip skip;
+        private HarvestSkipURI skip;
 
         PutStatementCreator(boolean update) { this.update = update; }
 
-        public void setValue(HarvestSkip skip)
+        public void setValue(HarvestSkipURI skip)
         {
             this.skip = skip;
         }
@@ -245,7 +247,7 @@ public class HarvestSkipDAO
             int col = 1;
             ps.setString(col++, skip.source);
             ps.setString(col++, skip.cname);
-            ps.setObject(col++, skip.skipID);
+            ps.setString(col++, skip.skipID.toASCIIString());
             ps.setString(col++, skip.errorMessage);
             ps.setTimestamp(col++, new Timestamp(now.getTime()), CAL);
             ps.setObject(col++, skip.id);
@@ -256,11 +258,11 @@ public class HarvestSkipDAO
     {
         public Object mapRow(ResultSet rs, int i) throws SQLException
         {
-            HarvestSkip ret = new HarvestSkip();
+            HarvestSkipURI ret = new HarvestSkipURI();
             int col = 1;
             ret.source = rs.getString(col++);
             ret.cname = rs.getString(col++);
-            ret.skipID = Util.getUUID(rs, col++);
+            ret.skipID = Util.getURI(rs, col++);
             ret.errorMessage = rs.getString(col++);
             ret.lastModified = Util.getDate(rs, col++, CAL);
             ret.id = Util.getUUID(rs, col++);
