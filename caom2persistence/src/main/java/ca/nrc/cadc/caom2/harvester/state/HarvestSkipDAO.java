@@ -92,7 +92,7 @@ import org.springframework.jdbc.core.RowMapper;
  */
 public class HarvestSkipDAO
 {
-    private static Logger log = Logger.getLogger(HarvestSkipURIDAO.class);
+    private static Logger log = Logger.getLogger(HarvestSkipDAO.class);
 
     private static final String[] COLUMNS =
     {
