@@ -33,6 +33,7 @@ import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 
@@ -64,7 +65,10 @@ public class RepoClient extends DatabaseObservationDAO {
 
         // setup optional authentication for harvesting from a web service
         // get current subject
-        subject = AuthenticationUtil.getCurrentSubject();
+        // Create a subject
+        subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+
+        // subject = AuthenticationUtil.getCurrentSubject();
         if (subject != null) {
             meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             // User RegistryClient to go from resourceID to service URL
@@ -74,7 +78,7 @@ public class RepoClient extends DatabaseObservationDAO {
             log.info("No current subject found");
         }
 
-        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_20, meth);
+        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_23, meth);
         BASE_HTTP_URL = baseServiceURL.toExternalForm();
         this.collection = collection;
         log.info("BASE SERVICE URL: " + baseServiceURL.toString());
@@ -117,8 +121,7 @@ public class RepoClient extends DatabaseObservationDAO {
 
         List<ObservationState> list;
         try {
-            list = transformByteArrayOutputStreamIntoListOfObservationState(collection, bos, df,
-                    ',', '\n');
+            list = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
         } catch (ParseException e) {
             throw new RuntimeException("Unable to list of ObservationState from " + bos.toString());
         }
@@ -149,7 +152,7 @@ public class RepoClient extends DatabaseObservationDAO {
         List<Callable<Observation>> tasks = new ArrayList<Callable<Observation>>();
 
         for (ObservationState os : stateList) {
-            tasks.add(new WorkerThread(os.getObservationID(), subject, BASE_HTTP_URL, collection));
+            tasks.add(new WorkerThread(os, subject, BASE_HTTP_URL));
         }
 
         // Run tasks in a fixed thread pool
@@ -215,8 +218,9 @@ public class RepoClient extends DatabaseObservationDAO {
     public Observation get(ObservationURI uri) {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
-        WorkerThread wt = new WorkerThread(uri.getObservationID(), subject, BASE_HTTP_URL,
-                collection);
+        ObservationState os = new ObservationState(uri.getCollection(), uri.getObservationID(),
+                null, null);
+        WorkerThread wt = new WorkerThread(os, subject, BASE_HTTP_URL);
         return wt.getObservation();
     }
 
@@ -234,20 +238,40 @@ public class RepoClient extends DatabaseObservationDAO {
     }
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
-            String collection, ByteArrayOutputStream bos, DateFormat sdf, char separator,
-            char endOfLine) throws ParseException {
+            ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
+            throws ParseException {
 
         List<ObservationState> list = new ArrayList<ObservationState>();
         String id = null;
         String sdate = null;
+        String collection = null;
 
         String aux = "";
+        boolean readingCollection = true;
+        boolean readingId = false;
+        boolean readingDate = false;
+
         for (int i = 0; i < bos.toString().length(); i++) {
             char c = bos.toString().charAt(i);
             if (c != separator && c != endOfLine) {
                 aux += c;
             } else if (c == separator) {
-                id = aux;
+                if (readingCollection) {
+                    collection = aux;
+                    readingCollection = false;
+                    readingId = true;
+                    readingDate = false;
+                } else if (readingId) {
+                    id = aux;
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = true;
+                } else if (readingDate) {
+                    sdate = aux;
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = false;
+                }
                 aux = "";
             } else if (c == endOfLine) {
                 sdate = aux;
@@ -255,6 +279,10 @@ public class RepoClient extends DatabaseObservationDAO {
                 Date date = sdf.parse(sdate);
                 ObservationState os = new ObservationState(collection, id, date, resourceId);
                 list.add(os);
+                readingCollection = true;
+                readingId = false;
+                readingDate = false;
+
             }
         }
         return list;

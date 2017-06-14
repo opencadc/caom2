@@ -30,11 +30,11 @@ public class RepoClientMainTest implements Runnable {
     public static void main(String[] args) {
 
         Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.TRACE);
-        Log4jInit.setLevel("ca.nrc.cadc.reg.client.RegistryClient", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net.NetrcAuthenticator", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net.NetrcFile", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.auth.AuthenticationUtil", Level.DEBUG);
+        // Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.TRACE);
+        // Log4jInit.setLevel("ca.nrc.cadc.reg.client.RegistryClient", Level.DEBUG);
+        // Log4jInit.setLevel("ca.nrc.cadc.net.NetrcAuthenticator", Level.DEBUG);
+        // Log4jInit.setLevel("ca.nrc.cadc.net.NetrcFile", Level.DEBUG);
+        // Log4jInit.setLevel("ca.nrc.cadc.auth.AuthenticationUtil", Level.DEBUG);
 
         // Create a subject
         Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
@@ -66,7 +66,8 @@ public class RepoClientMainTest implements Runnable {
         List<Observation> l = repoC.getList(Observation.class, null, null, 5, 1);
 
         for (Observation o : l) {
-            log.info(o.getID() + " " + o.getID().getLeastSignificantBits() + o.getURI().toString());
+            log.info(o.getID() + " " + o.getCollection() + " " + o.getURI().toString() + " "
+                    + o.getLastModified());
         }
 
         Observation o = repoC.get(new ObservationURI("IRIS", "f005h000"));
