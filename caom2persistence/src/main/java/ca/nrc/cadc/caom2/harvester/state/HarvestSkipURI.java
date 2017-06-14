@@ -103,7 +103,7 @@ public class HarvestSkipURI
     @Override
     public String toString()
     {
-        return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
+        return "HarvestSkipURI[" + source + "," + cname + "," + skipID + "]";
     }
 
     public URI getSkipID()
