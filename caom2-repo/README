@@ -1,1 +1,6 @@
-The CaomRepoConfig.properties file is an example that works for development; it goes in $HOME/config (TBD).
+A .netrc file is required in $HOME with the following format:
+
+machine <url> login <username> password <password>
+
+Example:
+machine www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca login <GitHub_username> password <GitHub_password>
