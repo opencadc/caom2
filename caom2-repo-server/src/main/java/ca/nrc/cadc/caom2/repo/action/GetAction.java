@@ -222,6 +222,10 @@ public class GetAction extends RepoAction
             {
                 writer.write(state.getAccMetaChecksum().toString());
             }
+            else
+            {
+                writer.write("");
+            }
             writer.endRecord();
         }
         writer.flush();
