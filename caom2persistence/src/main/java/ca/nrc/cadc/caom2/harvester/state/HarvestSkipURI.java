@@ -69,27 +69,30 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.ObservationURI;
+import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 
 /**
- * Track failed harvest attempts by CaomEntity UUID.
+ * Track failed harvest attempts by URI. This is expected to be used for CAOM
+ * Observation harvesting.
  * 
  * @author pdowler
  */
-public class HarvestSkip 
+public class HarvestSkipURI 
 {
     public String source;
     public String cname;
-    public UUID skipID;
+    public URI skipID;
     public String errorMessage;
 
     public Date lastModified;
     UUID id;
 
-    HarvestSkip() { }
+    HarvestSkipURI() { }
     
-    public HarvestSkip(String source, String cname, UUID skipID, String msg)
+    public HarvestSkipURI(String source, String cname, URI skipID, String msg)
     {
         this.source = source;
         this.cname = cname;
@@ -100,10 +103,10 @@ public class HarvestSkip
     @Override
     public String toString()
     {
-        return "HarvestSkipUUID[" + source + "," + cname + "," + skipID + "]";
+        return "HarvestSkipURI[" + source + "," + cname + "," + skipID + "]";
     }
 
-    public UUID getSkipID()
+    public URI getSkipID()
     {
         return skipID;
     }
