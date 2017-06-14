@@ -2,50 +2,53 @@ package ca.nrc.cadc.caom2.repo.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.Log4jInit;
 
 public class RepoClientTest {
-	
-	private static final Logger log = Logger.getLogger(RepoClient.class);
 
-    // constructor takes service identifier arg
-    public RepoClientTest(URI resourceID) {
+    private static final Logger log = Logger.getLogger(RepoClientTest.class);
 
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    public List<ObservationState> getObservationList(String collection, Date start, Date end,
-            Integer maxrec) {
-        return null;
+    // @Test
+    public void testTemplate() {
+        try {
 
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 
-    public Observation get(ObservationURI obs) {
-        return null;
+    @Test
+    public void testGetObservationList() {
+        try {
+            RepoClient repoC = null;
+            try {
+                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), "IRIS", 8);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(
+                        "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
+            }
 
+            List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
+
+            Assert.assertEquals(list.size(), 5);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-
-    public List<Observation> getList() {
-        return null;
-
-    }
-
-    public Iterator<Observation> observationIterator() {
-        return null;
-
-    }
-    
-  
 
 }
