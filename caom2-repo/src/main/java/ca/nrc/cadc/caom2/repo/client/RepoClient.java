@@ -123,7 +123,8 @@ public class RepoClient extends DatabaseObservationDAO {
         try {
             list = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
         } catch (ParseException e) {
-            throw new RuntimeException("Unable to list of ObservationState from " + bos.toString());
+            throw new RuntimeException("Unable to list of ObservationState from " + bos.toString()
+                    + ": exception = " + e.getMessage());
         }
         return list;
     }
@@ -249,7 +250,6 @@ public class RepoClient extends DatabaseObservationDAO {
         String aux = "";
         boolean readingCollection = true;
         boolean readingId = false;
-        boolean readingDate = false;
 
         for (int i = 0; i < bos.toString().length(); i++) {
             char c = bos.toString().charAt(i);
@@ -260,19 +260,15 @@ public class RepoClient extends DatabaseObservationDAO {
                     collection = aux;
                     readingCollection = false;
                     readingId = true;
-                    readingDate = false;
+                    aux = "";
+
                 } else if (readingId) {
                     id = aux;
                     readingCollection = false;
                     readingId = false;
-                    readingDate = true;
-                } else if (readingDate) {
-                    sdate = aux;
-                    readingCollection = false;
-                    readingId = false;
-                    readingDate = false;
+                    aux = "";
                 }
-                aux = "";
+
             } else if (c == endOfLine) {
                 sdate = aux;
                 aux = "";
@@ -281,7 +277,6 @@ public class RepoClient extends DatabaseObservationDAO {
                 list.add(os);
                 readingCollection = true;
                 readingId = false;
-                readingDate = false;
 
             }
         }
