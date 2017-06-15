@@ -2,3 +2,8 @@
 /bin/
 /.settings/
 /build/
+/.gitignore/
+/.classpath/
+/.project/
+/gradlew/
+/gradlew.bat/
