@@ -222,7 +222,7 @@ public class RepoClient
 	}
 
 	public List<Observation> getList(Class<Observation> c, Date startDate,
-			Date end, Integer numberOfObservations, int depth)
+			Date end, Integer numberOfObservations)
 	{
 
 		List<Observation> list = new ArrayList<Observation>();

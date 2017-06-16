@@ -158,7 +158,7 @@ public class RepoClientTest
 			}
 
 			List<Observation> list = repoC.getList(Observation.class, null,
-					null, 5, 1);
+					null, 5);
 
 			Assert.assertEquals(list.size(), 5);
 

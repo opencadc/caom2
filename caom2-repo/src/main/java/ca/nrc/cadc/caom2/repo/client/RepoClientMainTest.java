@@ -144,8 +144,7 @@ public class RepoClientMainTest implements Runnable
 			log.info(os.toString());
 		}
 
-		List<Observation> l = repoC.getList(Observation.class, null, null, 5,
-				1);
+		List<Observation> l = repoC.getList(Observation.class, null, null, 5);
 
 		for (Observation o : l)
 		{
