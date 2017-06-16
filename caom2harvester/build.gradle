@@ -27,7 +27,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.0,)'
     compile 'org.opencadc:caom2:[2.3.0,)'
     compile 'org.opencadc:caom2-compute:[2.3.0,)'
-    compile 'org.opencadc:caom2persistence:[2.3.1,)'
+    compile 'org.opencadc:caom2persistence:[2.3.2,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'

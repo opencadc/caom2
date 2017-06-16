@@ -2880,13 +2880,13 @@ public class BaseSQLGenerator implements SQLGenerator
             return new ObservationSkeletonExtractor();
         
         if (c.equals(ObservationMetaReadAccessSkeleton.class))
-            return new SkeletonExtractor(ObservationMetaReadAccessSkeleton.class);
+            return new ReadAccessSkeletonExtractor(ObservationMetaReadAccessSkeleton.class);
         
         if (c.equals(PlaneMetaReadAccessSkeleton.class))
-            return new SkeletonExtractor(PlaneMetaReadAccessSkeleton.class);
+            return new ReadAccessSkeletonExtractor(PlaneMetaReadAccessSkeleton.class);
         
         if (c.equals(PlaneDataReadAccessSkeleton.class))
-            return new SkeletonExtractor(PlaneDataReadAccessSkeleton.class);
+            return new ReadAccessSkeletonExtractor(PlaneDataReadAccessSkeleton.class);
         
         throw new UnsupportedOperationException("getSkeletonExtractor: " + c.getName());
     }
@@ -3771,10 +3771,10 @@ public class BaseSQLGenerator implements SQLGenerator
     }
 
 
-    private class SkeletonExtractor implements ResultSetExtractor
+    private class ReadAccessSkeletonExtractor implements ResultSetExtractor
     {
         private Class<? extends Skeleton> c;
-        public SkeletonExtractor(Class<? extends Skeleton> c)
+        public ReadAccessSkeletonExtractor(Class<? extends Skeleton> c)
         {
             this.c = c;
         }
@@ -3795,10 +3795,8 @@ public class BaseSQLGenerator implements SQLGenerator
                 int col = 1;
                 Skeleton ret = c.newInstance();
                 ret.lastModified = Util.getDate(rs, col++, UTC_CAL);
-                ret.maxLastModified = Util.getDate(rs, col++, UTC_CAL);
                 ret.stateCode = Util.getInteger(rs, col++);
                 ret.metaChecksum = Util.getURI(rs, col++);
-                // no accMetaChecksum in ReadAccess tables
                 ret.id = Util.getUUID(rs, col++);
                 log.debug("found: " + ret);
                 return ret;
