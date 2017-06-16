@@ -69,8 +69,9 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -97,7 +98,7 @@ public class GetAction extends RepoAction
 {
     private static final Logger log = Logger.getLogger(GetAction.class);
 
-    private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    protected DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
 
@@ -143,7 +144,7 @@ public class GetAction extends RepoAction
                     end = df.parse(endString);
 
                 doList(maxRec, start, end);
-            } 
+            }
             catch (ParseException e)
             {
                 throw new IllegalArgumentException("wrong date format", e);
@@ -166,7 +167,7 @@ public class GetAction extends RepoAction
             throw new ResourceNotFoundException("not found: " + uri);
 
         // write with default schema
-        ObservationWriter ow = new ObservationWriter();
+        ObservationWriter ow = getObservationWriter();
 
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         OutputStream os = syncOutput.getOutputStream();
@@ -193,22 +194,42 @@ public class GetAction extends RepoAction
             throw new ResourceNotFoundException(
                     "Collection not found: " + getCollection());
 
-        // write in csv format for now
-        syncOutput.setHeader("Content-Type", "text/csv");
+        long byteCount = writeObservationList(states);
+        logInfo.setBytes(byteCount);
+
+        log.debug("DONE: " + getCollection());
+    }
+
+    protected ObservationWriter getObservationWriter()
+    {
+        return new ObservationWriter();
+    }
+
+    protected long writeObservationList(List<ObservationState> states) throws IOException
+    {
+        // write in tsv format
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
         for (ObservationState state : states)
         {
+            writer.write(state.getCollection());
             writer.write(state.getObservationID());
             writer.write(df.format(state.getMaxLastModified()));
+            if (state.getAccMetaChecksum() != null)
+            {
+                writer.write(state.getAccMetaChecksum().toString());
+            }
+            else
+            {
+                writer.write("");
+            }
             writer.endRecord();
         }
         writer.flush();
-
-        logInfo.setBytes(bc.getByteCount());
-
-        log.debug("DONE: " + getCollection());
+        return bc.getByteCount();
     }
 
 }

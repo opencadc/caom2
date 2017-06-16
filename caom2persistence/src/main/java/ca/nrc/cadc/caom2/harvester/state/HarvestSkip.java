@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,7 +73,8 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- *
+ * Track failed harvest attempts by CaomEntity UUID.
+ * 
  * @author pdowler
  */
 public class HarvestSkip 
@@ -99,7 +100,7 @@ public class HarvestSkip
     @Override
     public String toString()
     {
-        return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
+        return "HarvestSkipUUID[" + source + "," + cname + "," + skipID + "]";
     }
 
     public UUID getSkipID()
@@ -109,6 +110,6 @@ public class HarvestSkip
 
     public UUID getID()
     {
-        return skipID;
+        return id;
     }
 }

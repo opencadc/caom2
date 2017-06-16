@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,35 +67,52 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence.skel;
+package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.ObservationURI;
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 
 /**
- * Simple class to capture the internal IDs, lastModified timestamps, metadata 
- * checksums and parent-child relations of the CAOM model.
- *
+ * Track failed harvest attempts by URI. This is expected to be used for CAOM
+ * Observation harvesting.
+ * 
  * @author pdowler
  */
-public class Skeleton
+public class HarvestSkipURI 
 {
-    public UUID id;
-    public Date lastModified;
-    public Date maxLastModified;
-    public URI metaChecksum;
-    public URI accMetaChecksum;
-    
-    public Integer stateCode;
-    public Class targetClass;
+    public String source;
+    public String cname;
+    public URI skipID;
+    public String errorMessage;
 
-    protected Skeleton(Class c) { this.targetClass = c; }
+    public Date lastModified;
+    UUID id;
+
+    HarvestSkipURI() { }
     
+    public HarvestSkipURI(String source, String cname, URI skipID, String msg)
+    {
+        this.source = source;
+        this.cname = cname;
+        this.skipID = skipID;
+        this.errorMessage = msg;
+    }
+
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + id + "," + lastModified + "," 
-                + stateCode + "," + metaChecksum + "]";
+        return "HarvestSkipURI[" + source + "," + cname + "," + skipID + "]";
+    }
+
+    public URI getSkipID()
+    {
+        return skipID;
+    }
+
+    public UUID getID()
+    {
+        return id;
     }
 }

@@ -117,12 +117,12 @@ import ca.nrc.cadc.util.Log4jInit;
  * @author majorb
  *
  */
-public class CaomRepoIntTests extends CaomRepoBaseIntTests
+public class CaomRepoIntTests22 extends CaomRepoBaseIntTests
 {
 
-    private static final Logger log = Logger.getLogger(CaomRepoIntTests.class);
+    private static final Logger log = Logger.getLogger(CaomRepoIntTests22.class);
 
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_3_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
 
     static
     {
@@ -130,7 +130,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    private CaomRepoIntTests() { }
+    private CaomRepoIntTests22() { }
 
     /**
      * @param resourceID resource identifier of service to test
@@ -138,9 +138,9 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
      * @param pem2 PEM file for user with read-only permission
      * @param pem3 PEM file for user with no permissions
      */
-    public CaomRepoIntTests(URI resourceID, String pem1, String pem2, String pem3)
+    public CaomRepoIntTests22(URI resourceID, String pem1, String pem2, String pem3)
     {
-        super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
+        super(resourceID, Standards.CAOM2REPO_OBS_20, pem1, pem2, pem3);
     }
 
     @Test

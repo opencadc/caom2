@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import java.net.URI;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -306,9 +307,8 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             log.debug("PUT: " + sql);
             ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
-            boolean updateMax = false;
-            if (computeLastModified)
-                updateMax = updateLastModified(obs, cur);
+            // update metadata checksums, maybe modified timestamps
+            boolean updateMax = updateEntity(obs, cur);
             
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
@@ -320,7 +320,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     Plane p = Util.findPlane(obs.getPlanes(), ps.id);
                     if ( p == null ) // removed by client
                     {
-                        log.debug("PUT: caused delete: " + ps.id);
+                        log.info("PUT: caused delete: " + ps.id);
                         planeDAO.delete(ps, jdbc);
                     }
                 }
@@ -335,8 +335,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                 for (Plane p : obs.getPlanes())
                     pairs.add(new Pair<Plane>(null, p));
 
-            
-            super.put(cur, obs, null, jdbc, updateMax);
+            super.put(cur, obs, null, jdbc);
 
             // insert/update children
             LinkedList<CaomEntity> parents = new LinkedList<CaomEntity>();
@@ -502,19 +501,24 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             log.debug("no children: " + o.id);
     }
 
-    private boolean updateLastModified(Observation o, ObservationSkeleton s)
+    // update CaomEntity state: 
+    // always compute and assign: metaChecksum, accMetaChecksum
+    // assign if metaChecksum changes: lastModified
+    // assign if lastModified changed or a child's maxLastModified changes
+    private boolean updateEntity(Observation entity, ObservationSkeleton s)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            Util.assignLastModified(o, s.lastModified, "lastModified");
-            Util.assignLastModified(o, s.maxLastModified, "maxLastModified");
+            // keep timestamps from database
+            Util.assignLastModified(entity, s.lastModified, "lastModified");
+            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
         
         Date now = new Date();
         boolean updateMax = false;
         
         // check for added or modified
-        for (Plane plane : o.getPlanes())
+        for (Plane plane : entity.getPlanes())
         {
             PlaneSkeleton skel = null;
             if (s != null)
@@ -523,7 +527,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (plane.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = updateLastModified(plane, skel, now);
+            boolean ulm = updateEntity(plane, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -531,38 +535,48 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         {
             for (PlaneSkeleton ss : s.planes)
             {
-                Plane p = Util.findPlane(o.getPlanes(), ss.id);
+                Plane p = Util.findPlane(entity.getPlanes(), ss.id);
                 boolean ulm = (p == null);
                 updateMax = updateMax || ulm;
             }
         }
 
         // new or changed
-        int nsc = o.getStateCode(gen.persistTransientState());
-        if (s != null)
-            log.info("updateLastModified: stateCode " + s.stateCode + " vs " + nsc);
-        if (s == null || s.stateCode.intValue() != nsc)
+        int nsc = entity.getStateCode(gen.persistTransientState());
+        digest.reset(); // just in case
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback for null checksum in database
+                
+        if (computeLastModified && delta)        
         {
-            Util.assignLastModified(o, now, "lastModified");
+            Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
         
-        if (updateMax)
-            Util.assignLastModified(o, now, "maxLastModified");
+        if (computeLastModified && updateMax)
+            Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
     }
     
-    private boolean updateLastModified(Plane p, PlaneSkeleton s, Date now)
+    private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            Util.assignLastModified(p, s.lastModified, "lastModified");
-            Util.assignLastModified(p, s.maxLastModified, "maxLastModified");
+            Util.assignLastModified(entity, s.lastModified, "lastModified");
+            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
         
         boolean updateMax = false;
-        for (Artifact artifact : p.getArtifacts())
+        for (Artifact artifact : entity.getArtifacts())
         {
             ArtifactSkeleton skel = null;
             if (s != null)
@@ -571,7 +585,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (artifact.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = updateLastModified(artifact, skel, now);
+            boolean ulm = updateEntity(artifact, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -579,35 +593,48 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         {
             for (ArtifactSkeleton ss : s.artifacts)
             {
-                Artifact a = Util.findArtifact(p.getArtifacts(), ss.id);
+                Artifact a = Util.findArtifact(entity.getArtifacts(), ss.id);
                 boolean ulm = (a == null);
                 updateMax = updateMax || ulm;
             }
         }
 
         // new or changed
-        if (s == null || s.stateCode.intValue() != p.getStateCode(gen.persistTransientState()))
+        int nsc = entity.getStateCode(gen.persistTransientState());
+        digest.reset(); // just in case
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback
+                
+        if (computeLastModified && delta)        
         {
-            Util.assignLastModified(p, now, "lastModified");
+            Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
 
-        if (updateMax)
-            Util.assignLastModified(p, now, "maxLastModified");
+        if (computeLastModified && updateMax)
+            Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
     }
 
-    private boolean updateLastModified(Artifact a, ArtifactSkeleton s, Date now)
+    private boolean updateEntity(Artifact entity, ArtifactSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            Util.assignLastModified(a, s.lastModified, "lastModified");
-            Util.assignLastModified(a, s.maxLastModified, "maxLastModified");
+            Util.assignLastModified(entity, s.lastModified, "lastModified");
+            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         boolean updateMax = false;
-        for (Part part : a.getParts())
+        for (Part part : entity.getParts())
         {
             PartSkeleton skel = null;
             if (s != null)
@@ -616,7 +643,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (part.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = updateLastModified(part, skel, now);
+            boolean ulm = updateEntity(part, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -624,35 +651,48 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         {
             for (PartSkeleton ss : s.parts)
             {
-                Part p = Util.findPart(a.getParts(), ss.id);
+                Part p = Util.findPart(entity.getParts(), ss.id);
                 boolean ulm = (p == null);
                 updateMax = updateMax || ulm;
             }
         }
         
         // new or changed
-        if (s == null || s.stateCode.intValue() != a.getStateCode(gen.persistTransientState()))
+        int nsc = entity.getStateCode(gen.persistTransientState());
+        digest.reset(); // just in case
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback
+                
+        if (computeLastModified && delta)        
         {
-            Util.assignLastModified(a, now, "lastModified");
+            Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
 
-        if (updateMax)
-            Util.assignLastModified(a, now, "maxLastModified");
+        if (computeLastModified && updateMax)
+            Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
     }
 
-    private boolean updateLastModified(Part p, PartSkeleton s, Date now)
+    private boolean updateEntity(Part entity, PartSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            Util.assignLastModified(p, s.lastModified, "lastModified");
-            Util.assignLastModified(p, s.maxLastModified, "maxLastModified");
+            Util.assignLastModified(entity, s.lastModified, "lastModified");
+            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         boolean updateMax = false;
-        for (Chunk chunk : p.getChunks())
+        for (Chunk chunk : entity.getChunks())
         {
             ChunkSkeleton skel = null;
             if (s != null)
@@ -661,7 +701,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
                     if (chunk.getID().equals(ss.id))
                         skel = ss;
                 }
-            boolean ulm = updateLastModified(chunk, skel, now);
+            boolean ulm = updateEntity(chunk, skel, now);
             updateMax = updateMax || ulm;
         }
         // check for deleted (unmatched skel)
@@ -669,44 +709,70 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         {
             for (ChunkSkeleton ss : s.chunks)
             {
-                Chunk c = Util.findChunk(p.getChunks(), ss.id);
+                Chunk c = Util.findChunk(entity.getChunks(), ss.id);
                 boolean ulm = (c == null);
                 updateMax = updateMax || ulm;
             }
         }
         
         // new or changed
-        if (s == null || s.stateCode.intValue() != p.getStateCode(gen.persistTransientState()))
+        int nsc = entity.getStateCode(gen.persistTransientState());
+        digest.reset(); // just in case
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback
+                
+        if (computeLastModified && delta)        
         {
-            Util.assignLastModified(p, now, "lastModified");
+            Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
-
-        if (updateMax)
-            Util.assignLastModified(p, now, "maxLastModified");
+        
+        if (computeLastModified && updateMax)
+            Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
     }
 
-    private boolean updateLastModified(Chunk c, ChunkSkeleton s, Date now)
+    private boolean updateEntity(Chunk entity, ChunkSkeleton s, Date now)
     {
-        if (s != null)
+        if (computeLastModified && s != null)
         {
-            Util.assignLastModified(c, s.lastModified, "lastModified");
-            Util.assignLastModified(c, s.maxLastModified, "maxLastModified");
+            Util.assignLastModified(entity, s.lastModified, "lastModified");
+            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         boolean updateMax = false;
 
         // new or changed
-        if (s == null || s.stateCode.intValue() != c.getStateCode(gen.persistTransientState()))
+        int nsc = entity.getStateCode(gen.persistTransientState());
+        digest.reset(); // just in case
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        
+        boolean delta = false;
+        if (s == null)
+            delta = true;
+        else if (s.metaChecksum != null)
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
+        else
+            delta = (s.stateCode != nsc); // fallback
+                
+        if (computeLastModified && delta)        
         {
-            Util.assignLastModified(c, now, "lastModified");
+            Util.assignLastModified(entity, now, "lastModified");
             updateMax = true;
         }
-
-        if (updateMax)
-            Util.assignLastModified(c, now, "maxLastModified");
+        
+        if (computeLastModified && updateMax)
+            Util.assignLastModified(entity, now, "maxLastModified");
 
         return updateMax;
     }

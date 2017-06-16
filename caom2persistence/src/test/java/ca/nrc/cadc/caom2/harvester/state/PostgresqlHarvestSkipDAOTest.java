@@ -74,6 +74,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -117,6 +118,10 @@ public class PostgresqlHarvestSkipDAOTest
             String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
             log.debug("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
+            
+            sql = "DELETE FROM " + database + "." + schema + ".HarvestSkipURI";
+            log.debug("cleanup: " + sql);
+            dataSource.getConnection().createStatement().execute(sql);
         }
         catch(Exception ex)
         {
@@ -139,7 +144,7 @@ public class PostgresqlHarvestSkipDAOTest
     }
 
     @Test
-    public void testInsert()
+    public void testInsertUUID()
     {
         try
         {
@@ -174,7 +179,7 @@ public class PostgresqlHarvestSkipDAOTest
     }
 
     @Test
-    public void testUpdate()
+    public void testUpdateUUID()
     {
         try
         {
@@ -198,6 +203,82 @@ public class PostgresqlHarvestSkipDAOTest
             dao.put(skip);
 
             HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
+            Assert.assertNotNull(actual2);
+            Assert.assertEquals(id1, actual2.skipID);
+
+            log.debug("actual1.lastModified: " + actual1.lastModified.getTime());
+            log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
+            Assert.assertTrue("lastModified increased", actual1.lastModified.getTime() < actual2.lastModified.getTime());
+            Assert.assertEquals("error message", skip.errorMessage, actual2.errorMessage);
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInsertURI()
+    {
+        try
+        {
+            HarvestSkipURIDAO dao = new HarvestSkipURIDAO(dataSource, database, schema, null);
+            URI id1 = URI.create("foo:"+UUID.randomUUID());
+            URI id2 = URI.create("foo:"+UUID.randomUUID());
+            URI id3 = URI.create("foo:"+UUID.randomUUID());
+
+            HarvestSkipURI skip;
+            Date start = null;
+            
+            skip = new HarvestSkipURI("testInsert", Integer.class.getName(), id1, "m1");
+            dao.put(skip);
+            Thread.sleep(10L);
+            skip = new HarvestSkipURI("testInsert", Integer.class.getName(), id2, "m2");
+            dao.put(skip);
+            Thread.sleep(10L);
+            skip = new HarvestSkipURI("testInsert", Integer.class.getName(), id3, null);
+            dao.put(skip);
+
+            List<HarvestSkipURI> skips = dao.get("testInsert", Integer.class.getName(), start);
+            Assert.assertEquals("skips size", 3, skips.size());
+            Assert.assertEquals(id1, skips.get(0).skipID);
+            Assert.assertEquals(id2, skips.get(1).skipID);
+            Assert.assertEquals(id3, skips.get(2).skipID);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testUpdateURI()
+    {
+        try
+        {
+            HarvestSkipURIDAO dao = new HarvestSkipURIDAO(dataSource, database, schema, null);
+            URI id1 = URI.create("foo:"+UUID.randomUUID());
+
+            HarvestSkipURI skip;
+
+            skip = new HarvestSkipURI("testUpdate", Integer.class.getName(), id1, "initial error message");
+            dao.put(skip);
+            
+            HarvestSkipURI actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
+            Assert.assertNotNull(actual1);
+            Assert.assertEquals(id1, actual1.skipID);
+            Assert.assertEquals("error message", skip.errorMessage, actual1.errorMessage);
+            Date d1 = actual1.lastModified;
+
+            Thread.sleep(100L);
+
+            skip.errorMessage = "modified error message";
+            dao.put(skip);
+
+            HarvestSkipURI actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
             Assert.assertNotNull(actual2);
             Assert.assertEquals(id1, actual2.skipID);
 
