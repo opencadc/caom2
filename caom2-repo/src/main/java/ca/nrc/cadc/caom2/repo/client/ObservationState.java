@@ -77,40 +77,49 @@ import java.util.Date;
  *
  * @author pdowler
  */
-public class ObservationState {
-    // private static final Logger log =
-    // Logger.getLogger(ObservationState.class);
+public class ObservationState
+{
+	// private static final Logger log =
+	// Logger.getLogger(ObservationState.class);
 
-    private final String collection;
-    private final String observationID;
-    private final Date maxLastModified;
-    private final URI accMetaChecksum;
+	private final String collection;
+	private final String observationID;
+	private final Date maxLastModified;
+	private final URI accMetaChecksum;
 
-    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum) {
-	this.collection = collection;
-	this.observationID = observationID;
-	this.maxLastModified = maxlastModified;
-	this.accMetaChecksum = accMetaChecksum;
-    }
+	public ObservationState(String collection, String observationID,
+			Date maxlastModified, URI accMetaChecksum)
+	{
+		this.collection = collection;
+		this.observationID = observationID;
+		this.maxLastModified = maxlastModified;
+		this.accMetaChecksum = accMetaChecksum;
+	}
 
-    public String getCollection() {
-	return collection;
-    }
+	public String getCollection()
+	{
+		return collection;
+	}
 
-    public String getObservationID() {
-	return observationID;
-    }
+	public String getObservationID()
+	{
+		return observationID;
+	}
 
-    public Date getMaxLastModified() {
-	return maxLastModified;
-    }
+	public Date getMaxLastModified()
+	{
+		return maxLastModified;
+	}
 
-    public URI getAccMetaChecksum() {
-	return accMetaChecksum;
-    }
+	public URI getAccMetaChecksum()
+	{
+		return accMetaChecksum;
+	}
 
-    @Override
-    public String toString() {
-	return "ObservationState[" + observationID + "," + maxLastModified + "]";
-    }
+	@Override
+	public String toString()
+	{
+		return "ObservationState[" + observationID + "," + maxLastModified
+				+ "]";
+	}
 }
