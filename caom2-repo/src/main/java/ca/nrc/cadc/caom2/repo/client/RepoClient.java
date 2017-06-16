@@ -149,7 +149,6 @@ public class RepoClient
 
 			log.info("No current subject found");
 		}
-
 		baseServiceURL = rc.getServiceURL(this.resourceId,
 				Standards.CAOM2REPO_OBS_23, meth);
 		BASE_HTTP_URL = baseServiceURL.toExternalForm();
@@ -231,7 +230,6 @@ public class RepoClient
 		List<ObservationState> stateList = getObservationList(collection,
 				startDate, end, numberOfObservations);
 
-		ByteArrayOutputStream bos = null;
 		// Create tasks for each file
 		List<Callable<Observation>> tasks = new ArrayList<Callable<Observation>>();
 

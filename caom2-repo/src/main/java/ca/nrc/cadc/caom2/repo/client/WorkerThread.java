@@ -88,7 +88,6 @@ public class WorkerThread implements Callable<Observation>
 
 	private ObservationState state = null;
 	private Subject subject = null;
-	private String collection = null;
 	private String BASE_HTTP_URL = null;
 
 	public WorkerThread(ObservationState state, Subject subject, String url)

@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.repo.client;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.UUID;
 
 import javax.security.auth.Subject;
 
@@ -154,12 +153,12 @@ public class RepoClientMainTest implements Runnable
 					+ o.getURI().toString() + " " + o.getLastModified());
 		}
 
-		Observation o = repoC.get(new ObservationURI("IRIS", "f005h000"));
+		repoC.get(new ObservationURI("IRIS", "f005h000"));
 
 		// repoC.get(new UUID(l.get(0).getID().getMostSignificantBits(),
 		// l.get(0).getID().getLeastSignificantBits()));
 
-		UUID uuid = repoC.getID(new ObservationURI("IRIS", "f005h000"));
+		repoC.getID(new ObservationURI("IRIS", "f005h000"));
 
 	}
 
