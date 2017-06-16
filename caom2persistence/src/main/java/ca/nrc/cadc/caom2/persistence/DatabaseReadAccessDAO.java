@@ -200,8 +200,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
             log.debug("PUT: " + sql);
             Skeleton cur = (Skeleton) jdbc.query(sql, gen.getSkeletonExtractor(skel));
 
-            if (computeLastModified)
-                updateEntity(ra, cur);
+            updateEntity(ra, cur);
 
             super.put(cur, ra, null, jdbc);
         }
@@ -258,6 +257,9 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         
         digest.reset();
         Util.assignMetaChecksum(ra, ra.computeMetaChecksum(false, digest), "metaChecksum");
+        
+        if (!computeLastModified)
+            return;
         
         boolean delta = false;
         if (s == null)
