@@ -286,60 +286,6 @@ public abstract class AbstractDatabaseReadAccessDAOTest
     }
     
     @Test
-    public void testUpdate()
-    {
-        UUID assetID = genID();
-        Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, assetID);
-        Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
-        Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
-        Part pp = new Part(0);
-        Chunk ch = new Chunk();
-        
-        pp.getChunks().add(ch);
-        ar.getParts().add(pp);
-        pl.getArtifacts().add(ar);
-        obs.getPlanes().add(pl);
-            
-        try
-        {
-            // cleanup previous test run
-            obsDAO.delete(assetID);
-            
-            obsDAO.put(obs);
-            
-            ReadAccess expected;
-            
-            URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
-            for (Class c : entityClasses)
-            {
-                Constructor ctor = c.getConstructor(UUID.class, URI.class);
-                expected = (ReadAccess) ctor.newInstance(assetID, groupID);
-                doPutGetDelete(expected);
-            }
-            
-            groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
-            for (Class c : entityClasses)
-            {
-                Constructor ctor = c.getConstructor(UUID.class, URI.class);
-                expected = (ReadAccess) ctor.newInstance(assetID, groupID);
-                doPutGetDelete(expected);
-            }
-            
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-        finally
-        {
-            //obsDAO.delete(obs.getID());
-        }
-    }
-    
-    @Test
     public void testRejectDuplicate()
     {
         // random ID is OK since we are testing observation only
