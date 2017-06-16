@@ -83,14 +83,14 @@ import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
-public class WorkerThread implements Callable<Observation>
+public class Worker implements Callable<Observation>
 {
 
 	private ObservationState state = null;
 	private Subject subject = null;
 	private String BASE_HTTP_URL = null;
 
-	public WorkerThread(ObservationState state, Subject subject, String url)
+	public Worker(ObservationState state, Subject subject, String url)
 	{
 		this.state = state;
 		this.subject = subject;

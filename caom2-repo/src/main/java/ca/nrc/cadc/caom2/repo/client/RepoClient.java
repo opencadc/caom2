@@ -235,7 +235,7 @@ public class RepoClient
 
 		for (ObservationState os : stateList)
 		{
-			tasks.add(new WorkerThread(os, subject, BASE_HTTP_URL));
+			tasks.add(new Worker(os, subject, BASE_HTTP_URL));
 		}
 
 		// Run tasks in a fixed thread pool
@@ -313,7 +313,7 @@ public class RepoClient
 			throw new IllegalArgumentException("uri cannot be null");
 		ObservationState os = new ObservationState(uri.getCollection(),
 				uri.getObservationID(), null, null);
-		WorkerThread wt = new WorkerThread(os, subject, BASE_HTTP_URL);
+		Worker wt = new Worker(os, subject, BASE_HTTP_URL);
 		return wt.getObservation();
 	}
 
