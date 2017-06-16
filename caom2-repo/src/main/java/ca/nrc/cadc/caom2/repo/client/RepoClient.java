@@ -97,7 +97,6 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetrcAuthenticator;
@@ -272,7 +271,7 @@ public class RepoClient {
 	if (id == null)
 	    throw new IllegalArgumentException("id cannot be null");
 	// TODO: redo in a more efficient way
-	return get(null, id, SQLGenerator.MAX_DEPTH);
+	return get(null, id, 1);
     }
 
     public Observation get(ObservationURI uri) {
