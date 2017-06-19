@@ -5,7 +5,7 @@ Common Archive Observation Model service implementation libraries.
 ## CAOM TAP service
 
 * caom2-tap: basic CAOM-2.x TAP client to get observations, planes, or artifacts from a TAP service
-* caom2-tap-server: CAOM-2.x TAP service implmenetation for use with cadc-tap-server
+* caom2-tap-server: CAOM-2.x TAP service implementation for use with cadc-tap-server
 
 ## CAOM services that use the CAOM TAP service
 
