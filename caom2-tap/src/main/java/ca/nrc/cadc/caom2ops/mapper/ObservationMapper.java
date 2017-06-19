@@ -83,6 +83,8 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2ops.Util;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -192,12 +194,21 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
             
             Date lastModified = Util.getDate(data, map.get("caom2:Observation.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Observation.maxLastModified"));
-
             Util.assignLastModified(obs, lastModified, "lastModified");
             Util.assignLastModified(obs, maxLastModified, "maxLastModified");
+            
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Observation.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Observation.accMetaChecksum"));
+            Util.assignMetaChecksum(obs, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(obs, accMetaChecksum, "accMetaChecksum");
+            
             Util.assignID(obs, id);
 
             return obs;   		
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new UnexpectedContentException("invalid URI", ex);
         }
         finally { }
     }
