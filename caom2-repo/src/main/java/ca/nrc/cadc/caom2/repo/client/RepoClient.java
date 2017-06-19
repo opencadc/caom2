@@ -67,6 +67,7 @@
 ************************************************************************
 */
 
+
 package ca.nrc.cadc.caom2.repo.client;
 
 import java.io.ByteArrayOutputStream;
@@ -103,314 +104,268 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 
-public class RepoClient
-{
+public class RepoClient {
 
-	private static final Logger log = Logger.getLogger(RepoClient.class);
-	private final DateFormat df = DateUtil
-			.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-	private URI resourceId = null;
-	private RegistryClient rc = null;
-	private URL baseServiceURL = null;
+    private static final Logger log = Logger.getLogger(RepoClient.class);
+    private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    private URI resourceId = null;
+    private RegistryClient rc = null;
+    private URL baseServiceURL = null;
 
-	private Subject subject = null;
-	private AuthMethod meth;
-	private String collection = null;
-	private int nthreads = 1;
+    private Subject subject = null;
+    private AuthMethod meth;
+    private String collection = null;
+    private int nthreads = 1;
 
-	protected final String BASE_HTTP_URL;
+    protected final String BASE_HTTP_URL;
 
-	public RepoClient()
-	{
-		BASE_HTTP_URL = null;
-	}
+    public RepoClient() {
+        BASE_HTTP_URL = null;
+    }
 
-	// constructor takes service identifier arg
-	public RepoClient(URI resourceID, String collection, int nthreads)
-	{
-		this.nthreads = nthreads;
-		this.resourceId = resourceID;
+    // constructor takes service identifier arg
+    public RepoClient(URI resourceID, String collection, int nthreads) {
+        this.nthreads = nthreads;
+        this.resourceId = resourceID;
 
-		rc = new RegistryClient();
+        rc = new RegistryClient();
 
-		// setup optional authentication for harvesting from a web service
-		// get current subject
-		// Create a subject
-		subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+        // setup optional authentication for harvesting from a web service
+        // get current subject
+        // Create a subject
+        subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
 
-		// subject = AuthenticationUtil.getCurrentSubject();
-		if (subject != null)
-		{
-			meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-			// User RegistryClient to go from resourceID to service URL
-		} else
-		{
-			meth = AuthMethod.ANON;
+        // subject = AuthenticationUtil.getCurrentSubject();
+        if (subject != null) {
+            meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            // User RegistryClient to go from resourceID to service URL
+        } else {
+            meth = AuthMethod.ANON;
 
-			log.info("No current subject found");
-		}
-		baseServiceURL = rc.getServiceURL(this.resourceId,
-				Standards.CAOM2REPO_OBS_23, meth);
-		BASE_HTTP_URL = baseServiceURL.toExternalForm();
-		this.collection = collection;
-		log.info("BASE SERVICE URL: " + baseServiceURL.toString());
-		log.info("Authentication used: " + meth);
+            log.info("No current subject found");
+        }
+        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_23, meth);
+        BASE_HTTP_URL = baseServiceURL.toExternalForm();
+        this.collection = collection;
+        log.info("BASE SERVICE URL: " + baseServiceURL.toString());
+        log.info("Authentication used: " + meth);
 
-	}
+    }
 
-	public List<ObservationState> getObservationList(String collection,
-			Date start, Date end, Integer maxrec)
-	{
-		// Use HttpDownload to make the http GET calls (because it handles a lot
-		// of the
-		// authentication stuff)
+    public List<ObservationState> getObservationList(String collection, Date start, Date end,
+            Integer maxrec) {
+        // Use HttpDownload to make the http GET calls (because it handles a lot
+        // of the
+        // authentication stuff)
 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		String surl = BASE_HTTP_URL + File.separator + collection;
-		if (maxrec != null)
-			surl = surl + "?maxRec=" + maxrec;
-		if (start != null)
-			surl = surl + "&start=" + df.format(start);
-		if (end != null)
-			surl = surl + "&end=" + df.format(end);
-		URL url;
-		try
-		{
-			url = new URL(surl);
-			HttpDownload get = new HttpDownload(url, bos);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        String surl = BASE_HTTP_URL + File.separator + collection;
+        if (maxrec != null)
+            surl = surl + "?maxRec=" + maxrec;
+        if (start != null)
+            surl = surl + "&start=" + df.format(start);
+        if (end != null)
+            surl = surl + "&end=" + df.format(end);
+        URL url;
+        try {
 
-			if (subject != null)
-			{
-				Subject.doAs(subject, new RunnableAction(get));
+            url = new URL(surl);
+            HttpDownload get = new HttpDownload(url, bos);
 
-				log.info("Query run within subject");
-			} else
-			{
-				get.run();
-				log.info("Query run");
-			}
+            if (subject != null) {
+                Subject.doAs(subject, new RunnableAction(get));
 
-		} catch (MalformedURLException e)
-		{
-			log.error("Exception in getObservationList: " + e.getMessage());
-			e.printStackTrace();
-		}
+                log.info("Query run within subject");
+            } else {
+                get.run();
+                log.info("Query run");
+            }
 
-		List<ObservationState> list;
-		try
-		{
-			list = transformByteArrayOutputStreamIntoListOfObservationState(bos,
-					df, '\t', '\n');
-		} catch (ParseException e)
-		{
-			throw new RuntimeException(
-					"Unable to list of ObservationState from " + bos.toString()
-							+ ": exception = " + e.getMessage());
-		}
-		return list;
-	}
+        } catch (MalformedURLException e) {
+            log.error("Exception in getObservationList: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-	public Iterator<Observation> observationIterator()
-	{
-		return null;
+        List<ObservationState> list;
+        try {
+            list = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
 
-	}
+        } catch (ParseException e) {
+            throw new RuntimeException("Unable to list of ObservationState from " + bos.toString()
+                    + ": exception = " + e.getMessage());
+        }
+        return list;
+    }
 
-	public void setConfig(Map<String, Object> config1)
-	{
+    public Iterator<Observation> observationIterator() {
+        return null;
 
-	}
+    }
 
-	public List<Observation> getList(Class<Observation> c, Date startDate,
-			Date end, Integer numberOfObservations)
-	{
+    public void setConfig(Map<String, Object> config1) {
 
-		List<Observation> list = new ArrayList<Observation>();
+    }
 
-		List<ObservationState> stateList = getObservationList(collection,
-				startDate, end, numberOfObservations);
+    public List<Observation> getList(Class<Observation> c, Date startDate, Date end,
+            Integer numberOfObservations) {
 
-		// Create tasks for each file
-		List<Callable<Observation>> tasks = new ArrayList<Callable<Observation>>();
+        // startDate = null;
+        // end = df.parse("2017-06-20T09:03:15.360");
+        List<Observation> list = new ArrayList<Observation>();
 
-		for (ObservationState os : stateList)
-		{
-			tasks.add(new Worker(os, subject, BASE_HTTP_URL));
-		}
+        List<ObservationState> stateList = getObservationList(collection, startDate, end,
+                numberOfObservations);
 
-		// Run tasks in a fixed thread pool
-		ExecutorService taskExecutor = Executors.newFixedThreadPool(nthreads);
-		List<Future<Observation>> futures;
-		try
-		{
-			futures = taskExecutor.invokeAll(tasks);
-		} catch (InterruptedException e1)
-		{
-			throw new RuntimeException("Unable to create ExecutorService");
-		}
+        // Create tasks for each file
+        List<Callable<Observation>> tasks = new ArrayList<Callable<Observation>>();
 
-		for (Future<Observation> f : futures)
-		{
-			Observation res = null;
-			try
-			{
-				res = f.get();
-			} catch (InterruptedException | ExecutionException e)
-			{
-				throw new RuntimeException("Unable execute thread");
-			}
-			if (f.isDone())
-			{
-				list.add(res);
-			}
-		}
-		taskExecutor.shutdown();
+        for (ObservationState os : stateList) {
+            tasks.add(new Worker(os, subject, BASE_HTTP_URL));
+        }
 
-		List<ObservationState> erroneousObservations = checkResults(list,
-				stateList);
+        // Run tasks in a fixed thread pool
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(nthreads);
+        List<Future<Observation>> futures;
+        try {
+            futures = taskExecutor.invokeAll(tasks);
+        } catch (InterruptedException e1) {
+            throw new RuntimeException("Unable to create ExecutorService");
+        }
 
-		if (erroneousObservations.size() > 0)
-		{
-			String erroneous = "";
-			for (ObservationState os : erroneousObservations)
-			{
-				erroneous += os.getObservationID() + " ";
-			}
-			throw new RuntimeException(
-					"errors reading observations: " + erroneous);
-		}
+        for (Future<Observation> f : futures) {
+            Observation res = null;
+            try {
+                res = f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Unable execute thread");
+            }
+            if (f.isDone()) {
+                list.add(res);
+            }
+        }
+        taskExecutor.shutdown();
 
-		return list;
-	}
+        log.debug("****************List<Observation> list: " + list.size());
 
-	public UUID getID(ObservationURI uri)
-	{
-		Observation observation = get(uri, null, 1);
-		if (observation != null)
-			return observation.getID();
-		return null;
-	}
+        List<ObservationState> erroneousObservations = checkResults(list, stateList);
 
-	public ObservationURI getURI(UUID id)
-	{
-		Observation observation = get(null, id, 1);
-		if (observation != null)
-			return observation.getURI();
-		return null;
-	}
+        if (erroneousObservations.size() > 0) {
+            String erroneous = "";
+            for (ObservationState os : erroneousObservations) {
+                erroneous += os.getObservationID() + " ";
+            }
+            throw new RuntimeException("errors reading observations: " + erroneous);
+        }
 
-	public Observation get(UUID id)
-	{
-		if (id == null)
-			throw new IllegalArgumentException("id cannot be null");
-		// TODO: redo in a more efficient way
-		return get(null, id, 1);
-	}
+        return list;
+    }
 
-	public Observation get(ObservationURI uri)
-	{
-		if (uri == null)
-			throw new IllegalArgumentException("uri cannot be null");
-		ObservationState os = new ObservationState(uri.getCollection(),
-				uri.getObservationID(), null, null);
-		Worker wt = new Worker(os, subject, BASE_HTTP_URL);
-		return wt.getObservation();
-	}
+    public UUID getID(ObservationURI uri) {
+        Observation observation = get(uri, null, 1);
+        if (observation != null)
+            return observation.getID();
+        return null;
+    }
 
-	private Observation get(ObservationURI uri, UUID id, int depth)
-	{
-		if (id == null && uri == null)
-		{
-			throw new RuntimeException(
-					"uri and id cannot be null at the same time");
-		}
-		Observation o = null;
-		if (uri != null)
-		{
-			o = get(uri);
-		} else if (id != null)
-		{
-			o = get(id);
-		}
-		return o;
-	}
+    public ObservationURI getURI(UUID id) {
+        Observation observation = get(null, id, 1);
+        if (observation != null)
+            return observation.getURI();
+        return null;
+    }
 
-	private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
-			ByteArrayOutputStream bos, DateFormat sdf, char separator,
-			char endOfLine) throws ParseException
-	{
+    public Observation get(UUID id) {
+        if (id == null)
+            throw new IllegalArgumentException("id cannot be null");
+        // TODO: redo in a more efficient way
+        return get(null, id, 1);
+    }
 
-		List<ObservationState> list = new ArrayList<ObservationState>();
-		String id = null;
-		String sdate = null;
-		String collection = null;
+    public Observation get(ObservationURI uri) {
+        if (uri == null)
+            throw new IllegalArgumentException("uri cannot be null");
+        ObservationState os = new ObservationState(uri.getCollection(), uri.getObservationID(),
+                null, null);
+        Worker wt = new Worker(os, subject, BASE_HTTP_URL);
+        return wt.getObservation();
+    }
 
-		String aux = "";
-		boolean readingCollection = true;
-		boolean readingId = false;
+    private Observation get(ObservationURI uri, UUID id, int depth) {
+        if (id == null && uri == null) {
+            throw new RuntimeException("uri and id cannot be null at the same time");
+        }
+        Observation o = null;
+        if (uri != null) {
+            o = get(uri);
+        } else if (id != null) {
+            o = get(id);
+        }
+        return o;
+    }
 
-		for (int i = 0; i < bos.toString().length(); i++)
-		{
-			char c = bos.toString().charAt(i);
-			if (c != separator && c != endOfLine)
-			{
-				aux += c;
-			} else if (c == separator)
-			{
-				if (readingCollection)
-				{
-					collection = aux;
-					readingCollection = false;
-					readingId = true;
-					aux = "";
+    private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
+            ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
+            throws ParseException {
 
-				} else if (readingId)
-				{
-					id = aux;
-					readingCollection = false;
-					readingId = false;
-					aux = "";
-				}
+        List<ObservationState> list = new ArrayList<ObservationState>();
+        String id = null;
+        String sdate = null;
+        String collection = null;
 
-			} else if (c == endOfLine)
-			{
-				sdate = aux;
-				aux = "";
-				Date date = sdf.parse(sdate);
-				ObservationState os = new ObservationState(collection, id, date,
-						resourceId);
-				list.add(os);
-				readingCollection = true;
-				readingId = false;
+        String aux = "";
+        boolean readingCollection = true;
+        boolean readingId = false;
 
-			}
-		}
-		return list;
-	}
+        for (int i = 0; i < bos.toString().length(); i++) {
+            char c = bos.toString().charAt(i);
+            if (c != separator && c != endOfLine) {
+                aux += c;
+            } else if (c == separator) {
+                if (readingCollection) {
+                    collection = aux;
+                    readingCollection = false;
+                    readingId = true;
+                    aux = "";
 
-	private List<ObservationState> checkResults(
-			List<Observation> observationList, List<ObservationState> stateList)
-	{
-		List<ObservationState> erroneous = new ArrayList<ObservationState>();
+                } else if (readingId) {
+                    id = aux;
+                    readingCollection = false;
+                    readingId = false;
+                    aux = "";
+                }
 
-		boolean found = false;
-		for (ObservationState os : stateList)
-		{
-			found = false;
-			for (Observation o : observationList)
-			{
-				if (o.getObservationID().equals(os.getObservationID()))
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				erroneous.add(os);
-			}
-		}
-		return erroneous;
-	}
+            } else if (c == endOfLine) {
+                sdate = aux;
+                aux = "";
+                Date date = sdf.parse(sdate);
+                ObservationState os = new ObservationState(collection, id, date, resourceId);
+                list.add(os);
+                readingCollection = true;
+                readingId = false;
+
+            }
+        }
+        return list;
+    }
+
+    private List<ObservationState> checkResults(List<Observation> observationList,
+            List<ObservationState> stateList) {
+        List<ObservationState> erroneous = new ArrayList<ObservationState>();
+
+        boolean found = false;
+        for (ObservationState os : stateList) {
+            found = false;
+            for (Observation o : observationList) {
+                if (o.getObservationID().equals(os.getObservationID())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                erroneous.add(os);
+            }
+        }
+        return erroneous;
+    }
 
 }
