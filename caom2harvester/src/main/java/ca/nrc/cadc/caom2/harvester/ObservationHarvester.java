@@ -41,7 +41,10 @@ public class ObservationHarvester extends Harvester
 
 	private boolean interactive;
 
-	private RepoClient srcObservationDAO;
+	private boolean service = false;
+
+	private RepoClient srcObservationService;
+	private DatabaseObservationDAO srcObservationDAO;
 	private DatabaseObservationDAO destObservationDAO;
 
 	private boolean skipped;
@@ -52,11 +55,22 @@ public class ObservationHarvester extends Harvester
 	{
 	}
 
-	public ObservationHarvester(String[] src, String[] dest, Integer batchSize,
-			boolean full, boolean dryrun) throws IOException, URISyntaxException
+	public ObservationHarvester(boolean service, String[] src, String[] dest,
+			Integer batchSize, boolean full, boolean dryrun)
+			throws IOException, URISyntaxException
 	{
 		super(Observation.class, src, dest, batchSize, full, dryrun);
-		init();
+		this.service = service;
+		if (this.service)
+		{
+			log.debug(
+					"src = { " + src[0] + ", " + src[1] + ", " + src[2] + "}");
+
+			init(src[0], src[1], Integer.parseInt(src[2]));
+		} else
+		{
+			init();
+		}
 	}
 
 	public void setSkipped(boolean skipped)
@@ -83,9 +97,20 @@ public class ObservationHarvester extends Harvester
 	{
 		Map<String, Object> config1 = getConfigDAO(src);
 		Map<String, Object> config2 = getConfigDAO(dest);
-		this.srcObservationDAO = new RepoClient(
-				new URI("ivo://cadc.nrc.ca/caom2repo"), "IRIS", 8);
+		this.srcObservationDAO = new DatabaseObservationDAO();
 		srcObservationDAO.setConfig(config1);
+		this.destObservationDAO = new DatabaseObservationDAO();
+		destObservationDAO.setConfig(config2);
+		destObservationDAO.setComputeLastModified(false); // copy as-is
+		initHarvestState(destObservationDAO.getDataSource(), Observation.class);
+	}
+
+	private void init(String uri, String collection, int threads)
+			throws IOException, URISyntaxException
+	{
+		Map<String, Object> config2 = getConfigDAO(dest);
+		this.srcObservationService = new RepoClient(new URI(uri), collection,
+				threads);
 		this.destObservationDAO = new DatabaseObservationDAO();
 		destObservationDAO.setConfig(config2);
 		destObservationDAO.setComputeLastModified(false); // copy as-is
@@ -231,8 +256,16 @@ public class ObservationHarvester extends Harvester
 
 				log.info("harvest window: " + format(startDate) + " :: "
 						+ format(end) + " [" + batchSize + "]");
-				List<Observation> tmp = srcObservationDAO.getList(
-						Observation.class, startDate, end, batchSize + 1);
+				List<Observation> tmp = null;
+				if (!this.service)
+				{
+					tmp = srcObservationDAO.getList(Observation.class,
+							startDate, end, batchSize + 1);
+				} else
+				{
+					tmp = srcObservationService.getList(Observation.class,
+							startDate, end, batchSize + 1);
+				}
 				entityList = wrap(tmp);
 			}
 
@@ -249,9 +282,19 @@ public class ObservationHarvester extends Harvester
 						log.info("(loop) temporary harvest window: "
 								+ format(startDate) + " :: " + format(end)
 								+ " [" + tmpBatchSize + "]");
-						List<Observation> tmp = srcObservationDAO.getList(
-								Observation.class, startDate, end,
-								tmpBatchSize);
+
+						List<Observation> tmp = null;
+						if (!this.service)
+						{
+							tmp = srcObservationDAO.getList(Observation.class,
+									startDate, end, tmpBatchSize);
+						} else
+						{
+							tmp = srcObservationService.getList(
+									Observation.class, startDate, end,
+									tmpBatchSize);
+						}
+
 						entityList = wrap(tmp);
 						detectLoop(entityList);
 					} else
@@ -639,7 +682,14 @@ public class ObservationHarvester extends Harvester
 				skip.size());
 		for (HarvestSkip hs : skip)
 		{
-			Observation o = srcObservationDAO.get(hs.getSkipID());
+			Observation o = null;
+			if (!service)
+			{
+				o = srcObservationDAO.get(hs.getSkipID());
+			} else
+			{
+				o = srcObservationService.get(hs.getSkipID());
+			}
 			ret.add(new SkippedWrapper<Observation>(o, hs));
 		}
 		return ret;
