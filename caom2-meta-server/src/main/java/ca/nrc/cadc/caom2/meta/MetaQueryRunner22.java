@@ -114,7 +114,7 @@ import java.net.URISyntaxException;
  */
 public class MetaQueryRunner22 implements JobRunner
 {
-    private static final Logger log = Logger.getLogger(MetaQueryRunner.class);
+    private static final Logger log = Logger.getLogger(MetaQueryRunner22.class);
 
     private static final String DEFAULT_FORMAT = "text/xml";
     private static final String JSON_FORMAT = "application/json";

@@ -147,8 +147,8 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
             Util.assignLastModified(artifact, lastModified, "lastModified");
             Util.assignLastModified(artifact, maxLastModified, "maxLastModified");
             
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Plane.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Plane.accMetaChecksum"));
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Artifact.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Artifact.accMetaChecksum"));
             Util.assignMetaChecksum(artifact, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(artifact, accMetaChecksum, "accMetaChecksum");
             
