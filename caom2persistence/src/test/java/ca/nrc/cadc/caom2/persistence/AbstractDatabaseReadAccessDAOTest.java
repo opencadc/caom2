@@ -218,12 +218,12 @@ public abstract class AbstractDatabaseReadAccessDAOTest
         checkPut(s, expected, actual2);
         Assert.assertEquals(expected.getID(), actual2.getID());
         
-        // idempotent put (a no-net-op update)
-        checkPut(s, expected, actual);
-        
-        ReadAccess actual3 = dao.get(expected.getClass(), expected.getAssetID(), expected.getGroupID());
+        // idempotent put (a no-net-op update) but test that skeleton extractor works
+        dao.put(expected);
+        ReadAccess actual3 = dao.get(expected.getClass(), expected.getID());
         checkPut(s, expected, actual3);
         Assert.assertEquals(expected.getID(), actual3.getID());
+        Assert.assertEquals(actual2.getLastModified(), actual3.getLastModified());
         
         dao.delete(expected.getClass(), expected.getID());
         actual = dao.get(expected.getClass(), expected.getID());

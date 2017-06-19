@@ -100,7 +100,7 @@ public class HarvestSkip
     @Override
     public String toString()
     {
-        return "HarvestSkipUUID[" + source + "," + cname + "," + skipID + "]";
+        return "HarvestSkip[" + source + "," + cname + "," + skipID + "]";
     }
 
     public UUID getSkipID()

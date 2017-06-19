@@ -278,7 +278,7 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
                 
             // change in accMetaChecksum means maxLastModified changed
             // this correctly maintains accMetaChecksum and maxLastModified
-            if (!delta)
+            if (!delta && val.getAccMetaChecksum() != null) // only observations
             {
                 delta = !val.getAccMetaChecksum().equals(cur.accMetaChecksum);
                 cmp = cmp + " -- " + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
