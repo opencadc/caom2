@@ -86,6 +86,7 @@ public class ReadAccessHarvester extends Harvester
 		Map<String, Object> config2 = getConfigDAO(dest);
 
 		if (!service)
+
 		{
 			this.srcAccessDAO = new DatabaseReadAccessDAO();
 			srcAccessDAO.setConfig(config1);
