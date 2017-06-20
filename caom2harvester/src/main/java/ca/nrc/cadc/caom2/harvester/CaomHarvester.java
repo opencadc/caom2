@@ -126,8 +126,6 @@ public class CaomHarvester implements Runnable
 			String[] dest, Integer batchSize, boolean full, Date maxDate)
 			throws IOException, URISyntaxException
 	{
-		Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
-				Level.DEBUG);
 		this.obsHarvester = new ObservationHarvester(service, src, dest,
 				batchSize, full, dryrun);
 		obsHarvester.setMaxDate(maxDate);

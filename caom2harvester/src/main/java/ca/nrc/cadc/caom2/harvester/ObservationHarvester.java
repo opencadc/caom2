@@ -264,15 +264,8 @@ public class ObservationHarvester extends Harvester
 							startDate, end, batchSize + 1);
 				} else
 				{
-					log.debug("******************harvesting startDate = "
-							+ startDate + " end = " + end + " batchSize = "
-							+ batchSize);
-
 					tmp = srcObservationService.getList(Observation.class,
 							startDate, end, batchSize + 1);
-					log.debug("******************list retrieved; size "
-							+ tmp.size());
-
 				}
 				entityList = wrap(tmp);
 			}
