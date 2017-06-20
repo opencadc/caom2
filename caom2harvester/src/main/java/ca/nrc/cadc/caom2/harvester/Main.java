@@ -62,7 +62,9 @@ public class Main
 			boolean full = am.isSet("full");
 			boolean skip = am.isSet("skip");
 			boolean dryrun = am.isSet("dryrun");
-			boolean service = am.isSet("service");
+			boolean resourceId = am.isSet("resourceID");
+			// boolean collection = am.isSet("collection");
+			// boolean threads = am.isSet("threads");
 
 			// setup optional authentication for harvesting from a web service
 			Subject subject = null;
@@ -95,9 +97,25 @@ public class Main
 				System.exit(1);
 			}
 
+			String sresourceId = am.getValue("resourceID");
+			String scollection = am.getValue("collection");
+			int nthreads = 1;
+			try
+			{
+				nthreads = Integer.parseInt(am.getValue("threads"));
+			} catch (NumberFormatException nfe)
+			{
+
+			}
 			String src = am.getValue("source");
 			String dest = am.getValue("destination");
+
 			boolean nosrc = (src == null || src.trim().length() == 0);
+			boolean noresourceId = sresourceId == null
+					|| sresourceId.trim().length() == 0 || scollection == null
+					|| scollection.trim().length() == 0;
+			boolean service = !noresourceId;
+
 			boolean nodest = (dest == null || dest.trim().length() == 0);
 			if (recomp && nodest)
 			{
@@ -105,11 +123,12 @@ public class Main
 				log.warn("missing required argument: --destination");
 				System.exit(1);
 			}
-			if (!recomp && (nosrc || nodest))
+			if (!recomp && ((nosrc && noresourceId) || nodest))
 			{
 				usage();
-				if (nosrc)
-					log.warn("missing required argument: --source");
+				if (nosrc && noresourceId)
+					log.warn(
+							"missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
 				if (nodest)
 					log.warn("missing required argument: --destination");
 				System.exit(1);
@@ -117,10 +136,12 @@ public class Main
 			if (recomp)
 				src = dest;
 
-			String[] srcDS = null;
+			String[] srcDS = new String[3];
 			if (service)
 			{
-				srcDS = src.split("[,]");
+				srcDS[0] = sresourceId;
+				srcDS[1] = scollection;
+				srcDS[2] = nthreads + "";
 			} else
 			{
 				srcDS = src.split("[.]");
@@ -137,9 +158,9 @@ public class Main
 								+ " e.g. SYBASE.mydb.dbo");
 					} else
 					{
-						log.warn("malformed --source value, found " + src
-								+ " expected: service_url,collection,number_of_threads"
-								+ " e.g. 'ivo://cadc.nrc.ca/caom2repo,IRIS,12'");
+						log.warn("malformed --resourceID value, found "
+								+ sresourceId + " expected: service_url"
+								+ " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
 
 					}
 				if (destDS.length != 3)
@@ -278,6 +299,12 @@ public class Main
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug]");
+		sb.append(
+				"\n           --resourceID= to pick the caom2repo service. p.ej. 'ivo://cadc.nrc.ca/caom2repo'");
+		sb.append(
+				"\n           --collection= collection to be retrieve. p.ej. 'IRIS' or 'HST'");
+		sb.append(
+				"\n           --threads= number  of threads to be used to harvest observations");
 		sb.append("\n           --source=<server.database.schema>");
 		sb.append("\n           --destination=<server.database.schema>");
 		sb.append("\n\nOptions:");
