@@ -58,7 +58,6 @@ public class ReadAccessHarvester extends Harvester
 		this.service = service;
 		init(service);
 	}
-
 	public void setMaxDate(Date maxDate)
 	{
 		this.maxDate = maxDate;
@@ -69,6 +68,14 @@ public class ReadAccessHarvester extends Harvester
 		this.skipped = skipped;
 	}
 
+	private void init() throws IOException
+	{
+		Map<String, Object> config1 = null;
+		if (!service)
+		{
+			config1 = getConfigDAO(src);
+		}
+	}
 	private void init(boolean service) throws IOException
 	{
 		Map<String, Object> config1 = null;
@@ -76,7 +83,6 @@ public class ReadAccessHarvester extends Harvester
 		{
 			config1 = getConfigDAO(src);
 		}
-
 		Map<String, Object> config2 = getConfigDAO(dest);
 
 		if (!service)
@@ -84,6 +90,18 @@ public class ReadAccessHarvester extends Harvester
 			this.srcAccessDAO = new DatabaseReadAccessDAO();
 			srcAccessDAO.setConfig(config1);
 		}
+
+		if (!service)
+		{
+			this.srcAccessDAO = new DatabaseReadAccessDAO();
+			srcAccessDAO.setConfig(config1);
+		}
+		this.destAccessDAO = new DatabaseReadAccessDAO();
+		// required to update asset tables when assets change but identical
+		// tuples are generated
+		config2.put("forceUpdate", Boolean.TRUE);
+		destAccessDAO.setConfig(config2);
+		destAccessDAO.setComputeLastModified(false); // copy as-is
 
 		this.destAccessDAO = new DatabaseReadAccessDAO();
 		// required to update asset tables when assets change but identical
@@ -98,6 +116,7 @@ public class ReadAccessHarvester extends Harvester
 	private void close() throws IOException
 	{
 		// TODO
+
 	}
 
 	@Override
@@ -157,7 +176,6 @@ public class ReadAccessHarvester extends Harvester
 			return found + " ingested: " + ingested + " failed: " + failed;
 		}
 	}
-
 	private Date startDate;
 
 	private Progress doit()
@@ -204,140 +222,128 @@ public class ReadAccessHarvester extends Harvester
 						end = fiveMinAgo;
 				}
 
-				List<ReadAccess> tmp = null;
-				if (!service)
-				{
-					tmp = srcAccessDAO.getList(entityClass, startDate, end,
-							batchSize);
-					entityList = wrap(tmp);
-				}
+				List<ReadAccess> tmp = srcAccessDAO.getList(entityClass,
+						startDate, end, batchSize);
+				entityList = wrap(tmp);
 			}
 
-			if (entityList != null)
+			if (entityList.size() >= expectedNum)
+				detectLoop(entityList);
+
+			ret.found = entityList.size();
+			log.info("found: " + entityList.size());
+
+			ListIterator<SkippedWrapper<ReadAccess>> iter = entityList
+					.listIterator();
+			while (iter.hasNext())
 			{
-				if (entityList.size() >= expectedNum)
-					detectLoop(entityList);
+				SkippedWrapper<ReadAccess> sra = iter.next();
+				ReadAccess ra = sra.entity;
+				HarvestSkip hs = sra.skip;
 
-				ret.found = entityList.size();
-				log.info("found: " + entityList.size());
-				ListIterator<SkippedWrapper<ReadAccess>> iter = entityList
-						.listIterator();
-				while (iter.hasNext())
+				iter.remove(); // allow garbage collection asap
+
+				if (!dryrun)
+					destAccessDAO.getTransactionManager().startTransaction();
+				boolean ok = false;
+				try
 				{
-					SkippedWrapper<ReadAccess> sra = iter.next();
-					ReadAccess ra = sra.entity;
-					HarvestSkip hs = sra.skip;
-
-					iter.remove(); // allow garbage collection asap
-
+					if (ra != null)
+						log.info("put: " + ra.getClass().getSimpleName() + " "
+								+ ra.getAssetID() + "/" + ra.getGroupID() + " "
+								+ format(ra.getLastModified()));
 					if (!dryrun)
-						destAccessDAO.getTransactionManager()
-								.startTransaction();
-					boolean ok = false;
-					try
 					{
 						if (ra != null)
-							log.info("put: " + ra.getClass().getSimpleName()
-									+ " " + ra.getAssetID() + "/"
-									+ ra.getGroupID() + " "
-									+ format(ra.getLastModified()));
-						if (!dryrun)
 						{
-							if (ra != null)
+							if (skipped)
+								startDate = hs.lastModified;
+
+							if (state != null)
 							{
-								if (skipped)
-									startDate = hs.lastModified;
+								state.curLastModified = ra.getLastModified();
+								state.curID = ra.getID();
+							}
 
-								if (state != null)
-								{
-									state.curLastModified = ra
-											.getLastModified();
-									state.curID = ra.getID();
-								}
+							destAccessDAO.put(ra);
 
-								destAccessDAO.put(ra);
-
-								if (hs != null) // success in redo mode
-								{
-									log.info("delete: " + hs + " "
-											+ format(hs.lastModified));
-									harvestSkip.delete(hs);
-								} else
-									harvestState.put(state);
-							} else if (skipped) // entity gone from src
+							if (hs != null) // success in redo mode
 							{
 								log.info("delete: " + hs + " "
 										+ format(hs.lastModified));
 								harvestSkip.delete(hs);
-							}
-							log.debug("committing transaction");
-							destAccessDAO.getTransactionManager()
-									.commitTransaction();
-							log.debug("commit: OK");
+							} else
+								harvestState.put(state);
+						} else if (skipped) // entity gone from src
+						{
+							log.info("delete: " + hs + " "
+									+ format(hs.lastModified));
+							harvestSkip.delete(hs);
 						}
-						ok = true;
-						ret.ingested++;
-					} catch (Throwable t)
+						log.debug("committing transaction");
+						destAccessDAO.getTransactionManager()
+								.commitTransaction();
+						log.debug("commit: OK");
+					}
+					ok = true;
+					ret.ingested++;
+				} catch (Throwable t)
+				{
+					if (t instanceof DataIntegrityViolationException
+							&& t.getMessage().contains("failed to update"))
 					{
-						if (t instanceof DataIntegrityViolationException
-								&& t.getMessage().contains("failed to update"))
-						{
-							log.error(t.getMessage());
-						} else
-						{
-							log.error("BUG - failed to put ReadAccess", t);
-							ret.abort = true;
-						}
-					} finally
+						log.error(t.getMessage());
+					} else
 					{
-						if (!ok && !dryrun)
-						{
-							log.warn("failed to process " + ra
-									+ ": trying to rollback the transaction");
-							destAccessDAO.getTransactionManager()
-									.rollbackTransaction();
-							log.warn("rollback: OK");
+						log.error("BUG - failed to put ReadAccess", t);
+						ret.abort = true;
+					}
+				} finally
+				{
+					if (!ok && !dryrun)
+					{
+						log.warn("failed to process " + ra
+								+ ": trying to rollback the transaction");
+						destAccessDAO.getTransactionManager()
+								.rollbackTransaction();
+						log.warn("rollback: OK");
 
-							// track failures where possible
-							if (!skipped)
+						// track failures where possible
+						if (!skipped)
+						{
+							try
 							{
-								try
-								{
-									log.debug(
-											"starting harvestSkip transaction");
-									HarvestSkip skip = harvestSkip.get(source,
-											cname, ra.getID());
-									if (skip == null)
-										skip = new HarvestSkip(source, cname,
-												ra.getID(), null);
-									destAccessDAO.getTransactionManager()
-											.startTransaction();
-									log.info("skip: " + skip);
+								log.debug("starting harvestSkip transaction");
+								HarvestSkip skip = harvestSkip.get(source,
+										cname, ra.getID());
+								if (skip == null)
+									skip = new HarvestSkip(source, cname,
+											ra.getID(), null);
+								destAccessDAO.getTransactionManager()
+										.startTransaction();
+								log.info("skip: " + skip);
 
-									// track the harvest state progress
-									harvestState.put(state);
-									// track the fail
-									harvestSkip.put(skip);
-									// TBD: delete previous version of entity?
-									destAccessDAO.delete(ra.getClass(),
-											ra.getID());
+								// track the harvest state progress
+								harvestState.put(state);
+								// track the fail
+								harvestSkip.put(skip);
+								// TBD: delete previous version of entity?
+								destAccessDAO.delete(ra.getClass(), ra.getID());
 
-									log.debug(
-											"committing harvestSkip transaction");
-									destAccessDAO.getTransactionManager()
-											.commitTransaction();
-									log.debug("commit harvestSkip: OK");
-								} catch (Throwable oops)
-								{
-									log.warn("failed to insert via HarvestSkip",
-											oops);
-									destAccessDAO.getTransactionManager()
-											.rollbackTransaction();
-									log.warn("rollback harvestSkip: OK");
-								}
+								log.debug("committing harvestSkip transaction");
+								destAccessDAO.getTransactionManager()
+										.commitTransaction();
+								log.debug("commit harvestSkip: OK");
+							} catch (Throwable oops)
+							{
+								log.warn("failed to insert via HarvestSkip",
+										oops);
+								destAccessDAO.getTransactionManager()
+										.rollbackTransaction();
+								log.warn("rollback harvestSkip: OK");
 							}
-							ret.failed++;
 						}
+						ret.failed++;
 					}
 				}
 
