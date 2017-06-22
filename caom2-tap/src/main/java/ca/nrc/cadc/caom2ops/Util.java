@@ -2,6 +2,8 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +31,19 @@ public class Util extends CaomUtil
             return null;
         return (String) o;
     }
+    
+    public static URI getURI(List<Object> data, Integer col)
+        throws URISyntaxException
+    {
+        if (col == null)
+            return null;
+        Object o = data.get(col);
+        if (o == null)
+            return null;
+        String s = (String) o;
+        return new URI(s);
+    }
+    
     public static Boolean getBoolean(List<Object> data, Integer col)
     {
         if (col == null)

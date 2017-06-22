@@ -140,19 +140,25 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
 
             artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
             artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
+            artifact.contentChecksum = Util.getURI(data, map.get("caom2:Artifact.contentChecksum"));
 
             Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));
-
             Util.assignLastModified(artifact, lastModified, "lastModified");
             Util.assignLastModified(artifact, maxLastModified, "maxLastModified");
+            
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Artifact.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Artifact.accMetaChecksum"));
+            Util.assignMetaChecksum(artifact, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(artifact, accMetaChecksum, "accMetaChecksum");
+            
             Util.assignID(artifact, id);
 
             return artifact;
         }
         catch(URISyntaxException ex)
         {
-            throw new UnexpectedContentException("invalid Artifact URI: " + suri);
+            throw new UnexpectedContentException("invalid URI", ex);
         }
     }
 }

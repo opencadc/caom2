@@ -139,6 +139,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
             plane.metaRelease = Util.getDate(data, map.get("caom2:Plane.metaRelease"));
             
+            plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
+                
             ca.nrc.cadc.stc.Polygon posBounds = (ca.nrc.cadc.stc.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
             if (posBounds != null)
             {
@@ -221,7 +223,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.polarization = new Polarization();
                 plane.polarization.states = new ArrayList<PolarizationState>();
                 Util.decodeStates(polStates, plane.polarization.states);
-                plane.polarization.dimension = Util.getInteger(data, map.get("caom2:Plane.polarization.dimension"));
+                plane.polarization.dimension = Util.getLong(data, map.get("caom2:Plane.polarization.dimension"));
             }
             
             Metrics metrics = new Metrics();
@@ -262,16 +264,21 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Date lastModified = Util.getDate(data, map.get("caom2:Plane.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Plane.maxLastModified"));
-
             Util.assignLastModified(plane, lastModified, "lastModified");
             Util.assignLastModified(plane, maxLastModified, "maxLastModified");
+            
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Plane.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Plane.accMetaChecksum"));
+            Util.assignMetaChecksum(plane, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(plane, accMetaChecksum, "accMetaChecksum");
+            
             Util.assignID(plane, id);
 
             return plane;
         }
         catch(URISyntaxException ex)
         {
-            throw new UnexpectedContentException("invalid Plane.provenance.reference URI", ex);
+            throw new UnexpectedContentException("invalid URI", ex);
         }
         finally { }
     }
