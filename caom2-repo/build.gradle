@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7.1'
+    id 'application'
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+sourceCompatibility = 1.7
+
+group = 'org.opencadc'
+
+version = '0.1.0'
+
+mainClassName = 'ca.nrc.cadc.caom2.repo.client.RepoClientMainTest'
+
+dependencies {
+    compile 'log4j:log4j:1.2.+'
+    compile 'net.sourceforge.javacsv:javacsv:2.+'
+    compile 'javax.servlet:javax.servlet-api:3.1.+'
+    
+    compile 'org.opencadc:cadc-util:[1.0.14,)'
+    compile 'org.opencadc:caom2:[2.2.5,3.0)'
+    compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
+    
+    testCompile 'junit:junit:4.+'
+    testCompile 'org.easymock:easymock:[3.2,4.0)'
+}
