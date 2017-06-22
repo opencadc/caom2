@@ -1,0 +1,10 @@
+A .netrc file is required in $HOME with the following format. An account at CADC is required:
+
+machine <url> login <cadc_username> password <cadc_password>
+
+Example:
+machine www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca login <cadc_username> password <cadc_password>
+
+A .dbrc file is required in $HOME with the following format. This is the info for the output database connection
+
+<db_machine> <database> <db_user> <db_password> org.postgresql.Driver jdbc:postgresql://<db_machine>:8300/<database>
