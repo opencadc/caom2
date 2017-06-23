@@ -57,6 +57,8 @@ import java.util.concurrent.Callable;
 
 import javax.security.auth.Subject;
 
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
@@ -64,6 +66,8 @@ import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
 public class Worker implements Callable<WorkerResponse> {
+
+    private static final Logger log = Logger.getLogger(Worker.class);
 
     private ObservationState state = null;
     private Subject subject = null;
@@ -112,6 +116,8 @@ public class Worker implements Callable<WorkerResponse> {
             exception = new Exception("Unable to create Observation object for id "
                     + state.getObservationID() + ": " + e.getMessage());
             wr.setError(exception);
+            log.warn("Unable to create Observation object for id " + state.getObservationID() + ": "
+                    + e.getMessage());
         }
         return wr;
     }

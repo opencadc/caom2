@@ -76,7 +76,7 @@ public class RepoClientMainTest implements Runnable {
 
     public static void main(String[] args) {
 
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.WARN);
         // Log4jInit.setLevel("ca.nrc.cadc.net.HttpDownload", Level.TRACE);
         // Log4jInit.setLevel("ca.nrc.cadc.reg.client.RegistryClient",
         // Level.DEBUG);
