@@ -86,14 +86,16 @@ public class ObservationState
 	private final String observationID;
 	private final Date maxLastModified;
 	private final URI accMetaChecksum;
+	private final URI uri;
 
 	public ObservationState(String collection, String observationID,
-			Date maxlastModified, URI accMetaChecksum)
+			Date maxlastModified, URI accMetaChecksum, URI uri)
 	{
 		this.collection = collection;
 		this.observationID = observationID;
 		this.maxLastModified = maxlastModified;
 		this.accMetaChecksum = accMetaChecksum;
+		this.uri = uri;
 	}
 
 	public String getCollection()
@@ -121,5 +123,10 @@ public class ObservationState
 	{
 		return "ObservationState[" + observationID + "," + maxLastModified
 				+ "]";
+	}
+
+	public URI getUri()
+	{
+		return uri;
 	}
 }

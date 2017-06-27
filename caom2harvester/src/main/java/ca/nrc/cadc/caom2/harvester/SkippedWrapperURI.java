@@ -67,67 +67,26 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.client;
+package ca.nrc.cadc.caom2.harvester;
 
-import ca.nrc.cadc.caom2.Observation;
+import org.apache.log4j.Logger;
 
-public class WorkerResponse
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+
+/**
+ *
+ * @author pdowler
+ */
+public class SkippedWrapperURI<T>
 {
+	private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
 
-	private Observation observation = null;
-	private ObservationState observationState = null;
-	private Exception error = null;
+	public T entity;
+	public HarvestSkipURI skip;
 
-	public WorkerResponse(Observation obs, ObservationState obsState,
-			Exception err)
+	public SkippedWrapperURI(T entity, HarvestSkipURI skip)
 	{
-		this.setObservation(obs);
-		this.setObservationState(obsState);
-		this.setError(err);
+		this.entity = entity;
+		this.skip = skip;
 	}
-
-	public Observation getObservation()
-	{
-		return observation;
-	}
-
-	public void setObservation(Observation observation)
-	{
-		this.observation = observation;
-	}
-
-	public ObservationState getObservationState()
-	{
-		return observationState;
-	}
-
-	public void setObservationState(ObservationState observationState)
-	{
-		this.observationState = observationState;
-	}
-
-	public Exception getError()
-	{
-		return error;
-	}
-
-	public void setError(Exception error)
-	{
-		this.error = error;
-	}
-
-	@Override
-	public String toString()
-	{
-		return observation == null
-				? "null"
-				: observation.getObservationID() + " "
-						+ observationState == null
-								? "null"
-								: observationState.getCollection() + " "
-										+ error == null
-												? "Correct"
-												: error.getMessage();
-	}
-
 }

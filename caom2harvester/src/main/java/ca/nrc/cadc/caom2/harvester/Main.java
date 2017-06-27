@@ -26,6 +26,7 @@ import ca.nrc.cadc.util.Log4jInit;
  */
 public class Main
 {
+
 	private static Logger log = Logger.getLogger(Main.class);
 
 	private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
@@ -42,13 +43,22 @@ public class Main
 			{
 				Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
 				Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+				Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
+						Level.DEBUG);
+
 			} else if (am.isSet("v") || am.isSet("verbose"))
 			{
 				Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
 				Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+				Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
+						Level.INFO);
+
 			} else
 			{
 				Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
+				Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
+						Level.WARN);
+
 			}
 
 			if (am.isSet("h") || am.isSet("help"))
@@ -241,15 +251,29 @@ public class Main
 			try
 			{
 				if (test)
-					ch = CaomHarvester.getTestHarvester(service, dryrun, srcDS,
-							destDS, batchSize, batchFactor, full, skip,
-							maxDate);
-				else if (recomp)
-					ch = new CaomHarvester(service, dryrun, srcDS, destDS,
-							batchSize, full, maxDate);
-				else
-					ch = new CaomHarvester(service, dryrun, srcDS, destDS,
+					ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS,
 							batchSize, batchFactor, full, skip, maxDate);
+				else if (recomp)
+				{
+					if (service)
+						ch = new CaomHarvester(dryrun, sresourceId, scollection,
+								nthreads, destDS, batchSize, full, maxDate);
+					else
+						ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
+								full, maxDate);
+				} else
+				{
+					if (service)
+					{
+						ch = new CaomHarvester(dryrun, sresourceId, scollection,
+								nthreads, destDS, batchSize, batchFactor, full,
+								skip, maxDate);
+					} else
+					{
+						ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
+								batchFactor, full, skip, maxDate);
+					}
+				}
 			} catch (IOException ioex)
 			{
 				log.error("failed to init: " + ioex.getMessage());
@@ -283,6 +307,7 @@ public class Main
 
 	private static class ShutdownHook implements Runnable
 	{
+
 		ShutdownHook()
 		{
 		}
@@ -295,6 +320,7 @@ public class Main
 		}
 
 	}
+
 	private static void usage()
 	{
 		StringBuilder sb = new StringBuilder();
