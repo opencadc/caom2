@@ -38,7 +38,7 @@ public class ReadAccessHarvester extends Harvester
 	protected HarvestSkipDAO harvestSkip;
 	/**
 	 * Harvest ReadAccess tuples.
-	 * 
+	 *
 	 * @param src
 	 *            source server.database.schema
 	 * @param dest

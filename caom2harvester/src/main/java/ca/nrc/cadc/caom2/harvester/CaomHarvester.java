@@ -145,7 +145,7 @@ public class CaomHarvester implements Runnable
 			boolean full, boolean skip, Date maxDate)
 			throws IOException, URISyntaxException
 	{
-	    Integer entityBatchSize = batchSize * batchFactor;
+		Integer entityBatchSize = batchSize * batchFactor;
 
 		DBConfig dbrc = new DBConfig();
 		ConnectionConfig cc = dbrc.getConnectionConfig(dest[0], dest[1]);
