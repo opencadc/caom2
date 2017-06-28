@@ -15,11 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-<<<<<<< HEAD
-version = '2.3.1'
-=======
 version = '2.3.2'
->>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 

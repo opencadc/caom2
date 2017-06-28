@@ -1,4 +1,3 @@
-
 package ca.nrc.cadc.caom2.harvester;
 
 import java.io.IOException;
