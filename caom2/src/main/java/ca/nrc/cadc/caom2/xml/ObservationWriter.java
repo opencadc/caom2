@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -621,7 +622,10 @@ public class ObservationWriter implements Serializable
             addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
             if (plane.dataProductType != null)
             {
-                addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
+                if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) // backwards compat
+                    addElement("dataProductType", plane.dataProductType.getTerm(), planeElement);
+                else
+                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
             }
             if (plane.calibrationLevel != null)
             {

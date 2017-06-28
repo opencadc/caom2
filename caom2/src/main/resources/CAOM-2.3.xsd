@@ -713,7 +713,8 @@
             <xs:enumeration value="visibility"/>
             <xs:enumeration value="eventlist"/>
             <xs:enumeration value="cube"/>
-            <xs:enumeration value="catalog"/>
+            <!-- extensions of ObsCore vocabulary -->
+            <xs:enumeration value="http://www.opencadc.org/caom2/DataProductType#catalog"/>
         </xs:restriction>
     </xs:simpleType>
     
