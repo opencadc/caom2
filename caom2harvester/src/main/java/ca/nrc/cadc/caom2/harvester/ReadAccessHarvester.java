@@ -14,6 +14,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
+<<<<<<< HEAD
+=======
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipDAO;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
@@ -25,16 +29,34 @@ import ca.nrc.cadc.date.DateUtil;
  */
 public class ReadAccessHarvester extends Harvester
 {
+<<<<<<< HEAD
 	private static Logger log = Logger.getLogger(ReadAccessHarvester.class);
+=======
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	private DatabaseReadAccessDAO srcAccessDAO;
 	private DatabaseReadAccessDAO destAccessDAO;
+=======
+	private static Logger log = Logger.getLogger(ReadAccessHarvester.class);
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	private boolean skipped;
 	private Date maxDate;
+=======
+	private DatabaseReadAccessDAO srcAccessDAO;
+	private DatabaseReadAccessDAO destAccessDAO;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	private boolean service = false;
+=======
+	private boolean skipped;
+	private Date maxDate;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	/**
 	 * Harvest ReadAccess tuples.
 	 *
@@ -61,13 +83,43 @@ public class ReadAccessHarvester extends Harvester
 	public void setMaxDate(Date maxDate)
 	{
 		this.maxDate = maxDate;
+=======
+	protected HarvestSkipDAO harvestSkip;
+	/**
+	 * Harvest ReadAccess tuples.
+	 *
+	 * @param src
+	 *            source server.database.schema
+	 * @param dest
+	 *            destination server.database.schema
+	 * @param entityClass
+	 *            the type of entity to harvest
+	 * @param batchSize
+	 *            ignored, always full list
+	 * @param full
+	 *            ignored, always in lastModfied order
+	 * @throws IOException
+	 */
+	public ReadAccessHarvester(Class entityClass, String[] src, String[] dest,
+			Integer batchSize, boolean full, boolean dryrun) throws IOException
+	{
+		super(entityClass, src, dest, batchSize, full, dryrun);
+		init();
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 	}
 
+<<<<<<< HEAD
 	public void setSkipped(boolean skipped)
 	{
 		this.skipped = skipped;
+=======
+	public void setMaxDate(Date maxDate)
+	{
+		this.maxDate = maxDate;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 	}
 
+<<<<<<< HEAD
 	private void init() throws IOException
 	{
 		Map<String, Object> config1 = null;
@@ -84,19 +136,40 @@ public class ReadAccessHarvester extends Harvester
 			config1 = getConfigDAO(src);
 		}
 		Map<String, Object> config2 = getConfigDAO(dest);
+=======
+	public void setSkipped(boolean skipped)
+	{
+		this.skipped = skipped;
+	}
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 		if (!service)
+=======
+	private void init() throws IOException
+	{
+		Map<String, Object> config1 = getConfigDAO(src);
+		Map<String, Object> config2 = getConfigDAO(dest);
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 		{
 			this.srcAccessDAO = new DatabaseReadAccessDAO();
 			srcAccessDAO.setConfig(config1);
 		}
+=======
+		this.srcAccessDAO = new DatabaseReadAccessDAO();
+		srcAccessDAO.setConfig(config1);
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 		if (!service)
 		{
 			this.srcAccessDAO = new DatabaseReadAccessDAO();
 			srcAccessDAO.setConfig(config1);
 		}
+=======
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 		this.destAccessDAO = new DatabaseReadAccessDAO();
 		// required to update asset tables when assets change but identical
 		// tuples are generated
@@ -104,22 +177,32 @@ public class ReadAccessHarvester extends Harvester
 		destAccessDAO.setConfig(config2);
 		destAccessDAO.setComputeLastModified(false); // copy as-is
 
+<<<<<<< HEAD
 		this.destAccessDAO = new DatabaseReadAccessDAO();
 		// required to update asset tables when assets change but identical
 		// tuples are generated
 		config2.put("forceUpdate", Boolean.TRUE);
 		destAccessDAO.setConfig(config2);
 		destAccessDAO.setComputeLastModified(false); // copy as-is
-
+=======
 		initHarvestState(destAccessDAO.getDataSource(), entityClass);
 	}
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
+		initHarvestState(destAccessDAO.getDataSource(), entityClass);
+=======
 	private void close() throws IOException
 	{
 		// TODO
-
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 	}
 
+<<<<<<< HEAD
+	private void close() throws IOException
+	{
+		// TODO
+=======
 	@Override
 	public void run()
 	{
@@ -132,7 +215,61 @@ public class ReadAccessHarvester extends Harvester
 			throw new RuntimeException("failed to init connections and state",
 					oops);
 		}
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
+=======
+		boolean go = true;
+		while (go)
+		{
+			Progress num = doit();
+			if (num.found > 0)
+				log.info("finished batch: " + num);
+			if (!skipped && num.failed > num.found / 2) // more than half failed
+			{
+				log.warn("failure rate is quite high: " + num.failed + "/"
+						+ num.found);
+				num.abort = true;
+			}
+			if (num.abort)
+				log.error("batched aborted");
+			go = (num.found > 0 && !num.abort && !num.done);
+			full = false; // do not start at min(lastModified) again
+			if (dryrun)
+				go = false;
+			// go = false;// single loop for testing
+		}
+		try
+		{
+			close();
+		} catch (Throwable oops)
+		{
+			log.error("failed to cleanup connections and state", oops);
+			return;
+		}
+		log.info("DONE: " + entityClass.getSimpleName() + "\n");
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
+	}
+
+<<<<<<< HEAD
+	@Override
+	public void run()
+	{
+		log.info("START: " + entityClass.getSimpleName());
+		try
+		{
+			// init();
+		} catch (Throwable oops)
+		{
+			throw new RuntimeException("failed to init connections and state",
+					oops);
+		}
+=======
+	private static class Progress
+	{
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
+
+<<<<<<< HEAD
 		boolean go = true;
 		while (go)
 		{
@@ -163,7 +300,15 @@ public class ReadAccessHarvester extends Harvester
 		}
 		log.info("DONE: " + entityClass.getSimpleName() + "\n");
 	}
+=======
+		boolean done = false;
+		boolean abort = false;
+		int found = 0;
+		int ingested = 0;
+		int failed = 0;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	private static class Progress
 	{
 		boolean done = false;
@@ -178,12 +323,25 @@ public class ReadAccessHarvester extends Harvester
 		}
 	}
 	private Date startDate;
+=======
+		@Override
+		public String toString()
+		{
+			return found + " ingested: " + ingested + " failed: " + failed;
+		}
+	}
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 	private Progress doit()
 	{
 		log.info("batch: " + entityClass.getSimpleName());
 		Progress ret = new Progress();
+=======
+	private Date startDate;
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
 
+<<<<<<< HEAD
 		int expectedNum = Integer.MAX_VALUE;
 		if (batchSize != null)
 			expectedNum = batchSize.intValue();
@@ -443,3 +601,257 @@ public class ReadAccessHarvester extends Harvester
 		return ret;
 	}
 }
+=======
+	private Progress doit()
+	{
+		log.info("batch: " + entityClass.getSimpleName());
+		Progress ret = new Progress();
+
+		int expectedNum = Integer.MAX_VALUE;
+		if (batchSize != null)
+			expectedNum = batchSize.intValue();
+
+		try
+		{
+			HarvestState state = null;
+			if (!skipped)
+			{
+				state = harvestState.get(source, cname);
+				log.info("last harvest: " + format(state.curLastModified));
+			}
+
+			if (full)
+				startDate = null;
+			else if (!skipped)
+				startDate = state.curLastModified;
+			// else: skipped: keep startDate across multiple batches since we
+			// don't persist harvest
+			// state
+
+			Date end = maxDate;
+			List<SkippedWrapper<ReadAccess>> entityList = null;
+			if (skipped)
+				entityList = getSkipped(startDate);
+			else
+			{
+				Date fiveMinAgo = new Date(
+						System.currentTimeMillis() - 5 * 60000L); // 5 minutes
+																	// ago;
+				if (end == null)
+					end = fiveMinAgo;
+				else
+				{
+					log.info("harvest limit: min( " + format(fiveMinAgo) + " "
+							+ format(end) + " )");
+					if (end.getTime() > fiveMinAgo.getTime())
+						end = fiveMinAgo;
+				}
+
+				List<ReadAccess> tmp = srcAccessDAO.getList(entityClass,
+						startDate, end, batchSize);
+				entityList = wrap(tmp);
+			}
+
+			if (entityList.size() >= expectedNum)
+				detectLoop(entityList);
+
+			ret.found = entityList.size();
+			log.info("found: " + entityList.size());
+
+			ListIterator<SkippedWrapper<ReadAccess>> iter = entityList
+					.listIterator();
+			while (iter.hasNext())
+			{
+				SkippedWrapper<ReadAccess> sra = iter.next();
+				ReadAccess ra = sra.entity;
+				HarvestSkip hs = sra.skip;
+
+				iter.remove(); // allow garbage collection asap
+
+				if (!dryrun)
+					destAccessDAO.getTransactionManager().startTransaction();
+				boolean ok = false;
+				try
+				{
+					if (ra != null)
+						log.info("put: " + ra.getClass().getSimpleName() + " "
+								+ ra.getAssetID() + "/" + ra.getGroupID() + " "
+								+ format(ra.getLastModified()));
+					if (!dryrun)
+					{
+						if (ra != null)
+						{
+							if (skipped)
+								startDate = hs.lastModified;
+
+							if (state != null)
+							{
+								state.curLastModified = ra.getLastModified();
+								state.curID = ra.getID();
+							}
+
+							destAccessDAO.put(ra);
+
+							if (hs != null) // success in redo mode
+							{
+								log.info("delete: " + hs + " "
+										+ format(hs.lastModified));
+								harvestSkip.delete(hs);
+							} else
+								harvestState.put(state);
+						} else if (skipped) // entity gone from src
+						{
+							log.info("delete: " + hs + " "
+									+ format(hs.lastModified));
+							harvestSkip.delete(hs);
+						}
+						log.debug("committing transaction");
+						destAccessDAO.getTransactionManager()
+								.commitTransaction();
+						log.debug("commit: OK");
+					}
+					ok = true;
+					ret.ingested++;
+				} catch (Throwable t)
+				{
+					if (t instanceof DataIntegrityViolationException
+							&& t.getMessage().contains("failed to update"))
+					{
+						log.error(t.getMessage());
+					} else
+					{
+						log.error("BUG - failed to put ReadAccess", t);
+						ret.abort = true;
+					}
+				} finally
+				{
+					if (!ok && !dryrun)
+					{
+						log.warn("failed to process " + ra
+								+ ": trying to rollback the transaction");
+						destAccessDAO.getTransactionManager()
+								.rollbackTransaction();
+						log.warn("rollback: OK");
+
+						// track failures where possible
+						if (!skipped)
+						{
+							try
+							{
+								log.debug("starting harvestSkip transaction");
+								HarvestSkip skip = harvestSkip.get(source,
+										cname, ra.getID());
+								if (skip == null)
+									skip = new HarvestSkip(source, cname,
+											ra.getID(), null);
+								destAccessDAO.getTransactionManager()
+										.startTransaction();
+								log.info("skip: " + skip);
+
+								// track the harvest state progress
+								harvestState.put(state);
+								// track the fail
+								harvestSkip.put(skip);
+								// TBD: delete previous version of entity?
+								destAccessDAO.delete(ra.getClass(), ra.getID());
+
+								log.debug("committing harvestSkip transaction");
+								destAccessDAO.getTransactionManager()
+										.commitTransaction();
+								log.debug("commit harvestSkip: OK");
+							} catch (Throwable oops)
+							{
+								log.warn("failed to insert via HarvestSkip",
+										oops);
+								destAccessDAO.getTransactionManager()
+										.rollbackTransaction();
+								log.warn("rollback harvestSkip: OK");
+							}
+						}
+						ret.failed++;
+					}
+				}
+			}
+			if (ret.found < expectedNum)
+			{
+				ret.done = true;
+				if (state != null && state.curLastModified != null
+						&& ret.found > 0)
+				{
+					// tweak HarvestState so we don't keep picking up the same
+					// batch
+					Date n = new Date(state.curLastModified.getTime() + 1L); // 1
+																				// ms
+																				// ahead
+					Date now = new Date();
+					if (now.getTime() - n.getTime() > 600 * 1000L) // 10 minutes
+																	// aka very
+																	// old
+						n = new Date(state.curLastModified.getTime() + 100L); // 100
+																				// ms
+																				// ahead
+					state.curLastModified = n;
+					log.info("reached last " + entityClass.getSimpleName()
+							+ ": setting curLastModified to "
+							+ format(state.curLastModified));
+					harvestState.put(state);
+				}
+			}
+		} finally
+		{
+			log.debug("DONE");
+		}
+		return ret;
+	}
+
+	private void detectLoop(List<SkippedWrapper<ReadAccess>> entityList)
+	{
+		if (entityList.size() < 2)
+			return;
+		SkippedWrapper<ReadAccess> start = entityList.get(0);
+		SkippedWrapper<ReadAccess> end = entityList.get(entityList.size() - 1);
+		if (start.entity.getLastModified().equals(end.entity.getLastModified()))
+		{
+			DateFormat df = DateUtil.getDateFormat(
+					DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
+			throw new RuntimeException("detected infinite harvesting loop: "
+					+ entityClass.getSimpleName() + " at "
+					+ df.format(start.entity.getLastModified()));
+		}
+	}
+
+	private List<SkippedWrapper<ReadAccess>> wrap(List<ReadAccess> obsList)
+	{
+		List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(
+				obsList.size());
+		for (ReadAccess o : obsList)
+		{
+			ret.add(new SkippedWrapper<ReadAccess>(o, null));
+		}
+		return ret;
+	}
+
+	private List<SkippedWrapper<ReadAccess>> getSkipped(Date start)
+	{
+
+		log.info("harvest window (skip): " + format(start) + " [" + batchSize
+				+ "]");
+		int found = 0;
+		int notFound = 0;
+		List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
+		List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(
+				skip.size());
+		for (HarvestSkip hs : skip)
+		{
+			ReadAccess o = srcAccessDAO.get(entityClass, hs.getSkipID());
+			if (o == null)
+				notFound++;
+			else
+				found++;
+			ret.add(new SkippedWrapper<ReadAccess>(o, hs));
+		}
+		log.info("getSkipped found: " + found + " not found: " + notFound);
+		return ret;
+	}
+}
+>>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git

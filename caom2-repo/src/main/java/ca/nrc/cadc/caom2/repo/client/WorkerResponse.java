@@ -69,64 +69,65 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
-import java.net.URI;
-import java.util.Date;
+import ca.nrc.cadc.caom2.Observation;
 
-/**
- * Wrapper class to support listing observations in incremental mode.
- *
- * @author pdowler
- */
-public class ObservationState
+public class WorkerResponse
 {
-	// private static final Logger log =
-	// Logger.getLogger(ObservationState.class);
 
-	private final String collection;
-	private final String observationID;
-	private final Date maxLastModified;
-	private final URI accMetaChecksum;
-	private final URI uri;
+	private Observation observation = null;
+	private ObservationState observationState = null;
+	private Exception error = null;
 
-	public ObservationState(String collection, String observationID,
-			Date maxlastModified, URI accMetaChecksum, URI uri)
+	public WorkerResponse(Observation obs, ObservationState obsState,
+			Exception err)
 	{
-		this.collection = collection;
-		this.observationID = observationID;
-		this.maxLastModified = maxlastModified;
-		this.accMetaChecksum = accMetaChecksum;
-		this.uri = uri;
+		this.setObservation(obs);
+		this.setObservationState(obsState);
+		this.setError(err);
 	}
 
-	public String getCollection()
+	public Observation getObservation()
 	{
-		return collection;
+		return observation;
 	}
 
-	public String getObservationID()
+	public void setObservation(Observation observation)
 	{
-		return observationID;
+		this.observation = observation;
 	}
 
-	public Date getMaxLastModified()
+	public ObservationState getObservationState()
 	{
-		return maxLastModified;
+		return observationState;
 	}
 
-	public URI getAccMetaChecksum()
+	public void setObservationState(ObservationState observationState)
 	{
-		return accMetaChecksum;
+		this.observationState = observationState;
+	}
+
+	public Exception getError()
+	{
+		return error;
+	}
+
+	public void setError(Exception error)
+	{
+		this.error = error;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ObservationState[" + observationID + "," + maxLastModified
-				+ "]";
+		return observation == null
+				? "null"
+				: observation.getObservationID() + " "
+						+ observationState == null
+								? "null"
+								: observationState.getCollection() + " "
+										+ error == null
+												? "Correct"
+												: error.getMessage();
 	}
 
-	public URI getUri()
-	{
-		return uri;
-	}
 }

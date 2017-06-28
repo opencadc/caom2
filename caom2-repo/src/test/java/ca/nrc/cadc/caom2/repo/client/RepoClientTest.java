@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,7 +78,6 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -116,7 +115,7 @@ public class RepoClientTest
 			try
 			{
 				repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-						"IRIS", 8);
+						8);
 			} catch (URISyntaxException e)
 			{
 				throw new RuntimeException(
@@ -140,7 +139,7 @@ public class RepoClientTest
 		}
 	}
 
-	@Test
+	// @Test
 	public void testGetList()
 	{
 		try
@@ -150,27 +149,26 @@ public class RepoClientTest
 			try
 			{
 				repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-						"IRIS", 8);
+						8);
 			} catch (URISyntaxException e)
 			{
 				throw new RuntimeException(
 						"Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
 			}
 
-			List<Observation> list = repoC.getList(Observation.class, null,
-					null, 5);
+			List<WorkerResponse> list = repoC.getList("IRIS", null, null, 5);
 
 			Assert.assertEquals(list.size(), 5);
 
-			Assert.assertEquals(list.get(0).getID().toString(),
+			Assert.assertEquals(list.get(0).getObservation().getID().toString(),
 					"00000000-0000-0000-897c-013ac26a8f32");
-			Assert.assertEquals(list.get(1).getID().toString(),
+			Assert.assertEquals(list.get(1).getObservation().getID().toString(),
 					"00000000-0000-0000-31a6-013ac26a8284");
-			Assert.assertEquals(list.get(2).getID().toString(),
+			Assert.assertEquals(list.get(2).getObservation().getID().toString(),
 					"00000000-0000-0000-7a3c-013ac28ebeca");
-			Assert.assertEquals(list.get(3).getID().toString(),
+			Assert.assertEquals(list.get(3).getObservation().getID().toString(),
 					"00000000-0000-0000-95c3-01394aa6a272");
-			Assert.assertEquals(list.get(4).getID().toString(),
+			Assert.assertEquals(list.get(4).getObservation().getID().toString(),
 					"00000000-0000-0000-8117-013ac28ddb9b");;
 
 		} catch (Exception unexpected)
@@ -180,7 +178,7 @@ public class RepoClientTest
 		}
 	}
 
-	@Test
+	// @Test
 	public void testGet()
 	{
 		try
@@ -190,16 +188,17 @@ public class RepoClientTest
 			try
 			{
 				repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-						"IRIS", 8);
+						8);
 			} catch (URISyntaxException e)
 			{
 				throw new RuntimeException(
 						"Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
 			}
 
-			Observation obs = repoC.get(new ObservationURI("IRIS", "f001h000"));
+			WorkerResponse wr = repoC
+					.get(new ObservationURI("IRIS", "f001h000"));
 
-			Assert.assertEquals(obs.getID().toString(),
+			Assert.assertEquals(wr.getObservation().getID().toString(),
 					"00000000-0000-0000-897c-013ac26a8f32");
 
 		} catch (Exception unexpected)

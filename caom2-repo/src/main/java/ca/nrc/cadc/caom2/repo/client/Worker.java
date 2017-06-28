@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,10 +72,13 @@ package ca.nrc.cadc.caom2.repo.client;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.Callable;
 
 import javax.security.auth.Subject;
+
+import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
@@ -83,8 +86,10 @@ import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
-public class Worker implements Callable<Observation>
+public class Worker implements Callable<WorkerResponse>
 {
+
+	private static final Logger log = Logger.getLogger(Worker.class);
 
 	private ObservationState state = null;
 	private Subject subject = null;
@@ -98,13 +103,12 @@ public class Worker implements Callable<Observation>
 	}
 
 	@Override
-	public Observation call() throws Exception
+	public WorkerResponse call() throws Exception
 	{
-
 		return getObservation();
 	}
 
-	public Observation getObservation()
+	public WorkerResponse getObservation()
 	{
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		String surl = BASE_HTTP_URL + File.separator + state.getCollection()
@@ -131,17 +135,69 @@ public class Worker implements Callable<Observation>
 
 		ObservationReader obsReader = new ObservationReader();
 		Observation o = null;
+		Exception exception = null;
+		WorkerResponse wr = new WorkerResponse(null, state, null);
 
 		try
 		{
 			o = obsReader.read(bos.toString());
+			wr.setObservation(o);
 		} catch (ObservationParsingException e)
 		{
-			throw new RuntimeException(
+			exception = new Exception(
 					"Unable to create Observation object for id "
-							+ state.getObservationID());
+							+ state.getObservationID() + ": " + e.getMessage());
+			wr.setError(exception);
+			log.warn("Unable to create Observation object for id "
+					+ state.getObservationID() + ": " + e.getMessage());
 		}
-		return o;
+		return wr;
+	}
+
+	public WorkerResponse getObservation(URI uri)
+	{
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		String surl = BASE_HTTP_URL + File.separator + state.getCollection()
+				+ File.separator + state.getObservationID();
+		URL url = null;
+		try
+		{
+			url = new URL(surl);
+		} catch (MalformedURLException e)
+		{
+			throw new RuntimeException(
+					"Unable to create URL object for " + surl);
+		}
+		HttpDownload get = new HttpDownload(url, bos);
+
+		if (subject != null)
+		{
+			Subject.doAs(subject, new RunnableAction(get));
+
+		} else
+		{
+			get.run();
+		}
+
+		ObservationReader obsReader = new ObservationReader();
+		Observation o = null;
+		Exception exception = null;
+		WorkerResponse wr = new WorkerResponse(null, state, null);
+
+		try
+		{
+			o = obsReader.read(bos.toString());
+			wr.setObservation(o);
+		} catch (ObservationParsingException e)
+		{
+			exception = new Exception(
+					"Unable to create Observation object for id "
+							+ state.getObservationID() + ": " + e.getMessage());
+			wr.setError(exception);
+			log.warn("Unable to create Observation object for id "
+					+ state.getObservationID() + ": " + e.getMessage());
+		}
+		return wr;
 	}
 
 }
