@@ -67,104 +67,26 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.client;
+package ca.nrc.cadc.caom2.harvester;
 
-import java.net.URI;
-import java.util.Date;
+import org.apache.log4j.Logger;
+
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 
 /**
- * Wrapper class to support listing observations in incremental mode.
  *
  * @author pdowler
  */
-public class ObservationState
+public class SkippedWrapperURI<T>
 {
-	// private static final Logger log =
-	// Logger.getLogger(ObservationState.class);
+	private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
 
-	private final String collection;
-	private final String observationID;
-	private final Date maxLastModified;
-	private final URI accMetaChecksum;
-<<<<<<< HEAD
+	public T entity;
+	public HarvestSkipURI skip;
 
-	public ObservationState(String collection, String observationID,
-			Date maxlastModified, URI accMetaChecksum)
+	public SkippedWrapperURI(T entity, HarvestSkipURI skip)
 	{
-		this.collection = collection;
-		this.observationID = observationID;
-		this.maxLastModified = maxlastModified;
-		this.accMetaChecksum = accMetaChecksum;
-	}
-
-	public String getCollection()
-	{
-		return collection;
-	}
-
-	public String getObservationID()
-	{
-		return observationID;
-	}
-
-	public Date getMaxLastModified()
-	{
-		return maxLastModified;
-	}
-
-	public URI getAccMetaChecksum()
-	{
-		return accMetaChecksum;
-	}
-
-	@Override
-	public String toString()
-	{
-		return "ObservationState[" + observationID + "," + maxLastModified
-				+ "]";
-=======
-	private final URI uri;
-
-	public ObservationState(String collection, String observationID,
-			Date maxlastModified, URI accMetaChecksum, URI uri)
-	{
-		this.collection = collection;
-		this.observationID = observationID;
-		this.maxLastModified = maxlastModified;
-		this.accMetaChecksum = accMetaChecksum;
-		this.uri = uri;
-	}
-
-	public String getCollection()
-	{
-		return collection;
-	}
-
-	public String getObservationID()
-	{
-		return observationID;
-	}
-
-	public Date getMaxLastModified()
-	{
-		return maxLastModified;
-	}
-
-	public URI getAccMetaChecksum()
-	{
-		return accMetaChecksum;
-	}
-
-	@Override
-	public String toString()
-	{
-		return "ObservationState[" + observationID + "," + maxLastModified
-				+ "]";
-	}
-
-	public URI getUri()
-	{
-		return uri;
->>>>>>> branch 'master' of https://github.com/esdc-esac-esa-int/caom2db.git
+		this.entity = entity;
+		this.skip = skip;
 	}
 }
