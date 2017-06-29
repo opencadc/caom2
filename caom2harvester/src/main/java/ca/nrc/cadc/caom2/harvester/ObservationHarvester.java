@@ -153,8 +153,6 @@ public class ObservationHarvester extends Harvester
         boolean go = true;
         while (go)
         {
-            log.info("************** obsHarvester.doit() ***************");
-
             Progress num = doit();
 
             if (num.found > 0)
@@ -232,8 +230,6 @@ public class ObservationHarvester extends Harvester
             t = System.currentTimeMillis();
 
             HarvestState state = null;
-            log.info("***************** skipped: " + skipped
-                    + " *******************");
 
             if (!skipped)
                 state = harvestState.get(source,
@@ -254,8 +250,6 @@ public class ObservationHarvester extends Harvester
             List<SkippedWrapperURI<Observation>> entityList = null;
             if (skipped)
             {
-                log.info("***************** getSkipped(startDate): startDate = "
-                        + startDate + " *******************");
                 entityList = getSkipped(startDate);
             } else
             {
@@ -281,9 +275,6 @@ public class ObservationHarvester extends Harvester
                             startDate, end, batchSize + 1);
                 } else
                 {
-                    log.info(
-                            "***************** srcObservationService.getList *******************");
-
                     tmp = new ArrayList<Observation>();
                     List<WorkerResponse> l = srcObservationService
                             .getList(collection, startDate, end, batchSize + 1);
@@ -298,10 +289,6 @@ public class ObservationHarvester extends Harvester
 
             if (entityList.size() >= expectedNum)
             {
-                log.info("***************** entityList.size() >= expectedNum = "
-                        + entityList.size() + " " + expectedNum
-                        + " *******************");
-
                 try
                 {
                     detectLoop(entityList);
@@ -344,9 +331,6 @@ public class ObservationHarvester extends Harvester
             // HarvestState
             if (!entityList.isEmpty() && !skipped)
             {
-                log.info("***************** !entityList.isEmpty() && !skipped"
-                        + " *******************");
-
                 ListIterator<SkippedWrapperURI<Observation>> iter = entityList
                         .listIterator();
                 Observation curBatchLeader = iter.next().entity;
