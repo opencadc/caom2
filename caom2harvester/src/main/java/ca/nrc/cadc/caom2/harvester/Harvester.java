@@ -49,8 +49,8 @@ public abstract class Harvester implements Runnable
     {
     }
 
-    protected Harvester(Class entityClass, String[] src, String[] dest,
-            Integer batchSize, boolean full, boolean dryrun) throws IOException
+    protected Harvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun)
+            throws IOException
     {
         this.entityClass = entityClass;
         this.src = src;
@@ -69,8 +69,7 @@ public abstract class Harvester implements Runnable
         ConnectionConfig cc = dbrc.getConnectionConfig(desc[0], desc[1]);
         String driver = cc.getDriver();
         if (driver == null)
-            throw new RuntimeException("failed to find JDBC driver for "
-                    + desc[0] + " " + desc[1]);
+            throw new RuntimeException("failed to find JDBC driver for " + desc[0] + " " + desc[1]);
 
         if (driver.contains(SYBASE) || driver.contains(JTDS))
             ret.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
@@ -80,8 +79,12 @@ public abstract class Harvester implements Runnable
             ret.put("disableHashJoin", Boolean.TRUE);
         }
         else
+<<<<<<< HEAD
+            throw new IllegalArgumentException("unknown SQL dialect: " + desc[0]);
+=======
             throw new IllegalArgumentException(
                     "unknown SQL dialect: " + desc[0]);
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
 
         ret.put("server", desc[0]);
         ret.put("database", desc[1]);
@@ -99,12 +102,10 @@ public abstract class Harvester implements Runnable
     {
         this.cname = c.getSimpleName();
 
-        log.debug("creating HarvestState tracker: " + cname + " in " + dest[1]
-                + "." + dest[2]);
+        log.debug("creating HarvestState tracker: " + cname + " in " + dest[1] + "." + dest[2]);
         this.harvestState = new PostgresqlHarvestStateDAO(ds, dest[1], dest[2]);
 
-        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest[1]
-                + "." + dest[2]);
+        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest[1] + "." + dest[2]);
 
         if (src != null)
         {
@@ -112,8 +113,7 @@ public abstract class Harvester implements Runnable
         }
     }
 
-    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT,
-            DateUtil.UTC);
+    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
     protected String format(Date d)
     {

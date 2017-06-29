@@ -63,9 +63,8 @@ public class CaomHarvester implements Runnable
      * @throws java.io.IOException
      * @throws URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String[] src, String[] dest,
-            int batchSize, int batchFactor, boolean full, boolean skip,
-            Date maxDate) throws IOException, URISyntaxException
+    public CaomHarvester(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full,
+            boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         Integer entityBatchSize = batchSize * batchFactor;
 
@@ -74,39 +73,31 @@ public class CaomHarvester implements Runnable
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full,
-                dryrun);
+        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
 
-        this.observationMetaHarvester = new ReadAccessHarvester(
-                ObservationMetaReadAccess.class, src, dest, entityBatchSize,
-                full, dryrun);
+        this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest,
+                entityBatchSize, full, dryrun);
         observationMetaHarvester.setSkipped(skip);
-        this.planeDataHarvester = new ReadAccessHarvester(
-                PlaneDataReadAccess.class, src, dest, entityBatchSize, full,
+        this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full,
                 dryrun);
         planeDataHarvester.setSkipped(skip);
-        this.planeMetaHarvester = new ReadAccessHarvester(
-                PlaneMetaReadAccess.class, src, dest, entityBatchSize, full,
+        this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full,
                 dryrun);
         planeMetaHarvester.setSkipped(skip);
 
         if (!full)
         {
-            this.obsDeleter = new DeletionHarvester(DeletedObservation.class,
-                    src, dest, entityBatchSize, dryrun);
+            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
 
             if (!skip)
             {
-                this.observationMetaDeleter = new DeletionHarvester(
-                        DeletedObservationMetaReadAccess.class, src, dest,
+                this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest,
                         entityBatchSize, dryrun);
-                this.planeMetaDeleter = new DeletionHarvester(
-                        DeletedPlaneMetaReadAccess.class, src, dest,
+                this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest,
                         entityBatchSize, dryrun);
-                this.planeDataDeleter = new DeletionHarvester(
-                        DeletedPlaneDataReadAccess.class, src, dest,
+                this.planeDataDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest,
                         entityBatchSize, dryrun);
             }
         }
@@ -135,9 +126,8 @@ public class CaomHarvester implements Runnable
      * @throws java.io.IOException
      * @throws URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String resourceId, String collection,
-            int nthreads, String[] dest, int batchSize, int batchFactor,
-            boolean full, boolean skip, Date maxDate)
+    public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
+            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
             throws IOException, URISyntaxException
     {
         Integer entityBatchSize = batchSize * batchFactor;
@@ -147,8 +137,7 @@ public class CaomHarvester implements Runnable
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsHarvester = new ObservationHarvester(resourceId, collection,
-                nthreads, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
 
@@ -161,36 +150,30 @@ public class CaomHarvester implements Runnable
 
             if (!skip)
             {
-                this.observationMetaDeleter = new DeletionHarvester(
-                        DeletedObservationMetaReadAccess.class, resourceId,
+                this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, resourceId,
                         collection, nthreads, dest, entityBatchSize, dryrun);
             }
         }
     }
 
-    public CaomHarvester(boolean dryrun, String resourceId, String collection,
-            int nthreads, String[] dest, Integer batchSize, boolean full,
-            Date maxDate) throws IOException, URISyntaxException
+    public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
+            Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
     {
-        this.obsHarvester = new ObservationHarvester(resourceId, collection,
-                nthreads, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
     }
 
-    public CaomHarvester(boolean dryrun, String[] src, String[] dest,
-            Integer batchSize, boolean full, Date maxDate)
+    public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
             throws IOException, URISyntaxException
     {
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full,
-                dryrun);
+        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
     }
 
-    public static CaomHarvester getTestHarvester(boolean dryrun, String[] src,
-            String[] dest, Integer batchSize, Integer batchFactor, boolean full,
-            boolean skip, Date maxdate) throws IOException, URISyntaxException
+    public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize,
+            Integer batchFactor, boolean full, boolean skip, Date maxdate) throws IOException, URISyntaxException
     {
 
         throw new UnsupportedOperationException();
@@ -224,8 +207,7 @@ public class CaomHarvester implements Runnable
         }
         catch (Throwable t)
         {
-            throw new RuntimeException(
-                    "FATAL - failed to load WCSLib JNI binding", t);
+            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
         }
 
         boolean init = false;
@@ -247,8 +229,7 @@ public class CaomHarvester implements Runnable
                 log.warn("in observationMetaDeleter != null and !init");
 
                 // check if we have ever harvested before
-                HarvestState hs = observationMetaHarvester.harvestState.get(
-                        observationMetaHarvester.source,
+                HarvestState hs = observationMetaHarvester.harvestState.get(observationMetaHarvester.source,
                         observationMetaHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never
                                                                             // harvested
@@ -266,8 +247,8 @@ public class CaomHarvester implements Runnable
             if (!init)
             {
                 // check if we have ever harvested before
-                HarvestState hs = planeDataHarvester.harvestState.get(
-                        planeDataHarvester.source, planeDataHarvester.cname);
+                HarvestState hs = planeDataHarvester.harvestState.get(planeDataHarvester.source,
+                        planeDataHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never
                                                                             // harvested
                                                                             // from
@@ -284,8 +265,8 @@ public class CaomHarvester implements Runnable
             if (!init)
             {
                 // check if we have ever harvested before
-                HarvestState hs = planeMetaHarvester.harvestState.get(
-                        planeMetaHarvester.source, planeMetaHarvester.cname);
+                HarvestState hs = planeMetaHarvester.harvestState.get(planeMetaHarvester.source,
+                        planeMetaHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never
                                                                             // harvested
                                                                             // from
@@ -305,8 +286,7 @@ public class CaomHarvester implements Runnable
             if (!init)
             {
                 // check if we have ever harvested before
-                HarvestState hs = obsHarvester.harvestState
-                        .get(obsHarvester.source, obsHarvester.cname);
+                HarvestState hs = obsHarvester.harvestState.get(obsHarvester.source, obsHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never
                                                                             // harvested
                                                                             // from

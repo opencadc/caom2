@@ -51,8 +51,8 @@ public class ReadAccessHarvester extends Harvester
      *            ignored, always in lastModfied order
      * @throws IOException
      */
-    public ReadAccessHarvester(Class entityClass, String[] src, String[] dest,
-            Integer batchSize, boolean full, boolean dryrun) throws IOException
+    public ReadAccessHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full,
+            boolean dryrun) throws IOException
     {
         super(entityClass, src, dest, batchSize, full, dryrun);
         init();
@@ -101,8 +101,7 @@ public class ReadAccessHarvester extends Harvester
         }
         catch (Throwable oops)
         {
-            throw new RuntimeException("failed to init connections and state",
-                    oops);
+            throw new RuntimeException("failed to init connections and state", oops);
         }
 
         boolean go = true;
@@ -113,8 +112,7 @@ public class ReadAccessHarvester extends Harvester
                 log.info("finished batch: " + num);
             if (!skipped && num.failed > num.found / 2) // more than half failed
             {
-                log.warn("failure rate is quite high: " + num.failed + "/"
-                        + num.found);
+                log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
             }
             if (num.abort)
@@ -187,21 +185,19 @@ public class ReadAccessHarvester extends Harvester
                 entityList = getSkipped(startDate);
             else
             {
-                Date fiveMinAgo = new Date(
-                        System.currentTimeMillis() - 5 * 60000L); // 5 minutes
-                                                                  // ago;
+                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
+                                                                                     // minutes
+                                                                                     // ago;
                 if (end == null)
                     end = fiveMinAgo;
                 else
                 {
-                    log.info("harvest limit: min( " + format(fiveMinAgo) + " "
-                            + format(end) + " )");
+                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
                     if (end.getTime() > fiveMinAgo.getTime())
                         end = fiveMinAgo;
                 }
 
-                List<ReadAccess> tmp = srcAccessDAO.getList(entityClass,
-                        startDate, end, batchSize);
+                List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
                 entityList = wrap(tmp);
             }
 
@@ -211,8 +207,7 @@ public class ReadAccessHarvester extends Harvester
             ret.found = entityList.size();
             log.info("found: " + entityList.size());
 
-            ListIterator<SkippedWrapper<ReadAccess>> iter = entityList
-                    .listIterator();
+            ListIterator<SkippedWrapper<ReadAccess>> iter = entityList.listIterator();
             while (iter.hasNext())
             {
                 SkippedWrapper<ReadAccess> sra = iter.next();
@@ -227,9 +222,8 @@ public class ReadAccessHarvester extends Harvester
                 try
                 {
                     if (ra != null)
-                        log.info("put: " + ra.getClass().getSimpleName() + " "
-                                + ra.getAssetID() + "/" + ra.getGroupID() + " "
-                                + format(ra.getLastModified()));
+                        log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID()
+                                + " " + format(ra.getLastModified()));
                     if (!dryrun)
                     {
                         if (ra != null)
@@ -247,8 +241,7 @@ public class ReadAccessHarvester extends Harvester
 
                             if (hs != null) // success in redo mode
                             {
-                                log.info("delete: " + hs + " "
-                                        + format(hs.lastModified));
+                                log.info("delete: " + hs + " " + format(hs.lastModified));
                                 harvestSkip.delete(hs);
                             }
                             else
@@ -256,13 +249,11 @@ public class ReadAccessHarvester extends Harvester
                         }
                         else if (skipped) // entity gone from src
                         {
-                            log.info("delete: " + hs + " "
-                                    + format(hs.lastModified));
+                            log.info("delete: " + hs + " " + format(hs.lastModified));
                             harvestSkip.delete(hs);
                         }
                         log.debug("committing transaction");
-                        destAccessDAO.getTransactionManager()
-                                .commitTransaction();
+                        destAccessDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
                     }
                     ok = true;
@@ -270,8 +261,7 @@ public class ReadAccessHarvester extends Harvester
                 }
                 catch (Throwable t)
                 {
-                    if (t instanceof DataIntegrityViolationException
-                            && t.getMessage().contains("failed to update"))
+                    if (t instanceof DataIntegrityViolationException && t.getMessage().contains("failed to update"))
                     {
                         log.error(t.getMessage());
                     }
@@ -285,10 +275,8 @@ public class ReadAccessHarvester extends Harvester
                 {
                     if (!ok && !dryrun)
                     {
-                        log.warn("failed to process " + ra
-                                + ": trying to rollback the transaction");
-                        destAccessDAO.getTransactionManager()
-                                .rollbackTransaction();
+                        log.warn("failed to process " + ra + ": trying to rollback the transaction");
+                        destAccessDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
 
                         // track failures where possible
@@ -297,13 +285,10 @@ public class ReadAccessHarvester extends Harvester
                             try
                             {
                                 log.debug("starting harvestSkip transaction");
-                                HarvestSkip skip = harvestSkip.get(source,
-                                        cname, ra.getID());
+                                HarvestSkip skip = harvestSkip.get(source, cname, ra.getID());
                                 if (skip == null)
-                                    skip = new HarvestSkip(source, cname,
-                                            ra.getID(), null);
-                                destAccessDAO.getTransactionManager()
-                                        .startTransaction();
+                                    skip = new HarvestSkip(source, cname, ra.getID(), null);
+                                destAccessDAO.getTransactionManager().startTransaction();
                                 log.info("skip: " + skip);
 
                                 // track the harvest state progress
@@ -314,16 +299,13 @@ public class ReadAccessHarvester extends Harvester
                                 destAccessDAO.delete(ra.getClass(), ra.getID());
 
                                 log.debug("committing harvestSkip transaction");
-                                destAccessDAO.getTransactionManager()
-                                        .commitTransaction();
+                                destAccessDAO.getTransactionManager().commitTransaction();
                                 log.debug("commit harvestSkip: OK");
                             }
                             catch (Throwable oops)
                             {
-                                log.warn("failed to insert via HarvestSkip",
-                                        oops);
-                                destAccessDAO.getTransactionManager()
-                                        .rollbackTransaction();
+                                log.warn("failed to insert via HarvestSkip", oops);
+                                destAccessDAO.getTransactionManager().rollbackTransaction();
                                 log.warn("rollback harvestSkip: OK");
                             }
                         }
@@ -334,8 +316,7 @@ public class ReadAccessHarvester extends Harvester
             if (ret.found < expectedNum)
             {
                 ret.done = true;
-                if (state != null && state.curLastModified != null
-                        && ret.found > 0)
+                if (state != null && state.curLastModified != null && ret.found > 0)
                 {
                     // tweak HarvestState so we don't keep picking up the same
                     // batch
@@ -350,8 +331,7 @@ public class ReadAccessHarvester extends Harvester
                                                                               // ms
                                                                               // ahead
                     state.curLastModified = n;
-                    log.info("reached last " + entityClass.getSimpleName()
-                            + ": setting curLastModified to "
+                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to "
                             + format(state.curLastModified));
                     harvestState.put(state);
                 }
@@ -372,18 +352,15 @@ public class ReadAccessHarvester extends Harvester
         SkippedWrapper<ReadAccess> end = entityList.get(entityList.size() - 1);
         if (start.entity.getLastModified().equals(end.entity.getLastModified()))
         {
-            DateFormat df = DateUtil.getDateFormat(
-                    DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
-            throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at "
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
+            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at "
                     + df.format(start.entity.getLastModified()));
         }
     }
 
     private List<SkippedWrapper<ReadAccess>> wrap(List<ReadAccess> obsList)
     {
-        List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(
-                obsList.size());
+        List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(obsList.size());
         for (ReadAccess o : obsList)
         {
             ret.add(new SkippedWrapper<ReadAccess>(o, null));
@@ -394,13 +371,11 @@ public class ReadAccessHarvester extends Harvester
     private List<SkippedWrapper<ReadAccess>> getSkipped(Date start)
     {
 
-        log.info("harvest window (skip): " + format(start) + " [" + batchSize
-                + "]");
+        log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]");
         int found = 0;
         int notFound = 0;
         List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
-        List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(
-                skip.size());
+        List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(skip.size());
         for (HarvestSkip hs : skip)
         {
             ReadAccess o = srcAccessDAO.get(entityClass, hs.getSkipID());

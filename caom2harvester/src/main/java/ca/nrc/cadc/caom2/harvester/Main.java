@@ -42,23 +42,20 @@ public class Main
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
-                        Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
 
             }
             else if (am.isSet("v") || am.isSet("verbose"))
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
-                        Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.INFO);
 
             }
             else
             {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
-                        Level.WARN);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.WARN);
 
             }
 
@@ -81,8 +78,12 @@ public class Main
             Subject subject = null;
             if (am.isSet("netrc"))
             {
+<<<<<<< HEAD
+                subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+=======
                 subject = AuthenticationUtil
                         .getSubject(new NetrcAuthenticator(true));
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
             }
             else if (am.isSet("cert"))
             {
@@ -90,8 +91,7 @@ public class Main
             }
             if (subject != null)
             {
-                AuthMethod meth = AuthenticationUtil
-                        .getAuthMethodFromCredentials(subject);
+                AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
 
@@ -124,8 +124,7 @@ public class Main
             String dest = am.getValue("destination");
 
             boolean nosrc = (src == null || src.trim().length() == 0);
-            boolean noresourceId = sresourceId == null
-                    || sresourceId.trim().length() == 0 || scollection == null
+            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null
                     || scollection.trim().length() == 0;
             boolean service = !noresourceId;
 
@@ -167,20 +166,17 @@ public class Main
                 if (srcDS.length != 3)
                     if (!service)
                     {
-                        log.warn("malformed --source value, found " + src
-                                + " expected: server.database.schema"
+                        log.warn("malformed --source value, found " + src + " expected: server.database.schema"
                                 + " e.g. SYBASE.mydb.dbo");
                     }
                     else
                     {
-                        log.warn("malformed --resourceID value, found "
-                                + sresourceId + " expected: service_url"
+                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url"
                                 + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
 
                     }
                 if (destDS.length != 3)
-                    log.warn("malformed --destination value, found " + dest
-                            + " expected: server.database.schema"
+                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema"
                             + " e.g. cvodb0.cvodb.caom2");
                 System.exit(1);
             }
@@ -199,9 +195,7 @@ public class Main
                 catch (NumberFormatException nex)
                 {
                     usage();
-                    log.error(
-                            "value for --batchSize must be an integer, found: "
-                                    + sbatch);
+                    log.error("value for --batchSize must be an integer, found: " + sbatch);
                     System.exit(1);
                 }
             }
@@ -214,42 +208,35 @@ public class Main
                 catch (NumberFormatException nex)
                 {
                     usage();
-                    log.error(
-                            "value for --batchSize must be an integer, found: "
-                                    + sbatch);
+                    log.error("value for --batchSize must be an integer, found: " + sbatch);
                     System.exit(1);
                 }
             }
 
             if (batchSize == null)
             {
-                log.warn("no --batchSize specified: defaulting to "
-                        + DEFAULT_BATCH_SIZE);
+                log.warn("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
                 batchSize = DEFAULT_BATCH_SIZE;
             }
             if (batchFactor == null && batchSize != null)
             {
-                log.warn("no --batchFactor specified: defaulting to "
-                        + DEFAULT_BATCH_FACTOR);
+                log.warn("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
                 batchFactor = DEFAULT_BATCH_FACTOR;
             }
-            log.info("batchSize: " + batchSize + "  batchFactor: "
-                    + batchFactor);
+            log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
 
             Date maxDate = null;
             String maxDateStr = am.getValue("maxDate");
             if (maxDateStr != null && maxDateStr.trim().length() > 0)
             {
-                DateFormat df = DateUtil
-                        .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
                 try
                 {
                     maxDate = df.parse(maxDateStr);
                 }
                 catch (ParseException ex)
                 {
-                    log.error("invalid maxDate: " + maxDateStr + " reason: "
-                            + ex);
+                    log.error("invalid maxDate: " + maxDateStr + " reason: " + ex);
                     usage();
                     System.exit(1);
                 }
@@ -259,21 +246,28 @@ public class Main
             try
             {
                 if (test)
-                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS,
-                            batchSize, batchFactor, full, skip, maxDate);
+                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip,
+                            maxDate);
                 else if (recomp)
                 {
                     if (service)
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection,
-                                nthreads, destDS, batchSize, full, maxDate);
+                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
+                                maxDate);
                     else
+<<<<<<< HEAD
+                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
+=======
                         ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
                                 full, maxDate);
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                 }
                 else
                 {
                     if (service)
                     {
+<<<<<<< HEAD
+                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
+=======
                         ch = new CaomHarvester(dryrun, sresourceId, scollection,
                                 nthreads, destDS, batchSize, batchFactor, full,
                                 skip, maxDate);
@@ -281,7 +275,12 @@ public class Main
                     else
                     {
                         ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                                 batchFactor, full, skip, maxDate);
+                    }
+                    else
+                    {
+                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
             }
@@ -293,8 +292,7 @@ public class Main
             }
 
             exitValue = 2; // in case we get killed
-            Runtime.getRuntime()
-                    .addShutdownHook(new Thread(new ShutdownHook()));
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             if (subject != null)
             {
@@ -339,35 +337,24 @@ public class Main
     {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug]");
-        sb.append(
-                "\n           --resourceID= to pick the caom2repo service. p.ej. 'ivo://cadc.nrc.ca/caom2repo'");
-        sb.append(
-                "\n           --collection= collection to be retrieve. p.ej. 'IRIS' or 'HST'");
-        sb.append(
-                "\n           --threads= number  of threads to be used to harvest observations");
+        sb.append("\n           --resourceID= to pick the caom2repo service. p.ej. 'ivo://cadc.nrc.ca/caom2repo'");
+        sb.append("\n           --collection= collection to be retrieve. p.ej. 'IRIS' or 'HST'");
+        sb.append("\n           --threads= number  of threads to be used to harvest observations");
         sb.append("\n           --source=<server.database.schema>");
         sb.append("\n           --destination=<server.database.schema>");
         sb.append("\n\nOptions:");
-        sb.append(
-                "\n     --full : restart at the first (oldest) observation (default: false)");
-        sb.append(
-                "\n     --skip : redo previously skipped (failed) observations (default: false)");
-        sb.append(
-                "\n     --recompute : recompute metadata in the destination DB (only --destination required)");
+        sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
+        sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
+        sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)");
         sb.append("\n\nOptional authentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
-        sb.append(
-                "\n     --netrc : read username and password(s) from ~/.netrc file");
-        sb.append(
-                "\n     --cert=<pem file> : read client certificate from PEM file");
+        sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
         sb.append("\n\nOptional modifiers:");
-        sb.append(
-                "\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append(
-                "\n     --batchSize=<number of observations per batch> (default: (")
-                .append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append(
-                "\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ")
+        sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
+        sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE)
+                .append(")");
+        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ")
                 .append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n     --dryrun : check for work but don't do anything");
         log.warn(sb.toString());

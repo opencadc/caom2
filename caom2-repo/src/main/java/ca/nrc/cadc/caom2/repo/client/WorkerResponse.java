@@ -78,8 +78,7 @@ public class WorkerResponse
     private ObservationState observationState = null;
     private Exception error = null;
 
-    public WorkerResponse(Observation obs, ObservationState obsState,
-            Exception err)
+    public WorkerResponse(Observation obs, ObservationState obsState, Exception err)
     {
         this.setObservation(obs);
         this.setObservationState(obsState);
@@ -119,15 +118,9 @@ public class WorkerResponse
     @Override
     public String toString()
     {
-        return observation == null
+        return observation == null ? "null" : observation.getObservationID() + " " + observationState == null
                 ? "null"
-                : observation.getObservationID() + " "
-                        + observationState == null
-                                ? "null"
-                                : observationState.getCollection() + " "
-                                        + error == null
-                                                ? "Correct"
-                                                : error.getMessage();
+                : observationState.getCollection() + " " + error == null ? "Correct" : error.getMessage();
     }
 
 }

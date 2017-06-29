@@ -111,16 +111,16 @@ public class Worker implements Callable<WorkerResponse>
     public WorkerResponse getObservation()
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getCollection()
-                + File.separator + state.getObservationID();
+        String surl = BASE_HTTP_URL + File.separator + state.getCollection() + File.separator
+                + state.getObservationID();
         URL url = null;
         try
         {
             url = new URL(surl);
-        } catch (MalformedURLException e)
+        }
+        catch (MalformedURLException e)
         {
-            throw new RuntimeException(
-                    "Unable to create URL object for " + surl);
+            throw new RuntimeException("Unable to create URL object for " + surl);
         }
         HttpDownload get = new HttpDownload(url, bos);
 
@@ -128,7 +128,8 @@ public class Worker implements Callable<WorkerResponse>
         {
             Subject.doAs(subject, new RunnableAction(get));
 
-        } else
+        }
+        else
         {
             get.run();
         }
@@ -142,14 +143,13 @@ public class Worker implements Callable<WorkerResponse>
         {
             o = obsReader.read(bos.toString());
             wr.setObservation(o);
-        } catch (ObservationParsingException e)
+        }
+        catch (ObservationParsingException e)
         {
             exception = new Exception(
-                    "Unable to create Observation object for id "
-                            + state.getObservationID() + ": " + e.getMessage());
+                    "Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
             wr.setError(exception);
-            log.warn("Unable to create Observation object for id "
-                    + state.getObservationID() + ": " + e.getMessage());
+            log.warn("Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
         }
         return wr;
     }
@@ -157,16 +157,16 @@ public class Worker implements Callable<WorkerResponse>
     public WorkerResponse getObservation(URI uri)
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getCollection()
-                + File.separator + state.getObservationID();
+        String surl = BASE_HTTP_URL + File.separator + state.getCollection() + File.separator
+                + state.getObservationID();
         URL url = null;
         try
         {
             url = new URL(surl);
-        } catch (MalformedURLException e)
+        }
+        catch (MalformedURLException e)
         {
-            throw new RuntimeException(
-                    "Unable to create URL object for " + surl);
+            throw new RuntimeException("Unable to create URL object for " + surl);
         }
         HttpDownload get = new HttpDownload(url, bos);
 
@@ -174,7 +174,8 @@ public class Worker implements Callable<WorkerResponse>
         {
             Subject.doAs(subject, new RunnableAction(get));
 
-        } else
+        }
+        else
         {
             get.run();
         }
@@ -188,14 +189,13 @@ public class Worker implements Callable<WorkerResponse>
         {
             o = obsReader.read(bos.toString());
             wr.setObservation(o);
-        } catch (ObservationParsingException e)
+        }
+        catch (ObservationParsingException e)
         {
             exception = new Exception(
-                    "Unable to create Observation object for id "
-                            + state.getObservationID() + ": " + e.getMessage());
+                    "Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
             wr.setError(exception);
-            log.warn("Unable to create Observation object for id "
-                    + state.getObservationID() + ": " + e.getMessage());
+            log.warn("Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
         }
         return wr;
     }

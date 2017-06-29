@@ -88,8 +88,7 @@ public class ObservationState
     private final URI accMetaChecksum;
     private final URI uri;
 
-    public ObservationState(String collection, String observationID,
-            Date maxlastModified, URI accMetaChecksum, URI uri)
+    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum, URI uri)
     {
         this.collection = collection;
         this.observationID = observationID;
@@ -121,8 +120,7 @@ public class ObservationState
     @Override
     public String toString()
     {
-        return "ObservationState[" + observationID + "," + maxLastModified
-                + "]";
+        return "ObservationState[" + observationID + "," + maxLastModified + "]";
     }
 
     public URI getUri()

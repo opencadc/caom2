@@ -88,8 +88,7 @@ public class RepoClientTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
-                Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
     }
 
     // @Test
@@ -98,7 +97,8 @@ public class RepoClientTest
         try
         {
 
-        } catch (Exception unexpected)
+        }
+        catch (Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -114,16 +114,15 @@ public class RepoClientTest
             RepoClient repoC = null;
             try
             {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-                        8);
-            } catch (URISyntaxException e)
+                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
+            }
+            catch (URISyntaxException e)
             {
                 throw new RuntimeException(
                         "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
             }
 
-            List<ObservationState> list = repoC.getObservationList("IRIS", null,
-                    null, 5);
+            List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
 
             Assert.assertEquals(list.size(), 5);
             Assert.assertEquals(list.get(0).getObservationID(), "f001h000");
@@ -132,7 +131,8 @@ public class RepoClientTest
             Assert.assertEquals(list.get(3).getObservationID(), "f004h000");
             Assert.assertEquals(list.get(4).getObservationID(), "f005h000");
 
-        } catch (Exception unexpected)
+        }
+        catch (Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -148,9 +148,9 @@ public class RepoClientTest
             RepoClient repoC = null;
             try
             {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-                        8);
-            } catch (URISyntaxException e)
+                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
+            }
+            catch (URISyntaxException e)
             {
                 throw new RuntimeException(
                         "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
@@ -171,7 +171,8 @@ public class RepoClientTest
             Assert.assertEquals(list.get(4).getObservation().getID().toString(),
                     "00000000-0000-0000-8117-013ac28ddb9b");;
 
-        } catch (Exception unexpected)
+        }
+        catch (Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -183,25 +184,23 @@ public class RepoClientTest
     {
         try
         {
-
             RepoClient repoC = null;
             try
             {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"),
-                        8);
-            } catch (URISyntaxException e)
+                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
+            }
+            catch (URISyntaxException e)
             {
                 throw new RuntimeException(
                         "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
             }
 
-            WorkerResponse wr = repoC
-                    .get(new ObservationURI("IRIS", "f001h000"));
+            WorkerResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
 
-            Assert.assertEquals(wr.getObservation().getID().toString(),
-                    "00000000-0000-0000-897c-013ac26a8f32");
+            Assert.assertEquals(wr.getObservation().getID().toString(), "00000000-0000-0000-897c-013ac26a8f32");
 
-        } catch (Exception unexpected)
+        }
+        catch (Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

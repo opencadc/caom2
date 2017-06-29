@@ -64,8 +64,7 @@ public class DeletionHarvester extends Harvester implements Runnable
      * @throws URISyntaxException
      * @throws NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest,
-            Integer batchSize, boolean dryrun)
+    public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun)
             throws IOException, NumberFormatException, URISyntaxException
     {
         super(entityClass, src, dest, batchSize, false, dryrun);
@@ -87,10 +86,8 @@ public class DeletionHarvester extends Harvester implements Runnable
      * @throws URISyntaxException
      * @throws NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, String resourceId,
-            String collection, int nthreads, String[] dest, Integer batchSize,
-            boolean dryrun)
-            throws IOException, NumberFormatException, URISyntaxException
+    public DeletionHarvester(Class<?> entityClass, String resourceId, String collection, int nthreads, String[] dest,
+            Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
     {
         super(entityClass, null, dest, batchSize, false, dryrun);
         this.service = true;
@@ -111,8 +108,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.initDate = new Date(); // timestamp at startup, not when run
     }
 
-    private void init(String uri, String collection, int threads)
-            throws IOException, URISyntaxException
+    private void init(String uri, String collection, int threads) throws IOException, URISyntaxException
     {
 
         Map<String, Object> config2 = getConfigDAO(dest);
@@ -148,13 +144,16 @@ public class DeletionHarvester extends Harvester implements Runnable
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao,
-                    ObservationMetaReadAccess.class);
+            this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
         }
         else
+<<<<<<< HEAD
+            throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
+=======
             throw new UnsupportedOperationException(
                     "unsupported class: " + entityClass.getName());
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
     }
 
     private void init() throws IOException
@@ -194,13 +193,16 @@ public class DeletionHarvester extends Harvester implements Runnable
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao,
-                    ObservationMetaReadAccess.class);
+            this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
         }
         else
+<<<<<<< HEAD
+            throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
+=======
             throw new UnsupportedOperationException(
                     "unsupported class: " + entityClass.getName());
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
     }
 
     private void close() throws IOException
@@ -224,18 +226,20 @@ public class DeletionHarvester extends Harvester implements Runnable
             try
             {
                 if (targetClass != null)
-                    this.deleteMethod = dao.getClass().getMethod("delete",
-                            Class.class, UUID.class);
+                    this.deleteMethod = dao.getClass().getMethod("delete", Class.class, UUID.class);
                 else
+<<<<<<< HEAD
+                    this.deleteMethod = dao.getClass().getMethod("delete", UUID.class);
+=======
                     this.deleteMethod = dao.getClass().getMethod("delete",
                             UUID.class);
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
             }
             catch (NoSuchMethodException bug)
             {
                 throw new RuntimeException("BUG", bug);
             }
-            log.debug("created wrapper to call "
-                    + dao.getClass().getSimpleName() + ".delete(Long)");
+            log.debug("created wrapper to call " + dao.getClass().getSimpleName() + ".delete(Long)");
         }
 
         public void delete(UUID id)
@@ -282,8 +286,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         catch (Throwable oops)
         {
-            throw new RuntimeException("failed to init connections and state",
-                    oops);
+            throw new RuntimeException("failed to init connections and state", oops);
         }
         boolean go = true;
         while (go)
@@ -293,8 +296,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                 log.info("finished batch: " + num);
             if (num.failed > num.found / 2) // more than half failed
             {
-                log.warn("failure rate is quite high: " + num.failed + "/"
-                        + num.found);
+                log.warn("failure rate is quite high: " + num.failed + "/" + num.found);
                 num.abort = true;
             }
             if (num.abort)
@@ -354,8 +356,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                 state.curLastModified = initDate;
                 harvestState.put(state);
                 state = harvestState.get(source, cname);
-                log.info("harvest state initialised to: "
-                        + df.format(state.curLastModified));
+                log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
 
             Date start = state.curLastModified;
@@ -370,13 +371,17 @@ public class DeletionHarvester extends Harvester implements Runnable
             List<DeletedEntity> entityList = null;
             if (!service)
             {
+<<<<<<< HEAD
+                entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end, batchSize);
+=======
                 entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO)
                         .getList(entityClass, start, end, batchSize);
+>>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
             }
             else
             {
-                entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO)
-                        .getList(entityClass, start, end, batchSize);
+                entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end,
+                        batchSize);
 
             }
 
@@ -393,8 +398,7 @@ public class DeletionHarvester extends Harvester implements Runnable
 
                 if (de.id.equals(state.curID))
                 {
-                    log.info("skip: " + de.getClass().getSimpleName() + " "
-                            + de.id + " -- was end of last batch");
+                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.id + " -- was end of last batch");
                     break;
                 }
 
@@ -403,8 +407,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                 boolean ok = false;
                 try
                 {
-                    log.info("put: " + de.getClass().getSimpleName() + " "
-                            + de.id + " " + format(de.lastModified));
+                    log.info("put: " + de.getClass().getSimpleName() + " " + de.id + " " + format(de.lastModified));
                     if (!dryrun)
                     {
                         state.curLastModified = de.lastModified;
@@ -434,8 +437,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                 {
                     if (!ok && !dryrun)
                     {
-                        log.warn("failed to process " + de
-                                + ": trying to rollback the transaction");
+                        log.warn("failed to process " + de + ": trying to rollback the transaction");
                         txnManager.rollbackTransaction();
                         log.warn("rollback: OK");
                         ret.abort = true;
@@ -445,8 +447,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             if (ret.found < expectedNum)
             {
                 ret.done = true;
-                if (state != null && state.curLastModified != null
-                        && ret.found > 0)
+                if (state != null && state.curLastModified != null && ret.found > 0)
                 {
                     // tweak HarvestState so we don't keep picking up the same
                     // one
@@ -461,8 +462,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                                                                               // ms
                                                                               // ahead
                     state.curLastModified = n;
-                    log.info("reached last " + entityClass.getSimpleName()
-                            + ": setting curLastModified to "
+                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to "
                             + format(state.curLastModified));
                     harvestState.put(state);
                 }
@@ -482,9 +482,8 @@ public class DeletionHarvester extends Harvester implements Runnable
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
         if (start.lastModified.equals(end.lastModified))
-            throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at "
-                    + start.lastModified);
+            throw new RuntimeException(
+                    "detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + start.lastModified);
 
     }
 }

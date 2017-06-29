@@ -108,8 +108,7 @@ public class RepoClient
 {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
-    private final DateFormat df = DateUtil
-            .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     private URI resourceId = null;
     private RegistryClient rc = null;
     private URL baseServiceURL = null;
@@ -145,14 +144,14 @@ public class RepoClient
         {
             meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             // User RegistryClient to go from resourceID to service URL
-        } else
+        }
+        else
         {
             meth = AuthMethod.ANON;
 
             log.info("No current subject found");
         }
-        baseServiceURL = rc.getServiceURL(this.resourceId,
-                Standards.CAOM2REPO_OBS_23, meth);
+        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_23, meth);
         BASE_HTTP_URL = baseServiceURL.toExternalForm();
 
         log.info("BASE SERVICE URL: " + baseServiceURL.toString());
@@ -160,8 +159,7 @@ public class RepoClient
 
     }
 
-    public List<ObservationState> getObservationList(String collection,
-            Date start, Date end, Integer maxrec)
+    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec)
     {
         // Use HttpDownload to make the http GET calls (because it handles a lot
         // of the
@@ -178,7 +176,6 @@ public class RepoClient
         URL url;
         try
         {
-
             url = new URL(surl);
             HttpDownload get = new HttpDownload(url, bos);
 
@@ -187,13 +184,15 @@ public class RepoClient
                 Subject.doAs(subject, new RunnableAction(get));
 
                 log.info("Query run within subject");
-            } else
+            }
+            else
             {
                 get.run();
                 log.info("Query run");
             }
 
-        } catch (MalformedURLException e)
+        }
+        catch (MalformedURLException e)
         {
             log.error("Exception in getObservationList: " + e.getMessage());
             e.printStackTrace();
@@ -202,14 +201,13 @@ public class RepoClient
         List<ObservationState> list = null;
         try
         {
-            list = transformByteArrayOutputStreamIntoListOfObservationState(bos,
-                    df, '\t', '\n');
+            list = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
 
-        } catch (ParseException | IOException e)
+        }
+        catch (ParseException | IOException e)
         {
             throw new RuntimeException(
-                    "Unable to list of ObservationState from " + bos.toString()
-                            + ": exception = " + e.getMessage());
+                    "Unable to list of ObservationState from " + bos.toString() + ": exception = " + e.getMessage());
         }
         return list;
     }
@@ -225,8 +223,7 @@ public class RepoClient
 
     }
 
-    public List<WorkerResponse> getList(String collection, Date startDate,
-            Date end, Integer numberOfObservations)
+    public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
             throws InterruptedException, ExecutionException
     {
 
@@ -234,8 +231,7 @@ public class RepoClient
         // end = df.parse("2017-06-20T09:03:15.360");
         List<WorkerResponse> list = new ArrayList<WorkerResponse>();
 
-        List<ObservationState> stateList = getObservationList(collection,
-                startDate, end, numberOfObservations);
+        List<ObservationState> stateList = getObservationList(collection, startDate, end, numberOfObservations);
 
         // Create tasks for each file
         List<Callable<WorkerResponse>> tasks = new ArrayList<Callable<WorkerResponse>>();
@@ -264,13 +260,14 @@ public class RepoClient
                     list.add(res);
                 }
             }
-        } catch (InterruptedException | ExecutionException e)
+        }
+        catch (InterruptedException | ExecutionException e)
         {
-            log.error("Error when executing thread in ThreadPool: "
-                    + e.getMessage() + " caused by: "
+            log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: "
                     + e.getCause().toString());
             throw e;
-        } finally
+        }
+        finally
         {
             if (taskExecutor != null)
             {
@@ -311,8 +308,7 @@ public class RepoClient
     {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
-        ObservationState os = new ObservationState(uri.getCollection(),
-                uri.getObservationID(), null, null, null);
+        ObservationState os = new ObservationState(uri.getCollection(), uri.getObservationID(), null, null, null);
         Worker wt = new Worker(os, subject, BASE_HTTP_URL);
         return wt.getObservation();
     }
@@ -321,8 +317,7 @@ public class RepoClient
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
 
-        List<ObservationState> list = getObservationList(collection, start,
-                null, null);
+        List<ObservationState> list = getObservationList(collection, start, null, null);
         ObservationState obsState = null;
         for (ObservationState os : list)
         {
@@ -351,8 +346,8 @@ public class RepoClient
     // }
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
-            final ByteArrayOutputStream bos, DateFormat sdf, char separator,
-            char endOfLine) throws ParseException, IOException
+            final ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
+            throws ParseException, IOException
     {
         List<ObservationState> list = new ArrayList<ObservationState>();
 
@@ -420,7 +415,8 @@ public class RepoClient
             if (c != separator && c != endOfLine)
             {
                 aux += c;
-            } else if (c == separator)
+            }
+            else if (c == separator)
             {
                 if (readingCollection)
                 {
@@ -429,7 +425,8 @@ public class RepoClient
                     readingId = true;
                     aux = "";
 
-                } else if (readingId)
+                }
+                else if (readingId)
                 {
                     id = aux;
                     readingCollection = false;
@@ -437,13 +434,13 @@ public class RepoClient
                     aux = "";
                 }
 
-            } else if (c == endOfLine)
+            }
+            else if (c == endOfLine)
             {
                 sdate = aux;
                 aux = "";
                 Date date = sdf.parse(sdate);
-                ObservationState os = new ObservationState(collection, id, date,
-                        null, resourceId);
+                ObservationState os = new ObservationState(collection, id, date, null, resourceId);
                 list.add(os);
                 readingCollection = true;
                 readingId = false;
