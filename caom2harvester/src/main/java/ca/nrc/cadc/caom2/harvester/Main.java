@@ -45,14 +45,16 @@ public class Main
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
                         Level.DEBUG);
 
-            } else if (am.isSet("v") || am.isSet("verbose"))
+            }
+            else if (am.isSet("v") || am.isSet("verbose"))
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
                         Level.INFO);
 
-            } else
+            }
+            else
             {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient",
@@ -81,7 +83,8 @@ public class Main
             {
                 subject = AuthenticationUtil
                         .getSubject(new NetrcAuthenticator(true));
-            } else if (am.isSet("cert"))
+            }
+            else if (am.isSet("cert"))
             {
                 subject = CertCmdArgUtil.initSubject(am);
             }
@@ -112,7 +115,8 @@ public class Main
             try
             {
                 nthreads = Integer.parseInt(am.getValue("threads"));
-            } catch (NumberFormatException nfe)
+            }
+            catch (NumberFormatException nfe)
             {
 
             }
@@ -151,7 +155,8 @@ public class Main
                 srcDS[0] = sresourceId;
                 srcDS[1] = scollection;
                 srcDS[2] = nthreads + "";
-            } else
+            }
+            else
             {
                 srcDS = src.split("[.]");
             }
@@ -165,7 +170,8 @@ public class Main
                         log.warn("malformed --source value, found " + src
                                 + " expected: server.database.schema"
                                 + " e.g. SYBASE.mydb.dbo");
-                    } else
+                    }
+                    else
                     {
                         log.warn("malformed --resourceID value, found "
                                 + sresourceId + " expected: service_url"
@@ -189,7 +195,8 @@ public class Main
                 try
                 {
                     batchSize = new Integer(sbatch);
-                } catch (NumberFormatException nex)
+                }
+                catch (NumberFormatException nex)
                 {
                     usage();
                     log.error(
@@ -203,7 +210,8 @@ public class Main
                 try
                 {
                     batchFactor = new Integer(sFactor);
-                } catch (NumberFormatException nex)
+                }
+                catch (NumberFormatException nex)
                 {
                     usage();
                     log.error(
@@ -237,7 +245,8 @@ public class Main
                 try
                 {
                     maxDate = df.parse(maxDateStr);
-                } catch (ParseException ex)
+                }
+                catch (ParseException ex)
                 {
                     log.error("invalid maxDate: " + maxDateStr + " reason: "
                             + ex);
@@ -260,20 +269,23 @@ public class Main
                     else
                         ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
                                 full, maxDate);
-                } else
+                }
+                else
                 {
                     if (service)
                     {
                         ch = new CaomHarvester(dryrun, sresourceId, scollection,
                                 nthreads, destDS, batchSize, batchFactor, full,
                                 skip, maxDate);
-                    } else
+                    }
+                    else
                     {
                         ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
                                 batchFactor, full, skip, maxDate);
                     }
                 }
-            } catch (IOException ioex)
+            }
+            catch (IOException ioex)
             {
                 log.error("failed to init: " + ioex.getMessage());
                 exitValue = -1;
@@ -287,18 +299,21 @@ public class Main
             if (subject != null)
             {
                 Subject.doAs(subject, new RunnableAction(ch));
-            } else // anon
+            }
+            else // anon
             {
                 ch.run();
             }
 
             exitValue = 0; // finished cleanly
-        } catch (Throwable t)
+        }
+        catch (Throwable t)
         {
             log.error("uncaught exception", t);
             exitValue = -1;
             System.exit(exitValue);
-        } finally
+        }
+        finally
         {
             System.exit(exitValue);
         }

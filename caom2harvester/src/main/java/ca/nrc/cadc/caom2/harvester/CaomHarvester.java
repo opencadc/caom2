@@ -44,10 +44,6 @@ public class CaomHarvester implements Runnable
     private DeletionHarvester planeDataDeleter;
     private DeletionHarvester planeMetaDeleter;
 
-    private CaomHarvester()
-    {
-    }
-
     /**
      * Harvest everything.
      *
@@ -225,7 +221,8 @@ public class CaomHarvester implements Runnable
         try
         {
             Class.forName("ca.nrc.cadc.wcs.WCSLib");
-        } catch (Throwable t)
+        }
+        catch (Throwable t)
         {
             throw new RuntimeException(
                     "FATAL - failed to load WCSLib JNI binding", t);

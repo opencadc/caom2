@@ -49,10 +49,6 @@ public class DeletionHarvester extends Harvester implements Runnable
     private String collection = null;
     private int nthreads = 1;
 
-    private DeletionHarvester()
-    {
-    }
-
     /**
      * Constructor.
      *
@@ -130,21 +126,24 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, null);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
@@ -152,7 +151,8 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.entityDAO = new WrapperDAO(dao,
                     ObservationMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else
+        }
+        else
             throw new UnsupportedOperationException(
                     "unsupported class: " + entityClass.getName());
     }
@@ -172,21 +172,24 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, null);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
+        }
+        else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
         {
             DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
             dao.setConfig(config2);
@@ -194,7 +197,8 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.entityDAO = new WrapperDAO(dao,
                     ObservationMetaReadAccess.class);
             initHarvestState(dao.getDataSource(), entityClass);
-        } else
+        }
+        else
             throw new UnsupportedOperationException(
                     "unsupported class: " + entityClass.getName());
     }
@@ -225,7 +229,8 @@ public class DeletionHarvester extends Harvester implements Runnable
                 else
                     this.deleteMethod = dao.getClass().getMethod("delete",
                             UUID.class);
-            } catch (NoSuchMethodException bug)
+            }
+            catch (NoSuchMethodException bug)
             {
                 throw new RuntimeException("BUG", bug);
             }
@@ -242,10 +247,12 @@ public class DeletionHarvester extends Harvester implements Runnable
                     deleteMethod.invoke(dao, targetClass, id);
                 else
                     deleteMethod.invoke(dao, id);
-            } catch (IllegalAccessException bug)
+            }
+            catch (IllegalAccessException bug)
             {
                 throw new RuntimeException("BUG", bug);
-            } catch (InvocationTargetException bug)
+            }
+            catch (InvocationTargetException bug)
             {
                 throw new RuntimeException("BUG", bug);
             }
@@ -267,11 +274,13 @@ public class DeletionHarvester extends Harvester implements Runnable
             if (service)
             {
                 init(uri, collection, nthreads);
-            } else
+            }
+            else
             {
                 init();
             }
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             throw new RuntimeException("failed to init connections and state",
                     oops);
@@ -298,7 +307,8 @@ public class DeletionHarvester extends Harvester implements Runnable
         try
         {
             close();
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             log.error("failed to cleanup connections and state", oops);
             return;
@@ -362,7 +372,8 @@ public class DeletionHarvester extends Harvester implements Runnable
             {
                 entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO)
                         .getList(entityClass, start, end, batchSize);
-            } else
+            }
+            else
             {
                 entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO)
                         .getList(entityClass, start, end, batchSize);
@@ -414,10 +425,12 @@ public class DeletionHarvester extends Harvester implements Runnable
                     }
                     ok = true;
                     ret.ingested++;
-                } catch (Throwable t)
+                }
+                catch (Throwable t)
                 {
                     log.error("unexpected exception", t);
-                } finally
+                }
+                finally
                 {
                     if (!ok && !dryrun)
                     {
@@ -454,7 +467,8 @@ public class DeletionHarvester extends Harvester implements Runnable
                     harvestState.put(state);
                 }
             }
-        } finally
+        }
+        finally
         {
             log.debug("DONE");
         }

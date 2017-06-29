@@ -78,7 +78,8 @@ public abstract class Harvester implements Runnable
         {
             ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             ret.put("disableHashJoin", Boolean.TRUE);
-        } else
+        }
+        else
             throw new IllegalArgumentException(
                     "unknown SQL dialect: " + desc[0]);
 

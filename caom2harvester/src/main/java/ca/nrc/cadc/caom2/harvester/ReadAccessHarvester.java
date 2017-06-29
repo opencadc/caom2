@@ -98,7 +98,8 @@ public class ReadAccessHarvester extends Harvester
         try
         {
             // init();
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             throw new RuntimeException("failed to init connections and state",
                     oops);
@@ -127,7 +128,8 @@ public class ReadAccessHarvester extends Harvester
         try
         {
             close();
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             log.error("failed to cleanup connections and state", oops);
             return;
@@ -248,9 +250,11 @@ public class ReadAccessHarvester extends Harvester
                                 log.info("delete: " + hs + " "
                                         + format(hs.lastModified));
                                 harvestSkip.delete(hs);
-                            } else
+                            }
+                            else
                                 harvestState.put(state);
-                        } else if (skipped) // entity gone from src
+                        }
+                        else if (skipped) // entity gone from src
                         {
                             log.info("delete: " + hs + " "
                                     + format(hs.lastModified));
@@ -263,18 +267,21 @@ public class ReadAccessHarvester extends Harvester
                     }
                     ok = true;
                     ret.ingested++;
-                } catch (Throwable t)
+                }
+                catch (Throwable t)
                 {
                     if (t instanceof DataIntegrityViolationException
                             && t.getMessage().contains("failed to update"))
                     {
                         log.error(t.getMessage());
-                    } else
+                    }
+                    else
                     {
                         log.error("BUG - failed to put ReadAccess", t);
                         ret.abort = true;
                     }
-                } finally
+                }
+                finally
                 {
                     if (!ok && !dryrun)
                     {
@@ -310,7 +317,8 @@ public class ReadAccessHarvester extends Harvester
                                 destAccessDAO.getTransactionManager()
                                         .commitTransaction();
                                 log.debug("commit harvestSkip: OK");
-                            } catch (Throwable oops)
+                            }
+                            catch (Throwable oops)
                             {
                                 log.warn("failed to insert via HarvestSkip",
                                         oops);
@@ -348,7 +356,8 @@ public class ReadAccessHarvester extends Harvester
                     harvestState.put(state);
                 }
             }
-        } finally
+        }
+        finally
         {
             log.debug("DONE");
         }

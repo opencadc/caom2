@@ -144,7 +144,8 @@ public class ObservationHarvester extends Harvester
         try
         {
             // init();
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             throw new RuntimeException("failed to init connections and state",
                     oops);
@@ -179,7 +180,8 @@ public class ObservationHarvester extends Harvester
         try
         {
             close();
-        } catch (Throwable oops)
+        }
+        catch (Throwable oops)
         {
             log.error("failed to cleanup connections and state", oops);
             return;
@@ -251,7 +253,8 @@ public class ObservationHarvester extends Harvester
             if (skipped)
             {
                 entityList = getSkipped(startDate);
-            } else
+            }
+            else
             {
                 Date fiveMinAgo = new Date(
                         System.currentTimeMillis() - 5 * 60000L); // 5 minutes
@@ -273,7 +276,8 @@ public class ObservationHarvester extends Harvester
                 {
                     tmp = srcObservationDAO.getList(Observation.class,
                             startDate, end, batchSize + 1);
-                } else
+                }
+                else
                 {
                     tmp = new ArrayList<Observation>();
                     List<WorkerResponse> l = srcObservationService
@@ -292,7 +296,8 @@ public class ObservationHarvester extends Harvester
                 try
                 {
                     detectLoop(entityList);
-                } catch (RuntimeException rex)
+                }
+                catch (RuntimeException rex)
                 {
                     if (!skipped)
                     {
@@ -306,7 +311,8 @@ public class ObservationHarvester extends Harvester
                         {
                             tmp = srcObservationDAO.getList(Observation.class,
                                     startDate, end, tmpBatchSize);
-                        } else
+                        }
+                        else
                         {
                             tmp = new ArrayList<Observation>();
                             List<WorkerResponse> l = null;
@@ -322,7 +328,8 @@ public class ObservationHarvester extends Harvester
 
                         entityList = wrap(tmp);
                         detectLoop(entityList);
-                    } else
+                    }
+                    else
                         throw rex;
                 }
             }
@@ -459,9 +466,11 @@ public class ObservationHarvester extends Harvester
                                 log.info("delete: " + hs + " "
                                         + format(hs.lastModified));
                                 harvestSkip.delete(hs);
-                            } else
+                            }
+                            else
                                 harvestState.put(state);
-                        } else if (skipped) // observation is gone from src
+                        }
+                        else if (skipped) // observation is gone from src
                         {
                             log.info("delete: " + hs + " "
                                     + format(hs.lastModified));
@@ -475,7 +484,8 @@ public class ObservationHarvester extends Harvester
                     }
                     ok = true;
                     ret.ingested++;
-                } catch (Throwable oops)
+                }
+                catch (Throwable oops)
                 {
                     lastMsg = oops.getMessage();
                     String str = oops.toString();
@@ -485,11 +495,13 @@ public class ObservationHarvester extends Harvester
                                 "FATAL - probably installation or environment",
                                 oops);
                         ret.abort = true;
-                    } else if (oops instanceof NullPointerException)
+                    }
+                    else if (oops instanceof NullPointerException)
                     {
                         log.error("BUG", oops);
                         ret.abort = true;
-                    } else if (oops instanceof BadSqlGrammarException)
+                    }
+                    else if (oops instanceof BadSqlGrammarException)
                     {
                         log.error("BUG", oops);
                         BadSqlGrammarException bad = (BadSqlGrammarException) oops;
@@ -502,13 +514,15 @@ public class ObservationHarvester extends Harvester
                             log.error("NEXT CAUSE", sex2);
                         }
                         ret.abort = true;
-                    } else if (oops instanceof DataAccessResourceFailureException)
+                    }
+                    else if (oops instanceof DataAccessResourceFailureException)
                     {
                         log.error(
                                 "SEVERE PROBLEM - probably out of space in database",
                                 oops);
                         ret.abort = true;
-                    } else if (oops instanceof DataIntegrityViolationException
+                    }
+                    else if (oops instanceof DataIntegrityViolationException
                             && str.contains(
                                     "duplicate key value violates unique constraint \"i_observationuri\""))
                     {
@@ -516,16 +530,19 @@ public class ObservationHarvester extends Harvester
                                 + format(o.getID()) + " "
                                 + o.getURI().getURI().toASCIIString());
                         ret.handled++;
-                    } else if (oops instanceof UncategorizedSQLException)
+                    }
+                    else if (oops instanceof UncategorizedSQLException)
                     {
                         if (str.contains("spherepoly_from_array"))
                         {
                             log.error("UNDETECTED illegal polygon: "
                                     + o.getURI());
                             ret.handled++;
-                        } else
+                        }
+                        else
                             log.error("unexpected exception", oops);
-                    } else if (oops instanceof IllegalArgumentException
+                    }
+                    else if (oops instanceof IllegalArgumentException
                             && str.contains("CaomValidator")
                             && str.contains("keywords"))
                     {
@@ -533,9 +550,11 @@ public class ObservationHarvester extends Harvester
                                 + format(o.getID()) + " "
                                 + o.getURI().getURI().toASCIIString());
                         ret.handled++;
-                    } else
+                    }
+                    else
                         log.error("unexpected exception", oops);
-                } finally
+                }
+                finally
                 {
                     if (!ok && !dryrun)
                     {
@@ -563,7 +582,8 @@ public class ObservationHarvester extends Harvester
                                 {
                                     skip.errorMessage = skipMsg; // possible
                                                                  // update
-                                } else
+                                }
+                                else
                                 {
                                     log.info("no change in status: " + hs);
                                     putSkip = false; // avoid timestamp update
@@ -592,7 +612,8 @@ public class ObservationHarvester extends Harvester
                             destObservationDAO.getTransactionManager()
                                     .commitTransaction();
                             log.debug("commit HarvestSkipURI: OK");
-                        } catch (Throwable oops)
+                        }
+                        catch (Throwable oops)
                         {
                             log.warn("failed to insert HarvestSkipURI", oops);
                             destObservationDAO.getTransactionManager()
@@ -618,11 +639,13 @@ public class ObservationHarvester extends Harvester
                                 {
                                     ret.abort = true;
                                     break;
-                                } else
+                                }
+                                else
                                     System.out.println(
                                             "unexpected input: " + str);
                             }
-                        } catch (IOException e)
+                        }
+                        catch (IOException e)
                         {
 
                         }
@@ -633,13 +656,15 @@ public class ObservationHarvester extends Harvester
             }
             if (ret.found < expectedNum)
                 ret.done = true;
-        } catch (InterruptedException | ExecutionException e)
+        }
+        catch (InterruptedException | ExecutionException e)
         {
             log.error(
                     "SEVERE PROBLEM - ThreadPool harvesting Observations failed: "
                             + e.getMessage());
             ret.abort = true;
-        } finally
+        }
+        finally
         {
             tTransaction = System.currentTimeMillis() - t;
             log.debug("time to get HarvestState: " + tState + "ms");
