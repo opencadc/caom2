@@ -79,12 +79,7 @@ public abstract class Harvester implements Runnable
             ret.put("disableHashJoin", Boolean.TRUE);
         }
         else
-<<<<<<< HEAD
             throw new IllegalArgumentException("unknown SQL dialect: " + desc[0]);
-=======
-            throw new IllegalArgumentException(
-                    "unknown SQL dialect: " + desc[0]);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
 
         ret.put("server", desc[0]);
         ret.put("database", desc[1]);

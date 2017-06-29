@@ -78,12 +78,7 @@ public class Main
             Subject subject = null;
             if (am.isSet("netrc"))
             {
-<<<<<<< HEAD
                 subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-=======
-                subject = AuthenticationUtil
-                        .getSubject(new NetrcAuthenticator(true));
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
             }
             else if (am.isSet("cert"))
             {
@@ -254,28 +249,13 @@ public class Main
                         ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
                                 maxDate);
                     else
-<<<<<<< HEAD
                         ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
-=======
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
-                                full, maxDate);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                 }
                 else
                 {
                     if (service)
                     {
-<<<<<<< HEAD
                         ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
-=======
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection,
-                                nthreads, destDS, batchSize, batchFactor, full,
-                                skip, maxDate);
-                    }
-                    else
-                    {
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize,
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                                 batchFactor, full, skip, maxDate);
                     }
                     else

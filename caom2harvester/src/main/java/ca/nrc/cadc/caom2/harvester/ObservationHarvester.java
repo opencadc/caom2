@@ -267,12 +267,7 @@ public class ObservationHarvester extends Harvester
                 List<Observation> tmp = null;
                 if (!this.service)
                 {
-<<<<<<< HEAD
                     tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize + 1);
-=======
-                    tmp = srcObservationDAO.getList(Observation.class,
-                            startDate, end, batchSize + 1);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                 }
                 else
                 {
@@ -304,12 +299,7 @@ public class ObservationHarvester extends Harvester
                         List<Observation> tmp = null;
                         if (!this.service)
                         {
-<<<<<<< HEAD
                             tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
-=======
-                            tmp = srcObservationDAO.getList(Observation.class,
-                                    startDate, end, tmpBatchSize);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                         }
                         else
                         {
@@ -496,12 +486,7 @@ public class ObservationHarvester extends Harvester
                         ret.abort = true;
                     }
                     else if (oops instanceof DataIntegrityViolationException
-<<<<<<< HEAD
                             && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
-=======
-                            && str.contains(
-                                    "duplicate key value violates unique constraint \"i_observationuri\""))
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                     {
                         log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " "
                                 + o.getURI().getURI().toASCIIString());
@@ -517,12 +502,7 @@ public class ObservationHarvester extends Harvester
                         else
                             log.error("unexpected exception", oops);
                     }
-<<<<<<< HEAD
                     else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator")
-=======
-                    else if (oops instanceof IllegalArgumentException
-                            && str.contains("CaomValidator")
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                             && str.contains("keywords"))
                     {
                         log.error("CONTENT PROBLEM - invalid keywords: " + format(o.getID()) + " "
@@ -612,12 +592,7 @@ public class ObservationHarvester extends Harvester
                                     break;
                                 }
                                 else
-<<<<<<< HEAD
                                     System.out.println("unexpected input: " + str);
-=======
-                                    System.out.println(
-                                            "unexpected input: " + str);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
                             }
                         }
                         catch (IOException e)

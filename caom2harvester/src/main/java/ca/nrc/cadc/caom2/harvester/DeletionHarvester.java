@@ -148,12 +148,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             initHarvestState(dao.getDataSource(), entityClass);
         }
         else
-<<<<<<< HEAD
             throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
-=======
-            throw new UnsupportedOperationException(
-                    "unsupported class: " + entityClass.getName());
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
     }
 
     private void init() throws IOException
@@ -197,12 +192,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             initHarvestState(dao.getDataSource(), entityClass);
         }
         else
-<<<<<<< HEAD
             throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
-=======
-            throw new UnsupportedOperationException(
-                    "unsupported class: " + entityClass.getName());
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
     }
 
     private void close() throws IOException
@@ -228,12 +218,8 @@ public class DeletionHarvester extends Harvester implements Runnable
                 if (targetClass != null)
                     this.deleteMethod = dao.getClass().getMethod("delete", Class.class, UUID.class);
                 else
-<<<<<<< HEAD
                     this.deleteMethod = dao.getClass().getMethod("delete", UUID.class);
-=======
-                    this.deleteMethod = dao.getClass().getMethod("delete",
-                            UUID.class);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
+
             }
             catch (NoSuchMethodException bug)
             {
@@ -371,18 +357,12 @@ public class DeletionHarvester extends Harvester implements Runnable
             List<DeletedEntity> entityList = null;
             if (!service)
             {
-<<<<<<< HEAD
                 entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end, batchSize);
-=======
-                entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO)
-                        .getList(entityClass, start, end, batchSize);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
             }
             else
             {
                 entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end,
                         batchSize);
-
             }
 
             if (entityList.size() == expectedNum)
