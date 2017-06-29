@@ -42,6 +42,8 @@ public abstract class Harvester implements Runnable
     protected boolean full;
 
     protected String[] src;
+    protected String resourceId;
+    protected String collection;
     protected String[] dest;
     protected HarvestStateDAO harvestState;
 
@@ -79,12 +81,7 @@ public abstract class Harvester implements Runnable
             ret.put("disableHashJoin", Boolean.TRUE);
         }
         else
-<<<<<<< HEAD
             throw new IllegalArgumentException("unknown SQL dialect: " + desc[0]);
-=======
-            throw new IllegalArgumentException(
-                    "unknown SQL dialect: " + desc[0]);
->>>>>>> branch 'master' of https://github.com/javierduranarenas/caom2db.git
 
         ret.put("server", desc[0]);
         ret.put("database", desc[1]);
@@ -110,6 +107,10 @@ public abstract class Harvester implements Runnable
         if (src != null)
         {
             this.source = src[0] + "." + src[1] + "." + src[2];
+        }
+        else
+        {
+            this.source = resourceId + "?" + collection;
         }
     }
 

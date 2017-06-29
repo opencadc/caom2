@@ -150,8 +150,11 @@ public class CaomHarvester implements Runnable
 
             if (!skip)
             {
-                this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, resourceId,
-                        collection, nthreads, dest, entityBatchSize, dryrun);
+                // TODO uncomment when delete service in place
+                // this.observationMetaDeleter = new
+                // DeletionHarvester(DeletedObservationMetaReadAccess.class,
+                // resourceId,
+                // collection, nthreads, dest, entityBatchSize, dryrun);
             }
         }
     }
