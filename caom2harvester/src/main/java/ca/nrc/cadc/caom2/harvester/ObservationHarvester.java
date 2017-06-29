@@ -56,6 +56,7 @@ public class ObservationHarvester extends Harvester
     private Date maxDate;
     private boolean doCollisionCheck = false;
     private String collection = null;
+    private String resourceId = null;
 
     HarvestSkipURIDAO harvestSkip = null;
 
@@ -114,6 +115,8 @@ public class ObservationHarvester extends Harvester
             throws IOException, URISyntaxException
     {
         this.collection = collection;
+        this.resourceId = uri;
+        this.service = true;
         Map<String, Object> config2 = getConfigDAO(dest);
         this.srcObservationService = new RepoClient(new URI(uri), threads);
         this.destObservationDAO = new DatabaseObservationDAO();
@@ -750,7 +753,7 @@ public class ObservationHarvester extends Harvester
         super.initHarvestState(ds, c);
         this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2],
                 batchSize);
-        // this.source = dest[0] + "." + dest[1] + "." + dest[2];
+        this.source = resourceId + "?" + collection;
 
     }
 }
