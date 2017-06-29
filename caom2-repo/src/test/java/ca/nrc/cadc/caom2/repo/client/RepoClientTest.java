@@ -139,7 +139,7 @@ public class RepoClientTest
         }
     }
 
-    // @Test
+    @Test
     public void testGetList()
     {
         try
@@ -178,7 +178,7 @@ public class RepoClientTest
         }
     }
 
-    // @Test
+    @Test
     public void testGet()
     {
         try
