@@ -10,33 +10,33 @@ import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.persistence.AbstractDAO;
 
 public class ServiceDeletedEntityDAO<T extends DeletedEntity>
-		extends
-			AbstractDAO
+        extends
+            AbstractDAO
 {
 
-	private static final Logger log = Logger
-			.getLogger(ServiceDeletedEntityDAO.class);
+    private static final Logger log = Logger
+            .getLogger(ServiceDeletedEntityDAO.class);
 
-	public ServiceDeletedEntityDAO()
-	{
-	}
+    public ServiceDeletedEntityDAO()
+    {
+    }
 
-	public List<T> getList(Class<? extends DeletedEntity> c,
-			Date minLastModified, Date maxLastModified, Integer batchSize)
-	{
+    public List<T> getList(Class<? extends DeletedEntity> c,
+            Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
 
-		List<T> ret = new ArrayList<T>();
-		log.debug("GET: " + batchSize);
-		long t = System.currentTimeMillis();
-		try
-		{
+        List<T> ret = new ArrayList<T>();
+        log.debug("GET: " + batchSize);
+        long t = System.currentTimeMillis();
+        try
+        {
 
-		} finally
-		{
-			long dt = System.currentTimeMillis() - t;
-			log.debug("GET: " + batchSize + " " + dt + "ms");
-		}
-		return ret;
-	}
+        } finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + batchSize + " " + dt + "ms");
+        }
+        return ret;
+    }
 
 }

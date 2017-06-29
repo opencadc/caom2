@@ -79,14 +79,14 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
  */
 public class SkippedWrapperURI<T>
 {
-	private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
+    private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
 
-	public T entity;
-	public HarvestSkipURI skip;
+    public T entity;
+    public HarvestSkipURI skip;
 
-	public SkippedWrapperURI(T entity, HarvestSkipURI skip)
-	{
-		this.entity = entity;
-		this.skip = skip;
-	}
+    public SkippedWrapperURI(T entity, HarvestSkipURI skip)
+    {
+        this.entity = entity;
+        this.skip = skip;
+    }
 }
