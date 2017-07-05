@@ -97,6 +97,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
@@ -308,7 +309,7 @@ public class RepoClient
     {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
-        ObservationState os = new ObservationState(uri.getCollection(), uri.getObservationID(), null, null, null);
+        ObservationState os = new ObservationState(uri);
         Worker wt = new Worker(os, subject, BASE_HTTP_URL);
         return wt.getObservation();
     }
@@ -321,7 +322,7 @@ public class RepoClient
         ObservationState obsState = null;
         for (ObservationState os : list)
         {
-            if (!os.getUri().equals(uri))
+            if (!os.getURI().getURI().equals(uri))
             {
                 continue;
             }
@@ -447,7 +448,8 @@ public class RepoClient
                 sdate = aux;
                 aux = "";
                 Date date = sdf.parse(sdate);
-                ObservationState os = new ObservationState(collection, id, date, null, resourceId);
+                ObservationState os = new ObservationState(new ObservationURI(collection, id));
+                os.maxLastModified = date;
                 list.add(os);
                 readingCollection = true;
                 readingId = false;
