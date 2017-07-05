@@ -39,17 +39,21 @@ public class ReadAccessHarvester extends Harvester
     /**
      * Harvest ReadAccess tuples.
      *
+     * @param entityClass
+     *            the type of entity to harvest
      * @param src
      *            source server.database.schema
      * @param dest
      *            destination server.database.schema
-     * @param entityClass
-     *            the type of entity to harvest
      * @param batchSize
      *            ignored, always full list
      * @param full
      *            ignored, always in lastModfied order
+     * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
      * @throws IOException
+     *             IOException
      */
     public ReadAccessHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full,
             boolean dryrun) throws IOException
@@ -68,6 +72,11 @@ public class ReadAccessHarvester extends Harvester
         this.skipped = skipped;
     }
 
+    /**
+     * initialize the harvester
+     * 
+     * @throws IOException
+     */
     private void init() throws IOException
     {
         Map<String, Object> config1 = getConfigDAO(src);
@@ -86,11 +95,19 @@ public class ReadAccessHarvester extends Harvester
         initHarvestState(destAccessDAO.getDataSource(), entityClass);
     }
 
+    /**
+     * cleanup connections and state
+     * 
+     * @throws IOException
+     */
     private void close() throws IOException
     {
         // TODO
     }
 
+    /**
+     * run
+     */
     @Override
     public void run()
     {
@@ -135,6 +152,10 @@ public class ReadAccessHarvester extends Harvester
         log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
+    /**
+     * class that does the harvester work
+     *
+     */
     private static class Progress
     {
 
@@ -153,6 +174,11 @@ public class ReadAccessHarvester extends Harvester
 
     private Date startDate;
 
+    /**
+     * Does the harvester work
+     * 
+     * @return
+     */
     private Progress doit()
     {
         log.info("batch: " + entityClass.getSimpleName());
