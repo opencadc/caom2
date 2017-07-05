@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,40 +69,67 @@
 
 package ca.nrc.cadc.caom2;
 
-
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;
 
 /**
- * Wrapper class to support listing observations in incremental mode.
+ * Primary descriptive state of an observation.
  * 
  * @author pdowler
  */
 public class ObservationState 
 {
-    //private static final Logger log = Logger.getLogger(ObservationState.class);
-
-    private final String collection;
-    private final String observationID;
+    private final ObservationURI uri;
     private final Date maxLastModified;
     private final URI accMetaChecksum;
-    
+
+    /**
+     * @param collection
+     * @param observationID
+     * @param maxlastModified
+     * @param accMetaChecksum
+     * @deprecated
+     */    
     public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum) 
-    { 
-        this.collection = collection;
-        this.observationID = observationID;
+    {
+        this(new ObservationURI(collection,observationID),maxlastModified,accMetaChecksum); 
+    }
+
+    /**
+     * @param uri
+     * @param maxlastModified
+     * @param accMetaChecksum 
+     */
+    public ObservationState(ObservationURI uri, Date maxlastModified, URI accMetaChecksum)
+    {
+        CaomValidator.assertNotNull(ObservationState.class, "uri", uri);
+        this.uri = uri;
         this.maxLastModified = maxlastModified;
         this.accMetaChecksum = accMetaChecksum;
     }
 
-    public String getCollection()
+    public ObservationURI getUri()
     {
-        return collection;
+        return uri;
     }
 
+    /**
+     * @deprecated 
+     * @return collection
+     */
+    public String getCollection()
+    {
+        return uri.getCollection();
+    }
+
+    /**
+     * @deprecated 
+     * @return observationID
+     */
     public String getObservationID()
     {
-        return observationID;
+        return uri.getObservationID();
     }
 
     public Date getMaxLastModified()
@@ -118,6 +145,6 @@ public class ObservationState
     @Override
     public String toString()
     {
-        return "ObservationState[" + observationID + "," + maxLastModified + "]";
+        return "ObservationState[" + uri.getURI().toASCIIString() + "," + maxLastModified + "," + accMetaChecksum + "]";
     }
 }
