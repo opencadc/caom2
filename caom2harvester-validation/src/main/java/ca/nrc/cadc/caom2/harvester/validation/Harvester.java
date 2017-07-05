@@ -1,4 +1,4 @@
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.harvester.validation;
 
 import java.io.IOException;
 import java.text.DateFormat;

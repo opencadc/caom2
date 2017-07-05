@@ -1,4 +1,4 @@
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.harvester.validation;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -60,15 +60,9 @@ public class DeletionHarvester extends Harvester implements Runnable
      *            the class specifying what should be deleted
      * @param batchSize
      *            ignored, always full list
-     * @param dryrun
-     *            true if no changed in the data base are applied during the
-     *            process
      * @throws IOException
-     *             IOException
      * @throws URISyntaxException
-     *             URISyntaxException
      * @throws NumberFormatException
-     *             NumberFormatException
      */
     public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun)
             throws IOException, NumberFormatException, URISyntaxException
@@ -80,27 +74,17 @@ public class DeletionHarvester extends Harvester implements Runnable
     /**
      * Constructor.
      *
-     * @param entityClass
-     *            the class specifying what should be deleted
-     * @param resourceId
-     *            repo service
-     * @param collection
-     *            collection to be harvested
-     * @param nthreads
-     *            number of threads to be used to harvest
+     * @param src
+     *            source server.database.schema
      * @param dest
      *            destination server.database.schema
+     * @param entityClass
+     *            the class specifying what should be deleted
      * @param batchSize
      *            ignored, always full list
-     * @param dryrun
-     *            true if no changed in the data base are applied during the
-     *            process
      * @throws IOException
-     *             IOException
      * @throws URISyntaxException
-     *             URISyntaxException
      * @throws NumberFormatException
-     *             NumberFormatException
      */
     public DeletionHarvester(Class<?> entityClass, String resourceId, String collection, int nthreads, String[] dest,
             Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
@@ -116,7 +100,6 @@ public class DeletionHarvester extends Harvester implements Runnable
      * Initialise harvest state with the current date.
      *
      * @param initHarvestState
-     *            value for this attribute
      */
     public void setInitHarvestState(boolean initHarvestState)
     {
@@ -125,20 +108,6 @@ public class DeletionHarvester extends Harvester implements Runnable
             this.initDate = new Date(); // timestamp at startup, not when run
     }
 
-    /**
-     * initialize of the harvester
-     *
-     * @param uri
-     *            uri to be used
-     * @param collection
-     *            collection to work on
-     * @param threads
-     *            number of threads to be used
-     * @throws IOException
-     *             IOException
-     * @throws URISyntaxException
-     *             URISyntaxException
-     */
     private void init(String uri, String collection, int threads) throws IOException, URISyntaxException
     {
 
@@ -182,11 +151,6 @@ public class DeletionHarvester extends Harvester implements Runnable
             throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
     }
 
-    /**
-     * initialize of the harvester
-     *
-     * @throws IOException
-     */
     private void init() throws IOException
     {
         Map<String, Object> config1 = getConfigDAO(src);
@@ -231,20 +195,12 @@ public class DeletionHarvester extends Harvester implements Runnable
             throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
     }
 
-    /**
-     * cleanup connections and state
-     *
-     * @throws IOException
-     */
     private void close() throws IOException
     {
         // TODO
     }
 
-    /**
-     * invoke delete(Long) method on an arbitrary object via reflection
-     *
-     */
+    // invoke delete(Long) method on an arbitrary object via reflection
     private class WrapperDAO
     {
 
@@ -299,9 +255,6 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
     }
 
-    /**
-     * run
-     */
     @Override
     public void run()
     {
@@ -351,10 +304,6 @@ public class DeletionHarvester extends Harvester implements Runnable
         log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
-    /**
-     * class that does the work
-     *
-     */
     private static class Progress
     {
 
@@ -373,11 +322,6 @@ public class DeletionHarvester extends Harvester implements Runnable
 
     Object prevBatchLeader = null;
 
-    /**
-     * Does the work
-     *
-     * @return progress status
-     */
     @SuppressWarnings("unchecked")
     private Progress doit()
     {
@@ -511,11 +455,6 @@ public class DeletionHarvester extends Harvester implements Runnable
         return ret;
     }
 
-    /**
-     *
-     * @param entityList
-     *            list of entities to detect loops with
-     */
     private void detectLoop(List<DeletedEntity> entityList)
     {
         if (entityList.size() < 2)

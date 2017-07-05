@@ -1,4 +1,4 @@
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.harvester.validation;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -21,7 +21,7 @@ import ca.nrc.cadc.util.Log4jInit;
 
 /**
  *
- * @author pdowler
+ * @author jduran
  */
 public class Main
 {
@@ -240,28 +240,14 @@ public class Main
             CaomHarvester ch = null;
             try
             {
-                if (test)
-                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip,
-                            maxDate);
-                else if (recomp)
+                if (service)
                 {
-                    if (service)
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
-                                maxDate);
-                    else
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
+                    ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor,
+                            full, skip, maxDate);
                 }
                 else
                 {
-                    if (service)
-                    {
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
-                                batchFactor, full, skip, maxDate);
-                    }
-                    else
-                    {
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
+                    ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                 }
             }
             catch (IOException ioex)
@@ -316,16 +302,12 @@ public class Main
     private static void usage()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug]");
+        sb.append("\n\nusage: caom2harvester-validation [-v|--verbose|-d|--debug]");
         sb.append("\n           --resourceID= to pick the caom2repo service. p.ej. 'ivo://cadc.nrc.ca/caom2repo'");
         sb.append("\n           --collection= collection to be retrieve. p.ej. 'IRIS' or 'HST'");
         sb.append("\n           --threads= number  of threads to be used to harvest observations");
         sb.append("\n           --source=<server.database.schema>");
         sb.append("\n           --destination=<server.database.schema>");
-        sb.append("\n\nOptions:");
-        sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
-        sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
-        sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)");
         sb.append("\n\nOptional authentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");

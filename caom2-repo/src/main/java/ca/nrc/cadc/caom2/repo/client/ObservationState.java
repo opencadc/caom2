@@ -67,26 +67,64 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.repo.client;
 
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
+import java.net.URI;
+import java.util.Date;
 
 /**
+ * Wrapper class to support listing observations in incremental mode.
  *
  * @author pdowler
  */
-public class SkippedWrapper<T>
+public class ObservationState
 {
-    private static final Logger log = Logger.getLogger(SkippedWrapper.class);
+    // private static final Logger log =
+    // Logger.getLogger(ObservationState.class);
 
-    public T entity;
-    public HarvestSkip skip;
+    private final String collection;
+    private final String observationID;
+    private final Date maxLastModified;
+    private final URI accMetaChecksum;
+    private final URI uri;
 
-    public SkippedWrapper(T entity, HarvestSkip skip)
+    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum, URI uri)
     {
-        this.entity = entity;
-        this.skip = skip;
+        this.collection = collection;
+        this.observationID = observationID;
+        this.maxLastModified = maxlastModified;
+        this.accMetaChecksum = accMetaChecksum;
+        this.uri = uri;
+    }
+
+    public String getCollection()
+    {
+        return collection;
+    }
+
+    public String getObservationID()
+    {
+        return observationID;
+    }
+
+    public Date getMaxLastModified()
+    {
+        return maxLastModified;
+    }
+
+    public URI getAccMetaChecksum()
+    {
+        return accMetaChecksum;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ObservationState[" + observationID + "," + maxLastModified + "]";
+    }
+
+    public URI getUri()
+    {
+        return uri;
     }
 }

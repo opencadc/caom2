@@ -71,20 +71,20 @@ package ca.nrc.cadc.caom2.harvester;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 
 /**
  *
  * @author pdowler
  */
-public class SkippedWrapper<T>
+public class SkippedWrapperURI<T>
 {
-    private static final Logger log = Logger.getLogger(SkippedWrapper.class);
+    private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
 
     public T entity;
-    public HarvestSkip skip;
+    public HarvestSkipURI skip;
 
-    public SkippedWrapper(T entity, HarvestSkip skip)
+    public SkippedWrapperURI(T entity, HarvestSkipURI skip)
     {
         this.entity = entity;
         this.skip = skip;

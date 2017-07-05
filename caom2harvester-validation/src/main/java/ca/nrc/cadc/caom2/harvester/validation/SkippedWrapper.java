@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.harvester.validation;
 
 import org.apache.log4j.Logger;
 
