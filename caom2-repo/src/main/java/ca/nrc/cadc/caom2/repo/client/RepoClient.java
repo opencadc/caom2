@@ -328,8 +328,15 @@ public class RepoClient
             obsState = os;
             break;
         }
-        Worker wt = new Worker(obsState, subject, BASE_HTTP_URL);
-        return wt.getObservation();
+        if (obsState != null)
+        {
+            Worker wt = new Worker(obsState, subject, BASE_HTTP_URL);
+            return wt.getObservation();
+        }
+        else
+        {
+            return null;
+        }
     }
 
     // private WorkerResponse get(ObservationURI uri, UUID id, int depth) {
