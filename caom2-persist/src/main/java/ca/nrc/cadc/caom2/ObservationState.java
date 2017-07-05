@@ -81,22 +81,19 @@ import java.util.Date;
 public class ObservationState 
 {
     private final ObservationURI uri;
-    private final Date maxLastModified;
-    private final URI accMetaChecksum;
+    
+    public Date maxLastModified;
+    public URI accMetaChecksum;
 
-    /**
-     * @param collection
-     * @param observationID
-     * @param maxlastModified
-     * @param accMetaChecksum
-     * @deprecated
-     */    
-    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum) 
+    public ObservationState(ObservationURI uri)
     {
-        this(new ObservationURI(collection,observationID),maxlastModified,accMetaChecksum); 
+        CaomValidator.assertNotNull(ObservationState.class, "uri", uri);
+        this.uri = uri;
     }
-
+    
     /**
+     * Convenience constructor.
+     * 
      * @param uri
      * @param maxlastModified
      * @param accMetaChecksum 
@@ -109,37 +106,9 @@ public class ObservationState
         this.accMetaChecksum = accMetaChecksum;
     }
 
-    public ObservationURI getUri()
+    public ObservationURI getURI()
     {
         return uri;
-    }
-
-    /**
-     * @deprecated 
-     * @return collection
-     */
-    public String getCollection()
-    {
-        return uri.getCollection();
-    }
-
-    /**
-     * @deprecated 
-     * @return observationID
-     */
-    public String getObservationID()
-    {
-        return uri.getObservationID();
-    }
-
-    public Date getMaxLastModified()
-    {
-        return maxLastModified;
-    }
-
-    public URI getAccMetaChecksum()
-    {
-        return accMetaChecksum;
     }
 
     @Override

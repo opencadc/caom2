@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
+import ca.nrc.cadc.caom2.ObservationState;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -125,11 +126,11 @@ public class RepoClientTest
             List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
 
             Assert.assertEquals(list.size(), 5);
-            Assert.assertEquals(list.get(0).getObservationID(), "f001h000");
-            Assert.assertEquals(list.get(1).getObservationID(), "f002h000");
-            Assert.assertEquals(list.get(2).getObservationID(), "f003h000");
-            Assert.assertEquals(list.get(3).getObservationID(), "f004h000");
-            Assert.assertEquals(list.get(4).getObservationID(), "f005h000");
+            Assert.assertEquals(URI.create("caom:IRIS/f001h000"), list.get(0).getURI().getURI());
+            Assert.assertEquals(URI.create("caom:IRIS/f002h000"), list.get(1).getURI().getURI());
+            Assert.assertEquals(URI.create("caom:IRIS/f003h000"), list.get(2).getURI().getURI());
+            Assert.assertEquals(URI.create("caom:IRIS/f004h000"), list.get(3).getURI().getURI());
+            Assert.assertEquals(URI.create("caom:IRIS/f005h000"), list.get(4).getURI().getURI());
 
         }
         catch (Exception unexpected)

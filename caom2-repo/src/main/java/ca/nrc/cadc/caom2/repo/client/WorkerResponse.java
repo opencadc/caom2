@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.repo.client;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 
 public class WorkerResponse
 {
@@ -120,7 +121,7 @@ public class WorkerResponse
     {
         return observation == null ? "null" : observation.getObservationID() + " " + observationState == null
                 ? "null"
-                : observationState.getCollection() + " " + error == null ? "Correct" : error.getMessage();
+                : observationState.getURI().getObservationID() + " " + error == null ? "Correct" : error.getMessage();
     }
 
 }
