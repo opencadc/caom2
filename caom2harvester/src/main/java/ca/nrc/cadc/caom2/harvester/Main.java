@@ -71,6 +71,7 @@ public class Main
             boolean skip = am.isSet("skip");
             boolean dryrun = am.isSet("dryrun");
             boolean resourceId = am.isSet("resourceID");
+            boolean validate = am.isSet("validate");
             // boolean collection = am.isSet("collection");
             // boolean threads = am.isSet("threads");
 
@@ -237,52 +238,100 @@ public class Main
                 }
             }
 
-            CaomHarvester ch = null;
-            try
+            if (!validate)
             {
-                if (test)
-                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip,
-                            maxDate);
-                else if (recomp)
+                CaomHarvester ch = null;
+                try
                 {
-                    if (service)
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
+                    if (test)
+                        ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip,
                                 maxDate);
+                    else if (recomp)
+                    {
+                        if (service)
+                            ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
+                                    maxDate);
+                        else
+                            ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
+                    }
                     else
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
+                    {
+                        if (service)
+                        {
+                            ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
+                                    batchFactor, full, skip, maxDate);
+                        }
+                        else
+                        {
+                            ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        }
+                    }
                 }
-                else
+                catch (IOException ioex)
                 {
-                    if (service)
+                    log.error("failed to init: " + ioex.getMessage());
+                    exitValue = -1;
+                    System.exit(exitValue);
+                }
+
+                exitValue = 2; // in case we get killed
+                Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+
+                if (subject != null)
+                {
+                    Subject.doAs(subject, new RunnableAction(ch));
+                }
+                else // anon
+                {
+                    ch.run();
+                }
+            }
+            else
+            {
+                CaomValidator cv = null;
+                try
+                {
+                    if (recomp)
                     {
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
-                                batchFactor, full, skip, maxDate);
+                        if (service)
+                            cv = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
+                                    maxDate);
+                        else
+                            cv = new CaomValidator(dryrun, srcDS, destDS, batchSize, full, maxDate);
                     }
                     else
                     {
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        if (service)
+                        {
+                            cv = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
+                                    batchFactor, full, skip, maxDate);
+                        }
+                        else
+                        {
+                            cv = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        }
                     }
                 }
-            }
-            catch (IOException ioex)
-            {
-                log.error("failed to init: " + ioex.getMessage());
-                exitValue = -1;
-                System.exit(exitValue);
-            }
+                catch (IOException ioex)
+                {
+                    log.error("failed to init: " + ioex.getMessage());
+                    exitValue = -1;
+                    System.exit(exitValue);
+                }
 
-            exitValue = 2; // in case we get killed
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+                exitValue = 2; // in case we get killed
+                Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-            if (subject != null)
-            {
-                Subject.doAs(subject, new RunnableAction(ch));
-            }
-            else // anon
-            {
-                ch.run();
-            }
+                if (subject != null)
+                {
+                    Subject.doAs(subject, new RunnableAction(cv));
+                }
+                else // anon
+                {
+                    cv.run();
+                }
 
+            }
             exitValue = 0; // finished cleanly
         }
         catch (Throwable t)
