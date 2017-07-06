@@ -104,38 +104,10 @@ public class Plane extends CaomEntity implements Comparable<Plane>
     public Provenance provenance;
     public Metrics metrics;
     public DataQuality quality;
-    
-    /**
-     * Computed position metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Position position;
-    /**
-     * Computed energy metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Energy energy;
-    /**
-     * Computed time metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Time time;
-    /**
-     * Computed polarization metadata. Computed state is always qualified as transient
-     * since it does not (always) need to be stored or serialised.
-     */
-    public transient Polarization polarization;
-    
-    /**
-     * Computed plane identifier. Identifers of this form are used in Provenance
-     * input lists.
-     */
-    public transient PlaneURI planeURI;
-    
-    /**
-     * Computed globally unique identifier.
-     */
-    public transient PublisherID publisherID;
+    public Position position;
+    public Energy energy;
+    public Time time;
+    public Polarization polarization;
     
     public Plane(String productID)
     {

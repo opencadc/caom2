@@ -107,9 +107,6 @@ public class Chunk extends CaomEntity implements Comparable<Chunk>
     public TemporalWCS time;
     public PolarizationWCS polarization;
     
-    // computed state
-    public transient Date metaRelease;
-
     public Chunk() { }
 
     @Override

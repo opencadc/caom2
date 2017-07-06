@@ -94,9 +94,6 @@ public class Part extends CaomEntity implements Comparable<Part>
     // mutable state
     public ProductType productType;
     
-    // computed state
-    public transient Date metaRelease;
-
     // mutable contents
     private final Set<Chunk> chunks = new TreeSet<Chunk>();;
 
