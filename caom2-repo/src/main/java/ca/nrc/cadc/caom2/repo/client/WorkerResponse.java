@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.repo.client;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 
 public class WorkerResponse
 {
