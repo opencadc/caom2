@@ -85,7 +85,7 @@ public class SybaseSQLGenerator extends BaseSQLGenerator
     {
         super(database, schema);
         this.fakeSchemaTablePrefix = "caom2_";
-        this.persistTransientState = false;
+        this.persistComputed = false;
         this.persistReadAccessWithAsset = false;
         this.useLongForUUID = true;
         this.useIntegerForBoolean = true;

@@ -256,7 +256,7 @@ public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
         int nsc = ra.getStateCode();
         
         digest.reset();
-        Util.assignMetaChecksum(ra, ra.computeMetaChecksum(false, digest), "metaChecksum");
+        Util.assignMetaChecksum(ra, ra.computeMetaChecksum(digest), "metaChecksum");
         
         if (!computeLastModified)
             return;

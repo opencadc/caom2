@@ -110,16 +110,6 @@ class PlaneDAO extends AbstractCaomEntityDAO<Plane>
 
         try
         {
-            // always clear transient state
-            ComputeUtil.clearTransientState(p);
-            // force recompute here so the stateCode in call to super.put() below includes
-            // all correctly computed transient state
-            if ( gen.persistTransientState() )
-            {
-                Observation o = (Observation) parents.getFirst();
-                ComputeUtil.computeTransientState(o, p);
-            }
-            
             // delete obsolete children
             List<Pair<Artifact>> pairs = new ArrayList<Pair<Artifact>>();
             if (cur != null)
