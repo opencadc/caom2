@@ -512,7 +512,8 @@ public class DeletionHarvester extends Harvester implements Runnable
     }
 
     /**
-     *
+     * detects loops
+     * 
      * @param entityList
      *            list of entities to detect loops with
      */
