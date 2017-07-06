@@ -40,6 +40,8 @@ public class CaomHarvester implements Runnable
      * Harvest everything.
      *
      * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
      * @param src
      *            source server,database,schema
      * @param dest
@@ -51,9 +53,13 @@ public class CaomHarvester implements Runnable
      * @param full
      *            full harvest of all source entities
      * @param skip
+     *            flag that indicates if shipped observations should be dealt
      * @param maxDate
+     *            latest date to be using during harvester
      * @throws java.io.IOException
+     *             IOException
      * @throws URISyntaxException
+     *             URISyntaxException
      */
     public CaomHarvester(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full,
             boolean skip, Date maxDate) throws IOException, URISyntaxException
@@ -73,6 +79,8 @@ public class CaomHarvester implements Runnable
      * Harvest everything.
      *
      * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
      * @param resourceId
      *            repo service
      * @param collection
@@ -88,9 +96,13 @@ public class CaomHarvester implements Runnable
      * @param full
      *            full harvest of all source entities
      * @param skip
+     *            flag that indicates if shipped observations should be dealt
      * @param maxDate
+     *            latest date to be using during harvester
      * @throws java.io.IOException
+     *             IOException
      * @throws URISyntaxException
+     *             URISyntaxException
      */
     public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
             int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
@@ -107,6 +119,31 @@ public class CaomHarvester implements Runnable
         obsHarvester.setMaxDate(maxDate);
     }
 
+    /**
+     * Harvest everything.
+     *
+     * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
+     * @param resourceId
+     *            repo service
+     * @param collection
+     *            collection to be harvested
+     * @param nthreads
+     *            number of threads to be used to harvest
+     * @param batchSize
+     *            number of observations per batch (~memory consumption)
+     * @param dest
+     *            destination server,database,schema
+     * @param full
+     *            full harvest of all source entities
+     * @param maxDate
+     *            latest date to be used during harvester
+     * @throws java.io.IOException
+     *             IOException
+     * @throws URISyntaxException
+     *             URISyntaxException
+     */
     public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
             Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
     {
@@ -115,6 +152,27 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
+    /**
+     * Harvest everything.
+     *
+     * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
+     * @param src
+     *            source server,database,schema
+     * @param dest
+     *            destination server,database,schema
+     * @param batchSize
+     *            number of observations per batch (~memory consumption)
+     * @param full
+     *            full harvest of all source entities
+     * @param maxDate
+     *            latest date to be used during harvester
+     * @throws java.io.IOException
+     *             IOException
+     * @throws URISyntaxException
+     *             URISyntaxException
+     */
     public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
             throws IOException, URISyntaxException
     {
@@ -123,12 +181,41 @@ public class CaomHarvester implements Runnable
         obsHarvester.setDoCollisionCheck(true);
     }
 
+    /**
+     * Harvest everything.
+     *
+     * @param dryrun
+     *            true if no changed in the data base are applied during the
+     *            process
+     * @param src
+     *            source server,database,schema
+     * @param dest
+     *            destination server,database,schema
+     * @param batchSize
+     *            number of observations per batch (~memory consumption)
+     * @param batchFactor
+     *            multiplier for batchSize when harvesting single-table entities
+     * @param full
+     *            full harvest of all source entities
+     * @param skip
+     *            flag that indicates if shipped observations should be dealt
+     * @param maxDate
+     *            latest date to be using during harvester
+     * @return UnsupportedOperationException
+     * @throws java.io.IOException
+     *             IOException
+     * @throws URISyntaxException
+     *             URISyntaxException
+     */
     public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize,
-            Integer batchFactor, boolean full, boolean skip, Date maxdate) throws IOException, URISyntaxException
+            Integer batchFactor, boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * run
+     */
     @Override
     public void run()
     {

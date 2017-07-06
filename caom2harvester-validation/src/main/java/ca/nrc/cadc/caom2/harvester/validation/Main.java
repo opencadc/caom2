@@ -67,8 +67,8 @@ public class Main
 
             boolean test = am.isSet("test");
             boolean recomp = am.isSet("recompute");
-            boolean full = am.isSet("full");
-            boolean skip = am.isSet("skip");
+            boolean full = true;
+            boolean skip = false;
             boolean dryrun = am.isSet("dryrun");
             boolean resourceId = am.isSet("resourceID");
             // boolean collection = am.isSet("collection");
