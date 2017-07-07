@@ -42,20 +42,19 @@ public class Main
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
-
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             }
             else if (am.isSet("v") || am.isSet("verbose"))
             {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.INFO);
-
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
             }
             else
             {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.WARN);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
 
             }
 
@@ -66,14 +65,11 @@ public class Main
             }
 
             boolean test = am.isSet("test");
-            boolean recomp = am.isSet("recompute");
             boolean full = am.isSet("full");
             boolean skip = am.isSet("skip");
             boolean dryrun = am.isSet("dryrun");
-            boolean resourceId = am.isSet("resourceID");
-            // boolean collection = am.isSet("collection");
-            // boolean threads = am.isSet("threads");
-
+            boolean compute = am.isSet("compute");
+            
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
             if (am.isSet("netrc"))
@@ -97,13 +93,6 @@ public class Main
                 System.exit(1);
             }
 
-            if (recomp && skip)
-            {
-                usage();
-                log.warn("cannot specify both --recompute and --skip");
-                System.exit(1);
-            }
-
             String sresourceId = am.getValue("resourceID");
             String scollection = am.getValue("collection");
             int nthreads = 1;
@@ -124,13 +113,8 @@ public class Main
             boolean service = !noresourceId;
 
             boolean nodest = (dest == null || dest.trim().length() == 0);
-            if (recomp && nodest)
-            {
-                usage();
-                log.warn("missing required argument: --destination");
-                System.exit(1);
-            }
-            if (!recomp && ((nosrc && noresourceId) || nodest))
+            
+            if ((nosrc && noresourceId) || nodest)
             {
                 usage();
                 if (nosrc && noresourceId)
@@ -140,8 +124,6 @@ public class Main
                     log.warn("missing required argument: --destination");
                 System.exit(1);
             }
-            if (recomp)
-                src = dest;
 
             String[] srcDS = new String[3];
             if (service)
@@ -240,28 +222,14 @@ public class Main
             CaomHarvester ch = null;
             try
             {
-                if (test)
-                    ch = CaomHarvester.getTestHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip,
-                            maxDate);
-                else if (recomp)
+                if (service)
                 {
-                    if (service)
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize, full,
-                                maxDate);
-                    else
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, full, maxDate);
+                    ch = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize,
+                            batchFactor, full, skip, maxDate);
                 }
                 else
                 {
-                    if (service)
-                    {
-                        ch = new CaomHarvester(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
-                                batchFactor, full, skip, maxDate);
-                    }
-                    else
-                    {
-                        ch = new CaomHarvester(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
+                    ch = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                 }
             }
             catch (IOException ioex)
@@ -316,26 +284,28 @@ public class Main
     private static void usage()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug]");
-        sb.append("\n           --resourceID= to pick the caom2repo service. p.ej. 'ivo://cadc.nrc.ca/caom2repo'");
-        sb.append("\n           --collection= collection to be retrieve. p.ej. 'IRIS' or 'HST'");
-        sb.append("\n           --threads= number  of threads to be used to harvest observations");
+        sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
+        sb.append("\n           --resourceID= to pick the caom2repo service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n           --collection= collection to be retrieve. (e.g. IRIS)");
+        sb.append("\n           --threads= number  of threads to be used to harvest observations (default: 1)");
         sb.append("\n           --source=<server.database.schema>");
         sb.append("\n           --destination=<server.database.schema>");
+        sb.append("\n          note: harvesting source is specified by either --resourceID or --source");
+        sb.append("\n                --collection and --threads apply to --resourceID mode only");
         sb.append("\n\nOptions:");
         sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
         sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
-        sb.append("\n     --recompute : recompute metadata in the destination DB (only --destination required)");
+        sb.append("\n     --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n\nOptional authentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
         sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
         sb.append("\n\nOptional modifiers:");
         sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n     --batchSize=<number of observations per batch> (default: (").append(DEFAULT_BATCH_SIZE)
-                .append(")");
-        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ")
-                .append(DEFAULT_BATCH_FACTOR).append(")");
+        sb.append("\n     --batchSize=<number of observations per batch> (default: (");
+        sb.append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
+        sb.append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n     --dryrun : check for work but don't do anything");
         log.warn(sb.toString());
     }

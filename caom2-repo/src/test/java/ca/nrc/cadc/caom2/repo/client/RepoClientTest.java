@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.ObservationState;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -80,7 +82,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.Log4jInit;
+import java.security.AccessControlException;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import javax.security.auth.Subject;
 
 public class RepoClientTest
 {
@@ -111,27 +119,56 @@ public class RepoClientTest
     {
         try
         {
+            Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+                    {
+                        public Object run()
+                            throws Exception
+                        {
+                            RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-            RepoClient repoC = null;
-            try
-            {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
-            }
-            catch (URISyntaxException e)
-            {
-                throw new RuntimeException(
-                        "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
-            }
+                            List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
+                            Assert.assertEquals(list.size(), 5);
+                            Assert.assertEquals(URI.create("caom:IRIS/f001h000"), list.get(0).getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f002h000"), list.get(1).getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f003h000"), list.get(2).getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f004h000"), list.get(3).getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f005h000"), list.get(4).getURI().getURI());
+                            
+                            return null;
+                        }
+                    });
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetObservationListDenied()
+    {
+        try
+        {
+            Subject s = AuthenticationUtil.getAnonSubject();
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+                    {
+                        public Object run()
+                            throws Exception
+                        {
+                            RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-            List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
-
-            Assert.assertEquals(list.size(), 5);
-            Assert.assertEquals(URI.create("caom:IRIS/f001h000"), list.get(0).getURI().getURI());
-            Assert.assertEquals(URI.create("caom:IRIS/f002h000"), list.get(1).getURI().getURI());
-            Assert.assertEquals(URI.create("caom:IRIS/f003h000"), list.get(2).getURI().getURI());
-            Assert.assertEquals(URI.create("caom:IRIS/f004h000"), list.get(3).getURI().getURI());
-            Assert.assertEquals(URI.create("caom:IRIS/f005h000"), list.get(4).getURI().getURI());
-
+                            List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
+                            Assert.fail("expected exception, got results");
+                            
+                            return null;
+                        }
+                    });
+        }
+        catch(AccessControlException expected)
+        {
+            log.info("caught expected exception: " + expected);
         }
         catch (Exception unexpected)
         {
@@ -145,33 +182,25 @@ public class RepoClientTest
     {
         try
         {
+            Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+                    {
+                        public Object run()
+                            throws Exception
+                        {
+                            RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-            RepoClient repoC = null;
-            try
-            {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
-            }
-            catch (URISyntaxException e)
-            {
-                throw new RuntimeException(
-                        "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
-            }
-
-            List<WorkerResponse> list = repoC.getList("IRIS", null, null, 5);
-
-            Assert.assertEquals(list.size(), 5);
-
-            Assert.assertEquals(list.get(0).getObservation().getID().toString(),
-                    "00000000-0000-0000-897c-013ac26a8f32");
-            Assert.assertEquals(list.get(1).getObservation().getID().toString(),
-                    "00000000-0000-0000-31a6-013ac26a8284");
-            Assert.assertEquals(list.get(2).getObservation().getID().toString(),
-                    "00000000-0000-0000-7a3c-013ac28ebeca");
-            Assert.assertEquals(list.get(3).getObservation().getID().toString(),
-                    "00000000-0000-0000-95c3-01394aa6a272");
-            Assert.assertEquals(list.get(4).getObservation().getID().toString(),
-                    "00000000-0000-0000-8117-013ac28ddb9b");;
-
+                            List<WorkerResponse> list = repoC.getList("IRIS", null, null, 5);
+                            Assert.assertEquals(list.size(), 5);
+                            Assert.assertEquals(URI.create("caom:IRIS/f001h000"), list.get(0).getObservation().getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f002h000"), list.get(1).getObservation().getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f003h000"), list.get(2).getObservation().getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f004h000"), list.get(3).getObservation().getURI().getURI());
+                            Assert.assertEquals(URI.create("caom:IRIS/f005h000"), list.get(4).getObservation().getURI().getURI());
+                            
+                            return null;
+                        }
+                    });
         }
         catch (Exception unexpected)
         {
@@ -185,21 +214,20 @@ public class RepoClientTest
     {
         try
         {
-            RepoClient repoC = null;
-            try
-            {
-                repoC = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 8);
-            }
-            catch (URISyntaxException e)
-            {
-                throw new RuntimeException(
-                        "Unable to create RepoClient instance for URI ivo://cadc.nrc.ca/caom2repo and collection IRIS");
-            }
+            Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+                    {
+                        public Object run()
+                            throws Exception
+                        {
+                            RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-            WorkerResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
-
-            Assert.assertEquals(wr.getObservation().getID().toString(), "00000000-0000-0000-897c-013ac26a8f32");
-
+                            WorkerResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
+                            Assert.assertEquals(wr.getObservation().getID().toString(), "00000000-0000-0000-897c-013ac26a8f32");
+                            
+                            return null;
+                        }
+                    });
         }
         catch (Exception unexpected)
         {
