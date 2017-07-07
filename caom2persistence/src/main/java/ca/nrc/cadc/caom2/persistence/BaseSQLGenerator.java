@@ -3763,10 +3763,13 @@ public class BaseSQLGenerator implements SQLGenerator
             
             String collection = rs.getString(col++);
             String observationID = rs.getString(col++);
-            Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-
-            return new ObservationState(collection, observationID, maxLastModified, accMetaChecksum);
+            ObservationURI uri = new ObservationURI(collection, observationID);
+            ObservationState ret = new ObservationState(uri);
+            
+            ret.maxLastModified = Util.getDate(rs, col++, UTC_CAL);
+            ret.accMetaChecksum = Util.getURI(rs, col++);
+            
+            return ret;
         }
     }
 

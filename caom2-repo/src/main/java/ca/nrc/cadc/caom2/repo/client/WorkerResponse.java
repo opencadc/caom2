@@ -121,7 +121,7 @@ public class WorkerResponse
     {
         return observation == null ? "null" : observation.getObservationID() + " " + observationState == null
                 ? "null"
-                : observationState.getCollection() + " " + error == null ? "Correct" : error.getMessage();
+                : observationState.getURI().getObservationID() + " " + error == null ? "Correct" : error.getMessage();
     }
 
 }

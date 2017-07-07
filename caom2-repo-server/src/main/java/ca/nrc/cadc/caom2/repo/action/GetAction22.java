@@ -62,7 +62,7 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
@@ -109,8 +109,8 @@ public class GetAction22 extends GetAction
         CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
         for (ObservationState state : states)
         {
-            writer.write(state.getObservationID());
-            writer.write(df.format(state.getMaxLastModified()));
+            writer.write(state.getURI().getObservationID());
+            writer.write(df.format(state.maxLastModified));
             writer.endRecord();
         }
         writer.flush();
