@@ -112,8 +112,7 @@ public class Worker implements Callable<WorkerResponse>
     public WorkerResponse getObservation()
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getCollection() + File.separator
-                + state.getObservationID();
+        String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
         URL url = null;
         try
         {
@@ -147,10 +146,11 @@ public class Worker implements Callable<WorkerResponse>
         }
         catch (ObservationParsingException e)
         {
+            String oid = state.getURI().getObservationID();
             exception = new Exception(
-                    "Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
+                    "Unable to create Observation object for id " + oid + ": " + e.getMessage());
             wr.setError(exception);
-            log.warn("Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
+            log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
         return wr;
     }
@@ -158,8 +158,7 @@ public class Worker implements Callable<WorkerResponse>
     public WorkerResponse getObservation(URI uri)
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getCollection() + File.separator
-                + state.getObservationID();
+        String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
         URL url = null;
         try
         {
@@ -193,10 +192,11 @@ public class Worker implements Callable<WorkerResponse>
         }
         catch (ObservationParsingException e)
         {
+            String oid = state.getURI().getObservationID();
             exception = new Exception(
-                    "Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
+                    "Unable to create Observation object for id " + oid + ": " + e.getMessage());
             wr.setError(exception);
-            log.warn("Unable to create Observation object for id " + state.getObservationID() + ": " + e.getMessage());
+            log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
         return wr;
     }

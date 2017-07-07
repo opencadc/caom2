@@ -215,12 +215,19 @@ public class GetAction extends RepoAction
         CsvWriter writer = new CsvWriter(out, '\t');
         for (ObservationState state : states)
         {
-            writer.write(state.getCollection());
-            writer.write(state.getObservationID());
-            writer.write(df.format(state.getMaxLastModified()));
-            if (state.getAccMetaChecksum() != null)
+            writer.write(state.getURI().getCollection());
+            writer.write(state.getURI().getObservationID());
+            if (state.maxLastModified != null)
             {
-                writer.write(state.getAccMetaChecksum().toString());
+                writer.write(df.format(state.maxLastModified));
+            }
+            else
+            {
+                writer.write("");
+            }
+            if (state.accMetaChecksum != null)
+            {
+                writer.write(state.accMetaChecksum.toASCIIString());
             }
             else
             {

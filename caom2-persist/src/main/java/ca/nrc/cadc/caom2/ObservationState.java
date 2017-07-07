@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,55 +69,36 @@
 
 package ca.nrc.cadc.caom2;
 
-
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;
 
 /**
- * Wrapper class to support listing observations in incremental mode.
+ * Primary descriptive state of an observation.
  * 
  * @author pdowler
  */
 public class ObservationState 
 {
-    //private static final Logger log = Logger.getLogger(ObservationState.class);
-
-    private final String collection;
-    private final String observationID;
-    private final Date maxLastModified;
-    private final URI accMetaChecksum;
+    private final ObservationURI uri;
     
-    public ObservationState(String collection, String observationID, Date maxlastModified, URI accMetaChecksum) 
-    { 
-        this.collection = collection;
-        this.observationID = observationID;
-        this.maxLastModified = maxlastModified;
-        this.accMetaChecksum = accMetaChecksum;
-    }
+    public Date maxLastModified;
+    public URI accMetaChecksum;
 
-    public String getCollection()
+    public ObservationState(ObservationURI uri)
     {
-        return collection;
+        CaomValidator.assertNotNull(ObservationState.class, "uri", uri);
+        this.uri = uri;
     }
-
-    public String getObservationID()
+    
+    public ObservationURI getURI()
     {
-        return observationID;
-    }
-
-    public Date getMaxLastModified()
-    {
-        return maxLastModified;
-    }
-
-    public URI getAccMetaChecksum()
-    {
-        return accMetaChecksum;
+        return uri;
     }
 
     @Override
     public String toString()
     {
-        return "ObservationState[" + observationID + "," + maxLastModified + "]";
+        return "ObservationState[" + uri.getURI().toASCIIString() + "," + maxLastModified + "," + accMetaChecksum + "]";
     }
 }
