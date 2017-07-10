@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.sql.DataSource;
 
@@ -25,6 +26,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
+import ca.nrc.cadc.caom2.repo.client.WorkerResponse;
 
 /**
  *
@@ -189,23 +191,35 @@ public class ObservationValidator extends Harvester {
 
             List<ObservationState> tmpSrcState = null;
             List<ObservationState> tmpDstState = null;
+            List<Observation> tmpSrc = null;
+            List<Observation> tmpDst = null;
 
             tmpDstState = destObservationDAO.getObservationList(collection, startDate, end,
                     batchSize + 1);
-            // tmpDst = destObservationDAO.getList(Observation.class, startDate,
-            // end, batchSize + 1);
+            tmpDst = destObservationDAO.getList(Observation.class, startDate, end, batchSize + 1);
 
             if (!this.service) {
                 tmpSrcState = srcObservationDAO.getObservationList(collection, startDate, end,
                         batchSize + 1);
+                tmpSrc = srcObservationDAO.getList(Observation.class, startDate, end,
+                        batchSize + 1);
             } else {
                 tmpSrcState = srcObservationService.getObservationList(collection, startDate, end,
                         batchSize + 1);
+                List<WorkerResponse> aux = srcObservationService.getList(collection, startDate, end,
+                        batchSize + 1);
+                tmpSrc = new ArrayList<Observation>();
+                for (WorkerResponse wr : aux) {
+                    if (wr.getObservation() == null)
+                        continue;
+                    tmpSrc.add(wr.getObservation());
+                }
             }
 
-            List<ObservationState> errlist = calculateErroneousObservations(tmpSrcState,
+            List<ObservationState> errlistState = calculateErroneousObservationState(tmpSrcState,
                     tmpDstState);
-            log.info("************************** errlist.size() = " + errlist.size());
+            List<Observation> errlist = calculateErroneousObservations(tmpSrc, tmpDst);
+            log.info("************************** errlist.size() = " + errlistState.size());
             log.info("************************** tmpSrcState.size() = " + tmpSrcState.size());
             log.info("************************** tmpDstState.size() = " + tmpDstState.size());
 
@@ -335,6 +349,8 @@ public class ObservationValidator extends Harvester {
             }
             if (ret.found < expectedNum)
                 ret.done = true;
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         } finally {
             tTransaction = System.currentTimeMillis() - t;
             log.debug("time to get HarvestState: " + tState + "ms");
@@ -344,7 +360,42 @@ public class ObservationValidator extends Harvester {
         return ret;
     }
 
-    private List<ObservationState> calculateErroneousObservations(
+    private List<ObservationState> calculateErroneousObservationState(
+            List<ObservationState> tmpSrcState, List<ObservationState> tmpDstState) {
+        List<ObservationState> errList = new ArrayList<ObservationState>();
+        for (ObservationState osSrc : tmpSrcState) {
+            log.debug("SRC -> ObservationState (URI): " + osSrc.getURI().getURI().toString());
+            log.debug("SRC -> ObservationState (AccMetaChecksum): " + osSrc.accMetaChecksum);
+
+            boolean found = false;
+            for (ObservationState osDst : tmpDstState) {
+                log.debug("DST -> ObsetvationState (URI): " + osDst.getURI().getURI().toString());
+                log.debug("DST -> ObservationState (AccMetaChecksum): " + osDst.accMetaChecksum);
+
+                if (!osSrc.getURI().getURI().equals(osDst.getURI().getURI()))
+                    continue;
+                found = true;
+                if (osSrc.accMetaChecksum == null || osDst.accMetaChecksum == null
+                        || !osSrc.accMetaChecksum.equals(osDst.accMetaChecksum))
+                    errList.add(osDst);
+                break;
+            }
+            if (!found) {
+                errList.add(osSrc);
+            }
+        }
+
+        return errList;
+
+    }
+
+    private List<Observation> calculateErroneousObservations(List<Observation> tmpSrc,
+            List<Observation> tmpDst) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private List<ObservationState> calculateErroneousObservationsState(
             List<ObservationState> tmpSrcState, List<ObservationState> tmpDstState) {
         List<ObservationState> errList = new ArrayList<ObservationState>();
         for (ObservationState osSrc : tmpSrcState) {

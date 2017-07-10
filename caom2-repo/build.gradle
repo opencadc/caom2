@@ -15,9 +15,9 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '0.1.0'
+version = '0.2.0'
 
-mainClassName = 'ca.nrc.cadc.caom2.repo.client.RepoClientMainTest'
+mainClassName = 'ca.nrc.cadc.caom2.repo.client.Main'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'

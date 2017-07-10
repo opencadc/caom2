@@ -77,12 +77,14 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 
@@ -128,7 +130,6 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
      * Return true if the observation identified by observation
      * URI exists.
      */
-    @Override
     public boolean exists(ObservationURI uri)
     {
         Observation observation = get(uri, null, 1);
@@ -219,7 +220,6 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
      * @param uri
      * @return the complete observation
      */
-    @Override
     public Observation get(ObservationURI uri)
     {
         if (uri == null)
@@ -542,10 +542,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
 
         // new or changed
-        int nsc = entity.getStateCode(gen.persistTransientState());
+        int nsc = entity.getStateCode();
         digest.reset(); // just in case
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
         
         boolean delta = false;
         if (s == null)
@@ -600,10 +600,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
 
         // new or changed
-        int nsc = entity.getStateCode(gen.persistTransientState());
+        int nsc = entity.getStateCode();
         digest.reset(); // just in case
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
         
         boolean delta = false;
         if (s == null)
@@ -658,10 +658,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
         
         // new or changed
-        int nsc = entity.getStateCode(gen.persistTransientState());
+        int nsc = entity.getStateCode();
         digest.reset(); // just in case
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
         
         boolean delta = false;
         if (s == null)
@@ -716,10 +716,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
         
         // new or changed
-        int nsc = entity.getStateCode(gen.persistTransientState());
+        int nsc = entity.getStateCode();
         digest.reset(); // just in case
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
         
         boolean delta = false;
         if (s == null)
@@ -752,10 +752,10 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         boolean updateMax = false;
 
         // new or changed
-        int nsc = entity.getStateCode(gen.persistTransientState());
+        int nsc = entity.getStateCode();
         digest.reset(); // just in case
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(gen.persistTransientState(), digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(gen.persistTransientState(), digest), "accMetaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
         
         boolean delta = false;
         if (s == null)
