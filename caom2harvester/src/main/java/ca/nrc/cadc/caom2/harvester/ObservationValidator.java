@@ -187,6 +187,7 @@ public class ObservationValidator extends Harvester
             List<ObservationState> tmpSrcState = null;
             List<ObservationState> tmpDstState = null;
             List<Observation> tmpSrc = null;
+
             tmpDstState = destObservationDAO.getObservationList(collection, startDate, end, batchSize + 1);
             if (!this.service)
             {

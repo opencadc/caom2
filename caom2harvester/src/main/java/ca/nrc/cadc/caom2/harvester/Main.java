@@ -23,7 +23,8 @@ import ca.nrc.cadc.util.Log4jInit;
  *
  * @author pdowler
  */
-public class Main {
+public class Main
+{
 
     private static Logger log = Logger.getLogger(Main.class);
 
@@ -31,26 +32,34 @@ public class Main {
     private static final Integer DEFAULT_BATCH_FACTOR = new Integer(2500);
     private static int exitValue = 0;
 
-    public static void main(String[] args) {
-        try {
+    public static void main(String[] args)
+    {
+        try
+        {
             ArgumentMap am = new ArgumentMap(args);
 
-            if (am.isSet("d") || am.isSet("debug")) {
+            if (am.isSet("d") || am.isSet("debug"))
+            {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
-            } else if (am.isSet("v") || am.isSet("verbose")) {
+            }
+            else if (am.isSet("v") || am.isSet("verbose"))
+            {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
-            } else {
+            }
+            else
+            {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
 
             }
 
-            if (am.isSet("h") || am.isSet("help")) {
+            if (am.isSet("h") || am.isSet("help"))
+            {
                 usage();
                 System.exit(0);
             }
@@ -68,17 +77,22 @@ public class Main {
 
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
-            if (am.isSet("netrc")) {
+            if (am.isSet("netrc"))
+            {
                 subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            } else if (am.isSet("cert")) {
+            }
+            else if (am.isSet("cert"))
+            {
                 subject = CertCmdArgUtil.initSubject(am);
             }
-            if (subject != null) {
+            if (subject != null)
+            {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
 
-            if (full && skip) {
+            if (full && skip)
+            {
                 usage();
                 log.warn("cannot specify both --full and --skip");
                 System.exit(1);
@@ -87,22 +101,26 @@ public class Main {
             String sresourceId = am.getValue("resourceID");
             String scollection = am.getValue("collection");
             int nthreads = 1;
-            try {
+            try
+            {
                 nthreads = Integer.parseInt(am.getValue("threads"));
-            } catch (NumberFormatException nfe) {
+            }
+            catch (NumberFormatException nfe)
+            {
 
             }
             String src = am.getValue("source");
             String dest = am.getValue("destination");
 
             boolean nosrc = (src == null || src.trim().length() == 0);
-            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0
-                    || scollection == null || scollection.trim().length() == 0;
+            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null
+                    || scollection.trim().length() == 0;
             boolean service = !noresourceId;
 
             boolean nodest = (dest == null || dest.trim().length() == 0);
 
-            if ((nosrc && noresourceId) || nodest) {
+            if ((nosrc && noresourceId) || nodest)
+            {
                 usage();
                 if (nosrc && noresourceId)
                     log.warn(
@@ -113,28 +131,35 @@ public class Main {
             }
 
             String[] srcDS = new String[3];
-            if (service) {
+            if (service)
+            {
                 srcDS[0] = sresourceId;
                 srcDS[1] = scollection;
                 srcDS[2] = nthreads + "";
-            } else {
+            }
+            else
+            {
                 srcDS = src.split("[.]");
             }
             String[] destDS = dest.split("[.]");
-            if (srcDS.length != 3 || destDS.length != 3) {
+            if (srcDS.length != 3 || destDS.length != 3)
+            {
                 usage();
                 if (srcDS.length != 3)
-                    if (!service) {
-                        log.warn("malformed --source value, found " + src
-                                + " expected: server.database.schema" + " e.g. SYBASE.mydb.dbo");
-                    } else {
-                        log.warn("malformed --resourceID value, found " + sresourceId
-                                + " expected: service_url" + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
+                    if (!service)
+                    {
+                        log.warn("malformed --source value, found " + src + " expected: server.database.schema"
+                                + " e.g. SYBASE.mydb.dbo");
+                    }
+                    else
+                    {
+                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url"
+                                + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
 
                     }
                 if (destDS.length != 3)
-                    log.warn("malformed --destination value, found " + dest
-                            + " expected: server.database.schema" + " e.g. cvodb0.cvodb.caom2");
+                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema"
+                            + " e.g. cvodb0.cvodb.caom2");
                 System.exit(1);
             }
 
@@ -143,30 +168,40 @@ public class Main {
             String sbatch = am.getValue("batchSize");
             String sFactor = am.getValue("batchFactor");
 
-            if (sbatch != null && sbatch.trim().length() > 0) {
-                try {
+            if (sbatch != null && sbatch.trim().length() > 0)
+            {
+                try
+                {
                     batchSize = new Integer(sbatch);
-                } catch (NumberFormatException nex) {
+                }
+                catch (NumberFormatException nex)
+                {
                     usage();
                     log.error("value for --batchSize must be an integer, found: " + sbatch);
                     System.exit(1);
                 }
             }
-            if (sFactor != null && sFactor.trim().length() > 0) {
-                try {
+            if (sFactor != null && sFactor.trim().length() > 0)
+            {
+                try
+                {
                     batchFactor = new Integer(sFactor);
-                } catch (NumberFormatException nex) {
+                }
+                catch (NumberFormatException nex)
+                {
                     usage();
                     log.error("value for --batchSize must be an integer, found: " + sbatch);
                     System.exit(1);
                 }
             }
 
-            if (batchSize == null) {
+            if (batchSize == null)
+            {
                 log.warn("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
                 batchSize = DEFAULT_BATCH_SIZE;
             }
-            if (batchFactor == null && batchSize != null) {
+            if (batchFactor == null && batchSize != null)
+            {
                 log.warn("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
                 batchFactor = DEFAULT_BATCH_FACTOR;
             }
@@ -174,28 +209,39 @@ public class Main {
 
             Date maxDate = null;
             String maxDateStr = am.getValue("maxDate");
-            if (maxDateStr != null && maxDateStr.trim().length() > 0) {
+            if (maxDateStr != null && maxDateStr.trim().length() > 0)
+            {
                 DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-                try {
+                try
+                {
                     maxDate = df.parse(maxDateStr);
-                } catch (ParseException ex) {
+                }
+                catch (ParseException ex)
+                {
                     log.error("invalid maxDate: " + maxDateStr + " reason: " + ex);
                     usage();
                     System.exit(1);
                 }
             }
 
-            if (!validate) {
+            if (!validate)
+            {
                 CaomHarvester ch = null;
-                try {
-                    if (service) {
-                        ch = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads,
-                                destDS, batchSize, batchFactor, full, skip, maxDate);
-                    } else {
-                        ch = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize,
+                try
+                {
+                    if (service)
+                    {
+                        ch = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize,
                                 batchFactor, full, skip, maxDate);
                     }
-                } catch (IOException ioex) {
+                    else
+                    {
+                        ch = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip,
+                                maxDate);
+                    }
+                }
+                catch (IOException ioex)
+                {
 
                     log.error("failed to init: " + ioex.getMessage());
                     exitValue = -1;
@@ -205,26 +251,33 @@ public class Main {
                 exitValue = 2; // in case we get killed
                 Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-                log.info("about to launch ch");
-
-                if (subject != null) {
+                if (subject != null)
+                {
                     Subject.doAs(subject, new RunnableAction(ch));
-                } else // anon
+                }
+                else // anon
                 {
                     ch.run();
                 }
-            } else {
+            }
+            else
+            {
                 CaomValidator cv = null;
 
-                try {
-                    if (service) {
-                        cv = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS,
-                                batchSize, batchFactor, full, skip, maxDate);
-                    } else {
-                        cv = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full,
-                                skip, maxDate);
+                try
+                {
+                    if (service)
+                    {
+                        cv = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
+                                batchFactor, full, skip, maxDate);
                     }
-                } catch (IOException ioex) {
+                    else
+                    {
+                        cv = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                    }
+                }
+                catch (IOException ioex)
+                {
 
                     log.error("failed to init: " + ioex.getMessage());
                     exitValue = -1;
@@ -234,48 +287,55 @@ public class Main {
                 exitValue = 2; // in case we get killed
                 Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-                if (subject != null) {
+                if (subject != null)
+                {
                     Subject.doAs(subject, new RunnableAction(cv));
-                } else // anon
+                }
+                else // anon
                 {
                     cv.run();
                 }
             }
             exitValue = 0; // finished cleanly
-        } catch (Throwable t) {
+        }
+        catch (Throwable t)
+        {
             log.error("uncaught exception", t);
             exitValue = -1;
             System.exit(exitValue);
-        } finally {
+        }
+        finally
+        {
             System.exit(exitValue);
         }
     }
 
-    private static class ShutdownHook implements Runnable {
+    private static class ShutdownHook implements Runnable
+    {
 
-        ShutdownHook() {
+        ShutdownHook()
+        {
         }
 
         @Override
-        public void run() {
+        public void run()
+        {
             if (exitValue != 0)
                 log.error("terminating with exit status " + exitValue);
         }
 
     }
 
-    private static void usage() {
+    private static void usage()
+    {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append(
-                "\n           --resourceID= to pick the caom2repo service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n           --resourceID= to pick the caom2repo service (e.g. ivo://cadc.nrc.ca/caom2repo)");
         sb.append("\n           --collection= collection to be retrieve. (e.g. IRIS)");
-        sb.append(
-                "\n           --threads= number  of threads to be used to harvest observations (default: 1)");
+        sb.append("\n           --threads= number  of threads to be used to harvest observations (default: 1)");
         sb.append("\n           --source=<server.database.schema>");
         sb.append("\n           --destination=<server.database.schema>");
-        sb.append(
-                "\n          note: harvesting source is specified by either --resourceID or --source");
+        sb.append("\n          note: harvesting source is specified by either --resourceID or --source");
         sb.append("\n                --collection and --threads apply to --resourceID mode only");
         sb.append("\n\nOptions:");
         sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
@@ -290,8 +350,7 @@ public class Main {
         sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n     --batchSize=<number of observations per batch> (default: (");
         sb.append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append(
-                "\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
+        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
         sb.append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n     --dryrun : check for work but don't do anything");
         log.warn(sb.toString());
