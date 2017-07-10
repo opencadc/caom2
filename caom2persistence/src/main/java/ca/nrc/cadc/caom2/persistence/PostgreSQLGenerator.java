@@ -106,10 +106,10 @@ public class PostgreSQLGenerator extends BaseSQLGenerator
     {
         super(database, schema);
         this.useIntegerForBoolean = true;
-        this.persistTransientState = true;
+        this.persistComputed = true;
+        this.persistOptimisations = true;
         this.persistReadAccessWithAsset = true;
         this.useLongForUUID = false;
-        this.useIntegerForBoolean = true;
         super.init();
         
         castMap.put("proposal_keywords", "tsvector");
