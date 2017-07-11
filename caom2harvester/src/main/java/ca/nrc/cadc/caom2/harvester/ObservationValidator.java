@@ -169,7 +169,7 @@ public class ObservationValidator extends Harvester
             startDate = curLastModified;
 
             Date end = maxDate;
-            List<SkippedWrapperURI<Observation>> entityListSrc = null;
+            List<SkippedWrapperURI<ObservationError>> entityListSrc = null;
             List<SkippedWrapperURI<Observation>> entityListSrcComplete = null;
 
             Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
@@ -217,7 +217,7 @@ public class ObservationValidator extends Harvester
             List<Observation> copy = new ArrayList<Observation>();
             copy.addAll(tmpSrc);
 
-            List<Observation> errlist = calculateErroneousObservations(tmpSrcState, tmpDstState, tmpSrc, tmpDst);
+            List<ObservationError> errlist = calculateErroneousObservations(tmpSrcState, tmpDstState, tmpSrc, tmpDst);
             // log.info("************************** errlistState.size() = " +
             // errlistState.size());
             log.info("************************** errlist.size() = " + errlist.size());
@@ -234,7 +234,8 @@ public class ObservationValidator extends Harvester
             t = System.currentTimeMillis();
 
             entityListSrc = wrap(errlist);
-            entityListSrcComplete = wrap(copy);
+
+            entityListSrcComplete = wrapObservation(copy);
             if (entityListSrcComplete.size() > 0)
             {
                 curLastModified = entityListSrcComplete.get(entityListSrcComplete.size() - 1).entity
@@ -244,14 +245,13 @@ public class ObservationValidator extends Harvester
             ret.found = copy.size();
             log.info("found: " + copy.size());
 
-            ListIterator<SkippedWrapperURI<Observation>> iter = entityListSrc.listIterator();
+            ListIterator<SkippedWrapperURI<ObservationError>> iter = entityListSrc.listIterator();
             while (iter.hasNext())
             {
-                SkippedWrapperURI<Observation> ow = iter.next();
-                Observation o = ow.entity;
+                SkippedWrapperURI<ObservationError> ow = iter.next();
+                ObservationError o = ow.entity;
                 iter.remove(); // allow garbage collection during loop
 
-                String lastMsg = null;
                 String skipMsg = null;
 
                 try
@@ -261,17 +261,15 @@ public class ObservationValidator extends Harvester
                     {
                         if (o != null)
                         {
-                            skipMsg = o + ": " + lastMsg;
-                            lastMsg = null;
-
+                            skipMsg = o.toString();// + ": " + o.getError();
                             try
                             {
                                 log.debug("starting HarvestSkipURI transaction");
                                 boolean putSkip = true;
-                                HarvestSkipURI skip = harvestSkip.get(source, cname, o.getURI().getURI());
+                                HarvestSkipURI skip = harvestSkip.get(source, cname, o.getObs().getURI().getURI());
                                 if (skip == null)
                                 {
-                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), skipMsg);
                                 }
                                 else
                                 {
@@ -319,7 +317,6 @@ public class ObservationValidator extends Harvester
                 }
                 catch (Throwable oops)
                 {
-                    lastMsg = oops.getMessage();
                     String str = oops.toString();
                     if (oops instanceof Error)
                     {
@@ -354,13 +351,13 @@ public class ObservationValidator extends Harvester
                             && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
                     {
                         log.error("CONTENT PROBLEM - duplicate observation: " + " "
-                                + o.getURI().getURI().toASCIIString());
+                                + o.getObs().getURI().getURI().toASCIIString());
                     }
                     else if (oops instanceof UncategorizedSQLException)
                     {
                         if (str.contains("spherepoly_from_array"))
                         {
-                            log.error("UNDETECTED illegal polygon: " + o.getURI().getURI());
+                            log.error("UNDETECTED illegal polygon: " + o.getObs().getURI().getURI());
                         }
                         else
                             log.error("unexpected exception", oops);
@@ -368,7 +365,8 @@ public class ObservationValidator extends Harvester
                     else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator")
                             && str.contains("keywords"))
                     {
-                        log.error("CONTENT PROBLEM - invalid keywords: " + " " + o.getURI().getURI().toASCIIString());
+                        log.error("CONTENT PROBLEM - invalid keywords: " + " "
+                                + o.getObs().getURI().getURI().toASCIIString());
                     }
                     else
                         log.error("unexpected exception", oops);
@@ -415,10 +413,10 @@ public class ObservationValidator extends Harvester
 
     };
 
-    private List<Observation> calculateErroneousObservations(List<ObservationState> tmpSrcState,
+    private List<ObservationError> calculateErroneousObservations(List<ObservationState> tmpSrcState,
             List<ObservationState> tmpDstState, List<Observation> tmpSrc, List<Observation> tmpDst)
     {
-        List<Observation> listErroneous = new ArrayList<Observation>();
+        List<ObservationError> listErroneous = new ArrayList<ObservationError>();
         Collections.sort(tmpSrcState, cState);
         Collections.sort(tmpDstState, cState);
         Collections.sort(tmpSrc, c);
@@ -440,8 +438,10 @@ public class ObservationValidator extends Harvester
 
             if (!osSrc.getURI().getObservationID().equals(oSrc.getURI().getObservationID()))
             {
-                log.info("WRONG (not found): " + osSrc.getURI().getObservationID());
-                listErroneous.add(oSrc);
+                log.debug("WRONG (not found): " + osSrc.getURI().getObservationID());
+                ObservationError oe = new ObservationError(oSrc, "Observation " + oSrc.getObservationID()
+                        + " not found in repo but present as ObservationState");
+                listErroneous.add(oe);
                 tmpSrcState.remove(osSrc);
                 if (i >= 0)
                 {
@@ -451,29 +451,30 @@ public class ObservationValidator extends Harvester
             }
             else
             {
-                // if (!(osSrc.accMetaChecksum != null &&
-                // oSrc.getAccMetaChecksum() != null
-                // && osSrc.accMetaChecksum.equals(oSrc.getAccMetaChecksum())))
-                // {
-                // log.info("WRONG MD5: " + osSrc.getURI().getObservationID());
-                // listErroneous.add(oSrc);
-                // tmpSrcState.remove(osSrc);
-                // if (i >= 0)
-                // {
-                // i--;
-                // }
-                // continue;
-                // }
-                // else
-                // {
-                log.info("CORRECT MD5: " + osSrc.getURI().getObservationID());
-                tmpSrcState.remove(osSrc);
-                tmpSrc.remove(oSrc);
-                if (i >= 0)
+                if (!(osSrc.accMetaChecksum != null && oSrc.getAccMetaChecksum() != null
+                        && osSrc.accMetaChecksum.equals(oSrc.getAccMetaChecksum())))
                 {
-                    i--;
+                    log.debug("WRONG MD5: " + osSrc.getURI().getObservationID());
+                    ObservationError oe = new ObservationError(oSrc, "Observation " + oSrc.getObservationID()
+                            + " has different accumulated checksum in ObservationState and in Observation");
+                    listErroneous.add(oe);
+                    tmpSrcState.remove(osSrc);
+                    if (i >= 0)
+                    {
+                        i--;
+                    }
+                    continue;
                 }
-                // }
+                else
+                {
+                    log.debug("CORRECT MD5: " + osSrc.getURI().getObservationID());
+                    tmpSrcState.remove(osSrc);
+                    tmpSrc.remove(oSrc);
+                    if (i >= 0)
+                    {
+                        i--;
+                    }
+                }
             }
         }
 
@@ -489,8 +490,10 @@ public class ObservationValidator extends Harvester
 
             if (!oSrc.getURI().getObservationID().equals(oDst.getURI().getObservationID()))
             {
-                log.info("WRONG (not found): " + oSrc.getURI().getObservationID());
-                listErroneous.add(oSrc);
+                log.debug("WRONG (not found): " + oSrc.getURI().getObservationID());
+                ObservationError oe = new ObservationError(oSrc, "Observation " + oSrc.getObservationID()
+                        + " present in repo but not found in destination data base");
+                listErroneous.add(oe);
                 tmpSrc.remove(oSrc);
                 if (i >= 0)
                 {
@@ -500,30 +503,30 @@ public class ObservationValidator extends Harvester
             }
             else
             {
-                // if (!(oSrc.getAccMetaChecksum() != null &&
-                // oDst.getAccMetaChecksum() != null
-                // &&
-                // oSrc.getAccMetaChecksum().equals(oDst.getAccMetaChecksum())))
-                // {
-                // log.info("WRONG MD5: " + oSrc.getURI().getObservationID());
-                // listErroneous.add(oSrc);
-                // tmpSrc.remove(oSrc);
-                // if (i >= 0)
-                // {
-                // i--;
-                // }
-                // continue;
-                // }
-                // else
-                // {
-                log.info("CORRECT MD5: " + oSrc.getURI().getObservationID());
-                tmpSrc.remove(oSrc);
-                tmpDst.remove(oDst);
-                if (i >= 0)
+                if (!(oSrc.getAccMetaChecksum() != null && oDst.getAccMetaChecksum() != null
+                        && oSrc.getAccMetaChecksum().equals(oDst.getAccMetaChecksum())))
                 {
-                    i--;
+                    log.debug("WRONG MD5: " + oSrc.getURI().getObservationID());
+                    ObservationError oe = new ObservationError(oSrc, "Observation " + oSrc.getObservationID()
+                            + " has different accumulated checksum in repo and in destination database");
+                    listErroneous.add(oe);
+                    tmpSrc.remove(oSrc);
+                    if (i >= 0)
+                    {
+                        i--;
+                    }
+                    continue;
                 }
-                // }
+                else
+                {
+                    log.debug("CORRECT MD5: " + oSrc.getURI().getObservationID());
+                    tmpSrc.remove(oSrc);
+                    tmpDst.remove(oDst);
+                    if (i >= 0)
+                    {
+                        i--;
+                    }
+                }
             }
         }
 
@@ -535,7 +538,17 @@ public class ObservationValidator extends Harvester
         return listErroneous;
     }
 
-    private List<SkippedWrapperURI<Observation>> wrap(List<Observation> obsList)
+    private List<SkippedWrapperURI<ObservationError>> wrap(List<ObservationError> obsList)
+    {
+        List<SkippedWrapperURI<ObservationError>> ret = new ArrayList<SkippedWrapperURI<ObservationError>>(
+                obsList.size());
+        for (ObservationError o : obsList)
+        {
+            ret.add(new SkippedWrapperURI<ObservationError>(o, null));
+        }
+        return ret;
+    }
+    private List<SkippedWrapperURI<Observation>> wrapObservation(List<Observation> obsList)
     {
         List<SkippedWrapperURI<Observation>> ret = new ArrayList<SkippedWrapperURI<Observation>>(obsList.size());
         for (Observation o : obsList)
