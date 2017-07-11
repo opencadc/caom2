@@ -207,7 +207,7 @@ public class ObservationValidator extends Harvester
                 tmpSrc = new ArrayList<Observation>();
                 for (WorkerResponse wr : aux)
                 {
-                    if (wr.getObservation() == null)
+                    if (wr != null && wr.getObservation() == null)
                         continue;
                     tmpSrc.add(wr.getObservation());
                 }

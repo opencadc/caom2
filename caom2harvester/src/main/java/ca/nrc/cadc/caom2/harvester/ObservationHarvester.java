@@ -281,7 +281,7 @@ public class ObservationHarvester extends Harvester
                     List<WorkerResponse> l = srcObservationService.getList(collection, startDate, end, batchSize + 1);
                     for (WorkerResponse wr : l)
                     {
-                        if (wr.getObservation() != null)
+                        if (wr != null && wr.getObservation() != null)
                             tmp.add(wr.getObservation());
                     }
                 }
@@ -315,7 +315,7 @@ public class ObservationHarvester extends Harvester
                             l = srcObservationService.getList(collection, startDate, end, tmpBatchSize);
                             for (WorkerResponse wr : l)
                             {
-                                if (wr.getObservation() != null)
+                                if (wr != null && wr.getObservation() != null)
                                     tmp.add(wr.getObservation());
                             }
 
