@@ -122,6 +122,8 @@ public abstract class RepoAction extends RestAction
 
     private String collection;
     protected ObservationURI uri;
+    protected boolean computeMetadata;
+    protected boolean computeMetadataValidation;
 
     private transient CaomRepoConfig.Item repoConfig;
     private transient ObservationDAO dao;
@@ -325,32 +327,41 @@ public abstract class RepoAction extends RestAction
         {
             CaomValidator.validate(obs);
 
-            // start: temporary
-            // this used to be in the CaomValidator but computation was removed from the core model
-            // however the concept of transient state is likely to be removed in the near future so
-            // this is temporary to keep current behaviour
-            for (Plane p : obs.getPlanes())
+            if (computeMetadata || computeMetadataValidation)
             {
+                String ostr = obs.getCollection() + "/" + obs.getObservationID();
+                String cur = ostr;
                 try
                 {
-                    ComputeUtil.clearTransientState(p);
-                    ComputeUtil.computeTransientState(obs, p);
-                    if (p.position != null && p.position.bounds != null)
+                    for (Plane p : obs.getPlanes())
                     {
-                        Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
-                        PolygonUtil.getOuterHull(poly);
+                        cur = ostr + "/" + p.getProductID();
+                        ComputeUtil.clearTransientState(p);
+                        ComputeUtil.computeTransientState(obs, p);
+                        if (p.position != null && p.position.bounds != null)
+                        {
+                            Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
+                            PolygonUtil.getOuterHull(poly);
+                        }
                     }
                 }
                 catch(Error er)
                 {
-                    throw new RuntimeException("failed to compute metadata for plane " + p.getProductID(), er);
+                    throw new RuntimeException("failed to compute metadata for plane " + cur, er);
                 }
                 catch(Exception ex)
                 {
-                    throw new IllegalArgumentException("failed to compute metadata for plane " + p.getProductID(), ex);
+                    throw new IllegalArgumentException("failed to compute metadata for plane " + cur, ex);
+                }
+                finally
+                {
+                    if (!computeMetadata) // do not impact checksums
+                        for (Plane p : obs.getPlanes())
+                        {
+                            ComputeUtil.clearTransientState(p);
+                        }
                 }
             }
-            // end: temporary
         } 
         catch (IllegalArgumentException ex)
         {
@@ -394,6 +405,9 @@ public abstract class RepoAction extends RestAction
         CaomRepoConfig.Item i = getConfig(collection);
         if (i != null)
         {
+            this.computeMetadata = i.getComputeMetadata();
+            this.computeMetadataValidation = i.getComputeMetadataValidation();
+            
             ObservationDAO ret = new DatabaseObservationDAO();
             Map<String,Object> props = new HashMap<String,Object>();
             props.put("jndiDataSourceName", i.getDataSourceName());
@@ -401,6 +415,7 @@ public abstract class RepoAction extends RestAction
             props.put("schema", i.getSchema());
             props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
             ret.setConfig(props);
+            
             return ret;
         }
         throw new IllegalArgumentException("unknown collection: " + collection);

@@ -98,12 +98,6 @@ public class DummySQLGeneratorImpl implements SQLGenerator
     public DummySQLGeneratorImpl() { }
 
     @Override
-    public boolean persistTransientState()
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public String getSelectSQL(ObservationURI ouri, int i)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
