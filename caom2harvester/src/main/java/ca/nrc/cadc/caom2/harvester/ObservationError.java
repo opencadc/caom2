@@ -26,6 +26,6 @@ public class ObservationError
     @Override
     public String toString()
     {
-        return obs.getURI().getURI() + ": " + error;
+        return (String) (obs != null ? obs.getURI().getURI() : obs + ": " + error);
     }
 }
