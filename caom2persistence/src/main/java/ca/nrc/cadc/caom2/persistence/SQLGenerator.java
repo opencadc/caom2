@@ -89,8 +89,6 @@ public interface SQLGenerator
     static final int MIN_DEPTH = 1;
     static final int MAX_DEPTH = 5;
     
-    boolean persistTransientState();
-
     /**
      * Get SQL to select an Observation from a URI.
      * 

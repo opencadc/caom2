@@ -104,70 +104,64 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import java.security.AccessControlException;
 
 public class RepoClient
 {
-
     private static final Logger log = Logger.getLogger(RepoClient.class);
+    private static final URI standardID = Standards.CAOM2REPO_OBS_23;
+    
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    private URI resourceId = null;
-    private RegistryClient rc = null;
+    
+    private URI resourceID = null;
     private URL baseServiceURL = null;
 
-    private Subject subject = null;
-    private AuthMethod meth;
+    //private Subject subject = null;
+    //private AuthMethod meth;
     private String collection = null;
     private int nthreads = 1;
 
-    protected final String BASE_HTTP_URL;
-
-    public RepoClient()
-    {
-        BASE_HTTP_URL = null;
-    }
-
-    // constructor takes service identifier arg
-    @SuppressWarnings("deprecation")
+    private RepoClient() { }
+    
+    /**
+     * Create new CAOM RepoClient.
+     * 
+     * @param resourceID the service identifier
+     * @param nthreads number of threads to use when getting list of observations
+     */
     public RepoClient(URI resourceID, int nthreads)
     {
         this.nthreads = nthreads;
-        this.resourceId = resourceID;
+        this.resourceID = resourceID;
+    }
+    
+    private void init()
+    {
+        RegistryClient rc = new RegistryClient();
 
-        rc = new RegistryClient();
-
-        // setup optional authentication for harvesting from a web service
-        // get current subject
-        // Create a subject
-        subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-
-        // subject = AuthenticationUtil.getCurrentSubject();
-        if (subject != null)
-        {
-            meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            // User RegistryClient to go from resourceID to service URL
-        }
-        else
-        {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null)
             meth = AuthMethod.ANON;
-
-            log.info("No current subject found");
-        }
-        baseServiceURL = rc.getServiceURL(this.resourceId, Standards.CAOM2REPO_OBS_23, meth);
-        BASE_HTTP_URL = baseServiceURL.toExternalForm();
-
-        log.info("BASE SERVICE URL: " + baseServiceURL.toString());
-        log.info("Authentication used: " + meth);
-
+        this.baseServiceURL = rc.getServiceURL(this.resourceID, standardID, meth);
+        if (baseServiceURL == null)
+            throw new RuntimeException("not found: " + resourceID + " + " + standardID + " + " + meth);
+        
+        log.debug("service URL: " + baseServiceURL.toString());
+        log.debug("AuthMethod:  " + meth);
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec)
+        throws AccessControlException
     {
+        init();
+        
         // Use HttpDownload to make the http GET calls (because it handles a lot
         // of the
         // authentication stuff)
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + collection;
+        String surl = baseServiceURL.toExternalForm() + File.separator + collection;
         if (maxrec != null)
             surl = surl + "?maxRec=" + maxrec;
         if (start != null)
@@ -179,24 +173,18 @@ public class RepoClient
         {
             url = new URL(surl);
             HttpDownload get = new HttpDownload(url, bos);
-
-            if (subject != null)
+            get.run();
+            if (get.getThrowable() != null)
             {
-                Subject.doAs(subject, new RunnableAction(get));
+                if (get.getThrowable() instanceof AccessControlException)
+                    throw (AccessControlException) get.getThrowable();
 
-                log.info("Query run within subject");
+                throw new RuntimeException("failed to get observation list", get.getThrowable());
             }
-            else
-            {
-                get.run();
-                log.info("Query run");
-            }
-
         }
         catch (MalformedURLException e)
         {
-            log.error("Exception in getObservationList: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("BUG: failed to generate observation list url", e);
         }
 
         List<ObservationState> list = null;
@@ -207,8 +195,7 @@ public class RepoClient
         }
         catch (ParseException | IOException e)
         {
-            throw new RuntimeException(
-                    "Unable to list of ObservationState from " + bos.toString() + ": exception = " + e.getMessage());
+            throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
         }
         return list;
     }
@@ -227,7 +214,8 @@ public class RepoClient
     public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
             throws InterruptedException, ExecutionException
     {
-
+        init();
+        
         // startDate = null;
         // end = df.parse("2017-06-20T09:03:15.360");
         List<WorkerResponse> list = new ArrayList<WorkerResponse>();
@@ -237,9 +225,13 @@ public class RepoClient
         // Create tasks for each file
         List<Callable<WorkerResponse>> tasks = new ArrayList<Callable<WorkerResponse>>();
 
+        // the current subject usually gets propagated into a thread pool, but gets attached
+        // when the thread is created so we explicitly pass it it and do another Subject.doAs in case
+        // thread pool management is changed
+        Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
         for (ObservationState os : stateList)
         {
-            tasks.add(new Worker(os, subject, BASE_HTTP_URL));
+            tasks.add(new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm()));
         }
 
         ExecutorService taskExecutor = null;
@@ -279,38 +271,16 @@ public class RepoClient
         return list;
     }
 
-    // public UUID getID(ObservationURI uri) {
-    // WorkerResponse wr = get(uri, null, 1);
-    // if (wr.getObservation() != null)
-    // return wr.getObservation().getID();
-    // return null;
-    // }
-
-    // public ObservationURI getURI(UUID id) {
-    // WorkerResponse wr = get(null, id, 1);
-    // if (wr.getObservation() != null)
-    // return wr.getObservation().getURI();
-    // return null;
-    // }
-
-    // public WorkerResponse get(UUID id) {
-    // if (id == null)
-    // throw new IllegalArgumentException("id cannot be null");
-    // // TODO: redo in a more efficient way
-    // List<ObservationState> list = getObservationList(collection, null, null,
-    // null);
-    // for (ObservationState os : list) {
-    // if (os.get)
-    // }
-    // return get(null, id, 1);
-    // }
-
     public WorkerResponse get(ObservationURI uri)
     {
+        init();
+        
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
         ObservationState os = new ObservationState(uri);
-        Worker wt = new Worker(os, subject, BASE_HTTP_URL);
+        // see comment above in getList
+        Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
+        Worker wt = new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm());
         return wt.getObservation();
     }
     public WorkerResponse get(URI uri, Date start)
@@ -318,6 +288,8 @@ public class RepoClient
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
 
+        init();
+        
         List<ObservationState> list = getObservationList(collection, start, null, null);
         ObservationState obsState = null;
         for (ObservationState os : list)
@@ -331,7 +303,9 @@ public class RepoClient
         }
         if (obsState != null)
         {
-            Worker wt = new Worker(obsState, subject, BASE_HTTP_URL);
+            // see comment above in getList
+            Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
+            Worker wt = new Worker(obsState, subjectForWorkerThread, baseServiceURL.toExternalForm());
             return wt.getObservation();
         }
         else
@@ -340,23 +314,12 @@ public class RepoClient
         }
     }
 
-    // private WorkerResponse get(ObservationURI uri, UUID id, int depth) {
-    // if (id == null && uri == null) {
-    // throw new RuntimeException("uri and id cannot be null at the same time");
-    // }
-    // WorkerResponse o = null;
-    // if (uri != null) {
-    // o = get(uri);
-    // } else if (id != null) {
-    // o = get(id);
-    // }
-    // return o;
-    // }
-
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
             final ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
             throws ParseException, IOException
     {
+        init();
+        
         List<ObservationState> list = new ArrayList<ObservationState>();
 
         // Reader reader = new Reader()
@@ -457,10 +420,5 @@ public class RepoClient
             }
         }
         return list;
-    }
-
-    public void delete(UUID id)
-    {
-
     }
 }

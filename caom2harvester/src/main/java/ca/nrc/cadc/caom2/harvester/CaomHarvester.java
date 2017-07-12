@@ -75,6 +75,7 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param compute compute plane metadata from WCS before insert
      * @param src
      *            source server,database,schema
      * @param dest
@@ -94,7 +95,7 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full,
+    public CaomHarvester(boolean dryrun, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full,
             boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         Integer entityBatchSize = batchSize * batchFactor;
@@ -107,6 +108,7 @@ public class CaomHarvester implements Runnable
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
+        obsHarvester.setComputePlaneMetadata(compute);
 
         this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest,
                 entityBatchSize, full, dryrun);
@@ -140,6 +142,7 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param compute compute plane metadata from WCS before insert
      * @param resourceId
      *            repo service
      * @param collection
@@ -163,12 +166,10 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
+    public CaomHarvester(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest,
             int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
             throws IOException, URISyntaxException
     {
-        Integer entityBatchSize = batchSize * batchFactor;
-
         DBConfig dbrc = new DBConfig();
         ConnectionConfig cc = dbrc.getConnectionConfig(dest[0], dest[1]);
         DataSource ds = DBUtil.getDataSource(cc);
@@ -177,6 +178,7 @@ public class CaomHarvester implements Runnable
         this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
+        obsHarvester.setComputePlaneMetadata(compute);
 
         if (!full)
         {
@@ -202,6 +204,7 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param compute compute plane metadata from WCS before insert
      * @param resourceId
      *            repo service
      * @param collection
@@ -221,20 +224,22 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
+    public CaomHarvester(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest,
             Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
     {
         this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
+        obsHarvester.setComputePlaneMetadata(compute);
     }
 
     /**
-     * Harvest everything.
+     * Harvest observations from source database..
      *
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param compute compute plane metadata from WCS before insert
      * @param src
      *            source server,database,schema
      * @param dest
@@ -250,41 +255,18 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
+    public CaomHarvester(boolean dryrun, boolean compute, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
             throws IOException, URISyntaxException
     {
         this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
+        obsHarvester.setComputePlaneMetadata(compute);
     }
 
-    /**
-     * Harvest everything.
-     *
-     * @param dryrun
-     *            true if no changed in the data base are applied during the
-     *            process
-     * @param src
-     *            source server,database,schema
-     * @param dest
-     *            destination server,database,schema
-     * @param batchSize
-     *            number of observations per batch (~memory consumption)
-     * @param batchFactor
-     *            multiplier for batchSize when harvesting single-table entities
-     * @param full
-     *            full harvest of all source entities
-     * @param skip
-     *            flag that indicates if shipped observations should be dealt
-     * @param maxDate
-     *            latest date to be using during harvester
-     * @return UnsupportedOperationException
-     * @throws java.io.IOException
-     *             IOException
-     * @throws URISyntaxException
-     *             URISyntaxException
-     */
-    public static CaomHarvester getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize,
+    // undocumented for use be developers that want to setup a CaomHarvester with only some components or hard-coded
+    // config not supported by command-line arguments
+    public static CaomHarvester getTestHarvester(boolean dryrun, boolean compute, String[] src, String[] dest, Integer batchSize,
             Integer batchFactor, boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         throw new UnsupportedOperationException();
@@ -297,14 +279,18 @@ public class CaomHarvester implements Runnable
     public void run()
     {
 
-        // make sure wcslib can be loaded
-        try
+        if (obsHarvester.getComputePlaneMetadata())
         {
-            Class.forName("ca.nrc.cadc.wcs.WCSLib");
-        }
-        catch (Throwable t)
-        {
-            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+            // make sure wcslib can be loaded
+            try
+            {
+                log.info("loading ca.nrc.cadc.wcs.WCSLib");
+                Class.forName("ca.nrc.cadc.wcs.WCSLib");
+            }
+            catch (Throwable t)
+            {
+                throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+            }
         }
 
         boolean init = false;
@@ -312,8 +298,7 @@ public class CaomHarvester implements Runnable
         {
             boolean created = initdb.doInit();
             if (created)
-                init = true; // database is empty so can bypass processing old
-                             // deletions
+                init = true; // database is empty so can bypass processing old deletions
         }
 
         // clean up old access control tuples before harvest to avoid conflicts
@@ -398,7 +383,7 @@ public class CaomHarvester implements Runnable
         // harvest observations
         if (obsHarvester != null)
         {
-            log.info("************** obsHarvester.run() ***************");
+            log.debug("************** obsHarvester.run() ***************");
             obsHarvester.run();
         }
 

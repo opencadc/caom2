@@ -94,11 +94,13 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Requirements;
@@ -205,17 +207,33 @@ public class BaseSQLGenerator implements SQLGenerator
 
     protected String database;
     protected String schema;
+    
+    // default configuration of features is for a complete caom2 model with no optimisations
     protected boolean useIntegerForBoolean = true; // TAP default
-    protected boolean persistTransientState = false; // persist computed plane metadata
+    protected boolean persistOptimisations = false;  // persist alternate representations to support optimisations
+    protected boolean persistComputed = true; // persist computed plane metadata
     protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
     protected boolean useLongForUUID = false;
     protected String fakeSchemaTablePrefix = null;
+    
+    /**
+     * IVOA authority for computing Plane publisherID when persistOptimisations is true.
+     * TODO: Provide a mechanism to set the publisher authority or support a plugin that
+     * generated a publisherID URI using site-specific format.
+     */
+    protected String publisherAuthority = "cadc.nrc.ca";
     
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
     protected int numComputedArtifactColumns;
     protected int numComputedPartColumns;
     protected int numComputedChunkColumns;
+    
+    protected int numOptObservationColumns;
+    protected int numOptPlaneColumns;
+    protected int numOptArtifactColumns;
+    protected int numOptPartColumns;
+    protected int numOptChunkColumns;
 
     // map of Class to the table that stores instances
     protected final Map<Class,String> tableMap = new TreeMap<Class,String>(new ClassComp());
@@ -316,23 +334,14 @@ public class BaseSQLGenerator implements SQLGenerator
             "stateCode", "metaChecksum", "accMetaChecksum", 
             "obsID"
         };
-        if (persistTransientState)
+        if (persistOptimisations)
         {
-            String[] computedObsColumns = new String[]
+            String[] extraCols = new String[]
             {
                 "observationURI"
             };
-            this.numComputedObservationColumns = computedObsColumns.length;
-            int n = obsColumns.length + computedObsColumns.length;
-            String[] allCols = new String[n];
-
-            // insert the computed columns before the CaomEntity columns and PK (last 6)
-            System.arraycopy(obsColumns, 0, allCols, 0, obsColumns.length - 6);
-            int num = obsColumns.length - 6;
-            System.arraycopy(computedObsColumns, 0, allCols, num, computedObsColumns.length);
-            num += computedObsColumns.length;
-            System.arraycopy(obsColumns, obsColumns.length - 6, allCols, num, 6);
-            obsColumns = allCols;
+            this.numOptObservationColumns = extraCols.length;
+            obsColumns = addExtraColumns(obsColumns, extraCols);
         }
         columnMap.put(Observation.class, obsColumns);
 
@@ -353,14 +362,20 @@ public class BaseSQLGenerator implements SQLGenerator
             "stateCode", "metaChecksum", "accMetaChecksum", 
             "planeID"
         };
-
-        if (persistTransientState)
+        if (persistOptimisations)
         {
-            String[] computedPlaneColumns = new String[]
+            String[] extraCols = new String[]
             {
                 "publisherID",
-                "planeURI",
-                
+                "planeURI"
+            };
+            this.numOptPlaneColumns = extraCols.length;
+            planeColumns = addExtraColumns(planeColumns, extraCols);
+        }
+        if (persistComputed)
+        {
+            String[] extraCols = new String[]
+            {
                 // position
                 "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size",
                 "position_dimension1", "position_dimension2",
@@ -380,17 +395,8 @@ public class BaseSQLGenerator implements SQLGenerator
                 // polarization
                 "polarization_states", "polarization_dimension"
             };
-            this.numComputedPlaneColumns = computedPlaneColumns.length;
-            int n = planeColumns.length + computedPlaneColumns.length;
-            String[] allCols = new String[n];
-
-            // insert the computed columns before the CaomEntity columns and PK (last 6)
-            System.arraycopy(planeColumns, 0, allCols, 0, planeColumns.length - 6);
-            int num = planeColumns.length - 6;
-            System.arraycopy(computedPlaneColumns, 0, allCols, num, computedPlaneColumns.length);
-            num += computedPlaneColumns.length;
-            System.arraycopy(planeColumns, planeColumns.length - 6, allCols, num, 6);
-            planeColumns = allCols;
+            this.numComputedPlaneColumns = extraCols.length;
+            planeColumns = addExtraColumns(planeColumns, extraCols);
         }
         columnMap.put(Plane.class, planeColumns);
 
@@ -404,23 +410,14 @@ public class BaseSQLGenerator implements SQLGenerator
             "stateCode", "metaChecksum", "accMetaChecksum", 
             "artifactID"
         };
-        if (persistTransientState)
+        if (persistOptimisations)
         {
-            String[] computedColumns = new String[]
+            String[] extraCols = new String[]
             {
                 "metaRelease"
             };
-            this.numComputedArtifactColumns = computedColumns.length;
-            int n = artifactColumns.length + computedColumns.length;
-            String[] allCols = new String[n];
-
-            // insert the computed columns before the CaomEntity columns and PK (last 6)
-            System.arraycopy(artifactColumns, 0, allCols, 0, artifactColumns.length - 6);
-            int num = artifactColumns.length - 6;
-            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
-            num += computedColumns.length;
-            System.arraycopy(artifactColumns, artifactColumns.length - 6, allCols, num, 6);
-            artifactColumns = allCols;
+            this.numOptArtifactColumns = extraCols.length;
+            artifactColumns = addExtraColumns(artifactColumns, extraCols);
         }
         columnMap.put(Artifact.class, artifactColumns);
 
@@ -433,23 +430,14 @@ public class BaseSQLGenerator implements SQLGenerator
             "stateCode", "metaChecksum", "accMetaChecksum", 
             "partID"
         };
-        if (persistTransientState)
+        if (persistOptimisations)
         {
-            String[] computedColumns = new String[]
+            String[] extraCols = new String[]
             {
                 "metaRelease"
             };
-            this.numComputedPartColumns = computedColumns.length;
-            int n = partColumns.length + computedColumns.length;
-            String[] allCols = new String[n];
-
-            // insert the computed columns before the CaomEntity columns and PK (last 6)
-            System.arraycopy(partColumns, 0, allCols, 0, partColumns.length - 6);
-            int num = partColumns.length - 6;
-            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
-            num += computedColumns.length;
-            System.arraycopy(partColumns, partColumns.length - 6, allCols, num, 6);
-            partColumns = allCols;
+            this.numOptPartColumns = extraCols.length;
+            partColumns = addExtraColumns(partColumns, extraCols);
         }
         columnMap.put(Part.class, partColumns);
 
@@ -525,23 +513,14 @@ public class BaseSQLGenerator implements SQLGenerator
             "stateCode", "metaChecksum", "accMetaChecksum",
             "chunkID"
         };
-        if (persistTransientState)
+        if (persistOptimisations)
         {
-            String[] computedColumns = new String[]
+            String[] extraCols = new String[]
             {
                 "metaRelease"
             };
-            this.numComputedChunkColumns = computedColumns.length;
-            int n = chunkColumns.length + computedColumns.length;
-            String[] allCols = new String[n];
-
-            // insert the computed columns before the CaomEntity columns and PK (last 6)
-            System.arraycopy(chunkColumns, 0, allCols, 0, chunkColumns.length - 6);
-            int num = chunkColumns.length - 6;
-            System.arraycopy(computedColumns, 0, allCols, num, computedColumns.length);
-            num += computedColumns.length;
-            System.arraycopy(chunkColumns, chunkColumns.length - 6, allCols, num, 6);
-            chunkColumns = allCols;
+            this.numOptChunkColumns = extraCols.length;
+            chunkColumns = addExtraColumns(chunkColumns, extraCols);
         }
         columnMap.put(Chunk.class, chunkColumns);
 
@@ -580,11 +559,20 @@ public class BaseSQLGenerator implements SQLGenerator
         columnMap.put(ObservationState.class, new String[] { "collection", "observationID", "maxLastModified", "accMetaChecksum" });
     }
 
-    public boolean persistTransientState()
+    private String[] addExtraColumns(String[] origCols, String[] extraCols)
     {
-        return persistTransientState;
+        // insert the extra columns before the CaomEntity columns and PK (last 6)
+        int n = origCols.length + extraCols.length;
+        String[] allCols = new String[n];
+            
+        System.arraycopy(origCols, 0, allCols, 0, origCols.length - 6);
+        int num = origCols.length - 6;
+        System.arraycopy(extraCols, 0, allCols, num, extraCols.length);
+        num += extraCols.length;
+        System.arraycopy(origCols, origCols.length - 6, allCols, num, 6);
+        return allCols;
     }
-
+    
     public String getCatalog() { return database; }
     
     public String getSchema() { return schema; }
@@ -1258,7 +1246,7 @@ public class BaseSQLGenerator implements SQLGenerator
             else
                 safeSetString(sb, ps, col++, null);
 
-            if (persistTransientState)
+            if (persistOptimisations)
             {
                 safeSetString(sb, ps, col++, obs.getURI().getURI().toString());
             }
@@ -1390,13 +1378,22 @@ public class BaseSQLGenerator implements SQLGenerator
             else
                 safeSetString(sb, ps, col++, null);
             
-            if (persistTransientState)
+            if (persistOptimisations)
             {
-                safeSetURI(sb, ps, col++, plane.publisherID.getURI());
-                safeSetURI(sb, ps, col++, plane.planeURI.getURI());
-
+                URI resourceID = URI.create("ivo://" + publisherAuthority + "/" + obs.getCollection());
+                PublisherID publisherID = new PublisherID(resourceID, obs.getObservationID(), plane.getProductID());
+                
+                PlaneURI planeURI = new PlaneURI(obs.getURI(), plane.getProductID());
+                
+                safeSetURI(sb, ps, col++, publisherID.getURI());
+                safeSetURI(sb, ps, col++, planeURI.getURI());
+            }
+            if (persistComputed)
+            {
                 //position
                 Position pos = plane.position;
+                if (pos == null)
+                    pos = new Position();
                 if (pos.bounds != null)
                 {
                     Polygon poly = PolygonUtil.toPolygon(pos.bounds);
@@ -1429,6 +1426,8 @@ public class BaseSQLGenerator implements SQLGenerator
 
                 //energy
                 Energy nrg = plane.energy;
+                if (nrg == null)
+                    nrg = new Energy();
                 if (nrg.emBand != null)
                     safeSetString(sb, ps, col++, nrg.emBand.getValue());
                 else
@@ -1467,6 +1466,8 @@ public class BaseSQLGenerator implements SQLGenerator
                 
                 //time
                 Time tim = plane.time;
+                if (tim == null)
+                    tim = new Time();
                 if (tim.bounds != null)
                 {
                     safeSetInterval(sb, ps, col++, tim.bounds);
@@ -1488,6 +1489,8 @@ public class BaseSQLGenerator implements SQLGenerator
 
                 //polarization
                 Polarization pol = plane.polarization;
+                if (pol == null)
+                    pol = new Polarization();
                 safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
                 safeSetLong(sb, ps, col++, pol.dimension);
             }
@@ -1571,8 +1574,8 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetLong(sb, ps, col++, artifact.contentLength);
             safeSetURI(sb, ps, col++, artifact.contentChecksum);
             
-            if (persistTransientState)
-                safeSetDate(sb, ps, col++, Util.truncate(artifact.metaRelease), UTC_CAL);
+            if (persistOptimisations)
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
 
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
@@ -1658,8 +1661,8 @@ public class BaseSQLGenerator implements SQLGenerator
             else
                 safeSetString(sb, ps, col++, null);
             
-            if (persistTransientState)
-                safeSetDate(sb, ps, col++, Util.truncate(part.metaRelease), UTC_CAL);
+            if (persistComputed)
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
 
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
@@ -2009,8 +2012,8 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetLong(sb, ps, col++, null);
             }
 
-            if (persistTransientState)
-                safeSetDate(sb, ps, col++, Util.truncate(chunk.metaRelease), UTC_CAL);
+            if (persistOptimisations)
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
             
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
@@ -3088,12 +3091,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 col += 1; // skip
             }
 
-            if (persistTransientState)
-            {
-                 // skip them on read: wasteful but simpler code for now
-                // TODO: skip them when creating the select-list instead
+            if (persistOptimisations)
+                col += numOptObservationColumns;
+            if (persistComputed)
                 col+= numComputedObservationColumns;
-            }
 
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: observation.lastModified = " + dateFormat.format(lastModified));
@@ -3224,12 +3225,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 p.quality = new DataQuality(Quality.toValue(qflag));
             }
             
-            if (persistTransientState)
-            {
-                 // skip them on read: wasteful but simpler code for now
-                // TODO: skip them when creating the select-list instead
+            if (persistOptimisations)
+                col += numOptPlaneColumns;
+            if (persistComputed)
                 col+= numComputedPlaneColumns;
-            }
 
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: plane.lastModified = " + lastModified);
@@ -3311,7 +3310,9 @@ public class BaseSQLGenerator implements SQLGenerator
             a.contentChecksum = Util.getURI(rs, col++);
             log.debug("found a.contentChecksum = " + a.contentChecksum);
             
-            if (persistTransientState)
+            if (persistOptimisations)
+                col += numOptArtifactColumns;
+            if (persistComputed)
                 col += numComputedArtifactColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
@@ -3379,7 +3380,9 @@ public class BaseSQLGenerator implements SQLGenerator
             if (pt != null)
                 p.productType = ProductType.toValue(pt);
 
-            if (persistTransientState)
+            if (persistOptimisations)
+                col += numOptPartColumns;
+            if (persistComputed)
                 col += numComputedPartColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
@@ -3652,7 +3655,9 @@ public class BaseSQLGenerator implements SQLGenerator
                     c.observable.independent = new Slice(new Axis(oia, oiu), oib);
             }
 
-            if (persistTransientState)
+            if (persistOptimisations)
+                col += numOptChunkColumns;
+            if (persistComputed)
                 col += numComputedChunkColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);

@@ -98,6 +98,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.TestSyncOutput;
 import ca.nrc.cadc.date.DateUtil;
@@ -171,12 +172,17 @@ public class GetActionTest
 
         // build the list of observations for the mock dao to return
         List<ObservationState> obsList = new ArrayList<ObservationState>();
-        Date date1 = df.parse("2010-10-10T10:10:10.10");
-        URI check1 = URI.create("md5:5b71d023d4729575d550536dce8439e6");
-        obsList.add(new ObservationState("TEST", "1234", date1, check1));
-        Date date2 = df.parse("2011-11-11T11:11:11.111");
-        URI check2 = URI.create("md5:aedbcf5e27a17fc2daa5a0e0d7840009");
-        obsList.add(new ObservationState("TEST", "6789", date2, check2));
+
+        ObservationState os1 = new ObservationState(new ObservationURI("TEST", "1234"));
+        os1.maxLastModified = df.parse("2010-10-10T10:10:10.10");
+        os1.accMetaChecksum = URI.create("md5:5b71d023d4729575d550536dce8439e6");
+        obsList.add(os1);
+        
+        ObservationState os2 = new ObservationState(new ObservationURI("TEST", "6789"));
+        os2.maxLastModified = df.parse("2011-11-11T11:11:11.111");
+        os2.accMetaChecksum = URI.create("md5:aedbcf5e27a17fc2daa5a0e0d7840009");
+        obsList.add(os2);
+        
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
 
@@ -189,8 +195,8 @@ public class GetActionTest
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
 
-        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(date1) + "\t" + check1.toString() + "\n" +
-                          "TEST" + "\t" + "6789" + "\t" + df.format(date2) + "\t" + check2.toString() + "\n";
+        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(os1.maxLastModified) + "\t" + os1.accMetaChecksum.toString() + "\n" +
+                          "TEST" + "\t" + "6789" + "\t" + df.format(os2.maxLastModified) + "\t" + os2.accMetaChecksum.toString() + "\n";
         String content = out.getContent();
         log.debug("\n--list content start--\n" + content + "\n--list content end--");
         Assert.assertEquals(expected, content);

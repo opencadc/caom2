@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,73 +62,80 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.repo.client;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.util.HexUtil;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.UUID;
+
+import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class SybaseSQLGenerator extends BaseSQLGenerator
+public class Main 
 {
-    public SybaseSQLGenerator(String database, String schema)
-    {
-        super(database, schema);
-        this.fakeSchemaTablePrefix = "caom2_";
-        this.persistComputed = false;
-        this.persistReadAccessWithAsset = false;
-        this.useLongForUUID = true;
-        this.useIntegerForBoolean = true;
-        super.init();
-    }
-    
+    private static final Logger log = Logger.getLogger(Main.class);
 
-    @Override
-    protected String getTopConstraint(Integer batchSize)
-    {
-        if (batchSize == null)
-            return null;
-        return "TOP " + batchSize;
-    }
+    public Main() { }
     
-    @Override
-    protected String literal(UUID value)
+    public static void main(String[] args)
     {
-        // backwards compat with Long id valued in main CAOM tables
-        if (value.getMostSignificantBits() == 0L)
-            return Long.toString(value.getLeastSignificantBits());
-        
-        // in sybase, UUID is a binary(16)
-        StringBuilder sb = new StringBuilder();
-        sb.append("0x");
-        sb.append( HexUtil.toHex(value.getMostSignificantBits()) );
-        sb.append( HexUtil.toHex(value.getLeastSignificantBits()) );
-        return sb.toString();
-    }
-    
-    @Override
-    protected void safeSetUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
-        throws SQLException
-    {
-        // null UUID is always a bug
-        String hex = HexUtil.toHex(val.getMostSignificantBits())
-            + HexUtil.toHex(val.getLeastSignificantBits());
-        ps.setBytes(col, HexUtil.toBytes(hex));
-        if (sb != null)
+        try
         {
-            sb.append(val);
-            sb.append(",");
+            ArgumentMap am = new ArgumentMap(args);
+
+            if (am.isSet("d") || am.isSet("debug"))
+            {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
+            }
+            else if (am.isSet("v") || am.isSet("verbose"))
+            {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+            }
+            else
+            {
+                Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
+
+            }
+
+            if (am.isSet("h") || am.isSet("help"))
+            {
+                usage();
+                System.exit(0);
+            }
+
+            // TODO: implement useful command-line fatures here: 
+            
+            // setup
+            // am.getValue("resourceID")
+            // am.getValue("collection")
+            
+            // get list
+            // am.isSet("list")
+            // am.getValue("maxrec")
+            
+            // get a single observation
+            // am.getValue("observationID")
+        }
+        catch(Throwable uncaught)
+        {
+            log.error("uncaught exception", uncaught);
+            System.exit(-1);
         }
     }
-     
+    
+    private static void usage()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nusage: caom2-repo [-v|--verbose|-d|--debug] [-h|--help] ...");
+        // TODO: add something useful
+        log.warn(sb.toString());
+    }
 }

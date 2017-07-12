@@ -27,6 +27,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
@@ -55,6 +56,7 @@ public class ObservationHarvester extends Harvester
     private boolean skipped;
     private Date maxDate;
     private boolean doCollisionCheck = false;
+    private boolean computePlaneMetadata = false;
 
     HarvestSkipURIDAO harvestSkip = null;
 
@@ -90,6 +92,16 @@ public class ObservationHarvester extends Harvester
     public void setDoCollisionCheck(boolean doCollisionCheck)
     {
         this.doCollisionCheck = doCollisionCheck;
+    }
+
+    public void setComputePlaneMetadata(boolean computePlaneMetadata)
+    {
+        this.computePlaneMetadata = computePlaneMetadata;
+    }
+
+    public boolean getComputePlaneMetadata()
+    {
+        return computePlaneMetadata;
     }
 
     private void init() throws IOException, URISyntaxException
@@ -148,7 +160,7 @@ public class ObservationHarvester extends Harvester
             Progress num = doit();
 
             if (num.found > 0)
-                log.info("***************** finished batch: " + num + " *******************");
+                log.debug("***************** finished batch: " + num + " *******************");
 
             // double failFrac = ((double) num.failed - num.handled) / ((double)
             // num.found);
@@ -245,14 +257,12 @@ public class ObservationHarvester extends Harvester
             }
             else
             {
-                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
-                                                                                     // minutes
-                                                                                     // ago;
+                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L);
                 if (end == null)
                     end = fiveMinAgo;
                 else
                 {
-                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                    log.debug("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
                     if (end.getTime() > fiveMinAgo.getTime())
                         end = fiveMinAgo;
                 }
@@ -325,14 +335,10 @@ public class ObservationHarvester extends Harvester
                 log.debug("currentBatch: " + format(curBatchLeader.getID()) + " "
                         + format(curBatchLeader.getMaxLastModified()));
                 log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
-                if (curBatchLeader.getID().equals(state.curID) // same obs as
-                                                               // last time
-                        && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) // not
-                                                                                              // modified
-                                                                                              // since
+                if (curBatchLeader.getID().equals(state.curID) // same obs as last time
+                        && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) // not modified since
                 {
-                    iter.remove(); // processed in last batch but picked up by
-                                   // lastModified query
+                    iter.remove(); // processed in last batch but picked up by lastModified query
                     expectedNum--;
                 }
             }
@@ -384,14 +390,11 @@ public class ObservationHarvester extends Harvester
                             }
 
                             // try to avoid DataIntegrityViolationException due
-                            // to missed deletion
-                            // of an observation
+                            // to missed deletion of an observation
                             UUID curID = destObservationDAO.getID(o.getURI());
                             if (curID != null && !curID.equals(o.getID()))
                             {
-                                ObservationURI oldSrc = srcObservationDAO.getURI(curID); // still
-                                                                                         // in
-                                                                                         // src?
+                                ObservationURI oldSrc = srcObservationDAO.getURI(curID);
                                 if (oldSrc == null)
                                 {
                                     // missed harvesting a deletion
@@ -414,7 +417,7 @@ public class ObservationHarvester extends Harvester
                                             + " maxLastModified: " + format(o.getMaxLastModified()));
                             }
 
-                            // advannce the date before put as there are usually
+                            // advance the date before put as there are usually
                             // lots of fails
                             if (skipped)
                                 startDate = hs.lastModified;
@@ -422,6 +425,13 @@ public class ObservationHarvester extends Harvester
                             // temporary validation hack to avoid tickmarks in
                             // the keywords columns
                             CaomValidator.validateKeywords(o);
+                            
+                            if (computePlaneMetadata)
+                            {
+                                log.debug("computePlaneMetadata: " + o.getObservationID());
+                                for (Plane p : o.getPlanes())
+                                    ComputeUtil.computeTransientState(o, p);
+                            }
 
                             destObservationDAO.put(o);
 
