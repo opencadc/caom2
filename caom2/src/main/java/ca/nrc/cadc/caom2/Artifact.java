@@ -101,9 +101,6 @@ public class Artifact extends CaomEntity implements Comparable<Artifact>
     public Long contentLength;
     public URI contentChecksum;
     
-    // computed state
-    public transient Date metaRelease;
-
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType)
     {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);

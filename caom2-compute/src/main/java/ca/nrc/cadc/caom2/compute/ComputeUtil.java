@@ -73,15 +73,13 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
 import org.apache.log4j.Logger;
 
 /**
- * Utility class to compute Plane metadata from Artifact-Part-Chunk metadata.
+ * Utility class to assign values to fields marked with the computed stereotype
+ * in the data model.
  * 
  * @author pdowler
  */
@@ -91,46 +89,28 @@ public class ComputeUtil
 
     private ComputeUtil() { }
     
-    private static void computeIdentifiers(Observation o, Plane p)
-    {
-        // publisherID: ivo://<authority>/<collection>?<observationID>/<productID>
-        // TODO: where to get authority??
-        URI resourceID = URI.create("ivo://cadc.nrc.ca/" + o.getCollection());
-        p.planeURI = new PlaneURI(o.getURI(), p.getProductID());
-        p.publisherID = new PublisherID(resourceID, o.getObservationID(), p.getProductID());
-    }
-     
+    /**
+     * Clear computed plane metadata.
+     * @deprecated 
+     */
     public static void clearTransientState(Plane p)
     {
-        p.publisherID = null;
         p.position = null;
         p.energy = null;
         p.time = null;
         p.polarization = null;
-        // clear metaRelease to children
-        for (Artifact a : p.getArtifacts())
-        {
-            a.metaRelease = null;
-            for (Part pp : a.getParts())
-            {
-                pp.metaRelease = null;
-                for (Chunk c : pp.getChunks())
-                {
-                    c.metaRelease = null;
-                }
-            }
-        }
     }
     
+    /**
+     * Compute plane metadata from WCS.
+     * @deprecated 
+     */
     public static void computeTransientState(Observation o, Plane p)
     {
-        computeIdentifiers(o, p);
         computePosition(p);
         computeEnergy(p);
         computeTime(p);
         computePolarization(p);
-        
-        propagateMetaRelease(p);
     }
     
     private static void computePosition(Plane p)
@@ -173,22 +153,5 @@ public class ComputeUtil
     private static void computePolarization(Plane p)
     {
         p.polarization = PolarizationUtil.compute(p.getArtifacts());
-    }
-
-    private static void propagateMetaRelease(Plane p)
-    {
-        // propagate metaRelease to children of the plane
-        for (Artifact a : p.getArtifacts())
-        {
-            a.metaRelease = p.metaRelease;
-            for (Part pp : a.getParts())
-            {
-                pp.metaRelease = p.metaRelease;
-                for (Chunk c : pp.getChunks())
-                {
-                    c.metaRelease = p.metaRelease;
-                }
-            }
-        }
     }
 }

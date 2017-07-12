@@ -180,7 +180,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 11, 3, 0, 4, 1, 3, 0, 8, 5, 1, 3, 13
+            0, 0, 11, 3, 0, 4, 1, 3, 0, 12, 5, 1, 3, 13
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);

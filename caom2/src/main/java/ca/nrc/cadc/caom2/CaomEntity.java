@@ -239,15 +239,14 @@ public abstract class CaomEntity implements Serializable
      * the current state and is returned without changing the stored value that is
      * accessed via the getMetaChecksum() method.
      * 
-     * @param includeTransient
      * @param digest
      * @return 
      */
-    public URI computeMetaChecksum(boolean includeTransient, MessageDigest digest) 
+    public URI computeMetaChecksum(MessageDigest digest) 
     {
         try 
         {
-            calcMetaChecksum(this.getClass(), this, includeTransient, digest);
+            calcMetaChecksum(this.getClass(), this, digest);
             byte[] metaChecksumBytes = digest.digest();
             String hexMetaChecksum = HexUtil.toHex(metaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
@@ -260,7 +259,7 @@ public abstract class CaomEntity implements Serializable
         finally { }
     }
 
-    private void calcMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
+    private void calcMetaChecksum(Class c, Object o, MessageDigest digest)
     {
         // calculation order:
         // 1. CaomEntity.id for entities
@@ -285,7 +284,7 @@ public abstract class CaomEntity implements Serializable
                 if (MCS_DEBUG) log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
             }
             
-            SortedSet<Field> fields = getStateFields(c, includeTransient);
+            SortedSet<Field> fields = getStateFields(c, false);
             for (Field f : fields) 
             {
                 String cf = c.getSimpleName() + "." + f.getName();
@@ -304,7 +303,7 @@ public abstract class CaomEntity implements Serializable
                     } 
                     else if (isLocalClass(ac)) 
                     {
-                        calcMetaChecksum(ac, fo, includeTransient, digest);
+                        calcMetaChecksum(ac, fo, digest);
                     } 
                     else if (fo instanceof Collection) 
                     {
@@ -323,7 +322,7 @@ public abstract class CaomEntity implements Serializable
                             } 
                             else if (isLocalClass(cc)) 
                             {
-                                calcMetaChecksum(cc, co, includeTransient, digest);
+                                calcMetaChecksum(cc, co, digest);
                             } 
                             else // non-caom2 class ~primtive value
                             {
@@ -429,15 +428,14 @@ public abstract class CaomEntity implements Serializable
      * is returned without changing the stored value that is accessed via the 
      * getAccumulatedMetaChecksum() method.
      * 
-     * @param includeTransient
      * @param digest
      * @return 
      */
-    public URI computeAccMetaChecksum(boolean includeTransient, MessageDigest digest) 
+    public URI computeAccMetaChecksum(MessageDigest digest) 
     {
         try 
         {
-            calcAccMetaChecksum(this.getClass(), this, includeTransient, digest);
+            calcAccMetaChecksum(this.getClass(), this, digest);
             byte[] accMetaChecksumBytes = digest.digest();
             String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
@@ -449,7 +447,7 @@ public abstract class CaomEntity implements Serializable
         }
     }
 
-    private void calcAccMetaChecksum(Class c, Object o, boolean includeTransient, MessageDigest digest)
+    private void calcAccMetaChecksum(Class c, Object o, MessageDigest digest)
     {
         
         // calculation order:
@@ -461,7 +459,7 @@ public abstract class CaomEntity implements Serializable
             MessageDigest md = MessageDigest.getInstance(digest.getAlgorithm());
         
             // add this object's complete metadata
-            calcMetaChecksum(c, o, includeTransient, md);
+            calcMetaChecksum(c, o, md);
             digest.update(md.digest());
             // call to digest also resets
             //md.reset();
@@ -486,7 +484,7 @@ public abstract class CaomEntity implements Serializable
                             CaomEntity ce = i.next();
                             Class cc = ce.getClass();
                             if (MCS_DEBUG) log.debug("calculate: " + ce.getID());
-                            calcAccMetaChecksum(cc, ce, includeTransient, md);
+                            calcAccMetaChecksum(cc, ce, md);
                             byte[] bb = md.digest();
                             // call to digest also resets
                             //md.reset();

@@ -60,8 +60,8 @@
     
     <import>
         <name>ivoa</name>
-        <url>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/IVOA.vo-dml.xml</url>
-        <documentationURL>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/IVOA.html</documentationURL>
+        <url>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/vo-dml/xml/IVOA-v1.0.vo-dml.xml</url>
+        <documentationURL>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/vo-dml/IVOA.html</documentationURL>
     </import>
     
     <!-- externally specified primtiveType -->

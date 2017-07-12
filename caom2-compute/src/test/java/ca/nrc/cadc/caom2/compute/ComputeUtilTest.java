@@ -76,7 +76,9 @@ import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.util.Log4jInit;
 import java.util.ArrayList;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -89,105 +91,24 @@ public class ComputeUtilTest
 {
     private static final Logger log = Logger.getLogger(ComputeUtilTest.class);
 
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", Level.INFO);
+    }
+    
     public ComputeUtilTest() { }
     
     @Test
-    public void testTransientState()
+    public void testTemplate()
     {
         try
         {
-            Observation o = new SimpleObservation("STUFF", "nonsense");
-            Plane plane = new Plane("foo");
-            
-            int defCode = plane.getStateCode();
-            log.debug("testTransientState: " + defCode);
-            int nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            
-            Assert.assertEquals("default code", defCode, nonTransientCode);
-            int notComputed = plane.getStateCode(true);
-            log.debug("testTransientState: " + notComputed);
-            Assert.assertEquals("not computed", defCode, notComputed);
-
-            ComputeUtil.clearTransientState(plane);
-            ComputeUtil.computeTransientState(o, plane);
-            int idCode = plane.getStateCode(true);
-            Assert.assertTrue("computed identifiers", defCode != idCode);
-
-            assignPos(plane);
-            ComputeUtil.computeTransientState(o, plane);
-
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            int compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            ComputeUtil.clearTransientState(plane);
-            assignEnergy(plane);
-            ComputeUtil.computeTransientState(o, plane);
-
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            ComputeUtil.clearTransientState(plane);
-            assignTime(plane);
-            ComputeUtil.computeTransientState(o, plane);
-            
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
-
-            ComputeUtil.clearTransientState(plane);
-            assignPol(plane);
-            ComputeUtil.computeTransientState(o, plane);
-            
-            nonTransientCode = plane.getStateCode(false);
-            log.debug("testTransientState: " + nonTransientCode);
-            Assert.assertEquals("non-transient only", defCode, nonTransientCode);
-            compCode = plane.getStateCode(true);
-            log.debug("testTransientState: " + compCode);
-            Assert.assertTrue("computed position", defCode != compCode);
+            // TODO
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
-    }
-
-    private void assignPos(Plane p)
-    {
-        p.position = new Position();
-        p.position.resolution = 0.01;
-    }
-
-    private void assignEnergy(Plane p)
-    {
-        p.energy = new Energy();
-        p.energy.bandpassName = "foo123";
-    }
-
-    private void assignTime(Plane p)
-    {
-        p.time = new Time();
-        p.time.exposure = new Double(123.0);
-    }
-
-    private void assignPol(Plane p)
-    {
-        Polarization pol = new Polarization();
-        pol.states = new ArrayList<PolarizationState>();
-        pol.states.add(PolarizationState.I);
-        pol.dimension = new Long(1);
-        p.polarization = pol;
     }
 }

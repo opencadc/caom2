@@ -193,34 +193,34 @@ public class ObservationReaderWriterTest
             MessageDigest digest = MessageDigest.getInstance("MD5");
             CaomUtil.assignLastModified(o, new Date(t1), "lastModified");
             CaomUtil.assignLastModified(o, new Date(t2), "maxLastModified");
-            URI ocs = o.computeMetaChecksum(true, digest);
-            URI oacs = o.computeAccMetaChecksum(true, digest);
+            URI ocs = o.computeMetaChecksum(digest);
+            URI oacs = o.computeAccMetaChecksum(digest);
             CaomUtil.assignMetaChecksum(o, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(o, oacs, "accMetaChecksum");
             for (Plane pl : o.getPlanes())
             {
                 CaomUtil.assignLastModified(pl, new Date(t1), "lastModified");
                 CaomUtil.assignLastModified(pl, new Date(t2), "maxLastModified");
-                CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(true, digest), "metaChecksum");
-                CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(true, digest), "accMetaChecksum");
+                CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(digest), "metaChecksum");
+                CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(digest), "accMetaChecksum");
                 for (Artifact ar : pl.getArtifacts())
                 {
                     CaomUtil.assignLastModified(ar, new Date(t1), "lastModified");
                     CaomUtil.assignLastModified(ar, new Date(t2), "maxLastModified");
-                    CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(true, digest), "metaChecksum");
-                    CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(true, digest), "accMetaChecksum");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(digest), "metaChecksum");
+                    CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(digest), "accMetaChecksum");
                     for (Part pa : ar.getParts())
                     {
                         CaomUtil.assignLastModified(pa, new Date(t1), "lastModified");
                         CaomUtil.assignLastModified(pa, new Date(t2), "maxLastModified");
-                        CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(true, digest), "metaChecksum");
-                        CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(true, digest), "accMetaChecksum");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(digest), "metaChecksum");
+                        CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(digest), "accMetaChecksum");
                         for (Chunk ch : pa.getChunks())
                         {
                             CaomUtil.assignLastModified(ch, new Date(t1), "lastModified");
                             CaomUtil.assignLastModified(ch, new Date(t2), "maxLastModified");
-                            CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(true, digest), "metaChecksum");
-                            CaomUtil.assignMetaChecksum(ch, ch.computeAccMetaChecksum(true, digest), "accMetaChecksum");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(digest), "metaChecksum");
+                            CaomUtil.assignMetaChecksum(ch, ch.computeAccMetaChecksum(digest), "accMetaChecksum");
                         }
                     }
                 }
@@ -321,8 +321,8 @@ public class ObservationReaderWriterTest
             // add maxLastModified and meta checksums
             CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            URI ocs = obs.computeMetaChecksum(true, digest);
-            URI oacs = obs.computeAccMetaChecksum(true, digest);
+            URI ocs = obs.computeMetaChecksum(digest);
+            URI oacs = obs.computeAccMetaChecksum(digest);
             CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
             bos = new ByteArrayOutputStream();

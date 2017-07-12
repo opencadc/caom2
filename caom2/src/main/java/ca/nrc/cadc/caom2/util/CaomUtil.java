@@ -69,10 +69,16 @@
 
 package ca.nrc.cadc.caom2.util;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
