@@ -53,8 +53,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full,
-            boolean skip, Date maxDate) throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+            throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -131,9 +131,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
-            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
-            throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip,
+            Date maxDate) throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -189,12 +188,11 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest,
-            Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, Date maxDate)
+            throws IOException, URISyntaxException
     {
         this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsValidator.setMaxDate(maxDate);
-        obsValidator.setDoCollisionCheck(true);
     }
 
     /**
@@ -218,12 +216,10 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
-            throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
     {
         this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun);
         obsValidator.setMaxDate(maxDate);
-        obsValidator.setDoCollisionCheck(true);
     }
 
     /**
@@ -252,8 +248,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public static CaomValidator getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize,
-            Integer batchFactor, boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
+    public static CaomValidator getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxDate)
+            throws IOException, URISyntaxException
     {
         throw new UnsupportedOperationException();
     }

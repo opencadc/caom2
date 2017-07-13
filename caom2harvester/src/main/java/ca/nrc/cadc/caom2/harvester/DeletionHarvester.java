@@ -70,8 +70,7 @@ public class DeletionHarvester extends Harvester implements Runnable
      * @throws NumberFormatException
      *             NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun)
-            throws IOException, NumberFormatException, URISyntaxException
+    public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
     {
         super(entityClass, src, dest, batchSize, false, dryrun);
         service = false;
@@ -102,8 +101,8 @@ public class DeletionHarvester extends Harvester implements Runnable
      * @throws NumberFormatException
      *             NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, String resourceId, String collection, int nthreads, String[] dest,
-            Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
+    public DeletionHarvester(Class<?> entityClass, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean dryrun)
+            throws IOException, NumberFormatException, URISyntaxException
     {
         super(entityClass, null, dest, batchSize, false, dryrun);
         this.service = true;
@@ -417,8 +416,7 @@ public class DeletionHarvester extends Harvester implements Runnable
             }
             else
             {
-                entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end,
-                        batchSize);
+                entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end, batchSize);
             }
 
             if (entityList.size() == expectedNum)
@@ -498,8 +496,7 @@ public class DeletionHarvester extends Harvester implements Runnable
                                                                               // ms
                                                                               // ahead
                     state.curLastModified = n;
-                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to "
-                            + format(state.curLastModified));
+                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
                     harvestState.put(state);
                 }
             }
@@ -513,7 +510,7 @@ public class DeletionHarvester extends Harvester implements Runnable
 
     /**
      * detects loops
-     * 
+     *
      * @param entityList
      *            list of entities to detect loops with
      */
@@ -524,8 +521,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
         if (start.lastModified.equals(end.lastModified))
-            throw new RuntimeException(
-                    "detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + start.lastModified);
+            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + start.lastModified);
 
     }
 }

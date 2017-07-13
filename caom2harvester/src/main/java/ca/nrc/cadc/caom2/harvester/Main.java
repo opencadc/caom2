@@ -85,6 +85,10 @@ public class Main
             {
                 subject = CertCmdArgUtil.initSubject(am);
             }
+            else
+            {
+                subject = AuthenticationUtil.getAnonSubject();
+            }
             if (subject != null)
             {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
@@ -224,19 +228,20 @@ public class Main
                 }
             }
 
+            Runnable action = null;
             if (!validate)
             {
-                CaomHarvester ch = null;
+
                 try
                 {
                     if (service)
                     {
-                        ch = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize,
-                                batchFactor, full, skip, maxDate);
+                        action = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS,
+                                batchSize, batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        ch = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip,
+                        action = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip,
                                 maxDate);
                     }
                 }
@@ -248,32 +253,20 @@ public class Main
                     System.exit(exitValue);
                 }
 
-                exitValue = 2; // in case we get killed
-                Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-
-                if (subject != null)
-                {
-                    Subject.doAs(subject, new RunnableAction(ch));
-                }
-                else // anon
-                {
-                    ch.run();
-                }
             }
             else
             {
-                CaomValidator cv = null;
 
                 try
                 {
                     if (service)
                     {
-                        cv = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
+                        action = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
                                 batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        cv = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
                 catch (IOException ioex)
@@ -283,19 +276,15 @@ public class Main
                     exitValue = -1;
                     System.exit(exitValue);
                 }
-
-                exitValue = 2; // in case we get killed
-                Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-
-                if (subject != null)
-                {
-                    Subject.doAs(subject, new RunnableAction(cv));
-                }
-                else // anon
-                {
-                    cv.run();
-                }
             }
+            exitValue = 2; // in case we get killed
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+
+            if (subject != null)
+            {
+                Subject.doAs(subject, new RunnableAction(action));
+            }
+
             exitValue = 0; // finished cleanly
         }
         catch (Throwable t)
