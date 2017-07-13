@@ -196,6 +196,9 @@ public class CaomRepoConfig
         private String obsTableName;
         private GroupURI readOnlyGroup;
         private GroupURI readWriteGroup;
+        
+        private boolean computeMetadata;
+        private boolean computeMetadataValidation;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database, String schema, String obsTableName,
             GroupURI readOnlyGroup, GroupURI readWriteGroup)
@@ -214,7 +217,8 @@ public class CaomRepoConfig
         public String toString()
         {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + "," + schema + "," + obsTableName + ","
-                    + readOnlyGroup + "," + readWriteGroup + "]";
+                    + readOnlyGroup + "," + readWriteGroup + "," 
+                    + sqlGenerator.getSimpleName() + "," + computeMetadata + "," + computeMetadataValidation + "]";
         }
 
         public Class getSqlGenerator()
@@ -222,6 +226,16 @@ public class CaomRepoConfig
             return sqlGenerator;
         }
 
+        public boolean getComputeMetadata()
+        {
+            return computeMetadata;
+        }
+
+        public boolean getComputeMetadataValidation()
+        {
+            return computeMetadataValidation;
+        }
+        
         public String getTestTable()
         {
             return database + "." + schema + "." + obsTableName;
@@ -296,7 +310,7 @@ public class CaomRepoConfig
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
-        if (parts.length == 7 || parts.length == 6) // 6: backwards compat
+        if (parts.length >= 6) // 6: backwards compat
         {
             String dsName=  parts[0];
             String database = parts[1];
@@ -307,7 +321,7 @@ public class CaomRepoConfig
             
             // temporary default for backwards compatibility to existing config
             Class sqlGen = SybaseSQLGenerator.class;
-            if (parts.length == 7)
+            if (parts.length >= 7)
             {
                 String cname = parts[6];
                 try
@@ -322,10 +336,36 @@ public class CaomRepoConfig
                 }
             }
             
+            // default values for backwards compat to existing config
+            boolean computeMetadata = false;
+            boolean computeMetadataValidation = true;
+            if (parts.length >= 8)
+            {
+                String options = parts[7];
+                log.debug(collection+  " options: " + options);
+                String[] ss = options.split(","); // comma-separated list of key=value pairs
+                for (String s : ss)
+                {
+                    String[] kv = s.split("=");
+                    if (kv.length == 2)
+                    {
+                        if ("computeMetadata".equals(kv[0]))
+                            computeMetadata = Boolean.parseBoolean(kv[1]);
+                        else if ("computeMetadataValidation".equals(kv[0]))
+                            computeMetadataValidation = Boolean.parseBoolean(kv[1]);
+                        
+                        // else: ignore
+                    }
+                }
+            }
+            
             GroupURI ro = new GroupURI(roGroup);
             GroupURI rw = new GroupURI(rwGroup);
 
             CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database, schema, obsTable, ro, rw);
+            rci.computeMetadata = computeMetadata;
+            rci.computeMetadataValidation = computeMetadataValidation;
+            log.debug(collection + ": loaded " + rci);
             return rci;
         }
         else
