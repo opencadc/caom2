@@ -350,8 +350,8 @@ public class ObservationValidator extends Harvester
                     listErroneous.add(ose);
             }
             else if (!listCorrect.contains(os))// ObservationState is in both
-                                               // lists. Here we check checksums
-                                               // thanks to the comparator
+            // lists. Here we check checksums
+            // thanks to the comparator
             {
                 ObservationStateError ose = new ObservationStateError(os, "computation or serialization bug");
                 log.info("************************ adding computation or serialization bug: " + os.getURI());
