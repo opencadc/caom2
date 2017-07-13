@@ -128,11 +128,6 @@ public class ObservationHarvester extends Harvester
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
-    private void close() throws IOException
-    {
-        // TODO
-    }
-
     private String format(UUID id)
     {
         if (id == null)
@@ -144,14 +139,6 @@ public class ObservationHarvester extends Harvester
     public void run()
     {
         log.info("START: " + Observation.class.getSimpleName());
-        try
-        {
-            // init();
-        }
-        catch (Throwable oops)
-        {
-            throw new RuntimeException("failed to init connections and state", oops);
-        }
 
         boolean go = true;
         while (go)
@@ -161,14 +148,6 @@ public class ObservationHarvester extends Harvester
             if (num.found > 0)
                 log.debug("***************** finished batch: " + num + " *******************");
 
-            // double failFrac = ((double) num.failed - num.handled) / ((double)
-            // num.found);
-            // if (!skipped && failFrac > 0.5)
-            // {
-            // log.warn("failure rate is quite high: " + num.failed + "/" +
-            // num.found);
-            // num.abort = true;
-            // }
             if (num.abort)
                 log.error("batched aborted");
             go = (num.found > 0 && !num.abort && !num.done);
@@ -178,15 +157,7 @@ public class ObservationHarvester extends Harvester
             if (dryrun)
                 go = false; // no state update -> infinite loop
         }
-        try
-        {
-            close();
-        }
-        catch (Throwable oops)
-        {
-            log.error("failed to cleanup connections and state", oops);
-            return;
-        }
+
         log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
