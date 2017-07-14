@@ -378,19 +378,13 @@ public class ObservationValidator extends Harvester
         public int compare(ObservationState o1, ObservationState o2)
         {
             int c1 = o1.getURI().compareTo(o2.getURI());
-            int c2 = 1;
-            if (o1.accMetaChecksum != null && o2.accMetaChecksum != null && o1.accMetaChecksum.compareTo(o2.accMetaChecksum) == 0)
-            {
-                c2 = 0;
-            }
-            if (c1 == 0 && c2 == 0)
-            {
-                return 0;
-            }
-            else
-            {
-                return 1;
-            }
+            if (c1 != 0)
+                return c1; // different observations
+
+            if (o1.accMetaChecksum == null || o2.accMetaChecksum == null)
+                return 0; // cannot compare
+
+            return o1.accMetaChecksum.compareTo(o2.accMetaChecksum);
         }
 
     };
