@@ -235,7 +235,7 @@ public class RepoClient
 
             start = accList.get(accList.size() - 1).maxLastModified;
             recCounter = accList.size();
-            if (maxrec != null && maxrec - recCounter < rec)
+            if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec)
             {
                 rec = maxrec - recCounter;
             }
@@ -386,9 +386,14 @@ public class RepoClient
         String aux = "";
         boolean readingCollection = true;
         boolean readingId = false;
-
+        boolean firstNewLine = true;
         for (int i = 0; i < bos.toString().length(); i++)
         {
+            if (firstNewLine)
+            {
+                firstNewLine = false;
+                continue;
+            }
             char c = bos.toString().charAt(i);
             if (c != separator && c != endOfLine)
             {
@@ -417,7 +422,7 @@ public class RepoClient
             {
                 sdate = aux;
                 aux = "";
-                Date date = sdf.parse(sdate);
+                Date date = DateUtil.flexToDate(sdate, sdf);
 
                 ObservationState os = new ObservationState(new ObservationURI(collection, id));
                 os.maxLastModified = date;
