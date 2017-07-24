@@ -110,7 +110,7 @@ public class RepoClient
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
     private static final URI standardID = Standards.CAOM2REPO_OBS_23;
-    private static final Integer MAX_NUMBER = 300;
+    private static final Integer MAX_NUMBER = 3000;
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
@@ -226,6 +226,8 @@ public class RepoClient
                 }
 
                 accList.addAll(partialList);
+                log.info("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+
                 bos.close();
             }
             catch (ParseException | IOException e)
@@ -240,13 +242,20 @@ public class RepoClient
                 rec = maxrec - recCounter;
             }
             log.info("dinamic batch (rec): " + rec);
+            log.info("counter (recCounter): " + recCounter);
+            log.info("maxrec: " + maxrec);
+            // log.info("start: " + start.toString());
+            // log.info("end: " + end.toString());
+            log.info("partialList.size(): " + partialList.size());
 
-            if (accList.isEmpty() || (maxrec != null && recCounter >= maxrec) || (start != null && end != null && start.equals(end)) || partialList.size() < rec)
+            if (partialList.size() < rec || (end != null && start != null && start.equals(end)))
             {
+                log.info("************** go false");
+
                 go = false;
             }
         }
-        return accList;
+        return partialList;
     }
 
     public Iterator<Observation> observationIterator()
@@ -386,14 +395,14 @@ public class RepoClient
         String aux = "";
         boolean readingCollection = true;
         boolean readingId = false;
-        boolean firstNewLine = true;
+        // boolean firstNewLine = true;
         for (int i = 0; i < bos.toString().length(); i++)
         {
-            if (firstNewLine)
-            {
-                firstNewLine = false;
-                continue;
-            }
+            // if (firstNewLine)
+            // {
+            // firstNewLine = false;
+            // continue;
+            // }
             char c = bos.toString().charAt(i);
             if (c != separator && c != endOfLine)
             {
