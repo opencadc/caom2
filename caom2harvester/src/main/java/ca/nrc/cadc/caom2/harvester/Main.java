@@ -111,14 +111,14 @@ public class Main
             }
             catch (NumberFormatException nfe)
             {
-
+                log.warn("wrong number of threads specified; please check --threads parameter");
+                System.exit(1);
             }
             String src = am.getValue("source");
             String dest = am.getValue("destination");
 
             boolean nosrc = (src == null || src.trim().length() == 0);
-            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null
-                    || scollection.trim().length() == 0;
+            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null || scollection.trim().length() == 0;
             boolean service = !noresourceId;
 
             boolean nodest = (dest == null || dest.trim().length() == 0);
@@ -127,8 +127,7 @@ public class Main
             {
                 usage();
                 if (nosrc && noresourceId)
-                    log.warn(
-                            "missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
+                    log.warn("missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
                 if (nodest)
                     log.warn("missing required argument: --destination");
                 System.exit(1);
@@ -152,18 +151,15 @@ public class Main
                 if (srcDS.length != 3)
                     if (!service)
                     {
-                        log.warn("malformed --source value, found " + src + " expected: server.database.schema"
-                                + " e.g. SYBASE.mydb.dbo");
+                        log.warn("malformed --source value, found " + src + " expected: server.database.schema" + " e.g. SYBASE.mydb.dbo");
                     }
                     else
                     {
-                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url"
-                                + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
+                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url" + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
 
                     }
                 if (destDS.length != 3)
-                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema"
-                            + " e.g. cvodb0.cvodb.caom2");
+                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema" + " e.g. cvodb0.cvodb.caom2");
                 System.exit(1);
             }
 
@@ -236,13 +232,11 @@ public class Main
                 {
                     if (service)
                     {
-                        action = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS,
-                                batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        action = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip,
-                                maxDate);
+                        action = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
                 catch (IOException ioex)
@@ -261,12 +255,11 @@ public class Main
                 {
                     if (service)
                     {
-                        action = new CaomValidator(dryrun, sresourceId, scollection, nthreads, destDS, batchSize,
-                                batchFactor, full, skip, maxDate);
+                        action = new CaomValidator(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        action = new CaomValidator(dryrun, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomValidator(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
                 catch (IOException ioex)
@@ -329,8 +322,7 @@ public class Main
         sb.append("\n\nOptions:");
         sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
         sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
-        sb.append(
-                "\n     --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
+        sb.append("\n     --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n\nOptional authentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");

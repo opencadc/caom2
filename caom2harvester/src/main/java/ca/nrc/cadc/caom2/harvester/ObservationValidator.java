@@ -46,6 +46,7 @@ public class ObservationValidator extends Harvester
 
     private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
+    private boolean computePlaneMetadata = false;
 
     public ObservationValidator(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun)
             throws IOException, URISyntaxException
@@ -408,22 +409,20 @@ public class ObservationValidator extends Harvester
         }
         return ret;
     }
-    // private List<SkippedWrapperURI<Observation>>
-    // wrapObservation(List<Observation> obsList)
-    // {
-    // List<SkippedWrapperURI<Observation>> ret = new
-    // ArrayList<SkippedWrapperURI<Observation>>(obsList.size());
-    // for (Observation o : obsList)
-    // {
-    // ret.add(new SkippedWrapperURI<Observation>(o, null));
-    // }
-    // return ret;
-    // }
 
     @Override
     protected void initHarvestState(DataSource ds, @SuppressWarnings("rawtypes") Class c)
     {
         super.initHarvestState(ds, c);
         this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2], batchSize);
+    }
+
+    public void setComputePlaneMetadata(boolean computePlaneMetadata)
+    {
+        this.computePlaneMetadata = computePlaneMetadata;
+    }
+    public boolean getComputePlaneMetadata()
+    {
+        return this.computePlaneMetadata;
     }
 }

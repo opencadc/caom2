@@ -53,7 +53,7 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+    public CaomValidator(boolean dryrun, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
             throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
@@ -66,6 +66,7 @@ public class CaomValidator implements Runnable
         this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun);
         // obsValidator.setSkipped(skip);
         obsValidator.setMaxDate(maxDate);
+        obsValidator.setComputePlaneMetadata(compute);
 
         // this.observationMetaHarvester = new
         // ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest,
@@ -131,8 +132,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip,
-            Date maxDate) throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor, boolean full,
+            boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -144,6 +145,7 @@ public class CaomValidator implements Runnable
         this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         // obsValidator.setSkipped(skip);
         obsValidator.setMaxDate(maxDate);
+        obsValidator.setComputePlaneMetadata(compute);
 
         // if (!full)
         // {
@@ -188,11 +190,12 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, Date maxDate)
+    public CaomValidator(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, Date maxDate)
             throws IOException, URISyntaxException
     {
         this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
         obsValidator.setMaxDate(maxDate);
+        obsValidator.setComputePlaneMetadata(compute);
     }
 
     /**
@@ -258,15 +261,17 @@ public class CaomValidator implements Runnable
     public void run()
     {
         // make sure wcslib can be loaded
-        try
+        if (obsValidator.getComputePlaneMetadata())
         {
-            Class.forName("ca.nrc.cadc.wcs.WCSLib");
+            try
+            {
+                Class.forName("ca.nrc.cadc.wcs.WCSLib");
+            }
+            catch (Throwable t)
+            {
+                throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+            }
         }
-        catch (Throwable t)
-        {
-            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
-        }
-
         boolean init = false;
         if (initdb != null)
         {

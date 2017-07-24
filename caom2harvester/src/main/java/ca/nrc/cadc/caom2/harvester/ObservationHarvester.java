@@ -114,7 +114,7 @@ public class ObservationHarvester extends Harvester
         srcObservationDAO.setConfig(config1);
         this.destObservationDAO = new DatabaseObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
+        // destObservationDAO.setComputeLastModified(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
@@ -127,7 +127,7 @@ public class ObservationHarvester extends Harvester
         this.srcObservationService = new RepoClient(new URI(uri), threads);
         this.destObservationDAO = new DatabaseObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
+        // destObservationDAO.setComputeLastModified(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
@@ -318,7 +318,7 @@ public class ObservationHarvester extends Harvester
             {
                 ListIterator<SkippedWrapperURI<Observation>> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().entity;
-                log.debug("currentBatch: " + format(curBatchLeader.getID()) + " " + format(curBatchLeader.getMaxLastModified()));
+                log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
                 log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
                 if (curBatchLeader.getID().equals(state.curID) // same obs as
                                                                // last time
@@ -364,7 +364,12 @@ public class ObservationHarvester extends Harvester
                     if (o != null)
                     {
                         String treeSize = computeTreeSize(o);
-                        log.info("put: " + o.getClass().getSimpleName() + " " + format(o.getID()) + " " + format(o.getMaxLastModified()) + " " + treeSize);
+                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
+                    }
+                    else if (hs != null)
+                    {
+                        log.info("error put: " + hs.cname + " " + hs.skipID + " " + format(hs.lastModified));
+
                     }
                     if (!dryrun)
                     {
@@ -419,10 +424,11 @@ public class ObservationHarvester extends Harvester
                                     ComputeUtil.computeTransientState(o, p);
                             }
 
-                            if (checkChecksums(entityListState.get(i).entity, o))
-                                destObservationDAO.put(o);
-                            else
-                                throw new ChecksumError("mismatching checksums");
+                            // if (checkChecksums(entityListState.get(i).entity,
+                            // o))
+                            destObservationDAO.put(o);
+                            // else
+                            // throw new ChecksumError("mismatching checksums");
 
                             if (hs != null) // success in redo mode
                             {
@@ -484,7 +490,7 @@ public class ObservationHarvester extends Harvester
                     }
                     else if (oops instanceof DataIntegrityViolationException && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
                     {
-                        log.error("CONTENT PROBLEM - duplicate observation: " + format(o.getID()) + " " + o.getURI().getURI().toASCIIString());
+                        log.error("CONTENT PROBLEM - duplicate observation: " + o.getURI());
                         ret.handled++;
                     }
                     else if (oops instanceof UncategorizedSQLException)
@@ -499,7 +505,7 @@ public class ObservationHarvester extends Harvester
                     }
                     else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator") && str.contains("keywords"))
                     {
-                        log.error("CONTENT PROBLEM - invalid keywords: " + format(o.getID()) + " " + o.getURI().getURI().toASCIIString());
+                        log.error("CONTENT PROBLEM - invalid keywords: " + o.getURI());
                         ret.handled++;
                     }
                     else

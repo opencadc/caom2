@@ -144,13 +144,11 @@ public class Worker implements Callable<WorkerResponse>
             o = obsReader.read(bos.toString());
             wr.setObservation(o);
         }
-        catch (ObservationParsingException e)
+        catch (Exception e)
         {
             String oid = state.getURI().getObservationID();
-            exception = new Exception(
-                    "Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
             wr.setError(exception);
-            log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
         return wr;
     }
@@ -193,8 +191,7 @@ public class Worker implements Callable<WorkerResponse>
         catch (ObservationParsingException e)
         {
             String oid = state.getURI().getObservationID();
-            exception = new Exception(
-                    "Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
             wr.setError(exception);
             log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
