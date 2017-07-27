@@ -157,6 +157,7 @@ public class Worker implements Callable<WorkerResponse>
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
+        log.info("URL: " + surl);
         URL url = null;
         try
         {

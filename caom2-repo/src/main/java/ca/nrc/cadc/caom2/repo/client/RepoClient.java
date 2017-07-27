@@ -391,18 +391,13 @@ public class RepoClient
         String id = null;
         String sdate = null;
         String collection = null;
-
         String aux = "";
+
         boolean readingCollection = true;
         boolean readingId = false;
-        // boolean firstNewLine = true;
+
         for (int i = 0; i < bos.toString().length(); i++)
         {
-            // if (firstNewLine)
-            // {
-            // firstNewLine = false;
-            // continue;
-            // }
             char c = bos.toString().charAt(i);
             if (c != separator && c != endOfLine)
             {
@@ -429,6 +424,9 @@ public class RepoClient
             }
             else if (c == endOfLine)
             {
+                if (id == null || collection == null)
+                    continue;
+
                 sdate = aux;
                 aux = "";
                 Date date = DateUtil.flexToDate(sdate, sdf);
@@ -439,7 +437,6 @@ public class RepoClient
                 list.add(os);
                 readingCollection = true;
                 readingId = false;
-
             }
         }
         Collections.sort(list, maxLasModifiedComparator);
