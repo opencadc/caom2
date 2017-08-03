@@ -74,6 +74,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.text.DateFormat;
@@ -205,6 +206,19 @@ public class RepoClient
                 HttpDownload get = new HttpDownload(url, bos);
 
                 get.run();
+                int responseCode = get.getResponseCode();
+                log.info("RESPONSE CODE: '" + responseCode + "'");
+                if (responseCode == 302) // redirected url
+                {
+                    url = get.getRedirectURL();
+                    log.info("REDIRECTED URL: " + url);
+                    bos = new ByteArrayOutputStream();
+                    get = new HttpDownload(url, bos);
+                    responseCode = get.getResponseCode();
+                    log.info("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+
+                }
+
                 if (get.getThrowable() != null)
                 {
                     if (get.getThrowable() instanceof AccessControlException)
@@ -219,6 +233,7 @@ public class RepoClient
 
             try
             {
+                // log.info("RESPONSE = '" + bos.toString() + "'");
                 partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && accList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0)))
                 {
@@ -230,12 +245,16 @@ public class RepoClient
 
                 bos.close();
             }
-            catch (ParseException | IOException e)
+            catch (ParseException | URISyntaxException | IOException e)
             {
                 throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
             }
 
-            start = accList.get(accList.size() - 1).maxLastModified;
+            if (accList.size() > 0)
+            {
+                start = accList.get(accList.size() - 1).maxLastModified;
+            }
+
             recCounter = accList.size();
             if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec)
             {
@@ -382,7 +401,7 @@ public class RepoClient
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(final ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
 
-            throws ParseException, IOException
+            throws ParseException, IOException, URISyntaxException
     {
         init();
 
@@ -390,16 +409,20 @@ public class RepoClient
 
         String id = null;
         String sdate = null;
+        Date date = null;
         String collection = null;
+        String md5 = null;
         String aux = "";
 
+        boolean readingDate = false;
         boolean readingCollection = true;
         boolean readingId = false;
 
         for (int i = 0; i < bos.toString().length(); i++)
         {
             char c = bos.toString().charAt(i);
-            if (c != separator && c != endOfLine)
+
+            if (c != ' ' && c != separator && c != endOfLine)
             {
                 aux += c;
             }
@@ -408,32 +431,76 @@ public class RepoClient
                 if (readingCollection)
                 {
                     collection = aux;
+                    // log.info("*************** collection: " + collection);
                     readingCollection = false;
                     readingId = true;
+                    readingDate = false;
                     aux = "";
-
                 }
                 else if (readingId)
                 {
                     id = aux;
+                    // log.info("*************** id: " + id);
                     readingCollection = false;
                     readingId = false;
+                    readingDate = true;
+                    aux = "";
+                }
+                else if (readingDate)
+                {
+                    sdate = aux;
+                    // log.info("*************** sdate: " + sdate);
+                    date = DateUtil.flexToDate(sdate, sdf);
+
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = false;
                     aux = "";
                 }
 
+            }
+            else if (c == ' ')
+            {
+                if (readingDate)
+                {
+                    sdate = aux;
+                    // log.info("*************** sdate: " + sdate);
+                    date = DateUtil.flexToDate(sdate, sdf);
+
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = false;
+                    aux = "";
+                }
             }
             else if (c == endOfLine)
             {
                 if (id == null || collection == null)
                     continue;
 
-                sdate = aux;
-                aux = "";
-                Date date = DateUtil.flexToDate(sdate, sdf);
-
                 ObservationState os = new ObservationState(new ObservationURI(collection, id));
+
+                if (date == null)
+                {
+                    sdate = aux;
+                    date = DateUtil.flexToDate(sdate, sdf);
+                }
+
                 os.maxLastModified = date;
 
+                md5 = aux;
+                aux = "";
+                // log.info("*************** md5: " + md5);
+                if (!md5.equals(""))
+                {
+                    os.accMetaChecksum = new URI(md5);
+                }
+
+                // if (os.maxLastModified == null)
+                // {
+                // log.info("*************** NO DATE");
+                // System.exit(1);
+                // }
                 list.add(os);
                 readingCollection = true;
                 readingId = false;

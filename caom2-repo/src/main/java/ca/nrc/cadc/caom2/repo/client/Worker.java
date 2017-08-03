@@ -141,6 +141,7 @@ public class Worker implements Callable<WorkerResponse>
 
         try
         {
+            // log.info("********************* bos:" + bos.toString());
             o = obsReader.read(bos.toString());
             wr.setObservation(o);
         }
