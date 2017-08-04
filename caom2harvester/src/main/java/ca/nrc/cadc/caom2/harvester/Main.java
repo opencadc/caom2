@@ -72,6 +72,7 @@ public class Main
             boolean validate = am.isSet("validate");
             boolean collection = am.isSet("collection");
             boolean threads = am.isSet("threads");
+            boolean noChecksum = am.isSet("nochecksum");;
 
             boolean compute = am.isSet("compute");
 
@@ -232,11 +233,11 @@ public class Main
                 {
                     if (service)
                     {
-                        action = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomHarvester(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        action = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomHarvester(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
                 catch (IOException ioex)
@@ -255,11 +256,11 @@ public class Main
                 {
                     if (service)
                     {
-                        action = new CaomValidator(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomValidator(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                     else
                     {
-                        action = new CaomValidator(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                        action = new CaomValidator(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
                     }
                 }
                 catch (IOException ioex)

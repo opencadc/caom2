@@ -47,17 +47,20 @@ public class ObservationValidator extends Harvester
     private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
     private boolean computePlaneMetadata = false;
+    private boolean nochecksum = false;
 
-    public ObservationValidator(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun)
+    public ObservationValidator(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum)
             throws IOException, URISyntaxException
     {
         super(Observation.class, null, dest, batchSize, full, dryrun);
+        this.nochecksum = nochecksum;
         init(resourceId, collection, nthreads);
     }
 
-    public ObservationValidator(String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException, URISyntaxException
+    public ObservationValidator(String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum) throws IOException, URISyntaxException
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
+        this.nochecksum = nochecksum;
         init();
     }
 
@@ -350,7 +353,8 @@ public class ObservationValidator extends Harvester
                 if (!listErroneous.contains(ose))
                     listErroneous.add(ose);
             }
-            else if (!listCorrect.contains(os))// ObservationState is in both
+            else if (!nochecksum && !listCorrect.contains(os))// ObservationState
+                                                              // is in both
             // lists. Here we check checksums
             // thanks to the comparator
             {

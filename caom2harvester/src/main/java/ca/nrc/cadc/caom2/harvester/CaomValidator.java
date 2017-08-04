@@ -53,7 +53,7 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+    public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
             throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
@@ -63,7 +63,7 @@ public class CaomValidator implements Runnable
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun);
+        this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun, nochecksum);
         // obsValidator.setSkipped(skip);
         obsValidator.setMaxDate(maxDate);
         obsValidator.setComputePlaneMetadata(compute);
@@ -109,6 +109,10 @@ public class CaomValidator implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
+     * @param compute
+     *            compute plane metadata
      * @param resourceId
      *            repo service
      * @param collection
@@ -132,8 +136,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor, boolean full,
-            boolean skip, Date maxDate) throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor,
+            boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -142,7 +146,7 @@ public class CaomValidator implements Runnable
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
+        this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun, nochecksum);
         // obsValidator.setSkipped(skip);
         obsValidator.setMaxDate(maxDate);
         obsValidator.setComputePlaneMetadata(compute);
@@ -171,6 +175,10 @@ public class CaomValidator implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
+     * @param compute
+     *            compute plane metadata
      * @param resourceId
      *            repo service
      * @param collection
@@ -190,10 +198,10 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, Date maxDate)
-            throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full,
+            Date maxDate) throws IOException, URISyntaxException
     {
-        this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
+        this.obsValidator = new ObservationValidator(resourceId, collection, nthreads, dest, batchSize, full, dryrun, nochecksum);
         obsValidator.setMaxDate(maxDate);
         obsValidator.setComputePlaneMetadata(compute);
     }
@@ -204,6 +212,10 @@ public class CaomValidator implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
+     * @param compute
+     *            compute plane metadata
      * @param src
      *            source server,database,schema
      * @param dest
@@ -219,9 +231,10 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomValidator(boolean dryrun, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
+    public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
+            throws IOException, URISyntaxException
     {
-        this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun);
+        this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun, nochecksum);
         obsValidator.setMaxDate(maxDate);
     }
 
@@ -231,6 +244,10 @@ public class CaomValidator implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
+     * @param compute
+     *            compute plane metadata
      * @param src
      *            source server,database,schema
      * @param dest
@@ -251,8 +268,8 @@ public class CaomValidator implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public static CaomValidator getTestHarvester(boolean dryrun, String[] src, String[] dest, Integer batchSize, Integer batchFactor, boolean full, boolean skip, Date maxDate)
-            throws IOException, URISyntaxException
+    public static CaomValidator getTestHarvester(boolean dryrun, boolean nochecksum, boolean compute, String[] src, String[] dest, Integer batchSize, Integer batchFactor,
+            boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         throw new UnsupportedOperationException();
     }

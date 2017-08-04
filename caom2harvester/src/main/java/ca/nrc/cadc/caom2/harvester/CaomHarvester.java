@@ -96,7 +96,7 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute, String[] src, String[] dest, int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
             throws IOException, URISyntaxException
     {
         Integer entityBatchSize = batchSize * batchFactor;
@@ -106,7 +106,7 @@ public class CaomHarvester implements Runnable
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun, nochecksum);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);
@@ -137,6 +137,8 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
      * @param compute
      *            compute plane metadata from WCS before insert
      * @param resourceId
@@ -162,15 +164,15 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor, boolean full,
-            boolean skip, Date maxDate) throws IOException, URISyntaxException
+    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute, String resourceId, String collection, int nthreads, String[] dest, int batchSize, int batchFactor,
+            boolean full, boolean skip, Date maxDate) throws IOException, URISyntaxException
     {
         DBConfig dbrc = new DBConfig();
         ConnectionConfig cc = dbrc.getConnectionConfig(dest[0], dest[1]);
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest[1], dest[2]);
 
-        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun, nochecksum);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);
@@ -199,6 +201,8 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
      * @param compute
      *            compute plane metadata from WCS before insert
      * @param resourceId
@@ -220,10 +224,10 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, boolean compute, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, Date maxDate)
-            throws IOException, URISyntaxException
+    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full,
+            Date maxDate) throws IOException, URISyntaxException
     {
-        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(resourceId, collection, nthreads, dest, batchSize, full, dryrun, nochecksum);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
         obsHarvester.setComputePlaneMetadata(compute);
@@ -235,6 +239,8 @@ public class CaomHarvester implements Runnable
      * @param dryrun
      *            true if no changed in the data base are applied during the
      *            process
+     * @param nochecksum
+     *            no checks of checksums
      * @param compute
      *            compute plane metadata from WCS before insert
      * @param src
@@ -252,9 +258,10 @@ public class CaomHarvester implements Runnable
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, boolean compute, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate) throws IOException, URISyntaxException
+    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute, String[] src, String[] dest, Integer batchSize, boolean full, Date maxDate)
+            throws IOException, URISyntaxException
     {
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun);
+        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun, nochecksum);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setDoCollisionCheck(true);
         obsHarvester.setComputePlaneMetadata(compute);

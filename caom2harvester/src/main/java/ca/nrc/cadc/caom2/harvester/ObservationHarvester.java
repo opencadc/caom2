@@ -60,19 +60,22 @@ public class ObservationHarvester extends Harvester
     private Date maxDate;
     private boolean doCollisionCheck = false;
     private boolean computePlaneMetadata = false;
+    private boolean nochecksum = false;
 
     HarvestSkipURIDAO harvestSkip = null;
 
-    public ObservationHarvester(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun)
+    public ObservationHarvester(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum)
             throws IOException, URISyntaxException
     {
         super(Observation.class, null, dest, batchSize, full, dryrun);
+        this.nochecksum = nochecksum;
         init(resourceId, collection, nthreads);
     }
 
-    public ObservationHarvester(String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException, URISyntaxException
+    public ObservationHarvester(String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum) throws IOException, URISyntaxException
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
+        this.nochecksum = nochecksum;
         init();
     }
 
@@ -466,7 +469,7 @@ public class ObservationHarvester extends Harvester
                                         ComputeUtil.computeTransientState(o, p);
                                 }
 
-                                if (checkChecksums(entityListState.get(i).entity, o))
+                                if (nochecksum || checkChecksums(entityListState.get(i).entity, o))
                                     destObservationDAO.put(o);
                                 else
                                     throw new ChecksumError("mismatching checksums");
