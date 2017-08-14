@@ -56,7 +56,7 @@
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
     <version>2.3</version>
-    <lastModified>2017-05-05T12:00:00</lastModified>
+    <lastModified>2017-08-14T15:00:00</lastModified>
     
     <import>
         <name>ivoa</name>
@@ -75,14 +75,6 @@
         <!-- TODO: restrict format like we do in the xsd -->
     </primitiveType>
         
-    <!--
-        Notes:
-        * multiplicity/maxOccurs=666 is used to work around the fact that maxOccurs is required by the xsd
-        * experimented with putting the really core classes (observation-plane-artifact-part-chunk) into
-          the root package but it only changes the documentation organisation; that should be done by 
-          improving the vo-dml2html transform to organise things according to a configurable policy
-    -->
-    
     <package>
         <vodml-id>caom2</vodml-id>
         <name>caom2</name>
@@ -2235,20 +2227,50 @@
             </dataType>
             
             <dataType>
-                <vodml-id>Polygon</vodml-id>
-                <name>Polygon</name>
+                <vodml-id>MultiPolygon</vodml-id>
+                <name>MultiPolygon</name>
                 <extends>
                     <vodml-ref>caom2:Shape</vodml-ref>
                 </extends>
                 <attribute>
-                    <vodml-id>Polygon.vertices</vodml-id>
+                    <vodml-id>MultiPolygon.vertices</vodml-id>
                     <name>vertices</name>
                     <datatype>
                         <vodml-ref>caom2:Vertex</vodml-ref>
                     </datatype>
                     <multiplicity>
                         <minOccurs>3</minOccurs>
-                        <maxOccurs>666</maxOccurs>
+                        <maxOccurs>-1</maxOccurs>
+                    </multiplicity>
+                </attribute>
+            </dataType>
+            
+            <dataType>
+                <vodml-id>Polygon</vodml-id>
+                <name>Polygon</name>
+                <extends>
+                    <vodml-ref>caom2:Shape</vodml-ref>
+                </extends>
+                <attribute>
+                    <vodml-id>Polygon.points</vodml-id>
+                    <name>points</name>
+                    <datatype>
+                        <vodml-ref>caom2:Point</vodml-ref>
+                    </datatype>
+                    <multiplicity>
+                        <minOccurs>3</minOccurs>
+                        <maxOccurs>-1</maxOccurs>
+                    </multiplicity>
+                </attribute>
+                <attribute>
+                    <vodml-id>Polygon.samples</vodml-id>
+                    <name>samples</name>
+                    <datatype>
+                        <vodml-ref>caom2:MultiPolygon</vodml-ref>
+                    </datatype>
+                    <multiplicity>
+                        <minOccurs>1</minOccurs>
+                        <maxOccurs>1</maxOccurs>
                     </multiplicity>
                 </attribute>
             </dataType>
@@ -2313,7 +2335,7 @@
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
-                        <maxOccurs>666</maxOccurs>
+                        <maxOccurs>-1</maxOccurs>
                     </multiplicity>
                 </attribute>
             </dataType>
@@ -2551,7 +2573,7 @@
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
-                        <maxOccurs>666</maxOccurs>
+                        <maxOccurs>-1</maxOccurs>
                     </multiplicity>
                 </attribute>
             </dataType>
@@ -2692,7 +2714,7 @@
                     </datatype>
                     <multiplicity>
                         <minOccurs>1</minOccurs>
-                        <maxOccurs>666</maxOccurs>
+                        <maxOccurs>-1</maxOccurs>
                     </multiplicity>
                 </attribute>
             </dataType>
