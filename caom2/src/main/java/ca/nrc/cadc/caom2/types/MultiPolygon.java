@@ -182,7 +182,7 @@ public class MultiPolygon implements Serializable
     private void initProps()
     {
         validate();
-        PolygonProperties pp = computePolygonProperties(this);
+        PolygonProperties pp = computePolygonProperties();
         this.area = pp.area;
         this.center = pp.center;
         this.minimumSpanningCircle = pp.minSpanCircle;
@@ -220,12 +220,12 @@ public class MultiPolygon implements Serializable
     }
     
     // used by Polygon
-    public PolygonProperties computePolygonProperties(MultiPolygon poly)
+    private PolygonProperties computePolygonProperties()
     {
         //log.debug("computePolygonProperties: " + poly);
         // the transform needed for computing things in long/lat using cartesian approximation
-        CartesianTransform trans = CartesianTransform.getTransform(poly);
-        MultiPolygon tpoly = trans.transform(poly);
+        CartesianTransform trans = CartesianTransform.getTransform(this);
+        MultiPolygon tpoly = trans.transform(this);
        
         // algorithm from
         // http://astronomy.swin.edu.au/~pbourke/geometry/polyarea/
