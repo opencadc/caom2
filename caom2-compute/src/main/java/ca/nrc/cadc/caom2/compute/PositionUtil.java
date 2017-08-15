@@ -72,10 +72,9 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.Box;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-import ca.nrc.cadc.caom2.types.Location;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
@@ -90,7 +89,6 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
@@ -159,6 +157,7 @@ public final class PositionUtil
      * @see Circle#encode(Circle)
      * @see Location#encode(Location)
      */
+    /*
     public static byte[] encode(Shape s)
     {
         if (s instanceof Polygon)
@@ -169,7 +168,8 @@ public final class PositionUtil
             return Box.encode((Box) s);
         throw new IllegalArgumentException("unknown shape type: " + s.getClass().getName());
     }
-
+    */
+    
     /**
      * Decode the specified byte array and create a Shape. This method figures out
      * which type of shape has been encoded and calls the decode method on the
@@ -178,6 +178,7 @@ public final class PositionUtil
      * @param encoded a previously encoded shape
      * @return a Shape or null if type cannot be determined
      */
+    /*
     public static Shape decode(byte[] encoded)
     {
         int magic = HexUtil.toInt(encoded, 0);
@@ -189,11 +190,12 @@ public final class PositionUtil
         }
         throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
     }
-   
-    public static List<Polygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
+    */
+    
+    public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {
-        List<Polygon> polys = new ArrayList<Polygon>();
+        List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
         for (Artifact a : artifacts)
         {
             for (Part p : a.getParts())
@@ -206,7 +208,7 @@ public final class PositionUtil
                                 + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null)
                         {
-                            Polygon poly = toPolygon(c.position);
+                            MultiPolygon poly = toPolygon(c.position);
                             log.debug("[generatePolygons] wcs: " + poly);
                             if (poly != null && poly.getArea() > MAX_SANE_AREA)
                                 throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
@@ -225,11 +227,12 @@ public final class PositionUtil
     {
         // since we compute the union, just blindly use all the polygons
         // derived from spatial wcs
-        List<Polygon> polys = generatePolygons(artifacts, productType);
+        List<MultiPolygon> polys = generatePolygons(artifacts, productType);
         if (polys.isEmpty())
             return null;
         log.debug("[computeBounds] components: " + polys.size());
-        Polygon poly = PolygonUtil.union(polys);
+        MultiPolygon mp = PolygonUtil.compose(polys);
+        Polygon poly = PolygonUtil.getOuterHull(mp);
         log.debug("[computeBounds] done: " + poly);
         if (poly.getArea() > MAX_SANE_AREA)
             throw new IllegalPolygonException("area too large, assuming invalid WCS: " + poly.getArea());
@@ -290,35 +293,32 @@ public final class PositionUtil
         double y2 = -1 * y1;
         CoordSys csys = inferCoordSys(sw);
         List<long[]> pixv = new ArrayList<long[]>();
-        for (Vertex v : poly.getVertices())
+        for (Point pt : poly.getPoints())
         {
-            if ( !SegmentType.CLOSE.equals(v.getType()) )
+            double[] coords = new double[] { pt.cval1, pt.cval2 };
+            if (csys.swappedAxes)
             {
-                double[] coords = new double[] { v.cval1, v.cval2 };
-                if (csys.swappedAxes)
-                {
-                    double tmp = coords[0];
-                    coords[0] = coords[1];
-                    coords[1] = tmp;
-                }
-                // convert vertices -> wcs sky coordinates -> pixel coords
-                if (csys.name.equals("GAL"))
-                {
-                    Point2D p = wcscon.fk52gal(new Point2D.Double(coords[0], coords[1]));
-                    coords[0] = p.getX();
-                    coords[1] = p.getY();
-                }
-                else if (csys.name.equals("FK4"))
-                {
-                    Point2D p = wcscon.fk524(new Point2D.Double(coords[0], coords[1]));
-                    coords[0] = p.getX();
-                    coords[1] = p.getY();
-                }
-                Transform.Result tr = transform.sky2pix(coords);
-                long[] pv = new long[] { (long) tr.coordinates[0], (long) tr.coordinates[1] };
-                log.debug("[computeDimensionsFromWCS] " + v.cval1 + "," + v.cval2 + " -> " + pv[0] + "," + pv[1]);
-                pixv.add(pv);
+                double tmp = coords[0];
+                coords[0] = coords[1];
+                coords[1] = tmp;
             }
+            // convert vertices -> wcs sky coordinates -> pixel coords
+            if (csys.name.equals("GAL"))
+            {
+                Point2D p = wcscon.fk52gal(new Point2D.Double(coords[0], coords[1]));
+                coords[0] = p.getX();
+                coords[1] = p.getY();
+            }
+            else if (csys.name.equals("FK4"))
+            {
+                Point2D p = wcscon.fk524(new Point2D.Double(coords[0], coords[1]));
+                coords[0] = p.getX();
+                coords[1] = p.getY();
+            }
+            Transform.Result tr = transform.sky2pix(coords);
+            long[] pv = new long[] { (long) tr.coordinates[0], (long) tr.coordinates[1] };
+            log.debug("[computeDimensionsFromWCS] " + pt.cval1 + "," + pt.cval2 + " -> " + pv[0] + "," + pv[1]);
+            pixv.add(pv);
         }
         // find lengths of edges
         long ix = 0;
@@ -484,7 +484,7 @@ public final class PositionUtil
         return null;
     }
     
-    public static Polygon toPolygon(SpatialWCS wcs)
+    public static MultiPolygon toPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException
     {
         CoordSys coordsys = inferCoordSys(wcs);
@@ -495,14 +495,14 @@ public final class PositionUtil
         CoordBounds2D bounds = wcs.getAxis().bounds;
         CoordFunction2D function = wcs.getAxis().function;
         
-        Polygon poly = new Polygon();
+        MultiPolygon poly = new MultiPolygon();
         if(bounds != null)
         {
             if (bounds instanceof CoordCircle2D)
             {
                 CoordCircle2D cc = (CoordCircle2D) bounds;
                 if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
-                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> Polygon near the pole ("+cc+")");
+                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
                 double x = cc.getCenter().coord1;
                 double y = cc.getCenter().coord2;
                 double dy = cc.getRadius();
@@ -777,7 +777,7 @@ public final class PositionUtil
         double y = c.getCenter().cval2;
         double dy = c.getRadius();
         double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-        Polygon poly = new Polygon();
+        MultiPolygon poly = new MultiPolygon();
         poly.getVertices().add(new Vertex(x-dx, y-dy, SegmentType.MOVE));
         poly.getVertices().add(new Vertex(x+dx, y-dy, SegmentType.LINE));
         poly.getVertices().add(new Vertex(x+dx, y+dy, SegmentType.LINE));
@@ -798,7 +798,7 @@ public final class PositionUtil
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *         or null if the circle does not intersect the WCS
      */
-    public static long[] getBounds(SpatialWCS wcs, Polygon poly)
+    public static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
         CoordSys coordsys = inferCoordSys(wcs);
@@ -818,11 +818,11 @@ public final class PositionUtil
 
         // convert wcs/footprint to sky coords
         log.debug("computing poly INTERSECT footprint");
-        Polygon foot = toPolygon(wcs);
+        MultiPolygon foot = toPolygon(wcs);
         log.debug("input poly: " + poly);
         log.debug("wcs poly: " + foot);
         
-        Polygon npoly = PolygonUtil.intersection(poly, foot);
+        MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
         if (npoly == null)
         {
             log.debug("poly INTERSECT footprint == null");

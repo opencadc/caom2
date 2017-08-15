@@ -71,6 +71,7 @@ import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
@@ -105,15 +106,15 @@ public final class PolygonUtil
      */
     public static final boolean ENABLE_CONCAVE_OUTER = false;
 
-    public static Polygon toPolygon(Shape s)
+    public static MultiPolygon toMultiPolygon(Shape s)
     {
         if (s == null)
             return null;
 
-        if (s instanceof Polygon)
-            return (Polygon) s;
+        if (s instanceof MultiPolygon)
+            return (MultiPolygon) s;
 
-        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> Polygon");
+        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> MultiPolygon");
     }
 
     /**
@@ -124,29 +125,21 @@ public final class PolygonUtil
      * @param poly
      * @return a simple bounding polygon
      */
-    public static Polygon getOuterHull(final Polygon poly)
+    public static Polygon getOuterHull(final MultiPolygon poly)
     {
-        List<Polygon> parts = decompose(poly, true);
-        return getOuterHull(parts);
-    }
-    
-    public static Polygon getOuterHull(final List<Polygon> parts)
-    {
-        Polygon tmp = compose(parts);
-        
-        Polygon convex = getConvexHull(tmp);
-        PolygonProperties cxp = computePolygonProperties(convex);
-        log.debug("[getOuterHull] convex: " + convex + " A = " + cxp.area);
+        Polygon convex = getConvexHull(poly);
+        double cvxArea = convex.getArea();
+        log.debug("[getOuterHull] convex: " + convex + " A = " + cvxArea);
         
         if (ENABLE_CONCAVE_OUTER)
         {
-            Polygon concave = getConcaveHull(parts);
+            Polygon concave = getConcaveHull(poly);
             if (concave != null)
             {
-                PolygonProperties ccp = computePolygonProperties(concave);
-                log.debug("[getOuterHull] concave: " + concave + " A = " + ccp.area);
+                double ccvArea = concave.getArea();
+                log.debug("[getOuterHull] concave: " + concave + " A = " + ccvArea);
                 
-                // if (  comcave isBetterThan convex )
+                // if (  concave isBetterThan convex )
                 {
                     log.debug("[getOuterHull] pick CONCAVE " + concave);
                     return concave;
@@ -169,20 +162,16 @@ public final class PolygonUtil
      * @param poly
      * @return concave hull or null if current algorithms fail
      */
-    static Polygon getConcaveHull(final Polygon poly)
+    static Polygon getConcaveHull(final MultiPolygon poly)
     {
-        List<Polygon> parts = decompose(poly, true);  // decompose and remove holes
-        return getConcaveHull(parts);
-    }
+        List<MultiPolygon> parts = decompose(poly, true);  // decompose and remove holes
     
-    static Polygon getConcaveHull(final List<Polygon> parts)
-    {
         double scale = 0.0;
-        Polygon outer = null;
+        MultiPolygon outer = null;
         while (outer == null && scale <= MAX_SCALE)
         {
             log.debug("[getConcaveHull] trying scale=" + scale + " with " + parts.size() + " simple polygons");
-            Polygon tmp = transComputeUnion(parts, scale, true, true);
+            MultiPolygon tmp = transComputeUnion(parts, scale, true, true);
             
             log.debug("[getConcaveHull] union = " + tmp);
             if (tmp.isSimple())
@@ -200,10 +189,18 @@ public final class PolygonUtil
             scale += DEFAULT_SCALE; // 2x, 3x, etc
         }
         if (outer != null)
+        {
             log.debug("[getConcaveHull] SUCCESS: " + outer);
-        else
-            log.debug("[getConcaveHull] FAILED");
-        return outer;
+            List<Point> pts = new ArrayList<Point>();
+            for (Vertex v : outer.getVertices())
+                if (!SegmentType.CLOSE.equals(v.getType()))
+                    pts.add(new Point(v.cval1, v.cval2));
+            Polygon ret = new Polygon(pts, poly);
+            return ret;
+        }
+
+        log.debug("[getConcaveHull] FAILED");
+        return null;
     }
 
     /**
@@ -212,7 +209,7 @@ public final class PolygonUtil
      * @param poly
      * @return
      */
-    static Polygon getConvexHull(final Polygon poly)
+    static Polygon getConvexHull(final MultiPolygon poly)
     {
         log.debug("[getConvexHull] " + poly);
         if (poly == null)
@@ -220,19 +217,25 @@ public final class PolygonUtil
         
 
         CartesianTransform trans = CartesianTransform.getTransform(poly);
-        Polygon tpoly = trans.transform(poly);
+        MultiPolygon tpoly = trans.transform(poly);
         log.debug("[getConvexHull] tpoly " + tpoly);
         
-        Polygon tconvex = computeConvexHull(tpoly);
+        MultiPolygon tconvex = computeConvexHull(tpoly);
         log.debug("[getConvexHull] tconvex " + tconvex);
         
         smooth(tconvex);
         log.debug("[getConvexHull] tsmooth " + tconvex);
         
-        Polygon convex = trans.getInverseTransform().transform(tconvex);
+        MultiPolygon convex = trans.getInverseTransform().transform(tconvex);
         log.debug("[getConvexHull] convex " + convex );
         
-        return convex;
+        // TODO: convert
+        List<Point> pts = new ArrayList<Point>();
+        for (Vertex v : convex.getVertices())
+            if (!SegmentType.CLOSE.equals(v.getType()))
+                pts.add(new Point(v.cval1, v.cval2));
+        Polygon ret = new Polygon(pts, poly);
+        return ret;
     }
 
     /**
@@ -242,22 +245,22 @@ public final class PolygonUtil
      * @param polys
      * @return 
      */
-    public static Polygon union(List<Polygon> polys)
-    {
-        return getOuterHull(polys);
-    }
+    //public static MultiPolygon union(List<MultiPolygon> polys)
+    //{
+    //    return getOuterHull(polys);
+    //}
     
-    public static Polygon intersection(Polygon p1, Polygon p2)
+    public static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
     {
         double[] cube = CartesianTransform.getBoundingCube(p1, null);
         cube = CartesianTransform.getBoundingCube(p2, cube);
 
         CartesianTransform trans = CartesianTransform.getTransform(cube, false);
 
-        Polygon pt1 = trans.transform(p1);
-        Polygon pt2 = trans.transform(p2);
+        MultiPolygon pt1 = trans.transform(p1);
+        MultiPolygon pt2 = trans.transform(p2);
 
-        Polygon inter = doIntersectCAG(pt1, pt2);
+        MultiPolygon inter = doIntersectCAG(pt1, pt2);
         
         if (inter != null)
             inter = trans.getInverseTransform().transform(inter);
@@ -266,14 +269,14 @@ public final class PolygonUtil
     }
   
     // transform, compute, inverse transforms
-    private static Polygon transComputeUnion(List<Polygon> polys, double scale, boolean unscale, boolean removeHoles)
+    private static MultiPolygon transComputeUnion(List<MultiPolygon> polys, double scale, boolean unscale, boolean removeHoles)
     {
         if (polys.size() == 1)
             return polys.get(0);
         
         // transform the input polygons to some other 2D coordinates where cartesian CAG is good enough
         double[] cube = null;
-        for (Polygon p : polys)
+        for (MultiPolygon p : polys)
         {
             cube = CartesianTransform.getBoundingCube(p, cube);
         }
@@ -281,14 +284,14 @@ public final class PolygonUtil
         log.debug("working transform: " + trans);
         
         // transform all the polygons
-        List<Polygon> work = new ArrayList<Polygon>(polys.size());
-        for (Polygon p : polys)
+        List<MultiPolygon> work = new ArrayList<MultiPolygon>(polys.size());
+        for (MultiPolygon p : polys)
         {
             work.add(trans.transform(p));
         }
 
         // compute union
-        Polygon union = computeUnion(work, scale, unscale, removeHoles);
+        MultiPolygon union = computeUnion(work, scale, unscale, removeHoles);
 
         // inverse transform back to longitude,latitude
         union = trans.getInverseTransform().transform(union);
@@ -297,24 +300,24 @@ public final class PolygonUtil
     }
 
      // scale, compute, remove-holes, [unscale], smooth; assumes cartesian approx is safe
-    private static Polygon computeUnion(List<Polygon> work, double scale, boolean unscale, boolean removeHoles)
+    private static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
     {
         log.debug("[computeUnion] work=" + work.size() + " scale="+scale 
                 + " unscale="+unscale + " removeHoles="+removeHoles);
         
         // scale all the polygons up to cause nearby polygons to intersect
-        List<Polygon> scaled = work;
+        List<MultiPolygon> scaled = work;
         if (scale > 0.0)
         {
-            scaled = new ArrayList<Polygon>(work.size());
-            for (Polygon p : work)
+            scaled = new ArrayList<MultiPolygon>(work.size());
+            for (MultiPolygon p : work)
             {
-                scaled.add(scalePolygon(p, scale));
+                scaled.add(scaleMultiPolygon(p, scale));
             }
         }
 
-        Polygon poly = null;
-        for (Polygon p : scaled)
+        MultiPolygon poly = null;
+        for (MultiPolygon p : scaled)
         {
             if (poly == null)
                 poly = p;
@@ -327,24 +330,24 @@ public final class PolygonUtil
             poly = removeHoles(poly);
         
         if (unscale && scale > 0.0)
-            poly = unscalePolygon(poly, scaled, scale);
+            poly = unscaleMultiPolygon(poly, scaled, scale);
 
         smooth(poly);
 
         return poly;
     }
 
-    private static Polygon removeHoles(Polygon poly)
+    private static MultiPolygon removeHoles(MultiPolygon poly)
     {
         // impl: no checking, just blindly decompose and reassemble
-        List<Polygon> parts = decompose(poly, true);
+        List<MultiPolygon> parts = decompose(poly, true);
         return compose(parts);
     }
     
-    private static Polygon compose(List<Polygon> parts)
+    static MultiPolygon compose(List<MultiPolygon> parts)
     {
-        Polygon poly = new Polygon();
-        for (Polygon p : parts)
+        MultiPolygon poly = new MultiPolygon();
+        for (MultiPolygon p : parts)
         {
             for (Vertex v : p.getVertices())
             {
@@ -354,19 +357,19 @@ public final class PolygonUtil
         return poly;
     }
     
-    private static List<Polygon> decompose(Polygon p)
+    static List<MultiPolygon> decompose(MultiPolygon p)
     {
         if (p == null)
             return null;
-        List<Polygon> polys = new ArrayList<Polygon>();
-        Polygon prev = null; // needs to be a stack?
-        Polygon cur = null;
+        List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
+        MultiPolygon prev = null; // needs to be a stack?
+        MultiPolygon cur = null;
         for (Vertex v : p.getVertices())
         {
             if (cur == null) // start new poly
             {
-                //log.debug("new Polygon");
-                cur = new Polygon();
+                //log.debug("new MultiPolygon");
+                cur = new MultiPolygon();
                 //log.debug("vertex: " + v);
                 cur.getVertices().add(v);
             }
@@ -375,11 +378,11 @@ public final class PolygonUtil
                 //log.debug("vertex: " + v);
                 //cur.getVertices().add(new Vertex(0.0, 0.0,SegmentType.CLOSE));
                 //polys.add(cur);
-                //log.debug("close Polygon");
+                //log.debug("close MultiPolygon");
                 prev = cur; // embedded loop
 
-                //log.debug("new Polygon");
-                cur = new Polygon();
+                //log.debug("new MultiPolygon");
+                cur = new MultiPolygon();
                 //log.debug("vertex: " + v);
                 cur.getVertices().add(v);
             }
@@ -389,7 +392,7 @@ public final class PolygonUtil
                 cur.getVertices().add(v);
                 polys.add(cur);
                 cur = prev;
-                //log.debug("close Polygon");
+                //log.debug("close MultiPolygon");
             }
             else
             {
@@ -400,19 +403,19 @@ public final class PolygonUtil
         return polys;
     }
 
-    static List<Polygon> decompose(Polygon poly, boolean removeHoles)
+    static List<MultiPolygon> decompose(MultiPolygon poly, boolean removeHoles)
     {
         log.debug("[decompose] START: " + poly + " removeHoles="+removeHoles);
-        List<Polygon> samples = decompose(poly);
+        List<MultiPolygon> samples = decompose(poly);
         
         // find samples and holes via sign of the area
-        boolean cw = computePolygonProperties(poly).windCounterClockwise; 
-        ListIterator<Polygon> iter = samples.listIterator();
+        boolean cw = poly.getCCW();
+        ListIterator<MultiPolygon> iter = samples.listIterator();
         int num = 0;
         while ( iter.hasNext() )
         {
-            Polygon part = iter.next();
-            boolean pcw = computePolygonProperties(part).windCounterClockwise;
+            MultiPolygon part = iter.next();
+            boolean pcw = part.getCCW();
             if (cw != pcw) // opposite sign
             {
                 iter.remove();
@@ -423,7 +426,7 @@ public final class PolygonUtil
             log.debug("[removeHoles] discarded " + num + " holes");
         
         poly.getVertices().clear();
-        for (Polygon p : samples)
+        for (MultiPolygon p : samples)
         {
             poly.getVertices().addAll(p.getVertices());
         }
@@ -432,15 +435,15 @@ public final class PolygonUtil
     }
     
     // removes all holes with fractional area less than rat
-    static boolean removeSmallHoles(Polygon poly, double rat)
+    static boolean removeSmallHoles(MultiPolygon poly, double rat)
     {
         if (poly.getVertices().size() <= 8)
             return false; // cannot have holes with fewer than 8 vertices (two triangles and 2 CLOSE)
 
         boolean hasHoles = false;
         log.debug("[removeSmallHoles] start: " + poly);
-        PolygonProperties pProp = computePolygonProperties(poly);
-        Polygon tmp = new Polygon();
+        MultiPolygon tmp = new MultiPolygon();
+        double polyArea = poly.getArea();
         boolean go = true;
         while(go)
         {
@@ -473,9 +476,9 @@ public final class PolygonUtil
                     else
                     {
                         // closed loop
-                        PolygonProperties tProp = computePolygonProperties(tmp);
-                        double da = tProp.area/pProp.area;
-                        boolean isHole = (tProp.windCounterClockwise != pProp.windCounterClockwise); // opposite winding
+                        double tmpArea = tmp.getArea();
+                        double da = tmpArea/polyArea;
+                        boolean isHole = (tmp.getCCW() != poly.getCCW()); // opposite winding
                         hasHoles = isHole;
                         if (isHole && da < rat) // hole && small
                         {
@@ -504,11 +507,11 @@ public final class PolygonUtil
         return hasHoles;
     }
 
-    private static void smooth(Polygon poly)
+    private static void smooth(MultiPolygon poly)
     {
-        List<Polygon> parts = decompose(poly);
+        List<MultiPolygon> parts = decompose(poly);
         poly.getVertices().clear();
-        for (Polygon p : parts)
+        for (MultiPolygon p : parts)
         {
             int prev = p.getVertices().size();
             int num = 0;
@@ -538,16 +541,16 @@ public final class PolygonUtil
         log.debug("[smooth] after: " + poly);
     }
     
-    private static void smoothSimpleAdjacentVertices(Polygon poly, double rsl)
+    private static void smoothSimpleAdjacentVertices(MultiPolygon poly, double rsl)
     {
         log.debug("[smooth.adjacent] " + poly);
         if (poly.getVertices().size() <= 5) // 4+close == rectangle
             return;
-        PolygonProperties pp = computePolygonProperties(poly);
         
-        double tol = pp.minSpanCircle.getSize()*rsl;
+        Circle msc = poly.getMinimumSpanningCircle();
+        double tol = msc.getSize()*rsl;
         //double tol = Math.sqrt(pp.area)*rsl; // ~same for squares, smaller for skinny rectangles
-        log.debug("[smooth.adjacent] r=" + pp.minSpanCircle.getRadius()
+        log.debug("[smooth.adjacent] r=" + msc.getRadius()
             + " tol=" + tol);
         
         Iterator<Vertex> vi = poly.getVertices().iterator();
@@ -631,7 +634,7 @@ public final class PolygonUtil
     }
     
     // assume simple polygon
-    private static void smoothSimpleColinearSegments(Polygon poly, double tol)
+    private static void smoothSimpleColinearSegments(MultiPolygon poly, double tol)
     {
         log.debug("[smooth.colinear] " + poly);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
@@ -696,16 +699,16 @@ public final class PolygonUtil
     }
     
     // remove vertices when the area change is very small (optional: dA >= 0)
-    private static void smoothSimpleSmallAreaChange(Polygon poly, double rat)
+    private static void smoothSimpleSmallAreaChange(MultiPolygon poly, double rat)
     {
         boolean allowNegDA = false;
         
         log.debug("[smooth.area] " + poly + " rat="+rat);
         if (poly.getVertices().size() <= 4) // 3+close == triangle
             return;
-        PolygonProperties pp = computePolygonProperties(poly);
-        Polygon tmp = new Polygon();
+        MultiPolygon tmp = new MultiPolygon();
         List<Vertex> verts = tmp.getVertices();
+        double polyArea = poly.getArea();
         boolean changed = true;
         while (changed)
         {
@@ -739,9 +742,9 @@ public final class PolygonUtil
                         else
                             throw new IllegalStateException("found " + vl + " after " + v);
                     }
-                    PolygonProperties tp = computePolygonProperties(tmp);
-                    double da = (tp.area - pp.area)/pp.area;
-                    log.debug("[smooth.area] (try) remove " + v + ", dA = " + da + ", " + pp.area + " -> " + tp.area);
+                    double tmpArea = tmp.getArea();
+                    double da = (tmpArea - polyArea)/polyArea;
+                    log.debug("[smooth.area] (try) remove " + v + ", dA = " + da + ", " + polyArea + " -> " + tmpArea);
                     if (da >= 0.0)
                     {
                         if (da < posDA)
@@ -811,12 +814,11 @@ public final class PolygonUtil
         }
     }
     
-    private static Polygon scalePolygon(Polygon poly, double scale)
+    private static MultiPolygon scaleMultiPolygon(MultiPolygon poly, double scale)
     {
-        log.debug("[scalePolygon] start: " + poly + " BY " + scale);
-        Polygon ret = new Polygon();
-        PolygonProperties pp = computePolygonProperties(poly);
-        Point c = pp.center;
+        log.debug("[scaleMultiPolygon] start: " + poly + " BY " + scale);
+        MultiPolygon ret = new MultiPolygon();
+        Point c = poly.getCenter();
         for (Vertex v : poly.getVertices())
         {
             if (SegmentType.CLOSE.equals(v.getType()))
@@ -832,18 +834,18 @@ public final class PolygonUtil
                 ret.getVertices().add(sv);
             }
         }
-        log.debug("[scalePolygon] done: " + ret);
+        log.debug("[scaleMultiPolygon] done: " + ret);
         return ret;
     }
     
-    private static Polygon unscalePolygon(Polygon poly, List<Polygon> scaled, double scale)
+    private static MultiPolygon unscaleMultiPolygon(MultiPolygon poly, List<MultiPolygon> scaled, double scale)
     {
-        log.debug("[unscalePolygon] scale: " + scale + " IN: " + poly);
-        Polygon ret = new Polygon();
+        log.debug("[unscaleMultiPolygon] scale: " + scale + " IN: " + poly);
+        MultiPolygon ret = new MultiPolygon();
         
         boolean validSeg = false;
         double tol = 1.1 * poly.getSize() * scale;
-        log.debug("[unscalePolygon] tol = " + tol);
+        log.debug("[unscaleMultiPolygon] tol = " + tol);
 
         // or each vertex in poly, look for the scaled vertex in the list of input polygons
         // that is nearest and use the original unscaled vertex if it is close enough
@@ -859,40 +861,40 @@ public final class PolygonUtil
             if ( !SegmentType.CLOSE.equals(pv.getType()) )
             {
                 ScaledVertex sv = (ScaledVertex) findNearest(pv, scaled);
-                log.debug("[unscalePolygon] nearest: " + pv+ " " + sv);
+                log.debug("[unscaleMultiPolygon] nearest: " + pv+ " " + sv);
                 double d = Math.sqrt(distanceSquared(pv, sv));
                 
                 if (d < tol)
                 {
                     // use orig coords but keep current segtype
                     Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
-                    log.debug("[unscalePolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
+                    log.debug("[unscaleMultiPolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
                     ret.getVertices().set(i, v);
                     if (validSeg)
                     {
                         try { validateSegments(ret); }
                         catch(IllegalPolygonException oops)
                         {
-                            log.debug("[unscalePolygon] REVERT: " + v + " -> " + pv);
+                            log.debug("[unscaleMultiPolygon] REVERT: " + v + " -> " + pv);
                             ret.getVertices().set(i, pv); // undo
                         }
                     }
                 }
                 else
                 {
-                    log.debug("[unscalePolygon] KEEP: " + pv + " (d=" + d + ")");
+                    log.debug("[unscaleMultiPolygon] KEEP: " + pv + " (d=" + d + ")");
                 }
             }
         }
-        log.debug("[unscalePolygon] done: " + ret);
+        log.debug("[unscaleMultiPolygon] done: " + ret);
         return ret;
     }
 
-    private static Vertex findNearest(Vertex v, List<Polygon> polys)
+    private static Vertex findNearest(Vertex v, List<MultiPolygon> polys)
     {
         double d = Double.MAX_VALUE;
         Vertex ret = null;
-        for (Polygon p : polys)
+        for (MultiPolygon p : polys)
         {
             for (Vertex pv : p.getVertices())
             {
@@ -920,13 +922,13 @@ public final class PolygonUtil
         Circle minSpanCircle;
     }
     
-    // used by Polygon
-    static PolygonProperties computePolygonProperties(Polygon poly)
+    // used by MultiPolygon
+    static PolygonProperties XXXcomputePolygonProperties(MultiPolygon poly)
     {
         log.debug("computePolygonProperties: " + poly);
         // the transform needed for computing things in long/lat using cartesian approximation
         CartesianTransform trans = CartesianTransform.getTransform(poly);
-        Polygon tpoly = trans.transform(poly);
+        MultiPolygon tpoly = trans.transform(poly);
        
         // algorithm from
         // http://astronomy.swin.edu.au/~pbourke/geometry/polyarea/
@@ -1006,7 +1008,7 @@ public final class PolygonUtil
         return ret;
     }
 
-    static CartesianTransform getTransform(Polygon p1, Polygon p2)
+    static CartesianTransform getTransform(MultiPolygon p1, MultiPolygon p2)
     {
         double[] cube = CartesianTransform.getBoundingCube(p1, null);
         cube = CartesianTransform.getBoundingCube(p2, cube);
@@ -1043,12 +1045,12 @@ public final class PolygonUtil
     }
 
     // validate a simple polygon (single loop) for intersecting segments
-    // used by PositionUtil to validate CoordPolygon2D
-    static void validateSegments(Polygon poly)
+    // used by PositionUtil to validate CoordMultiPolygon2D
+    static void validateSegments(MultiPolygon poly)
         throws IllegalPolygonException
     {
         CartesianTransform trans = CartesianTransform.getTransform(poly);
-        Polygon tpoly = trans.transform(poly);
+        MultiPolygon tpoly = trans.transform(poly);
 
         Iterator<Vertex> vi = tpoly.getVertices().iterator();
         List<Segment> tsegs = new ArrayList<Segment>();
@@ -1210,30 +1212,30 @@ public final class PolygonUtil
     // from here down: interfaces to "external" libraries with alternate data structures
     
     // use java.awt CAG implementation for 2D cartesian geometry
-    static Polygon doUnionCAG(Polygon p1, Polygon p2)
+    static MultiPolygon doUnionCAG(MultiPolygon p1, MultiPolygon p2)
     {
         Area a1 = toArea(p1);
         Area a2 = toArea(p2);
         a1.add(a2);
-        Polygon ret = toPolygon(a1);
+        MultiPolygon ret = toMultiPolygon(a1);
         return ret;
     }
 
     // use java.awt CAG implementation for 2D cartesian geometry
-    static Polygon doIntersectCAG(Polygon p1, Polygon p2)
+    static MultiPolygon doIntersectCAG(MultiPolygon p1, MultiPolygon p2)
     {
         Area a1 = toArea(p1);
         Area a2 = toArea(p2);
         a1.intersect(a2);
-        Polygon ret = toPolygon(a1);
+        MultiPolygon ret = toMultiPolygon(a1);
         if (ret.getVertices().isEmpty())
             return null;
         return ret;
     }
 
-    static Polygon toPolygon(Area area)
+    static MultiPolygon toMultiPolygon(Area area)
     {
-        Polygon ret = new Polygon();
+        MultiPolygon ret = new MultiPolygon();
         List<Vertex> verts = ret.getVertices();
 
         PathIterator pi = area.getPathIterator(null);
@@ -1268,7 +1270,7 @@ public final class PolygonUtil
     }
 
     // support java.awt rendering
-    public static GeneralPath toGeneralPath(Polygon poly)
+    public static GeneralPath toGeneralPath(MultiPolygon poly)
     {
         GeneralPath gp = new GeneralPath();
         for (Vertex v : poly.getVertices())
@@ -1286,13 +1288,13 @@ public final class PolygonUtil
     }
     
     // support java.awt rendering
-    public static Area toArea(Polygon poly)
+    public static Area toArea(MultiPolygon poly)
     {
         return new Area(toGeneralPath(poly));
     }
     
-    // transform Polygon and call GrahamScan algorithm
-    private static Polygon computeConvexHull(Polygon poly)
+    // transform MultiPolygon and call GrahamScan algorithm
+    private static MultiPolygon computeConvexHull(MultiPolygon poly)
     {
         // copy and strip out CLOSE
         List<SortablePoint2D> tmp = new ArrayList<SortablePoint2D>();
@@ -1303,7 +1305,7 @@ public final class PolygonUtil
         }
         SortablePoint2D[] points = (SortablePoint2D[]) tmp.toArray(new SortablePoint2D[tmp.size()]);
         
-        Polygon ret = new Polygon();
+        MultiPolygon ret = new MultiPolygon();
         SegmentType t = SegmentType.MOVE;
         GrahamScan gs = new GrahamScan(points);
         for (SortablePoint2D p : gs.hull())

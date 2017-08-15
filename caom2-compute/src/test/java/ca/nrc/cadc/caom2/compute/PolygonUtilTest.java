@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -120,13 +121,13 @@ public class PolygonUtilTest
     {
         try
         {
-            Polygon p1 = new Polygon(); // 2x2 at 2,2
+            MultiPolygon p1 = new MultiPolygon(); // 2x2 at 2,2
             p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            Polygon p2 = new Polygon(); // 2x2 at 3,3
+            MultiPolygon p2 = new MultiPolygon(); // 2x2 at 3,3
             p2.getVertices().add( new Vertex( 2.0, 2.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( 4.0, 2.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( 4.0, 4.0, SegmentType.LINE));
@@ -134,7 +135,7 @@ public class PolygonUtilTest
             p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             // area = 7 center=2.5,2.5
-            Polygon actual = PolygonUtil.doUnionCAG(p1, p2);
+            MultiPolygon actual = PolygonUtil.doUnionCAG(p1, p2);
             
             log.debug("testUnionDisjoint: " + p1);
             log.debug("testUnionDisjoint: " + p2);
@@ -168,13 +169,13 @@ public class PolygonUtilTest
         try
         {
             double x = 30.0;
-            Polygon p1 = new Polygon(); // 2x2 at 2,2
+            MultiPolygon p1 = new MultiPolygon(); // 2x2 at 2,2
             p1.getVertices().add( new Vertex( x+1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( x+3.0, 1.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( x+3.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( x+1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            Polygon p2 = new Polygon(); // 2x2 at 6,6
+            MultiPolygon p2 = new MultiPolygon(); // 2x2 at 6,6
             p2.getVertices().add( new Vertex( x+5.0, 5.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( x+7.0, 5.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( x+7.0, 7.0, SegmentType.LINE));
@@ -182,7 +183,7 @@ public class PolygonUtilTest
             p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             // area = 8 center=4,4
-            Polygon actual = PolygonUtil.doUnionCAG(p1, p2);
+            MultiPolygon actual = PolygonUtil.doUnionCAG(p1, p2);
 
             log.debug("testUnionDisjoint: " + p1);
             log.debug("testUnionDisjoint: " + p2);
@@ -215,7 +216,7 @@ public class PolygonUtilTest
         try
         {
             // TODO: test polygon with a hole in it
-            Polygon p1 = new Polygon(); // 3x3 at 2.5,2.5 with 1x1 hole in middle
+            MultiPolygon p1 = new MultiPolygon(); // 3x3 at 2.5,2.5 with 1x1 hole in middle
             // outside: ccw
             p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( 4.0, 1.0, SegmentType.LINE));
@@ -264,13 +265,13 @@ public class PolygonUtilTest
     {
         try
         {
-            Polygon p1 = new Polygon(); // 2x2
+            MultiPolygon p1 = new MultiPolygon(); // 2x2
             p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            Polygon p2 = new Polygon(); // 2x2 slightly to right
+            MultiPolygon p2 = new MultiPolygon(); // 2x2 slightly to right
             p2.getVertices().add( new Vertex( 3.1, 1.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( 5.1, 1.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( 5.1, 3.0, SegmentType.LINE));
@@ -280,7 +281,7 @@ public class PolygonUtilTest
             log.debug("testGetConcaveHullFromClose: " + p1);
             log.debug("testGetConcaveHullFromClose: " + p2);
             
-            Polygon union = PolygonUtil.doUnionCAG(p1, p2);
+            MultiPolygon union = PolygonUtil.doUnionCAG(p1, p2);
             Assert.assertNotNull(union);
             log.debug("testGetConcaveHullFromClose: " + union);
             Assert.assertFalse(union.isSimple());
@@ -298,7 +299,7 @@ public class PolygonUtilTest
             Polygon actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.info("testGetConcaveHullFromClose: " + actual);
-            Assert.assertTrue(actual.isSimple());
+            Assert.assertEquals(4, actual.getPoints().size());
 
             center = actual.getCenter();
             area = actual.getArea();
@@ -310,7 +311,7 @@ public class PolygonUtilTest
             Assert.assertEquals(8.0 + 2*0.1, area, 0.1); // 4 + 4 + gap
 
             // more complex scenario: p2 slightly to the right and up by 1
-            p2 = new Polygon(); // 2x2 slightly to right
+            p2 = new MultiPolygon(); // 2x2 slightly to right
             p2.getVertices().add( new Vertex( 3.02, 2.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( 5.02, 2.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( 5.02, 4.0, SegmentType.LINE));
@@ -338,7 +339,7 @@ public class PolygonUtilTest
             actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.debug("testGetConcaveHullFromClose: " + actual);
-            Assert.assertTrue(actual.isSimple());
+            Assert.assertEquals(4, actual.getPoints().size());
 
             center = actual.getCenter();
             area = actual.getArea();
@@ -361,13 +362,13 @@ public class PolygonUtilTest
     {
         try
         {
-            Polygon p1 = new Polygon(); // 2x2
+            MultiPolygon p1 = new MultiPolygon(); // 2x2
             p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            Polygon p2 = new Polygon(); // 2x2 above and to the right
+            MultiPolygon p2 = new MultiPolygon(); // 2x2 above and to the right
             p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
@@ -377,7 +378,7 @@ public class PolygonUtilTest
             log.debug("testGetConcaveHullFromFar: " + p1);
             log.debug("testGetConcaveHullFromFar: " + p2);
 
-            Polygon union = PolygonUtil.doUnionCAG(p1, p2);
+            MultiPolygon union = PolygonUtil.doUnionCAG(p1, p2);
             Assert.assertNotNull(union);
             log.debug("testGetConcaveHullFromFar: " + union);
             Assert.assertFalse(union.isSimple());
@@ -407,13 +408,13 @@ public class PolygonUtilTest
     {
         try
         {
-            Polygon p1 = new Polygon(); // 2x2
+            MultiPolygon p1 = new MultiPolygon(); // 2x2
             p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
             p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
             p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            Polygon p2 = new Polygon(); // 2x2 above and to the right
+            MultiPolygon p2 = new MultiPolygon(); // 2x2 above and to the right
             p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
             p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
             p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
@@ -423,7 +424,7 @@ public class PolygonUtilTest
             log.debug("testGetConvexHull: " + p1);
             log.debug("testGetConvexHull: " + p2);
 
-            Polygon union = PolygonUtil.doUnionCAG(p1, p2);
+            MultiPolygon union = PolygonUtil.doUnionCAG(p1, p2);
             Assert.assertNotNull(union);
             log.debug("testGetConvexHull: " + union);
             Assert.assertFalse(union.isSimple());
@@ -440,7 +441,7 @@ public class PolygonUtilTest
 
             Polygon actual = PolygonUtil.getConvexHull(union);
             Assert.assertNotNull(actual);
-            Assert.assertEquals("convex hull num verts", 7, actual.getVertices().size());
+            Assert.assertEquals("convex hull num verts", 6, actual.getPoints().size());
             center = actual.getCenter();
             area = actual.getArea();
             Assert.assertNotNull(center);
@@ -488,7 +489,7 @@ public class PolygonUtilTest
     }
 
     @Test
-    public void testGetBoundsFromPolygon()
+    public void testGetBoundsFromMultiPolygon()
     {
         try
         {
@@ -499,7 +500,7 @@ public class PolygonUtilTest
                     new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
                     1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
 
-            Polygon p = new Polygon();
+            MultiPolygon p = new MultiPolygon();
             p.getVertices().add(new Vertex(9.9,19.9, SegmentType.MOVE));
             p.getVertices().add(new Vertex(10.1,20.1, SegmentType.LINE));
             p.getVertices().add(new Vertex(9.8,20.2, SegmentType.LINE));
