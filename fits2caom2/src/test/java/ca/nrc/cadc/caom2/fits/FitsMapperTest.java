@@ -204,14 +204,13 @@ public class FitsMapperTest
             Telescope.class,
             Instrument.class,
             Part.class,
-            Polygon.class,
             CoordBounds1D.class,
             CoordPolygon2D.class
         };
         
         int[] members = new int[]
         {
-            2, 2, 2, 2, 2, 1, 1, 1
+            2, 2, 2, 2, 2, 1, 1
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);

@@ -81,6 +81,7 @@ import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.compute.Util;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 
@@ -206,39 +207,32 @@ public class VizUnion
             
             viewer.clear();
             
-            CartesianTransform trans = CartesianTransform.getTransform(bounds);
+            CartesianTransform trans = CartesianTransform.getTransform(bounds.getSamples());
             setArtifacts(plane.getArtifacts(), trans, ptype);
             
             
 
             boolean doHull = true;
-            boolean showBoundsVerts = true;
-            if (doHull)
+            MultiPolygon hull = new MultiPolygon();
+            SegmentType t = SegmentType.MOVE;
+            for (Point p : bounds.getPoints())
             {
-                log.warn("CALLING PolygonUtil.getOuterHull");
-                Polygon hull = PolygonUtil.getOuterHull(bounds);
-                log.info("outer hull: " + hull);
-                if (hull != null)
-                {
-                    log.info("center: " + hull.getCenter());
-                    log.info("area: " + hull.getArea());
-                    renderPolygon(hull, trans, Color.RED, 4.0f, true);
-                    showBoundsVerts = false;
-                }
+                hull.getVertices().add(new Vertex(p.cval1, p.cval2, t));
+                t = SegmentType.LINE;
             }
+            hull.getVertices().add(Vertex.CLOSE);
+            renderPolygon(hull, trans, Color.RED, 4.0f, true);
             
-            if (bounds != null)
-                renderPolygon(bounds, trans, Color.BLUE, 1.0f, false);
+            renderPolygon(bounds.getSamples(), trans, Color.BLUE, 1.0f, false);
             
             viewer.repaint(); 
         }
 
-        public void renderPolygon(Polygon bounds, CartesianTransform trans, Color color, float thick, boolean showVerts)
+        public void renderPolygon(MultiPolygon bounds, CartesianTransform trans, Color color, float thick, boolean showVerts)
         {
             log.info("Polygon -> GeneralPath");
-            Polygon tmp = trans.transform(bounds);
+            MultiPolygon tmp = trans.transform(bounds);
             GeneralPath gpa = PolygonUtil.toGeneralPath(tmp);
-            //Box box = PolygonUtil..getBoundingBox(tmp);
 
             double polySize = tmp.getSize(); //Math.max(box.width, box.height);
             
@@ -281,7 +275,7 @@ public class VizUnion
         public void setArtifacts(Set<Artifact> artifacts, CartesianTransform trans, ProductType productType)
             throws Exception
         {
-            List<Polygon> comps = new ArrayList<Polygon>();
+            List<MultiPolygon> comps = new ArrayList<MultiPolygon>();
             int i = 0;
             for (Artifact a : artifacts)
             {
@@ -292,7 +286,7 @@ public class VizUnion
                         if ( Util.useChunk(a.getProductType(), p.productType, c.productType, productType) )
                             if (c.position != null)
                         {
-                            Polygon poly = PositionUtil.toPolygon(c.position);
+                            MultiPolygon poly = PositionUtil.toPolygon(c.position);
                             if ( poly != null )
                                 comps.add(poly);
                         }
@@ -302,13 +296,13 @@ public class VizUnion
             renderComponents(comps, trans);
         }
 
-        public void renderComponents(List<Polygon> polys, CartesianTransform trans)
+        public void renderComponents(List<MultiPolygon> polys, CartesianTransform trans)
         {
             ArrayList<GeneralPath> gpP = new ArrayList<GeneralPath>();
             if (polys != null)
             {
                 log.info("Polygon[] -> GeneralPath");
-                for (Polygon p : polys)
+                for (MultiPolygon p : polys)
                 {
                     p = trans.transform(p);
                     gpP.add(PolygonUtil.toGeneralPath(p));
