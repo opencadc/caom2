@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import java.util.Set;
 
 /**

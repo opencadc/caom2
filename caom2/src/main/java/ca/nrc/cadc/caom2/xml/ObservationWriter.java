@@ -95,6 +95,8 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -161,7 +163,7 @@ public class ObservationWriter implements Serializable
 
     protected transient Namespace caom2Namespace;
     protected transient Namespace xsiNamespace;
-    private final int docVersion; // (int) (major.minor / 10) so CAOM-2.0 == 20
+    protected final int docVersion; // (int) (major.minor / 10) so CAOM-2.0 == 20
 
     /**
      * Default constructor. This uses a standard prefix <code>caom2</code>, does
@@ -429,7 +431,10 @@ public class ObservationWriter implements Serializable
         addElement("pi", proposal.pi, element);
         addElement("project", proposal.project, element);
         addElement("title", proposal.title, element);
-        addStringListElement("keywords", proposal.getKeywords(), element);
+        if (docVersion < 23)
+            addStringListElement("keywords", proposal.getKeywords(), element);
+        else
+            addKeywordsElement(proposal.getKeywords(), element);
         parent.addContent(element);
     }
     
@@ -453,7 +458,10 @@ public class ObservationWriter implements Serializable
         addBooleanElement("standard", target.standard, element);
         addNumberElement("redshift", target.redshift, element);
         addBooleanElement("moving", target.moving, element);
-        addStringListElement("keywords", target.getKeywords(), element);
+        if (docVersion < 23)
+            addStringListElement("keywords", target.getKeywords(), element);
+        else
+            addKeywordsElement(target.getKeywords(), element);
         parent.addContent(element);
     }
     
@@ -525,7 +533,10 @@ public class ObservationWriter implements Serializable
         addNumberElement("geoLocationX", telescope.geoLocationX, element);
         addNumberElement("geoLocationY", telescope.geoLocationY, element);
         addNumberElement("geoLocationZ", telescope.geoLocationZ, element);
-        addStringListElement("keywords", telescope.getKeywords(), element);
+        if (docVersion < 23)
+            addStringListElement("keywords", telescope.getKeywords(), element);
+        else
+            addKeywordsElement(telescope.getKeywords(), element);
         parent.addContent(element);
     }
     
@@ -544,7 +555,10 @@ public class ObservationWriter implements Serializable
         
         Element element = getCaom2Element("instrument");
         addElement("name", instrument.getName(), element);
-        addStringListElement("keywords", instrument.getKeywords(), element);
+        if (docVersion < 23)
+            addStringListElement("keywords", instrument.getKeywords(), element);
+        else
+            addKeywordsElement(instrument.getKeywords(), element);
         parent.addContent(element);
     }
 
@@ -662,9 +676,22 @@ public class ObservationWriter implements Serializable
                 Element pe = getCaom2Element("bounds");
                 String xsiType = caom2Namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
                 pe.setAttribute("type", xsiType, xsiNamespace);
-                Element ves = getCaom2Element("vertices");
                 
-                for (Vertex v : poly.getVertices())
+                Element pes = getCaom2Element("points");
+                
+                for (Point p :poly.getPoints())
+                {
+                    Element ppe = getCaom2Element("point");
+                    addNumberElement("cval1", p.cval1, ppe);
+                    addNumberElement("cval2", p.cval2, ppe);
+                    pes.addContent(ppe);
+                }
+                pe.addContent(pes);
+                                
+                Element se = getCaom2Element("samples");
+                Element ves = getCaom2Element("vertices");
+                MultiPolygon mp = poly.getSamples();
+                for (Vertex v : mp.getVertices())
                 {
                     Element ve = getCaom2Element("vertex");
                     addNumberElement("cval1", v.cval1, ve);
@@ -672,11 +699,12 @@ public class ObservationWriter implements Serializable
                     addNumberElement("type", v.getType().getValue(), ve);
                     ves.addContent(ve);
                 }
-                pe.addContent(ves);
+                se.addContent(ves);
+                pe.addContent(se);
                 e.addContent(pe);
             }
             else
-                throw new UnsupportedOperationException(comp.getClass().getName() + " -> XML");
+                throw new UnsupportedOperationException(comp.bounds.getClass().getName() + " -> XML");
         }
         if (comp.dimension != null)
         {
@@ -877,7 +905,10 @@ public class ObservationWriter implements Serializable
         addElement("runID", provenance.runID, element);
         addURIElement("reference", provenance.reference, element);
         addDateElement("lastExecuted", provenance.lastExecuted, element, dateFormat);
-        addStringListElement("keywords", provenance.getKeywords(), element);
+        if (docVersion < 23)
+            addStringListElement("keywords", provenance.getKeywords(), element);
+        else
+            addKeywordsElement(provenance.getKeywords(), element);
         addInputsElement(provenance.getInputs(), element, dateFormat);
         parent.addContent(element);
     }
@@ -1655,6 +1686,22 @@ public class ObservationWriter implements Serializable
             sb.append(value).append(" ");
         }
         element.setText(sb.toString().trim());
+        parent.addContent(element);
+    }
+    
+    protected void addKeywordsElement(Collection<String> values, Element parent)
+    {
+        if (values == null || (values.isEmpty() && !writeEmptyCollections))
+            return;
+        
+        Element element = new Element("keywords", caom2Namespace);
+        StringBuilder sb = new StringBuilder();
+        for (String value : values)
+        {
+            Element kw = new Element("keyword", caom2Namespace);
+            kw.addContent(value);
+            element.addContent(kw);
+        }
         parent.addContent(element);
     }
     

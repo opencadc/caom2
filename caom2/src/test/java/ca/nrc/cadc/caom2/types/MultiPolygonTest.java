@@ -79,11 +79,11 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class PolygonTest 
+public class MultiPolygonTest 
 {
-    private static final Logger log = Logger.getLogger(PolygonTest.class);
+    private static final Logger log = Logger.getLogger(MultiPolygonTest.class);
 
-    private Polygon target;
+    private MultiPolygon target;
     private double expCenterX, expCenterY, expArea, expSize;
     private double expMSCX, expMSCY, expMSCR;
     
@@ -92,9 +92,9 @@ public class PolygonTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
-    public PolygonTest()
+    public MultiPolygonTest()
     {
-        this.target = new Polygon();
+        this.target = new MultiPolygon();
         target.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
         target.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
         target.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
@@ -151,8 +151,8 @@ public class PolygonTest
     {
         try
         {
-            byte[] encoded = Polygon.encode(target);
-            Polygon decoded = Polygon.decode(encoded);
+            byte[] encoded = MultiPolygon.encode(target);
+            MultiPolygon decoded = MultiPolygon.decode(encoded);
             Assert.assertNotNull(decoded);
             Assert.assertEquals(target.getVertices().size(), decoded.getVertices().size());
             for (int i=0; i<target.getVertices().size(); i++)
@@ -179,7 +179,7 @@ public class PolygonTest
     {
         try
         {
-            Polygon p = new Polygon();
+            MultiPolygon p = new MultiPolygon();
             p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.MOVE));
             p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
             p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
@@ -198,7 +198,7 @@ public class PolygonTest
     {
         try
         {
-            Polygon p = new Polygon();
+            MultiPolygon p = new MultiPolygon();
             p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
             p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
             p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
@@ -219,7 +219,7 @@ public class PolygonTest
     {
         try
         {
-            Polygon poly = new Polygon();
+            MultiPolygon poly = new MultiPolygon();
             poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
             poly.getVertices().add(new Vertex(358.0, 2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
@@ -251,7 +251,7 @@ public class PolygonTest
     {
         try
         {
-            Polygon poly = new Polygon();
+            MultiPolygon poly = new MultiPolygon();
             poly.getVertices().add(new Vertex(358.0, -2.0, SegmentType.MOVE));
             poly.getVertices().add(new Vertex(2.0, -2.0, SegmentType.LINE));
             poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));

@@ -121,10 +121,13 @@ public class JsonWriter extends ObservationWriter implements Serializable
         outputter.getListElementNames().add("artifacts");
         outputter.getListElementNames().add("parts");
         outputter.getListElementNames().add("vertices");
+        outputter.getListElementNames().add("points");
         outputter.getListElementNames().add("inputs");
         outputter.getListElementNames().add("states");
         outputter.getListElementNames().add("samples");
         outputter.getListElementNames().add("members");
+        if (docVersion >= 23)
+            outputter.getListElementNames().add("keywords");
         
         outputter.getStringElementNames().add("observationID");
         outputter.getStringElementNames().add("productID");
