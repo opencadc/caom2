@@ -7,7 +7,7 @@ create table caom2_Artifact
     releaseType varchar(16) not null,
     contentType varchar(128) null,
     contentLength bigint null,
-    contentChecksum varchar(136),
+    contentChecksum varchar(136) null,
 
 -- internal
     obsID bigint not null,
@@ -17,8 +17,8 @@ create table caom2_Artifact
     lastModified datetime not null,
     maxLastModified datetime not null,
     stateCode int not null,
-    metaChecksum varchar(36),
-    accMetaChecksum varchar(36)
+    metaChecksum varchar(36) null,
+    accMetaChecksum varchar(36) null
 )
 lock datarows
 ;
