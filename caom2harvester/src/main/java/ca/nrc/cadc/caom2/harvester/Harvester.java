@@ -51,8 +51,7 @@ public abstract class Harvester implements Runnable
     {
     }
 
-    protected Harvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun)
-            throws IOException
+    protected Harvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
     {
         this.entityClass = entityClass;
         this.src = src;

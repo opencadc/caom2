@@ -55,8 +55,7 @@ public class ReadAccessHarvester extends Harvester
      * @throws IOException
      *             IOException
      */
-    public ReadAccessHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full,
-            boolean dryrun) throws IOException
+    public ReadAccessHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
     {
         super(entityClass, src, dest, batchSize, full, dryrun);
         init();
@@ -74,7 +73,7 @@ public class ReadAccessHarvester extends Harvester
 
     /**
      * initialize the harvester
-     * 
+     *
      * @throws IOException
      */
     private void init() throws IOException
@@ -97,7 +96,7 @@ public class ReadAccessHarvester extends Harvester
 
     /**
      * cleanup connections and state
-     * 
+     *
      * @throws IOException
      */
     private void close() throws IOException
@@ -176,7 +175,7 @@ public class ReadAccessHarvester extends Harvester
 
     /**
      * Does the harvester work
-     * 
+     *
      * @return
      */
     private Progress doit()
@@ -248,8 +247,7 @@ public class ReadAccessHarvester extends Harvester
                 try
                 {
                     if (ra != null)
-                        log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID()
-                                + " " + format(ra.getLastModified()));
+                        log.info("put: " + ra.getClass().getSimpleName() + " " + ra.getAssetID() + "/" + ra.getGroupID() + " " + format(ra.getLastModified()));
                     if (!dryrun)
                     {
                         if (ra != null)
@@ -357,8 +355,7 @@ public class ReadAccessHarvester extends Harvester
                                                                               // ms
                                                                               // ahead
                     state.curLastModified = n;
-                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to "
-                            + format(state.curLastModified));
+                    log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
                     harvestState.put(state);
                 }
             }
@@ -379,8 +376,7 @@ public class ReadAccessHarvester extends Harvester
         if (start.entity.getLastModified().equals(end.entity.getLastModified()))
         {
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_MSZ, DateUtil.UTC);
-            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at "
-                    + df.format(start.entity.getLastModified()));
+            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + df.format(start.entity.getLastModified()));
         }
     }
 

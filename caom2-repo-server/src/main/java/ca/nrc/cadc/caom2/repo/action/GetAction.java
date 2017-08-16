@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -96,6 +96,7 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
  */
 public class GetAction extends RepoAction
 {
+
     private static final Logger log = Logger.getLogger(GetAction.class);
 
     protected DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
@@ -104,8 +105,9 @@ public class GetAction extends RepoAction
 
     public static final int MAX_OBS_LIST_SIZE = 100000;
 
-
-    public GetAction() { }
+    public GetAction()
+    {
+    }
 
     @Override
     public void doAction() throws Exception
@@ -152,9 +154,7 @@ public class GetAction extends RepoAction
         }
     }
 
-
-    protected void doGetObservation(ObservationURI uri)
-        throws Exception
+    protected void doGetObservation(ObservationURI uri) throws Exception
     {
         log.debug("START: " + uri);
 
@@ -178,8 +178,7 @@ public class GetAction extends RepoAction
         log.debug("DONE: " + uri);
     }
 
-    protected void doList(int maxRec, Date start, Date end)
-            throws Exception
+    protected void doList(int maxRec, Date start, Date end) throws Exception
     {
         log.debug("START: " + getCollection());
 
@@ -187,12 +186,10 @@ public class GetAction extends RepoAction
 
         ObservationDAO dao = getDAO();
 
-        List<ObservationState> states = dao.getObservationList(
-                getCollection(), start, end, maxRec);
+        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec);
 
         if (states == null)
-            throw new ResourceNotFoundException(
-                    "Collection not found: " + getCollection());
+            throw new ResourceNotFoundException("Collection not found: " + getCollection());
 
         long byteCount = writeObservationList(states);
         logInfo.setBytes(byteCount);

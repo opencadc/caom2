@@ -74,15 +74,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -95,46 +98,58 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import java.security.AccessControlException;
 
 public class RepoClient
 {
+
     private static final Logger log = Logger.getLogger(RepoClient.class);
     private static final URI standardID = Standards.CAOM2REPO_OBS_23;
-    
+    private static final Integer MAX_NUMBER = 3000;
+
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    
+
     private URI resourceID = null;
     private URL baseServiceURL = null;
 
-    //private Subject subject = null;
-    //private AuthMethod meth;
-    private String collection = null;
     private int nthreads = 1;
+    private Comparator<ObservationState> maxLasModifiedComparator = new Comparator<ObservationState>()
+    {
+        @Override
+        public int compare(ObservationState o1, ObservationState o2)
+        {
+            return o1.maxLastModified.compareTo(o2.maxLastModified);
+        }
+    };
+    private Comparator<ObservationState> uriComparator = new Comparator<ObservationState>()
+    {
+        @Override
+        public int compare(ObservationState o1, ObservationState o2)
+        {
+            return o1.getURI().compareTo(o2.getURI());
+        }
+    };
 
-    private RepoClient() { }
-    
     /**
      * Create new CAOM RepoClient.
-     * 
-     * @param resourceID the service identifier
-     * @param nthreads number of threads to use when getting list of observations
+     *
+     * @param resourceID
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
      */
     public RepoClient(URI resourceID, int nthreads)
     {
         this.nthreads = nthreads;
         this.resourceID = resourceID;
     }
-    
+
     private void init()
     {
         RegistryClient rc = new RegistryClient();
@@ -146,58 +161,120 @@ public class RepoClient
         this.baseServiceURL = rc.getServiceURL(this.resourceID, standardID, meth);
         if (baseServiceURL == null)
             throw new RuntimeException("not found: " + resourceID + " + " + standardID + " + " + meth);
-        
+
         log.debug("service URL: " + baseServiceURL.toString());
         log.debug("AuthMethod:  " + meth);
     }
 
-    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec)
-        throws AccessControlException
+    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException
     {
         init();
-        
+
+        List<ObservationState> accList = new ArrayList<ObservationState>();
+        List<ObservationState> partialList = null;
+        boolean tooBigRequest = maxrec == null || maxrec > MAX_NUMBER;
+
+        Integer rec = maxrec;
+        Integer recCounter = 0;
+        if (tooBigRequest)
+        {
+            rec = MAX_NUMBER;
+        }
         // Use HttpDownload to make the http GET calls (because it handles a lot
         // of the
         // authentication stuff)
+        boolean go = true;
+        String surlCommon = baseServiceURL.toExternalForm() + File.separator + collection;
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = baseServiceURL.toExternalForm() + File.separator + collection;
-        if (maxrec != null)
-            surl = surl + "?maxRec=" + maxrec;
-        if (start != null)
-            surl = surl + "&start=" + df.format(start);
-        if (end != null)
-            surl = surl + "&end=" + df.format(end);
-        URL url;
-        try
+        while (go)
         {
-            url = new URL(surl);
-            HttpDownload get = new HttpDownload(url, bos);
-            get.run();
-            if (get.getThrowable() != null)
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            if (!tooBigRequest)
+                go = false;// only one go
+            String surl = surlCommon;
+            if (rec != null)
+                surl = surl + "?maxRec=" + (rec + 1);
+            if (start != null)
+                surl = surl + "&start=" + df.format(start);
+            if (end != null)
+                surl = surl + "&end=" + df.format(end);
+            URL url;
+            log.info("URL: " + surl);
+            try
             {
-                if (get.getThrowable() instanceof AccessControlException)
-                    throw (AccessControlException) get.getThrowable();
+                url = new URL(surl);
+                HttpDownload get = new HttpDownload(url, bos);
 
-                throw new RuntimeException("failed to get observation list", get.getThrowable());
+                get.run();
+                int responseCode = get.getResponseCode();
+                log.info("RESPONSE CODE: '" + responseCode + "'");
+                if (responseCode == 302) // redirected url
+                {
+                    url = get.getRedirectURL();
+                    log.info("REDIRECTED URL: " + url);
+                    bos = new ByteArrayOutputStream();
+                    get = new HttpDownload(url, bos);
+                    responseCode = get.getResponseCode();
+                    log.info("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+
+                }
+
+                if (get.getThrowable() != null)
+                {
+                    if (get.getThrowable() instanceof AccessControlException)
+                        throw (AccessControlException) get.getThrowable();
+                    throw new RuntimeException("failed to get observation list", get.getThrowable());
+                }
+            }
+            catch (MalformedURLException e)
+            {
+                throw new RuntimeException("BUG: failed to generate observation list url", e);
+            }
+
+            try
+            {
+                // log.info("RESPONSE = '" + bos.toString() + "'");
+                partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
+                if (partialList != null && accList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0)))
+                {
+                    partialList.remove(0);
+                }
+
+                accList.addAll(partialList);
+                log.info("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+
+                bos.close();
+            }
+            catch (ParseException | URISyntaxException | IOException e)
+            {
+                throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
+            }
+
+            if (accList.size() > 0)
+            {
+                start = accList.get(accList.size() - 1).maxLastModified;
+            }
+
+            recCounter = accList.size();
+            if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec)
+            {
+                rec = maxrec - recCounter;
+            }
+            log.info("dinamic batch (rec): " + rec);
+            log.info("counter (recCounter): " + recCounter);
+            log.info("maxrec: " + maxrec);
+            // log.info("start: " + start.toString());
+            // log.info("end: " + end.toString());
+            log.info("partialList.size(): " + partialList.size());
+
+            if (partialList.size() < rec || (end != null && start != null && start.equals(end)))
+            {
+                log.info("************** go false");
+
+                go = false;
             }
         }
-        catch (MalformedURLException e)
-        {
-            throw new RuntimeException("BUG: failed to generate observation list url", e);
-        }
-
-        List<ObservationState> list = null;
-        try
-        {
-            list = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
-
-        }
-        catch (ParseException | IOException e)
-        {
-            throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
-        }
-        return list;
+        return partialList;
     }
 
     public Iterator<Observation> observationIterator()
@@ -211,11 +288,10 @@ public class RepoClient
 
     }
 
-    public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-            throws InterruptedException, ExecutionException
+    public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
     {
         init();
-        
+
         // startDate = null;
         // end = df.parse("2017-06-20T09:03:15.360");
         List<WorkerResponse> list = new ArrayList<WorkerResponse>();
@@ -225,8 +301,11 @@ public class RepoClient
         // Create tasks for each file
         List<Callable<WorkerResponse>> tasks = new ArrayList<Callable<WorkerResponse>>();
 
-        // the current subject usually gets propagated into a thread pool, but gets attached
-        // when the thread is created so we explicitly pass it it and do another Subject.doAs in case
+        // the current subject usually gets propagated into a thread pool, but
+        // gets attached
+        // when the thread is created so we explicitly pass it it and do another
+        // Subject.doAs in
+        // case
         // thread pool management is changed
         Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
         for (ObservationState os : stateList)
@@ -256,8 +335,7 @@ public class RepoClient
         }
         catch (InterruptedException | ExecutionException e)
         {
-            log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: "
-                    + e.getCause().toString());
+            log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: " + e.getCause().toString());
             throw e;
         }
         finally
@@ -274,22 +352,26 @@ public class RepoClient
     public WorkerResponse get(ObservationURI uri)
     {
         init();
-        
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
+
         ObservationState os = new ObservationState(uri);
+
         // see comment above in getList
         Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
         Worker wt = new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm());
         return wt.getObservation();
     }
-    public WorkerResponse get(URI uri, Date start)
+
+    public WorkerResponse get(String collection, URI uri, Date start)
     {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
 
         init();
-        
+
+        log.info("******************* getObservationList(collection, start, null, null) " + collection);
+
         List<ObservationState> list = getObservationList(collection, start, null, null);
         ObservationState obsState = null;
         for (ObservationState os : list)
@@ -301,6 +383,9 @@ public class RepoClient
             obsState = os;
             break;
         }
+
+        log.info("******************* getting to getList " + obsState);
+
         if (obsState != null)
         {
             // see comment above in getList
@@ -314,76 +399,30 @@ public class RepoClient
         }
     }
 
-    private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(
-            final ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
-            throws ParseException, IOException
+    private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(final ByteArrayOutputStream bos, DateFormat sdf, char separator, char endOfLine)
+
+            throws ParseException, IOException, URISyntaxException
     {
         init();
-        
+
         List<ObservationState> list = new ArrayList<ObservationState>();
 
-        // Reader reader = new Reader()
-        // {
-        // @Override
-        // public int read(char[] cbuf, int off, int len) throws IOException
-        // {
-        // int res = 0;
-        // int j = 0;
-        //
-        // cbuf = new char[len];
-        //
-        // for (int i = off; i < off + len; i++)
-        // {
-        // if (i < bos.size())
-        // {
-        // cbuf[j++] = (char) bos.toByteArray()[i];
-        // res++;
-        // } else
-        // {
-        // res = -1;
-        // break;
-        // }
-        //
-        // }
-        //
-        // return res;
-        // }
-        //
-        // @Override
-        // public void close() throws IOException
-        // {
-        // bos.close();
-        //
-        // }
-        // };
-        // CsvReader tsvreader = new CsvReader(reader);
-        // tsvreader.setDelimiter('0');
-        //
-        // while (tsvreader.readRecord())
-        // {
-        // String collection = tsvreader.get(0);
-        // String id = tsvreader.get(1);
-        // Date date = sdf.parse(tsvreader.get(2));
-        // ObservationState os = new ObservationState(collection, id, date,
-        // resourceId);
-        // list.add(os);
-        // }
-        //
-        // tsvreader.close();
-
-        // list = new ArrayList<ObservationState>();
         String id = null;
         String sdate = null;
+        Date date = null;
         String collection = null;
-
+        String md5 = null;
         String aux = "";
+
+        boolean readingDate = false;
         boolean readingCollection = true;
         boolean readingId = false;
 
         for (int i = 0; i < bos.toString().length(); i++)
         {
             char c = bos.toString().charAt(i);
-            if (c != separator && c != endOfLine)
+
+            if (c != ' ' && c != separator && c != endOfLine)
             {
                 aux += c;
             }
@@ -392,33 +431,83 @@ public class RepoClient
                 if (readingCollection)
                 {
                     collection = aux;
+                    // log.info("*************** collection: " + collection);
                     readingCollection = false;
                     readingId = true;
+                    readingDate = false;
                     aux = "";
-
                 }
                 else if (readingId)
                 {
                     id = aux;
+                    // log.info("*************** id: " + id);
                     readingCollection = false;
                     readingId = false;
+                    readingDate = true;
+                    aux = "";
+                }
+                else if (readingDate)
+                {
+                    sdate = aux;
+                    // log.info("*************** sdate: " + sdate);
+                    date = DateUtil.flexToDate(sdate, sdf);
+
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = false;
                     aux = "";
                 }
 
             }
+            else if (c == ' ')
+            {
+                if (readingDate)
+                {
+                    sdate = aux;
+                    // log.info("*************** sdate: " + sdate);
+                    date = DateUtil.flexToDate(sdate, sdf);
+
+                    readingCollection = false;
+                    readingId = false;
+                    readingDate = false;
+                    aux = "";
+                }
+            }
             else if (c == endOfLine)
             {
-                sdate = aux;
-                aux = "";
-                Date date = sdf.parse(sdate);
+                if (id == null || collection == null)
+                    continue;
+
                 ObservationState os = new ObservationState(new ObservationURI(collection, id));
+
+                if (date == null)
+                {
+                    sdate = aux;
+                    date = DateUtil.flexToDate(sdate, sdf);
+                }
+
                 os.maxLastModified = date;
+
+                md5 = aux;
+                aux = "";
+                // log.info("*************** md5: " + md5);
+                if (!md5.equals(""))
+                {
+                    os.accMetaChecksum = new URI(md5);
+                }
+
+                // if (os.maxLastModified == null)
+                // {
+                // log.info("*************** NO DATE");
+                // System.exit(1);
+                // }
                 list.add(os);
                 readingCollection = true;
                 readingId = false;
-
             }
         }
+        Collections.sort(list, maxLasModifiedComparator);
         return list;
+
     }
 }
