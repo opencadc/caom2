@@ -145,53 +145,6 @@ public final class PositionUtil
         return p;
     }
 
-    
-
-    /**
-     * Encode the specified Shape as a byte array. This method figures out which type of shape
-     * has been specified and calls the encode method on the implementation class.
-     *
-     * @param s the shape to encode
-     * @return byte array storing all state for the shape
-     * @see Polygon#encode(Polygon)
-     * @see Circle#encode(Circle)
-     * @see Location#encode(Location)
-     */
-    /*
-    public static byte[] encode(Shape s)
-    {
-        if (s instanceof Polygon)
-            return Polygon.encode((Polygon) s);
-        if (s instanceof Circle)
-            return Circle.encode((Circle) s);
-        if (s instanceof Box)
-            return Box.encode((Box) s);
-        throw new IllegalArgumentException("unknown shape type: " + s.getClass().getName());
-    }
-    */
-    
-    /**
-     * Decode the specified byte array and create a Shape. This method figures out
-     * which type of shape has been encoded and calls the decode method on the
-     * implementation class.
-     *
-     * @param encoded a previously encoded shape
-     * @return a Shape or null if type cannot be determined
-     */
-    /*
-    public static Shape decode(byte[] encoded)
-    {
-        int magic = HexUtil.toInt(encoded, 0);
-        switch(magic)
-        {
-            case Shape.MAGIC_CIRCLE: return Circle.decode(encoded);
-            case Shape.MAGIC_POLYGON: return Polygon.decode(encoded);
-            case Shape.MAGIC_BOX: return Box.decode(encoded);
-        }
-        throw new IllegalArgumentException("unknown shape type, found magic number: " + magic);
-    }
-    */
-    
     public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException
     {

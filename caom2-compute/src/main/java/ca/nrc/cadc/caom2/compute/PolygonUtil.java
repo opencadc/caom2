@@ -238,18 +238,6 @@ public final class PolygonUtil
         return ret;
     }
 
-    /**
-     * Compute the union of a set of polygons. The resulting polygon may have
-     * multiple disjoint parts and/or holes.
-     * 
-     * @param polys
-     * @return 
-     */
-    //public static MultiPolygon union(List<MultiPolygon> polys)
-    //{
-    //    return getOuterHull(polys);
-    //}
-    
     public static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
     {
         double[] cube = CartesianTransform.getBoundingCube(p1, null);
