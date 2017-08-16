@@ -94,7 +94,7 @@ public class MultiPolygon implements Serializable
 
     private void validate()
     {
-        if (vertices.size() < 4) // triangle
+        if (vertices.size() < 4) // 2+close is a line segment
             throw new IllegalPolygonException("invalid polygon: " + vertices.size() + " vertices");
 
         Vertex end = vertices.get(0);
@@ -119,6 +119,8 @@ public class MultiPolygon implements Serializable
                     throw new IllegalPolygonException("invalid polygon: found CLOSE without MOVE");
                 openLoop = false;
             }
+            else if (!openLoop)
+                throw new IllegalPolygonException("invalid polygon: found LINE without MOVE");
         }
     }
 
