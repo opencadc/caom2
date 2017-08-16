@@ -258,6 +258,29 @@ public class ObservationReader implements Serializable
         private static final long serialVersionUID = 201604081100L;
         DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
+        
+        // allow for missing milliseconds in timestamps
+        Date parseTimestamp(String value)
+            throws ParseException
+        {
+            try
+            {
+                return dateFormat.parse(value);
+            }
+            catch(ParseException pex1)
+            {
+                try
+                {
+                    // append missing milliseconds?
+                    return dateFormat.parse(value + ".000");
+                }
+                catch(ParseException pex2)
+                {
+                    throw pex1; // original
+                }
+            }
+            finally { }
+        }
     }
     
     /**
@@ -327,7 +350,7 @@ public class ObservationReader implements Serializable
             CaomUtil.assignID(ce, uuid);
             if (alastModified != null)
             {
-                Date lastModified = rc.dateFormat.parse(alastModified.getValue());
+                Date lastModified = rc.parseTimestamp(alastModified.getValue());
                 CaomUtil.assignLastModified(ce, lastModified, "lastModified");
             }
             
@@ -335,7 +358,7 @@ public class ObservationReader implements Serializable
             {
                 if (aMaxLastModified != null)
                 {
-                    Date lastModified = rc.dateFormat.parse(aMaxLastModified.getValue());
+                    Date lastModified = rc.parseTimestamp(aMaxLastModified.getValue());
                     CaomUtil.assignLastModified(ce, lastModified, "maxLastModified");
                 }
                 if (mcs != null)

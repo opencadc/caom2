@@ -74,8 +74,6 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.EnergyBand;
-import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -94,13 +92,7 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SubInterval;
-import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -124,6 +116,7 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -132,10 +125,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
-import java.util.ArrayList;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -164,6 +156,45 @@ public class ObservationReaderWriterTest
         try
         {
             
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testLenientTimestampParser()
+    {
+        try
+        {
+            Caom2TestInstances ti = new Caom2TestInstances();
+            ti.setComplete(false);
+            ti.setDepth(1);
+            Observation o = ti.getSimpleObservation();
+            
+            String ivoaDateStr = "2017-08-15T12:34:56.000";
+            String truncDateStr = "2017-08-15T12:34:56";
+            
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            Date ts = df.parse(ivoaDateStr);
+            
+            CaomUtil.assignLastModified(o, ts, "lastModified");
+            CaomUtil.assignLastModified(o, ts, "maxLastModified");
+            
+            
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObservationWriter w = new ObservationWriter();
+            w.write(o, bos);
+            String xml = bos.toString();
+            log.debug("testLenientTimestampParser[before]:\n" + xml);
+            String xml2 = xml.replaceAll(ivoaDateStr, truncDateStr);
+            log.debug("testLenientTimestampParser[after]:\n" + xml2);
+            
+            ObservationReader r = new ObservationReader();
+            Observation o2 = r.read(xml2);
+            compareObservations(o, o2);
         }
         catch(Exception unexpected)
         {
