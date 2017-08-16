@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URI;
-
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -80,11 +78,9 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
 import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.util.PropertiesReader;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
@@ -147,14 +143,14 @@ public class Main
                 log.info("authentication using: " + meth);
             }
 
-            String sresourceId = am.getValue("resourceID");
-            String scollection = am.getValue("collection");
 
-            if (scollection == null)
+            String dbParam = am.getValue("database");
+            if (dbParam == null)
             {
-                log.error("--collection is required");
+                log.error("Must specify database information.");
                 System.exit(-1);
             }
+            String[] dbInfo = dbParam.split("[.]");
 
             int nthreads = 1;
             if (am.isSet("threads"))
@@ -170,43 +166,44 @@ public class Main
                 }
             }
 
-            boolean detectMissing = am.isSet("detect-missing");
-            boolean importMissing = am.isSet("import-missing");
-            if ((detectMissing && importMissing) || (!detectMissing && !importMissing))
-            {
-                log.error("Must specify either --detect-missing or --import-missing");
-                System.exit(-1);
-            }
-
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-            ArtifactStore artifactStore = loadArtifictStoreImpl();
-
-            Runnable worker = null;
-            if (detectMissing)
+            String asClassName = am.getValue("artifactStore");
+            ArtifactStore artifactStore = null;
+            if (asClassName == null)
             {
-                if (sresourceId == null)
-                {
-                    log.error("--resourceID is required");
-                }
-
-                URI uresourceID = URI.create(sresourceId);
-                RepoClient caom2client = new RepoClient(uresourceID, 1);
-                worker = new DetectMissingArtifacts(caom2client, artifactStore, scollection);
+                log.error("Must specify artifactStore.");
+                System.exit(-1);
             }
-            else
+            try
             {
-                worker = new ImportMissingArtifacts(artifactStore, scollection, dryrun, nthreads);
+                log.debug("Artifact store class: " + asClassName);
+                Class<?> asClass = Class.forName(asClassName);
+                artifactStore = (ArtifactStore) asClass.newInstance();
             }
+            catch (Exception e)
+            {
+                log.error("Failed to load " + asClassName, e);
+                System.exit(-1);
+            }
+
+
+            // Waiting for a public constructor in ArtifactDAO.
+            //ArtifactDAO artifactDAO = new ArtifactDAO();
+
+            Runnable harvester = new ArtifactHarvester(/*artifactDAO,*/ dbInfo, artifactStore, dryrun);
+            Runnable downloader = new DownloadArtifactFiles(/*artifactDAO,*/ dbInfo, artifactStore, dryrun, nthreads);
 
             if (subject != null)
             {
-                Subject.doAs(subject, new RunnableAction(worker));
+                Subject.doAs(subject, new RunnableAction(harvester));
+                Subject.doAs(subject, new RunnableAction(downloader));
             }
             else // anon
             {
-                worker.run();
+                harvester.run();
+                downloader.run();
             }
 
             exitValue = 0; // finished cleanly
@@ -220,22 +217,6 @@ public class Main
         finally
         {
             System.exit(exitValue);
-        }
-    }
-
-    private static ArtifactStore loadArtifictStoreImpl()
-    {
-        try
-        {
-            PropertiesReader pr = new PropertiesReader("ArtifactStore.properties");
-            String asClassName = pr.getFirstPropertyValue("ArtifactStore.impl.class");
-            log.debug("Artifact store class: " + asClassName);
-            Class<?> asClass = Class.forName(asClassName);
-            return (ArtifactStore) asClass.newInstance();
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Failed to load " + ArtifactStore.class.getName() + "Impl", e);
         }
     }
 
@@ -259,15 +240,16 @@ public class Main
     {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n           <--detect-missing | --import-missing>");
-        sb.append("\n           --resourceID= to pick the caom2repo service (e.g. ivo://cadc.nrc.ca/caom2repo)");
-        sb.append("\n           --collection= collection to be retrieve. (e.g. IRIS)");
-        sb.append("\n           --threads= number  of threads to be used to import artifacts (default: 1)");
-        sb.append("\n\nOptional authentication:");
+        sb.append("\n     --artifactStore= fully qualified class name");
+        sb.append("\n     --database= <server.database.schema>");
+        sb.append("\n     --threads= number  of threads to be used to import artifacts (default: 1)");
+        sb.append("\n\nOptional:");
+        sb.append("\n     --dryrun : check for work but don't do anything");
+        sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
         sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
-        sb.append("\n     --dryrun : check for work but don't do anything");
+
         log.warn(sb.toString());
     }
 }

@@ -107,93 +107,101 @@ public class CADCArtifactStore implements ArtifactStore
 
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
 
-	String dataURL;
+    String dataURL;
 
-	public CADCArtifactStore()
-	{
-	    try
-	    {
-    		RegistryClient rc = new RegistryClient();
-    		Subject subject = AuthenticationUtil.getCurrentSubject();
-    		AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
-    		if (authMethod == null)
-    		{
-    		    authMethod = AuthMethod.ANON;
-    		}
-    		Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
-    		Capability dataCap = caps.findCapability(Standards.DATA_10);
-    		URI securityMethod = Standards.getSecurityMethod(authMethod);
-    		Interface ifc = dataCap.findInterface(securityMethod);
-    		if (ifc == null)
-    		{
-    		    throw new IllegalArgumentException("No interface for security method " + securityMethod);
-    		}
-    		dataURL = ifc.getAccessURL().getURL().toString();
-	    }
-	    catch (Throwable t)
-	    {
-	        String message = "Failed to initialize data URL";
-	        throw new RuntimeException(message, t);
-	    }
+    public CADCArtifactStore()
+    {
+    }
 
-	}
+    private void init()
+    {
+        if (dataURL == null)
+        {
+            try
+            {
+                RegistryClient rc = new RegistryClient();
+                Subject subject = AuthenticationUtil.getCurrentSubject();
+                AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+                if (authMethod == null)
+                {
+                    authMethod = AuthMethod.ANON;
+                }
+                Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
+                Capability dataCap = caps.findCapability(Standards.DATA_10);
+                URI securityMethod = Standards.getSecurityMethod(authMethod);
+                Interface ifc = dataCap.findInterface(securityMethod);
+                if (ifc == null)
+                {
+                    throw new IllegalArgumentException("No interface for security method " + securityMethod);
+                }
+                dataURL = ifc.getAccessURL().getURL().toString();
+            }
+            catch (Throwable t)
+            {
+                String message = "Failed to initialize data URL";
+                throw new RuntimeException(message, t);
+            }
+        }
+    }
 
-	public boolean contains(URI artifactURI, URI checksum)
-			throws TransientException
-	{
-	    CADCDataURI dataURI = new CADCDataURI(artifactURI);
-		String expectedMD5 = getMD5Sum(checksum);
-		URL url = createDataURL(dataURI);
-		log.debug("Making HTTP HEAD request to: " + url);
+    public boolean contains(URI artifactURI, URI checksum)
+            throws TransientException
+    {
+        init();
+        CADCDataURI dataURI = new CADCDataURI(artifactURI);
+        String expectedMD5 = getMD5Sum(checksum);
+        URL url = createDataURL(dataURI);
+        log.debug("Making HTTP HEAD request to: " + url);
 
-		HttpDownload httpHead = new HttpDownload(url, new ByteArrayOutputStream());
-		httpHead.setHeadOnly(true);
-		httpHead.setFollowRedirects(false);
-		httpHead.run();
-		int respCode = httpHead.getResponseCode();
-		log.debug("Response code: " + respCode);
-		if (httpHead.getThrowable() == null && respCode == 200)
-		{
-			String contentMD5 = httpHead.getContentMD5();
-			log.debug("Found matching artifact with md5 " + contentMD5);
-			return expectedMD5.equalsIgnoreCase(contentMD5);
-		}
+        HttpDownload httpHead = new HttpDownload(url, new ByteArrayOutputStream());
+        httpHead.setHeadOnly(true);
+        httpHead.setFollowRedirects(false);
+        httpHead.run();
+        int respCode = httpHead.getResponseCode();
+        log.debug("Response code: " + respCode);
+        if (httpHead.getThrowable() == null && respCode == 200)
+        {
+            String contentMD5 = httpHead.getContentMD5();
+            log.debug("Found matching artifact with md5 " + contentMD5);
+            return expectedMD5.equalsIgnoreCase(contentMD5);
+        }
 
-		if (httpHead.getResponseCode() == 404)
-		{
-			log.debug("Artifact not found");
-			return false;
-		}
+        if (httpHead.getResponseCode() == 404)
+        {
+            log.debug("Artifact not found");
+            return false;
+        }
 
-		if (httpHead.getThrowable() != null)
-		{
-    		if (httpHead.getThrowable() instanceof TransientException)
-    		{
-    		    log.debug("Transient Exception");
-    			throw (TransientException) httpHead.getThrowable();
-    		}
+        if (httpHead.getThrowable() != null)
+        {
+            if (httpHead.getThrowable() instanceof TransientException)
+            {
+                log.debug("Transient Exception");
+                throw (TransientException) httpHead.getThrowable();
+            }
 
-    		throw new RuntimeException("Unexpected", httpHead.getThrowable());
-		}
+            throw new RuntimeException("Unexpected", httpHead.getThrowable());
+        }
 
-		throw new RuntimeException("unexpected response code " + respCode);
+        throw new RuntimeException("unexpected response code " + respCode);
 
-	}
+    }
 
-	public void store(URI artifactURI, URI checksum, InputStream data)
-			throws TransientException
-	{
-	    CADCDataURI dataURI = new CADCDataURI(artifactURI);
-	    String contentMD5 = getMD5Sum(checksum);
-	    URL url = createDataURL(dataURI);
+    public void store(URI artifactURI, URI checksum, InputStream data)
+            throws TransientException
+    {
+        init();
+        CADCDataURI dataURI = new CADCDataURI(artifactURI);
+        String contentMD5 = getMD5Sum(checksum);
+        URL url = createDataURL(dataURI);
 
-		HttpUpload httpPut = new HttpUpload(data, url);
-		if (contentMD5 != null)
-		{
-		    httpPut.setContentMD5(contentMD5);
-		}
-		httpPut.run();
-		int respCode = httpPut.getResponseCode();
+        HttpUpload httpPut = new HttpUpload(data, url);
+        if (contentMD5 != null)
+        {
+            httpPut.setContentMD5(contentMD5);
+        }
+        httpPut.run();
+        int respCode = httpPut.getResponseCode();
 
         if (httpPut.getThrowable() == null && (respCode == 200 || respCode == 201))
         {
@@ -216,32 +224,32 @@ public class CADCArtifactStore implements ArtifactStore
                 throw (TransientException) httpPut.getThrowable();
             }
 
-    		throw new RuntimeException("Unexpected", httpPut.getThrowable());
+            throw new RuntimeException("Unexpected", httpPut.getThrowable());
         }
 
-		throw new RuntimeException("unexpected response code " + respCode);
-	}
+        throw new RuntimeException("unexpected response code " + respCode);
+    }
 
-	private String getMD5Sum(URI checksum) throws UnsupportedOperationException
-	{
-	    if (checksum == null)
-	    {
-	        return null;
-	    }
+    private String getMD5Sum(URI checksum) throws UnsupportedOperationException
+    {
+        if (checksum == null)
+        {
+            return null;
+        }
 
-		if (checksum.getScheme().equalsIgnoreCase("MD5"))
-		{
-			return checksum.getSchemeSpecificPart();
-		}
-		else
-		{
-			throw new UnsupportedOperationException(
-				"Checksum algorithm " + checksum.getScheme() + " not suported.");
-		}
-	}
+        if (checksum.getScheme().equalsIgnoreCase("MD5"))
+        {
+            return checksum.getSchemeSpecificPart();
+        }
+        else
+        {
+            throw new UnsupportedOperationException(
+                "Checksum algorithm " + checksum.getScheme() + " not suported.");
+        }
+    }
 
-	private URL createDataURL(CADCDataURI dataURI)
-	{
+    private URL createDataURL(CADCDataURI dataURI)
+    {
        try
         {
             return new URL(dataURL + "/" + dataURI.archive + "/" + dataURI.fileID);
@@ -250,21 +258,21 @@ public class CADCArtifactStore implements ArtifactStore
         {
             throw new IllegalStateException("BUG in forming data URL", e);
         }
-	}
+    }
 
-	/**
-	 * Class to help with the parsing and validation of CADC-specific
-	 * data URIs.
-	 */
-	class CADCDataURI
-	{
-	    String archive;
-	    String fileID;
+    /**
+     * Class to help with the parsing and validation of CADC-specific
+     * data URIs.
+     */
+    class CADCDataURI
+    {
+        String archive;
+        String fileID;
 
-	    CADCDataURI(URI uri) throws UnsupportedOperationException
-	    {
-	        validate(uri);
-	    }
+        CADCDataURI(URI uri) throws UnsupportedOperationException
+        {
+            validate(uri);
+        }
 
         private void validate(URI uri)
         {
@@ -323,6 +331,6 @@ public class CADCArtifactStore implements ArtifactStore
             if (!matcher.find())
                 throw new IllegalArgumentException("Invalid dataset characters.");
         }
-	}
+    }
 
 }

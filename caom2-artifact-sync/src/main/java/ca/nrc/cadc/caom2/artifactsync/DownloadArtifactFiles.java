@@ -69,63 +69,18 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URI;
-
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.caom2.repo.client.RepoClient;
-
-public class DetectMissingArtifacts implements Runnable
+public class DownloadArtifactFiles implements Runnable
 {
 
-    private static final Logger log = Logger.getLogger(DetectMissingArtifacts.class);
-
-    private RepoClient repoClient;
-    private ArtifactStore artifactStore;
-    private String collection;
-
-
-    public DetectMissingArtifacts(RepoClient repoClient, ArtifactStore artifactStore, String collection)
+    public DownloadArtifactFiles(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int threads)
     {
-        this.repoClient = repoClient;
-        this.artifactStore = artifactStore;
-        this.collection = collection;
+        // TBD
     }
 
     @Override
     public void run()
     {
-        // TODO: Use the repoClient to list the artifacts with
-        // maxLastModified > last run.
-
-        // TODO: for each, use the artifact store to see if it already
-        // has the artifact.
-
-        // TODO: save the ones that are missing in the harvestSkipList
-
-        // The below is temporary -- a test of an existing artifact
-        // an of a missing artifact
-
-        try
-        {
-            // test one that exits
-            boolean exists = artifactStore.contains(URI.create("ad:HSTCA/n3t401dmq_raw"), URI.create("md5:bcb9300c9366a1b7e878d4093a608f52"));
-            log.debug("One that exists is: " + exists);
-
-            // test one with wrong md5
-            exists = artifactStore.contains(URI.create("ad:HSTCA/n3t401dmq_raw"), URI.create("md5:bcb9300c9366a1b7e878d4093a608f51"));
-            log.debug("One with wrong md5 is: " + exists);
-
-            // test one that doesn't exist
-            exists = artifactStore.contains(URI.create("ad:HSTCA/n3t401dmq_nonexist"), URI.create("md5:bcb9300c9366a1b7e878d4093a608f52"));
-            log.debug("One that does not exist is: " + exists);
-
-        }
-        catch (Throwable t)
-        {
-            throw new RuntimeException("unexpected", t);
-        }
-
+        // TBD
     }
 
 }
