@@ -75,8 +75,10 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
+import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import org.apache.log4j.Logger;
 
 import com.csvreader.CsvWriter;
@@ -117,7 +119,7 @@ public class GetAction extends RepoAction
             doGetObservation(uri);
             return;
         }
-        else
+        else if (getCollection() != null)
         {
             // maxRec == null means list all
             String maxRecString = syncInput.getParameter("maxrec");
@@ -149,6 +151,12 @@ public class GetAction extends RepoAction
             {
                 throw new IllegalArgumentException("wrong date format", e);
             }
+        }
+        else
+        {
+            // Responds to requests where no collection is provided.
+            // Returns list of all collections.
+            doGetCollectionList();
         }
     }
 
@@ -237,6 +245,38 @@ public class GetAction extends RepoAction
         }
         writer.flush();
         return bc.getByteCount();
+    }
+
+    /**
+     * Get list of collection names from repo configuration.
+     * @throws Exception
+     */
+    protected void doGetCollectionList()
+            throws Exception
+    {
+        CaomRepoConfig curConfig = getConfig();
+        Iterator<String> collectionListIterator = curConfig.collectionIterator();
+
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
+
+        while (collectionListIterator.hasNext()) {
+            String collectionName = collectionListIterator.next();
+
+            // Write out a single column as one entry per row
+            if (!collectionName.isEmpty())
+            {
+                writer.write(collectionName);
+                writer.endRecord();
+            }
+        }
+
+        writer.flush();
+        logInfo.setBytes(bc.getByteCount());
+        log.debug("DONE");
     }
 
 }

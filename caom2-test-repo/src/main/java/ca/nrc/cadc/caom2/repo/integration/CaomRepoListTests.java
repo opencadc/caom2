@@ -300,12 +300,29 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	}
     }
 
-    private List<Observation> putObservations(final List<String> baseIDs)
-    		throws Throwable
+    @Test
+    public void testListCollections() throws Throwable
     {
-    	int i=0;
-    	List<Observation> retObs = new ArrayList<Observation>();
-    	for (String baseID : baseIDs)
+        try
+        {
+            List<String> collectionList = listCollections(false,super.SUBJECT1);
+            collectionList = listCollections(true, null);
+        }
+        catch (Throwable t)
+        {
+            log.error("unexpected", t);
+            Assert.fail();
+        }
+    }
+
+
+
+    private List<Observation> putObservations(final List<String> baseIDs)
+            throws Throwable
+    {
+        int i=0;
+        List<Observation> retObs = new ArrayList<Observation>();
+        for (String baseID : baseIDs)
 	    {
 	        String observationID = generateObservationID(baseID);
 	        String uri = super.SCHEME + TEST_COLLECTION + "/" + observationID;
@@ -460,6 +477,57 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 			}
     	}
     }
+
+
+    private List<String> listCollections(boolean testAnon, Subject subject) throws Exception
+    {
+        List<String> retList = new ArrayList<String>();
+
+        String surl = super.BASE_HTTP_URL;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        if (testAnon == false)
+        {
+            surl = super.BASE_HTTPS_URL;
+        }
+
+        URL url = new URL(surl);
+        HttpDownload get = new HttpDownload(url, bos);
+
+
+        if (testAnon == false)
+        {
+            Subject.doAs(subject, new RunnableAction(get));
+        }
+        else
+        {
+            get.run();
+        }
+
+        int response = get.getResponseCode();
+
+        log.debug("response code: " + response);
+
+        // Check content type & reponse code. Can't count on content or size of list returned.
+        Assert.assertTrue("bad content returned", get.getContentType().equals("text/tab-separated-values"));
+        Assert.assertTrue("bad reponse", response == 200);
+
+        // read return, parse collection list
+        String message = bos.toString().trim();
+        Assert.assertNotNull(message);
+        String[] lines = message.split("\\r?\\n");
+
+        log.debug("lines returned: " + lines.length);
+
+        for (int i = 0; i < lines.length; i++)
+        {
+            log.debug("line " + i  + ": " + lines[i]);
+            retList.add(lines[i]);
+        }
+
+        return retList;
+    }
+
 
     private Date getTime(Date time)
     {
