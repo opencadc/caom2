@@ -48,8 +48,6 @@ public class ObservationHarvester extends Harvester
 
     private static Logger log = Logger.getLogger(ObservationHarvester.class);
 
-    private boolean interactive;
-
     private boolean service = false;
 
     private RepoClient srcObservationService;
@@ -76,11 +74,6 @@ public class ObservationHarvester extends Harvester
     public void setSkipped(boolean skipped)
     {
         this.skipped = skipped;
-    }
-
-    public void setInteractive(boolean enabled)
-    {
-        this.interactive = enabled;
     }
 
     public void setMaxDate(Date maxDate)
@@ -180,12 +173,6 @@ public class ObservationHarvester extends Harvester
     {
         Progress ret = new Progress();
 
-        BufferedReader stdin = null;
-        if (interactive)
-        {
-            stdin = new BufferedReader(new InputStreamReader(System.in));
-        }
-
         long t = System.currentTimeMillis();
         long tState = -1;
         long tQuery = -1;
@@ -229,14 +216,12 @@ public class ObservationHarvester extends Harvester
 
             Date end = maxDate;
             List<SkippedWrapperURI<WorkerResponse>> entityList = null;
-            List<SkippedWrapperURI<ObservationState>> entityListState = null;
-
-            List<ObservationState> tmpState = null;
+            //List<SkippedWrapperURI<ObservationState>> entityListState = null;
 
             if (skipped)
             {
                 entityList = getSkipped(startDate);
-                entityListState = getSkippedState(startDate);
+                //entityListState = getSkippedState(startDate);
             }
             else
             {
@@ -251,34 +236,25 @@ public class ObservationHarvester extends Harvester
                 }
 
                 log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
-                List<Observation> tmp = null;
-                List<WorkerResponse> l = null;
+                List<WorkerResponse> obsList = null;
+                //List<ObservationState> stateList = null;
                 if (srcObservationDAO != null)
                 {
-                    tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize + 1);
-                    l = new ArrayList<WorkerResponse>();
-
+                    List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize + 1);
+                    // wrap in WorkerResponse to mimic service response
+                    obsList = new ArrayList<WorkerResponse>();
                     for (Observation o : tmp)
-                    {
-                        if (o != null)
-                        {
-                            WorkerResponse wr = new WorkerResponse(o, null, null);
-                            l.add(wr);
-                        }
-                    }
+                        obsList.add(new WorkerResponse(o, null, null));
 
-                    tmpState = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
+                    //stateList = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
                 }
                 else if (srcObservationService != null)
                 {
-                    tmp = new ArrayList<Observation>();
-                    l = srcObservationService.getList(src.getCollection(), startDate, end, batchSize + 1);
-                    tmpState = srcObservationService.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
-                    log.debug("list size: " + tmpState.size());
-                    log.debug("observations size: " + l.size());
+                    obsList = srcObservationService.getList(src.getCollection(), startDate, end, batchSize + 1);
+                    //stateList = srcObservationService.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
                 }
-                entityList = wrap(l);
-                entityListState = wrapState(tmpState);
+                entityList = wrap(obsList);
+                //entityListState = wrapState(stateList);
             }
 
             if (entityList.size() >= expectedNum)
@@ -294,36 +270,27 @@ public class ObservationHarvester extends Harvester
                         Integer tmpBatchSize = entityList.size() + 1;
                         log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
 
-                        List<Observation> tmp = null;
-                        List<WorkerResponse> l = null;
-
-                        tmpState = null;
+                        List<WorkerResponse> obsList = null;
+                        //List<ObservationState> stateList = null;
                         if (!this.service)
                         {
-                            tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
-                            l = new ArrayList<WorkerResponse>();
+                            List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
+                            obsList = new ArrayList<WorkerResponse>();
 
                             for (Observation o : tmp)
                             {
-                                if (o != null)
-                                {
-                                    WorkerResponse wr = new WorkerResponse(o, null, null);
-                                    l.add(wr);
-                                }
+                                obsList.add(new WorkerResponse(o, null, null));
                             }
-                            tmpState = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
+                            //stateList = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
                         }
                         else
                         {
-                            tmp = new ArrayList<Observation>();
-                            l = srcObservationService.getList(src.getCollection(), startDate, end, tmpBatchSize);
-                            tmpState = srcObservationService.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
-                            log.debug("list size: " + tmpState.size());
-                            log.debug("observations size: " + tmp.size());
-
+                            obsList = srcObservationService.getList(src.getCollection(), startDate, end, tmpBatchSize);
+                            //stateList = srcObservationService.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
                         }
 
-                        entityList = wrap(l);
+                        entityList = wrap(obsList);
+                        //entityListState = wrapState(stateList);
                         detectLoop(entityList);
                     }
                     else
@@ -331,8 +298,7 @@ public class ObservationHarvester extends Harvester
                 }
             }
 
-            // avoid re-processing the last successful one stored in
-            // HarvestState
+            // avoid re-processing the last successful one stored in HarvestState
             if (!entityList.isEmpty() && !skipped)
             {
                 ListIterator<SkippedWrapperURI<WorkerResponse>> iter = entityList.listIterator();
@@ -341,352 +307,319 @@ public class ObservationHarvester extends Harvester
                 {
                     log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
                     log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
-                    if (curBatchLeader.getID().equals(state.curID) // same obs
-                            // as
-                            // last time
+                    if (curBatchLeader.getID().equals(state.curID)
                             && curBatchLeader.getMaxLastModified().equals(state.curLastModified))
-                    // not
-                    // modified
-                    // since
                     {
-                        entityListState.remove(0);
-                        iter.remove(); // processed in last batch but picked up
-                        // by
-                        // lastModified query
+                        //entityListState.remove(0);
+                        iter.remove();
                         expectedNum--;
                     }
 
                 }
+            }
 
-                ret.found = entityList.size();
-                log.debug("found o: " + entityList.size());
-                log.debug("found os: " + entityListState.size());
+            ret.found = entityList.size();
+            log.debug("found: " + entityList.size());
+            //log.debug("found os: " + entityListState.size());
 
-                tQuery = System.currentTimeMillis() - t;
-                t = System.currentTimeMillis();
+            tQuery = System.currentTimeMillis() - t;
+            t = System.currentTimeMillis();
 
-                ListIterator<SkippedWrapperURI<WorkerResponse>> iter1 = entityList.listIterator();
-                int i = 0;
-                while (iter1.hasNext())
+            ListIterator<SkippedWrapperURI<WorkerResponse>> iter1 = entityList.listIterator();
+            //int i = 0;
+            while (iter1.hasNext())
+            {
+                SkippedWrapperURI<WorkerResponse> ow = iter1.next();
+                Observation o = ow.entity.getObservation();
+                HarvestSkipURI hs = ow.skip;
+                iter1.remove(); // allow garbage collection during loop
+
+                String lastMsg = null;
+                String skipMsg = null;
+
+                if (!dryrun)
                 {
-                    SkippedWrapperURI<WorkerResponse> ow = iter1.next();
-                    Observation o = ow.entity.getObservation();
-                    HarvestSkipURI hs = ow.skip;
-                    iter1.remove(); // allow garbage collection during loop
+                    if (destObservationDAO.getTransactionManager().isOpen())
+                        throw new RuntimeException("BUG: found open trasnaction at start of next observation");
+                    log.debug("starting transaction");
+                    destObservationDAO.getTransactionManager().startTransaction();
+                }
+                boolean ok = false;
+                try
+                {
+                    // o could be null in skip mode cleanup
+                    if (o != null)
+                    {
+                        String treeSize = computeTreeSize(o);
+                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
+                    }
+                    else if (hs != null)
+                    {
+                        log.info("error put: " + hs.cname + " " + hs.skipID + " " + format(hs.lastModified));
 
-                    String lastMsg = null;
-                    String skipMsg = null;
-
+                    }
                     if (!dryrun)
                     {
-                        if (destObservationDAO.getTransactionManager().isOpen())
-                            throw new RuntimeException("BUG: found open trasnaction at start of next observation");
-                        log.debug("starting transaction");
-                        destObservationDAO.getTransactionManager().startTransaction();
-                    }
-                    boolean ok = false;
-                    try
-                    {
-                        // o could be null in skip mode cleanup
+                        if (skipped)
+                            startDate = hs.lastModified;
                         if (o != null)
                         {
-                            String treeSize = computeTreeSize(o);
-                            log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
-                        }
-                        else if (hs != null)
-                        {
-                            log.info("error put: " + hs.cname + " " + hs.skipID + " " + format(hs.lastModified));
+                            if (state != null)
+                            {
+                                state.curLastModified = o.getMaxLastModified();
+                                state.curID = o.getID();
+                            }
 
-                        }
-                        if (!dryrun)
-                        {
+                            // try to avoid DataIntegrityViolationException
+                            // due
+                            // to missed deletion of an observation
+                            UUID curID = destObservationDAO.getID(o.getURI());
+                            if (curID != null && !curID.equals(o.getID()))
+                            {
+                                ObservationURI oldSrc = srcObservationDAO.getURI(curID);
+                                if (oldSrc == null)
+                                {
+                                    // missed harvesting a deletion
+                                    log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
+                                    destObservationDAO.delete(curID);
+                                }
+                                // else: the put below with throw a valid
+                                // exception because source
+                                // is not enforcing
+                                // unique ID and URI
+                            }
+                            if (doCollisionCheck)
+                            {
+                                Observation cc = destObservationDAO.getShallow(o.getID());
+                                log.debug("collision check: " + o.getURI() + " " + format(o.getMaxLastModified()) + " vs " + format(cc.getMaxLastModified()));
+                                if (!cc.getMaxLastModified().equals(o.getMaxLastModified()))
+                                    throw new IllegalStateException("detected harvesting collision: " + o.getURI() + " maxLastModified: " + format(o.getMaxLastModified()));
+                            }
+
+                            // advance the date before put as there are
+                            // usually
+                            // lots of fails
                             if (skipped)
                                 startDate = hs.lastModified;
-                            if (o != null)
+
+                            // temporary validation hack to avoid tickmarks
+                            // in
+                            // the keywords columns
+                            CaomValidator.validateKeywords(o);
+
+                            if (computePlaneMetadata)
                             {
-                                if (state != null)
-                                {
-                                    state.curLastModified = o.getMaxLastModified();
-                                    state.curID = o.getID();
-                                }
-
-                                // try to avoid DataIntegrityViolationException
-                                // due
-                                // to missed deletion of an observation
-                                UUID curID = destObservationDAO.getID(o.getURI());
-                                if (curID != null && !curID.equals(o.getID()))
-                                {
-                                    ObservationURI oldSrc = srcObservationDAO.getURI(curID);
-                                    if (oldSrc == null)
-                                    {
-                                        // missed harvesting a deletion
-                                        log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
-                                        destObservationDAO.delete(curID);
-                                    }
-                                    // else: the put below with throw a valid
-                                    // exception because source
-                                    // is not enforcing
-                                    // unique ID and URI
-                                }
-                                if (doCollisionCheck)
-                                {
-                                    Observation cc = destObservationDAO.getShallow(o.getID());
-                                    log.debug("collision check: " + o.getURI() + " " + format(o.getMaxLastModified()) + " vs " + format(cc.getMaxLastModified()));
-                                    if (!cc.getMaxLastModified().equals(o.getMaxLastModified()))
-                                        throw new IllegalStateException("detected harvesting collision: " + o.getURI() + " maxLastModified: " + format(o.getMaxLastModified()));
-                                }
-
-                                // advance the date before put as there are
-                                // usually
-                                // lots of fails
-                                if (skipped)
-                                    startDate = hs.lastModified;
-
-                                // temporary validation hack to avoid tickmarks
-                                // in
-                                // the keywords columns
-                                CaomValidator.validateKeywords(o);
-
-                                if (computePlaneMetadata)
-                                {
-                                    log.debug("computePlaneMetadata: " + o.getObservationID());
-                                    for (Plane p : o.getPlanes())
-                                        ComputeUtil.computeTransientState(o, p);
-                                }
-
-                                if (nochecksum || checkChecksums(entityListState.get(i).entity, o))
-                                    destObservationDAO.put(o);
-                                else
-                                    throw new ChecksumError("mismatching checksums");
-
-                                if (hs != null) // success in redo mode
-                                {
-                                    log.info("delete: " + hs + " " + format(hs.lastModified));
-                                    harvestSkip.delete(hs);
-                                }
-                                else
-                                    harvestState.put(state);
+                                log.debug("computePlaneMetadata: " + o.getObservationID());
+                                for (Plane p : o.getPlanes())
+                                    ComputeUtil.computeTransientState(o, p);
                             }
-                            else if (skipped) // observation is gone from src
+
+                            if (nochecksum || checkChecksumsAlt(o))
+                                destObservationDAO.put(o);
+                            else
+                                throw new ChecksumError("mismatching checksums");
+
+                            if (hs != null) // success in redo mode
                             {
                                 log.info("delete: " + hs + " " + format(hs.lastModified));
                                 harvestSkip.delete(hs);
                             }
                             else
-                            {// o == null && !skipped
-                                if (ow.entity.getError() != null)
+                                harvestState.put(state);
+                        }
+                        else if (skipped) // observation is gone from src
+                        {
+                            log.info("delete: " + hs + " " + format(hs.lastModified));
+                            harvestSkip.delete(hs);
+                        }
+                        else
+                        {// o == null && !skipped
+                            if (ow.entity.getError() != null)
+                            {
+                                if (ow.entity.getError().getMessage().contains("XML failed schema validation"))
                                 {
-                                    if (ow.entity.getError().getMessage().contains("XML failed schema validation"))
-                                    {
-                                        throw new SchemaValidationError(ow.entity.getError().getMessage());
-                                    }
-                                    else
-                                    {
-                                        throw new Exception(ow.entity.getError().getMessage());
-                                    }
+                                    throw new SchemaValidationError(ow.entity.getError().getMessage());
+                                }
+                                else
+                                {
+                                    throw new Exception(ow.entity.getError().getMessage());
                                 }
                             }
-
-                            log.debug("committing transaction");
-                            destObservationDAO.getTransactionManager().commitTransaction();
-                            log.debug("commit: OK");
                         }
-                        ok = true;
-                        ret.ingested++;
+
+                        log.debug("committing transaction");
+                        destObservationDAO.getTransactionManager().commitTransaction();
+                        log.debug("commit: OK");
                     }
-                    catch (Throwable oops)
+                    ok = true;
+                    ret.ingested++;
+                }
+                catch (Throwable oops)
+                {
+                    lastMsg = oops.getMessage();
+                    String str = oops.toString();
+                    if (oops instanceof SchemaValidationError)
                     {
-                        lastMsg = oops.getMessage();
-                        String str = oops.toString();
-                        if (oops instanceof SchemaValidationError)
-                        {
-                            log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
-                        }
-                        else if (oops instanceof ChecksumError)
-                        {
-                            log.error("CONTENT PROBLEM - mismatching checksums for " + o);
-                        }
-                        else if (oops instanceof Error)
-                        {
-                            log.error("FATAL - probably installation or environment", oops);
-                            ret.abort = true;
-                        }
-                        else if (oops instanceof NullPointerException)
-                        {
-                            log.error("BUG", oops);
-                            ret.abort = true;
-                        }
-                        else if (oops instanceof BadSqlGrammarException)
-                        {
-                            log.error("BUG", oops);
-                            BadSqlGrammarException bad = (BadSqlGrammarException) oops;
-                            SQLException sex1 = bad.getSQLException();
+                        log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
+                    }
+                    else if (oops instanceof ChecksumError)
+                    {
+                        log.error("CONTENT PROBLEM - mismatching checksums for " + o);
+                    }
+                    else if (oops instanceof Error)
+                    {
+                        log.error("FATAL - probably installation or environment", oops);
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof NullPointerException)
+                    {
+                        log.error("BUG", oops);
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof BadSqlGrammarException)
+                    {
+                        log.error("BUG", oops);
+                        BadSqlGrammarException bad = (BadSqlGrammarException) oops;
+                        SQLException sex1 = bad.getSQLException();
 
-                            if (sex1 != null)
-                            {
-                                log.error("CAUSE", sex1);
-                                SQLException sex2 = sex1.getNextException();
-                                log.error("NEXT CAUSE", sex2);
-                            }
-                            ret.abort = true;
-                        }
-                        else if (oops instanceof DataAccessResourceFailureException)
+                        if (sex1 != null)
                         {
-                            log.error("SEVERE PROBLEM - probably out of space in database", oops);
-                            ret.abort = true;
+                            log.error("CAUSE", sex1);
+                            SQLException sex2 = sex1.getNextException();
+                            log.error("NEXT CAUSE", sex2);
                         }
-                        else if (oops instanceof DataIntegrityViolationException && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof DataAccessResourceFailureException)
+                    {
+                        log.error("SEVERE PROBLEM - probably out of space in database", oops);
+                        ret.abort = true;
+                    }
+                    else if (oops instanceof DataIntegrityViolationException && str.contains("duplicate key value violates unique constraint \"i_observationuri\""))
+                    {
+                        log.error("CONTENT PROBLEM - duplicate observation: " + o.getURI());
+                        ret.handled++;
+                    }
+                    else if (oops instanceof UncategorizedSQLException)
+                    {
+                        if (str.contains("spherepoly_from_array"))
                         {
-                            log.error("CONTENT PROBLEM - duplicate observation: " + o.getURI());
-                            ret.handled++;
-                        }
-                        else if (oops instanceof UncategorizedSQLException)
-                        {
-                            if (str.contains("spherepoly_from_array"))
-                            {
-                                log.error("UNDETECTED illegal polygon: " + o.getURI());
-                                ret.handled++;
-                            }
-                            else
-                                log.error("unexpected exception", oops);
-                        }
-                        else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator") && str.contains("keywords"))
-                        {
-                            log.error("CONTENT PROBLEM - invalid keywords: " + o.getURI());
+                            log.error("UNDETECTED illegal polygon: " + o.getURI());
                             ret.handled++;
                         }
                         else
                             log.error("unexpected exception", oops);
                     }
-                    finally
+                    else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator") && str.contains("keywords"))
                     {
-                        i++; // index over ObservationState collection
-                        if (!ok && !dryrun)
+                        log.error("CONTENT PROBLEM - invalid keywords: " + o.getURI());
+                        ret.handled++;
+                    }
+                    else
+                        log.error("unexpected exception", oops);
+                }
+                finally
+                {
+                    //i++; // index over ObservationState collection
+                    if (!ok && !dryrun)
+                    {
+                        if (o != null)
                         {
+                            log.warn("failed to insert " + o + ": " + lastMsg);
+                            skipMsg = o + ": " + lastMsg;
+                        }
+                        else
+                        {
+                            log.warn("failed to insert " + ow.entity.getObservationState().getURI().getURI() + ": " + lastMsg);
+                            skipMsg = ow.entity.getObservationState().getURI().getURI() + ": " + lastMsg;
+                        }
+                        lastMsg = null;
+                        destObservationDAO.getTransactionManager().rollbackTransaction();
+                        log.warn("rollback: OK");
+                        tTransaction += System.currentTimeMillis() - t;
+
+                        try
+                        {
+                            log.debug("starting HarvestSkipURI transaction");
+                            boolean putSkip = true;
+                            HarvestSkipURI skip = null;
                             if (o != null)
                             {
-                                log.warn("failed to insert " + o + ": " + lastMsg);
-                                skipMsg = o + ": " + lastMsg;
+                                skip = harvestSkip.get(source, cname, o.getURI().getURI());
                             }
                             else
                             {
-                                log.warn("failed to insert " + ow.entity.getObservationState().getURI().getURI() + ": " + lastMsg);
-                                skipMsg = ow.entity.getObservationState().getURI().getURI() + ": " + lastMsg;
+                                skip = harvestSkip.get(source, cname, ow.entity.getObservationState().getURI().getURI());
                             }
-                            lastMsg = null;
-                            destObservationDAO.getTransactionManager().rollbackTransaction();
-                            log.warn("rollback: OK");
-                            tTransaction += System.currentTimeMillis() - t;
+                            log.debug("skip == " + skip);
 
-                            try
+                            if (skip == null)
                             {
-                                log.debug("starting HarvestSkipURI transaction");
-                                boolean putSkip = true;
-                                HarvestSkipURI skip = null;
                                 if (o != null)
                                 {
-                                    skip = harvestSkip.get(source, cname, o.getURI().getURI());
+                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), skipMsg);
                                 }
                                 else
                                 {
-                                    skip = harvestSkip.get(source, cname, ow.entity.getObservationState().getURI().getURI());
+                                    skip = new HarvestSkipURI(source, cname, ow.entity.getObservationState().getURI().getURI(), skipMsg);
                                 }
-                                log.debug("skip == " + skip);
+                            }
+                            else
+                            {
+                                log.debug("skipMsg == " + skipMsg);
+                                log.debug("skip.errorMessage == " + skip.errorMessage);
 
-                                if (skip == null)
+                                if (skipMsg != null && !skipMsg.equals(skip.errorMessage))
                                 {
-                                    if (o != null)
-                                    {
-                                        skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), skipMsg);
-                                    }
-                                    else
-                                    {
-                                        skip = new HarvestSkipURI(source, cname, ow.entity.getObservationState().getURI().getURI(), skipMsg);
-                                    }
+                                    skip.errorMessage = skipMsg; // possible
+                                                                 // update
                                 }
                                 else
                                 {
-                                    log.debug("skipMsg == " + skipMsg);
-                                    log.debug("skip.errorMessage == " + skip.errorMessage);
-
-                                    if (skipMsg != null && !skipMsg.equals(skip.errorMessage))
-                                    {
-                                        skip.errorMessage = skipMsg; // possible
-                                                                     // update
-                                    }
-                                    else
-                                    {
-                                        log.debug("no change in status: " + hs);
-                                        putSkip = false; // avoid timestamp
-                                                         // update
-                                    }
+                                    log.debug("no change in status: " + hs);
+                                    putSkip = false; // avoid timestamp
+                                                     // update
                                 }
-
-                                destObservationDAO.getTransactionManager().startTransaction();
-
-                                if (!skipped)
-                                {
-                                    // track the harvest state progress
-                                    harvestState.put(state);
-                                }
-
-                                // track the fail
-                                if (putSkip)
-                                {
-                                    log.info("put: " + skip);
-                                    harvestSkip.put(skip);
-                                }
-
-                                // TBD: delete previous version of obs?
-                                if (o != null)
-                                    destObservationDAO.delete(o.getID());
-
-                                log.debug("committing HarvestSkipURI transaction");
-                                destObservationDAO.getTransactionManager().commitTransaction();
-                                log.debug("commit HarvestSkipURI: OK");
                             }
-                            catch (Throwable oops)
+
+                            destObservationDAO.getTransactionManager().startTransaction();
+
+                            if (!skipped)
                             {
-                                log.warn("failed to insert HarvestSkipURI", oops);
-                                destObservationDAO.getTransactionManager().rollbackTransaction();
-                                log.warn("rollback HarvestSkipURI: OK");
-                                ret.abort = true;
+                                // track the harvest state progress
+                                harvestState.put(state);
                             }
-                            ret.failed++;
+
+                            // track the fail
+                            if (putSkip)
+                            {
+                                log.info("put: " + skip);
+                                harvestSkip.put(skip);
+                            }
+
+                            // TBD: delete previous version of obs?
+                            if (o != null)
+                                destObservationDAO.delete(o.getID());
+
+                            log.debug("committing HarvestSkipURI transaction");
+                            destObservationDAO.getTransactionManager().commitTransaction();
+                            log.debug("commit HarvestSkipURI: OK");
                         }
-
-                        if (interactive)
+                        catch (Throwable oops)
                         {
-                            try
-                            {
-                                String str = "";
-                                while (str != null)
-                                {
-                                    System.out.print("\n\n(n=next, q=quit): ");
-                                    str = stdin.readLine();
-                                    if ("n".equals(str))
-                                        break;
-                                    else if ("q".equals(str))
-                                    {
-                                        ret.abort = true;
-                                        break;
-                                    }
-                                    else
-                                        System.out.println("unexpected input: " + str);
-                                }
-                            }
-                            catch (IOException e)
-                            {
-
-                            }
+                            log.warn("failed to insert HarvestSkipURI", oops);
+                            destObservationDAO.getTransactionManager().rollbackTransaction();
+                            log.warn("rollback HarvestSkipURI: OK");
+                            ret.abort = true;
                         }
+                        ret.failed++;
                     }
-                    if (ret.abort)
-                        return ret;
                 }
-                if (ret.found < expectedNum)
-                    ret.done = true;
+                if (ret.abort)
+                    return ret;
             }
+            if (ret.found < expectedNum)
+                ret.done = true;
         }
         catch (InterruptedException | ExecutionException e)
         {
@@ -716,6 +649,25 @@ public class ObservationHarvester extends Harvester
             log.debug("os.accMetaChecksum " + os.accMetaChecksum);
             if (o != null && o.getAccMetaChecksum() != null && os != null && os.accMetaChecksum != null && calculatedUri != null
                     && o.getAccMetaChecksum().equals(os.accMetaChecksum) && o.getAccMetaChecksum().equals(calculatedUri))
+            {
+                return true;
+            }
+            return false;
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            throw new ChecksumError("no MD5 digest algorithm available");
+        }
+    }
+    
+    private boolean checkChecksumsAlt(Observation o) throws ChecksumError
+    {
+        try
+        {
+            URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
+
+            log.debug("checkChecksumsAlt: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+            if (o.getAccMetaChecksum() != null && o.getAccMetaChecksum().equals(calculatedChecksum))
             {
                 return true;
             }
@@ -775,6 +727,8 @@ public class ObservationHarvester extends Harvester
         }
         return ret;
     }
+    
+    /*
     private List<SkippedWrapperURI<ObservationState>> wrapState(List<ObservationState> obsList)
     {
         List<SkippedWrapperURI<ObservationState>> ret = new ArrayList<SkippedWrapperURI<ObservationState>>(obsList.size());
@@ -784,7 +738,8 @@ public class ObservationHarvester extends Harvester
         }
         return ret;
     }
-
+    */
+    
     private List<SkippedWrapperURI<WorkerResponse>> getSkipped(Date start)
     {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
@@ -794,16 +749,18 @@ public class ObservationHarvester extends Harvester
         for (HarvestSkipURI hs : skip)
         {
             Observation o = null;
-            log.info("hs.getSkipID(): " + hs.getSkipID());
-            log.info("start: " + start);
 
-            WorkerResponse wr = srcObservationService.get(src.getCollection(), hs.getSkipID(), start);
-
+            log.debug("getSkipped: " + hs.getSkipID());
+            ObservationURI ouri = new ObservationURI(hs.getSkipID());
+            WorkerResponse wr = srcObservationService.get(ouri);
+            log.debug("response: " + wr);
+            
             if (wr != null)
                 ret.add(new SkippedWrapperURI<WorkerResponse>(wr, hs));
         }
         return ret;
     }
+    /*
     private List<SkippedWrapperURI<ObservationState>> getSkippedState(Date start)
     {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
@@ -813,8 +770,8 @@ public class ObservationHarvester extends Harvester
         for (HarvestSkipURI hs : skip)
         {
             ObservationState o = null;
-            log.info("hs.getSkipID(): " + hs.getSkipID());
-            log.info("start: " + start);
+            log.debug("getSkipped: " + hs.getSkipID());
+            log.debug("start: " + start);
 
             WorkerResponse wr = srcObservationService.get(src.getCollection(), hs.getSkipID(), start);
 
@@ -828,7 +785,8 @@ public class ObservationHarvester extends Harvester
         }
         return ret;
     }
-
+    */
+    
     @Override
     protected void initHarvestState(DataSource ds, Class c)
     {

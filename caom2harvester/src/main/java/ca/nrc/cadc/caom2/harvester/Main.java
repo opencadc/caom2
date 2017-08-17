@@ -331,6 +331,7 @@ public class Main
         sb.append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
+        sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         log.warn(sb.toString());
     }
 }

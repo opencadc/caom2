@@ -119,9 +119,14 @@ public class WorkerResponse
     @Override
     public String toString()
     {
-        return observation == null ? "null" : observation.getObservationID() + " " + observationState == null
-                ? "null"
-                : observationState.getURI().getObservationID() + " " + error == null ? "Correct" : error.getMessage();
+        StringBuilder sb = new StringBuilder();
+        sb.append("WorkerResponse[");
+        sb.append(observationState).append(",");
+        sb.append(observation);
+        if (error != null)
+            sb.append(",").append(error);
+        sb.append("]");
+        return sb.toString();
     }
 
 }

@@ -213,11 +213,11 @@ public class RepoClient
                 if (responseCode == 302) // redirected url
                 {
                     url = get.getRedirectURL();
-                    log.info("REDIRECTED URL: " + url);
+                    log.debug("REDIRECTED URL: " + url);
                     bos = new ByteArrayOutputStream();
                     get = new HttpDownload(url, bos);
                     responseCode = get.getResponseCode();
-                    log.info("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
 
                 }
                 */
@@ -236,7 +236,7 @@ public class RepoClient
 
             try
             {
-                // log.info("RESPONSE = '" + bos.toString() + "'");
+                // log.debug("RESPONSE = '" + bos.toString() + "'");
                 partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && accList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0)))
                 {
@@ -278,17 +278,6 @@ public class RepoClient
             }
         }
         return partialList;
-    }
-
-    public Iterator<Observation> observationIterator()
-    {
-        return null;
-
-    }
-
-    public void setConfig(Map<String, Object> config1)
-    {
-
     }
 
     public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
@@ -373,7 +362,7 @@ public class RepoClient
 
         init();
 
-        log.info("******************* getObservationList(collection, start, null, null) " + collection);
+        log.debug("******************* getObservationList(collection, start, null, null) " + collection);
 
         List<ObservationState> list = getObservationList(collection, start, null, null);
         ObservationState obsState = null;
@@ -387,7 +376,7 @@ public class RepoClient
             break;
         }
 
-        log.info("******************* getting to getList " + obsState);
+        log.debug("******************* getting to getList " + obsState);
 
         if (obsState != null)
         {
@@ -434,7 +423,7 @@ public class RepoClient
                 if (readingCollection)
                 {
                     collection = aux;
-                    // log.info("*************** collection: " + collection);
+                    // log.debug("*************** collection: " + collection);
                     readingCollection = false;
                     readingId = true;
                     readingDate = false;
@@ -443,7 +432,7 @@ public class RepoClient
                 else if (readingId)
                 {
                     id = aux;
-                    // log.info("*************** id: " + id);
+                    // log.debug("*************** id: " + id);
                     readingCollection = false;
                     readingId = false;
                     readingDate = true;
@@ -452,7 +441,7 @@ public class RepoClient
                 else if (readingDate)
                 {
                     sdate = aux;
-                    // log.info("*************** sdate: " + sdate);
+                    // log.debug("*************** sdate: " + sdate);
                     date = DateUtil.flexToDate(sdate, sdf);
 
                     readingCollection = false;
@@ -467,7 +456,7 @@ public class RepoClient
                 if (readingDate)
                 {
                     sdate = aux;
-                    // log.info("*************** sdate: " + sdate);
+                    // log.debug("*************** sdate: " + sdate);
                     date = DateUtil.flexToDate(sdate, sdf);
 
                     readingCollection = false;
@@ -493,7 +482,7 @@ public class RepoClient
 
                 md5 = aux;
                 aux = "";
-                // log.info("*************** md5: " + md5);
+                // log.debug("*************** md5: " + md5);
                 if (!md5.equals(""))
                 {
                     os.accMetaChecksum = new URI(md5);
@@ -501,7 +490,7 @@ public class RepoClient
 
                 // if (os.maxLastModified == null)
                 // {
-                // log.info("*************** NO DATE");
+                // log.debug("*************** NO DATE");
                 // System.exit(1);
                 // }
                 list.add(os);
