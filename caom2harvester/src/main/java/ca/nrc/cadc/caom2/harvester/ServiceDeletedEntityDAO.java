@@ -18,8 +18,7 @@ public class ServiceDeletedEntityDAO<T extends DeletedEntity> extends AbstractDA
     {
     }
 
-    public List<T> getList(Class<? extends DeletedEntity> c, Date minLastModified, Date maxLastModified,
-            Integer batchSize)
+    public List<T> getList(Class<? extends DeletedEntity> c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         List<T> ret = new ArrayList<T>();
         log.debug("GET: " + batchSize);

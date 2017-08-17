@@ -68,8 +68,14 @@ public class Main
             boolean full = am.isSet("full");
             boolean skip = am.isSet("skip");
             boolean dryrun = am.isSet("dryrun");
+            boolean resourceId = am.isSet("resourceID");
+            boolean validate = am.isSet("validate");
+            boolean collection = am.isSet("collection");
+            boolean threads = am.isSet("threads");
+            boolean noChecksum = am.isSet("nochecksum");;
+
             boolean compute = am.isSet("compute");
-            
+
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
             if (am.isSet("netrc"))
@@ -79,6 +85,10 @@ public class Main
             else if (am.isSet("cert"))
             {
                 subject = CertCmdArgUtil.initSubject(am);
+            }
+            else
+            {
+                subject = AuthenticationUtil.getAnonSubject();
             }
             if (subject != null)
             {
@@ -102,24 +112,23 @@ public class Main
             }
             catch (NumberFormatException nfe)
             {
-
+                log.warn("wrong number of threads specified; please check --threads parameter");
+                System.exit(1);
             }
             String src = am.getValue("source");
             String dest = am.getValue("destination");
 
             boolean nosrc = (src == null || src.trim().length() == 0);
-            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null
-                    || scollection.trim().length() == 0;
+            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null || scollection.trim().length() == 0;
             boolean service = !noresourceId;
 
             boolean nodest = (dest == null || dest.trim().length() == 0);
-            
+
             if ((nosrc && noresourceId) || nodest)
             {
                 usage();
                 if (nosrc && noresourceId)
-                    log.warn(
-                            "missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
+                    log.warn("missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
                 if (nodest)
                     log.warn("missing required argument: --destination");
                 System.exit(1);
@@ -143,18 +152,15 @@ public class Main
                 if (srcDS.length != 3)
                     if (!service)
                     {
-                        log.warn("malformed --source value, found " + src + " expected: server.database.schema"
-                                + " e.g. SYBASE.mydb.dbo");
+                        log.warn("malformed --source value, found " + src + " expected: server.database.schema" + " e.g. SYBASE.mydb.dbo");
                     }
                     else
                     {
-                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url"
-                                + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
+                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url" + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
 
                     }
                 if (destDS.length != 3)
-                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema"
-                            + " e.g. cvodb0.cvodb.caom2");
+                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema" + " e.g. cvodb0.cvodb.caom2");
                 System.exit(1);
             }
 
@@ -219,36 +225,58 @@ public class Main
                 }
             }
 
-            CaomHarvester ch = null;
-            try
+            Runnable action = null;
+            if (!validate)
             {
-                if (service)
-                {
-                    ch = new CaomHarvester(dryrun, compute, sresourceId, scollection, nthreads, destDS, batchSize,
-                            batchFactor, full, skip, maxDate);
-                }
-                else
-                {
-                    ch = new CaomHarvester(dryrun, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
-                }
-            }
-            catch (IOException ioex)
-            {
-                log.error("failed to init: " + ioex.getMessage());
-                exitValue = -1;
-                System.exit(exitValue);
-            }
 
+                try
+                {
+                    if (service)
+                    {
+                        action = new CaomHarvester(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
+                    }
+                    else
+                    {
+                        action = new CaomHarvester(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                    }
+                }
+                catch (IOException ioex)
+                {
+
+                    log.error("failed to init: " + ioex.getMessage());
+                    exitValue = -1;
+                    System.exit(exitValue);
+                }
+
+            }
+            else
+            {
+
+                try
+                {
+                    if (service)
+                    {
+                        action = new CaomValidator(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
+                    }
+                    else
+                    {
+                        action = new CaomValidator(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
+                    }
+                }
+                catch (IOException ioex)
+                {
+
+                    log.error("failed to init: " + ioex.getMessage());
+                    exitValue = -1;
+                    System.exit(exitValue);
+                }
+            }
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             if (subject != null)
             {
-                Subject.doAs(subject, new RunnableAction(ch));
-            }
-            else // anon
-            {
-                ch.run();
+                Subject.doAs(subject, new RunnableAction(action));
             }
 
             exitValue = 0; // finished cleanly

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,137 +67,58 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.client;
+package ca.nrc.cadc.caom2.artifactsync;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.net.MalformedURLException;
+import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
-import java.util.concurrent.Callable;
+import java.security.AccessControlException;
 
-import javax.security.auth.Subject;
+import ca.nrc.cadc.net.TransientException;
 
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.net.HttpDownload;
-
-public class Worker implements Callable<WorkerResponse>
+/**
+ * An interface to a CAOM2 artifact storage system.
+ *
+ * @author majorb
+ */
+public interface ArtifactStore
 {
 
-    private static final Logger log = Logger.getLogger(Worker.class);
+    /**
+     * Checks for artifact existence.
+     *
+     * @param artifactURI The artifact identifier.
+     * @param checksum The checksum of the artifact.
+     * @returns True in the artifact exists with the given checksum.
+     *
+     * @throws UnsupportedOperationException If the artifact uri cannot be resolved.
+     * @throws UnsupportedOperationException If the checksum algorith is not supported.
+     * @throws IllegalArgumentException If an aspect of the artifact uri is incorrect.
+     * @throws AccessControlException If the calling user is not allowed to perform the query.
+     * @throws TransientException If an unexpected runtime error occurs.
+     * @throws RuntimeException If an unrecovarable error occurs.
+     */
+    public boolean contains(URI artifactURI, URI checksum)
+        throws TransientException, UnsupportedOperationException,
+        IllegalArgumentException, AccessControlException, IllegalStateException;
 
-    private ObservationState state = null;
-    private Subject subject = null;
-    private String BASE_HTTP_URL = null;
-
-    public Worker(ObservationState state, Subject subject, String url)
-    {
-        this.state = state;
-        this.subject = subject;
-        this.BASE_HTTP_URL = url;
-    }
-
-    @Override
-    public WorkerResponse call() throws Exception
-    {
-        return getObservation();
-    }
-
-    public WorkerResponse getObservation()
-    {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
-        URL url = null;
-        try
-        {
-            url = new URL(surl);
-        }
-        catch (MalformedURLException e)
-        {
-            throw new RuntimeException("Unable to create URL object for " + surl);
-        }
-        HttpDownload get = new HttpDownload(url, bos);
-
-        if (subject != null)
-        {
-            Subject.doAs(subject, new RunnableAction(get));
-
-        }
-        else
-        {
-            get.run();
-        }
-
-        ObservationReader obsReader = new ObservationReader();
-        Observation o = null;
-        Exception exception = null;
-        WorkerResponse wr = new WorkerResponse(null, state, null);
-
-        try
-        {
-            // log.info("********************* bos:" + bos.toString());
-            o = obsReader.read(bos.toString());
-            wr.setObservation(o);
-        }
-        catch (Exception e)
-        {
-            String oid = state.getURI().getObservationID();
-            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
-            wr.setError(exception);
-        }
-        return wr;
-    }
-
-    public WorkerResponse getObservation(URI uri)
-    {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
-        log.info("URL: " + surl);
-        URL url = null;
-        try
-        {
-            url = new URL(surl);
-        }
-        catch (MalformedURLException e)
-        {
-            throw new RuntimeException("Unable to create URL object for " + surl);
-        }
-        HttpDownload get = new HttpDownload(url, bos);
-
-        if (subject != null)
-        {
-            Subject.doAs(subject, new RunnableAction(get));
-
-        }
-        else
-        {
-            get.run();
-        }
-
-        ObservationReader obsReader = new ObservationReader();
-        Observation o = null;
-        Exception exception = null;
-        WorkerResponse wr = new WorkerResponse(null, state, null);
-
-        try
-        {
-            o = obsReader.read(bos.toString());
-            wr.setObservation(o);
-        }
-        catch (ObservationParsingException e)
-        {
-            String oid = state.getURI().getObservationID();
-            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
-            wr.setError(exception);
-            log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
-        }
-        return wr;
-    }
+    /**
+     * Saves an artifact.  The artifact will be replaced if artifact already exists with a
+     * different checksum.
+     *
+     * @param artifactURI The artifact identifier.
+     * @param checksum The checksum of the artifact (can be null).
+     * @param data The artifact data.
+     *
+     * @throws UnsupportedOperationException If the artifact uri cannot be resolved.
+     * @throws UnsupportedOperationException If the checksum algorith is not supported.
+     * @throws IllegalArgumentException If an aspect of the artifact uri is incorrect.
+     * @throws AccessControlException If the calling user is not allowed to upload the artifact.
+     * @throws IllegalStateException If the artifact already exists.
+     * @throws TransientException If an unexpected runtime error occurs.
+     * @throws RuntimeException If an unrecovarable error occurs.
+     */
+    public void store(URI artifactURI, URI checksum, InputStream data)
+        throws TransientException, UnsupportedOperationException,
+            IllegalArgumentException, AccessControlException, IllegalStateException;
 
 }

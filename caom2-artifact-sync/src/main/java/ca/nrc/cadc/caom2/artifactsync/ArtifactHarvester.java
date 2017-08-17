@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,26 +67,48 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.harvester.validation;
+package ca.nrc.cadc.caom2.artifactsync;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 
-/**
- *
- * @author pdowler
- */
-public class SkippedWrapperURI<T>
+public class ArtifactHarvester implements Runnable
 {
-    private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
 
-    public T entity;
-    public HarvestSkipURI skip;
+    private static final Integer SKIPDAO_BATCH_SIZE = Integer.valueOf(1000);
 
-    public SkippedWrapperURI(T entity, HarvestSkipURI skip)
+    private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
+
+    //private ArtifactDAO artifactDAO;
+    private ArtifactStore artifactStore;
+    private HarvestStateDAO harvestStateDAO;
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private boolean dryrun;
+
+
+    public ArtifactHarvester(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun)
     {
-        this.entity = entity;
-        this.skip = skip;
+        //this.artifactDAO = artifactDAO;
+        this.artifactStore = artifactStore;
+        this.dryrun = dryrun;
+
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2], SKIPDAO_BATCH_SIZE);
     }
+
+    @Override
+    public void run()
+    {
+        // TODO: Use the ArtifactDAO to find artifacts with
+        // maxLastModified > last run.
+
+        // TODO: for each, use the ArtifactStore to see if it already
+        // has the artifact.
+
+        // TODO: save the ones that are missing using the HarvestSkipURIDAO
+    }
+
 }

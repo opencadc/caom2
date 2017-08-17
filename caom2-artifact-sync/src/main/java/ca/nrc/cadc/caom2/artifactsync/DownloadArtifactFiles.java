@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,26 +67,20 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.harvester.validation;
+package ca.nrc.cadc.caom2.artifactsync;
 
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
-
-/**
- *
- * @author pdowler
- */
-public class SkippedWrapper<T>
+public class DownloadArtifactFiles implements Runnable
 {
-    private static final Logger log = Logger.getLogger(SkippedWrapper.class);
 
-    public T entity;
-    public HarvestSkip skip;
-
-    public SkippedWrapper(T entity, HarvestSkip skip)
+    public DownloadArtifactFiles(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int threads)
     {
-        this.entity = entity;
-        this.skip = skip;
+        // TBD
     }
+
+    @Override
+    public void run()
+    {
+        // TBD
+    }
+
 }
