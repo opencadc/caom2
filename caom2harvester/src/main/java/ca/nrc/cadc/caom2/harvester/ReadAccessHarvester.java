@@ -55,7 +55,7 @@ public class ReadAccessHarvester extends Harvester
      * @throws IOException
      *             IOException
      */
-    public ReadAccessHarvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
+    public ReadAccessHarvester(Class entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
     {
         super(entityClass, src, dest, batchSize, full, dryrun);
         init();

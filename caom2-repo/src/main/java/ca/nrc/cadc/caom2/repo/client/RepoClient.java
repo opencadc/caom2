@@ -199,15 +199,17 @@ public class RepoClient
             if (end != null)
                 surl = surl + "&end=" + df.format(end);
             URL url;
-            log.info("URL: " + surl);
+            log.debug("URL: " + surl);
             try
             {
                 url = new URL(surl);
                 HttpDownload get = new HttpDownload(url, bos);
+                get.setFollowRedirects(true);
 
                 get.run();
                 int responseCode = get.getResponseCode();
-                log.info("RESPONSE CODE: '" + responseCode + "'");
+                log.debug("RESPONSE CODE: '" + responseCode + "'");
+                /*
                 if (responseCode == 302) // redirected url
                 {
                     url = get.getRedirectURL();
@@ -218,7 +220,8 @@ public class RepoClient
                     log.info("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
 
                 }
-
+                */
+                
                 if (get.getThrowable() != null)
                 {
                     if (get.getThrowable() instanceof AccessControlException)
@@ -241,7 +244,7 @@ public class RepoClient
                 }
 
                 accList.addAll(partialList);
-                log.info("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+                log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
 
                 bos.close();
             }
@@ -260,16 +263,16 @@ public class RepoClient
             {
                 rec = maxrec - recCounter;
             }
-            log.info("dinamic batch (rec): " + rec);
-            log.info("counter (recCounter): " + recCounter);
-            log.info("maxrec: " + maxrec);
-            // log.info("start: " + start.toString());
-            // log.info("end: " + end.toString());
-            log.info("partialList.size(): " + partialList.size());
+            log.debug("dynamic batch (rec): " + rec);
+            log.debug("counter (recCounter): " + recCounter);
+            log.debug("maxrec: " + maxrec);
+            // log.debug("start: " + start.toString());
+            // log.debug("end: " + end.toString());
+            log.debug("partialList.size(): " + partialList.size());
 
             if (partialList.size() < rec || (end != null && start != null && start.equals(end)))
             {
-                log.info("************** go false");
+                log.debug("************** go false");
 
                 go = false;
             }

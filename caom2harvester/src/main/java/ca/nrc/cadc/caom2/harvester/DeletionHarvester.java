@@ -70,45 +70,10 @@ public class DeletionHarvester extends Harvester implements Runnable
      * @throws NumberFormatException
      *             NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, String[] src, String[] dest, Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
+    public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException
     {
         super(entityClass, src, dest, batchSize, false, dryrun);
         service = false;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param entityClass
-     *            the class specifying what should be deleted
-     * @param resourceId
-     *            repo service
-     * @param collection
-     *            collection to be harvested
-     * @param nthreads
-     *            number of threads to be used to harvest
-     * @param dest
-     *            destination server.database.schema
-     * @param batchSize
-     *            ignored, always full list
-     * @param dryrun
-     *            true if no changed in the data base are applied during the
-     *            process
-     * @throws IOException
-     *             IOException
-     * @throws URISyntaxException
-     *             URISyntaxException
-     * @throws NumberFormatException
-     *             NumberFormatException
-     */
-    public DeletionHarvester(Class<?> entityClass, String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean dryrun)
-            throws IOException, NumberFormatException, URISyntaxException
-    {
-        super(entityClass, null, dest, batchSize, false, dryrun);
-        this.service = true;
-        this.uri = resourceId;
-        this.collection = collection;
-        this.nthreads = nthreads;
     }
 
     /**
