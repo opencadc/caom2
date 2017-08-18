@@ -83,9 +83,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -98,7 +96,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
@@ -280,18 +278,18 @@ public class RepoClient
         return partialList;
     }
 
-    public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
+    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
     {
         init();
 
         // startDate = null;
         // end = df.parse("2017-06-20T09:03:15.360");
-        List<WorkerResponse> list = new ArrayList<WorkerResponse>();
+        List<ObservationResponse> list = new ArrayList<ObservationResponse>();
 
         List<ObservationState> stateList = getObservationList(collection, startDate, end, numberOfObservations);
 
         // Create tasks for each file
-        List<Callable<WorkerResponse>> tasks = new ArrayList<Callable<WorkerResponse>>();
+        List<Callable<ObservationResponse>> tasks = new ArrayList<Callable<ObservationResponse>>();
 
         // the current subject usually gets propagated into a thread pool, but
         // gets attached
@@ -310,13 +308,13 @@ public class RepoClient
         {
             // Run tasks in a fixed thread pool
             taskExecutor = Executors.newFixedThreadPool(nthreads);
-            List<Future<WorkerResponse>> futures;
+            List<Future<ObservationResponse>> futures;
 
             futures = taskExecutor.invokeAll(tasks);
 
-            for (Future<WorkerResponse> f : futures)
+            for (Future<ObservationResponse> f : futures)
             {
-                WorkerResponse res = null;
+                ObservationResponse res = null;
                 res = f.get();
 
                 if (f.isDone())
@@ -341,7 +339,7 @@ public class RepoClient
         return list;
     }
 
-    public WorkerResponse get(ObservationURI uri)
+    public ObservationResponse get(ObservationURI uri)
     {
         init();
         if (uri == null)
@@ -355,7 +353,7 @@ public class RepoClient
         return wt.getObservation();
     }
 
-    public WorkerResponse get(String collection, URI uri, Date start)
+    public ObservationResponse get(String collection, URI uri, Date start)
     {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");

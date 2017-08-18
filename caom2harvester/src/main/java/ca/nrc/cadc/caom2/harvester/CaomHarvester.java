@@ -114,7 +114,8 @@ public class CaomHarvester implements Runnable
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);
 
-        if (src.getDatabaseServer() != null) // local db only
+        boolean extendedFeatures = src.getDatabaseServer() != null;
+        if (extendedFeatures)
         {
             this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
             observationMetaHarvester.setSkipped(skip);

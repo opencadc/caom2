@@ -92,6 +92,7 @@ public class ReadAccessHarvester extends Harvester
         destAccessDAO.setComputeLastModified(false); // copy as-is
 
         initHarvestState(destAccessDAO.getDataSource(), entityClass);
+        this.harvestSkip = new HarvestSkipDAO(destAccessDAO.getDataSource(), dest.getDatabase(), dest.getSchema(), batchSize);
     }
 
     /**

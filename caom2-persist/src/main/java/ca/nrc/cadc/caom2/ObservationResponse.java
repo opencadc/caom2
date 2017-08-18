@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,65 +62,45 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.client;
+package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
 
-public class WorkerResponse
+import org.apache.log4j.Logger;
+
+/**
+ * Simple wrapper for returning an observation either fully or with an error.
+ * This is intended to wrap responses to support partial success in multi-threaded
+ * or batched operations.
+ * 
+ * @author pdowler
+ */
+public class ObservationResponse 
 {
-
-    private Observation observation = null;
-    private ObservationState observationState = null;
-    private Exception error = null;
-
-    public WorkerResponse(Observation obs, ObservationState obsState, Exception err)
-    {
-        this.setObservation(obs);
-        this.setObservationState(obsState);
-        this.setError(err);
+    public ObservationState observationState;
+    
+    public Observation observation;
+    
+    public Exception error;
+    
+    public ObservationResponse() { }
+    
+    public ObservationResponse(ObservationState state) 
+    { 
+        this.observationState = state;
     }
-
-    public Observation getObservation()
-    {
-        return observation;
+    public ObservationResponse(Observation obs) 
+    { 
+        this.observation = obs;
     }
-
-    public void setObservation(Observation observation)
-    {
-        this.observation = observation;
-    }
-
-    public ObservationState getObservationState()
-    {
-        return observationState;
-    }
-
-    public void setObservationState(ObservationState observationState)
-    {
-        this.observationState = observationState;
-    }
-
-    public Exception getError()
-    {
-        return error;
-    }
-
-    public void setError(Exception error)
-    {
-        this.error = error;
-    }
-
+    
     @Override
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("WorkerResponse[");
+        sb.append("ObservationResponse[");
         sb.append(observationState).append(",");
         sb.append(observation);
         if (error != null)
@@ -128,5 +108,4 @@ public class WorkerResponse
         sb.append("]");
         return sb.toString();
     }
-
 }

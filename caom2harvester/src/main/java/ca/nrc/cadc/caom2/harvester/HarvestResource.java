@@ -108,7 +108,7 @@ public class HarvestResource
     {
         if (resourceID != null)
             return resourceID.toASCIIString() + "?" + collection;
-        return databaseServer + "." + database + "." + schema;
+        return databaseServer + "." + database + "." + schema + "?" + collection;
     }
     
     public String getDatabaseServer()

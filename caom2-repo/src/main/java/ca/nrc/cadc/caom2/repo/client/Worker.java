@@ -82,12 +82,13 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
-public class Worker implements Callable<WorkerResponse>
+public class Worker implements Callable<ObservationResponse>
 {
 
     private static final Logger log = Logger.getLogger(Worker.class);
@@ -104,12 +105,12 @@ public class Worker implements Callable<WorkerResponse>
     }
 
     @Override
-    public WorkerResponse call() throws Exception
+    public ObservationResponse call() throws Exception
     {
         return getObservation();
     }
 
-    public WorkerResponse getObservation()
+    public ObservationResponse getObservation()
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
@@ -135,26 +136,23 @@ public class Worker implements Callable<WorkerResponse>
         }
 
         ObservationReader obsReader = new ObservationReader();
-        Observation o = null;
         Exception exception = null;
-        WorkerResponse wr = new WorkerResponse(null, state, null);
+        ObservationResponse wr = new ObservationResponse(state);
 
         try
         {
             // log.info("********************* bos:" + bos.toString());
-            o = obsReader.read(bos.toString());
-            wr.setObservation(o);
+            wr.observation = obsReader.read(bos.toString());
         }
         catch (Exception e)
         {
             String oid = state.getURI().getObservationID();
-            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
-            wr.setError(exception);
+            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
         return wr;
     }
 
-    public WorkerResponse getObservation(URI uri)
+    public ObservationResponse getObservation(URI uri)
     {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         String surl = BASE_HTTP_URL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
@@ -181,21 +179,16 @@ public class Worker implements Callable<WorkerResponse>
         }
 
         ObservationReader obsReader = new ObservationReader();
-        Observation o = null;
-        Exception exception = null;
-        WorkerResponse wr = new WorkerResponse(null, state, null);
+        ObservationResponse wr = new ObservationResponse(state);
 
         try
         {
-            o = obsReader.read(bos.toString());
-            wr.setObservation(o);
+            wr.observation = obsReader.read(bos.toString());
         }
         catch (ObservationParsingException e)
         {
             String oid = state.getURI().getObservationID();
-            exception = new Exception("Unable to create Observation object for id " + oid + ": " + e.getMessage());
-            wr.setError(exception);
-            log.warn("Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
         }
         return wr;
     }
