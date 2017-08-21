@@ -249,7 +249,7 @@ public class HarvestSkipURIDAO
             ps.setString(col++, skip.cname);
             ps.setString(col++, skip.skipID.toASCIIString());
             String es = skip.errorMessage;
-            if (es.length() > 1024)
+            if (es != null && es.length() > 1024)
                 es = es.substring(0,1024);
             ps.setString(col++, es);
             ps.setTimestamp(col++, new Timestamp(now.getTime()), CAL);

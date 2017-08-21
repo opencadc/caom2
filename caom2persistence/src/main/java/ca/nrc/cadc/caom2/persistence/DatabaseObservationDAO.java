@@ -218,6 +218,33 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
             log.debug("getList: " + collection + " " + batchSize + " " + dt + "ms");
         }
     }
+    // pdd: temporary hack for use in harvester retring skipped found in above getList impl
+    public ObservationResponse getAlt(ObservationURI uri)
+    {
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            ObservationState s = new ObservationState(uri);
+            ObservationResponse ret = new ObservationResponse(s);
+            try
+            {
+                ret.observation = get(s.getURI());
+                if (ret.observation == null) 
+                    return null;
+            }
+            catch(Exception ex)
+            {
+                ret.error = new IllegalStateException("failed to read " + s.getURI() + " from database", ex);
+            }
+            return ret;
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("getAlt: " + uri + " " + dt + "ms");
+        }
+    }
     
     // pdd: for harvester to get just the observation object and check timestamps
     public Observation getShallow(UUID id)

@@ -135,6 +135,8 @@ public class Worker implements Callable<ObservationResponse>
             get.run();
         }
 
+        // TODO: need to check get.getResponseCode() and get.getThrowable() for any failure to get the document
+        // specifically: 404 if the observation does not/no longer exists is important to distinguish and handle
         ObservationReader obsReader = new ObservationReader();
         Exception exception = null;
         ObservationResponse wr = new ObservationResponse(state);

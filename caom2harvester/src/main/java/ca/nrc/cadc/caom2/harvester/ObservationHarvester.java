@@ -330,7 +330,9 @@ public class ObservationHarvester extends Harvester
             while (iter1.hasNext())
             {
                 SkippedWrapperURI<ObservationResponse> ow = iter1.next();
-                Observation o = ow.entity.observation;
+                Observation o = null;
+                if (ow.entity != null)
+                    o = ow.entity.observation;
                 HarvestSkipURI hs = ow.skip;
                 iter1.remove(); // allow garbage collection during loop
 
@@ -428,7 +430,7 @@ public class ObservationHarvester extends Harvester
                             else
                                 harvestState.put(state);
                         }
-                        else if (skipped) // observation is gone from src
+                        else if (skipped && ow.entity == null) // observation is gone from src
                         {
                             log.info("delete: " + hs + " " + format(hs.lastModified));
                             harvestSkip.delete(hs);
@@ -760,15 +762,17 @@ public class ObservationHarvester extends Harvester
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
         for (HarvestSkipURI hs : skip)
         {
-            Observation o = null;
-
             log.debug("getSkipped: " + hs.getSkipID());
             ObservationURI ouri = new ObservationURI(hs.getSkipID());
-            ObservationResponse wr = srcObservationService.get(ouri);
+            ObservationResponse wr;
+            if (srcObservationDAO != null)
+                wr = srcObservationDAO.getAlt(ouri);
+            else
+                wr = srcObservationService.get(ouri);
             log.debug("response: " + wr);
             
-            if (wr != null)
-                ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
+            //if (wr != null)
+            ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
         }
         return ret;
     }
