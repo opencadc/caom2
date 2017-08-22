@@ -163,7 +163,7 @@ public class Main
                 String[] srcDS = source.split("[.]");
                 if (srcDS.length != 3)
                 {
-                    log.warn("malformed --source value, found " + destination + " expected: server.database.schema");
+                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
                     usage();
                     System.exit(1);
                 }

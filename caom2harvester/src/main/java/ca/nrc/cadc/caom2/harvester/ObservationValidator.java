@@ -97,13 +97,13 @@ public class ObservationValidator extends Harvester
     private static class Progress
     {
         int found = 0;
-        int ingested = 0;
+        int validated = 0;
         int failed = 0;
 
         @Override
         public String toString()
         {
-            return found + " validated: " + ingested + " failed: " + failed;
+            return found + " validated: " + validated + " failed: " + failed;
         }
     }
 
@@ -250,7 +250,7 @@ public class ObservationValidator extends Harvester
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
                     }
-                    ret.ingested++;
+                    ret.validated++;
                 }
                 catch (Throwable oops)
                 {
