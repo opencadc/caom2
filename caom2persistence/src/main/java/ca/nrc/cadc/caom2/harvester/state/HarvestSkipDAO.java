@@ -246,7 +246,10 @@ public class HarvestSkipDAO
             ps.setString(col++, skip.source);
             ps.setString(col++, skip.cname);
             ps.setObject(col++, skip.skipID);
-            ps.setString(col++, skip.errorMessage);
+            String es = skip.errorMessage;
+            if (es != null && es.length() > 1024)
+                es = es.substring(0,1024);
+            ps.setString(col++, es);
             ps.setTimestamp(col++, new Timestamp(now.getTime()), CAL);
             ps.setObject(col++, skip.id);
         }

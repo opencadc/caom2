@@ -15,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '0.2.0'
+version = '1.0'
 
 mainClassName = 'ca.nrc.cadc.caom2.repo.client.Main'
 
@@ -34,4 +34,43 @@ dependencies {
     
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:[3.2,4.0)'
+}
+
+// enable intTest 
+configurations {
+    intTestCompile.extendsFrom testCompile
+    intTestRuntime.extendsFrom testRuntime
+}
+
+sourceSets {
+    intTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/intTest/java')
+        }
+        
+        // set the intTest resource directory
+        resources.srcDir file('src/intTest/resources')
+    }
+}
+
+tasks.withType(Test) {
+    // reset the report destinations so that intTests go to their
+    // own page
+    //reports.html.destination = file("${reporting.baseDir}/${name}")
+    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
+    
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
+}
+
+task intTest(type: Test) {
+    // set the configuration context
+    testClassesDir = sourceSets.intTest.output.classesDir
+    classpath = sourceSets.intTest.runtimeClasspath
+    
+    // run the tests always
+    outputs.upToDateWhen { false }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,66 +62,77 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.client;
+package ca.nrc.cadc.caom2.harvester;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
 
-public class WorkerResponse
+import java.net.URI;
+import org.apache.log4j.Logger;
+
+/**
+ * Encapsulate the information about a source or destination for harvesting instances.
+ * @author pdowler
+ */
+public class HarvestResource 
 {
+    private static final Logger log = Logger.getLogger(HarvestResource.class);
 
-    private Observation observation = null;
-    private ObservationState observationState = null;
-    private Exception error = null;
-
-    public WorkerResponse(Observation obs, ObservationState obsState, Exception err)
+    private String databaseServer;
+    private String database;
+    private String schema;
+    
+    private URI resourceID;
+    private String collection;
+    
+    public HarvestResource(String databaseServer, String database, String schema, String collection)
     {
-        this.setObservation(obs);
-        this.setObservationState(obsState);
-        this.setError(err);
+        if (databaseServer == null || database == null || schema == null || collection == null)
+            throw new IllegalArgumentException("args cannot be null");
+        this.databaseServer = databaseServer;
+        this.database = database;
+        this.schema = schema;
+        this.collection = collection;
+    }
+    
+    public HarvestResource(URI resourceID, String collection)
+    {
+        if (resourceID == null || collection == null)
+            throw new IllegalArgumentException("resourceID and collection args cannot be null");
+        this.resourceID = resourceID;
+        this.collection = collection;
     }
 
-    public Observation getObservation()
+    public String getIdentifier()
     {
-        return observation;
+        if (resourceID != null)
+            return resourceID.toASCIIString() + "?" + collection;
+        return databaseServer + "." + database + "." + schema + "?" + collection;
+    }
+    
+    public String getDatabaseServer()
+    {
+        return databaseServer;
     }
 
-    public void setObservation(Observation observation)
+    public String getDatabase()
     {
-        this.observation = observation;
+        return database;
     }
 
-    public ObservationState getObservationState()
+    public String getSchema()
     {
-        return observationState;
+        return schema;
     }
 
-    public void setObservationState(ObservationState observationState)
+    public URI getResourceID()
     {
-        this.observationState = observationState;
+        return resourceID;
     }
 
-    public Exception getError()
+    public String getCollection()
     {
-        return error;
+        return collection;
     }
-
-    public void setError(Exception error)
-    {
-        this.error = error;
-    }
-
-    @Override
-    public String toString()
-    {
-        return observation == null ? "null" : observation.getObservationID() + " " + observationState == null
-                ? "null"
-                : observationState.getURI().getObservationID() + " " + error == null ? "Correct" : error.getMessage();
-    }
-
 }

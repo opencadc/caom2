@@ -38,26 +38,17 @@ public class ObservationValidator extends Harvester
 
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
-    private boolean service = false;
-
     private RepoClient srcObservationService;
     private DatabaseObservationDAO srcObservationDAO;
     private DatabaseObservationDAO destObservationDAO;
 
     private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
-    private boolean computePlaneMetadata = false;
     private boolean nochecksum = false;
 
-    public ObservationValidator(String resourceId, String collection, int nthreads, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum)
-            throws IOException, URISyntaxException
-    {
-        super(Observation.class, null, dest, batchSize, full, dryrun);
-        this.nochecksum = nochecksum;
-        init(resourceId, collection, nthreads);
-    }
-
-    public ObservationValidator(String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum) throws IOException, URISyntaxException
+    public ObservationValidator(HarvestResource src, HarvestResource dest, Integer batchSize, 
+            boolean full, boolean dryrun, boolean nochecksum) 
+        throws IOException, URISyntaxException
     {
         super(Observation.class, src, dest, batchSize, full, dryrun);
         this.nochecksum = nochecksum;
@@ -71,23 +62,19 @@ public class ObservationValidator extends Harvester
 
     private void init() throws IOException, URISyntaxException
     {
-        Map<String, Object> config1 = getConfigDAO(src);
+        if (src.getResourceID() != null)
+        {
+            // 1 thread since we only use the ObservationState listing
+            this.srcObservationService = new RepoClient(src.getResourceID(), 1);
+        }
+        else
+        {
+            Map<String, Object> config1 = getConfigDAO(src);
+            this.srcObservationDAO = new DatabaseObservationDAO();
+            srcObservationDAO.setConfig(config1);
+        }
+        
         Map<String, Object> config2 = getConfigDAO(dest);
-        this.srcObservationDAO = new DatabaseObservationDAO();
-        srcObservationDAO.setConfig(config1);
-        this.destObservationDAO = new DatabaseObservationDAO();
-        destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
-        initHarvestState(destObservationDAO.getDataSource(), Observation.class);
-    }
-
-    private void init(String uri, String collection, int threads) throws IOException, URISyntaxException
-    {
-        this.collection = collection;
-        this.resourceId = uri;
-        this.service = true;
-        Map<String, Object> config2 = getConfigDAO(dest);
-        this.srcObservationService = new RepoClient(new URI(uri), threads);
         this.destObservationDAO = new DatabaseObservationDAO();
         destObservationDAO.setConfig(config2);
         destObservationDAO.setComputeLastModified(false); // copy as-is
@@ -102,7 +89,7 @@ public class ObservationValidator extends Harvester
         Progress num = doit();
 
         if (num.found > 0)
-            log.info("***************** finished batch: " + num + " *******************");
+            log.info("finished batch: " + num);
 
         log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
@@ -110,13 +97,13 @@ public class ObservationValidator extends Harvester
     private static class Progress
     {
         int found = 0;
-        int ingested = 0;
+        int validated = 0;
         int failed = 0;
 
         @Override
         public String toString()
         {
-            return found + " ingested: " + ingested + " failed: " + failed;
+            return found + " validated: " + validated + " failed: " + failed;
         }
     }
 
@@ -138,7 +125,7 @@ public class ObservationValidator extends Harvester
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-            log.info("**************** state = " + curLastModified + " source = " + source + " )");
+            log.debug("**************** state = " + curLastModified + " source = " + source + " )");
             tState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
@@ -154,7 +141,7 @@ public class ObservationValidator extends Harvester
                 end = fiveMinAgo;
             else
             {
-                log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
+                log.debug("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
                 if (end.getTime() > fiveMinAgo.getTime())
                     end = fiveMinAgo;
             }
@@ -164,17 +151,20 @@ public class ObservationValidator extends Harvester
             List<ObservationState> tmpSrcState = null;
             List<ObservationState> tmpDstState = null;
 
-            tmpDstState = destObservationDAO.getObservationList(collection, null, null, null);
+            tmpDstState = destObservationDAO.getObservationList(src.getCollection(), null, null, null);
 
-            if (!this.service)
+            if (srcObservationDAO != null)
             {
-                tmpSrcState = srcObservationDAO.getObservationList(collection, null, null, null);
+                tmpSrcState = srcObservationDAO.getObservationList(src.getCollection(), null, null, null);
+            }
+            else if (srcObservationService != null)
+            {
+                tmpSrcState = srcObservationService.getObservationList(src.getCollection(), null, null, null);
             }
             else
-            {
-                tmpSrcState = srcObservationService.getObservationList(collection, null, null, null);
-            }
+                throw new RuntimeException("BUG: both srcObservationDAO and srcObservationService are null");
 
+                        
             Set<ObservationState> srcState = new TreeSet<>(cStateUri);
             srcState.addAll(tmpSrcState);
             tmpSrcState.clear();
@@ -184,7 +174,7 @@ public class ObservationValidator extends Harvester
 
             Set<ObservationStateError> errlist = calculateErroneousObservationStates(srcState, dstState);
 
-            log.info("************************** errlist.size() = " + errlist.size());
+            log.debug("************************** errlist.size() = " + errlist.size());
 
             tQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -260,7 +250,7 @@ public class ObservationValidator extends Harvester
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
                     }
-                    ret.ingested++;
+                    ret.validated++;
                 }
                 catch (Throwable oops)
                 {
@@ -418,15 +408,6 @@ public class ObservationValidator extends Harvester
     protected void initHarvestState(DataSource ds, @SuppressWarnings("rawtypes") Class c)
     {
         super.initHarvestState(ds, c);
-        this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2], batchSize);
-    }
-
-    public void setComputePlaneMetadata(boolean computePlaneMetadata)
-    {
-        this.computePlaneMetadata = computePlaneMetadata;
-    }
-    public boolean getComputePlaneMetadata()
-    {
-        return this.computePlaneMetadata;
+        this.harvestSkip = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema(), batchSize);
     }
 }

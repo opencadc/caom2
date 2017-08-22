@@ -41,17 +41,15 @@ public abstract class Harvester implements Runnable
     protected Integer batchSize;
     protected boolean full;
 
-    protected String[] src;
-    protected String resourceId;
-    protected String collection;
-    protected String[] dest;
+    protected HarvestResource src;
+    protected HarvestResource dest;
     protected HarvestStateDAO harvestState;
 
     protected Harvester()
     {
     }
 
-    protected Harvester(Class entityClass, String[] src, String[] dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
+    protected Harvester(Class entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean full, boolean dryrun) throws IOException
     {
         this.entityClass = entityClass;
         this.src = src;
@@ -61,16 +59,19 @@ public abstract class Harvester implements Runnable
         this.dryrun = dryrun;
     }
 
-    protected Map<String, Object> getConfigDAO(String[] desc) throws IOException
+    protected Map<String, Object> getConfigDAO(HarvestResource desc) throws IOException
     {
+        if (desc.getDatabaseServer() == null)
+            throw new RuntimeException("BUG: getConfigDAO called with ObservationResource[service]");
+        
         Map<String, Object> ret = new HashMap<String, Object>();
 
         // HACK: detect RDBMS backend from JDBC driver
         DBConfig dbrc = new DBConfig();
-        ConnectionConfig cc = dbrc.getConnectionConfig(desc[0], desc[1]);
+        ConnectionConfig cc = dbrc.getConnectionConfig(desc.getDatabaseServer(), desc.getDatabase());
         String driver = cc.getDriver();
         if (driver == null)
-            throw new RuntimeException("failed to find JDBC driver for " + desc[0] + " " + desc[1]);
+            throw new RuntimeException("failed to find JDBC driver for " + desc.getDatabaseServer() + " " + desc.getDatabase());
 
         if (driver.contains(SYBASE) || driver.contains(JTDS))
             ret.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
@@ -80,11 +81,11 @@ public abstract class Harvester implements Runnable
             ret.put("disableHashJoin", Boolean.TRUE);
         }
         else
-            throw new IllegalArgumentException("unknown SQL dialect: " + desc[0]);
+            throw new IllegalArgumentException("unknown SQL dialect: " + desc.getDatabaseServer());
 
-        ret.put("server", desc[0]);
-        ret.put("database", desc[1]);
-        ret.put("schema", desc[2]);
+        ret.put("server", desc.getDatabaseServer());
+        ret.put("database", desc.getDatabase());
+        ret.put("schema", desc.getSchema());
         return ret;
     }
 
@@ -98,19 +99,12 @@ public abstract class Harvester implements Runnable
     {
         this.cname = c.getSimpleName();
 
-        log.debug("creating HarvestState tracker: " + cname + " in " + dest[1] + "." + dest[2]);
-        this.harvestState = new PostgresqlHarvestStateDAO(ds, dest[1], dest[2]);
+        log.debug("creating HarvestState tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
+        this.harvestState = new PostgresqlHarvestStateDAO(ds, dest.getDatabase(), dest.getSchema());
 
-        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest[1] + "." + dest[2]);
+        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
 
-        if (src != null)
-        {
-            this.source = src[0] + "." + src[1] + "." + src[2];
-        }
-        else
-        {
-            this.source = resourceId + "?" + collection;
-        }
+        this.source = src.getIdentifier();
     }
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);

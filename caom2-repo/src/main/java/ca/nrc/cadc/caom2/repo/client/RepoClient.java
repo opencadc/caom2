@@ -83,9 +83,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -98,7 +96,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
@@ -199,26 +197,29 @@ public class RepoClient
             if (end != null)
                 surl = surl + "&end=" + df.format(end);
             URL url;
-            log.info("URL: " + surl);
+            log.debug("URL: " + surl);
             try
             {
                 url = new URL(surl);
                 HttpDownload get = new HttpDownload(url, bos);
+                get.setFollowRedirects(true);
 
                 get.run();
                 int responseCode = get.getResponseCode();
-                log.info("RESPONSE CODE: '" + responseCode + "'");
+                log.debug("RESPONSE CODE: '" + responseCode + "'");
+                /*
                 if (responseCode == 302) // redirected url
                 {
                     url = get.getRedirectURL();
-                    log.info("REDIRECTED URL: " + url);
+                    log.debug("REDIRECTED URL: " + url);
                     bos = new ByteArrayOutputStream();
                     get = new HttpDownload(url, bos);
                     responseCode = get.getResponseCode();
-                    log.info("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
 
                 }
-
+                */
+                
                 if (get.getThrowable() != null)
                 {
                     if (get.getThrowable() instanceof AccessControlException)
@@ -233,7 +234,7 @@ public class RepoClient
 
             try
             {
-                // log.info("RESPONSE = '" + bos.toString() + "'");
+                // log.debug("RESPONSE = '" + bos.toString() + "'");
                 partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && accList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0)))
                 {
@@ -241,7 +242,7 @@ public class RepoClient
                 }
 
                 accList.addAll(partialList);
-                log.info("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+                log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
 
                 bos.close();
             }
@@ -260,16 +261,16 @@ public class RepoClient
             {
                 rec = maxrec - recCounter;
             }
-            log.info("dinamic batch (rec): " + rec);
-            log.info("counter (recCounter): " + recCounter);
-            log.info("maxrec: " + maxrec);
-            // log.info("start: " + start.toString());
-            // log.info("end: " + end.toString());
-            log.info("partialList.size(): " + partialList.size());
+            log.debug("dynamic batch (rec): " + rec);
+            log.debug("counter (recCounter): " + recCounter);
+            log.debug("maxrec: " + maxrec);
+            // log.debug("start: " + start.toString());
+            // log.debug("end: " + end.toString());
+            log.debug("partialList.size(): " + partialList.size());
 
             if (partialList.size() < rec || (end != null && start != null && start.equals(end)))
             {
-                log.info("************** go false");
+                log.debug("************** go false");
 
                 go = false;
             }
@@ -277,29 +278,18 @@ public class RepoClient
         return partialList;
     }
 
-    public Iterator<Observation> observationIterator()
-    {
-        return null;
-
-    }
-
-    public void setConfig(Map<String, Object> config1)
-    {
-
-    }
-
-    public List<WorkerResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
+    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException, ExecutionException
     {
         init();
 
         // startDate = null;
         // end = df.parse("2017-06-20T09:03:15.360");
-        List<WorkerResponse> list = new ArrayList<WorkerResponse>();
+        List<ObservationResponse> list = new ArrayList<ObservationResponse>();
 
         List<ObservationState> stateList = getObservationList(collection, startDate, end, numberOfObservations);
 
         // Create tasks for each file
-        List<Callable<WorkerResponse>> tasks = new ArrayList<Callable<WorkerResponse>>();
+        List<Callable<ObservationResponse>> tasks = new ArrayList<Callable<ObservationResponse>>();
 
         // the current subject usually gets propagated into a thread pool, but
         // gets attached
@@ -318,13 +308,13 @@ public class RepoClient
         {
             // Run tasks in a fixed thread pool
             taskExecutor = Executors.newFixedThreadPool(nthreads);
-            List<Future<WorkerResponse>> futures;
+            List<Future<ObservationResponse>> futures;
 
             futures = taskExecutor.invokeAll(tasks);
 
-            for (Future<WorkerResponse> f : futures)
+            for (Future<ObservationResponse> f : futures)
             {
-                WorkerResponse res = null;
+                ObservationResponse res = null;
                 res = f.get();
 
                 if (f.isDone())
@@ -349,7 +339,7 @@ public class RepoClient
         return list;
     }
 
-    public WorkerResponse get(ObservationURI uri)
+    public ObservationResponse get(ObservationURI uri)
     {
         init();
         if (uri == null)
@@ -363,14 +353,14 @@ public class RepoClient
         return wt.getObservation();
     }
 
-    public WorkerResponse get(String collection, URI uri, Date start)
+    public ObservationResponse get(String collection, URI uri, Date start)
     {
         if (uri == null)
             throw new IllegalArgumentException("uri cannot be null");
 
         init();
 
-        log.info("******************* getObservationList(collection, start, null, null) " + collection);
+        log.debug("******************* getObservationList(collection, start, null, null) " + collection);
 
         List<ObservationState> list = getObservationList(collection, start, null, null);
         ObservationState obsState = null;
@@ -384,7 +374,7 @@ public class RepoClient
             break;
         }
 
-        log.info("******************* getting to getList " + obsState);
+        log.debug("******************* getting to getList " + obsState);
 
         if (obsState != null)
         {
@@ -431,7 +421,7 @@ public class RepoClient
                 if (readingCollection)
                 {
                     collection = aux;
-                    // log.info("*************** collection: " + collection);
+                    // log.debug("*************** collection: " + collection);
                     readingCollection = false;
                     readingId = true;
                     readingDate = false;
@@ -440,7 +430,7 @@ public class RepoClient
                 else if (readingId)
                 {
                     id = aux;
-                    // log.info("*************** id: " + id);
+                    // log.debug("*************** id: " + id);
                     readingCollection = false;
                     readingId = false;
                     readingDate = true;
@@ -449,7 +439,7 @@ public class RepoClient
                 else if (readingDate)
                 {
                     sdate = aux;
-                    // log.info("*************** sdate: " + sdate);
+                    // log.debug("*************** sdate: " + sdate);
                     date = DateUtil.flexToDate(sdate, sdf);
 
                     readingCollection = false;
@@ -464,7 +454,7 @@ public class RepoClient
                 if (readingDate)
                 {
                     sdate = aux;
-                    // log.info("*************** sdate: " + sdate);
+                    // log.debug("*************** sdate: " + sdate);
                     date = DateUtil.flexToDate(sdate, sdf);
 
                     readingCollection = false;
@@ -490,7 +480,7 @@ public class RepoClient
 
                 md5 = aux;
                 aux = "";
-                // log.info("*************** md5: " + md5);
+                // log.debug("*************** md5: " + md5);
                 if (!md5.equals(""))
                 {
                     os.accMetaChecksum = new URI(md5);
@@ -498,7 +488,7 @@ public class RepoClient
 
                 // if (os.maxLastModified == null)
                 // {
-                // log.info("*************** NO DATE");
+                // log.debug("*************** NO DATE");
                 // System.exit(1);
                 // }
                 list.add(os);

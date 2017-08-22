@@ -82,6 +82,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.net.NetrcAuthenticator;
@@ -224,7 +225,7 @@ public class RepoClientTest
                 {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-                    List<WorkerResponse> list = repoC.getList("IRIS", null, null, 5);
+                    List<ObservationResponse> list = repoC.getList("IRIS", null, null, 5);
                     Assert.assertEquals(list.size(), 6);
                     // Assert.assertEquals(URI.create("caom:IRIS/f001h000"),
                     // list.get(0).getObservation().getURI().getURI());
@@ -262,8 +263,9 @@ public class RepoClientTest
                 {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
-                    WorkerResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
-                    Assert.assertEquals(wr.getObservation().getID().toString(), "00000000-0000-0000-897c-013ac26a8f32");
+                    ObservationResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
+                    Assert.assertNotNull(wr.observation);
+                    Assert.assertEquals(wr.observation.getID().toString(), "00000000-0000-0000-897c-013ac26a8f32");
 
                     return null;
                 }

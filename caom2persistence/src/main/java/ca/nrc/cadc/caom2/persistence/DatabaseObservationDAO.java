@@ -73,20 +73,19 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.net.URI;
+import ca.nrc.cadc.net.TransientException;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -188,6 +187,64 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         }
     }
     
+    // pdd: for harvester to get state  and (observation or error) reading single observations from db
+    public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            List<ObservationState> states = getObservationList(collection, minLastModified, maxLastModified, batchSize);
+            List<ObservationResponse> ret = new ArrayList<ObservationResponse>(states.size());
+            
+            for (ObservationState s : states)
+            {
+                ObservationResponse r = new ObservationResponse(s);
+                try
+                {
+                    r.observation = get(s.getURI());
+                }
+                catch(Exception ex)
+                {
+                    r.error = new IllegalStateException("failed to read " + s.getURI() + " from database", ex);
+                }
+                ret.add(r);
+            }
+            return ret;
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("getList: " + collection + " " + batchSize + " " + dt + "ms");
+        }
+    }
+    // pdd: temporary hack for use in harvester retring skipped found in above getList impl
+    public ObservationResponse getAlt(ObservationURI uri)
+    {
+        long t = System.currentTimeMillis();
+
+        try
+        {
+            ObservationState s = new ObservationState(uri);
+            ObservationResponse ret = new ObservationResponse(s);
+            try
+            {
+                ret.observation = get(s.getURI());
+                if (ret.observation == null) 
+                    return null;
+            }
+            catch(Exception ex)
+            {
+                ret.error = new IllegalStateException("failed to read " + s.getURI() + " from database", ex);
+            }
+            return ret;
+        }
+        finally
+        {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("getAlt: " + uri + " " + dt + "ms");
+        }
+    }
     
     // pdd: for harvester to get just the observation object and check timestamps
     public Observation getShallow(UUID id)

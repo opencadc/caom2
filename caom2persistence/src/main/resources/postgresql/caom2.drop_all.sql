@@ -23,4 +23,7 @@ drop table if exists caom2.DeletedPlaneDataReadAccess;
 
 drop table if exists caom2.HarvestState;
 drop table if exists caom2.HarvestSkip;
+drop table if exists caom2.HarvestSkipURI;
+
 drop table if exists caom2.ModelVersion;
+

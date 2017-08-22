@@ -101,6 +101,7 @@ import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
@@ -137,7 +138,6 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -334,6 +334,100 @@ public abstract class AbstractDatabaseObservationDAOTest
             result = dao.getObservationList(collection, null, null, batchSize);
             
             result = dao.getObservationList(collection, start, null, null);
+        }            
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetObservationStateAndObservationList()
+    {
+        try
+        {
+            String collection = "FOO";
+            Date start = new Date();
+            Thread.sleep(10);
+            
+            Observation obs = new SimpleObservation(collection, "bar1");
+            dao.put(obs);
+            Assert.assertTrue(dao.exists(obs.getURI()));
+            log.info("created: " + obs);
+            Thread.sleep(10);
+            
+            obs = new SimpleObservation(collection, "bar2");
+            dao.put(obs);
+            Assert.assertTrue(dao.exists(obs.getURI()));
+            log.info("created: " + obs);
+            Thread.sleep(10);
+            
+            Date mid = new Date();
+            
+            obs = new SimpleObservation(collection, "bar3");
+            dao.put(obs);
+            Assert.assertTrue(dao.exists(obs.getURI()));
+            log.info("created: " + obs);
+            Thread.sleep(10);
+            
+            obs = new SimpleObservation(collection, "bar4");
+            dao.put(obs);
+            Assert.assertTrue(dao.exists(obs.getURI()));
+            log.info("created: " + obs);
+            Thread.sleep(10);
+            
+            Date end = new Date();
+            
+            Integer batchSize = 100;
+            
+            List<ObservationResponse> result = dao.getList(collection, start, end, batchSize);
+            Assert.assertEquals(4, result.size());
+            for (ObservationResponse os : result)
+            {
+                log.info("found: " + os);
+                Assert.assertNotNull(os.observationState);
+                Assert.assertNotNull(os.observation);
+            }
+            
+            result = dao.getList(collection, start, mid, batchSize);
+            Assert.assertEquals(2, result.size());
+            for (ObservationResponse os : result)
+            {
+                log.info("found: " + os);
+                Assert.assertNotNull(os.observationState);
+                Assert.assertNotNull(os.observation);
+            }
+            
+            result = dao.getList(collection, mid, end, batchSize);
+            Assert.assertEquals(2, result.size());
+            for (ObservationResponse os : result)
+            {
+                log.info("found: " + os);
+                Assert.assertNotNull(os.observationState);
+                Assert.assertNotNull(os.observation);
+            }
+            
+            try
+            {
+                String str = null;
+                result = dao.getList(str, start, end, batchSize);
+                Assert.fail("expected IllegalArgumentException for null collection, got results");
+            }
+            catch(IllegalArgumentException ex)
+            {
+                log.info("caught expected exception: " + ex);
+            }
+            
+            result = dao.getList(collection, null, end, batchSize);
+            Assert.assertEquals(4, result.size());
+            
+            result = dao.getList(collection, start, null, batchSize);
+            Assert.assertEquals(4, result.size());
+            
+            result = dao.getList(collection, null, null, batchSize);
+            
+            result = dao.getList(collection, start, null, null);
         }            
         catch(Exception unexpected)
         {

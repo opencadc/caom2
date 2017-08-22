@@ -18,6 +18,8 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -68,16 +70,13 @@ public class Main
             boolean full = am.isSet("full");
             boolean skip = am.isSet("skip");
             boolean dryrun = am.isSet("dryrun");
-            boolean resourceId = am.isSet("resourceID");
             boolean validate = am.isSet("validate");
-            boolean collection = am.isSet("collection");
-            boolean threads = am.isSet("threads");
             boolean noChecksum = am.isSet("nochecksum");;
 
             boolean compute = am.isSet("compute");
 
             // setup optional authentication for harvesting from a web service
-            Subject subject = null;
+            Subject subject = AuthenticationUtil.getAnonSubject();
             if (am.isSet("netrc"))
             {
                 subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
@@ -86,15 +85,8 @@ public class Main
             {
                 subject = CertCmdArgUtil.initSubject(am);
             }
-            else
-            {
-                subject = AuthenticationUtil.getAnonSubject();
-            }
-            if (subject != null)
-            {
-                AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-                log.info("authentication using: " + meth);
-            }
+            AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            log.info("authentication using: " + meth);
 
             if (full && skip)
             {
@@ -103,65 +95,79 @@ public class Main
                 System.exit(1);
             }
 
-            String sresourceId = am.getValue("resourceID");
-            String scollection = am.getValue("collection");
-            int nthreads = 1;
-            try
+            // required args
+            String collection = am.getValue("collection");
+            boolean nocol = (collection == null || collection.trim().length() == 0);
+            if (nocol)
             {
-                nthreads = Integer.parseInt(am.getValue("threads"));
-            }
-            catch (NumberFormatException nfe)
-            {
-                log.warn("wrong number of threads specified; please check --threads parameter");
-                System.exit(1);
-            }
-            String src = am.getValue("source");
-            String dest = am.getValue("destination");
-
-            boolean nosrc = (src == null || src.trim().length() == 0);
-            boolean noresourceId = sresourceId == null || sresourceId.trim().length() == 0 || scollection == null || scollection.trim().length() == 0;
-            boolean service = !noresourceId;
-
-            boolean nodest = (dest == null || dest.trim().length() == 0);
-
-            if ((nosrc && noresourceId) || nodest)
-            {
+                log.warn("missing required argument: --collection=<name>");
                 usage();
-                if (nosrc && noresourceId)
-                    log.warn("missing required argument: --source for retrieving from DB or --resourceID and --collection for retrieving from caom2repo service");
-                if (nodest)
-                    log.warn("missing required argument: --destination");
                 System.exit(1);
             }
-
-            String[] srcDS = new String[3];
-            if (service)
+            
+            String destination = am.getValue("destination");
+            boolean nodest = (destination == null || destination.trim().length() == 0);
+            if (nodest)
             {
-                srcDS[0] = sresourceId;
-                srcDS[1] = scollection;
-                srcDS[2] = nthreads + "";
+                log.warn("missing required argument: --destination");
+                usage();
+                System.exit(1);
+            }
+            String[] destDS = destination.split("[.]");
+            if (destDS.length != 3)
+            {
+                log.warn("malformed --destination value, found " + destination + " expected: server.database.schema");
+                usage();
+                System.exit(1);
+            }
+            HarvestResource dest = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
+            
+            // source can be a database or service
+            String source = am.getValue("source");
+            String resourceID = am.getValue("resourceID");
+            
+            boolean nosrc = (source == null || source.trim().length() == 0);
+            boolean nosrv = (resourceID == null || resourceID.trim().length() == 0);
+            if (nosrc && nosrv )
+            {
+                log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier>");
+                usage();
+                System.exit(1);
+            }
+            
+            HarvestResource src = null;
+            int nthreads = 1;
+            if (resourceID != null)
+            {
+                try
+                {
+                    src = new HarvestResource(new URI(resourceID), collection);
+                    if (am.isSet("threads"))
+                        nthreads = Integer.parseInt(am.getValue("threads"));
+                }
+                catch(URISyntaxException ex)
+                {
+                    log.warn("invalid value for --resourceID parameter: " + resourceID + " reason: " + ex.toString());
+                    usage();
+                    System.exit(1);
+                }
+                catch (NumberFormatException nfe)
+                {
+                    log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer" );
+                    usage();
+                    System.exit(1);
+                }
             }
             else
             {
-                srcDS = src.split("[.]");
-            }
-            String[] destDS = dest.split("[.]");
-            if (srcDS.length != 3 || destDS.length != 3)
-            {
-                usage();
+                String[] srcDS = source.split("[.]");
                 if (srcDS.length != 3)
-                    if (!service)
-                    {
-                        log.warn("malformed --source value, found " + src + " expected: server.database.schema" + " e.g. SYBASE.mydb.dbo");
-                    }
-                    else
-                    {
-                        log.warn("malformed --resourceID value, found " + sresourceId + " expected: service_url" + " e.g. 'ivo://cadc.nrc.ca/caom2repo'");
-
-                    }
-                if (destDS.length != 3)
-                    log.warn("malformed --destination value, found " + dest + " expected: server.database.schema" + " e.g. cvodb0.cvodb.caom2");
-                System.exit(1);
+                {
+                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                    usage();
+                    System.exit(1);
+                }
+                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
             }
 
             Integer batchSize = null;
@@ -198,15 +204,16 @@ public class Main
 
             if (batchSize == null)
             {
-                log.warn("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
+                log.debug("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
                 batchSize = DEFAULT_BATCH_SIZE;
             }
             if (batchFactor == null && batchSize != null)
             {
-                log.warn("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
+                log.debug("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
                 batchFactor = DEFAULT_BATCH_FACTOR;
             }
-            log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
+            if (!validate)
+                log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
 
             Date maxDate = null;
             String maxDateStr = am.getValue("maxDate");
@@ -231,14 +238,7 @@ public class Main
 
                 try
                 {
-                    if (service)
-                    {
-                        action = new CaomHarvester(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
-                    else
-                    {
-                        action = new CaomHarvester(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
+                    action = new CaomHarvester(dryrun, noChecksum, compute, src, dest, batchSize, batchFactor, full, skip, maxDate, nthreads);
                 }
                 catch (IOException ioex)
                 {
@@ -254,14 +254,7 @@ public class Main
 
                 try
                 {
-                    if (service)
-                    {
-                        action = new CaomValidator(dryrun, noChecksum, compute, sresourceId, scollection, nthreads, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
-                    else
-                    {
-                        action = new CaomValidator(dryrun, noChecksum, compute, srcDS, destDS, batchSize, batchFactor, full, skip, maxDate);
-                    }
+                    action = new CaomValidator(dryrun, noChecksum, compute, src, dest, batchSize, batchFactor, full, skip, maxDate);
                 }
                 catch (IOException ioex)
                 {
@@ -313,28 +306,32 @@ public class Main
     {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n           --resourceID= to pick the caom2repo service (e.g. ivo://cadc.nrc.ca/caom2repo)");
-        sb.append("\n           --collection= collection to be retrieve. (e.g. IRIS)");
-        sb.append("\n           --threads= number  of threads to be used to harvest observations (default: 1)");
-        sb.append("\n           --source=<server.database.schema>");
-        sb.append("\n           --destination=<server.database.schema>");
-        sb.append("\n          note: harvesting source is specified by either --resourceID or --source");
-        sb.append("\n                --collection and --threads apply to --resourceID mode only");
-        sb.append("\n\nOptions:");
-        sb.append("\n     --full : restart at the first (oldest) observation (default: false)");
-        sb.append("\n     --skip : redo previously skipped (failed) observations (default: false)");
-        sb.append("\n     --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
-        sb.append("\n\nOptional authentication:");
-        sb.append("\n     [--netrc|--cert=<pem file>]");
-        sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
+        sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
+        sb.append("\n         --destination=<server.database.schema> : persist output directly to a databsee server");
+        
+        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema>");
+        sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n         --threads : number  of threads used to read observation documents (default: 1)");
+        sb.append("\n         --source : harvest directly from a database server");
+                
+        sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
+        sb.append("\n         --validate : validate all Observation.accMetaChecksum values between source and destination ");
+        sb.append("\n         --skip : redo previously skipped (failed) observations (default: false)");
+        sb.append("\n         --full : restart at the first (oldest) observation (default: false)");
+        
+        sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
+        sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
+        
         sb.append("\n\nOptional modifiers:");
-        sb.append("\n     --maxDate=<max Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n     --batchSize=<number of observations per batch> (default: (");
+        sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
+        sb.append("\n         --batchSize=<number of observations per batch> (default: ");
         sb.append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append("\n     --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
+        sb.append("\n         --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
         sb.append(DEFAULT_BATCH_FACTOR).append(")");
-        sb.append("\n     --dryrun : check for work but don't do anything");
+        sb.append("\n         --dryrun : check for work but don't do anything");
+        sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
+        sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         log.warn(sb.toString());
     }
 }
