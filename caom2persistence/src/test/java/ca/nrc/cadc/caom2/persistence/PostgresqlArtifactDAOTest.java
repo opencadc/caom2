@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,118 +62,28 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
-import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
-import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
  * @author pdowler
  */
-class ArtifactDAO extends AbstractCaomEntityDAO<Artifact>
+public class PostgresqlArtifactDAOTest extends AbstractArtifactDAOTest
 {
-    private static final Logger log = Logger.getLogger(ArtifactDAO.class);
+    private static final Logger log = Logger.getLogger(PostgresqlArtifactDAOTest.class);
 
-    private PartDAO partDAO;
-
-    /**
-     * Constructor for stand-alone query support. Use of this constructor
-     * creates an instance that can be used to to get a list of artifacts
-     * in order (getList) only.
-     */
-    public ArtifactDAO() { }
-    
-    // package access for use by ObservationDAO only
-    ArtifactDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
-    {
-        super(gen, forceUpdate, readOnly);
-        this.partDAO = new PartDAO(gen, forceUpdate, readOnly);
-    }
-
-    @Override
-    public void put(Skeleton cur, Artifact a, LinkedList<CaomEntity> parents, JdbcTemplate jdbc)
-    {
-        if (a == null)
-            throw new IllegalArgumentException("arg cannot be null");
-        log.debug("PUT: " + a.getID());
-        long t = System.currentTimeMillis();
-
-        try
-        {
-            // delete obsolete children
-            List<Pair<Part>> pairs = new ArrayList<Pair<Part>>();
-            if (cur != null)
-            {
-                ArtifactSkeleton cs = (ArtifactSkeleton) cur;
-                // delete the skeletons that are not in a.getParts()
-                for (PartSkeleton s : cs.parts)
-                {
-                    Part p = Util.findPart(a.getParts(), s.id);
-                    if ( p == null ) // removed by client
-                    {
-                        log.debug("put caused delete: " + p);
-                        partDAO.delete(s, jdbc);
-                    }
-                }
-                // pair up parts and skeletons for insert/update
-                for (Part p : a.getParts())
-                {
-                    PartSkeleton ps = Util.findPartSkel(cs.parts, p.getID());
-                    pairs.add(new Pair<Part>(ps, p)); // null ok
-                }
-            }
-            else
-                for (Part p : a.getParts())
-                    pairs.add(new Pair<Part>(null, p));
-
-            super.put(cur, a, parents, jdbc);
-
-            parents.push(a);
-            for (Pair<Part> p : pairs)
-                partDAO.put(p.cur, p.val, parents, jdbc);
-            parents.pop();
-        }
-        finally
-        {
-            long dt = System.currentTimeMillis() - t;
-            log.debug("PUT: " + a.getID() + " " + dt + "ms");
-        }
-    }
-
-    @Override
-    protected void deleteChildren(Skeleton s, JdbcTemplate jdbc)
-    {
-        ArtifactSkeleton a = (ArtifactSkeleton) s;
-        if (a.parts.size() > 0)
-        {
-            // delete children of parts
-            for (PartSkeleton p : a.parts)
-                partDAO.deleteChildren(p, jdbc);
-
-            // delete parts by FK
-            EntityDelete op = gen.getEntityDelete(Part.class, false);
-            op.setID(a.id);
-            op.execute(jdbc);
-            //String sql = gen.getDeleteSQL(Part.class, a.id, false);
-            //log.debug("delete: " + sql);
-            //jdbc.update(sql);
-        }
-
+    public PostgresqlArtifactDAOTest() 
+    { 
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2");
+        
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        init.doInit();
     }
 }
