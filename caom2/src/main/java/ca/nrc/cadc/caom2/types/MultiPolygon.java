@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.types;
 
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.util.HexUtil;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -91,39 +92,26 @@ public class MultiPolygon implements Serializable
     private transient Boolean ccw;
 
     public MultiPolygon() { }
-
-    private void validate()
-    {
-        if (vertices.size() < 4) // 2+close is a line segment
-            throw new IllegalPolygonException("invalid polygon: " + vertices.size() + " vertices");
-
-        Vertex end = vertices.get(0);
-        if ( !SegmentType.MOVE.equals(end.getType()) )
-            throw new IllegalPolygonException("invalid polygon: first vertex must be MOVE, found " + end);
-        end = vertices.get(vertices.size() - 1);
-        if ( !SegmentType.CLOSE.equals(end.getType()) )
-            throw new IllegalPolygonException("invalid polygon: last vertex must be CLOSE, found " + end);
-
-        boolean openLoop = false;
-        for (Vertex v : vertices)
-        {
-            if ( SegmentType.MOVE.equals(v.getType()) )
-            {
-                if (openLoop)
-                    throw new IllegalPolygonException("invalid polygon: found MOVE when loop already open");
-                openLoop = true;
-            }
-            else if (  SegmentType.CLOSE.equals(v.getType()) )
-            {
-                if (!openLoop)
-                    throw new IllegalPolygonException("invalid polygon: found CLOSE without MOVE");
-                openLoop = false;
-            }
-            else if (!openLoop)
-                throw new IllegalPolygonException("invalid polygon: found LINE without MOVE");
-        }
+    
+    public MultiPolygon(List<Vertex> vertices) 
+    { 
+        CaomValidator.assertNotNull(MultiPolygon.class, "vertices", vertices);
+        this.vertices.addAll(vertices);
+        validate();
     }
 
+    public final void validate()
+    {
+        initProps();
+    }
+
+    /**
+     * Access the vertices for this polygon. If the vertex list is modified, the caller
+     * must call validate in order to enforce correctness and recompute the center, area, and
+     * minimum spanning circle (size).
+     * 
+     * @return 
+     */
     public List<Vertex> getVertices()
     {
         return vertices;
@@ -183,7 +171,35 @@ public class MultiPolygon implements Serializable
 
     private void initProps()
     {
-        validate();
+        if (vertices.size() < 4) // 2+close is a line segment
+            throw new IllegalPolygonException("invalid polygon: " + vertices.size() + " vertices");
+
+        Vertex end = vertices.get(0);
+        if ( !SegmentType.MOVE.equals(end.getType()) )
+            throw new IllegalPolygonException("invalid polygon: first vertex must be MOVE, found " + end);
+        end = vertices.get(vertices.size() - 1);
+        if ( !SegmentType.CLOSE.equals(end.getType()) )
+            throw new IllegalPolygonException("invalid polygon: last vertex must be CLOSE, found " + end);
+
+        boolean openLoop = false;
+        for (Vertex v : vertices)
+        {
+            if ( SegmentType.MOVE.equals(v.getType()) )
+            {
+                if (openLoop)
+                    throw new IllegalPolygonException("invalid polygon: found MOVE when loop already open");
+                openLoop = true;
+            }
+            else if (  SegmentType.CLOSE.equals(v.getType()) )
+            {
+                if (!openLoop)
+                    throw new IllegalPolygonException("invalid polygon: found CLOSE without MOVE");
+                openLoop = false;
+            }
+            else if (!openLoop)
+                throw new IllegalPolygonException("invalid polygon: found LINE without MOVE");
+        }
+        
         PolygonProperties pp = computePolygonProperties();
         this.area = pp.area;
         this.center = pp.center;

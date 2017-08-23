@@ -331,34 +331,6 @@ public class CaomUtilTest
     }
     
     @Test
-    public void testKeywordList()
-    {
-        try
-        {
-            Set<String> keywords = new TreeSet<String>();
-            String actual = CaomUtil.encodeListString(keywords);
-            Assert.assertNull(actual);
-            
-            Set<String> kw2 = new TreeSet<String>();
-            CaomUtil.decodeListString(actual, kw2);
-            Assert.assertTrue(kw2.isEmpty());
-            
-            keywords.add("foo");
-            keywords.add("bar");
-            keywords.add("num=2");
-            actual = CaomUtil.encodeListString(keywords);
-            Assert.assertNotNull(actual);
-            CaomUtil.decodeListString(actual, kw2);
-            Assert.assertEquals(3, kw2.size());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testCoordRange1D()
     {
         log.debug("testCoordRange1D - START");

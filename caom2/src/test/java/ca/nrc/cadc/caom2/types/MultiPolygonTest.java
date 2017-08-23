@@ -171,8 +171,10 @@ public class MultiPolygonTest
         }
     }
     
-    // polygon winding driection: viewed in a tangent plane from outside the
-    // unit sphere so RA increases to the right and DEC increases to the north
+    // polygon winding direction: viewed from the origin of a unit sphere so 
+    // RA increases to the east/left and DEC increases to the north/up
+    
+    // DALI polygons must have CCW winding direction
     
     @Test
     public void testPolygonWindingCCW()
@@ -180,9 +182,9 @@ public class MultiPolygonTest
         try
         {
             MultiPolygon p = new MultiPolygon();
-            p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
             p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
-            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             p.getVertices().add(Vertex.CLOSE);
             
             Assert.assertTrue(p.getCCW());
@@ -202,7 +204,6 @@ public class MultiPolygonTest
             p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
             p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
             p.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
-            
             p.getVertices().add(Vertex.CLOSE);
             
             Assert.assertFalse(p.getCCW());

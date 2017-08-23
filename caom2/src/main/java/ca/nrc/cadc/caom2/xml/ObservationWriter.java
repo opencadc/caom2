@@ -672,6 +672,9 @@ public class ObservationWriter implements Serializable
         {
             if (comp.bounds instanceof Polygon)
             {
+                if (docVersion < 23)
+                    throw new UnsupportedOperationException("cannot downgrade polygon doc version "+docVersion);
+                
                 Polygon poly = (Polygon) comp.bounds;
                 Element pe = getCaom2Element("bounds");
                 String xsiType = caom2Namespace.getPrefix() + ":" + Polygon.class.getSimpleName();

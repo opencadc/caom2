@@ -822,6 +822,9 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
+            if (rc.docVersion < 23)
+                throw new UnsupportedOperationException("cannot convert version " 
+                        + rc.docVersion + " polygon to current version");
             Attribute type = cur.getAttribute("type", xsiNamespace);
             String tval = type.getValue();
             String extype = namespace.getPrefix() + ":" + Polygon.class.getSimpleName();

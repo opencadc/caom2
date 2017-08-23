@@ -89,7 +89,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
  * @author pdowler
  */
 public class PolygonUtilTest
@@ -210,7 +209,7 @@ public class PolygonUtilTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetConcaveHullFromHole()
     {
         try
@@ -260,7 +259,7 @@ public class PolygonUtilTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetConcaveHullFromClose()
     {
         try
@@ -339,7 +338,7 @@ public class PolygonUtilTest
             actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.debug("testGetConcaveHullFromClose: " + actual);
-            Assert.assertEquals(4, actual.getPoints().size());
+            Assert.assertEquals(8, actual.getPoints().size());
 
             center = actual.getCenter();
             area = actual.getArea();
@@ -357,7 +356,7 @@ public class PolygonUtilTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetConcaveHullFromFar()
     {
         try
@@ -460,7 +459,7 @@ public class PolygonUtilTest
     }
 
     @Test
-    public void testGetBoundsFromCircle()
+    public void testGetCutoutFromCircle()
     {
         try
         {

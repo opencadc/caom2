@@ -106,15 +106,15 @@ public final class PolygonUtil
      */
     public static final boolean ENABLE_CONCAVE_OUTER = false;
 
-    public static MultiPolygon toMultiPolygon(Shape s)
+    public static Polygon toPolygon(Shape s)
     {
         if (s == null)
             return null;
 
-        if (s instanceof MultiPolygon)
-            return (MultiPolygon) s;
+        if (s instanceof Polygon)
+            return (Polygon) s;
 
-        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> MultiPolygon");
+        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> Polygon");
     }
 
     /**
@@ -191,10 +191,17 @@ public final class PolygonUtil
         if (outer != null)
         {
             log.debug("[getConcaveHull] SUCCESS: " + outer);
+            boolean ccw = outer.getCCW();
             List<Point> pts = new ArrayList<Point>();
             for (Vertex v : outer.getVertices())
                 if (!SegmentType.CLOSE.equals(v.getType()))
-                    pts.add(new Point(v.cval1, v.cval2));
+                {
+                    Point p = new Point(v.cval1, v.cval2);
+                    if (ccw)
+                        pts.add(p);
+                    else 
+                        pts.add(0, p); // add to start aka reverse list
+                }
             Polygon ret = new Polygon(pts, poly);
             return ret;
         }
@@ -230,10 +237,17 @@ public final class PolygonUtil
         log.debug("[getConvexHull] convex " + convex );
         
         // TODO: convert
+        boolean ccw = convex.getCCW();
         List<Point> pts = new ArrayList<Point>();
         for (Vertex v : convex.getVertices())
             if (!SegmentType.CLOSE.equals(v.getType()))
-                pts.add(new Point(v.cval1, v.cval2));
+            {
+                Point p = new Point(v.cval1, v.cval2);
+                if (ccw)
+                    pts.add(p); // add to end
+                else
+                    pts.add(0, p); // add to start aka revserse order
+            }
         Polygon ret = new Polygon(pts, poly);
         return ret;
     }

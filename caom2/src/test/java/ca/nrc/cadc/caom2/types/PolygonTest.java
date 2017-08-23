@@ -68,123 +68,113 @@
 package ca.nrc.cadc.caom2.types;
 
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.util.Log4jInit;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class Polygon implements Shape
+public class PolygonTest 
 {
-    private static final long serialVersionUID = 201708141600L;
+    private static final Logger log = Logger.getLogger(PolygonTest.class);
 
-    private final List<Point> points = new ArrayList<>();
-    private MultiPolygon samples;
-    
-    // lazily computed
-    private transient Point center;
-    private transient Double area;
-    private transient Circle minimumSpanningCircle;
-    private transient Boolean ccw;
-    
-    /**
-     * Construct new polygon. The input must provide at least 3 points
-     * and a valid samples object. 
-     * 
-     * @param points
-     * @param samples 
-     */
-    public Polygon(List<Point> points, MultiPolygon samples) 
-    { 
-        CaomValidator.assertNotNull(Polygon.class, "points", points);
-        CaomValidator.assertNotNull(Polygon.class, "samples", samples);
-        this.points.addAll(points);
-        this.samples = samples;
-        validate();
-    }
-
-    /**
-     * Validate this polygon for conformance to IVOA DALI polygon rules.
-     */
-    public final void validate()
+    static
     {
-        initProps();
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
     
-    /**
-     * Access the coordinates for this polygon. If the coordinate list is modified, the caller
-     * must call validate in order to enforce correctness and recompute the center, area, and
-     * minimum spanning circle (size).
-     * 
-     * @return 
-     */
-    public List<Point> getPoints()
-    {
-        return points;
-    }
-
-    public MultiPolygon getSamples()
-    {
-        return samples;
-    }
-
-    @Override
-    public Point getCenter()
-    {
-        if (center == null)
-            initProps();
-        return center;
-    }
-
-    @Override
-    public double getArea()
-    {
-        if (area == null)
-            initProps();
-        return area;
-    }
-
-    @Override
-    public double getSize()
-    {
-        if (minimumSpanningCircle == null)
-            initProps();
-        return minimumSpanningCircle.getSize();
-    }
-
-    public Circle getMinimumSpanningCircle()
-    {
-        if (minimumSpanningCircle == null)
-            initProps();
-        return minimumSpanningCircle;
-    }
+    public PolygonTest() { }
     
-    private void initProps()
+    @Test
+    public void testCtorNulls()
     {
-        if (points.size() < 3)
-            throw new IllegalPolygonException("polygon has " + points.size() + " points: minimum 3");
-        
-        MultiPolygon mp = new MultiPolygon();
-        SegmentType t = SegmentType.MOVE;
-        for (Point p : points)
+        try
         {
-            Vertex v = new Vertex(p.cval1, p.cval2, t);
-            mp.getVertices().add(v);
-            t = SegmentType.LINE;
+            Polygon p = new Polygon(null, null);
         }
-        mp.getVertices().add(Vertex.CLOSE);
-        
-        this.area = mp.getArea();
-        this.center = mp.getCenter();
-        this.minimumSpanningCircle = mp.getMinimumSpanningCircle();
-        this.ccw = mp.getCCW();
-        
-        // DALI polygons are always CCW so if we detect CW here it is equivalent
-        // to the region outside with area = 4*pi - area and larger than half the 
-        // sphere
-        if (!ccw)
-            throw new IllegalPolygonException("polygon too large or has clockwise winding direction");
+        catch(IllegalArgumentException expected)
+        {
+            log.info("caught expected: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
+    
+    @Test
+    public void testValidPolygon()
+    {
+        try
+        {
+            List<Point> pts = new ArrayList<Point>();
+            pts.add(new Point(2.0, 2.0));
+            pts.add(new Point(1.0, 4.0));
+            pts.add(new Point(3.0, 3.0));
+            
+            MultiPolygon mp = new MultiPolygon();
+            mp.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            mp.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            mp.getVertices().add(Vertex.CLOSE);
+            
+            Polygon p = new Polygon(pts, mp);
+            
+            Point c = p.getCenter();
+            Assert.assertNotNull(c);
+            Assert.assertEquals(2.0, c.cval1, 0.01);
+            Assert.assertEquals(3.0, c.cval2, 0.01);
+            
+            Assert.assertEquals(1.5, p.getArea(), 0.1);
+            
+            Circle msc = p.getMinimumSpanningCircle();
+            Assert.assertNotNull(msc);
+            Assert.assertEquals(1.5, msc.getCenter().cval1, 0.01);
+            Assert.assertEquals(3.0, msc.getCenter().cval2, 0.01);
+            Assert.assertEquals(1.12, msc.getRadius(), 0.01);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    @Test
+    public void testInvalidPolygon()
+    {
+        try
+        {
+            List<Point> pts = new ArrayList<Point>();
+            pts.add(new Point(2.0, 2.0));
+            pts.add(new Point(3.0, 3.0));
+            pts.add(new Point(1.0, 4.0));
+            
+            // CW is ok for MultiPolygon
+            MultiPolygon mp = new MultiPolygon();
+            mp.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            mp.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            mp.getVertices().add(Vertex.CLOSE);
+            
+            Polygon p = new Polygon(pts, mp);
+            Assert.fail("expected IllegalPolygonException, created: " + p);
+        }
+        catch(IllegalPolygonException expected)
+        {
+            log.info("caught expected: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
 }

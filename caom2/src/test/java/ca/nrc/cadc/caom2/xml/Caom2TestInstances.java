@@ -386,9 +386,9 @@ public class Caom2TestInstances
 
                 p.position = new Position();
                 MultiPolygon poly = new MultiPolygon();
-                poly.getVertices().add(new Vertex(2.0, 3.0, SegmentType.MOVE));
-                poly.getVertices().add(new Vertex(3.0, 4.0, SegmentType.LINE));
-                poly.getVertices().add(new Vertex(1.0, 5.0, SegmentType.LINE));
+                poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+                poly.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+                poly.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
                 poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
                 List<Point> points = new ArrayList<Point>();
                 for (Vertex v : poly.getVertices())

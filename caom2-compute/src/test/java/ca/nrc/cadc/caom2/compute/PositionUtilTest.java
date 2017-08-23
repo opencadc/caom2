@@ -444,30 +444,6 @@ public class PositionUtilTest
         }
     }
     
-    //@Test
-    public void testHPX()
-    {
-        try
-        {
-            // content from JCMT scuba2_00046_20120816T110937.xml
-            Axis axis1 = new Axis("RA---HPX", "deg");
-            Axis axis2 = new Axis("DEC--HPX", "deg");
-            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
-            SpatialWCS wcs = new SpatialWCS(axis);
-            wcs.equinox = null;
-            Dimension2D dim = new Dimension2D(425, 191);
-            Coord2D ref = new Coord2D(new RefCoord(67333.5, 0.0), new RefCoord(-32576.5, 0.0));
-            axis.function = new CoordFunction2D(dim, ref, -0.000686645537833, -0.000686645537834, -0.000686645537833, 0.000686645537835);
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-
     @Test
     public void testComputeBounds()
     {

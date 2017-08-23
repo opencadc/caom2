@@ -117,8 +117,15 @@ public class CaomUtil implements Serializable
     
     private static Logger log = Logger.getLogger(CaomUtil.class);
     
+    /**
+     * @deprecated space separator for list of string in CAOM-2.2 and earlier
+     */
     static final String STRING_SET_SEPARATOR = " ";
-    static final String POL_STATE_SEPARATOR = "/"; // IVOA ObsCore-1.0 Data Model, B.6.6
+    
+    /**
+     * Polarization state separator from IVOA ObsCore-1.0 Data Model (B.6.6).
+     */
+    static final String POL_STATE_SEPARATOR = "/";
     
     // other projects can subclass this so all Util their methods are in a single place
     // TODO: decide if this is a good idea or not and refactor if necessary
@@ -210,31 +217,6 @@ public class CaomUtil implements Serializable
         }
     }
     
-    public static String encodeListString(Collection<String> strs)
-    {
-        if (strs == null || strs.isEmpty())
-            return null;
-        StringBuilder sb = new StringBuilder();
-        Iterator<String> i = strs.iterator();
-        while ( i.hasNext() )
-        {
-            sb.append(i.next());
-            if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
-        }
-        return sb.toString();
-    }
-    public static void decodeListString(String val, Collection<String> out)
-    {
-        if (val == null)
-            return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
-        for (String s : ss)
-        {
-            out.add(s);
-        }
-    }
-
     public static String encodeObservationURIs(Set<ObservationURI> set)
     {
         if (set.isEmpty())

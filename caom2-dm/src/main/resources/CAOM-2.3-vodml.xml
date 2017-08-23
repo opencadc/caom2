@@ -1330,7 +1330,10 @@
                 <vodml-id>Telescope.keywords</vodml-id>
                 <name>keywords</name>
                 <description>additional keywords that describe the telescope or telscope configuration 
-                    at the time of observation</description>
+                    at the time of observation; 
+                    keywords cannot contain the pipe (|) character - it is reserved for use in persistence
+                    systems (e.g. to store all keywords in a single column in a table)
+                </description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1361,7 +1364,9 @@
                 <vodml-id>Instrument.keywords</vodml-id>
                 <name>keywords</name>
                 <description>additional keywords that describe the instrument or instrument configuration
-                    at the time of observation</description>
+                    at the time of observation; 
+                    keywords cannot contain the pipe (|) character - it is reserved for use in persistence
+                    systems (e.g. to store all keywords in a single column in a table)</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1519,7 +1524,9 @@
             <attribute>
                 <vodml-id>Proposal.keywords</vodml-id>
                 <name>keywords</name>
-                <description>additional keywords that describe the science goals of the proposal</description>
+                <description>additional keywords that describe the science goals of the proposal; 
+                    keywords cannot contain the pipe (|) character - it is reserved for use in persistence
+                    systems (e.g. to store all keywords in a single column in a table)</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1599,7 +1606,9 @@
             <attribute>
                 <vodml-id>Target.keywords</vodml-id>
                 <name>keywords</name>
-                <description>additional keywords that describe the target</description>
+                <description>additional keywords that describe the target; 
+                    keywords cannot contain the pipe (|) character - it is reserved for use in persistence
+                    systems (e.g. to store all keywords in a single column in a table)</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1765,7 +1774,9 @@
                 <vodml-id>Provenance.keywords</vodml-id>
                 <name>keywords</name>
                 <description>addituional keywords that describe the processing; this may include both general
-                    descriptive words and those specific to this particular execution of the processing</description>
+                    descriptive words and those specific to this particular execution of the processing; 
+                    keywords cannot contain the pipe (|) character - it is reserved for use in persistence
+                    systems (e.g. to store all keywords in a single column in a table)</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>

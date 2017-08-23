@@ -92,15 +92,24 @@ public final class CaomValidator
             throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
     }
 
+    /**
+     * Keywords can contain any valid UTF-8 character except the pipe (|). The pipe 
+     * character is reserved for use as a separator in persistence implementations 
+     * so the list of keywords can be serialized in a single string to support 
+     * querying.
+     * 
+     * @param caller
+     * @param name
+     * @param val 
+     */
     public static void assertValidKeyword(Class caller, String name, String val)
     {
         assertNotNull(caller, name, val);
-        boolean space = (val.indexOf(' ') >= 0);
-        boolean tick = (val.indexOf('\'') >= 0);
-        if (!tick && !space)
+        boolean pipe = (val.indexOf('|') >= 0);
+        if (!pipe)
             return;
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name
-                + ": may not contain single tick (') or space ( )");
+                + ": may not contain pipe (|)");
     }
     
     /**
