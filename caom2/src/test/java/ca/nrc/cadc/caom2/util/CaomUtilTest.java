@@ -331,6 +331,45 @@ public class CaomUtilTest
     }
     
     @Test
+    public void testKeywordList()
+    {
+        try
+        {
+            Set<String> keywords = new TreeSet<String>();
+            String actualStr = CaomUtil.encodeKeywordList(keywords);
+            Assert.assertNull(actualStr);
+            
+            Set<String> kw2 = new TreeSet<String>();
+            CaomUtil.decodeKeywordList(actualStr, kw2);
+            Assert.assertTrue(kw2.isEmpty());
+            
+            keywords.add("foo");
+            keywords.add("bar");
+            keywords.add("num=2");
+            actualStr = CaomUtil.encodeKeywordList(keywords);
+            log.info("testKeywordList: " + actualStr);
+            Assert.assertNotNull(actualStr);
+            Assert.assertTrue( actualStr.indexOf('|') > 0); // using correct CAOM-2.3 separator
+            CaomUtil.decodeKeywordList(actualStr, kw2);
+            
+            Assert.assertEquals(3, kw2.size());
+            Iterator<String> exp = keywords.iterator();
+            Iterator<String> act = kw2.iterator();
+            while (exp.hasNext())
+            {
+                String e = exp.next();
+                String a = act.next();
+                Assert.assertEquals(e, a);
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testCoordRange1D()
     {
         log.debug("testCoordRange1D - START");

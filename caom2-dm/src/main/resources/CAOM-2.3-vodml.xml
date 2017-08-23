@@ -2240,9 +2240,6 @@
             <dataType>
                 <vodml-id>MultiPolygon</vodml-id>
                 <name>MultiPolygon</name>
-                <extends>
-                    <vodml-ref>caom2:Shape</vodml-ref>
-                </extends>
                 <attribute>
                     <vodml-id>MultiPolygon.vertices</vodml-id>
                     <name>vertices</name>
