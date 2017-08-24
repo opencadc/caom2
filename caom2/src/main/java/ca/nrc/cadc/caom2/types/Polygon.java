@@ -187,4 +187,20 @@ public class Polygon implements Shape
         if (!ccw)
             throw new IllegalPolygonException("polygon too large or has clockwise winding direction");
     }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(Polygon.class.getSimpleName()).append("[");
+        sb.append("points={");
+        for (Point p : points)
+            sb.append(p).append(",");
+        sb.setCharAt(sb.length() - 1, '}'); // replace last comma
+        sb.append(",samples=").append(samples);
+        sb.append("]");
+        return sb.toString();
+    }
+    
+    
 }

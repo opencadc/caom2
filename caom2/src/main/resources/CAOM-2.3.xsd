@@ -354,7 +354,7 @@
         <xs:sequence>
             <xs:element name="lower" type="xs:double" minOccurs="1" maxOccurs="1"/>
             <xs:element name="upper" type="xs:double" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="samples" type="caom2:SubIntervalList" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="samples" type="caom2:SubIntervalList" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="Energy">

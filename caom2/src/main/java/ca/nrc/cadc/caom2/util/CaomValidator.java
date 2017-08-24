@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Polygon;
 import java.util.Set;
 
 /**
@@ -200,6 +200,32 @@ public final class CaomValidator
     }
     
     /**
+     * Validate Plane.position.bounds, Plane.energy,bounds, and Plane.time.bounds for
+     * valid polygon and interval respectively.
+     * 
+     * @param obs 
+     */
+    public static void validatePlanes(Observation obs)
+    {
+        for (Plane p : obs.getPlanes())
+        {
+            if (p.position != null && p.position.bounds != null && p.position.bounds instanceof Polygon)
+            {
+                Polygon poly = (Polygon) p.position.bounds;
+                poly.validate();
+            }
+            if (p.energy != null && p.energy.bounds != null)
+            {
+                p.energy.bounds.validate();
+            }
+            if (p.time != null && p.time.bounds != null)
+            {
+                p.time.bounds.validate();
+            }
+        }
+    }
+    
+    /**
      * Perform all validation of the content of an observation.
      * 
      * @param obs 
@@ -209,5 +235,7 @@ public final class CaomValidator
         validateKeywords(obs);
         
         validateIntent(obs);
+        
+        validatePlanes(obs);
     }
 }

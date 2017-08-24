@@ -893,7 +893,7 @@ public class ObservationReader implements Serializable
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
             nrg.bounds = new Interval(lb, ub);
-            addSamples(nrg.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
+            addSamples(nrg.bounds, cur.getChild("samples", namespace), namespace, rc);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
@@ -937,7 +937,7 @@ public class ObservationReader implements Serializable
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
             tim.bounds = new Interval(lb, ub);
-            addSamples(tim.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
+            addSamples(tim.bounds, cur.getChild("samples", namespace), namespace, rc);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
@@ -963,7 +963,7 @@ public class ObservationReader implements Serializable
         return tim;        
     }
     
-    private void addSamples(List<SubInterval> samples, Element sampleElement, Namespace namespace)
+    private void addSamples(Interval inter, Element sampleElement, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         if (sampleElement != null)
@@ -973,8 +973,13 @@ public class ObservationReader implements Serializable
             {
                 double lb = getChildTextAsDouble("lower", se, namespace, true);
                 double ub = getChildTextAsDouble("upper", se, namespace, true);
-                samples.add(new SubInterval(lb, ub));
+                inter.getSamples().add(new SubInterval(lb, ub));
             }
+        }
+        if (rc.docVersion < 23 && inter.getSamples().isEmpty())
+        {
+            // backwards compat
+            inter.getSamples().add(new SubInterval(inter.getLower(), inter.getUpper()));
         }
     }
     
