@@ -302,8 +302,23 @@ public abstract class AbstractDatabaseObservationDAOTest
             
             List<ObservationState> result = dao.getObservationList(collection, start, end, batchSize);
             Assert.assertEquals(4, result.size());
-            for (ObservationState os : result)
+            for (int i=0; i<result.size(); i++)
+            {
+                ObservationState os = result.get(i);
                 log.info("found: " + os);
+                ObservationURI exp = new ObservationURI(collection, "bar"+(i+1)); // 1 2 3 4
+                Assert.assertEquals(exp, os.getURI());
+            }
+            
+            result = dao.getObservationList(collection, start, end, batchSize, false); // descending order
+            Assert.assertEquals(4, result.size());
+            for (int i=0; i<result.size(); i++)
+            {
+                ObservationState os = result.get(i);
+                log.info("found: " + os);
+                ObservationURI exp = new ObservationURI(collection, "bar"+(4-i)); // 4 3 2 1
+                Assert.assertEquals(exp, os.getURI());
+            }
             
             result = dao.getObservationList(collection, start, mid, batchSize);
             Assert.assertEquals(2, result.size());
