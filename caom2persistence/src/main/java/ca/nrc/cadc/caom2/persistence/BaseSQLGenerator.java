@@ -117,7 +117,6 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationMetaReadAccessSkeleton;
@@ -1408,13 +1407,18 @@ public class BaseSQLGenerator implements SQLGenerator
                     pos = new Position();
                 if (pos.bounds != null)
                 {
-                    Polygon poly = PolygonUtil.toPolygon(pos.bounds);
-                    safeSetPointList(sb, ps, col++, poly.getPoints());
-                    safeSetPolygon(sb, ps, col++, poly);
-                    safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
-                    safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                    if (pos.bounds instanceof Polygon)
+                    {
+                        Polygon poly = (Polygon) pos.bounds;
+                        safeSetPointList(sb, ps, col++, poly.getPoints());
+                        safeSetPolygon(sb, ps, col++, poly);
+                        safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
+                        safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                    }
+                    else
+                        throw new UnsupportedOperationException("cannot persist: " + pos.bounds.getClass().getName());
                 }
                 else
                 {
