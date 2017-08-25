@@ -19,7 +19,7 @@ create table caom2.Plane
     provenance_producer varchar(256),
     provenance_runID varchar(256),
     provenance_lastExecuted timestamp,
-    provenance_keywords tsvector,
+    provenance_keywords citext,
     provenance_inputs text,
 
 -- metrics
@@ -33,9 +33,11 @@ create table caom2.Plane
 
 -- position
     position_bounds          spoly,
+    position_bounds_points   double precision[],
     position_bounds_center   spoint,
     position_bounds_area     double precision,
     position_bounds_size     double precision,
+    position_bounds_samples  double precision[],
     position_dimension1      bigint,
     position_dimension2      bigint,
     position_resolution      double precision,
@@ -49,6 +51,7 @@ create table caom2.Plane
     energy_bounds_upper      double precision,
     energy_bounds_width      double precision,
     energy_bounds_integrated double precision,
+    energy_bounds_samples    polygon,
     energy_dimension         bigint,
     energy_resolvingPower    double precision,
     energy_sampleSize        double precision,
@@ -65,6 +68,7 @@ create table caom2.Plane
     time_bounds_upper       double precision,
     time_bounds_width       double precision,
     time_bounds_integrated  double precision,
+    time_bounds_samples     polygon,
     time_dimension          bigint,
     time_resolution         double precision,
     time_sampleSize         double precision,

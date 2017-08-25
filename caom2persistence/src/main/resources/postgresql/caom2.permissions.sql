@@ -16,6 +16,7 @@ grant select on caom2.ObservationMetaReadAccess to CVOPUB;
 
 grant select on caom2.HarvestState to CVOPUB;
 grant select on caom2.HarvestSkip to CVOPUB;
+grant select on caom2.HarvestSkipURI to CVOPUB;
 
 -- caom2 account used by caom2-repo-server web service
 grant insert, update, delete on caom2.ModelVersion to caom2;
