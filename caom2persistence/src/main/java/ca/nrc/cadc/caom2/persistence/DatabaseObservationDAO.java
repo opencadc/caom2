@@ -159,7 +159,30 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
 
+    /**
+     * Get list of observation states in ascending order.
+     * @param collection
+     * @param minLastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @return 
+     */
     public List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
+        return getObservationList(collection, minLastModified, maxLastModified, batchSize, true);
+    }
+    
+    /**
+     * Get list of observation states in the specified timestamp order.
+     * @param collection
+     * @param minLastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @param ascendingOrder
+     * @return 
+     */
+    public List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified, 
+            Integer batchSize, boolean ascendingOrder)
     {
         checkInit();
         log.debug("getObservationStates: " + collection + " " + batchSize);
@@ -171,7 +194,7 @@ public class DatabaseObservationDAO extends AbstractCaomEntityDAO<Observation> i
         
         try
         {
-            String sql = gen.getSelectSQL(ObservationState.class, minLastModified, maxLastModified, batchSize, collection);
+            String sql = gen.getSelectSQL(ObservationState.class, minLastModified, maxLastModified, batchSize, ascendingOrder, collection);
             
             if (log.isDebugEnabled())
                 log.debug("GET: " + Util.formatSQL(sql));
