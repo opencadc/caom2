@@ -105,6 +105,7 @@ public class CaomRepoConfig
         this.config = loadConfig(config);
     }
 
+
     public Item getConfig(String collection)
     {
         Iterator<Item> i = config.iterator();
@@ -185,6 +186,39 @@ public class CaomRepoConfig
             }
         }
     }
+
+
+    public Iterator<String> collectionIterator()
+    {
+        return new CollectionIterator(config.iterator());
+    }
+
+    private class CollectionIterator implements Iterator<String>
+    {
+        private Iterator<Item> iter;
+        public CollectionIterator(Iterator<Item> iter)
+        {
+            this.iter = iter;
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return iter.hasNext();
+        }
+
+        @Override
+        public String next()
+        {
+            Item ret = iter.next();
+            return ret.collection;
+        }
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+    }
+
 
     public static class Item
     {

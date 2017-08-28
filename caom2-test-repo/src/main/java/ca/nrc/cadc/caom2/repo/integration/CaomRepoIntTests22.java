@@ -241,17 +241,6 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests
         plane.getArtifacts().add(artifact);
         observation.getPlanes().add(plane);
 
-        // verify wcs computation works
-        try
-        {
-            ComputeUtil.computeTransientState(observation, plane);
-            ComputeUtil.clearTransientState(plane);
-        }
-        catch(Exception bug)
-        {
-            throw new IllegalStateException("BUG in test setup ", bug);
-        }
-
         putObservation(observation, SUBJECT1, 200, "OK", null);
 
         // cleanup (ok to fail)
