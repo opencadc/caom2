@@ -125,12 +125,26 @@ public class GetAction extends RepoAction
         {
             // maxRec == null means list all
             String maxRecString = syncInput.getParameter("maxrec");
+            String isDescendingString = syncInput.getParameter("isDescending");
+            boolean isAscending = true;
             Integer maxRec = MAX_OBS_LIST_SIZE;
             if (maxRecString != null)
             {
                 int m = Integer.valueOf(maxRecString);
                 if (m < maxRec)
                     maxRec = m;
+            }
+            
+            if (isDescendingString != null)
+            {
+            	if (isDescendingString.equals("true") || isDescendingString.equals("false"))
+            	{
+	            	isAscending = !Boolean.valueOf(isDescendingString);
+            	}
+            	else
+            	{
+                    throw new IllegalArgumentException("wrong descending order value");
+            	}
             }
 
             try
@@ -147,7 +161,7 @@ public class GetAction extends RepoAction
                 if (endString != null)
                     end = df.parse(endString);
 
-                doList(maxRec, start, end);
+                doList(maxRec, start, end, isAscending);
             }
             catch (ParseException e)
             {
@@ -186,7 +200,7 @@ public class GetAction extends RepoAction
         log.debug("DONE: " + uri);
     }
 
-    protected void doList(int maxRec, Date start, Date end) throws Exception
+    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception
     {
         log.debug("START: " + getCollection());
 
@@ -194,7 +208,7 @@ public class GetAction extends RepoAction
 
         ObservationDAO dao = getDAO();
 
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec);
+        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec, isAscending);
 
         if (states == null)
             throw new ResourceNotFoundException("Collection not found: " + getCollection());

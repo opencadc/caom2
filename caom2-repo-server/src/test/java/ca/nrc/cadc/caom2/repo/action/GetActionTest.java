@@ -143,7 +143,7 @@ public class GetActionTest
         reset(mockDao);
         expect(mockRequest.getMethod()).andReturn("GET");
         expect(mockRequest.getPathInfo()).andReturn("/BLAH");
-        expect(mockDao.getObservationList("BLAH", null, null, null))
+        expect(mockDao.getObservationList("BLAH", null, null, null, true))
             .andReturn(null);
 
         Enumeration<String> params = Collections.emptyEnumeration();
@@ -188,7 +188,7 @@ public class GetActionTest
 
         // since no maxRec argument given, expect the default one
         expect(mockDao.getObservationList("TEST", null, null,
-                GetAction.MAX_OBS_LIST_SIZE)).andReturn(obsList);
+                GetAction.MAX_OBS_LIST_SIZE, true)).andReturn(obsList);
 
         replay(mockDao, mockRequest);
 
@@ -202,7 +202,7 @@ public class GetActionTest
         Assert.assertEquals(expected, content);
 
 
-        // repeat test when start, end and maxRec specified
+        // repeat test when start, end, maxRec and ascendingOrder specified
         getAction = new TestGetAction(mockDao);
 
         reset(mockDao);
@@ -231,7 +231,7 @@ public class GetActionTest
 
         // all arguments given
         expect(mockDao.getObservationList("TEST", df.parse(startDate),
-                df.parse(endDate), 3)).andReturn(obsList);
+                df.parse(endDate), 3, true)).andReturn(obsList);
 
         replay(mockDao, mockRequest);
 

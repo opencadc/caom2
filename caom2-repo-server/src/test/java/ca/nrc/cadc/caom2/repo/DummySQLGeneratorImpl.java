@@ -140,7 +140,7 @@ public class DummySQLGeneratorImpl implements SQLGenerator
     }
 
     @Override
-    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, String string)
+    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, boolean bool, String string)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

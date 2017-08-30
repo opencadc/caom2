@@ -135,9 +135,10 @@ public interface ObservationDAO
      * @param minLastModified
      * @param maxLastModified
      * @param batchSize
+     * @param ascendingOrder
      * @return 
      */
-    List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize);
+    List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascendingOrder);
     
     /**
      * Get a stored observation by UUID.
