@@ -175,15 +175,9 @@ public class CaomHarvester implements Runnable
             boolean initDel = init;
             if (!init)
             {
-                log.warn("in observationMetaDeleter != null and !init");
-
                 // check if we have ever harvested before
                 HarvestState hs = observationMetaHarvester.harvestState.get(observationMetaHarvester.source, observationMetaHarvester.cname);
-                initDel = (hs.curID == null && hs.curLastModified == null); // never
-                                                                            // harvested
-                                                                            // from
-                                                                            // source
-                                                                            // before
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             observationMetaDeleter.setInitHarvestState(initDel);
             observationMetaDeleter.run();
@@ -196,11 +190,7 @@ public class CaomHarvester implements Runnable
             {
                 // check if we have ever harvested before
                 HarvestState hs = planeDataHarvester.harvestState.get(planeDataHarvester.source, planeDataHarvester.cname);
-                initDel = (hs.curID == null && hs.curLastModified == null); // never
-                                                                            // harvested
-                                                                            // from
-                                                                            // source
-                                                                            // before
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             planeDataDeleter.setInitHarvestState(initDel);
             planeDataDeleter.run();
@@ -213,11 +203,7 @@ public class CaomHarvester implements Runnable
             {
                 // check if we have ever harvested before
                 HarvestState hs = planeMetaHarvester.harvestState.get(planeMetaHarvester.source, planeMetaHarvester.cname);
-                initDel = (hs.curID == null && hs.curLastModified == null); // never
-                                                                            // harvested
-                                                                            // from
-                                                                            // source
-                                                                            // before
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             planeMetaDeleter.setInitHarvestState(initDel);
             planeMetaDeleter.run();
@@ -233,11 +219,7 @@ public class CaomHarvester implements Runnable
             {
                 // check if we have ever harvested before
                 HarvestState hs = obsHarvester.harvestState.get(obsHarvester.source, obsHarvester.cname);
-                initDel = (hs.curID == null && hs.curLastModified == null); // never
-                                                                            // harvested
-                                                                            // from
-                                                                            // source
-                                                                            // before
+                initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             log.info("init: " + obsDeleter.source + " " + obsDeleter.cname);
             obsDeleter.setInitHarvestState(initDel);
