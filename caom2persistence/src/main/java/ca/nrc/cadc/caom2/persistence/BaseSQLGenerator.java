@@ -384,7 +384,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 "position_bounds_points",
                 "position_bounds", "position_bounds_samples", 
                 "position_bounds_center", "position_bounds_area", "position_bounds_size",
-                "position_dimension1", "position_dimension2",
+                "position_dimension_naxis1", "position_dimension_naxis2",
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
                 // energy

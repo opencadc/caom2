@@ -21,6 +21,10 @@ alter table caom2.Plane
     alter column provenance_keywords type citext
         using replace(replace(provenance_keywords::varchar,$$'$$,''),' ','|');
 
+alter table caom2.Plane
+    rename column position_dimension1 to position_dimension_naxis1;
+alter table caom2.Plane
+    rename column position_dimension2 to position_dimension_naxis2;
 
 -- bug fix: correct support for IVOA/DALI datatypes
 alter table caom2.Plane
