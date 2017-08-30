@@ -72,6 +72,7 @@ public class Main
             boolean dryrun = am.isSet("dryrun");
             boolean validate = am.isSet("validate");
             boolean noChecksum = am.isSet("nochecksum");;
+            boolean noAC = am.isSet("noac");
 
             boolean compute = am.isSet("compute");
 
@@ -167,7 +168,7 @@ public class Main
                     usage();
                     System.exit(1);
                 }
-                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
+                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
             }
 
             Integer batchSize = null;
@@ -332,6 +333,7 @@ public class Main
         sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
+        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: true with --resourceID, false with --source)");
         log.warn(sb.toString());
     }
 }
