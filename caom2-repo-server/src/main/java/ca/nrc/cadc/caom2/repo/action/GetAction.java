@@ -125,7 +125,7 @@ public class GetAction extends RepoAction
         {
             // maxRec == null means list all
             String maxRecString = syncInput.getParameter("maxrec");
-            String isDescendingString = syncInput.getParameter("isDescending");
+            String orderString = syncInput.getParameter("order");
             boolean isAscending = true;
             Integer maxRec = MAX_OBS_LIST_SIZE;
             if (maxRecString != null)
@@ -135,15 +135,15 @@ public class GetAction extends RepoAction
                     maxRec = m;
             }
             
-            if (isDescendingString != null)
+            if (orderString != null)
             {
-            	if (isDescendingString.equals("true") || isDescendingString.equals("false"))
+            	if (orderString.equals("desc"))
             	{
-	            	isAscending = !Boolean.valueOf(isDescendingString);
+            		isAscending = false;
             	}
-            	else
+            	else if (!orderString.equals("asc"))
             	{
-                    throw new IllegalArgumentException("wrong descending order value");
+                    throw new IllegalArgumentException("wrong order value");
             	}
             }
 

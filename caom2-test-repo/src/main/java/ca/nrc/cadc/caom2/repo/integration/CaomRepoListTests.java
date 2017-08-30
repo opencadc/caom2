@@ -232,7 +232,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
     	// Check that we only have 3 observations, use ascending order
     	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			end, super.SUBJECT2, false, observations, 200, null, true);
+    			end, super.SUBJECT2, "asc", observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -263,7 +263,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
     	// Check that we only have 2 observations, use descending order
     	checkObservationList(maxRec, super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			null, super.SUBJECT2, true, observations, 200, null, true);
+    			null, super.SUBJECT2, "desc", observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -356,7 +356,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	return retObs;
     }
 
-    private URL buildURL(String uri, Integer maxRec, Date start, Date end, Subject subject, Boolean isDescending) 
+    private URL buildURL(String uri, Integer maxRec, Date start, Date end, Subject subject, String order) 
     		throws URISyntaxException, MalformedURLException
     {
         // extract the path from the uri
@@ -373,20 +373,20 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             surl = surl + "&start=" + df.format(start);
         if (end != null)
             surl = surl + "&end=" + df.format(end);
-        if (isDescending != null)
-        	surl = surl + "&isDescending=" + isDescending.toString();
+        if (order != null)
+        	surl = surl + "&order=" + order;
 
         return new URL(surl);
     }
     
     private Map<String, Date> listObservationIDs(String uri, Integer maxRec,
-    		Date start, Date end, Subject subject, Boolean isDescending, List<Observation> observations,
+    		Date start, Date end, Subject subject, String order, List<Observation> observations,
     		Integer expectedResponse, String expectedMessage, boolean exactMatch) throws Exception
     {
         log.debug("start list on " + uri);
 
         Map<String, Date> retMap = new Hashtable<String, Date>();
-        URL url = this.buildURL(uri, maxRec, start, end, subject, isDescending);
+        URL url = this.buildURL(uri, maxRec, start, end, subject, order);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpDownload get = new HttpDownload(url, bos);
@@ -429,7 +429,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             }
 
             boolean revert = false;
-            if ((isDescending != null) && (isDescending == true))
+            if ((order != null) && (order.equals("desc")))
             {
             	revert = true;
             }
@@ -461,12 +461,12 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
     private void checkObservationList(final Integer expectedSize,
     		final String collection, final Integer maxRec, final Date start,
-    		final Date end, Subject subject, Boolean isDescending, 
+    		final Date end, Subject subject, String order, 
     		List<Observation> observations, Integer expectedCode,
     		String expectedMessage, boolean exactMatch) throws Throwable
     {
     	Map<String, Date> observationIDMap = listObservationIDs(
-    			super.SCHEME + TEST_COLLECTION, maxRec, start, end, subject, isDescending, 
+    			super.SCHEME + TEST_COLLECTION, maxRec, start, end, subject, order, 
     			observations, expectedCode, expectedMessage, exactMatch);
 
 		// expectedSize == null means no size limits
