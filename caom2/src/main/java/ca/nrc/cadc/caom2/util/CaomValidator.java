@@ -194,7 +194,7 @@ public final class CaomValidator
             {
                 if (ban.equals(a.getProductType()))
                     throw new IllegalArgumentException("Observation.intent = " + obs.intent + " but artifact "
-                            + a.getURI().toASCIIString() + "has productType = " + a.getProductType());
+                            + a.getURI().toASCIIString() + " has productType = " + a.getProductType());
             }
         }
     }

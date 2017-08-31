@@ -108,8 +108,8 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     protected Observation(String collection, String observationID, Algorithm algorithm)
     {
         super();
-        CaomValidator.assertNotNull(getClass(), "collection", collection);
-        CaomValidator.assertNotNull(getClass(), "observationID", observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
         this.collection = collection;
         this.observationID = observationID;
