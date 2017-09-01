@@ -486,7 +486,9 @@ public class DeletionHarvester extends Harvester implements Runnable
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
         if (start.lastModified.equals(end.lastModified))
-            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + start.lastModified);
+            throw new RuntimeException("detected infinite harvesting loop: " 
+                    + entityClass.getSimpleName() + " at " + 
+                    format(start.lastModified));
 
     }
 }
