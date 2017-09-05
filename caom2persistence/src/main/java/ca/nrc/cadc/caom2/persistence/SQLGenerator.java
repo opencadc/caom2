@@ -137,6 +137,8 @@ public interface SQLGenerator
     ResultSetExtractor getObservationExtractor();
     
     RowMapper getObservationStateMapper();
+    
+    RowMapper getArtifactMapper();
 
     Class<? extends Skeleton> getSkeletonClass(Class c);
     
