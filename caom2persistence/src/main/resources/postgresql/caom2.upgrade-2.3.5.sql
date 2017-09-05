@@ -1,4 +1,9 @@
 
+drop view if exists caom2.ObsPart;
+drop view if exists caom2.ObsFile;
+drop view if exists caom2.ObsCore;
+drop view if exists caom2.SIAv1;
+
 -- bug fix: correct handling of keywords
 drop index if exists Observation_i_instr_kw;
 drop index if exists Observation_i_prop_kw;

@@ -107,12 +107,18 @@ public class InitDatabase
         "caom2.HarvestSkipURI.sql",
         "caom2.access.sql",
         "caom2.deleted.sql",
-        "caom2.extra_indices.sql"
+        "caom2.extra_indices.sql",
+        "caom2.ObsCore.sql", 
+        "caom2.ObsCore-x.sql", 
+        "caom2.SIAv1.sql" 
     };
     
     static String[] UPGRADE_SQL = new String[]
     {
-        "caom2.upgrade-2.3.5.sql"
+        "caom2.upgrade-2.3.5.sql",
+        "caom2.ObsCore.sql", 
+        "caom2.ObsCore-x.sql", 
+        "caom2.SIAv1.sql"
     };
     
     private final DataSource dataSource;
