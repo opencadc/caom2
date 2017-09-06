@@ -69,18 +69,69 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.apache.log4j.Logger;
+
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
+
 public class DownloadArtifactFiles implements Runnable
 {
 
-    public DownloadArtifactFiles(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int threads)
+    private static final Integer BATCH_SIZE = Integer.valueOf(1000);
+
+    private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
+
+    private ArtifactDAO artifactDAO;
+    private ArtifactStore artifactStore;
+    private HarvestStateDAO harvestStateDAO;
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String source;
+    private int threads;
+
+
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads)
     {
-        // TBD
+        this.artifactDAO = artifactDAO;
+        this.artifactStore = artifactStore;
+
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], BATCH_SIZE);
+
+        this.threads = threads;
     }
 
     @Override
     public void run()
     {
-        // TBD
+
+        Date nullDate = null;
+        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, nullDate);
+
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+    }
+
+    class Downloader implements Runnable
+    {
+        Downloader()
+        {
+        }
+
+        @Override
+        public void run()
+        {
+
+        }
     }
 
 }

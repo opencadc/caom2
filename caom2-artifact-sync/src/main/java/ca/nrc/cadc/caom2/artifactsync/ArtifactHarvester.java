@@ -69,46 +69,132 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 
 public class ArtifactHarvester implements Runnable
 {
 
-    private static final Integer SKIPDAO_BATCH_SIZE = Integer.valueOf(1000);
+    private static final Integer BATCH_SIZE = Integer.valueOf(1000);
+    public static final String STATE_CLASS = Artifact.class.getSimpleName();
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
-    //private ArtifactDAO artifactDAO;
+    private ArtifactDAO artifactDAO;
     private ArtifactStore artifactStore;
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private boolean dryrun;
+    private String source;
 
 
-    public ArtifactHarvester(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun)
+    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, boolean dryrun)
     {
-        //this.artifactDAO = artifactDAO;
+        this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
         this.dryrun = dryrun;
 
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2], SKIPDAO_BATCH_SIZE);
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], BATCH_SIZE);
     }
 
     @Override
     public void run()
     {
-        // TODO: Use the ArtifactDAO to find artifacts with
-        // maxLastModified > last run.
 
-        // TODO: for each, use the ArtifactStore to see if it already
-        // has the artifact.
+        int batchRun = 0;
+        long downloadCount = 0;
+        long newDownloadCount = 0;
+        int num = 0;
+        Date now = new Date();
 
-        // TODO: save the ones that are missing using the HarvestSkipURIDAO
+        try
+        {
+            // Determine the state of the last run
+            HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
+
+            do
+            {
+                batchRun++;
+
+                // Use the ArtifactDAO to find artifacts with lastModified > last artifact processed
+                List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, BATCH_SIZE);
+                num = artifacts.size();
+                log.info("Batch run " + batchRun + " found " + num + " artifacts to process.");
+
+                for (Artifact artifact : artifacts)
+                {
+                    try
+                    {
+                        boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
+                        log.debug("Artifact " + artifact.getURI() +
+                                " with MD5 " + artifact.contentChecksum + " exists: " + exists);
+                        if (!exists)
+                        {
+                            log.debug("Artifact eligible for download");
+
+                            // see if there's already an entry
+                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                            if (skip == null)
+                            {
+                                if (!dryrun)
+                                {
+                                    log.debug("Adding artifact to skip table");
+                                    skip = new HarvestSkipURI(
+                                            source, STATE_CLASS, artifact.getURI(), "new or modifed artifact");
+                                    harvestSkipURIDAO.put(skip);
+                                }
+                                newDownloadCount++;
+                            }
+                            else
+                            {
+                                log.debug("Artifact already exists in skip table.");
+                            }
+                            downloadCount++;
+                        }
+
+                        if (!dryrun)
+                        {
+                            state.curLastModified = artifact.getLastModified();
+                            harvestStateDAO.put(state);
+                            log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                        }
+                    }
+                    catch (Throwable t)
+                    {
+                        if (dryrun)
+                        {
+                            log.error("Failed to determine if artifact exists, continuing.", t);
+                        }
+                        else
+                        {
+                            log.error("Failed to determine if artifact exists, exiting");
+                            throw new IllegalStateException(t);
+                        }
+                    }
+                }
+            }
+            while (num == BATCH_SIZE);  // continue if `batch size` records found
+
+        }
+        finally
+        {
+            log.info("Discovered " + downloadCount + " total artifacts eligible for download. ( " +
+                    newDownloadCount + " new)");
+        }
+
     }
 
 }

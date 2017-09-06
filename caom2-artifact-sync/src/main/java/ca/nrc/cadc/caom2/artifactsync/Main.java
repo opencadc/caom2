@@ -78,6 +78,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
 import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
@@ -188,22 +189,22 @@ public class Main
                 System.exit(-1);
             }
 
+            ArtifactDAO artifactDAO = new ArtifactDAO();
 
-            // Waiting for a public constructor in ArtifactDAO.
-            //ArtifactDAO artifactDAO = new ArtifactDAO();
-
-            Runnable harvester = new ArtifactHarvester(/*artifactDAO,*/ dbInfo, artifactStore, dryrun);
-            Runnable downloader = new DownloadArtifactFiles(/*artifactDAO,*/ dbInfo, artifactStore, dryrun, nthreads);
+            Runnable harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, dryrun);
+            Runnable downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads);
 
             if (subject != null)
             {
                 Subject.doAs(subject, new RunnableAction(harvester));
-                Subject.doAs(subject, new RunnableAction(downloader));
+                if (!dryrun)
+                    Subject.doAs(subject, new RunnableAction(downloader));
             }
             else // anon
             {
                 harvester.run();
-                downloader.run();
+                if (!dryrun)
+                    downloader.run();
             }
 
             exitValue = 0; // finished cleanly
