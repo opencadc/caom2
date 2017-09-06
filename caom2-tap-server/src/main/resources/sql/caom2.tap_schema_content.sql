@@ -143,12 +143,13 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'adql:DOUBLE', NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'adql:DOUBLE', NULL, 0,0,0 , 52),
 ( 'caom2.Plane', 'position_sampleSize', 'median sample (pixel) size on spatial axes', 'caom2:Plane.position.sampleSize', NULL, 'arcsec', 'adql:DOUBLE', NULL, 0,0,0 , 53),
-( 'caom2.Plane', 'position_dimension1', 'dimensions (number of pixels) along one spatial axis', 'caom2:Plane.position.dimension.naxis1', NULL, NULL, 'adql:BIGINT', NULL, 0,0,0 , 54),
-( 'caom2.Plane', 'position_dimension2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'adql:BIGINT', NULL, 0,0,0 , 55),
+( 'caom2.Plane', 'position_dimension_naxis1', 'dimensions (number of pixels) along one spatial axis', 'caom2:Plane.position.dimension.naxis1', NULL, NULL, 'adql:BIGINT', NULL, 0,0,0 , 54),
+( 'caom2.Plane', 'position_dimension_naxis2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'adql:BIGINT', NULL, 0,0,0 , 55),
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'adql:INTEGER', NULL, 0,0,0 , 56),
 
 ( 'caom2.Plane', 'energy_emBand', 'generic name for energy band (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray)', 'caom2:Plane.energy.emBand', NULL, NULL, 'adql:VARCHAR', 32, 0,0,0 , 60),
 ( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'adql:proto:INTERVAL', NULL, 0,0,0 , 61),
+( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'adql:proto:INTERVAL', NULL, 0,0,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'adql:DOUBLE', NULL, 0,0,0 , 62),
 ( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'adql:DOUBLE', NULL, 0,0,0 , 63),
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'adql:DOUBLE', NULL, 0,0,0 , 64),
@@ -164,6 +165,7 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 ( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'adql:DOUBLE', NULL, 0,0,0 , 74),
 
 ( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'adql:proto:INTERVAL', NULL, 0,0,0 , 80),
+( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'adql:proto:INTERVAL', NULL, 0,0,0 , 80),
 ( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'adql:DOUBLE', NULL, 0,0,0 , 81),
 ( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'adql:DOUBLE', NULL, 0,0,0 , 82),
 ( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'adql:DOUBLE', NULL, 0,0,0 , 83),

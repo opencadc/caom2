@@ -90,6 +90,7 @@ import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.compute.CutoutUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
@@ -580,16 +581,18 @@ public class SodaJobRunner implements JobRunner
             {
                 if (dd.length < 6)
                     throw new IndexOutOfBoundsException();
-                Polygon poly = new Polygon();
+                List<Point> points = new ArrayList<Point>();
+                MultiPolygon mp = new MultiPolygon();
                 SegmentType st = SegmentType.MOVE;
                 for (int i=0; i<dd.length; i += 2)
                 {
-                    Vertex v = new Vertex(dd[i], dd[i+1], st);
-                    poly.getVertices().add(v);
+                    points.add(new Point(dd[i], dd[i+1]));
+                    mp.getVertices().add(new Vertex(dd[i], dd[i+1], st));
                     st = SegmentType.LINE;
                 }
-                poly.getVertices().add(Vertex.CLOSE);
-                posCut.add(new Cutout(PARAM_POLY, s, poly));
+                mp.getVertices().add(Vertex.CLOSE);
+                Polygon poly = new Polygon(points, mp);
+                posCut.add(new Cutout<Shape>(PARAM_POLY, s, poly));
             }
             catch(IndexOutOfBoundsException ex)
             {

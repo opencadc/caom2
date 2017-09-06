@@ -260,8 +260,8 @@ public class ArtifactProcessor
         if (pos != null && pos.bounds != null && pos.bounds != null 
                 && pos.dimension != null && (pos.dimension.naxis1 > 1 || pos.dimension.naxis2 > 1))
         {
-            Polygon outer = PolygonUtil.getOuterHull((Polygon) pos.bounds);
-            ret.poly = daf.format(new CoordIterator(outer.getVertices().iterator()));
+            Polygon outer = (Polygon) pos.bounds;
+            ret.poly = daf.format(new CoordIterator(outer.getPoints().iterator()));
 
             Circle msc = outer.getMinimumSpanningCircle();
             ret.circle = daf.format(new double[] { msc.getCenter().cval1, msc.getCenter().cval2, msc.getRadius() });

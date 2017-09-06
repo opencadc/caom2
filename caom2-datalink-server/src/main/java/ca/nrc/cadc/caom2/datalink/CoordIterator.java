@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.caom2.datalink;
 
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.types.Point;
 import java.util.Iterator;
 
 /**
@@ -79,22 +78,21 @@ import java.util.Iterator;
  */
 public class CoordIterator implements Iterator<Double>
 {
-    private Iterator<Vertex> iter;
-    private Vertex cur;
+    private Iterator<Point> iter;
+    private Point cur;
     private boolean cval1 = true;
 
-    public CoordIterator(Iterator<Vertex> vi)
+    public CoordIterator(Iterator<Point> vi)
     {
         this.iter = vi;
     }
 
+    @Override
     public boolean hasNext()
     {
-        while (cur == null && iter.hasNext())
+        if ( cur == null && iter.hasNext())
         {
             cur = iter.next();
-            if (SegmentType.CLOSE.equals(cur.getType()))
-                cur = null;
         }
         if (cur == null)
             return false;
@@ -102,6 +100,7 @@ public class CoordIterator implements Iterator<Double>
         return true;
     }
 
+    @Override
     public Double next()
     {
         double ret = cur.cval2;
@@ -114,6 +113,7 @@ public class CoordIterator implements Iterator<Double>
     }
 
     // compile compat with older java versions
+    @Override
     public void remove()
     {
         throw new UnsupportedOperationException();

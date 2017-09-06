@@ -70,7 +70,6 @@
 package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.tap.caom2.CaomKeywordsFormat;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
 import ca.nrc.cadc.tap.schema.ColumnDesc;
@@ -142,16 +141,6 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     {
         log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
 
-        if (columnDesc != null)
-        {
-            if (columnDesc.getTableName().equalsIgnoreCase("caom2.Observation")
-                || columnDesc.getTableName().equalsIgnoreCase("caom2.Plane"))
-            {
-                if (columnDesc.getColumnName().endsWith("_keywords"))
-                    return new CaomKeywordsFormat();
-            }
-        }
-        
         // function with CLOB argument
         if (columnDesc != null)
         {
