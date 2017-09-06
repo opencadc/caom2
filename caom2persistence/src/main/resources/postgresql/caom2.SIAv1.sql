@@ -28,7 +28,7 @@ o.collection, p.planeURI, instrument_name,
 
 degrees(long(p.position_bounds_center)), degrees(lat(position_bounds_center)),
 2::int,
-ARRAY[position_dimension1,position_dimension2],
+ARRAY[position_dimension_naxis1,position_dimension_naxis2],
 ARRAY[position_sampleSize,position_sampleSize],
 p.position_bounds,
 
@@ -54,8 +54,8 @@ WHERE
   o.intent = 'science' 
   AND p.calibrationLevel IS NOT NULL
 -- avoid nulls in arrays created in select
-  AND p.position_dimension1 IS NOT NULL
-  AND p.position_dimension2 IS NOT NULL
+  AND p.position_dimension_naxis1 IS NOT NULL
+  AND p.position_dimension_naxis2 IS NOT NULL
   AND p.position_sampleSize IS NOT NULL
 -- SIAv1 specific filtering
   AND p.dataProductType = 'image'
