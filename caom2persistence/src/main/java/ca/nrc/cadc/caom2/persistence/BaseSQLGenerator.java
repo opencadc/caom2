@@ -2963,7 +2963,8 @@ public class BaseSQLGenerator implements SQLGenerator
     
     PartialRowMapper<Observation> getObservationMapper() { return new ObservationMapper(); }
     PartialRowMapper<Plane> getPlaneMapper() { return new PlaneMapper(); }
-    PartialRowMapper<Artifact> getArtifactMapper() { return new ArtifactMapper(); }
+    @Override
+    public PartialRowMapper<Artifact> getArtifactMapper() { return new ArtifactMapper(); }
     PartialRowMapper<Part> getPartMapper() { return new PartMapper(); }
     PartialRowMapper<Chunk> getChunkMapper() { return new ChunkMapper(); }
 
@@ -3448,7 +3449,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 col += numComputedArtifactColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
-            log.debug("found artifact.lastModified = " + lastModified);
+            log.debug("found artifact.lastModified = " + dateFormat.format(lastModified));
             Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: artifact.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);
