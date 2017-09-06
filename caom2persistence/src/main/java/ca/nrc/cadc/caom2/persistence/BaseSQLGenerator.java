@@ -700,11 +700,11 @@ public class BaseSQLGenerator implements SQLGenerator
     @Override
     public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
-        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, null);
+        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, true, null);
     }
 
     @Override
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, String collection)
+    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection)
     {
         DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
         String top = getTopConstraint(batchSize);
@@ -752,6 +752,8 @@ public class BaseSQLGenerator implements SQLGenerator
         }
         sb.append(" ORDER BY ");
         sb.append(alias).append(".").append(lastModifiedColumn);
+        if (!ascending)
+            sb.append(" DESC");
         if (limit != null && limit.length() > 0)
         {
             sb.append(" ");
