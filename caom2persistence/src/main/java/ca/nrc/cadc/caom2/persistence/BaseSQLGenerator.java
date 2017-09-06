@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -96,6 +97,7 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
@@ -115,7 +117,6 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationMetaReadAccessSkeleton;
@@ -126,8 +127,10 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneMetaReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -158,6 +161,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
@@ -377,19 +381,26 @@ public class BaseSQLGenerator implements SQLGenerator
             String[] extraCols = new String[]
             {
                 // position
-                "position_bounds", "position_bounds_center", "position_bounds_area", "position_bounds_size",
-                "position_dimension1", "position_dimension2",
+                "position_bounds_points",
+                "position_bounds", "position_bounds_samples", 
+                "position_bounds_center", "position_bounds_area", "position_bounds_size",
+                "position_dimension_naxis1", "position_dimension_naxis2",
                 "position_resolution", "position_sampleSize", "position_timeDependent",
 
                 // energy
-                "energy_emBand", "energy_bounds", "energy_bounds_lower", "energy_bounds_upper", "energy_bounds_width",
+                "energy_emBand", 
+                "energy_bounds_lower", "energy_bounds_upper", 
+                "energy_bounds", "energy_bounds_samples", 
+                "energy_bounds_width",
                 "energy_freqWidth", "energy_freqSampleSize",
                 "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
                 "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
                 "energy_restwav",
 
                 // time
-                "time_bounds", "time_bounds_lower", "time_bounds_upper", "time_bounds_width",
+                "time_bounds_lower", "time_bounds_upper", 
+                "time_bounds", "time_bounds_samples", 
+                "time_bounds_width",
                 "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
 
                 // polarization
@@ -689,11 +700,11 @@ public class BaseSQLGenerator implements SQLGenerator
     @Override
     public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
-        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, null);
+        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, true, null);
     }
 
     @Override
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, String collection)
+    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection)
     {
         DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
         String top = getTopConstraint(batchSize);
@@ -741,6 +752,8 @@ public class BaseSQLGenerator implements SQLGenerator
         }
         sb.append(" ORDER BY ");
         sb.append(alias).append(".").append(lastModifiedColumn);
+        if (!ascending)
+            sb.append(" DESC");
         if (limit != null && limit.length() > 0)
         {
             sb.append(" ");
@@ -1149,7 +1162,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, null);
                 safeSetString(sb, ps, col++, null);
                 safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.target != null)
             {
@@ -1396,15 +1409,24 @@ public class BaseSQLGenerator implements SQLGenerator
                     pos = new Position();
                 if (pos.bounds != null)
                 {
-                    Polygon poly = PolygonUtil.toPolygon(pos.bounds);
-                    safeSetPolygon(sb, ps, col++, poly);
-                    safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                    if (pos.bounds instanceof Polygon)
+                    {
+                        Polygon poly = (Polygon) pos.bounds;
+                        safeSetPointList(sb, ps, col++, poly.getPoints());
+                        safeSetPolygon(sb, ps, col++, poly);
+                        safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
+                        safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                    }
+                    else
+                        throw new UnsupportedOperationException("cannot persist: " + pos.bounds.getClass().getName());
                 }
                 else
                 {
+                    safeSetPointList(sb, ps, col++, null);
                     safeSetPolygon(sb, ps, col++, null);
+                    safeSetMultiPolygon(sb, ps, col++, null);
                     safeSetPoint(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
@@ -1434,16 +1456,18 @@ public class BaseSQLGenerator implements SQLGenerator
                     safeSetString(sb, ps, col++, null);
                 if (nrg.bounds != null)
                 {
-                    safeSetInterval(sb, ps, col++, nrg.bounds);
                     safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
                     safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
+                    safeSetInterval(sb, ps, col++, nrg.bounds);
+                    safeSetSubIntervalList(sb, ps, col++, nrg.bounds.getSamples());
                     safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
                 }
                 else
                 {
+                    safeSetDouble(sb, ps, col++, null);
+                    safeSetDouble(sb, ps, col++, null);
                     safeSetInterval(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    safeSetSubIntervalList(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                 }
                 safeSetDouble(sb, ps, col++, nrg.getFreqWidth());
@@ -1470,16 +1494,18 @@ public class BaseSQLGenerator implements SQLGenerator
                     tim = new Time();
                 if (tim.bounds != null)
                 {
-                    safeSetInterval(sb, ps, col++, tim.bounds);
                     safeSetDouble(sb, ps, col++, tim.bounds.getLower());
                     safeSetDouble(sb, ps, col++, tim.bounds.getUpper());
+                    safeSetInterval(sb, ps, col++, tim.bounds);
+                    safeSetSubIntervalList(sb, ps, col++, tim.bounds.getSamples());
                     safeSetDouble(sb, ps, col++, tim.bounds.getWidth());
                 }
                 else
                 {
+                    safeSetDouble(sb, ps, col++, null);
+                    safeSetDouble(sb, ps, col++, null);
                     safeSetInterval(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    safeSetSubIntervalList(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
                 }
                 safeSetLong(sb, ps, col++, tim.dimension);
@@ -2291,12 +2317,11 @@ public class BaseSQLGenerator implements SQLGenerator
         safeSetString(sb, ps, col, str);
     }
     
-    // default: space-separated words in a single string
     protected void safeSetKeywords(StringBuilder sb, PreparedStatement ps, int col, Set<String> vals)
         throws SQLException
     {
-        // default impl: space-separated
-        String val = CaomUtil.encodeListString(vals);
+        // default impl: 
+        String val = CaomUtil.encodeKeywordList(vals);
         if (val != null)
             ps.setString(col, val);
         else
@@ -2307,11 +2332,11 @@ public class BaseSQLGenerator implements SQLGenerator
             sb.append(",");
         }
     }
-    // default: space-separated words in a single string
+    
     protected void getKeywords(ResultSet rs, int col, Set<String> keywords)
         throws SQLException
     {
-        CaomUtil.decodeListString(rs.getString(col), keywords);
+        CaomUtil.decodeKeywordList(rs.getString(col), keywords);
     }
     
     protected void safeSetDouble(StringBuilder sb, PreparedStatement ps, int col, Double val)
@@ -2439,10 +2464,15 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         throw new UnsupportedOperationException();
     }
-    // unused: experiment with what custom extract methods would look like
-    // pro: simple con: single column storage only
-    // final: cannot actually be implemented and used yet
-    protected final Point getPoint(ResultSet rs, int col)
+
+    // unused
+    protected Point getPoint(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
         throws SQLException
     {
         throw new UnsupportedOperationException();
@@ -2453,10 +2483,20 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         throw new UnsupportedOperationException();
     }
-    // unused: experiment with what custom extract methods would look like
-    // pro: simple con: single column storage only
-    // final: cannot actually be implemented and used yet
-    protected final Polygon getPolygon(ResultSet rs, int col)
+    
+    protected void safeSetMultiPolygon(StringBuilder sb, PreparedStatement ps, int col, MultiPolygon val)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    protected MultiPolygon getMultiPolygon(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    protected List<Point> getPointList(ResultSet rs, int col)
         throws SQLException
     {
         throw new UnsupportedOperationException();
@@ -2467,10 +2507,19 @@ public class BaseSQLGenerator implements SQLGenerator
     {
         throw new UnsupportedOperationException();
     }
-    // unused: experiment with what custom extract methods would look like
-    // pro: simple con: single column storage only
-    // final: cannot actually be implemented and used yet
-    protected final Interval getInterval(ResultSet rs, int col)
+    protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<SubInterval> val)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    protected Interval getInterval(ResultSet rs, int col)
+        throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    protected List<SubInterval> getSubIntervalList(ResultSet rs, int col)
         throws SQLException
     {
         throw new UnsupportedOperationException();
@@ -2916,7 +2965,8 @@ public class BaseSQLGenerator implements SQLGenerator
     
     PartialRowMapper<Observation> getObservationMapper() { return new ObservationMapper(); }
     PartialRowMapper<Plane> getPlaneMapper() { return new PlaneMapper(); }
-    PartialRowMapper<Artifact> getArtifactMapper() { return new ArtifactMapper(); }
+    @Override
+    public PartialRowMapper<Artifact> getArtifactMapper() { return new ArtifactMapper(); }
     PartialRowMapper<Part> getPartMapper() { return new PartMapper(); }
     PartialRowMapper<Chunk> getChunkMapper() { return new ChunkMapper(); }
 
@@ -3227,8 +3277,93 @@ public class BaseSQLGenerator implements SQLGenerator
             
             if (persistOptimisations)
                 col += numOptPlaneColumns;
+            
             if (persistComputed)
-                col+= numComputedPlaneColumns;
+            {
+                Position pos = new Position();
+                List<Point> points = getPointList(rs, col++);
+                col++; // position_bounds spoly
+                MultiPolygon mp = getMultiPolygon(rs, col++);
+                if (points != null)
+                    pos.bounds = new Polygon(points, mp);
+                log.debug("position_bounds: " + pos.bounds);
+                col += 3; // center, area, size
+                Long pd1 = Util.getLong(rs, col++);
+                Long pd2 = Util.getLong(rs, col++);
+                if (pd1 != null)
+                    pos.dimension = new Dimension2D(pd1, pd2);
+                log.debug("position_dimension: " + pos.dimension);
+
+                pos.resolution = Util.getDouble(rs, col++);
+                log.debug("position_resolution: " + pos.resolution);
+                pos.sampleSize = Util.getDouble(rs, col++);
+                log.debug("position_sampleSize: " + pos.sampleSize);
+                pos.timeDependent = Util.getBoolean(rs, col++);
+                log.debug("position_timeDependent: " + pos.timeDependent);
+                p.position = pos;
+
+                Energy nrg = new Energy();
+                String emStr = rs.getString(col++);
+                if (emStr != null)
+                    nrg.emBand = EnergyBand.toValue(emStr);
+                log.debug("energy_emband: " + nrg.emBand);
+
+                Double elb = Util.getDouble(rs, col++);
+                Double eub = Util.getDouble(rs, col++);
+                col++; // energy_bounds polygon
+                List<SubInterval> esi = getSubIntervalList(rs, col++);
+                if (elb != null)
+                    nrg.bounds = new Interval(elb, eub, esi);
+                log.debug("energy_bounds: " + nrg.bounds);
+                col += 3; // width, freqWidth, freqSampleSize
+                nrg.dimension = Util.getLong(rs, col++);
+                log.debug("energy_dimension: " + nrg.dimension);
+                nrg.resolvingPower = Util.getDouble(rs, col++);
+                log.debug("energy_resolvingPower: " + nrg.resolvingPower);
+                nrg.sampleSize = Util.getDouble(rs, col++);
+                log.debug("energy_sampleSize: " + nrg.sampleSize);
+                nrg.bandpassName = rs.getString(col++);
+                log.debug("energy_bandpassName: " + nrg.bandpassName);
+                String ets = rs.getString(col++);
+                String ett = rs.getString(col++);
+                if (ets != null)
+                    nrg.transition = new EnergyTransition(ets, ett);
+                log.debug("energy_transition: " + nrg.transition);
+                nrg.restwav = Util.getDouble(rs, col++);
+                log.debug("energy_restwav: " + nrg.restwav);
+                p.energy = nrg;
+
+                Time tim = new Time();
+                Double tlb = Util.getDouble(rs, col++);
+                Double tub = Util.getDouble(rs, col++);
+                col++; // time_bounds polygon
+                List<SubInterval> tsi = getSubIntervalList(rs, col++);
+                if (elb != null)
+                    tim.bounds = new Interval(tlb, tub, tsi);
+                log.debug("time_bounds: " + tim.bounds);
+                col++; // width
+                tim.dimension = Util.getLong(rs, col++);
+                log.debug("time_dimension: " + tim.dimension);
+                tim.resolution = Util.getDouble(rs, col++);
+                log.debug("time_resolution: " + tim.resolution);
+                tim.sampleSize = Util.getDouble(rs, col++);
+                log.debug("time_sampleSize: " + tim.sampleSize);
+                tim.exposure = Util.getDouble(rs, col++);
+                log.debug("time_exposure: " + tim.exposure);
+                p.time = tim;
+
+                Polarization pol = new Polarization();
+                String polStr = rs.getString(col++);
+                if (polStr != null)
+                {
+                    pol.states = new ArrayList<PolarizationState>();
+                    Util.decodeStates(polStr, pol.states);
+                }
+                pol.dimension = Util.getLong(rs, col++);
+                p.polarization = pol;
+            }
+            else
+                col += numComputedPlaneColumns;
 
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: plane.lastModified = " + lastModified);
@@ -3316,7 +3451,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 col += numComputedArtifactColumns;
             
             Date lastModified = Util.getDate(rs, col++, UTC_CAL);
-            log.debug("found artifact.lastModified = " + lastModified);
+            log.debug("found artifact.lastModified = " + dateFormat.format(lastModified));
             Date maxLastModified = Util.getDate(rs, col++, UTC_CAL);
             log.debug("found: artifact.maxLastModified = " + dateFormat.format(maxLastModified));
             Integer stateCode = Util.getInteger(rs, col++);

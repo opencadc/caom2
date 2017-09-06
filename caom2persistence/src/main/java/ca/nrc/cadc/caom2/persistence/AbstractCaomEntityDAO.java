@@ -69,12 +69,12 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.MaxLastModifiedComparator;
-import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -145,10 +145,16 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
         if (Observation.class.isAssignableFrom(c))
             return getList(c, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
 
+        if (Artifact.class.isAssignableFrom(c))
+        {
+            Class<? extends Artifact> rac = (Class<? extends Artifact>) c;
+            return getArtifactList(minLastModified, maxLastModified, batchSize);
+        }
+        
         if (ReadAccess.class.isAssignableFrom(c))
         {
             Class<? extends ReadAccess> rac = (Class<? extends ReadAccess>) c;
-            return getListImpl(rac, minLastModified, maxLastModified, batchSize);
+            return getReadAccessList(rac, minLastModified, maxLastModified, batchSize);
         }
      
         throw new UnsupportedOperationException("unexpected class for getList: " + c.getName());
@@ -220,19 +226,31 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO
         }
     }
     
-    protected List<T> getListImpl(Class<? extends ReadAccess> rac, Date minLastModified, Date maxLastModified, Integer batchSize)
+    protected List<T> getReadAccessList(Class<? extends ReadAccess> rac, Date minLastModified, Date maxLastModified, Integer batchSize)
     {
         checkInit();
             
         RowMapper rm = gen.getReadAccessMapper(rac);
-
+        return getListImpl(rm, rac, minLastModified, maxLastModified, batchSize);
+    }
+    
+    protected List<T> getArtifactList(Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
+        checkInit();
+            
+        RowMapper rm = gen.getArtifactMapper();
+        return getListImpl(rm, Artifact.class, minLastModified, maxLastModified, batchSize);
+    }
+    
+    private List<T> getListImpl(RowMapper rm, Class c, Date minLastModified, Date maxLastModified, Integer batchSize)
+    {
         log.debug("GET: " + batchSize);
         long t = System.currentTimeMillis();
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
-            String sql = gen.getSelectSQL(rac, minLastModified, maxLastModified, batchSize);
+            String sql = gen.getSelectSQL(c, minLastModified, maxLastModified, batchSize);
             log.debug("GET SQL: " + sql);
 
 

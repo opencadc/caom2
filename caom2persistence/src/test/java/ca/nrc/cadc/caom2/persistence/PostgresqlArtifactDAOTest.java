@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,133 +62,28 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SubInterval;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.util.Log4jInit;
-import java.text.DateFormat;
-import java.util.Date;
-import org.apache.log4j.Level;
+
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
-import org.postgresql.geometric.PGpolygon;
 
 /**
  *
  * @author pdowler
  */
-public class PostgreSQLGeneratorTest 
+public class PostgresqlArtifactDAOTest extends AbstractArtifactDAOTest
 {
-    private static final Logger log = Logger.getLogger(PostgreSQLGeneratorTest.class);
+    private static final Logger log = Logger.getLogger(PostgresqlArtifactDAOTest.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-    }
-
-    PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", "caom2");
-
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testSelectObservationSQL()
-    {
-        try
-        {
-            String start = "select observation.maxlastmodified ";
-            String end = "order by observation.maxlastmodified limit 10";
-            String sql = gen.getSelectLastModifiedRangeSQL(Observation.class, new Date(), null, new Integer(10));
-            log.debug("SQL: " + sql);
-            sql = sql.toLowerCase();
-            String actualStart = sql.substring(0, start.length());
-            String actualEnd = sql.substring(sql.length() - end.length());
-            Assert.assertEquals(start, actualStart);
-            Assert.assertEquals(end, actualEnd);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testSelectByLastModifiedSQL()
-    {
-        try
-        {
-            String start = "select observationmetareadaccess.";
-            String end = " order by observationmetareadaccess.lastmodified limit 10";
-            Date d1 = new Date();
-            Date d2 = new Date(d1.getTime() + 1000000L);
-            Integer batchSize = new Integer(10);
-            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-            String exp1 = "observationmetareadaccess.lastmodified >= '" + df.format(d1) + "'";
-
-            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, null, batchSize);
-            log.debug("SQL: " + sql);
-            sql = sql.toLowerCase();
-
-            String actualStart = sql.substring(0, start.length());
-            String actualEnd = sql.substring(sql.length() - end.length());
-            Assert.assertEquals(start, actualStart);
-            Assert.assertEquals(end, actualEnd);
-
-            log.debug("look for: " + exp1);
-            Assert.assertTrue(sql.contains(exp1));
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    
-    
-    @Test
-    public void testGetPolygonFromInterval()
-    {
-        try
-        {
-            Interval i = new Interval(1.0, 3.0);
-            i.getSamples().add(new SubInterval(1.0, 1.2));
-            i.getSamples().add(new SubInterval(2.8, 3.0));
-            
-            PGpolygon ip;
-            
-            ip = gen.generatePolygon2D(i, null);
-            log.info(i + " -> " + ip.getValue());
-            
-            ip = gen.generatePolygon2D(null, i.getSamples());
-            log.info(i + " -> " + ip.getValue());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    public PostgresqlArtifactDAOTest() 
+    { 
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2");
+        
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        init.doInit();
     }
 }

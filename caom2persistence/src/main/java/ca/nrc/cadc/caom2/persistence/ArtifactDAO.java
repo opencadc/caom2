@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -85,12 +86,19 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author pdowler
  */
-class ArtifactDAO extends AbstractCaomEntityDAO<Artifact>
+public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact>
 {
     private static final Logger log = Logger.getLogger(ArtifactDAO.class);
 
     private PartDAO partDAO;
 
+    /**
+     * Constructor for stand-alone query support. Use of this constructor
+     * creates an instance that can be used to to get a list of artifacts
+     * in order (getList) only.
+     */
+    public ArtifactDAO() { }
+    
     // package access for use by ObservationDAO only
     ArtifactDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
     {

@@ -130,13 +130,15 @@ public interface SQLGenerator
     String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
     String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
-    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, String collection);
+    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection);
 
     String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth);
 
     ResultSetExtractor getObservationExtractor();
     
     RowMapper getObservationStateMapper();
+    
+    RowMapper getArtifactMapper();
 
     Class<? extends Skeleton> getSkeletonClass(Class c);
     

@@ -82,11 +82,32 @@ public class HarvestResource
     private String databaseServer;
     private String database;
     private String schema;
+    private boolean harvestAC;
     
     private URI resourceID;
     private String collection;
     
+    /**
+     * Create a HarvestResource for a database. This is suitable for a destination and
+     * when intending to harvest access control tuples.
+     * @param databaseServer server name in $HOME/.dbrc
+     * @param database database name in $HOME/.dbrc and query generation
+     * @param schema schema name for query generation
+     * @param collection name of collection to harvest
+     */
     public HarvestResource(String databaseServer, String database, String schema, String collection)
+    {
+        this(databaseServer, database, schema, collection, true);
+    }
+    /**
+     * Create a HarvestResource for a database.
+     * @param databaseServer server name in $HOME/.dbrc
+     * @param database database name in $HOME/.dbrc and query generation
+     * @param schema schema name for query generation
+     * @param collection name of collection to harvest
+     * @param harvestAC true to enable harvesting access control tuples
+     */
+    public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC)
     {
         if (databaseServer == null || database == null || schema == null || collection == null)
             throw new IllegalArgumentException("args cannot be null");
@@ -94,6 +115,7 @@ public class HarvestResource
         this.database = database;
         this.schema = schema;
         this.collection = collection;
+        this.harvestAC = harvestAC;
     }
     
     public HarvestResource(URI resourceID, String collection)
@@ -102,6 +124,7 @@ public class HarvestResource
             throw new IllegalArgumentException("resourceID and collection args cannot be null");
         this.resourceID = resourceID;
         this.collection = collection;
+        this.harvestAC = true; // no API for this
     }
 
     public String getIdentifier()
@@ -124,6 +147,11 @@ public class HarvestResource
     public String getSchema()
     {
         return schema;
+    }
+
+    public boolean getHarvestAC()
+    {
+        return harvestAC;
     }
 
     public URI getResourceID()

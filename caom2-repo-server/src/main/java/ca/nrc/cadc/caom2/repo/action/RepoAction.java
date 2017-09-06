@@ -338,11 +338,6 @@ public abstract class RepoAction extends RestAction
                         cur = ostr + "/" + p.getProductID();
                         ComputeUtil.clearTransientState(p);
                         ComputeUtil.computeTransientState(obs, p);
-                        if (p.position != null && p.position.bounds != null)
-                        {
-                            Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
-                            PolygonUtil.getOuterHull(poly);
-                        }
                     }
                 }
                 catch(Error er)
