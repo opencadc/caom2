@@ -709,7 +709,7 @@ public final class PositionUtil
         if (s instanceof Circle)
             return getBounds(wcs, (Circle) s);
         if (s instanceof Polygon)
-            return getBounds(wcs, (Polygon) s);
+            return getBounds(wcs, ((Polygon) s).getSamples());
         throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
     }
     
