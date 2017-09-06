@@ -14,14 +14,14 @@ create table caom2.Observation
     proposal_pi varchar(64),
     proposal_project varchar(64),
     proposal_title citext,
-    proposal_keywords tsvector,
+    proposal_keywords citext,
 
     target_name varchar(64),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,
     target_moving integer,
-    target_keywords tsvector,
+    target_keywords citext,
 
     targetPosition_coordsys varchar(16),
     targetPosition_equinox double precision,
@@ -32,12 +32,12 @@ create table caom2.Observation
     telescope_geoLocationX double precision,
     telescope_geoLocationY double precision,
     telescope_geoLocationZ double precision,
-    telescope_keywords tsvector,
+    telescope_keywords citext,
 
     requirements_flag varchar(16),
 
     instrument_name varchar(64),
-    instrument_keywords tsvector,
+    instrument_keywords citext,
 
     environment_seeing double precision,
     environment_humidity double precision,

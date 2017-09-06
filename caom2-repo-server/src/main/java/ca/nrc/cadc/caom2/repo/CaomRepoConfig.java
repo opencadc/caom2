@@ -182,7 +182,7 @@ public class CaomRepoConfig
             }
             catch(NamingException ex)
             {
-                throw new IllegalArgumentException("unknown collection: " + i.getCollection());
+                throw new RuntimeException("CONFIG ERROR: failed to init or recognise database", ex);
             }
         }
     }

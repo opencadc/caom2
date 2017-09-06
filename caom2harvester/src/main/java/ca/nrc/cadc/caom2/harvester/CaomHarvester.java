@@ -117,18 +117,22 @@ public class CaomHarvester implements Runnable
         boolean extendedFeatures = src.getDatabaseServer() != null;
         if (extendedFeatures)
         {
-            this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            observationMetaHarvester.setSkipped(skip);
-            this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            planeDataHarvester.setSkipped(skip);
-            this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
-            planeMetaHarvester.setSkipped(skip);
-
-            if (!full)
+            if (src.getHarvestAC())
+            {
+                this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+                observationMetaHarvester.setSkipped(skip);
+                this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+                planeDataHarvester.setSkipped(skip);
+                this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
+                planeMetaHarvester.setSkipped(skip);
+            }
+            
+            // deletions in incremental mode only
+            if (!full && !skip)
             {
                 this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
 
-                if (!skip)
+                if (src.getHarvestAC())
                 {
                     this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
                     this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
