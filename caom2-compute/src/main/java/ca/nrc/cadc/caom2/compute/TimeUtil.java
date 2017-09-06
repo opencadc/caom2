@@ -179,8 +179,6 @@ public final class TimeUtil
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
-        if (subs.size() == 1)
-            return new Interval(lb, ub);
         return new Interval(lb, ub, subs);
     }
 

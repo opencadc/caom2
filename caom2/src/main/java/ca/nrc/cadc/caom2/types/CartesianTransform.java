@@ -27,12 +27,12 @@ public class CartesianTransform implements Serializable
 
     CartesianTransform() { }
 
-    public static CartesianTransform getTransform(Polygon poly)
+    public static CartesianTransform getTransform(MultiPolygon poly)
     {
         return getTransform(poly, false);
     }
     
-    public static CartesianTransform getTransform(Polygon poly, boolean force)
+    public static CartesianTransform getTransform(MultiPolygon poly, boolean force)
     {
         double[] cube = getBoundingCube(poly, null);
         return getTransform(cube, force);
@@ -168,12 +168,12 @@ public class CartesianTransform implements Serializable
         return new Vertex(p2[0], p2[1], v.getType());
     }
 
-    public Polygon transform(Polygon p)
+    public MultiPolygon transform(MultiPolygon p)
     {
         if (isNull())
             return p;
 
-        Polygon ret = new Polygon();
+        MultiPolygon ret = new MultiPolygon();
         for (Vertex v : p.getVertices())
         {
             ret.getVertices().add(transform(v));
@@ -189,7 +189,7 @@ public class CartesianTransform implements Serializable
         return CartesianTransform.toLongLat(dp[0], dp[1], dp[2]);
     }
 
-    public static double[] getBoundingCube(Polygon poly, double[] cube)
+    public static double[] getBoundingCube(MultiPolygon poly, double[] cube)
     {
         // x1, x2, y1, y2, z1, z2
         if (cube == null)

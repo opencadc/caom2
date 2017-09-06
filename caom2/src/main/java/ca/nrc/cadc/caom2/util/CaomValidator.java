@@ -92,15 +92,24 @@ public final class CaomValidator
             throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
     }
 
+    /**
+     * Keywords can contain any valid UTF-8 character except the pipe (|). The pipe 
+     * character is reserved for use as a separator in persistence implementations 
+     * so the list of keywords can be serialized in a single string to support 
+     * querying.
+     * 
+     * @param caller
+     * @param name
+     * @param val 
+     */
     public static void assertValidKeyword(Class caller, String name, String val)
     {
         assertNotNull(caller, name, val);
-        boolean space = (val.indexOf(' ') >= 0);
-        boolean tick = (val.indexOf('\'') >= 0);
-        if (!tick && !space)
+        boolean pipe = (val.indexOf('|') >= 0);
+        if (!pipe)
             return;
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name
-                + ": may not contain single tick (') or space ( )");
+                + ": may not contain pipe (|)");
     }
     
     /**
@@ -185,7 +194,33 @@ public final class CaomValidator
             {
                 if (ban.equals(a.getProductType()))
                     throw new IllegalArgumentException("Observation.intent = " + obs.intent + " but artifact "
-                            + a.getURI().toASCIIString() + "has productType = " + a.getProductType());
+                            + a.getURI().toASCIIString() + " has productType = " + a.getProductType());
+            }
+        }
+    }
+    
+    /**
+     * Validate Plane.position.bounds, Plane.energy,bounds, and Plane.time.bounds for
+     * valid polygon and interval respectively.
+     * 
+     * @param obs 
+     */
+    public static void validatePlanes(Observation obs)
+    {
+        for (Plane p : obs.getPlanes())
+        {
+            if (p.position != null && p.position.bounds != null && p.position.bounds instanceof Polygon)
+            {
+                Polygon poly = (Polygon) p.position.bounds;
+                poly.validate();
+            }
+            if (p.energy != null && p.energy.bounds != null)
+            {
+                p.energy.bounds.validate();
+            }
+            if (p.time != null && p.time.bounds != null)
+            {
+                p.time.bounds.validate();
             }
         }
     }
@@ -200,5 +235,7 @@ public final class CaomValidator
         validateKeywords(obs);
         
         validateIntent(obs);
+        
+        validatePlanes(obs);
     }
 }

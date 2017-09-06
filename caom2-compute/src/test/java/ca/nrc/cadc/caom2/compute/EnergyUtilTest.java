@@ -177,7 +177,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);
@@ -198,7 +198,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB+400.0e-9, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension*3, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);
@@ -284,7 +284,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);
@@ -342,7 +342,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.sampleSize);
@@ -554,7 +554,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);
@@ -603,7 +603,7 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);

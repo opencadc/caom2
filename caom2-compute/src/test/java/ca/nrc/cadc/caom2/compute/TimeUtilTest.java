@@ -164,7 +164,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -245,7 +245,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -286,7 +286,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -327,7 +327,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -378,7 +378,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -427,7 +427,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -476,7 +476,7 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
             Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertTrue(actual.bounds.getSamples().isEmpty());
+            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);

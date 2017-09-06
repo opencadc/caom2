@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -228,7 +229,7 @@ public class PositionUtilTest
             Coord2D end = new Coord2D(new RefCoord(512.5, 11), new RefCoord(512.5, 21));
             axis.range = new CoordRange2D(start, end);
             
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
                 log.debug("testCoordRangeToPolygon: " + v);
             Assert.assertNotNull(poly);
@@ -255,7 +256,7 @@ public class PositionUtilTest
             ValueCoord2D cen = new ValueCoord2D(2.0, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
             
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
                 log.debug("testCoordCircleToPolygon: " + v);
             Assert.assertNotNull(poly);
@@ -315,7 +316,7 @@ public class PositionUtilTest
             cp.getVertices().add(new ValueCoord2D(11, 21));
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
                 log.debug("testCoordPolygonToPolygon: " + v);
             Assert.assertNotNull(poly);
@@ -346,7 +347,7 @@ public class PositionUtilTest
             cp.getVertices().add(new ValueCoord2D(11, 21));
             cp.getVertices().add(new ValueCoord2D(10, 20));
             axis.bounds = cp;
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         }
         catch(IllegalPolygonException expected)
@@ -374,7 +375,7 @@ public class PositionUtilTest
             cp.getVertices().add(new ValueCoord2D(11, 20));
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         }
         catch(IllegalPolygonException expected)
@@ -401,7 +402,7 @@ public class PositionUtilTest
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
             for (Vertex v : poly.getVertices())
                 log.debug("testFunctionToPolygon: " + v);
             Assert.assertNotNull(poly);
@@ -428,7 +429,7 @@ public class PositionUtilTest
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
-            Polygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs);
 
             Assert.fail("expected WCSLibRuntimeException");
         }
@@ -443,30 +444,6 @@ public class PositionUtilTest
         }
     }
     
-    //@Test
-    public void testHPX()
-    {
-        try
-        {
-            // content from JCMT scuba2_00046_20120816T110937.xml
-            Axis axis1 = new Axis("RA---HPX", "deg");
-            Axis axis2 = new Axis("DEC--HPX", "deg");
-            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
-            SpatialWCS wcs = new SpatialWCS(axis);
-            wcs.equinox = null;
-            Dimension2D dim = new Dimension2D(425, 191);
-            Coord2D ref = new Coord2D(new RefCoord(67333.5, 0.0), new RefCoord(-32576.5, 0.0));
-            axis.function = new CoordFunction2D(dim, ref, -0.000686645537833, -0.000686645537834, -0.000686645537833, 0.000686645537835);
-            Polygon poly = PositionUtil.toPolygon(wcs);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-
     @Test
     public void testComputeBounds()
     {
@@ -479,7 +456,7 @@ public class PositionUtilTest
             plane = getTestSetRange(1, 2);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(2.0, poly.getArea(), 0.05);
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -487,7 +464,7 @@ public class PositionUtilTest
             plane = getTestSetRange(1, 2);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(2.0, poly.getArea(), 0.05);
             Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -495,7 +472,7 @@ public class PositionUtilTest
             plane = getTestSetRange(1, 3);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(3.0, poly.getArea(), 0.08);
             Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -503,7 +480,7 @@ public class PositionUtilTest
             plane = getTestSetRange(4, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(4.0, poly.getArea(), 0.1);
             Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -512,7 +489,7 @@ public class PositionUtilTest
             plane = getTestSetFunction(1, 1);
             poly = PositionUtil.computeBounds(plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(1.0, poly.getArea(), 0.05);
             Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -734,7 +711,7 @@ public class PositionUtilTest
             
             poly = PositionUtil.computeBounds(plane.getArtifacts(), Util.choseProductType(plane.getArtifacts()));
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(1.0, poly.getArea(), 0.02);
             Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
@@ -765,7 +742,7 @@ public class PositionUtilTest
             
             poly = PositionUtil.computeBounds(plane.getArtifacts(), Util.choseProductType(plane.getArtifacts()));
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getPoints().size());
             Assert.assertEquals(1.0, poly.getArea(), 0.02);
             Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
             Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);

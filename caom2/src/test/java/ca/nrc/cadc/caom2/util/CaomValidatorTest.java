@@ -135,17 +135,11 @@ public class CaomValidatorTest
             CaomValidator.assertValidKeyword(this.getClass(), "test", "foo");
             CaomValidator.assertValidKeyword(this.getClass(), "test", "foo=42");
             CaomValidator.assertValidKeyword(this.getClass(), "test", "foo:42");
-            
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "tick'marks");
+            CaomValidator.assertValidKeyword(this.getClass(), "test", "has multiple spaces");
             try 
             { 
-                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo's");
-                Assert.fail("expected IllegalArgumentException");
-            }
-            catch(IllegalArgumentException expected) { }
-            
-            try 
-            { 
-                CaomValidator.assertValidKeyword(this.getClass(), "test", "foo bar");
+                CaomValidator.assertValidKeyword(this.getClass(), "test", "pipe|denied");
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected) { }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,123 +62,124 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.types;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+
+import ca.nrc.cadc.util.Log4jInit;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class Interval implements Serializable
+public class IntervalTest 
 {
-    private static final long serialVersionUID = 201708241230L;
+    private static final Logger log = Logger.getLogger(IntervalTest.class);
 
-    private double lower;
-    private double upper;
-    private List<SubInterval> samples = new ArrayList<SubInterval>();
-
-    public static final String[] CTOR_UTYPES = { "lower", "upper" };
-    
-    private Interval() { }
-
-    public Interval(double lower, double upper)
+    static
     {
-        
-        this.lower = lower;
-        this.upper = upper;
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
     }
     
-    public Interval(double lower, double upper, List<SubInterval> samples)
+    public IntervalTest() { }
+    
+    @Test
+    public void testValidInterval()
     {
-        this.lower = lower;
-        this.upper = upper;
-        CaomValidator.assertNotNull(Interval.class, "samples", samples);
-        this.samples.addAll(samples);
-        validate();
-    }
-
-    public final void validate()
-    {
-        if (upper < lower)
-            throw new IllegalArgumentException("invalid interval (upper < lower): " + lower + "," + upper);
-        CaomValidator.assertNotNull(Interval.class, "samples", samples);    
-        if (samples.isEmpty())
-            throw new IllegalArgumentException("invalid interval (samples cannot be empty)");
-        
-        SubInterval prev = null;
-        for (SubInterval si : samples)
+        try
         {
-            if (si.getLower() < lower)
-                throw new IllegalArgumentException("invalid interval: sample extends below lower bound: " 
-                        + si + " vs " + lower);
-            if (si.getUpper() > upper)
-                throw new IllegalArgumentException("invalid interval: sample extends above upper bound: " 
-                        + si + " vs " + upper);
+            List<SubInterval> subs = new ArrayList<SubInterval>();
+            subs.add(new SubInterval(1.0, 2.0));
+            Interval i1 = new Interval(1.0, 2.0, subs);
             
-            if (prev != null)
-            {
-                if (si.getLower() <= prev.getUpper())
-                    throw new IllegalArgumentException("invalid interval: sample overlaps previous sample: " 
-                        + si + " vs " + prev);
-            }
-            prev = si;
+            subs.clear();
+            subs.add(new SubInterval(1.0, 1.2));
+            subs.add(new SubInterval(1.8, 2.0));
+            Interval i2 = new Interval(1.0, 2.0, subs);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
     
-    @Override
-    public String toString()
+    @Test
+    public void testInvalidInterval()
     {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Interval[").append(lower).append(",").append(upper);
-        if (!samples.isEmpty())
+        try
         {
-            sb.append(" samples[ ");
-            for (SubInterval si : samples)
+            try
             {
-                sb.append("[").append(si.lower).append(",").append(si.upper).append("] ");
+                
+                Interval i = new Interval(1.0, 2.0, null);
+                Assert.fail("expected IllegalArgumentException");
             }
-            sb.append("]");
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            List<SubInterval> subs = new ArrayList<SubInterval>();
+            
+            try
+            {
+                Interval i = new Interval(1.0, 2.0, subs);
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            try
+            {
+                subs.add(new SubInterval(0.0, 2.0));
+                Interval i = new Interval(1.0, 2.0, subs);
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            try
+            {
+                subs.clear();
+                subs.add(new SubInterval(1.0, 3.0));
+                Interval i = new Interval(1.0, 2.0, subs);
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            try
+            {
+                subs.clear();
+                subs.add(new SubInterval(1.0, 1.6));
+                subs.add(new SubInterval(1.4, 2.0));
+                Interval i = new Interval(1.0, 2.0, subs);
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
         }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    public double getLower()
-    {
-        return lower;
-    }
-
-    public double getUpper()
-    {
-        return upper;
-    }
-
-    public List<SubInterval> getSamples()
-    {
-        return samples;
-    }
-
-    public double getWidth()
-    {
-        return (upper - lower);
-    }
-
-    public static Interval intersection(Interval i1, Interval i2)
-    {
-        if (i1.lower > i2.upper || i1.upper < i2.lower)
-            return null; // no overlap
-
-        double lb = Math.max(i1.lower, i2.lower);
-        double ub = Math.min(i1.upper, i2.upper);
-        return new Interval(lb, ub);
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

@@ -117,8 +117,20 @@ public class CaomUtil implements Serializable
     
     private static Logger log = Logger.getLogger(CaomUtil.class);
     
-    static final String STRING_SET_SEPARATOR = " ";
-    static final String POL_STATE_SEPARATOR = "/"; // IVOA ObsCore-1.0 Data Model, B.6.6
+    /**
+     * Separator for string lists. This is used for lists of URIs.
+     */
+    static final String STRING_LIST_SEPARATOR = " ";
+    
+    /**
+     * Separator for keyword list serialisation (CAOM-2.3 reserved character).
+     */
+    static final String KEYWORD_SET_SEPARATOR = "|";
+    
+    /**
+     * Polarization state separator from IVOA ObsCore-1.0 Data Model (B.6.6).
+     */
+    static final String POL_STATE_SEPARATOR = "/";
     
     // other projects can subclass this so all Util their methods are in a single place
     // TODO: decide if this is a good idea or not and refactor if necessary
@@ -210,7 +222,13 @@ public class CaomUtil implements Serializable
         }
     }
     
-    public static String encodeListString(Collection<String> strs)
+    /**
+     * Format a list of keywords using the CAOM-2.3+ reserved character.
+     * 
+     * @param strs
+     * @return 
+     */
+    public static String encodeKeywordList(Collection<String> strs)
     {
         if (strs == null || strs.isEmpty())
             return null;
@@ -218,23 +236,30 @@ public class CaomUtil implements Serializable
         Iterator<String> i = strs.iterator();
         while ( i.hasNext() )
         {
-            sb.append(i.next());
+            sb.append(i.next().trim());
             if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
+                sb.append(KEYWORD_SET_SEPARATOR);
         }
         return sb.toString();
     }
-    public static void decodeListString(String val, Collection<String> out)
+    /**
+     * Parse a list of keywords from string using the CAOM-2.3+ reserved character.
+     * 
+     * @param val
+     * @param out 
+     */
+    public static void decodeKeywordList(String val, Collection<String> out)
     {
         if (val == null)
             return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
+        String[] ss = val.split("["+KEYWORD_SET_SEPARATOR+"]");
         for (String s : ss)
         {
             out.add(s);
         }
     }
 
+    
     public static String encodeObservationURIs(Set<ObservationURI> set)
     {
         if (set.isEmpty())
@@ -245,7 +270,7 @@ public class CaomUtil implements Serializable
         {
             sb.append(i.next().getURI().toASCIIString());
             if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
+                sb.append(STRING_LIST_SEPARATOR);
         }
         return sb.toString();
     }
@@ -256,7 +281,7 @@ public class CaomUtil implements Serializable
         val = val.trim();
         if (val.length() == 0)
             return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
+        String[] ss = val.split(STRING_LIST_SEPARATOR);
         for (String s : ss)
         {
             if (s.length() > 0)
@@ -282,7 +307,7 @@ public class CaomUtil implements Serializable
         {
             sb.append(i.next().getURI().toASCIIString());
             if ( i.hasNext() )
-                sb.append(STRING_SET_SEPARATOR);
+                sb.append(STRING_LIST_SEPARATOR);
         }
         return sb.toString();
     }
@@ -293,7 +318,7 @@ public class CaomUtil implements Serializable
         val = val.trim();
         if (val.length() == 0)
             return;
-        String[] ss = val.split(STRING_SET_SEPARATOR);
+        String[] ss = val.split(STRING_LIST_SEPARATOR);
         for (String s : ss)
         {
             try

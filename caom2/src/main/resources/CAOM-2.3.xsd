@@ -280,6 +280,11 @@
             <xs:element name="cval2" type="xs:double" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="PointList">
+        <xs:sequence>
+            <xs:element name="point" type="caom2:Point"  minOccurs="3" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
     <xs:complexType name="Vertex">
         <xs:complexContent>
             <xs:extension base="caom2:Point">
@@ -308,11 +313,17 @@
         </xs:complexContent>
         
     </xs:complexType>
+    <xs:complexType name="MultiPolygon">
+        <xs:sequence>
+            <xs:element name="vertices" type="caom2:VertexList"/>
+        </xs:sequence>
+    </xs:complexType>
     <xs:complexType name="Polygon">
         <xs:complexContent>
             <xs:extension base="caom2:Shape">
                 <xs:sequence>
-                    <xs:element name="vertices" type="caom2:VertexList"/>
+                    <xs:element name="points" type="caom2:PointList"/>
+                    <xs:element name="samples" type="caom2:MultiPolygon"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -343,7 +354,7 @@
         <xs:sequence>
             <xs:element name="lower" type="xs:double" minOccurs="1" maxOccurs="1"/>
             <xs:element name="upper" type="xs:double" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="samples" type="caom2:SubIntervalList" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="samples" type="caom2:SubIntervalList" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="Energy">
@@ -648,9 +659,11 @@
     
     <!-- Common Types -->
     
-    <xs:simpleType name="Keywords">
-        <xs:list itemType="xs:string" />
-    </xs:simpleType>
+    <xs:complexType name="Keywords">
+        <xs:sequence>
+            <xs:element name="keyword" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
     
     <xs:complexType name="Samples">
         <xs:sequence>

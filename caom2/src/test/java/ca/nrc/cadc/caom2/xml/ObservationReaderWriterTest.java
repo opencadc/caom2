@@ -74,8 +74,6 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.EnergyBand;
-import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -94,12 +92,7 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.SubInterval;
-import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -123,6 +116,7 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -131,10 +125,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
-import java.util.ArrayList;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -171,6 +164,45 @@ public class ObservationReaderWriterTest
         }
     }
     
+    @Test
+    public void testLenientTimestampParser()
+    {
+        try
+        {
+            Caom2TestInstances ti = new Caom2TestInstances();
+            ti.setComplete(false);
+            ti.setDepth(1);
+            Observation o = ti.getSimpleObservation();
+            
+            String ivoaDateStr = "2017-08-15T12:34:56.000";
+            String truncDateStr = "2017-08-15T12:34:56";
+            
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            Date ts = df.parse(ivoaDateStr);
+            
+            CaomUtil.assignLastModified(o, ts, "lastModified");
+            CaomUtil.assignLastModified(o, ts, "maxLastModified");
+            
+            
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObservationWriter w = new ObservationWriter();
+            w.write(o, bos);
+            String xml = bos.toString();
+            log.debug("testLenientTimestampParser[before]:\n" + xml);
+            String xml2 = xml.replaceAll(ivoaDateStr, truncDateStr);
+            log.debug("testLenientTimestampParser[after]:\n" + xml2);
+            
+            ObservationReader r = new ObservationReader();
+            Observation o2 = r.read(xml2);
+            compareObservations(o, o2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     // this "test" writes out a pretty complete document to use in comparison with python round-trip
     // and python meta checksum computations
     @Test
@@ -183,9 +215,6 @@ public class ObservationReaderWriterTest
             ti.setDepth(5);
             ti.setChildCount(2);
             Observation o = ti.getCompositeObservation();
-            
-            // include computed metadata
-            addComputedPlaneMetadata(o.getPlanes());
             
             long t1 = new Date().getTime();
             long t2 = t1 + 2000l;
@@ -334,10 +363,6 @@ public class ObservationReaderWriterTest
             compareObservations(obs, obs23);
             
         }
-        //catch(ObservationParsingException expected)
-        //{
-        //    log.info("caught expected exception: " + expected);
-        //}
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
@@ -530,9 +555,9 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            log.debug("testCompleteSimple");
             for (int i = 1; i <= 5; i++)
             {
+                log.info("testCompleteSimple: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 SimpleObservation observation = getCompleteSimple(i, boundsIsCircle);
@@ -563,6 +588,10 @@ public class ObservationReaderWriterTest
             {
                 p.quality = null;
                 p.creatorID = null;
+                p.position = null;
+                p.energy = null;
+                p.time = null;
+                p.polarization = null;
                 for (Artifact a : p.getArtifacts())
                 {
                     a.contentChecksum = null;
@@ -582,9 +611,9 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            log.debug("testCompleteSimpleSetAlgorithm");
             for (int i = 1; i <= 1; i++)
             {
+                log.info("testCompleteSimpleSetAlgorithm: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 SimpleObservation observation = getCompleteSimpleSetAlgorithm(i, boundsIsCircle);
@@ -618,9 +647,9 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            log.debug("testMinimalComposite");
             for (int i = 1; i < 6; i++)
             {
+                log.info("testMinimalComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 CompositeObservation observation = getMinimalComposite(i, boundsIsCircle);
@@ -654,9 +683,9 @@ public class ObservationReaderWriterTest
     {
         try
         {
-            log.debug("testCompleteComposite");
             for (int i = 1; i < 6; i++)
             {
+                log.info("testCompleteComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 CompositeObservation observation = getCompleteComposite(i, boundsIsCircle);
@@ -682,89 +711,6 @@ public class ObservationReaderWriterTest
         {
             log.error("unexpected exception", unexpected);
             fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testComputedSimple()
-    {
-        try
-        {
-            log.debug("testComputedSimple");
-            int i = 5; // need chunks for compute
-            SimpleObservation observation = getCompleteSimple(i, false); // CoordBounds2D as CoordPolygon2D
-
-            // Write empty elements.
-            testObservation(observation, true);
-
-            // Do not write empty elements.
-            testObservation(observation, false);
-            
-            log.debug("computing transient metadata for planes...");
-                    
-            addComputedPlaneMetadata(observation.getPlanes());
-
-            testObservation(observation, true);
-            
-            testObservation(observation, false);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    protected void addComputedPlaneMetadata(Set<Plane> planes)
-    {
-        for (Plane p : planes)
-        {
-            // alphabetical so easier to trace and debug metaChecksum computation
-            
-            p.energy = new Energy();
-            p.energy.bandpassName = "V";
-            p.energy.bounds = new Interval(400e-6, 900e-6);
-            p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
-            p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
-            p.energy.dimension = 2l;
-            p.energy.emBand = EnergyBand.OPTICAL;
-            p.energy.resolvingPower = 2.0;
-            p.energy.restwav = 600e-9;
-            p.energy.sampleSize = 100e-6;
-            p.energy.transition = new EnergyTransition("H", "alpha");
-            
-            p.polarization = new Polarization();
-            p.polarization.dimension = 3l;
-            p.polarization.states = new ArrayList<>();
-            p.polarization.states.add(PolarizationState.I);
-            p.polarization.states.add(PolarizationState.Q);
-            p.polarization.states.add(PolarizationState.U);
-            
-            p.position = new Position();
-            Polygon poly = new Polygon();
-            poly.getVertices().add(new Vertex(2.0, 3.0, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(3.0, 4.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(1.0, 5.0, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            p.position.bounds = poly;
-            p.position.dimension = new Dimension2D(1024, 2048);
-            p.position.resolution = 0.05;
-            p.position.sampleSize = 0.025;
-            p.position.timeDependent = false;
-
-            p.time = new Time();
-            p.time.bounds = new Interval(50000.25, 50000.75);
-            p.time.bounds.getSamples().add(new SubInterval(50000.25, 50000.40));
-            p.time.bounds.getSamples().add(new SubInterval(50000.50, 50000.75));
-            p.time.dimension = 2l;
-            p.time.exposure = 666.0;
-            p.time.resolution = 0.5;
-            p.time.sampleSize = 0.15;
-
-            //p.energy = null;
-            //p.polarization = null;
-            //p.position = null;
-            //p.time = null;
         }
     }
     

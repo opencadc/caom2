@@ -183,6 +183,9 @@ public final class EnergyUtil
             }
         }
 
+        if (subs.isEmpty())
+            return null;
+        
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
@@ -192,10 +195,7 @@ public final class EnergyUtil
             ub = Math.max(ub, sub.getUpper());
         }
 
-        if (subs.isEmpty())
-            return null;
-        if (subs.size() == 1)
-            return new Interval(lb, ub);
+        
         return new Interval(lb, ub, subs);
     }
 

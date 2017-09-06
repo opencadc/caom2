@@ -200,14 +200,14 @@ public class CartesianTransformTest
             trans.a = Math.PI/2.0; // +180
             trans.axis = CartesianTransform.Z;
             
-            Polygon p1 = new Polygon();
+            MultiPolygon p1 = new MultiPolygon();
             p1.getVertices().add(new Vertex(2.0, 2.0, SegmentType.LINE));
             p1.getVertices().add(new Vertex(4.0, 2.0, SegmentType.MOVE));
             p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.MOVE));
             p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             
-            Polygon p2 = trans.transform(p1);
-            Polygon p3 = trans.getInverseTransform().transform(p2);
+            MultiPolygon p2 = trans.transform(p1);
+            MultiPolygon p3 = trans.getInverseTransform().transform(p2);
             
             Assert.assertEquals(p1.getVertices().size(), p3.getVertices().size());
             for (int i=0; i<p1.getVertices().size(); i++)

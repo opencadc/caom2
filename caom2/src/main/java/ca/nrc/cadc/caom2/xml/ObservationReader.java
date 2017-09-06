@@ -106,8 +106,9 @@ import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
@@ -257,6 +258,29 @@ public class ObservationReader implements Serializable
         private static final long serialVersionUID = 201604081100L;
         DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
+        
+        // allow for missing milliseconds in timestamps
+        Date parseTimestamp(String value)
+            throws ParseException
+        {
+            try
+            {
+                return dateFormat.parse(value);
+            }
+            catch(ParseException pex1)
+            {
+                try
+                {
+                    // append missing milliseconds?
+                    return dateFormat.parse(value + ".000");
+                }
+                catch(ParseException pex2)
+                {
+                    throw pex1; // original
+                }
+            }
+            finally { }
+        }
     }
     
     /**
@@ -326,7 +350,7 @@ public class ObservationReader implements Serializable
             CaomUtil.assignID(ce, uuid);
             if (alastModified != null)
             {
-                Date lastModified = rc.dateFormat.parse(alastModified.getValue());
+                Date lastModified = rc.parseTimestamp(alastModified.getValue());
                 CaomUtil.assignLastModified(ce, lastModified, "lastModified");
             }
             
@@ -334,7 +358,7 @@ public class ObservationReader implements Serializable
             {
                 if (aMaxLastModified != null)
                 {
-                    Date lastModified = rc.dateFormat.parse(aMaxLastModified.getValue());
+                    Date lastModified = rc.parseTimestamp(aMaxLastModified.getValue());
                     CaomUtil.assignLastModified(ce, lastModified, "maxLastModified");
                 }
                 if (mcs != null)
@@ -528,7 +552,10 @@ public class ObservationReader implements Serializable
         proposal.pi = getChildText("pi", element, namespace, false);
         proposal.project = getChildText("project", element, namespace, false);
         proposal.title = getChildText("title", element, namespace, false);
-        addChildTextToStringList("keywords", proposal.getKeywords(), element, namespace, false);
+        if (rc.docVersion < 23)
+            addChildTextToStringList("keywords", proposal.getKeywords(), element, namespace, false);
+        else
+            addKeywordsToList(proposal.getKeywords(), element, namespace);
         
         return proposal;
     }
@@ -560,7 +587,10 @@ public class ObservationReader implements Serializable
         target.standard = getChildTextAsBoolean("standard", element, namespace, false);
         target.redshift =  getChildTextAsDouble("redshift", element, namespace, false);
         target.moving = getChildTextAsBoolean("moving", element, namespace, false);
-        addChildTextToStringList("keywords", target.getKeywords(), element, namespace, false);
+        if (rc.docVersion < 23)
+            addChildTextToStringList("keywords", target.getKeywords(), element, namespace, false);
+        else
+            addKeywordsToList(target.getKeywords(), element, namespace);
         
         return target;
     }
@@ -637,7 +667,10 @@ public class ObservationReader implements Serializable
         telescope.geoLocationX =  getChildTextAsDouble("geoLocationX", element, namespace, false);
         telescope.geoLocationY =  getChildTextAsDouble("geoLocationY", element, namespace, false);
         telescope.geoLocationZ =  getChildTextAsDouble("geoLocationZ", element, namespace, false);
-        addChildTextToStringList("keywords", telescope.getKeywords(), element, namespace, false);
+        if (rc.docVersion < 23)
+            addChildTextToStringList("keywords", telescope.getKeywords(), element, namespace, false);
+        else
+            addKeywordsToList(telescope.getKeywords(), element, namespace);
         
         return telescope;
     }
@@ -661,7 +694,10 @@ public class ObservationReader implements Serializable
         String name = getChildText("name", element, namespace, true);
         Instrument instrument = new Instrument(name);
         
-        addChildTextToStringList("keywords", instrument.getKeywords(), element, namespace, false);
+        if (rc.docVersion < 23)
+            addChildTextToStringList("keywords", instrument.getKeywords(), element, namespace, false);
+        else
+            addKeywordsToList(instrument.getKeywords(), element, namespace);
         
         return instrument;
     }
@@ -786,13 +822,25 @@ public class ObservationReader implements Serializable
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null)
         {
+            if (rc.docVersion < 23)
+                throw new UnsupportedOperationException("cannot convert version " 
+                        + rc.docVersion + " polygon to current version");
             Attribute type = cur.getAttribute("type", xsiNamespace);
             String tval = type.getValue();
             String extype = namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
             if ( extype.equals(tval) )
             {
-                Polygon poly = new Polygon();
-                Element ves = cur.getChild("vertices", namespace);
+                List<Point> points = new ArrayList<Point>();
+                Element pes = cur.getChild("points", namespace);
+                for (Element pe : pes.getChildren()) // only vertex
+                {
+                    double cval1 = getChildTextAsDouble("cval1", pe, namespace, true);
+                    double cval2 = getChildTextAsDouble("cval2", pe, namespace, true);
+                    points.add(new Point(cval1, cval2));
+                }
+                Element se = cur.getChild("samples", namespace);
+                MultiPolygon poly = new MultiPolygon();
+                Element ves = se.getChild("vertices", namespace);
                 for (Element ve : ves.getChildren()) // only vertex
                 {
                     double cval1 = getChildTextAsDouble("cval1", ve, namespace, true);
@@ -800,7 +848,9 @@ public class ObservationReader implements Serializable
                     int sv = getChildTextAsInteger("type", ve, namespace, true);
                     poly.getVertices().add(new Vertex(cval1, cval2, SegmentType.toValue(sv)));
                 }
-                pos.bounds = poly;
+                
+                Polygon sp = new Polygon(points, poly);
+                pos.bounds = sp;
             }
             else
                 throw new ObservationParsingException("unsupported bounds type: " + tval);
@@ -843,7 +893,7 @@ public class ObservationReader implements Serializable
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
             nrg.bounds = new Interval(lb, ub);
-            addSamples(nrg.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
+            addSamples(nrg.bounds, cur.getChild("samples", namespace), namespace, rc);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
@@ -887,7 +937,7 @@ public class ObservationReader implements Serializable
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
             tim.bounds = new Interval(lb, ub);
-            addSamples(tim.bounds.getSamples(), cur.getChild("samples", namespace), namespace);
+            addSamples(tim.bounds, cur.getChild("samples", namespace), namespace, rc);
         }
         
         cur = getChildElement("dimension", element, namespace, false);
@@ -913,7 +963,7 @@ public class ObservationReader implements Serializable
         return tim;        
     }
     
-    private void addSamples(List<SubInterval> samples, Element sampleElement, Namespace namespace)
+    private void addSamples(Interval inter, Element sampleElement, Namespace namespace, ReadContext rc)
         throws ObservationParsingException
     {
         if (sampleElement != null)
@@ -923,8 +973,13 @@ public class ObservationReader implements Serializable
             {
                 double lb = getChildTextAsDouble("lower", se, namespace, true);
                 double ub = getChildTextAsDouble("upper", se, namespace, true);
-                samples.add(new SubInterval(lb, ub));
+                inter.getSamples().add(new SubInterval(lb, ub));
             }
+        }
+        if (rc.docVersion < 23 && inter.getSamples().isEmpty())
+        {
+            // backwards compat
+            inter.getSamples().add(new SubInterval(inter.getLower(), inter.getUpper()));
         }
     }
     
@@ -1004,7 +1059,10 @@ public class ObservationReader implements Serializable
             }
         }
         provenance.lastExecuted = getChildTextAsDate("lastExecuted", element, namespace, false, rc.dateFormat);
-        addChildTextToStringList("keywords", provenance.getKeywords(), element, namespace, false);
+        if (rc.docVersion < 23)
+            addChildTextToStringList("keywords", provenance.getKeywords(), element, namespace, false);
+        else
+            addKeywordsToList(provenance.getKeywords(), element, namespace);
         addInputs(provenance.getInputs(), element, namespace, rc);
         
         return provenance;
@@ -1941,6 +1999,26 @@ public class ObservationReader implements Serializable
             token = cleanWhitespace(token);
             if (!token.isEmpty())
                 list.add(token);
+        }
+    }
+    
+    protected void addKeywordsToList(Collection<String> list, Element element, Namespace ns)
+        throws ObservationParsingException
+    {
+        Element kwe = element.getChild("keywords", ns);
+        log.debug("addKeywordsToList: " + kwe);
+        if (kwe == null)
+            return;
+        
+        List kws = kwe.getChildren("keyword", ns);
+        log.debug("addKeywordsToList: " + kws.size());
+        Iterator it = kws.iterator();
+        while (it.hasNext())
+        {
+            Element k = (Element) it.next();
+            String s = k.getTextTrim();
+            log.debug("addKeywordsToList: " + s);
+            list.add(s);
         }
     }
     

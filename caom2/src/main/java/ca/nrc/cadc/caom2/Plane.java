@@ -111,7 +111,7 @@ public class Plane extends CaomEntity implements Comparable<Plane>
     
     public Plane(String productID)
     {
-        CaomValidator.assertNotNull(getClass(), "productID", productID);
+        CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
         this.productID = productID;
     }
 
