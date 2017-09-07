@@ -194,7 +194,7 @@ public abstract class AbstractDatabaseObservationDAOTest
 
     boolean deletionTrack;
     boolean useLongForUUID;
-    DatabaseObservationDAO dao;
+    ObservationDAO dao;
     TransactionManager txnManager;
 
     Class[] ENTITY_CLASSES =
@@ -215,7 +215,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.dao = new DatabaseObservationDAO();
+            this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();
         }

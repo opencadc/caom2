@@ -26,7 +26,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 
 /**
@@ -39,8 +39,8 @@ public class ObservationValidator extends Harvester
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
     private RepoClient srcObservationService;
-    private DatabaseObservationDAO srcObservationDAO;
-    private DatabaseObservationDAO destObservationDAO;
+    private ObservationDAO srcObservationDAO;
+    private ObservationDAO destObservationDAO;
 
     private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
@@ -70,12 +70,12 @@ public class ObservationValidator extends Harvester
         else
         {
             Map<String, Object> config1 = getConfigDAO(src);
-            this.srcObservationDAO = new DatabaseObservationDAO();
+            this.srcObservationDAO = new ObservationDAO();
             srcObservationDAO.setConfig(config1);
         }
         
         Map<String, Object> config2 = getConfigDAO(dest);
-        this.destObservationDAO = new DatabaseObservationDAO();
+        this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
         destObservationDAO.setComputeLastModified(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);

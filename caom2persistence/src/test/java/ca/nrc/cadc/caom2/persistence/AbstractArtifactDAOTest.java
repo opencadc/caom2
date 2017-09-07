@@ -120,7 +120,7 @@ public abstract class AbstractArtifactDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.obsDAO = new DatabaseObservationDAO();
+            this.obsDAO = new ObservationDAO();
             obsDAO.setConfig(config);
             this.dao = new ArtifactDAO();
             dao.setConfig(config);
