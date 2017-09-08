@@ -85,12 +85,9 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.compute.PolygonUtil;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -424,7 +421,7 @@ public abstract class RepoAction extends RestAction
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
             
-            ObservationDAO ret = new DatabaseObservationDAO();
+            ObservationDAO ret = new ObservationDAO();
             Map<String,Object> props = new HashMap<String,Object>();
             props.put("jndiDataSourceName", i.getDataSourceName());
             props.put("database", i.getDatabase());
