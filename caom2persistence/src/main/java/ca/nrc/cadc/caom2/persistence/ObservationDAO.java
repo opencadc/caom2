@@ -124,10 +124,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation>
         this.planeDAO = new PlaneDAO(gen, forceUpdate, readOnly);
     }
     
-    /**
-     * Return true if the observation identified by observation
-     * URI exists.
-     */
     public boolean exists(ObservationURI uri)
     {
         Observation observation = get(uri, null, 1);
@@ -454,63 +450,24 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation>
      */
     public void delete(ObservationURI uri)
     {
-        if (readOnly)
-            throw new UnsupportedOperationException("put in readOnly mode");
-        checkInit();
         if (uri == null)
-            throw new IllegalArgumentException("uri cannot be null");
-        log.debug("DELETE: " + uri);
-        long t = System.currentTimeMillis();
-
-        boolean txnOpen = false;
-        try
-        {
-            log.debug("starting transaction");
-            getTransactionManager().startTransaction();
-            txnOpen = true;
-            
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
-            log.debug("DELETE: " + sql);
-            ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
-            if (skel != null)
-                delete(skel, jdbc);
-            else
-                log.debug("DELETE: not found: " + uri);
-            
-            log.debug("committing transaction");
-            getTransactionManager().commitTransaction();
-            log.debug("commit: OK");
-            txnOpen = false;
-        }
-        catch(DataAccessException e)
-        {
-            log.debug("failed to delete " + uri + ": ", e);
-            getTransactionManager().rollbackTransaction();
-            log.debug("rollback: OK");
-            txnOpen = false;
-            throw e;
-        }
-        finally
-        {
-            if (txnOpen)
-            {
-                log.error("BUG - open transaction in finally");
-                getTransactionManager().rollbackTransaction();
-                log.error("rollback: OK");
-            }
-            long dt = System.currentTimeMillis() - t;
-            log.debug("DELETE: " + uri + " " + dt + "ms");
-        }
+            throw new IllegalArgumentException("uri arg cannot be null");
+        deleteImpl(null, uri);
     }
 
     public void delete(UUID id)
     {
+        if (id == null)
+            throw new IllegalArgumentException("id arg cannot be null");
+        deleteImpl(id, null);
+    }
+
+    private void deleteImpl(UUID id, ObservationURI uri)
+    {
         if (readOnly)
             throw new UnsupportedOperationException("put in readOnly mode");
         checkInit();
-        if (id == null)
-            throw new IllegalArgumentException("id cannot be null");
+        // null check in public methods above
         log.debug("DELETE: " + id);
         long t = System.currentTimeMillis();
 
@@ -522,7 +479,11 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation>
             txnOpen = true;
             
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
+            String sql = null;
+            if (id != null)
+                sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
+            else
+                sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
             log.debug("DELETE: " + sql);
             ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
             if (skel != null)
@@ -555,7 +516,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation>
             log.debug("DELETE: " + id + " " + dt + "ms");
         }
     }
-
+    
     @Override
     protected void deleteChildren(Skeleton s, JdbcTemplate jdbc)
     {

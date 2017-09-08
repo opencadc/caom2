@@ -97,7 +97,7 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public abstract class AbstractDatabaseReadAccessDAOTest
+public abstract class AbstractReadAccessDAOTest
 {
     protected static Logger log;
 
@@ -109,7 +109,7 @@ public abstract class AbstractDatabaseReadAccessDAOTest
 
     protected Class[] entityClasses;
 
-    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
+    protected AbstractReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
         this.useLongForUUID = useLongForUUID;
