@@ -75,8 +75,10 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
+import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import org.apache.log4j.Logger;
 
 import com.csvreader.CsvWriter;
@@ -119,16 +121,30 @@ public class GetAction extends RepoAction
             doGetObservation(uri);
             return;
         }
-        else
+        else if (getCollection() != null)
         {
             // maxRec == null means list all
             String maxRecString = syncInput.getParameter("maxrec");
+            String orderString = syncInput.getParameter("order");
+            boolean isAscending = true;
             Integer maxRec = MAX_OBS_LIST_SIZE;
             if (maxRecString != null)
             {
                 int m = Integer.valueOf(maxRecString);
                 if (m < maxRec)
                     maxRec = m;
+            }
+            
+            if (orderString != null)
+            {
+            	if (orderString.equals("desc"))
+            	{
+            		isAscending = false;
+            	}
+            	else if (!orderString.equals("asc"))
+            	{
+                    throw new IllegalArgumentException("wrong order value");
+            	}
             }
 
             try
@@ -145,12 +161,18 @@ public class GetAction extends RepoAction
                 if (endString != null)
                     end = df.parse(endString);
 
-                doList(maxRec, start, end);
+                doList(maxRec, start, end, isAscending);
             }
             catch (ParseException e)
             {
                 throw new IllegalArgumentException("wrong date format", e);
             }
+        }
+        else
+        {
+            // Responds to requests where no collection is provided.
+            // Returns list of all collections.
+            doGetCollectionList();
         }
     }
 
@@ -178,7 +200,7 @@ public class GetAction extends RepoAction
         log.debug("DONE: " + uri);
     }
 
-    protected void doList(int maxRec, Date start, Date end) throws Exception
+    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception
     {
         log.debug("START: " + getCollection());
 
@@ -186,7 +208,7 @@ public class GetAction extends RepoAction
 
         ObservationDAO dao = getDAO();
 
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec);
+        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec, isAscending);
 
         if (states == null)
             throw new ResourceNotFoundException("Collection not found: " + getCollection());
@@ -234,6 +256,38 @@ public class GetAction extends RepoAction
         }
         writer.flush();
         return bc.getByteCount();
+    }
+
+    /**
+     * Get list of collection names from repo configuration.
+     * @throws Exception
+     */
+    protected void doGetCollectionList()
+            throws Exception
+    {
+        CaomRepoConfig curConfig = getConfig();
+        Iterator<String> collectionListIterator = curConfig.collectionIterator();
+
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
+
+        while (collectionListIterator.hasNext()) {
+            String collectionName = collectionListIterator.next();
+
+            // Write out a single column as one entry per row
+            if (!collectionName.isEmpty())
+            {
+                writer.write(collectionName);
+                writer.endRecord();
+            }
+        }
+
+        writer.flush();
+        logInfo.setBytes(bc.getByteCount());
+        log.debug("DONE");
     }
 
 }
