@@ -81,7 +81,7 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import static ca.nrc.cadc.caom2.persistence.AbstractDatabaseReadAccessDAOTest.log;
+import static ca.nrc.cadc.caom2.persistence.AbstractReadAccessDAOTest.log;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Constructor;
@@ -98,7 +98,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author pdowler
  */
-public class PostgresqlReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
+public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
 {
     static
     {

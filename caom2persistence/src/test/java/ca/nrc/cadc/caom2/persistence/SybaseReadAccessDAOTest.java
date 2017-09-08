@@ -82,7 +82,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseReadAccessDAOTest extends AbstractDatabaseReadAccessDAOTest
+public class SybaseReadAccessDAOTest extends AbstractReadAccessDAOTest
 {
     static
     {

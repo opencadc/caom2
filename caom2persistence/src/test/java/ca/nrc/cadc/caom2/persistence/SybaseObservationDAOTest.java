@@ -78,7 +78,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseObservationDAOTest extends AbstractDatabaseObservationDAOTest
+public class SybaseObservationDAOTest extends AbstractObservationDAOTest
 {
     static
     {

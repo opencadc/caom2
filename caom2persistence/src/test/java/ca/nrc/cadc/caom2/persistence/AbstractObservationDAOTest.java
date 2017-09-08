@@ -164,7 +164,7 @@ import org.springframework.dao.DataIntegrityViolationException;
  * 
  * @author pdowler
  */
-public abstract class AbstractDatabaseObservationDAOTest
+public abstract class AbstractObservationDAOTest
 {
     protected static Logger log;
 
@@ -194,7 +194,7 @@ public abstract class AbstractDatabaseObservationDAOTest
 
     boolean deletionTrack;
     boolean useLongForUUID;
-    DatabaseObservationDAO dao;
+    ObservationDAO dao;
     TransactionManager txnManager;
 
     Class[] ENTITY_CLASSES =
@@ -202,7 +202,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, 
+    protected AbstractObservationDAOTest(Class genClass, String server, String database, String schema, 
             boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
@@ -215,7 +215,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.dao = new DatabaseObservationDAO();
+            this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();
         }
@@ -956,11 +956,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             log.info("testGetObservationList");
             Integer batchSize = new Integer(3);
 
-            Observation o1 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1");
-            Observation o2 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA");
-            Observation o3 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2");
-            Observation o4 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB");
-            Observation o5 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3");
+            Observation o1 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs1");
+            Observation o2 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obsA");
+            Observation o3 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs2");
+            Observation o4 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obsB");
+            Observation o5 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs3");
 
             //txnManager.startTransaction();
             dao.put(o1);

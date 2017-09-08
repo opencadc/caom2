@@ -140,12 +140,6 @@ public class DummySQLGeneratorImpl implements SQLGenerator
     }
 
     @Override
-    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, String string)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public String getObservationSelectSQL(Class type, Date date, Date date1, int i)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -159,6 +153,18 @@ public class DummySQLGeneratorImpl implements SQLGenerator
 
     @Override
     public RowMapper getObservationStateMapper()
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, boolean bln, String string)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public RowMapper getArtifactMapper()
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
