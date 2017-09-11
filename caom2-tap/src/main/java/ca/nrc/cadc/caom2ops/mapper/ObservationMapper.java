@@ -145,7 +145,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.proposal.pi = Util.getString(data, map.get("caom2:Observation.proposal.pi"));
                 obs.proposal.project = Util.getString(data, map.get("caom2:Observation.proposal.project"));
                 obs.proposal.title = Util.getString(data, map.get("caom2:Observation.proposal.title"));
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.proposal.keywords")), obs.proposal.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.proposal.keywords")), obs.proposal.getKeywords());
             }
             
             String targetName = Util.getString(data, map.get("caom2:Observation.target.name"));
@@ -158,7 +158,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 String tType = Util.getString(data, map.get("caom2:Observation.target.type"));
                 if (tType != null)
                     obs.target.type = TargetType.toValue(tType);
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
             }
             String telName = Util.getString(data, map.get("caom2:Observation.telescope.name"));
             if (telName != null)
@@ -167,14 +167,14 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.telescope.geoLocationX = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationX"));
                 obs.telescope.geoLocationY = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationY"));
                 obs.telescope.geoLocationZ = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationZ"));
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.telescope.keywords")), obs.telescope.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.telescope.keywords")), obs.telescope.getKeywords());
             }
             
             String instName = Util.getString(data, map.get("caom2:Observation.instrument.name"));
             if (instName != null)
             {
                 obs.instrument = new Instrument(instName);
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.instrument.keywords")), obs.instrument.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.instrument.keywords")), obs.instrument.getKeywords());
             }
             
             String reqFlag = Util.getString(data, map.get("caom2:Observation.requirements.flag"));
