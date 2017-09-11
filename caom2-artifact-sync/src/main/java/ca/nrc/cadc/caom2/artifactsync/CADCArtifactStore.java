@@ -200,6 +200,7 @@ public class CADCArtifactStore implements ArtifactStore
         {
             httpPut.setContentMD5(contentMD5);
         }
+        httpPut.setBufferSize(4096);
         httpPut.run();
         int respCode = httpPut.getResponseCode();
 

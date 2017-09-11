@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -136,52 +137,69 @@ public class ArtifactHarvester implements Runnable
 
                 for (Artifact artifact : artifacts)
                 {
-                    try
-                    {
-                        boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
-                        log.debug("Artifact " + artifact.getURI() +
-                                " with MD5 " + artifact.contentChecksum + " exists: " + exists);
-                        if (!exists)
-                        {
-                            log.debug("Artifact eligible for download");
 
-                            // see if there's already an entry
-                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                            if (skip == null)
+                    // TEMPORARY:  For now, to keep the data volume low, only harvest
+                    // MAST files that begin with a W, X, Y, or Z
+                    List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
+                    String fileID = artifact.getURI().getPath();
+                    String firstChar = fileID.substring(0, 1).toLowerCase();
+                    if (!acceptedFilePrefixes.contains(firstChar))
+                    {
+                        log.debug("Artifact " + artifact.getURI() + " skipped by temporary data volume restriction");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
+                            log.debug("Artifact " + artifact.getURI() +
+                                    " with MD5 " + artifact.contentChecksum + " exists: " + exists);
+                            if (!exists)
                             {
-                                if (!dryrun)
+
+                                // see if there's already an entry
+                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                                if (skip == null)
                                 {
-                                    log.debug("Adding artifact to skip table");
-                                    skip = new HarvestSkipURI(
-                                            source, STATE_CLASS, artifact.getURI(), "new or modifed artifact");
-                                    harvestSkipURIDAO.put(skip);
+                                    if (!dryrun)
+                                    {
+                                        log.info("--> Adding artifact to skip table: " + artifact.getURI());
+                                        // set the message to be an empty string
+                                        skip = new HarvestSkipURI(
+                                                source, STATE_CLASS, artifact.getURI(), "");
+                                        harvestSkipURIDAO.put(skip);
+                                    }
+                                    else
+                                    {
+                                        log.info("--> Artifact eligible for harvesting: " + artifact.getURI());
+                                    }
+                                    newDownloadCount++;
                                 }
-                                newDownloadCount++;
+                                else
+                                {
+                                    log.debug("Artifact already exists in skip table.");
+                                }
+                                downloadCount++;
+                            }
+
+                            if (!dryrun)
+                            {
+                                state.curLastModified = artifact.getLastModified();
+                                harvestStateDAO.put(state);
+                                log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                            }
+                        }
+                        catch (Throwable t)
+                        {
+                            if (dryrun)
+                            {
+                                log.error("Failed to determine if artifact exists, continuing.", t);
                             }
                             else
                             {
-                                log.debug("Artifact already exists in skip table.");
+                                log.error("Failed to determine if artifact exists, exiting");
+                                throw new IllegalStateException(t);
                             }
-                            downloadCount++;
-                        }
-
-                        if (!dryrun)
-                        {
-                            state.curLastModified = artifact.getLastModified();
-                            harvestStateDAO.put(state);
-                            log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
-                        }
-                    }
-                    catch (Throwable t)
-                    {
-                        if (dryrun)
-                        {
-                            log.error("Failed to determine if artifact exists, continuing.", t);
-                        }
-                        else
-                        {
-                            log.error("Failed to determine if artifact exists, exiting");
-                            throw new IllegalStateException(t);
                         }
                     }
                 }

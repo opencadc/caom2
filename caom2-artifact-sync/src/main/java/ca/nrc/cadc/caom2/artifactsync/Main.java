@@ -159,6 +159,11 @@ public class Main
                 try
                 {
                     nthreads = Integer.parseInt(am.getValue("threads"));
+                    if (nthreads < 1 || nthreads > 25)
+                    {
+                        log.error("value for --threads must be between 1 and 25");
+                        System.exit(-1);
+                    }
                 }
                 catch (NumberFormatException nfe)
                 {
