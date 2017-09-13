@@ -71,7 +71,6 @@ package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.caom2.AccessURLConverter;
-import ca.nrc.cadc.tap.caom2.CaomKeywordsConverter;
 import ca.nrc.cadc.tap.caom2.CaomReadAccessConverter;
 import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
 import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
@@ -112,10 +111,6 @@ public class AdqlQueryImpl extends AdqlQuery
         // convert ADQL geometry function calls to alternate form
         super.navigatorList.add(new CaomRegionConverter());
         
-        // convert MATCH function to TextSearch: currently unsupported i  favour of CaomKeywordsConverter below
-        //super.navigatorList.add(new MatchConverter(
-        //    new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
-        
         // convert functions to PG-specific names
         navigatorList.add(new FunctionExpressionExtractor(
             new PgFunctionNameConverter(), new ReferenceNavigator(), new FromItemNavigator()));
@@ -142,9 +137,6 @@ public class AdqlQueryImpl extends AdqlQuery
         
         // change caom2.Artifact.accessURL to caom2.Artifact.uri
         super.navigatorList.add(new AccessURLConverter());
-        
-        // add cast for caom2 keywords columns so they behave like varchar
-        super.navigatorList.add(new CaomKeywordsConverter());
         
         //for (Object o : navigatorList)
         //    log.debug("navigator: " + o.getClass().getName());

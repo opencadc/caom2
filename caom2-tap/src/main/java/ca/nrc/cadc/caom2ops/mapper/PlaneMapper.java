@@ -84,6 +84,8 @@ import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
@@ -139,21 +141,42 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
             plane.metaRelease = Util.getDate(data, map.get("caom2:Plane.metaRelease"));
             
+            plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
+              
+            // TODO: get List<Point> directly from caom2:Plane.position.bounds
+            // TODO: get double[] from caom2:Plane.position.bounds.samples
+            
             ca.nrc.cadc.stc.Polygon posBounds = (ca.nrc.cadc.stc.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
             if (posBounds != null)
             {
+                // HACK: 
                 plane.position = new Position();
-                Polygon poly = new Polygon();
+                MultiPolygon mp = new MultiPolygon();
                 SegmentType t = SegmentType.MOVE;
                 for (int i=0; i<posBounds.getCoordPairs().size(); i++)
                 {
                     ca.nrc.cadc.stc.CoordPair c = posBounds.getCoordPairs().get(i);
                     Vertex v = new Vertex(c.getX(), c.getY(), t);
+                    mp.getVertices().add(v);
                     t = SegmentType.LINE; // subsequent vertices
-                    poly.getVertices().add(v);
                 }
-                poly.getVertices().add(Vertex.CLOSE);
-                plane.position.bounds = poly;
+                mp.getVertices().add(Vertex.CLOSE);
+                // HACK: temporary backwards compat: use the position_bounds to construct the DALI polygon and
+                // the CAOM polygon
+                boolean ccw = mp.getCCW();
+                List<Point> pts = new ArrayList<Point>();
+                for (Vertex v : mp.getVertices())
+                {
+                    if (!SegmentType.CLOSE.equals(v.getType()))
+                    {
+                        Point p = new Point(v.cval1, v.cval2);
+                        if (ccw)
+                            pts.add(p); // add to end
+                        else
+                            pts.add(0, p); // add to start aka revserse order
+                    }
+                }
+                plane.position.bounds = new Polygon(pts, mp);
                 
                 Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
                 Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis2"));
@@ -166,18 +189,22 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
             Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.upper"));
-            List<Double> eSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.energy.bounds"));
+            List<Double> eSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.energy.bounds.samples"));
             if (nrgBounds1 != null && nrgBounds2 != null)
             {
                 plane.energy = new Energy();
                 plane.energy.bounds = new Interval(nrgBounds1, nrgBounds2);
-                if (eSampleVals != null && eSampleVals.size() > 2) // actual sub-samples
+                if (eSampleVals != null) // actual sub-samples
                 {
                     for (int i=0; i<eSampleVals.size(); i++)
                     {
                         plane.energy.bounds.getSamples().add(new SubInterval(eSampleVals.get(i), eSampleVals.get(i+1)));
                         i++; // skip upper
                     }
+                }
+                else // HACK: backwards compat
+                {
+                    plane.energy.bounds.getSamples().add(new SubInterval(nrgBounds1, nrgBounds2));
                 }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
                 plane.energy.dimension = Util.getLong(data, map.get("caom2:Plane.energy.dimension"));
@@ -195,18 +222,22 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Double tBounds1 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.lower"));
             Double tBounds2 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.upper"));
-            List<Double> tSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.time.bounds"));
+            List<Double> tSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.time.bounds.samples"));
             if (tBounds1 != null && tBounds2 != null)
             {
                 plane.time = new Time();
                 plane.time.bounds = new Interval(tBounds1, tBounds2);
-                if (tSampleVals != null && tSampleVals.size() > 2) // actual sub-samples
+                if (tSampleVals != null) // actual sub-samples
                 {
                     for (int i=0; i<tSampleVals.size(); i++)
                     {
                         plane.time.bounds.getSamples().add(new SubInterval(tSampleVals.get(i), tSampleVals.get(i+1)));
                         i++; // skip upper
                     }
+                }
+                else // HACK: backwards compat
+                {
+                    plane.time.bounds.getSamples().add(new SubInterval(tBounds1, tBounds2));
                 }
                 plane.time.dimension = Util.getLong(data, map.get("caom2:Plane.time.dimension"));
                 plane.time.resolution = Util.getDouble(data, map.get("caom2:Plane.time.resolution"));
@@ -221,7 +252,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.polarization = new Polarization();
                 plane.polarization.states = new ArrayList<PolarizationState>();
                 Util.decodeStates(polStates, plane.polarization.states);
-                plane.polarization.dimension = Util.getInteger(data, map.get("caom2:Plane.polarization.dimension"));
+                plane.polarization.dimension = Util.getLong(data, map.get("caom2:Plane.polarization.dimension"));
             }
             
             Metrics metrics = new Metrics();
@@ -253,7 +284,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 String inputs = Util.getString(data, map.get("caom2:Plane.provenance.inputs"));
                 Util.decodePlaneURIs(inputs, plane.provenance.getInputs());
                 String keywords = Util.getString(data, map.get("caom2:Plane.provenance.keywords"));
-                Util.decodeListString(keywords, plane.provenance.getKeywords());
+                Util.decodeKeywordList(keywords, plane.provenance.getKeywords());
             }
             
             String qualityFlag = Util.getString(data, map.get("caom2:Plane.quality.flag"));
@@ -262,16 +293,21 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             Date lastModified = Util.getDate(data, map.get("caom2:Plane.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Plane.maxLastModified"));
-
             Util.assignLastModified(plane, lastModified, "lastModified");
             Util.assignLastModified(plane, maxLastModified, "maxLastModified");
+            
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Plane.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Plane.accMetaChecksum"));
+            Util.assignMetaChecksum(plane, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(plane, accMetaChecksum, "accMetaChecksum");
+            
             Util.assignID(plane, id);
 
             return plane;
         }
         catch(URISyntaxException ex)
         {
-            throw new UnexpectedContentException("invalid Plane.provenance.reference URI", ex);
+            throw new UnexpectedContentException("invalid URI", ex);
         }
         finally { }
     }

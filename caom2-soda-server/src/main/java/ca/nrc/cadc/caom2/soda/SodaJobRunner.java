@@ -87,23 +87,22 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.compute.CutoutUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.caom2.util.CutoutUtil;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.ParamExtractor;
-import ca.nrc.cadc.dali.util.CircleFormat;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
-import ca.nrc.cadc.dali.util.PolygonFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
@@ -582,16 +581,18 @@ public class SodaJobRunner implements JobRunner
             {
                 if (dd.length < 6)
                     throw new IndexOutOfBoundsException();
-                Polygon poly = new Polygon();
+                List<Point> points = new ArrayList<Point>();
+                MultiPolygon mp = new MultiPolygon();
                 SegmentType st = SegmentType.MOVE;
                 for (int i=0; i<dd.length; i += 2)
                 {
-                    Vertex v = new Vertex(dd[i], dd[i+1], st);
-                    poly.getVertices().add(v);
+                    points.add(new Point(dd[i], dd[i+1]));
+                    mp.getVertices().add(new Vertex(dd[i], dd[i+1], st));
                     st = SegmentType.LINE;
                 }
-                poly.getVertices().add(Vertex.CLOSE);
-                posCut.add(new Cutout(PARAM_POLY, s, poly));
+                mp.getVertices().add(Vertex.CLOSE);
+                Polygon poly = new Polygon(points, mp);
+                posCut.add(new Cutout<Shape>(PARAM_POLY, s, poly));
             }
             catch(IndexOutOfBoundsException ex)
             {

@@ -83,6 +83,8 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2ops.Util;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -143,7 +145,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.proposal.pi = Util.getString(data, map.get("caom2:Observation.proposal.pi"));
                 obs.proposal.project = Util.getString(data, map.get("caom2:Observation.proposal.project"));
                 obs.proposal.title = Util.getString(data, map.get("caom2:Observation.proposal.title"));
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.proposal.keywords")), obs.proposal.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.proposal.keywords")), obs.proposal.getKeywords());
             }
             
             String targetName = Util.getString(data, map.get("caom2:Observation.target.name"));
@@ -156,7 +158,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 String tType = Util.getString(data, map.get("caom2:Observation.target.type"));
                 if (tType != null)
                     obs.target.type = TargetType.toValue(tType);
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
             }
             String telName = Util.getString(data, map.get("caom2:Observation.telescope.name"));
             if (telName != null)
@@ -165,14 +167,14 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.telescope.geoLocationX = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationX"));
                 obs.telescope.geoLocationY = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationY"));
                 obs.telescope.geoLocationZ = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationZ"));
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.telescope.keywords")), obs.telescope.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.telescope.keywords")), obs.telescope.getKeywords());
             }
             
             String instName = Util.getString(data, map.get("caom2:Observation.instrument.name"));
             if (instName != null)
             {
                 obs.instrument = new Instrument(instName);
-                Util.decodeListString(Util.getString(data, map.get("caom2:Observation.instrument.keywords")), obs.instrument.getKeywords());
+                Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.instrument.keywords")), obs.instrument.getKeywords());
             }
             
             String reqFlag = Util.getString(data, map.get("caom2:Observation.requirements.flag"));
@@ -192,12 +194,21 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
             
             Date lastModified = Util.getDate(data, map.get("caom2:Observation.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Observation.maxLastModified"));
-
             Util.assignLastModified(obs, lastModified, "lastModified");
             Util.assignLastModified(obs, maxLastModified, "maxLastModified");
+            
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Observation.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Observation.accMetaChecksum"));
+            Util.assignMetaChecksum(obs, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(obs, accMetaChecksum, "accMetaChecksum");
+            
             Util.assignID(obs, id);
 
             return obs;   		
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new UnexpectedContentException("invalid URI", ex);
         }
         finally { }
     }

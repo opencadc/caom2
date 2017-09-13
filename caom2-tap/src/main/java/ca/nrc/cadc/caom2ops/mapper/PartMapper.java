@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2ops.mapper;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2ops.Util;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -110,21 +112,34 @@ public class PartMapper implements VOTableRowMapper<Part>
         if (id == null)
             return null;
 
-        String pName = Util.getString(data, map.get("caom2:Part.name"));
-        Part part = new Part(pName);
+        try
+        {
+            String pName = Util.getString(data, map.get("caom2:Part.name"));
+            Part part = new Part(pName);
 
-        String pType = Util.getString(data, map.get("caom2:Part.productType"));
-        if (pType != null)
-            part.productType = ProductType.toValue(pType);
+            String pType = Util.getString(data, map.get("caom2:Part.productType"));
+            if (pType != null)
+                part.productType = ProductType.toValue(pType);
 
-        Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-        Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
+            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
+            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
+            Util.assignLastModified(part, pLastModified, "lastModified");
+            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
 
-        Util.assignLastModified(part, pLastModified, "lastModified");
-        Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
-        Util.assignID(part, id);
+            URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
+            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
+            Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
+            Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
 
-        return part;   		
+            Util.assignID(part, id);
+            
+            return part;
+        }
+        catch(URISyntaxException ex)
+        {
+            throw new UnexpectedContentException("invalid URI", ex);
+        }
+        finally { }
     }
 }
 

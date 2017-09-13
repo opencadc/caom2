@@ -71,7 +71,6 @@ package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.tap.TapSelectItem;
-import ca.nrc.cadc.tap.caom2.CaomKeywordsFormat;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
 import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
@@ -142,17 +141,6 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     public Format<Object> getClobFormat(TapSelectItem columnDesc)
     {
         log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
-        
-        if (columnDesc != null)
-        {
-            if ("caom2.Observation".equalsIgnoreCase(columnDesc.tableName)
-                || "caom2.Plane".equalsIgnoreCase(columnDesc.tableName))
-            {
-                if (columnDesc.getColumnName() != null
-                        && columnDesc.getColumnName().endsWith("_keywords"))
-                    return new CaomKeywordsFormat();
-            }
-        }
         
         // function with CLOB argument
         if (columnDesc != null)

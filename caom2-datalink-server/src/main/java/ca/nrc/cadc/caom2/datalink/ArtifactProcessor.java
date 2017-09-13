@@ -90,14 +90,14 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.compute.CutoutUtil;
+import ca.nrc.cadc.caom2.compute.EnergyUtil;
+import ca.nrc.cadc.caom2.compute.PolarizationUtil;
+import ca.nrc.cadc.caom2.compute.PolygonUtil;
+import ca.nrc.cadc.caom2.compute.PositionUtil;
+import ca.nrc.cadc.caom2.compute.TimeUtil;
 import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.EnergyUtil;
-import ca.nrc.cadc.caom2.types.PolarizationUtil;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.PolygonUtil;
-import ca.nrc.cadc.caom2.types.PositionUtil;
-import ca.nrc.cadc.caom2.types.TimeUtil;
-import ca.nrc.cadc.caom2.util.CutoutUtil;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
@@ -108,6 +108,7 @@ import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.security.auth.Subject;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -259,8 +260,8 @@ public class ArtifactProcessor
         if (pos != null && pos.bounds != null && pos.bounds != null 
                 && pos.dimension != null && (pos.dimension.naxis1 > 1 || pos.dimension.naxis2 > 1))
         {
-            Polygon outer = PolygonUtil.getOuterHull((Polygon) pos.bounds);
-            ret.poly = daf.format(new CoordIterator(outer.getVertices().iterator()));
+            Polygon outer = (Polygon) pos.bounds;
+            ret.poly = daf.format(new CoordIterator(outer.getPoints().iterator()));
 
             Circle msc = outer.getMinimumSpanningCircle();
             ret.circle = daf.format(new double[] { msc.getCenter().cval1, msc.getCenter().cval2, msc.getRadius() });
@@ -305,7 +306,8 @@ public class ArtifactProcessor
                 && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
             return null;
 
-        AuthMethod authMethod = AuthenticationUtil.getAuthMethodForCurrentSubject();
+        Subject caller = AuthenticationUtil.getCurrentSubject();
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null)
             authMethod = AuthMethod.ANON;
         
