@@ -34,7 +34,5 @@ dependencies {
     compile 'org.opencadc:cadc-access-control:[1.1.1,)'
     compile 'org.opencadc:cadc-access-control-identity:1.+'
     
-    //compile 'org.opencadc:caom2:[2.3,3.0)'
- 
     testCompile group: 'junit', name: 'junit', version: '4.+'
 }
