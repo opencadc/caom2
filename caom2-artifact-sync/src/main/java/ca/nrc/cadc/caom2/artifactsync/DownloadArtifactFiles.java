@@ -96,7 +96,7 @@ import ca.nrc.cadc.net.InputStreamWrapper;
 public class DownloadArtifactFiles implements Runnable
 {
 
-    private static final Integer BATCH_SIZE = Integer.valueOf(1000);
+    private static final Integer BATCH_SIZE = Integer.valueOf(100);
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
@@ -211,7 +211,8 @@ public class DownloadArtifactFiles implements Runnable
                     if (head.getThrowable() != null)
                     {
                         sb.append(head.getThrowable().getMessage());
-                        log.error("[" + threadName + "] error determining artifact checksum", head.getThrowable());
+                        log.error("[" + threadName + "] error determining artifact checksum",
+                                head.getThrowable());
                     }
                     result.success = false;
                     result.errorMessage = sb.toString();
@@ -220,6 +221,14 @@ public class DownloadArtifactFiles implements Runnable
 
                 String md5String = head.getContentMD5();
                 sourceChecksum = URI.create("MD5:" + md5String);
+
+                // check again to be sure the destination doesn't already have it
+                if (artifactStore.contains(artifactURI, sourceChecksum))
+                {
+                    log.info("[" + threadName + "] ArtifactStore already has correct copy of "
+                            + artifactURI + " with checksum " + sourceChecksum);
+                    return result;
+                }
 
                 HttpDownload download = new HttpDownload(url, this);
 
