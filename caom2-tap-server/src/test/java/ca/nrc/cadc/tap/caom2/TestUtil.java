@@ -120,7 +120,7 @@ public class TestUtil
             log.debug("failed to read .dbrc - cannot load TapSchema");
         }
         */
-        TapDataType uuidType = new TapDataType("char", 36, false, "caom:uuid");
+        TapDataType uuidType = new TapDataType("char", "36", "caom:uuid");
         
         
         

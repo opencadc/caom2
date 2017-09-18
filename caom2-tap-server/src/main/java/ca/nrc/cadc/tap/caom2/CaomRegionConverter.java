@@ -145,8 +145,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
       if (e instanceof Column)
       {
           Column c = (Column) e;
-          if (c.getColumnName().equals("energy_bounds")
-                  || c.getColumnName().equals("time_bounds"))
+          if (c.getColumnName().equals("energy_bounds") || c.getColumnName().equals("energy_bounds_samples")
+                  || c.getColumnName().equals("time_bounds") || c.getColumnName().equals("time_bounds_samples"))
               return Interval.class;
       }
       return null; // unknown

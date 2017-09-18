@@ -104,25 +104,6 @@ public class UploadManagerImpl extends BasicUploadManager
         return new PostgreSQLDataType();
     }
     
-    
-    
-    /**
-     * Create the SQL to grant select privileges to the cvopub group for the
-     * specified table.
-     * 
-     * @param databaseTableName fully qualified table name.
-     * @return SQL to grant select privileges to the cvopub group.
-     */
-    @Override
-    protected String getGrantSelectTableSQL(String databaseTableName)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.append("grant select on table ");
-        sb.append(databaseTableName);
-        sb.append(" to group cvopub");
-        return sb.toString();
-    }
-
     // convert to a PGobject (spoint)
     @Override
     protected Object getPointObject(Position pos)

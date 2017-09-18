@@ -61,7 +61,7 @@ public class MaxRecValidatorImplTest
         
         ColumnDesc c1 = new ColumnDesc("foo.bar", "a", TapDataType.INTEGER);
         ColumnDesc c2 = new ColumnDesc("foo.bar", "b", TapDataType.DOUBLE);
-        ColumnDesc c3 = new ColumnDesc("foo.bar", "c", new TapDataType("char", null, true, null));
+        ColumnDesc c3 = new ColumnDesc("foo.bar", "c", new TapDataType("char", "*", null));
         
         TableDesc td = new TableDesc("foo", "foo.bar");
         td.getColumnDescs().add(c1);
