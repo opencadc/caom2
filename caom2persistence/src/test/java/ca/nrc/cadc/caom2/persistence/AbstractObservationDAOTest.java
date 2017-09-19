@@ -96,6 +96,9 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
+import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
@@ -106,6 +109,10 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.Polarization;
+import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
@@ -118,7 +125,14 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -138,6 +152,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -149,7 +164,7 @@ import org.springframework.dao.DataIntegrityViolationException;
  * 
  * @author pdowler
  */
-public abstract class AbstractDatabaseObservationDAOTest
+public abstract class AbstractObservationDAOTest
 {
     protected static Logger log;
 
@@ -179,7 +194,7 @@ public abstract class AbstractDatabaseObservationDAOTest
 
     boolean deletionTrack;
     boolean useLongForUUID;
-    DatabaseObservationDAO dao;
+    ObservationDAO dao;
     TransactionManager txnManager;
 
     Class[] ENTITY_CLASSES =
@@ -187,7 +202,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected AbstractDatabaseObservationDAOTest(Class genClass, String server, String database, String schema, 
+    protected AbstractObservationDAOTest(Class genClass, String server, String database, String schema, 
             boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
@@ -200,7 +215,7 @@ public abstract class AbstractDatabaseObservationDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.dao = new DatabaseObservationDAO();
+            this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();
         }
@@ -247,7 +262,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    @Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -302,8 +317,23 @@ public abstract class AbstractDatabaseObservationDAOTest
             
             List<ObservationState> result = dao.getObservationList(collection, start, end, batchSize);
             Assert.assertEquals(4, result.size());
-            for (ObservationState os : result)
+            for (int i=0; i<result.size(); i++)
+            {
+                ObservationState os = result.get(i);
                 log.info("found: " + os);
+                ObservationURI exp = new ObservationURI(collection, "bar"+(i+1)); // 1 2 3 4
+                Assert.assertEquals(exp, os.getURI());
+            }
+            
+            result = dao.getObservationList(collection, start, end, batchSize, false); // descending order
+            Assert.assertEquals(4, result.size());
+            for (int i=0; i<result.size(); i++)
+            {
+                ObservationState os = result.get(i);
+                log.info("found: " + os);
+                ObservationURI exp = new ObservationURI(collection, "bar"+(4-i)); // 4 3 2 1
+                Assert.assertEquals(exp, os.getURI());
+            }
             
             result = dao.getObservationList(collection, start, mid, batchSize);
             Assert.assertEquals(2, result.size());
@@ -571,13 +601,16 @@ public abstract class AbstractDatabaseObservationDAOTest
     @Test
     public void testPutSimpleObservation()
     {
+        boolean[] completeness = new boolean[] { false, true };
+        boolean[] science = new boolean[] { false, true };
+        
         try
         {
             int minDepth = 1;
             int maxDepth = 5;
-            for (boolean full : new boolean[] { false, true })
+            for (boolean full : completeness)
             {
-                for (boolean sci : new boolean[] { false, true })
+                for (boolean sci : science)
                 {
                     for (int i=minDepth; i<=maxDepth; i++)
                     {
@@ -923,11 +956,11 @@ public abstract class AbstractDatabaseObservationDAOTest
             log.info("testGetObservationList");
             Integer batchSize = new Integer(3);
 
-            Observation o1 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs1");
-            Observation o2 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsA");
-            Observation o3 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs2");
-            Observation o4 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obsB");
-            Observation o5 = new SimpleObservation(AbstractDatabaseObservationDAOTest.class.getSimpleName(), "obs3");
+            Observation o1 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs1");
+            Observation o2 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obsA");
+            Observation o3 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs2");
+            Observation o4 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obsB");
+            Observation o5 = new SimpleObservation(AbstractObservationDAOTest.class.getSimpleName(), "obs3");
 
             //txnManager.startTransaction();
             dao.put(o1);
@@ -1162,14 +1195,14 @@ public abstract class AbstractDatabaseObservationDAOTest
         // all checksums are computed and assigned on expected as a side effect of calling put
         Assert.assertEquals(cn+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
         Assert.assertEquals(cn+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
-        /*
+
         try
         {
             // above verifies that checksum was written to and read from database
             // below checks that all values included in the checksum were faithfully written/read
             // in case some other asser is not catching it - fail  means there is a bug in the
             // comparisons this should catch it
-            URI mcs = actual.computeMetaChecksum(false, MessageDigest.getInstance("MD5"));
+            URI mcs = actual.computeMetaChecksum(MessageDigest.getInstance("MD5"));
             Assert.assertEquals(cn + " recomputed metaChecksum", actual.getMetaChecksum(), mcs);
         }
         catch(Exception ex)
@@ -1177,7 +1210,6 @@ public abstract class AbstractDatabaseObservationDAOTest
             log.error(cn + " failed to compute metaChecksum", ex);
             Assert.fail(cn + " failed to compute metaChecksum: " + ex);
         }
-        */
         
         //Assert.assertEquals(cn+".getStateCode", expected.getStateCode(), actual.getStateCode());
         
@@ -1302,6 +1334,111 @@ public abstract class AbstractDatabaseObservationDAOTest
         }
         else
             Assert.assertNull(actual.metrics);
+        
+        if (expected.position != null)
+        {
+            Assert.assertNotNull("plane.position", actual.position);
+            if (expected.position.bounds != null)
+            {
+                Polygon ep = (Polygon) expected.position.bounds;
+                Polygon ap = (Polygon) actual.position.bounds;
+                Assert.assertEquals("num points", ep.getPoints().size(), ap.getPoints().size());
+                for (int i=0; i<ep.getPoints().size(); i++)
+                {
+                    Point ept = ep.getPoints().get(i);
+                    Point apt = ap.getPoints().get(i);
+                    Assert.assertEquals("point.cval1", ept.cval1, apt.cval1, 0.0);
+                    Assert.assertEquals("point.cval2", ept.cval2, apt.cval2, 0.0);
+                }
+                Assert.assertEquals("num vertices", ep.getSamples().getVertices().size(), ap.getSamples().getVertices().size());
+                for (int i=0; i<ep.getSamples().getVertices().size(); i++)
+                {
+                    Vertex ev = ep.getSamples().getVertices().get(i);
+                    Vertex av = ap.getSamples().getVertices().get(i);
+                    Assert.assertEquals("vertex.cval2", ev.getType(), av.getType());
+                    Assert.assertEquals("vertex.cval1", ev.cval1, av.cval1, 0.0);
+                    Assert.assertEquals("vertex.cval2", ev.cval2, av.cval2, 0.0);
+                }
+            }
+            else
+                Assert.assertNull(actual.position.bounds);
+            if (expected.position.dimension != null)
+            {
+                Assert.assertEquals(expected.position.dimension.naxis1, actual.position.dimension.naxis1);
+                Assert.assertEquals(expected.position.dimension.naxis2, actual.position.dimension.naxis2);
+            }
+            else
+                Assert.assertNull(actual.position.dimension);
+            Assert.assertEquals(expected.position.resolution, actual.position.resolution);
+            Assert.assertEquals(expected.position.sampleSize, actual.position.sampleSize);
+            Assert.assertEquals(expected.position.timeDependent, actual.position.timeDependent);
+            
+        }
+        if (expected.energy != null)
+        {
+            Assert.assertNotNull("plane.energy", actual.energy);
+            if (expected.energy.bounds != null)
+            {
+                Assert.assertNotNull(actual.energy.bounds);
+                Assert.assertEquals(expected.energy.bounds.getLower(), actual.energy.bounds.getLower(), 0.0);
+                Assert.assertEquals(expected.energy.bounds.getUpper(), actual.energy.bounds.getUpper(), 0.0);
+                Assert.assertEquals(expected.energy.bounds.getSamples().size(), actual.energy.bounds.getSamples().size());
+                for (int i=0; i<expected.energy.bounds.getSamples().size(); i++)
+                {
+                    SubInterval esi = expected.energy.bounds.getSamples().get(i);
+                    SubInterval asi = actual.energy.bounds.getSamples().get(i);
+                    Assert.assertEquals("SubInterval.lb", esi.getLower(), asi.getLower(), 0.0);
+                    Assert.assertEquals("SubInterval.ub", esi.getUpper(), asi.getUpper(), 0.0);
+                }
+            }
+            else
+                Assert.assertNull(actual.energy.bounds);
+            Assert.assertEquals(expected.energy.bandpassName, actual.energy.bandpassName);
+            Assert.assertEquals(expected.energy.dimension, actual.energy.dimension);
+            Assert.assertEquals(expected.energy.emBand, actual.energy.emBand);
+            Assert.assertEquals(expected.energy.resolvingPower, actual.energy.resolvingPower);
+            Assert.assertEquals(expected.energy.restwav, actual.energy.restwav);
+            Assert.assertEquals(expected.energy.sampleSize, actual.energy.sampleSize);
+            Assert.assertEquals(expected.energy.transition, actual.energy.transition);
+        }
+        if (expected.time != null)
+        {
+            Assert.assertNotNull("plane.time", actual.time);
+            if (expected.time.bounds != null)
+            {
+                Assert.assertNotNull(actual.time.bounds);
+                Assert.assertEquals(expected.time.bounds.getLower(), actual.time.bounds.getLower(), 0.0);
+                Assert.assertEquals(expected.time.bounds.getUpper(), actual.time.bounds.getUpper(), 0.0);
+                Assert.assertEquals(expected.time.bounds.getSamples().size(), actual.time.bounds.getSamples().size());
+                for (int i=0; i<expected.time.bounds.getSamples().size(); i++)
+                {
+                    SubInterval esi = expected.time.bounds.getSamples().get(i);
+                    SubInterval asi = actual.time.bounds.getSamples().get(i);
+                    Assert.assertEquals("SubInterval.lb", esi.getLower(), asi.getLower(), 0.0);
+                    Assert.assertEquals("SubInterval.ub", esi.getUpper(), asi.getUpper(), 0.0);
+                }
+            }
+            else
+                Assert.assertNull(actual.time.bounds);
+            Assert.assertEquals(expected.time.dimension, actual.time.dimension);
+            Assert.assertEquals(expected.time.exposure, actual.time.exposure);
+            Assert.assertEquals(expected.time.resolution, actual.time.resolution);
+            Assert.assertEquals(expected.time.sampleSize, actual.time.sampleSize);
+        }
+        if (expected.polarization != null)
+        {
+            Assert.assertNotNull("plane.polarization", actual.polarization);
+            if (expected.polarization.states != null)
+            {
+                Assert.assertNotNull(actual.polarization.states);
+                Assert.assertEquals(expected.polarization.states.size(), actual.polarization.states.size());
+                for (int i=0; i<expected.polarization.states.size(); i++)
+                {
+                    Assert.assertEquals(expected.polarization.states.get(i), actual.polarization.states.get(i));
+                }
+                Assert.assertEquals(expected.polarization.dimension, actual.polarization.dimension);
+            }
+        }
 
         log.debug("num artifacts: " + expected.getArtifacts().size() + " == " + actual.getArtifacts().size());
         Assert.assertEquals("number of artifacts", expected.getArtifacts().size(), actual.getArtifacts().size());
@@ -1600,7 +1737,7 @@ public abstract class AbstractDatabaseObservationDAOTest
         return o;
     }
 
-    private Plane getTestPlane(boolean full, String productID, int depth)
+    protected Plane getTestPlane(boolean full, String productID, int depth)
         throws Exception
     {
         Plane p = new Plane(productID);
@@ -1620,8 +1757,8 @@ public abstract class AbstractDatabaseObservationDAOTest
             p.provenance.runID = "RUNID123";
             p.provenance.version = "0.1alpha4";
             p.provenance.getKeywords().addAll(TEST_KEYWORDS);
-            //p.provenance.getInputs().add(new PlaneURI(new ObservationURI("FOO", "bar"), "in1"));
-            //p.provenance.getInputs().add(new PlaneURI(new ObservationURI("FOO", "bar"), "in2"));
+            p.provenance.getInputs().add(new PlaneURI(new ObservationURI("FOO", "bar"), "in1"));
+            p.provenance.getInputs().add(new PlaneURI(new ObservationURI("FOO", "bar"), "in2"));
         
 
             p.metrics = new Metrics();
@@ -1632,6 +1769,51 @@ public abstract class AbstractDatabaseObservationDAOTest
             p.metrics.magLimit = null;
             
             p.quality = new DataQuality(Quality.JUNK);
+            
+            // previously was computed metadata
+            p.energy = new Energy();
+            p.energy.bandpassName = "V";
+            p.energy.bounds = new Interval(400e-6, 900e-6);
+            p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
+            p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
+            p.energy.dimension = 2l;
+            p.energy.emBand = EnergyBand.OPTICAL;
+            p.energy.resolvingPower = 2.0;
+            p.energy.restwav = 600e-9;
+            p.energy.sampleSize = 100e-6;
+            p.energy.transition = new EnergyTransition("H", "alpha");
+
+            p.polarization = new Polarization();
+            p.polarization.dimension = 3l;
+            p.polarization.states = new ArrayList<>();
+            p.polarization.states.add(PolarizationState.I);
+            p.polarization.states.add(PolarizationState.Q);
+            p.polarization.states.add(PolarizationState.U);
+
+            p.position = new Position();
+            MultiPolygon poly = new MultiPolygon();
+                poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+                poly.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+                poly.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            List<Point> points = new ArrayList<Point>();
+            for (Vertex v : poly.getVertices())
+                if (!SegmentType.CLOSE.equals(v.getType()))
+                    points.add(new Point(v.cval1, v.cval2));
+            p.position.bounds = new Polygon(points, poly);
+            p.position.dimension = new Dimension2D(1024, 2048);
+            p.position.resolution = 0.05;
+            p.position.sampleSize = 0.025;
+            p.position.timeDependent = false;
+
+            p.time = new Time();
+            p.time.bounds = new Interval(50000.25, 50000.75);
+            p.time.bounds.getSamples().add(new SubInterval(50000.25, 50000.40));
+            p.time.bounds.getSamples().add(new SubInterval(50000.50, 50000.75));
+            p.time.dimension = 2l;
+            p.time.exposure = 666.0;
+            p.time.resolution = 0.5;
+            p.time.sampleSize = 0.15;
         }
         if (depth <= 2)
             return p;

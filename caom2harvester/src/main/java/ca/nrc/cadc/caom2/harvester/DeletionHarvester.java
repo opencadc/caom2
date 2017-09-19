@@ -22,8 +22,8 @@ import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.AbstractDAO;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
-import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
 
@@ -112,7 +112,7 @@ public class DeletionHarvester extends Harvester implements Runnable
 
         if (DeletedObservation.class.equals(entityClass))
         {
-            DatabaseObservationDAO dao = new DatabaseObservationDAO();
+            ObservationDAO dao = new ObservationDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, null);
@@ -120,7 +120,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
@@ -128,7 +128,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
@@ -136,7 +136,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
@@ -161,7 +161,7 @@ public class DeletionHarvester extends Harvester implements Runnable
 
         if (DeletedObservation.class.equals(entityClass))
         {
-            DatabaseObservationDAO dao = new DatabaseObservationDAO();
+            ObservationDAO dao = new ObservationDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, null);
@@ -169,7 +169,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedPlaneMetaReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
@@ -177,7 +177,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedPlaneDataReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
@@ -185,7 +185,7 @@ public class DeletionHarvester extends Harvester implements Runnable
         }
         else if (DeletedObservationMetaReadAccess.class.equals(entityClass))
         {
-            DatabaseReadAccessDAO dao = new DatabaseReadAccessDAO();
+            ReadAccessDAO dao = new ReadAccessDAO();
             dao.setConfig(config2);
             this.txnManager = dao.getTransactionManager();
             this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
@@ -486,7 +486,9 @@ public class DeletionHarvester extends Harvester implements Runnable
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
         if (start.lastModified.equals(end.lastModified))
-            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + start.lastModified);
+            throw new RuntimeException("detected infinite harvesting loop: " 
+                    + entityClass.getSimpleName() + " at " + 
+                    format(start.lastModified));
 
     }
 }

@@ -16,7 +16,7 @@ import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkip;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.persistence.DatabaseReadAccessDAO;
+import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
 
 /**
@@ -29,8 +29,8 @@ public class ReadAccessHarvester extends Harvester
 
     private static Logger log = Logger.getLogger(ReadAccessHarvester.class);
 
-    private DatabaseReadAccessDAO srcAccessDAO;
-    private DatabaseReadAccessDAO destAccessDAO;
+    private ReadAccessDAO srcAccessDAO;
+    private ReadAccessDAO destAccessDAO;
 
     private boolean skipped;
     private Date maxDate;
@@ -81,10 +81,10 @@ public class ReadAccessHarvester extends Harvester
         Map<String, Object> config1 = getConfigDAO(src);
         Map<String, Object> config2 = getConfigDAO(dest);
 
-        this.srcAccessDAO = new DatabaseReadAccessDAO();
+        this.srcAccessDAO = new ReadAccessDAO();
         srcAccessDAO.setConfig(config1);
 
-        this.destAccessDAO = new DatabaseReadAccessDAO();
+        this.destAccessDAO = new ReadAccessDAO();
         // required to update asset tables when assets change but identical
         // tuples are generated
         config2.put("forceUpdate", Boolean.TRUE);

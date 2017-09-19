@@ -97,19 +97,19 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public abstract class AbstractDatabaseReadAccessDAOTest
+public abstract class AbstractReadAccessDAOTest
 {
     protected static Logger log;
 
     boolean deletionTrack;
     boolean useLongForUUID;
-    DatabaseReadAccessDAO dao;
-    DatabaseObservationDAO obsDAO;
+    ReadAccessDAO dao;
+    ObservationDAO obsDAO;
     DatabaseTransactionManager txnManager;
 
     protected Class[] entityClasses;
 
-    protected AbstractDatabaseReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
+    protected AbstractReadAccessDAOTest(Class genClass, String server, String database, String schema, boolean useLongForUUID, boolean deletionTrack)
         throws Exception
     {
         this.useLongForUUID = useLongForUUID;
@@ -121,11 +121,11 @@ public abstract class AbstractDatabaseReadAccessDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
-            this.dao = new DatabaseReadAccessDAO();
+            this.dao = new ReadAccessDAO();
             dao.setConfig(config);
             this.txnManager = new DatabaseTransactionManager(dao.getDataSource());
             
-            this.obsDAO = new DatabaseObservationDAO();
+            this.obsDAO = new ObservationDAO();
             obsDAO.setConfig(config);
         }
         catch(Exception ex)

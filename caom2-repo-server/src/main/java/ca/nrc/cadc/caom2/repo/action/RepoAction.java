@@ -85,12 +85,9 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.compute.PolygonUtil;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -125,7 +122,7 @@ public abstract class RepoAction extends RestAction
     protected boolean computeMetadata;
     protected boolean computeMetadataValidation;
 
-    private transient CaomRepoConfig.Item repoConfig;
+    private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
 
     protected RepoAction() { }
@@ -152,20 +149,20 @@ public abstract class RepoAction extends RestAction
         if (collection == null)
         {
             String path = syncInput.getPath();
-            if (path == null)
-                throw new IllegalArgumentException("no collection specified");
-            String[] parts = path.split("/");
-            this.collection = parts[0];
-            if (parts.length > 1)
+            if (path != null)
             {
-                String suri = "caom:" + path;
-                try
+                String[] parts = path.split("/");
+                this.collection = parts[0];
+                if (parts.length > 1)
                 {
-                    this.uri = new ObservationURI(new URI(suri));
-                }
-                catch(URISyntaxException | IllegalArgumentException ex)
-                {
-                    throw new IllegalArgumentException("invalid input: " + suri, ex);
+                    String suri = "caom:" + path;
+                    try
+                    {
+                        this.uri = new ObservationURI(new URI(suri));
+                    } catch (URISyntaxException | IllegalArgumentException ex)
+                    {
+                        throw new IllegalArgumentException("invalid input: " + suri, ex);
+                    }
                 }
             }
         }
@@ -235,7 +232,7 @@ public abstract class RepoAction extends RestAction
             throw new IllegalStateException(READ_ONLY_MSG);
         }
 
-        CaomRepoConfig.Item i = getConfig(collection);
+        CaomRepoConfig.Item i = getCollectionConfig(collection);
         if (i == null)
             throw new ResourceNotFoundException("not found: " + uri);
 
@@ -293,7 +290,7 @@ public abstract class RepoAction extends RestAction
             throw new IllegalStateException(OFFLINE_MSG);
         }
 
-        CaomRepoConfig.Item i = getConfig(uri.getCollection());
+        CaomRepoConfig.Item i = getCollectionConfig(uri.getCollection());
         if (i == null)
             throw new ResourceNotFoundException(
                     "not found: " + uri);
@@ -338,11 +335,6 @@ public abstract class RepoAction extends RestAction
                         cur = ostr + "/" + p.getProductID();
                         ComputeUtil.clearTransientState(p);
                         ComputeUtil.computeTransientState(obs, p);
-                        if (p.position != null && p.position.bounds != null)
-                        {
-                            Polygon poly = PolygonUtil.toPolygon(p.position.bounds);
-                            PolygonUtil.getOuterHull(poly);
-                        }
                     }
                 }
                 catch(Error er)
@@ -381,34 +373,55 @@ public abstract class RepoAction extends RestAction
     	return null;
     }
 
-    // read configuration
-    private CaomRepoConfig.Item getConfig(String collection)
-        throws IOException
-    {
-        if (repoConfig != null)
-            return repoConfig;
-        
-        String serviceName = syncInput.getContextPath();
-        File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
-        CaomRepoConfig rc = new CaomRepoConfig(config);
-        if (rc.isEmpty())
-            throw new IllegalStateException("no RepoConfig.Item(s)found");
 
-        this.repoConfig = rc.getConfig(collection);
-        return repoConfig;
+    /**
+     * Get configuration for specified collection
+     * @param collection
+     * @return
+     * @throws IOException
+     */
+    private CaomRepoConfig.Item getCollectionConfig(String collection)
+            throws IOException
+    {
+        if (this.repoConfig == null)
+        {
+            getConfig();
+        }
+
+        return this.repoConfig.getConfig(collection);
     }
+
+
+    public CaomRepoConfig getConfig()
+            throws IOException
+    {
+        if (this.repoConfig == null)
+        {
+            String serviceName = syncInput.getContextPath();
+            File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
+            this.repoConfig = new CaomRepoConfig(config);
+
+            if (this.repoConfig.isEmpty())
+            {
+                throw new IllegalStateException("no RepoConfig.Item(s)found");
+            }
+
+        }
+        return this.repoConfig;
+    }
+
 
     // create DAO
     private ObservationDAO getDAO(String collection)
         throws IOException
     {
-        CaomRepoConfig.Item i = getConfig(collection);
+        CaomRepoConfig.Item i = getCollectionConfig(collection);
         if (i != null)
         {
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
             
-            ObservationDAO ret = new DatabaseObservationDAO();
+            ObservationDAO ret = new ObservationDAO();
             Map<String,Object> props = new HashMap<String,Object>();
             props.put("jndiDataSourceName", i.getDataSourceName());
             props.put("database", i.getDatabase());

@@ -70,7 +70,9 @@
 package ca.nrc.cadc.caom2.repo.integration;
 
 import java.io.ByteArrayOutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -151,7 +153,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	// Check that we have no permission to list the observations
     	checkObservationList(0, super.SCHEME +
     			super.TEST_COLLECTION, maxRec, start, null,
-    			super.SUBJECT3, null, 403, "permission denied: ", false);
+    			super.SUBJECT3, null, null, 403, "permission denied: ", false);
 
         // cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -182,19 +184,19 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
         	Date mid = getTime(observations.get(1).getLastModified());
         	Date end = getTime(observations.get(2).getLastModified());
 
-        	// Check that we have maxRec of the observations
+        	// Check that we have maxRec of the observations, use default (ascending) order
         	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-        			null, super.SUBJECT2, observations, 200, null, true);
+        			null, super.SUBJECT2, null, observations, 200, null, true);
 
         	observations.remove(0);
         	// Check that we only have the last two observations
         	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
-        			null, super.SUBJECT2, observations, 200, null, true);
+        			null, super.SUBJECT2, null, observations, 200, null, true);
 
         	observations.remove(0);
         	// Check that we only have the last observation
         	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
-        			null, super.SUBJECT2, observations, 200, null, true);
+        			null, super.SUBJECT2, null, observations, 200, null, true);
 
         	// cleanup (ok to fail)
         	for (Observation obs : observations)
@@ -228,9 +230,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Date start = getTime(observations.get(0).getLastModified());
     	Date end = null;
 
-    	// Check that we only have 3 observations
+    	// Check that we only have 3 observations, use ascending order
     	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			end, super.SUBJECT2, observations, 200, null, true);
+    			end, super.SUBJECT2, "asc", observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -259,9 +261,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Date mid = getTime(observations.get(1).getLastModified());
     	Date end = getTime(observations.get(2).getLastModified());
 
-    	// Check that we only have 2 observations
+    	// Check that we only have 2 observations, use descending order
     	checkObservationList(maxRec, super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			null, super.SUBJECT2, observations, 200, null, true);
+    			null, super.SUBJECT2, "desc", observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -289,9 +291,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	Date start = null;
     	Date end = null;
 
-    	// Check that we have all of the observations
+    	// Check that we have all of the observations, use default (ascending) order
     	checkObservationList(null, super.SCHEME + TEST_COLLECTION, maxRec, start,
-    			end, super.SUBJECT2, observations, 200, null, true);
+    			end, super.SUBJECT2, null, observations, 200, null, true);
 
     	// cleanup (ok to fail)
     	for (Observation obs : observations)
@@ -300,12 +302,29 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	}
     }
 
-    private List<Observation> putObservations(final List<String> baseIDs)
-    		throws Throwable
+    @Test
+    public void testListCollections() throws Throwable
     {
-    	int i=0;
-    	List<Observation> retObs = new ArrayList<Observation>();
-    	for (String baseID : baseIDs)
+        try
+        {
+            List<String> collectionList = listCollections(false,super.SUBJECT1);
+            collectionList = listCollections(true, null);
+        }
+        catch (Throwable t)
+        {
+            log.error("unexpected", t);
+            Assert.fail();
+        }
+    }
+
+
+
+    private List<Observation> putObservations(final List<String> baseIDs)
+            throws Throwable
+    {
+        int i=0;
+        List<Observation> retObs = new ArrayList<Observation>();
+        for (String baseID : baseIDs)
 	    {
 	        String observationID = generateObservationID(baseID);
 	        String uri = super.SCHEME + TEST_COLLECTION + "/" + observationID;
@@ -337,14 +356,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     	return retObs;
     }
 
-    private Map<String, Date> listObservationIDs(String uri, Integer maxRec,
-    		Date start, Date end, Subject subject, List<Observation> observations,
-    		Integer expectedResponse, String expectedMessage, boolean exactMatch) throws Exception
+    private URL buildURL(String uri, Integer maxRec, Date start, Date end, Subject subject, String order) 
+    		throws URISyntaxException, MalformedURLException
     {
-        log.debug("start list on " + uri);
-
-        Map<String, Date> retMap = new Hashtable<String, Date>();
-
         // extract the path from the uri
         URI ouri = new URI(uri);
         String surl = super.BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
@@ -359,8 +373,20 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
             surl = surl + "&start=" + df.format(start);
         if (end != null)
             surl = surl + "&end=" + df.format(end);
+        if (order != null)
+        	surl = surl + "&order=" + order;
 
-        URL url = new URL(surl);
+        return new URL(surl);
+    }
+    
+    private Map<String, Date> listObservationIDs(String uri, Integer maxRec,
+    		Date start, Date end, Subject subject, String order, List<Observation> observations,
+    		Integer expectedResponse, String expectedMessage, boolean exactMatch) throws Exception
+    {
+        log.debug("start list on " + uri);
+
+        Map<String, Date> retMap = new Hashtable<String, Date>();
+        URL url = this.buildURL(uri, maxRec, start, end, subject, order);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpDownload get = new HttpDownload(url, bos);
@@ -402,14 +428,26 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 	            Assert.assertEquals("wrong number of observation states", matchSize, lines.length);
             }
 
+            boolean revert = false;
+            if ((order != null) && (order.equals("desc")))
+            {
+            	revert = true;
+            }
+            
             for (int i = 0; i < lines.length; i++)
             {
             	String[] fields = lines[i].split("\t");
             	String actualDate = fields[2];
+                int j = i;
 
             	if (start != null)
             	{
-            	    Observation obs = observations.get(i);
+            		if (revert)
+            		{
+            			j = observations.size() - 1 - i;
+            		}
+            		
+            	    Observation obs = observations.get(j);
             	    String expectedDate = df.format(obs.getLastModified());
             	    Assert.assertEquals("wrong date", expectedDate, actualDate);
             	}
@@ -423,12 +461,13 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 
     private void checkObservationList(final Integer expectedSize,
     		final String collection, final Integer maxRec, final Date start,
-    		final Date end, Subject subject, List<Observation> observations, Integer expectedCode,
+    		final Date end, Subject subject, String order, 
+    		List<Observation> observations, Integer expectedCode,
     		String expectedMessage, boolean exactMatch) throws Throwable
     {
     	Map<String, Date> observationIDMap = listObservationIDs(
-    			super.SCHEME + TEST_COLLECTION, maxRec, start, end, subject, observations,
-    			expectedCode, expectedMessage, exactMatch);
+    			super.SCHEME + TEST_COLLECTION, maxRec, start, end, subject, order, 
+    			observations, expectedCode, expectedMessage, exactMatch);
 
 		// expectedSize == null means no size limits
 		if (expectedSize == null)
@@ -460,6 +499,57 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
 			}
     	}
     }
+
+
+    private List<String> listCollections(boolean testAnon, Subject subject) throws Exception
+    {
+        List<String> retList = new ArrayList<String>();
+
+        String surl = super.BASE_HTTP_URL;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        if (testAnon == false)
+        {
+            surl = super.BASE_HTTPS_URL;
+        }
+
+        URL url = new URL(surl);
+        HttpDownload get = new HttpDownload(url, bos);
+
+
+        if (testAnon == false)
+        {
+            Subject.doAs(subject, new RunnableAction(get));
+        }
+        else
+        {
+            get.run();
+        }
+
+        int response = get.getResponseCode();
+
+        log.debug("response code: " + response);
+
+        // Check content type & reponse code. Can't count on content or size of list returned.
+        Assert.assertTrue("bad content returned", get.getContentType().equals("text/tab-separated-values"));
+        Assert.assertTrue("bad reponse", response == 200);
+
+        // read return, parse collection list
+        String message = bos.toString().trim();
+        Assert.assertNotNull(message);
+        String[] lines = message.split("\\r?\\n");
+
+        log.debug("lines returned: " + lines.length);
+
+        for (int i = 0; i < lines.length; i++)
+        {
+            log.debug("line " + i  + ": " + lines[i]);
+            retList.add(lines[i]);
+        }
+
+        return retList;
+    }
+
 
     private Date getTime(Date time)
     {

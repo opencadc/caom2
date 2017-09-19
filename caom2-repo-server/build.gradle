@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.3'
+version = '2.3.4'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -24,13 +24,16 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.0.6,2.0)'
     compile 'org.opencadc:cadc-log:1.+'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
-    compile 'org.opencadc:caom2:[2.3.3,3.0)'
+    compile 'org.opencadc:caom2:[2.3.4,3.0)'
     compile 'org.opencadc:caom2-persist:[2.3.0,3.0)'
-    compile 'org.opencadc:caom2persistence:[2.3.3,3.0)'
+    compile 'org.opencadc:caom2persistence:[2.3.6,3.0)'
     compile 'org.opencadc:cadc-access-control:[1.1.4,)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-rest:[1.1.1,2.0)'
+    
+    compile 'org.opencadc:caom2-compute:[2.3.3,3.0)'
+    compile 'org.opencadc:cadc-wcs:[2.0,3.0)'
     
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:[3.2,4.0)'

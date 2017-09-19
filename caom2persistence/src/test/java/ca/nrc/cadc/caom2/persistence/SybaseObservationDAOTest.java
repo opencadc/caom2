@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -77,7 +78,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseObservationDAOTest extends AbstractDatabaseObservationDAOTest
+public class SybaseObservationDAOTest extends AbstractObservationDAOTest
 {
     static
     {
@@ -96,6 +97,18 @@ public class SybaseObservationDAOTest extends AbstractDatabaseObservationDAOTest
     {
         log.warn("testNestedTransaction: skip because jtds driver doesn't support it");
     }
-    
-    
+
+    @Override
+    protected Plane getTestPlane(boolean full, String productID, int depth) throws Exception
+    {
+        Plane p = super.getTestPlane(full, productID, depth);
+        
+        // not supported by SYBASE impl:
+        p.position = null;
+        p.energy = null;
+        p.time = null;
+        p.polarization = null;
+        
+        return p;
+    }
 }

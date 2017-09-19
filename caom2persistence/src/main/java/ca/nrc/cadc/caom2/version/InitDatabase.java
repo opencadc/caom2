@@ -91,8 +91,8 @@ public class InitDatabase
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.3";
-    public static final String PREV_MODEL_VERSION = "2.2";
+    public static final String MODEL_VERSION = "2.3.5";
+    public static final String PREV_MODEL_VERSION = "2.3";
     
     static String[] CREATE_SQL = new String[]
     {
@@ -107,13 +107,18 @@ public class InitDatabase
         "caom2.HarvestSkipURI.sql",
         "caom2.access.sql",
         "caom2.deleted.sql",
-        "caom2.extra_indices.sql"
+        "caom2.extra_indices.sql",
+        "caom2.ObsCore.sql", 
+        "caom2.ObsCore-x.sql", 
+        "caom2.SIAv1.sql" 
     };
     
     static String[] UPGRADE_SQL = new String[]
     {
-        "caom2.upgrade-23.sql",    // alter existing tables
-        "caom2.HarvestSkipURI.sql" // new table
+        "caom2.upgrade-2.3.5.sql",
+        "caom2.ObsCore.sql", 
+        "caom2.ObsCore-x.sql", 
+        "caom2.SIAv1.sql"
     };
     
     private final DataSource dataSource;

@@ -174,12 +174,15 @@ public class PostgreSQLGeneratorTest
         try
         {
             Interval i = new Interval(1.0, 3.0);
-            PGpolygon ip = gen.getPolygon2D(i);
-            log.info(i + " -> " + ip.getValue());
-            
             i.getSamples().add(new SubInterval(1.0, 1.2));
             i.getSamples().add(new SubInterval(2.8, 3.0));
-            ip = gen.getPolygon2D(i);
+            
+            PGpolygon ip;
+            
+            ip = gen.generatePolygon2D(i, null);
+            log.info(i + " -> " + ip.getValue());
+            
+            ip = gen.generatePolygon2D(null, i.getSamples());
             log.info(i + " -> " + ip.getValue());
         }
         catch(Exception unexpected)

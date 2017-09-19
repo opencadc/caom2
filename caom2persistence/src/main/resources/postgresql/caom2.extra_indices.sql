@@ -106,41 +106,31 @@ create index Observation_i_proposal_id_lower_pattern
     on caom2.Observation ( lower(proposal_id)  varchar_pattern_ops )
 ;
 
--- change: remove index(lower(telescope_keywords))
--- change: index(telescope_keywords) for tsvector @@ tsquery
-create index Observation_i_tel_kw
-    on caom2.Observation using GIN (telescope_keywords)
-;
-
--- change: remove index(lower(instrument_keywords))
--- change: index(instrument_keywords) for tsvector @@ tsquery
-create index Observation_i_instr_kw
-    on caom2.Observation using GIN (instrument_keywords)
-;
-
--- change: index(target_keywords) for tsvector @@ tsquery
-create index Observation_i_targ_kw
-    on caom2.Observation using GIN (target_keywords)
-;
-
--- change: remove index(lower(proposal_title))
-
--- change: remove index(lower(proposal_keywords))
--- change: index(proposal_keywords) for tsvector @@ tsquery
-create index Observation_i_prop_kw
-    on caom2.Observation using GIN (proposal_keywords)
-;
-
--- change: remove index(lower(provenance_keywords))
--- change: index(provenance_keywords) for tsvector @@ tsquery
-create index Plane_i_prov_kw
-    on caom2.Plane using GIN (provenance_keywords)
-;
-
 create index Plane_i_dataRelease
     on caom2.Plane ( dataRelease )
 ;
 
+-- support for SODA service and file authorization queries 
 create index Artifact_i_uri
     on caom2.Artifact ( uri )
 ;
+
+--create index Observation_i_tel_kw
+--    on caom2.Observation (telescope_keywords)
+--;
+
+--create index Observation_i_instr_kw
+--    on caom2.Observation (instrument_keywords)
+--;
+
+--create index Observation_i_targ_kw
+--    on caom2.Observation (target_keywords)
+--;
+
+--create index Observation_i_prop_kw
+--    on caom2.Observation (proposal_keywords)
+--;
+
+--create index Plane_i_prov_kw
+--    on caom2.Plane (provenance_keywords)
+--;

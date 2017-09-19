@@ -84,11 +84,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author pdowler
  */
-public class DatabaseReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
+public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess>
 {
-    private static final Logger log = Logger.getLogger(DatabaseReadAccessDAO.class);
+    private static final Logger log = Logger.getLogger(ReadAccessDAO.class);
 
-    public DatabaseReadAccessDAO() { }
+    public ReadAccessDAO() { }
     
     // need to expose this for caom2ac which has to cleanup tuples for caom2 
     // assets that became public

@@ -33,7 +33,7 @@ import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.TransientException;
@@ -50,8 +50,8 @@ public class ObservationHarvester extends Harvester
     private boolean service = false;
 
     private RepoClient srcObservationService;
-    private DatabaseObservationDAO srcObservationDAO;
-    private DatabaseObservationDAO destObservationDAO;
+    private ObservationDAO srcObservationDAO;
+    private ObservationDAO destObservationDAO;
 
     private boolean skipped;
     private Date maxDate;
@@ -100,7 +100,7 @@ public class ObservationHarvester extends Harvester
         if (src.getDatabaseServer() != null)
         {
             Map<String, Object> config1 = getConfigDAO(src);
-            this.srcObservationDAO = new DatabaseObservationDAO();
+            this.srcObservationDAO = new ObservationDAO();
             srcObservationDAO.setConfig(config1);
         }
         else
@@ -110,7 +110,7 @@ public class ObservationHarvester extends Harvester
         
         // for now, dest is always a database
         Map<String, Object> config2 = getConfigDAO(dest);
-        this.destObservationDAO = new DatabaseObservationDAO();
+        this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
         destObservationDAO.setComputeLastModified(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);

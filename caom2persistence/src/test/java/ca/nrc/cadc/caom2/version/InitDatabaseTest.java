@@ -116,12 +116,13 @@ public class InitDatabaseTest
     // all use InitDatabase.doInit and one of them will have done this anyway; this
     // test will have some value if/when the TODOs are implemented.
     
-    //@Test
+    @Test
     public void testNewInstall()
     {
         try
         {
             // TODO: nuke all tables and re-create
+            // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
             
@@ -141,10 +142,8 @@ public class InitDatabaseTest
     {
         try
         {
-            // when we have an upgrade to worry about (CAOM-2.3) we will want to be able to
-            // create CAOM-2.2 and then test upgrade to CAOM-2.3 ... in general version N
-            // of caom2persistence only needs to support upgrade from N-1 and larger steps
-            // can be done by using version  N-1 to upgrade from N-2
+            // TODO: create previous version  of tables and upgrade... sounds complicated
+            // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
             
@@ -167,7 +166,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                1, 7, 8, 3, 4, 4, 2, 2, 2, 6, 8, 32
+                1, 7, 8, 3, 4, 4, 2, 2, 2, 6, 8, 27, 1, 2, 1
             };
             Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
             
@@ -193,7 +192,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                9, 2
+                15, 1, 2, 1
             };
             Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
             
