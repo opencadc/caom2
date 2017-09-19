@@ -24,14 +24,5 @@ Running of this tool requires an implementation of the ArtifactStore.java interf
     mainClassName = 'ca.nrc.cadc.caom2.artifactsync.Main'
 
     dependencies {
-        compile 'log4j:log4j:1.2.+'
-        compile 'org.jdom:jdom2:2.+'
-        compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
-    
         compile 'org.opoecadc:caom2-artifact-sync[2.3.0,)'
-
-        runtime 'net.sourceforge.jtds:jtds:1.+'
-        runtime 'org.postgresql:postgresql:9.4.1209.jre7'
-    
-        testCompile 'junit:junit:4.+'
     }
