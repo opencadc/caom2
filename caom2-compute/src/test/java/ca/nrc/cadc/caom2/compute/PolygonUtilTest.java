@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.compute.common.PolygonUtil;
-import ca.nrc.cadc.caom2.compute.common.CutoutUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.MultiPolygon;

@@ -76,7 +76,6 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.compute.common.TimeUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;

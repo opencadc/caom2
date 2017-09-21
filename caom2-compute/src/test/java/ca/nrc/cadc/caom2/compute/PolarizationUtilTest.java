@@ -77,7 +77,6 @@ import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.compute.common.PolarizationUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
