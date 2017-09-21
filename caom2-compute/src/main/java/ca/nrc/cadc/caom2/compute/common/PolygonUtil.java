@@ -65,7 +65,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.compute;
+package ca.nrc.cadc.caom2.compute.common;
 
 import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Circle;

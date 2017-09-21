@@ -65,7 +65,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.compute;
+package ca.nrc.cadc.caom2.compute.common;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
@@ -542,27 +542,38 @@ public final class PositionUtil
         return v;
     }
 
-    static class CoordSys implements Serializable
+    public static class CoordSys implements Serializable
     {
         private static final long serialVersionUID = 201207300900L;
 
-        private static String ICRS = "ICRS";
-        private static String GAL = "GAL";
-        private static String FK4 = "FK4";
-        private static String FK5 = "FK5";
+        public static String ICRS = "ICRS";
+        public static String GAL = "GAL";
+        public static String FK4 = "FK4";
+        public static String FK5 = "FK5";
 
-        private static String ECL = "ECL";
-        private static String HECL = "HELIOECLIPTIC";
-        private static String GAPPT = "GAPPT";
-        
+        public static String ECL = "ECL";
+        public static String HECL = "HELIOECLIPTIC";
+        public static String GAPPT = "GAPPT";
+
+        public String getName()
+        {
+            return name;
+        }
+
         String name;
         Boolean timeDependent;
         boolean supported;
+
+        public boolean isSwappedAxes()
+        {
+            return swappedAxes;
+        }
+
         boolean swappedAxes = false;
 
     }
 
-    static CoordSys inferCoordSys(SpatialWCS wcs)
+    public static CoordSys inferCoordSys(SpatialWCS wcs)
     {
         CoordSys ret = new CoordSys();
         ret.name = wcs.coordsys;
@@ -701,173 +712,152 @@ public final class PositionUtil
         }
     }
     
-    public static long[] getBounds(SpatialWCS wcs, Shape s)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        if (s == null)
-            return null;
-        if (s instanceof Circle)
-            return getBounds(wcs, (Circle) s);
-        if (s instanceof Polygon)
-            return getBounds(wcs, ((Polygon) s).getSamples());
-        throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
-    }
-    
-    /**
-     * Find the pixel bounds that enclose the specified circle.
-     *
-     * @param wcs a spatial wcs solution
-     * @param c circle with center in ICRS coordinates
-     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     *         or null if the circle does not intersect the WCS
-     */
-    public static long[] getBounds(SpatialWCS wcs, Circle c)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        // convert the Circle -> Box ~ Polygon
-        // TODO: a WCS-aligned polygon would be better than an axis-aligned Box
-        double x = c.getCenter().cval1;
-        double y = c.getCenter().cval2;
-        double dy = c.getRadius();
-        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-        MultiPolygon poly = new MultiPolygon();
-        poly.getVertices().add(new Vertex(x-dx, y-dy, SegmentType.MOVE));
-        poly.getVertices().add(new Vertex(x+dx, y-dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x+dx, y+dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x-dx, y+dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-        return getBounds(wcs, poly);
-    }
+//    public static long[] getBounds(SpatialWCS wcs, Shape s)
+//        throws NoSuchKeywordException, WCSLibRuntimeException
+//    {
+//        if (s == null)
+//            return null;
+//        if (s instanceof Circle)
+//            return getBounds(wcs, (Circle) s);
+//        if (s instanceof Polygon)
+//            return getBounds(wcs, ((Polygon) s).getSamples());
+//        throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
+//    }
+//
+//    /**
+//     * Find the pixel bounds that enclose the specified circle.
+//     *
+//     * @param wcs a spatial wcs solution
+//     * @param c circle with center in ICRS coordinates
+//     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
+//     *         or null if the circle does not intersect the WCS
+//     */
+//    public static long[] getBounds(SpatialWCS wcs, Circle c)
+//        throws NoSuchKeywordException, WCSLibRuntimeException
+//    {
+//        // convert the Circle -> Box ~ Polygon
+//        // TODO: a WCS-aligned polygon would be better than an axis-aligned Box
+//        double x = c.getCenter().cval1;
+//        double y = c.getCenter().cval2;
+//        double dy = c.getRadius();
+//        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+//        MultiPolygon poly = new MultiPolygon();
+//        poly.getVertices().add(new Vertex(x-dx, y-dy, SegmentType.MOVE));
+//        poly.getVertices().add(new Vertex(x+dx, y-dy, SegmentType.LINE));
+//        poly.getVertices().add(new Vertex(x+dx, y+dy, SegmentType.LINE));
+//        poly.getVertices().add(new Vertex(x-dx, y+dy, SegmentType.LINE));
+//        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+//        return getBounds(wcs, poly);
+//    }
+//
+//    /**
+//     * Compute the range of pixel indices that correspond to the supplied
+//     * polygon. This method computes the cutout ranges within the image. The
+//     * returned value is null if there is no intersection, an int[4] for a
+//     * cutout, and an int[0] when the image is wholly contained within the
+//     * polygon (and no cutout is necessary).
+//     *
+//     * @param wcs a spatial wcs solution
+//     * @param poly the shape to cutout
+//     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
+//     *         or null if the circle does not intersect the WCS
+//     */
+//    public static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
+//        throws NoSuchKeywordException, WCSLibRuntimeException
+//    {
+//        CoordSys coordsys = inferCoordSys(wcs);
+//
+//        // detect necessary conversion of target coords to native WCS coordsys
+//        boolean gal = false;
+//        boolean fk4 = false;
+//        if (CoordSys.GAL.equals(coordsys.name))
+//            gal = true;
+//        else if (CoordSys.FK4.equals(coordsys.name))
+//            fk4 = true;
+//        else if (!CoordSys.ICRS.equals(coordsys.name) && !CoordSys.FK5.equals(coordsys.name))
+//            throw new UnsupportedOperationException("unexpected coordsys: " + coordsys.name);
+//
+//        WCSWrapper map = new WCSWrapper(wcs, 1, 2);
+//        Transform transform = new Transform(map);
+//
+//        // convert wcs/footprint to sky coords
+//        log.debug("computing poly INTERSECT footprint");
+//        MultiPolygon foot = toPolygon(wcs);
+//        log.debug("input poly: " + poly);
+//        log.debug("wcs poly: " + foot);
+//
+//        MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
+//        if (npoly == null)
+//        {
+//            log.debug("poly INTERSECT footprint == null");
+//            return null;
+//        }
+//        //log.debug("intersection: " + npoly);
+//
+//
+//        // npoly is in ICRS
+//        if (gal || fk4)
+//        {
+//            // convert npoly to native coordsys, in place since we created a new npoly above
+//            log.debug("converting poly to " + coordsys);
+//            for (Vertex v : npoly.getVertices())
+//            {
+//                if ( !SegmentType.CLOSE.equals(v.getType()) )
+//                {
+//                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
+//
+//                    // convert poly coords to native WCS coordsys
+//                    if (gal)
+//                        pp = wcscon.fk52gal(pp);
+//                    else if (fk4)
+//                        pp = wcscon.fk524(pp);
+//                    v.cval1 = pp.x;
+//                    v.cval2 = pp.y;
+//                }
+//            }
+//        }
+//
+//        // convert npoly to pixel coordinates and find min/max
+//        long x1 = Integer.MAX_VALUE;
+//        long x2 = -1 * x1;
+//        long y1 = x1;
+//        long y2 = -1 * y1;
+//        log.debug("converting npoly to pixel coordinates");
+//        double[] coords = new double[2];
+//        for (Vertex v : npoly.getVertices())
+//        {
+//            if ( !SegmentType.CLOSE.equals(v.getType()) )
+//            {
+//                coords[0] = v.cval1;
+//                coords[1] = v.cval2;
+//                if (coordsys.swappedAxes)
+//                {
+//                    coords[0] = v.cval2;
+//                    coords[1] = v.cval1;
+//                }
+//                Transform.Result tr = transform.sky2pix(coords);
+//                // if p2 is null, it was a long way away from the WCS and does not
+//                // impose a limit/cutout - so we can safely skip it
+//                if (tr != null)
+//                {
+//                    log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
+//                    x1 = (long) Math.min(x1, tr.coordinates[0]);
+//                    x2 = (long) Math.max(x2, tr.coordinates[0]);
+//                    y1 = (long) Math.min(y1, tr.coordinates[1]);
+//                    y2 = (long) Math.max(y2, tr.coordinates[1]);
+//                }
+//                //else
+//                //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
+//            }
+//        }
+//
+//        // clipping
+//        long naxis1 = wcs.getAxis().function.getDimension().naxis1;
+//        long naxis2 = wcs.getAxis().function.getDimension().naxis2;
+//        return doClipCheck(naxis1, naxis2, x1, x2, y1, y2);
+//    }
 
-    /**
-     * Compute the range of pixel indices that correspond to the supplied
-     * polygon. This method computes the cutout ranges within the image. The
-     * returned value is null if there is no intersection, an int[4] for a
-     * cutout, and an int[0] when the image is wholly contained within the
-     * polygon (and no cutout is necessary).
-     *
-     * @param wcs a spatial wcs solution
-     * @param poly the shape to cutout
-     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     *         or null if the circle does not intersect the WCS
-     */
-    public static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        CoordSys coordsys = inferCoordSys(wcs);
 
-        // detect necessary conversion of target coords to native WCS coordsys
-        boolean gal = false;
-        boolean fk4 = false;
-        if (CoordSys.GAL.equals(coordsys.name))
-            gal = true;
-        else if (CoordSys.FK4.equals(coordsys.name))
-            fk4 = true;
-        else if (!CoordSys.ICRS.equals(coordsys.name) && !CoordSys.FK5.equals(coordsys.name))
-            throw new UnsupportedOperationException("unexpected coordsys: " + coordsys.name);
-
-        WCSWrapper map = new WCSWrapper(wcs, 1, 2);
-        Transform transform = new Transform(map);
-
-        // convert wcs/footprint to sky coords
-        log.debug("computing poly INTERSECT footprint");
-        MultiPolygon foot = toPolygon(wcs);
-        log.debug("input poly: " + poly);
-        log.debug("wcs poly: " + foot);
-        
-        MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
-        if (npoly == null)
-        {
-            log.debug("poly INTERSECT footprint == null");
-            return null;
-        }
-        //log.debug("intersection: " + npoly);
-        
-
-        // npoly is in ICRS
-        if (gal || fk4)
-        {
-            // convert npoly to native coordsys, in place since we created a new npoly above
-            log.debug("converting poly to " + coordsys);
-            for (Vertex v : npoly.getVertices())
-            {
-                if ( !SegmentType.CLOSE.equals(v.getType()) )
-                {
-                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
-
-                    // convert poly coords to native WCS coordsys
-                    if (gal)
-                        pp = wcscon.fk52gal(pp);
-                    else if (fk4)
-                        pp = wcscon.fk524(pp);
-                    v.cval1 = pp.x;
-                    v.cval2 = pp.y;
-                }
-            }
-        }
-
-        // convert npoly to pixel coordinates and find min/max
-        long x1 = Integer.MAX_VALUE;
-        long x2 = -1 * x1;
-        long y1 = x1;
-        long y2 = -1 * y1;
-        log.debug("converting npoly to pixel coordinates");
-        double[] coords = new double[2];
-        for (Vertex v : npoly.getVertices())
-        {
-            if ( !SegmentType.CLOSE.equals(v.getType()) )
-            {
-                coords[0] = v.cval1;
-                coords[1] = v.cval2;
-                if (coordsys.swappedAxes)
-                {
-                    coords[0] = v.cval2;
-                    coords[1] = v.cval1;
-                }
-                Transform.Result tr = transform.sky2pix(coords);
-                // if p2 is null, it was a long way away from the WCS and does not
-                // impose a limit/cutout - so we can safely skip it
-                if (tr != null)
-                {
-                    log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = (long) Math.min(x1, tr.coordinates[0]);
-                    x2 = (long) Math.max(x2, tr.coordinates[0]);
-                    y1 = (long) Math.min(y1, tr.coordinates[1]);
-                    y2 = (long) Math.max(y2, tr.coordinates[1]);
-                }
-                //else
-                //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
-            }
-        }
-
-        // clipping
-        long naxis1 = wcs.getAxis().function.getDimension().naxis1;
-        long naxis2 = wcs.getAxis().function.getDimension().naxis2;
-        return doClipCheck(naxis1, naxis2, x1, x2, y1, y2);
-    }
-
-    private static long[] doClipCheck(long w, long h, long x1, long x2, long y1, long y2)
-    {
-        if (x1 < 1)
-            x1 = 1;
-        if (x2 > w)
-            x2 = w;
-        if (y1 < 1)
-            y1 = 1;
-        if (y2 > h)
-            y2 = h;
-
-        // validity check
-        if (x1 >= w || x2 <= 1 || y1 >= h || y2 <= 1) // no pixels included
-        {
-            return null;
-        }
-        if (x1 == 1 && y1 == 1 && x2 == w && y2 == h) // all pixels includes
-        {
-            return new long[0];
-        }
-        return new long[] { x1, x2, y1, y2 }; // an actual cutout
-    }
 
 
 }
