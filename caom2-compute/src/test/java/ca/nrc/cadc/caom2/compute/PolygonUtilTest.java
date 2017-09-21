@@ -472,7 +472,7 @@ public class PolygonUtilTest
 
             Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 r~50 pix
 
-            long[] cutout = CutoutUtil.getBounds(wcs, c);
+            long[] cutout = CutoutUtil.getPositionBounds(wcs, c);
             Assert.assertNotNull("cutout", cutout);
             Assert.assertEquals("length 4", 4, cutout.length);
             Assert.assertEquals(200, cutout[0], 5);
@@ -505,7 +505,7 @@ public class PolygonUtilTest
             p.getVertices().add(new Vertex(9.8,20.2, SegmentType.LINE));
             p.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
-            long[] cutout = CutoutUtil.getBounds(wcs, p);
+            long[] cutout = CutoutUtil.getPositionBounds(wcs, p);
             Assert.assertNotNull("cutout", cutout);
             Assert.assertEquals("length 4", 4, cutout.length);
             Assert.assertEquals(300, cutout[0], 5);
