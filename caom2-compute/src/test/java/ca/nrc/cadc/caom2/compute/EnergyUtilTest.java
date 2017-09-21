@@ -403,23 +403,23 @@ public class EnergyUtilTest
             Interval cut = new Interval(420e-9, 440e-9);
             Interval clip = new Interval(300e-9, 500e-9);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
             
-            long[] gapPix =  EnergyUtil.getBounds(wcs, gap);
+            long[] gapPix =  CutoutUtil.getEnergyBounds(wcs, gap);
             Assert.assertNull(gapPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 0, cutPix[0], 1);
             Assert.assertEquals("cut LB", 660, cutPix[1], 1);
             
-            long[] clipPix = EnergyUtil.getBounds(wcs, clip);
+            long[] clipPix = CutoutUtil.getEnergyBounds(wcs, clip);
             Assert.assertNotNull(clipPix);
             Assert.assertEquals("long[2]", 2, clipPix.length);
             Assert.assertEquals("clip LB", 0, clipPix[0], 1);
@@ -442,14 +442,14 @@ public class EnergyUtilTest
             Interval none = new Interval(700e-9, 900e-9);
             Interval cut = new Interval(450e-9, 550e-9);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 500, cutPix[0], 1);
@@ -472,14 +472,14 @@ public class EnergyUtilTest
             Interval none = new Interval(1.0, 2.0);
             Interval cut = new Interval(2.8, 3.2);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
@@ -503,14 +503,14 @@ public class EnergyUtilTest
             Interval none = new Interval(1.0, 2.0);
             Interval cut = new Interval(4.283, 7.5);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);

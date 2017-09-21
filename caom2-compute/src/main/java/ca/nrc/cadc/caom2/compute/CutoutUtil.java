@@ -141,7 +141,7 @@ public final class CutoutUtil
                     {
                         // cut.length==0 means circle contains all pixels
                         // cut.length==4 means circle picks a subset of pixels
-                        long[] cut = getBounds(c.position, shape);
+                        long[] cut = getPositionBounds(c.position, shape);
                         if (posCut == null)
                             posCut = cut;
                         else if (posCut.length == 4 && cut != null) // subset
@@ -164,7 +164,7 @@ public final class CutoutUtil
                     if ( canEnergyCutout(c) )
                     {
 //                        long[] cut = EnergyUtil.getBounds(c.energy, energyInter);
-                        long[] cut = getBounds(c.energy, energyInter);
+                        long[] cut = getEnergyBounds(c.energy, energyInter);
                         if (nrgCut == null)
                             nrgCut = cut;
                         else if (nrgCut.length == 2 && cut != null) // subset
@@ -449,15 +449,15 @@ public final class CutoutUtil
     }
 
 
-    static long[] getBounds(SpatialWCS wcs, Shape s)
+    static long[] getPositionBounds(SpatialWCS wcs, Shape s)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         if (s == null)
             return null;
         if (s instanceof Circle)
-            return getBounds(wcs, (Circle) s);
+            return getPositionBounds(wcs, (Circle) s);
         if (s instanceof Polygon)
-            return getBounds(wcs, ((Polygon) s).getSamples());
+            return getPositionBounds(wcs, ((Polygon) s).getSamples());
         throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
     }
 
@@ -469,7 +469,7 @@ public final class CutoutUtil
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *         or null if the circle does not intersect the WCS
      */
-    static long[] getBounds(SpatialWCS wcs, Circle c)
+    static long[] getPositionBounds(SpatialWCS wcs, Circle c)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         // convert the Circle -> Box ~ Polygon
@@ -484,7 +484,7 @@ public final class CutoutUtil
         poly.getVertices().add(new Vertex(x+dx, y+dy, SegmentType.LINE));
         poly.getVertices().add(new Vertex(x-dx, y+dy, SegmentType.LINE));
         poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-        return getBounds(wcs, poly);
+        return getPositionBounds(wcs, poly);
     }
 
     /**
@@ -499,7 +499,7 @@ public final class CutoutUtil
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *         or null if the circle does not intersect the WCS
      */
-    static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
+    static long[] getPositionBounds(SpatialWCS wcs, MultiPolygon poly)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         PositionUtil.CoordSys coordsys = PositionUtil.inferCoordSys(wcs);
@@ -594,10 +594,10 @@ public final class CutoutUtil
         // clipping
         long naxis1 = wcs.getAxis().function.getDimension().naxis1;
         long naxis2 = wcs.getAxis().function.getDimension().naxis2;
-        return doClipCheck(naxis1, naxis2, x1, x2, y1, y2);
+        return doPositionClipCheck(naxis1, naxis2, x1, x2, y1, y2);
     }
 
-    private static long[] doClipCheck(long w, long h, long x1, long x2, long y1, long y2)
+    private static long[] doPositionClipCheck(long w, long h, long x1, long x2, long y1, long y2)
     {
         if (x1 < 1)
             x1 = 1;
@@ -630,7 +630,7 @@ public final class CutoutUtil
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *         null if no pixels are included
      */
-    public static long[] getBounds(SpectralWCS wcs, Interval bounds)
+    public static long[] getEnergyBounds(SpectralWCS wcs, Interval bounds)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         if (wcs.getAxis().function != null)
@@ -672,7 +672,7 @@ public final class CutoutUtil
             long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
             long x2 = (long) Math.max(p1.coordinates[0], p2.coordinates[0]);
 
-            return doClipCheck(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
+            return doEnergyClipCheck(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
 
         if (wcs.getAxis().bounds != null)
@@ -705,7 +705,7 @@ public final class CutoutUtil
                 long p1 = (long) (pix1 + 0.5); // round up
                 long p2 = (long) pix2;         // round down
 
-                return doClipCheck(maxPixValue, p1, p2);
+                return doEnergyClipCheck(maxPixValue, p1, p2);
             }
             log.debug("bounds INTERSECT wcs.bounds == null");
             return null;
@@ -730,7 +730,7 @@ public final class CutoutUtil
         return null;
     }
 
-    private static long[] doClipCheck(long len, long x1, long x2)
+    private static long[] doEnergyClipCheck(long len, long x1, long x2)
     {
         if (x1 < 1)
             x1 = 1;
