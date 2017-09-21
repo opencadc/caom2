@@ -125,7 +125,7 @@ public final class PolygonUtil
      * @param poly
      * @return a simple bounding polygon
      */
-    public static Polygon getOuterHull(final MultiPolygon poly)
+    static Polygon getOuterHull(final MultiPolygon poly)
     {
         Polygon convex = getConvexHull(poly);
         double cvxArea = convex.getArea();
@@ -162,7 +162,7 @@ public final class PolygonUtil
      * @param poly
      * @return concave hull or null if current algorithms fail
      */
-    public static Polygon getConcaveHull(final MultiPolygon poly)
+    static Polygon getConcaveHull(final MultiPolygon poly)
     {
         List<MultiPolygon> parts = decompose(poly, true);  // decompose and remove holes
     
@@ -216,7 +216,7 @@ public final class PolygonUtil
      * @param poly
      * @return
      */
-    public static Polygon getConvexHull(final MultiPolygon poly)
+    static Polygon getConvexHull(final MultiPolygon poly)
     {
         log.debug("[getConvexHull] " + poly);
         if (poly == null)
@@ -252,7 +252,7 @@ public final class PolygonUtil
         return ret;
     }
 
-    public static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
+    static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
     {
         double[] cube = CartesianTransform.getBoundingCube(p1, null);
         cube = CartesianTransform.getBoundingCube(p2, cube);
@@ -271,7 +271,7 @@ public final class PolygonUtil
     }
   
     // transform, compute, inverse transforms
-    public static MultiPolygon transComputeUnion(List<MultiPolygon> polys, double scale, boolean unscale, boolean removeHoles)
+    static MultiPolygon transComputeUnion(List<MultiPolygon> polys, double scale, boolean unscale, boolean removeHoles)
     {
         if (polys.size() == 1)
             return polys.get(0);
@@ -302,7 +302,7 @@ public final class PolygonUtil
     }
 
      // scale, compute, remove-holes, [unscale], smooth; assumes cartesian approx is safe
-    public static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
+     static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
     {
         log.debug("[computeUnion] work=" + work.size() + " scale="+scale 
                 + " unscale="+unscale + " removeHoles="+removeHoles);

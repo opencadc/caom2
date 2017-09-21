@@ -379,7 +379,7 @@ public final class CutoutUtil
         return sb;
     }
 
-    public static boolean canCutout(Chunk c)
+    static boolean canCutout(Chunk c)
     {
         
         boolean posCutout = canPositionCutout(c);
@@ -445,7 +445,7 @@ public final class CutoutUtil
     }
 
 
-    public static long[] getBounds(SpatialWCS wcs, Shape s)
+    static long[] getBounds(SpatialWCS wcs, Shape s)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         if (s == null)
@@ -465,7 +465,7 @@ public final class CutoutUtil
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *         or null if the circle does not intersect the WCS
      */
-    public static long[] getBounds(SpatialWCS wcs, Circle c)
+    static long[] getBounds(SpatialWCS wcs, Circle c)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
         // convert the Circle -> Box ~ Polygon
@@ -495,7 +495,7 @@ public final class CutoutUtil
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *         or null if the circle does not intersect the WCS
      */
-    public static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
+    static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
             throws NoSuchKeywordException, WCSLibRuntimeException
     {
 //        PositionUtil.CoordSys coordsys = inferCoordSys(wcs);

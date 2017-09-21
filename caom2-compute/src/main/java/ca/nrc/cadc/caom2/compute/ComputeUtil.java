@@ -190,7 +190,7 @@ public class ComputeUtil
 
 
 
-    public static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType)
+    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType)
     {
         // assume all the WCS come from a single data array, find min/max pixel values
         double x1 = Double.MAX_VALUE;
@@ -235,7 +235,7 @@ public class ComputeUtil
         return new Dimension2D((long) dx, (long) dy);
     }
 
-    public static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
+    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
     {
         double totSampleSize = 0.0;
         double numPixels = 0.0;
@@ -266,7 +266,7 @@ public class ComputeUtil
     }
 
     // resolution of SCIENCE data, mean is weighted by number of pixels
-    public static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
+    static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
     {
         double totResolution = 0.0;
         double numPixels = 0.0;
@@ -293,7 +293,7 @@ public class ComputeUtil
         return null;
     }
 
-    public static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType)
+    static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType)
     {
         boolean foundTD = false;
         boolean foundTI = false;
@@ -326,7 +326,7 @@ public class ComputeUtil
     }
 
 
-    public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
+    static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
             throws NoSuchKeywordException
     {
         List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
@@ -357,7 +357,7 @@ public class ComputeUtil
         return polys;
     }
 
-    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+    static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
             throws NoSuchKeywordException
     {
         // since we compute the union, just blindly use all the polygons
@@ -375,7 +375,7 @@ public class ComputeUtil
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
-    public static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts, ProductType productType)
+    static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts, ProductType productType)
             throws NoSuchKeywordException
     {
         log.debug("[computeDimensionsFromWCS] " + poly + " " + artifacts.size());
