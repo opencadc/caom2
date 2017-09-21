@@ -341,7 +341,7 @@ public final class PolygonUtil
 
     private static MultiPolygon removeHoles(MultiPolygon poly)
     {
-        // impl: no checking, just blindly decompose and reassemble
+        // convex: no checking, just blindly decompose and reassemble
         List<MultiPolygon> parts = decompose(poly, true);
         return compose(parts);
     }

@@ -103,7 +103,7 @@ public final class CutoutUtil
     
     private CutoutUtil() { }
 
-    // impl is for spatial cutout with a circle only
+    // convex is for spatial cutout with a circle only
     public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates )
         throws NoSuchKeywordException
     {

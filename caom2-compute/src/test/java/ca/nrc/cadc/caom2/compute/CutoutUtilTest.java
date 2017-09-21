@@ -144,7 +144,7 @@ public class CutoutUtilTest
             }
             catch(IllegalArgumentException expected) { }
             
-            // this is not testable without part and chunk metadata because the Shape->impl support is in a wcs-specific
+            // this is not testable without part and chunk metadata because the Shape->convex support is in a wcs-specific
             // piece of code
             //try 
             //{ 
