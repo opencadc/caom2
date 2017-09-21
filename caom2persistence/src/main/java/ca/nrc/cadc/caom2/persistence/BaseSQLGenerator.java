@@ -3338,7 +3338,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 Double tub = Util.getDouble(rs, col++);
                 col++; // time_bounds polygon
                 List<SubInterval> tsi = getSubIntervalList(rs, col++);
-                if (elb != null)
+                if (tlb != null)
                     tim.bounds = new Interval(tlb, tub, tsi);
                 log.debug("time_bounds: " + tim.bounds);
                 col++; // width

@@ -98,11 +98,10 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.compute.ComputeUtil;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
@@ -608,34 +607,13 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests
             throws Exception
     {
         SimpleObservation observation = new SimpleObservation(collection, observationID);
-        Plane plane = new Plane("plane");
-        Artifact artifact = new Artifact(new URI(SCHEME + collection + "/artifact"), ProductType.SCIENCE, ReleaseType.DATA);
-        Part part = new Part("part");
-        Chunk chunk = new Chunk();
-
-        String ctype = "STOKES";
-        String cunit = "unit";
-
-        Axis axis = new Axis(ctype, cunit);
-        CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
-        PolarizationWCS polarization = new PolarizationWCS(coordAxis1D);
-        Long naxis = 20L;
-        Double delta = 1D;
-        RefCoord refCoord = new RefCoord(0.5, 1);
-        CoordFunction1D coordFunction1D = new CoordFunction1D(naxis, delta, refCoord);
-
-        coordAxis1D.function = coordFunction1D;
-        chunk.polarization = polarization;
-
-        part.getChunks().add(chunk);
-        artifact.getParts().add(part);
-        plane.getArtifacts().add(artifact);
-        observation.getPlanes().add(plane);
+        observation.instrument = new Instrument("INSTR");
+        observation.instrument.getKeywords().add("FOO|BAR"); // reserved character
 
         // ensure we have an invalid observation
         try
         {
-            ComputeUtil.computeTransientState(observation, plane);
+            CaomValidator.validate(observation);
             throw new IllegalStateException("BUG: Test setup - observation not invalid.");
         }
         catch (IllegalArgumentException e)
