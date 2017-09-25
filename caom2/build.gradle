@@ -3,8 +3,11 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
+    id 'checkstyle'
 }
 
+
+apply from: '../_shared.gradle'
 repositories {
     jcenter()
     mavenLocal()
