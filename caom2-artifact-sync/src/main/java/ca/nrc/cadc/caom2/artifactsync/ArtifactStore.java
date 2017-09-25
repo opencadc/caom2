@@ -107,6 +107,7 @@ public interface ArtifactStore
      *
      * @param artifactURI The artifact identifier.
      * @param checksum The checksum of the artifact (can be null).
+     * @param contentLength The size of the artifact in bytes (can be null).
      * @param data The artifact data.
      *
      * @throws UnsupportedOperationException If the artifact uri cannot be resolved.
@@ -117,7 +118,7 @@ public interface ArtifactStore
      * @throws TransientException If an unexpected runtime error occurs.
      * @throws RuntimeException If an unrecovarable error occurs.
      */
-    public void store(URI artifactURI, URI checksum, InputStream data)
+    public void store(URI artifactURI, URI checksum, Long contentLength, InputStream data)
         throws TransientException, UnsupportedOperationException,
             IllegalArgumentException, AccessControlException, IllegalStateException;
 

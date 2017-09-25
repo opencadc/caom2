@@ -69,6 +69,10 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -77,8 +81,9 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
-import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
@@ -106,6 +111,7 @@ public class Main
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
             }
             else if (am.isSet("v") || am.isSet("verbose"))
             {
@@ -127,6 +133,7 @@ public class Main
             }
 
             boolean dryrun = am.isSet("dryrun");
+            boolean loop = am.isSet("continue");
 
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
@@ -144,11 +151,32 @@ public class Main
                 log.info("authentication using: " + meth);
             }
 
+            int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
+            if (am.isSet("batchsize"))
+            {
+                try
+                {
+                    batchSize = Integer.parseInt(am.getValue("batchsize"));
+                    if (batchSize < 1 || batchSize > 10000)
+                    {
+                        log.error("value for --threads must be between 1 and 10000");
+                        usage();
+                        System.exit(-1);
+                    }
+                }
+                catch (NumberFormatException nfe)
+                {
+                    log.error("Illegal value for --batchsize: " + am.getValue("batchsize"));
+                    usage();
+                    System.exit(-1);
+                }
+            }
 
             String dbParam = am.getValue("database");
             if (dbParam == null)
             {
                 log.error("Must specify database information.");
+                usage();
                 System.exit(-1);
             }
             String[] dbInfo = dbParam.split("[.]");
@@ -162,12 +190,14 @@ public class Main
                     if (nthreads < 1 || nthreads > 25)
                     {
                         log.error("value for --threads must be between 1 and 25");
+                        usage();
                         System.exit(-1);
                     }
                 }
                 catch (NumberFormatException nfe)
                 {
                     log.error("Illegal value for --threads: " + am.getValue("threads"));
+                    usage();
                     System.exit(-1);
                 }
             }
@@ -180,6 +210,7 @@ public class Main
             if (asClassName == null)
             {
                 log.error("Must specify artifactStore.");
+                usage();
                 System.exit(-1);
             }
             try
@@ -195,22 +226,45 @@ public class Main
             }
 
             ArtifactDAO artifactDAO = new ArtifactDAO();
+            Map<String,Object> daoConfig = new HashMap<String,Object>(2);
+            daoConfig.put("server", dbInfo[0]);
+            daoConfig.put("database", dbInfo[1]);
+            daoConfig.put("schema", dbInfo[2]);
+            daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            artifactDAO.setConfig(daoConfig);
 
-            Runnable harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, dryrun);
-            Runnable downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads);
+            PrivilegedExceptionAction<Integer> harvester =
+                    new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, dryrun, batchSize);
 
-            if (subject != null)
+            PrivilegedExceptionAction<Object> downloader =
+                    new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
+
+            int num = 0;
+            int loopNum = 1;
+            do
             {
-                Subject.doAs(subject, new RunnableAction(harvester));
-                if (!dryrun)
-                    Subject.doAs(subject, new RunnableAction(downloader));
+                if (loop)
+                    log.info("-- STARTING LOOP #" + loopNum + " --");
+
+                if (subject != null)
+                {
+                    num = Subject.doAs(subject, harvester);
+                    if (!dryrun)
+                        Subject.doAs(subject, downloader);
+                }
+                else // anon
+                {
+                    num = harvester.run();
+                    if (!dryrun)
+                        downloader.run();
+                }
+
+                if (loop)
+                    log.info("-- ENDING LOOP #" + loopNum + " --");
+
+                loopNum++;
             }
-            else // anon
-            {
-                harvester.run();
-                if (!dryrun)
-                    downloader.run();
-            }
+            while (loop && num == batchSize);  // continue if `batch size` records found
 
             exitValue = 0; // finished cleanly
         }
@@ -246,11 +300,13 @@ public class Main
     {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n     --artifactStore= fully qualified class name");
-        sb.append("\n     --database= <server.database.schema>");
-        sb.append("\n     --threads= number  of threads to be used to import artifacts (default: 1)");
+        sb.append("\n     --artifactStore=fully qualified class name");
+        sb.append("\n     --database=<server.database.schema>");
+        sb.append("\n     --threads=number of threads to be used to import artifacts (default: 1)");
         sb.append("\n\nOptional:");
         sb.append("\n     --dryrun : check for work but don't do anything");
+        sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
+        sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");

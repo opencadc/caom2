@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -83,10 +84,10 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 
-public class ArtifactHarvester implements Runnable
+public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
 {
 
-    private static final Integer BATCH_SIZE = Integer.valueOf(1000);
+    public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
@@ -96,26 +97,27 @@ public class ArtifactHarvester implements Runnable
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private boolean dryrun;
+    private int batchSize;
     private String source;
 
 
-    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, boolean dryrun)
+    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int batchSize)
     {
         this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
         this.dryrun = dryrun;
+        this.batchSize = batchSize;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
 
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], BATCH_SIZE);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
     }
 
     @Override
-    public void run()
+    public Integer run() throws Exception
     {
 
-        int batchRun = 0;
         long downloadCount = 0;
         long newDownloadCount = 0;
         int num = 0;
@@ -126,31 +128,36 @@ public class ArtifactHarvester implements Runnable
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
 
-            do
+            // Use the ArtifactDAO to find artifacts with lastModified > last artifact processed
+            List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, batchSize);
+            num = artifacts.size();
+            log.info("Found " + num + " artifacts to process.");
+
+            for (Artifact artifact : artifacts)
             {
-                batchRun++;
 
-                // Use the ArtifactDAO to find artifacts with lastModified > last artifact processed
-                List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, BATCH_SIZE);
-                num = artifacts.size();
-                log.info("Batch run " + batchRun + " found " + num + " artifacts to process.");
-
-                for (Artifact artifact : artifacts)
+                // TEMPORARY:  For now, to keep the data volume low, only harvest
+                // MAST files that begin with a W, X, Y, or Z
+                List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
+                String path = artifact.getURI().getRawSchemeSpecificPart();
+                log.debug("Path: " + path);
+                int lastSlashIdx = path.lastIndexOf("/");
+                String fileID = path.substring(lastSlashIdx + 1, path.length());
+                log.debug("FileID: " + fileID);
+                String firstChar = fileID.substring(0, 1).toLowerCase();
+                if (!acceptedFilePrefixes.contains(firstChar))
                 {
+                    log.debug("Artifact " + artifact.getURI() + " skipped by temporary data volume restriction");
+                }
 
-                    // TEMPORARY:  For now, to keep the data volume low, only harvest
-                    // MAST files that begin with a W, X, Y, or Z
-                    List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
-                    String fileID = artifact.getURI().getPath();
-                    String firstChar = fileID.substring(0, 1).toLowerCase();
-                    if (!acceptedFilePrefixes.contains(firstChar))
+                else
+                {
+                    try
                     {
-                        log.debug("Artifact " + artifact.getURI() + " skipped by temporary data volume restriction");
-                    }
-                    else
-                    {
-                        try
+                        // only process mast artifacts for now
+                        if ("mast".equalsIgnoreCase(artifact.getURI().getScheme()))
                         {
+
                             boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
                             log.debug("Artifact " + artifact.getURI() +
                                     " with MD5 " + artifact.contentChecksum + " exists: " + exists);
@@ -189,27 +196,30 @@ public class ArtifactHarvester implements Runnable
                                 log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
                             }
                         }
-                        catch (Throwable t)
+                        else
                         {
-                            if (dryrun)
-                            {
-                                log.error("Failed to determine if artifact exists, continuing.", t);
-                            }
-                            else
-                            {
-                                log.error("Failed to determine if artifact exists, exiting");
-                                throw new IllegalStateException(t);
-                            }
+                            log.debug("Skipping non mast artifact: " + artifact.getURI());
+                        }
+                    }
+                    catch (Throwable t)
+                    {
+                        if (dryrun)
+                        {
+                            log.error("Failed to determine if artifact exists, continuing.", t);
+                        }
+                        else
+                        {
+                            log.error("Failed to determine if artifact exists, exiting");
+                            throw new IllegalStateException(t);
                         }
                     }
                 }
             }
-            while (num == BATCH_SIZE);  // continue if `batch size` records found
-
+            return num;
         }
         finally
         {
-            log.info("Discovered " + downloadCount + " total artifacts eligible for download. ( " +
+            log.info("Discovered " + downloadCount + " total artifacts eligible for download. (" +
                     newDownloadCount + " new)");
         }
 

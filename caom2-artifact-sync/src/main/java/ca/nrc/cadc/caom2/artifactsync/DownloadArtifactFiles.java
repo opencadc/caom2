@@ -76,6 +76,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -93,31 +94,29 @@ import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
 
-public class DownloadArtifactFiles implements Runnable
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
 {
 
-    private static final Integer BATCH_SIZE = Integer.valueOf(100);
-
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
+    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String source;
     private int threads;
 
-
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads)
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize)
     {
         this.artifactStore = artifactStore;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], BATCH_SIZE);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
 
         this.threads = threads;
     }
 
     @Override
-    public void run()
+    public Object run() throws Exception
     {
 
         Date nullDate = null;
@@ -157,14 +156,13 @@ public class DownloadArtifactFiles implements Runnable
             log.error("Thread execution error", e);
         }
 
+        return null;
     }
 
     private URL getSourceURL(URI artifactURI) throws MalformedURLException
     {
-        // TODO: This is incorrect...
-        String collection = artifactURI.getSchemeSpecificPart();
-        String fileID = artifactURI.getPath();
-        return new URL("http://stsci.mast.com/" + collection + "/" + fileID);
+        String artifact = artifactURI.getSchemeSpecificPart();
+        return new URL(MAST_BASE_ARTIFACT_URL + "/" + artifact);
     }
 
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper
@@ -177,6 +175,7 @@ public class DownloadArtifactFiles implements Runnable
         String uploadErrorMessage;
 
         URI sourceChecksum;
+        Long sourceLength;
 
         ArtifactDownloader(HarvestSkipURI skip, ArtifactStore artifactStore, HarvestSkipURIDAO harvestSkipURIDAO)
         {
@@ -198,7 +197,7 @@ public class DownloadArtifactFiles implements Runnable
 
             try
             {
-                // get the md5 of the artifact
+                // get the md5 and contentLength of the artifact
                 OutputStream out = new ByteArrayOutputStream();
                 HttpDownload head = new HttpDownload(url, out);
                 head.setHeadOnly(true);
@@ -220,7 +219,18 @@ public class DownloadArtifactFiles implements Runnable
                 }
 
                 String md5String = head.getContentMD5();
-                sourceChecksum = URI.create("MD5:" + md5String);
+                log.debug("MAST content MD5: " + md5String);
+                if (md5String != null)
+                {
+                    sourceChecksum = URI.create("MD5:" + md5String);
+                }
+
+                long contentLength = head.getContentLength();
+                sourceLength = null;
+                if (contentLength >= 0)
+                {
+                    sourceLength = new Long(contentLength);
+                }
 
                 // check again to be sure the destination doesn't already have it
                 if (artifactStore.contains(artifactURI, sourceChecksum))
@@ -234,8 +244,10 @@ public class DownloadArtifactFiles implements Runnable
 
                 log.debug("[" + threadName + "] Starting download of " + artifactURI + " from " + url);
                 download.run();
+                log.debug("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
 
                 respCode = download.getResponseCode();
+                log.debug("Download response code: " + respCode);
 
                 if (download.getThrowable() != null || respCode != 200)
                 {
@@ -247,10 +259,6 @@ public class DownloadArtifactFiles implements Runnable
                     }
                     result.success = false;
                     result.errorMessage = sb.toString();
-                }
-                else
-                {
-                    log.debug("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
                 }
 
                 if (!uploadSuccess)
@@ -292,7 +300,7 @@ public class DownloadArtifactFiles implements Runnable
             try
             {
                 log.debug("[" + threadName + "] Starting upload of " + artifactURI);
-                artifactStore.store(artifactURI, sourceChecksum, inputStream);
+                artifactStore.store(artifactURI, sourceChecksum, sourceLength, inputStream);
                 log.debug("[" + threadName + "] Completed upload of " + artifactURI);
             }
             catch (Throwable t)
@@ -301,6 +309,7 @@ public class DownloadArtifactFiles implements Runnable
                 log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "error uploading artifact: " + t.getMessage();
             }
+
         }
     }
 
