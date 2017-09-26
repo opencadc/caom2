@@ -309,7 +309,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                 log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "error uploading artifact: " + t.getMessage();
             }
-
         }
     }
 

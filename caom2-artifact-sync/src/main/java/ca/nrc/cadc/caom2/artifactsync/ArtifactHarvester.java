@@ -139,7 +139,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
                 // TEMPORARY:  For now, to keep the data volume low, only harvest
                 // MAST files that begin with a W, X, Y, or Z
                 List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
-                String path = artifact.getURI().getRawSchemeSpecificPart();
+                String path = artifact.getURI().getSchemeSpecificPart();
                 log.debug("Path: " + path);
                 int lastSlashIdx = path.lastIndexOf("/");
                 String fileID = path.substring(lastSlashIdx + 1, path.length());
@@ -198,7 +198,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
                         }
                         else
                         {
-                            log.debug("Skipping non mast artifact: " + artifact.getURI());
+                            log.debug("Skipping non-MAST artifact: " + artifact.getURI());
                         }
                     }
                     catch (Throwable t)
