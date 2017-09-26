@@ -84,8 +84,7 @@ public class ServiceParameter
 
     private final String name;
     private final String datatype;
-    private final Integer arraysize;
-    private final boolean varsize;
+    private final String arraysize;
     private final String ucd;
     
     private final List<String> options = new ArrayList<String>();
@@ -99,12 +98,11 @@ public class ServiceParameter
     public String utype;
     public String description;
     
-    public ServiceParameter(String name, String datatype, Integer arraysize, boolean varsize, String ucd) 
+    public ServiceParameter(String name, String datatype, String arraysize, String ucd) 
     {
         this.name = name;
         this.datatype = datatype;
         this.arraysize = arraysize;
-        this.varsize = varsize;
         this.ucd = ucd;
     }
 
@@ -118,14 +116,9 @@ public class ServiceParameter
         return datatype;
     }
 
-    public Integer getArraysize()
+    public String getArraysize()
     {
         return arraysize;
-    }
-
-    public boolean isVarsize()
-    {
-        return varsize;
     }
 
     public String getUcd()

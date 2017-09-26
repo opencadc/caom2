@@ -263,26 +263,30 @@ public class LinkQueryRunner implements JobRunner
                 metaResource.id = sd.getID();
                 metaResource.utype = "adhoc:service";
                 String val = null;
+                String len = null;
                 if (sd.getResourceIdentifier() != null)
                 {
                     val = sd.getResourceIdentifier().toASCIIString();
-                    metaResource.getParams().add(new VOTableParam("resourceIdentifier", "char", val.length(), false, val));
+                    len = Integer.toString(val.length());
+                    metaResource.getParams().add(new VOTableParam("resourceIdentifier", "char", len, val));
                 }
                 if (sd.standardID != null)
                 {
                     val = sd.standardID.toASCIIString();
-                    metaResource.getParams().add(new VOTableParam("standardID", "char", val.length(), false, val));
+                    len = Integer.toString(val.length());
+                    metaResource.getParams().add(new VOTableParam("standardID", "char", len, val));
                 }
                 if (sd.accessURL != null)
                 {
                     val = sd.accessURL.toExternalForm();
-                    metaResource.getParams().add(new VOTableParam("accessURL", "char", val.length(), false, val));
+                    len = Integer.toString(val.length());
+                    metaResource.getParams().add(new VOTableParam("accessURL", "char", len, val));
                 }
                 
                 VOTableGroup inputParams = new VOTableGroup("inputParams");
                 for (ServiceParameter p : sd.getInputParams())
                 {
-                    VOTableParam vp = new VOTableParam(p.getName(), p.getDatatype(), p.getArraysize(), p.isVarsize(), p.getValue());
+                    VOTableParam vp = new VOTableParam(p.getName(), p.getDatatype(), p.getArraysize(), p.getValue());
                     vp.ref = p.getRef();
                     vp.ucd = p.getUcd();
                     vp.unit = p.unit;

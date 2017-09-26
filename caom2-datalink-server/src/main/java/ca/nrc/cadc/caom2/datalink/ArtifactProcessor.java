@@ -319,19 +319,19 @@ public class ArtifactProcessor
             log.warn("failed to generate accessURL for: " + serviceID + " + " + standardID + " + " + authMethod);
 
         ServiceParameter sp;
-        sp = new ServiceParameter("ID", "char", null, true, "");
+        sp = new ServiceParameter("ID", "char", "*", "");
         sp.setValueRef(artifactURI.toASCIIString(), null);
         sd.getInputParams().add(sp);
         
         if (ab.poly != null)
         {
-            sp = new ServiceParameter("POS", "char", null, true, "obs.field");
+            sp = new ServiceParameter("POS", "char", "*", "obs.field");
             sd.getInputParams().add(sp);
         }
 
         if (ab.circle != null)
         {
-            sp = new ServiceParameter("CIRCLE", "double", 3, false, "obs.field");
+            sp = new ServiceParameter("CIRCLE", "double", "3", "obs.field");
             sp.xtype = "circle";
             sp.unit = "deg";
             sp.setMinMax(null, ab.circle);
@@ -340,7 +340,7 @@ public class ArtifactProcessor
 
         if (ab.poly != null)
         {
-            sp = new ServiceParameter("POLYGON", "double", null, true, "obs.field");
+            sp = new ServiceParameter("POLYGON", "double", "*", "obs.field");
             sp.xtype = "polygon";
             sp.unit = "deg";
             sp.setMinMax(null, ab.poly);
@@ -349,7 +349,7 @@ public class ArtifactProcessor
 
         if (ab.bandMin != null || ab.bandMax != null)
         {
-            sp = new ServiceParameter("BAND", "double", 2, false, "em.wl;stat.interval");
+            sp = new ServiceParameter("BAND", "double", "2", "em.wl;stat.interval");
             sp.xtype = "interval";
             sp.unit = "m";
             sp.setMinMax(ab.bandMin, ab.bandMax);
@@ -358,7 +358,7 @@ public class ArtifactProcessor
 
         if (ab.timeMin != null || ab.timeMax != null)
         {
-            sp = new ServiceParameter("TIME", "double", 2, false, "time;stat.interval");
+            sp = new ServiceParameter("TIME", "double", "2", "time;stat.interval");
             sp.xtype = "interval";
             sp.unit = "d";
             sp.setMinMax(ab.timeMin, ab.timeMax);
@@ -367,7 +367,7 @@ public class ArtifactProcessor
 
         if (ab.pol != null)
         {
-            sp = new ServiceParameter("POL", "char", null, true, "phys.polarization.state");
+            sp = new ServiceParameter("POL", "char", "*", "phys.polarization.state");
             for (PolarizationState s : ab.pol)
             {
                 sp.getOptions().add(s.stringValue());
