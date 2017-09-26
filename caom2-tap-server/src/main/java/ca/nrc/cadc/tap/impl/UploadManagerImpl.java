@@ -69,9 +69,10 @@
 
 package ca.nrc.cadc.tap.impl;
 
-import ca.nrc.cadc.stc.Polygon;
-import ca.nrc.cadc.stc.Position;
-import ca.nrc.cadc.stc.Region;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.tap.BasicUploadManager;
 import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoint;
 import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoly;
@@ -103,10 +104,12 @@ public class UploadManagerImpl extends BasicUploadManager
     {
         return new PostgreSQLDataType();
     }
+
     
-    // convert to a PGobject (spoint)
+    // convert TAP-1.0 (STC-S) geometry values
+    
     @Override
-    protected Object getPointObject(Position pos)
+    protected Object getPointObject(ca.nrc.cadc.stc.Position pos)
         throws SQLException
     {
         Spoint sval = new Spoint(pos);
@@ -117,15 +120,14 @@ public class UploadManagerImpl extends BasicUploadManager
         return pgo;
     }
 
-    // convert to a PGobject (spoly)
-    // TODO: add support for regions other than polygon
     @Override
-    protected Object getRegionObject(Region reg)
+    protected Object getRegionObject(ca.nrc.cadc.stc.Region reg)
         throws SQLException
     {
-        if (reg instanceof Polygon)
+        if (reg instanceof ca.nrc.cadc.stc.Polygon)
         {
-            Spoly sval = new Spoly((Polygon) reg);
+            ca.nrc.cadc.stc.Polygon poly = ( ca.nrc.cadc.stc.Polygon) reg;
+            Spoly sval = new Spoly(poly);
             PGobject pgo = new PGobject();
             String str = sval.toVertexList();
             pgo.setType("spoly");
@@ -133,5 +135,43 @@ public class UploadManagerImpl extends BasicUploadManager
             return pgo;
         }
         throw new UnsupportedOperationException("cannot convert a " + reg.getClass().getSimpleName());
+    }
+    
+    // convert DALI-1.1 geometry values
+
+    @Override
+    protected Object getPointObject(Point p) throws SQLException
+    {
+        Spoint sval = new Spoint(p);
+        PGobject pgo = new PGobject();
+        String str = sval.toVertex();
+        pgo.setType("spoint");
+        pgo.setValue(str);
+        return pgo;
+    }
+    
+    @Override
+    protected Object getPolygonObject(Polygon poly) throws SQLException
+    {
+        Spoly sval = new Spoly(poly);
+        PGobject pgo = new PGobject();
+        String str = sval.toVertexList();
+        pgo.setType("spoly");
+        pgo.setValue(str);
+        return pgo;
+    }
+
+    @Override
+    protected Object getIntervalObject(DoubleInterval inter)
+    {
+        PgInterval gen = new PgInterval();
+        return gen.generatePolygon2D(inter);
+    }
+
+    @Override
+    protected Object getIntervalArrayObject(DoubleInterval[] inter)
+    {
+        PgInterval gen = new PgInterval();
+        return gen.generatePolygon2D(inter);
     }
 }

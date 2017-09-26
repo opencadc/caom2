@@ -74,9 +74,12 @@ import ca.nrc.cadc.tap.TapSelectItem;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
 import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
+import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import ca.nrc.cadc.tap.writer.format.SCircleFormat;
 import ca.nrc.cadc.tap.writer.format.SPointFormat;
+import ca.nrc.cadc.tap.writer.format.SPointFormat10;
 import ca.nrc.cadc.tap.writer.format.SPolyFormat;
+import ca.nrc.cadc.tap.writer.format.SPolyFormat10;
 import org.apache.log4j.Logger;
 
 /**
@@ -119,15 +122,23 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     protected Format<Object> getPolygonFormat(TapSelectItem columnDesc)
     {
         log.debug("getPolygonFormat: " + columnDesc);
+        if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds"))
+            return new DoubleArrayFormat(); // see CaomSelectListConverter
         return new SPolyFormat();
     }
-    
+
+    @Override
+    protected Format<Object> getPositionFormat(TapSelectItem columnDesc)
+    {
+        log.debug("getPositionFormat: " + columnDesc);
+        return new SPointFormat10();
+    }
     
     @Override
     public Format<Object> getRegionFormat(TapSelectItem columnDesc)
     {
         log.debug("getRegionFormat: " + columnDesc);
-        return new SPolyFormat();
+        return new SPolyFormat10();
     }
 
     @Override

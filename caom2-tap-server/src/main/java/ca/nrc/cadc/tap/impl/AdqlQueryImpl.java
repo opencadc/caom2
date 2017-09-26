@@ -70,7 +70,7 @@
 package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.tap.AdqlQuery;
-import ca.nrc.cadc.tap.caom2.AccessURLConverter;
+import ca.nrc.cadc.tap.caom2.CaomSelectListConverter;
 import ca.nrc.cadc.tap.caom2.CaomReadAccessConverter;
 import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
 import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
@@ -136,7 +136,7 @@ public class AdqlQueryImpl extends AdqlQuery
         super.navigatorList.add(new IsDownloadableConverter());
         
         // change caom2.Artifact.accessURL to caom2.Artifact.uri
-        super.navigatorList.add(new AccessURLConverter());
+        super.navigatorList.add(new CaomSelectListConverter());
         
         //for (Object o : navigatorList)
         //    log.debug("navigator: " + o.getClass().getName());
