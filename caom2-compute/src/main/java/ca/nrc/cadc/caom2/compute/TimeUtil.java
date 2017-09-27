@@ -438,7 +438,7 @@ public final class TimeUtil
         return new SubInterval(Math.min(a,b), Math.max(a,b));
     }
 
-    private static SubInterval toInterval(TemporalWCS wcs, CoordFunction1D func)
+    public static SubInterval toInterval(TemporalWCS wcs, CoordFunction1D func)
     {
         double p1 = 0.5;
         double p2 = func.getNaxis().doubleValue() + 0.5;

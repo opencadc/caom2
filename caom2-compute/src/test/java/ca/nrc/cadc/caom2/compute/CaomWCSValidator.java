@@ -3,21 +3,32 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by jeevesh on 2017-09-26.
  */
 public class CaomWCSValidator
 {
+
+    private final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS in Chunk: ";
+    private final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS in Chunk: ";
+    private final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS in Chunk: ";
+    private final String POLARIZATION_WCS_VALIDATION_ERROR = "Invalid PolarizationWCS in Chunk: ";
+
     public CaomWCSValidator()
     {
     }
@@ -71,76 +82,68 @@ public class CaomWCSValidator
                     }
                     catch (NoSuchKeywordException ne)
                     {
-                        throw new IllegalArgumentException(CHUNK_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+                        throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
                     }
                     catch (UnsupportedOperationException uoe)
                     {
                         // from toPolygon if WCS is too near a pole, or if the bounds
                         // value is not recognized
-                        throw new IllegalArgumentException(CHUNK_VALIDATION_ERROR, uoe);
+                        throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
                     }
                 }
 
+                // Energy interval check
                 if (CutoutUtil.canEnergyCutout(c))
                 {
-//
-//                    long[] cut = getEnergyBounds(c.energy, energyInter);
-//                    if (nrgCut == null)
-//                        nrgCut = cut;
-//                    else if (nrgCut.length == 2 && cut != null) // subset
-//                    {
-//                        if (cut.length == 0)
-//                            nrgCut = cut;
-//                        else // both are length 4
-//                        {
-//                            nrgCut[0] = Math.min(nrgCut[0], cut[0]);
-//                            nrgCut[1] = Math.max(nrgCut[1], cut[1]);
-//                        }
-//                    }
+                    try
+                    {
+                        // convert wcs to energy axis interval
+                        SubInterval sei = EnergyUtil.toInterval(c.energy, c.energy.getAxis().function);
+                    }
+                    catch (NoSuchKeywordException ne)
+                    {
+                        throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+                    }
+
                 }
+
+                // Time check
+                try
+                {
+                    // convert wcs to energy axis interval
+                    SubInterval sti = TimeUtil.toInterval(c.time, c.time.getAxis().function);
+                }
+                catch (UnsupportedOperationException uoe)
+                {
+                    // from toPolygon if WCS is too near a pole, or if the bounds
+                    // value is not recognized
+                    throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
+                }
+
+                // Polarization check
+                try
+                {
+                    //Q: calculation for this and time intervals do this fall through: range, or bounds, last function.
+                    // Does the same pattern need to be applied here?
+                    Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
+                    CoordFunction1D function = c.polarization.getAxis().function;
+                    for (int i=1; i <= function.getNaxis(); i++)
+                    {
+                        double pix = (double) i;
+                        int val = (int) Util.pix2val(function, pix);
+                        pol.add(PolarizationState.toValue(val));
+                    }
+
+                }
+                catch (UnsupportedOperationException uoe)
+                {
+                    // from toPolygon if WCS is too near a pole, or if the bounds
+                    // value is not recognized
+                    throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
+                }
+
             }
         }
-
-        // take the energy SpectralWCS and get the interval?
-
-        // temporal WCS
-
     }
-
-    private final String CHUNK_VALIDATION_ERROR = "Invalid Chunk: ";
-
-    public MultiPolygon validateSpatialWCS(Chunk c)
-            throws IllegalArgumentException
-    {
-        // transform it to a polygon, trap and sanely process
-        // any returned exceptions
-        MultiPolygon newMP = new MultiPolygon();
-        try
-        {
-            newMP = PositionUtil.toPolygon(c.position);
-        }
-        catch (NoSuchKeywordException nske)
-        {
-            // Comes from the Transform class constructor
-            // throw the illegalArgumentException?
-            throw new IllegalArgumentException(CHUNK_VALIDATION_ERROR + " no such keyword", nske);
-        }
-        catch (UnsupportedOperationException uoe)
-        {
-            // from toPolygon if WCS is too near a pole, or if the bounds
-            // value is not recognized
-            throw new IllegalArgumentException(CHUNK_VALIDATION_ERROR, uoe);
-        }
-        // TODO : this only applies to cutouts. Should it still be checked for here?
-//        catch (IllegalPolygonException ipe)
-//        {
-//            // Thrown from toPolygon if polygon area is too large or if
-//            // centre of polygon isn't sane.
-//            throw new IllegalArgumentException(CHUNK_VALIDATION_ERROR + " illegal polygon.", ipe);
-//        }
-
-        return newMP;
-    }
-
 
 }
