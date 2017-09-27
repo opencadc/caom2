@@ -83,20 +83,20 @@ public class CaomWCSValidator
 
                 if (CutoutUtil.canEnergyCutout(c))
                 {
-
-                    long[] cut = getEnergyBounds(c.energy, energyInter);
-                    if (nrgCut == null)
-                        nrgCut = cut;
-                    else if (nrgCut.length == 2 && cut != null) // subset
-                    {
-                        if (cut.length == 0)
-                            nrgCut = cut;
-                        else // both are length 4
-                        {
-                            nrgCut[0] = Math.min(nrgCut[0], cut[0]);
-                            nrgCut[1] = Math.max(nrgCut[1], cut[1]);
-                        }
-                    }
+//
+//                    long[] cut = getEnergyBounds(c.energy, energyInter);
+//                    if (nrgCut == null)
+//                        nrgCut = cut;
+//                    else if (nrgCut.length == 2 && cut != null) // subset
+//                    {
+//                        if (cut.length == 0)
+//                            nrgCut = cut;
+//                        else // both are length 4
+//                        {
+//                            nrgCut[0] = Math.min(nrgCut[0], cut[0]);
+//                            nrgCut[1] = Math.max(nrgCut[1], cut[1]);
+//                        }
+//                    }
                 }
             }
         }
