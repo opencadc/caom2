@@ -71,6 +71,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import ca.nrc.cadc.caom2.*;
 import ca.nrc.cadc.caom2.types.*;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -82,10 +83,6 @@ import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import jsky.coords.wcscon;
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
@@ -163,7 +160,6 @@ public final class CutoutUtil
                 {
                     if ( canEnergyCutout(c) )
                     {
-//                        long[] cut = EnergyUtil.getBounds(c.energy, energyInter);
                         long[] cut = getEnergyBounds(c.energy, energyInter);
                         if (nrgCut == null)
                             nrgCut = cut;
@@ -191,7 +187,7 @@ public final class CutoutUtil
                         log.debug("observable cut: " + toString(obsCut) + " -> " + toString(cut));
                         obsCut = cut;
                     }
-                    else if (obsCut.length == 2 && cut != null) 
+                    else if (obsCut.length == 2 && cut != null)
                     {
                         if (cut.length == 0)
                         {
@@ -520,7 +516,7 @@ public final class CutoutUtil
 
         // convert wcs/footprint to sky coords
         log.debug("computing poly INTERSECT footprint");
-        MultiPolygon foot = PositionUtil.toPolygon(wcs);
+        MultiPolygon foot = PositionUtil.toICRSPolygon(wcs);
 
         log.debug("input poly: " + poly);
         log.debug("wcs poly: " + foot);
@@ -532,7 +528,6 @@ public final class CutoutUtil
             return null;
         }
         //log.debug("intersection: " + npoly);
-
 
         // npoly is in ICRS
         if (gal || fk4)
@@ -620,6 +615,34 @@ public final class CutoutUtil
         return new long[] { x1, x2, y1, y2 }; // an actual cutout
     }
 
+
+//    public void SpatialWCS convertPolyCoordsys(PositionUtil.CoordSys csys, SpatialWCS wcs, MultiPolygon poly)
+//    {
+//        // npoly is in ICRS
+//        if (PositionUtil.CoordSys.GAL.equals(csys.getName()) ||
+//                PositionUtil.CoordSys.FK4.equals(csys.getName()))
+//        {
+//            // convert npoly to native coordsys, in place since we created a new npoly above
+//            log.debug("converting poly to " + csys);
+//            for (Vertex v : poly.getVertices())
+//            {
+//                if ( !SegmentType.CLOSE.equals(v.getType()) )
+//                {
+//                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
+//
+//                    // convert poly coords to native WCS coordsys
+//                    if (PositionUtil.CoordSys.GAL.equals(csys.getName()))
+//                        pp = wcscon.fk52gal(pp);
+//                    else if (PositionUtil.CoordSys.FK4.equals(csys.getName()))
+//                        pp = wcscon.fk524(pp);
+//                    v.cval1 = pp.x;
+//                    v.cval2 = pp.y;
+//                }
+//            }
+//        }
+//    }
+
+//
 
     /**
      * Compute a pixel cutout for the specified bounds. The bounds are assumed to be
@@ -752,5 +775,14 @@ public final class CutoutUtil
             return new long[0];
         }
         return new long[] { x1, x2 }; // an actual cutout
+    }
+
+    public boolean validate(Chunk c)
+    {   boolean isValid = true;
+
+        // Provide WCS validation.
+
+
+        return isValid;
     }
 }

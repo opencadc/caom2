@@ -155,11 +155,20 @@ public final class PositionUtil
                                 + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null)
                         {
-                            MultiPolygon poly = toPolygon(c.position);
-                            log.debug("[generatePolygons] wcs: " + poly);
-                            if (poly != null && poly.getArea() > MAX_SANE_AREA)
+                            MultiPolygon poly = new MultiPolygon();
+                            try
+                            {
+                                poly = toICRSPolygon(c.position);
+                                log.debug("[generatePolygons] wcs: " + poly);
+                            }
+                            catch (IllegalPolygonException ipe)
+                            {
+                                // augment the error message
+                                log.debug("[generatePolygons] wcs: " + poly);
                                 throw new IllegalPolygonException("area too large, assuming invalid WCS: "
-                                    + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                                        + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                            }
+
                             if (poly != null)
                                 polys.add(poly);
                         }
@@ -433,90 +442,127 @@ public final class PositionUtil
     
     public static MultiPolygon toPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException
+{
+    CoordSys coordsys = inferCoordSys(wcs);
+//    if (!coordsys.supported)
+//        return null;
+
+    CoordRange2D range = wcs.getAxis().range;
+    CoordBounds2D bounds = wcs.getAxis().bounds;
+    CoordFunction2D function = wcs.getAxis().function;
+
+    MultiPolygon poly = new MultiPolygon();
+    if(bounds != null)
+    {
+        if (bounds instanceof CoordCircle2D)
+        {
+            CoordCircle2D cc = (CoordCircle2D) bounds;
+            if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
+                throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
+            double x = cc.getCenter().coord1;
+            double y = cc.getCenter().coord2;
+            double dy = cc.getRadius();
+            double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
+        }
+        else if (bounds instanceof CoordPolygon2D)
+        {
+            CoordPolygon2D cp = (CoordPolygon2D) bounds;
+            Iterator<ValueCoord2D> i = cp.getVertices().iterator();
+            while ( i.hasNext() )
+            {
+                ValueCoord2D coord = i.next();
+                if (poly.getVertices().isEmpty())
+                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
+                else
+                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
+            }
+            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            PolygonUtil.validateSegments(poly);
+        }
+        else
+            throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
+    }
+    else if (function != null)
+    {
+        double x1 = 0.5;
+        double x2 = function.getDimension().naxis1 + 0.5;
+        double y1 = 0.5;
+        double y2 = function.getDimension().naxis2 + 0.5;
+        List<Vertex> pixCoords = new ArrayList<Vertex>();
+        pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
+        pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
+        pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
+        poly.getVertices().addAll(skyCoords);
+    }
+    else if (range != null)
+    {
+        double x1 = range.getStart().getCoord1().val;
+        double x2 = range.getEnd().getCoord1().val;
+        double y1 = range.getStart().getCoord2().val;
+        double y2 = range.getEnd().getCoord2().val;
+        poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
+        poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+    }
+
+    log.debug("[wcs.toPolygon] native " + poly);
+//    toICRS(coordsys, poly.getVertices());
+//
+//    Point c = poly.getCenter();
+//    if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
+//    {
+//        throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+//    }
+//
+//    if (poly != null && poly.getArea() > MAX_SANE_AREA)
+//    {
+//        throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+//                + poly.getArea());
+//    }
+//
+//    log.debug("[wcs.toPolygon] icrs " + poly);
+    return poly;
+}
+
+
+    public static MultiPolygon toICRSPolygon(SpatialWCS wcs)
+            throws NoSuchKeywordException
     {
         CoordSys coordsys = inferCoordSys(wcs);
         if (!coordsys.supported)
             return null;
 
-        CoordRange2D range = wcs.getAxis().range;
-        CoordBounds2D bounds = wcs.getAxis().bounds;
-        CoordFunction2D function = wcs.getAxis().function;
-        
-        MultiPolygon poly = new MultiPolygon();
-        if(bounds != null)
+        MultiPolygon nativePolygon = toPolygon(wcs);
+
+        toICRS(coordsys, nativePolygon.getVertices());
+
+        Point c = nativePolygon.getCenter();
+        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
         {
-            if (bounds instanceof CoordCircle2D)
-            {
-                CoordCircle2D cc = (CoordCircle2D) bounds;
-                if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
-                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
-                double x = cc.getCenter().coord1;
-                double y = cc.getCenter().coord2;
-                double dy = cc.getRadius();
-                double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
-            }
-            else if (bounds instanceof CoordPolygon2D)
-            {
-                CoordPolygon2D cp = (CoordPolygon2D) bounds;
-                Iterator<ValueCoord2D> i = cp.getVertices().iterator();
-                while ( i.hasNext() )
-                {
-                    ValueCoord2D coord = i.next();
-                    if (poly.getVertices().isEmpty())
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
-                    else
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
-                }
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-                PolygonUtil.validateSegments(poly);
-            }
-            else
-                throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
-        }
-        else if (function != null)
-        {
-            double x1 = 0.5;
-            double x2 = function.getDimension().naxis1 + 0.5;
-            double y1 = 0.5;
-            double y2 = function.getDimension().naxis2 + 0.5;
-            List<Vertex> pixCoords = new ArrayList<Vertex>();
-            pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
-            pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
-            pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
-            poly.getVertices().addAll(skyCoords);
-        }
-        else if (range != null)
-        {
-            double x1 = range.getStart().getCoord1().val;
-            double x2 = range.getEnd().getCoord1().val;
-            double y1 = range.getStart().getCoord2().val;
-            double y2 = range.getEnd().getCoord2().val;
-            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         }
 
-        log.debug("[wcs.toPolygon] native " + poly);
-        toICRS(coordsys, poly.getVertices());
-        
-        Point c = poly.getCenter();
-        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
-            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
-        
-        log.debug("[wcs.toPolygon] icrs " + poly);
-        return poly;
+        if (nativePolygon != null && nativePolygon.getArea() > MAX_SANE_AREA)
+        {
+            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+                    + nativePolygon.getArea());
+        }
+
+        log.debug("[wcs.toIRCSPolygon] icrs " + nativePolygon);
+        return nativePolygon;
     }
-    
+
+
     private static Vertex rangeReduce(Vertex v)
     {
         if (v.cval2 > 90.0)
