@@ -745,6 +745,7 @@ public class EnergyUtilTest
         log.debug("test range: " + axis.range);
         return wcs;
     }
+
     private SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));

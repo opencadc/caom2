@@ -416,6 +416,35 @@ public class PositionUtilTest
         }
     }
 
+
+    @Test
+    public void testCoordFunctionToICRSPolygon()
+    {
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            Dimension2D dim = new Dimension2D(1024, 1024);
+            Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+            axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            for (Vertex v : poly.getVertices())
+                log.debug("testFunctionToPolygon: " + v);
+            Assert.assertNotNull(poly);
+            Assert.assertEquals(5, poly.getVertices().size());
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+
     @Test
     public void testInvalidCoordFunctionToPolygon()
     {
@@ -430,6 +459,35 @@ public class PositionUtilTest
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
             MultiPolygon poly = PositionUtil.toPolygon(wcs);
+
+            Assert.fail("expected WCSLibRuntimeException");
+        }
+        catch(WCSLibRuntimeException expected)
+        {
+            log.info("caught expected exception: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    //TODO: look at what tests here need to be expanded or changed to cover the toICRSPolygon function...
+    @Test
+    public void testInvalidCoordFunctionToICRSPolygon()
+    {
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            Dimension2D dim = new Dimension2D(1024, 1024);
+            Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+            axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
 
             Assert.fail("expected WCSLibRuntimeException");
         }

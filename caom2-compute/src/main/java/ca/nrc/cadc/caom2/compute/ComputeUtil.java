@@ -67,23 +67,12 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-
-import ca.nrc.cadc.caom2.*;
-//import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-//import ca.nrc.cadc.caom2.types.MultiPolygon;
-//import ca.nrc.cadc.caom2.types.Point;
-//import ca.nrc.cadc.caom2.types.Polygon;
-//import ca.nrc.cadc.caom2.wcs.*;
-//import ca.nrc.cadc.wcs.Transform;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import jsky.coords.wcscon;
 import org.apache.log4j.Logger;
 
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Utility class to assign values to fields marked with the computed stereotype

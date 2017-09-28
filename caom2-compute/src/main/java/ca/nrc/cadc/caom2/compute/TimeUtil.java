@@ -407,7 +407,7 @@ public final class TimeUtil
         return null;
     }
 
-    private static SubInterval toInterval(TemporalWCS wcs, CoordRange1D r)
+    static SubInterval toInterval(TemporalWCS wcs, CoordRange1D r)
     {
         double a = r.getStart().val;
         double b = r.getEnd().val;
@@ -438,7 +438,7 @@ public final class TimeUtil
         return new SubInterval(Math.min(a,b), Math.max(a,b));
     }
 
-    public static SubInterval toInterval(TemporalWCS wcs, CoordFunction1D func)
+    static SubInterval toInterval(TemporalWCS wcs, CoordFunction1D func)
     {
         double p1 = 0.5;
         double p2 = func.getNaxis().doubleValue() + 0.5;

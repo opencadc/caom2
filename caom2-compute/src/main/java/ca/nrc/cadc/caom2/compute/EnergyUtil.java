@@ -525,7 +525,7 @@ public final class EnergyUtil
         return null;
     }
 
-    public static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r)
+    static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r)
     {
         double a = r.getStart().val;
         double b = r.getEnd().val;
@@ -550,7 +550,7 @@ public final class EnergyUtil
         return new SubInterval(Math.min(a,b), Math.max(a,b));
     }
 
-    public static SubInterval toInterval(SpectralWCS wcs, CoordFunction1D f)
+    static SubInterval toInterval(SpectralWCS wcs, CoordFunction1D f)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
         // convert to TARGET_CTYPE

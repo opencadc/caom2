@@ -271,7 +271,7 @@ public final class PolygonUtil
     }
   
     // transform, compute, inverse transforms
-    static MultiPolygon transComputeUnion(List<MultiPolygon> polys, double scale, boolean unscale, boolean removeHoles)
+    private static MultiPolygon transComputeUnion(List<MultiPolygon> polys, double scale, boolean unscale, boolean removeHoles)
     {
         if (polys.size() == 1)
             return polys.get(0);
@@ -302,7 +302,7 @@ public final class PolygonUtil
     }
 
      // scale, compute, remove-holes, [unscale], smooth; assumes cartesian approx is safe
-     static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
+     private static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
     {
         log.debug("[computeUnion] work=" + work.size() + " scale="+scale 
                 + " unscale="+unscale + " removeHoles="+removeHoles);
@@ -1118,7 +1118,7 @@ public final class PolygonUtil
     // from here down: interfaces to "external" libraries with alternate data structures
     
     // use java.awt CAG implementation for 2D cartesian geometry
-    public static MultiPolygon doUnionCAG(MultiPolygon p1, MultiPolygon p2)
+    static MultiPolygon doUnionCAG(MultiPolygon p1, MultiPolygon p2)
     {
         Area a1 = toArea(p1);
         Area a2 = toArea(p2);
