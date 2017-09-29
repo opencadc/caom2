@@ -95,12 +95,12 @@ public class CaomWCSValidatorTest
 
     public CaomWCSValidatorTest() { }
     
-//    @Test
-//    public void testWCSValidator()
-//    {
-//        // SpatialWCS
-//        try
-//        {
+    @Test
+    public void testWCSValidator()
+    {
+        // SpatialWCS
+        try
+        {
 //            // Test set with bounds
 //            // could loop through integer values in getTestSetBounds here if need be.
 //            Plane plane = PositionUtilTest.getTestSetBounds(1,1);
@@ -109,16 +109,16 @@ public class CaomWCSValidatorTest
 //            plane = PositionUtilTest.getTestSetRange(1,2);
 //            validatePlane(plane);
 //
-//            plane = PositionUtilTest.getTestSetFunction(2,2);
-//            validatePlane(plane);
-//
-//        }
-//        catch(Exception unexpected)
-//        {
-//            log.error(UNEXPECTED_EXCEPTION + " getting test set range", unexpected);
-//            Assert.fail(UNEXPECTED_EXCEPTION + " getting test set range: " + unexpected);
-//        }
-//    }
+            Plane plane = PositionUtilTest.getTestSetFunction(2,2);
+            validatePlane(plane);
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " getting test set range", unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " getting test set range: " + unexpected);
+        }
+    }
 
     @Test
     public void testSpatialWCSValidator()
@@ -135,7 +135,6 @@ public class CaomWCSValidatorTest
         {
             // Test set with bounds
             // could loop through integer values in getTestSetBounds here if need be.
-//            SpatialWCS position = PositionUtilTest.getTestFunction(px,py,sx,sy,dp,ds);
             SpatialWCS position = PositionUtilTest.getTestFunction(px,py,sx,sy,false);
 
             try
