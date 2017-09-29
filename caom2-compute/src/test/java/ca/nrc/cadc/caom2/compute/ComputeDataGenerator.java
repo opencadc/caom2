@@ -13,6 +13,7 @@ import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -166,10 +167,53 @@ public class ComputeDataGenerator
     }
 
 
-    //    private TemporalWCS mkBadTemporalWCSRange()
-    //    {
-    //
-    //    }
+    TemporalWCS mkBadTemporalWCSCunit()
+    {
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
+        TemporalWCS wcs = new TemporalWCS(axis);
+//        wcs.exposure = 300.0;
+//        wcs.resolution = 0.1;
+//
+//
+//        // divide into 2 samples with a gap between
+//        RefCoord c1 = new RefCoord(px, sx);
+//        RefCoord c2 = new RefCoord(px + nx*0.33, sx + nx*ds*0.33);
+//        RefCoord c3 = new RefCoord(px + nx*0.66, sx + nx*ds*0.66);
+//        RefCoord c4 = new RefCoord(px + nx,      sx + nx*ds);
+//        wcs.getAxis().bounds = new CoordBounds1D();
+//        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
+//        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
+
+        return wcs;
+
+    }
+
+
+    TemporalWCS mkBadTemporalWCSRange()
+    {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
+        TemporalWCS wcs = new TemporalWCS(axis);
+                wcs.exposure = 300.0;
+                wcs.resolution = 0.1;
+
+                // divide into 2 samples with a gap between
+                RefCoord c1 = new RefCoord(px, sx);
+                RefCoord c2 = new RefCoord(0,0);
+                RefCoord c3 = new RefCoord(px + nx*0.66, sx + nx*ds*0.66);
+                RefCoord c4 = new RefCoord(px + nx,      sx + nx*ds);
+                wcs.getAxis().bounds = new CoordBounds1D();
+                wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
+                wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
+
+        return wcs;
+
+    }
     //    private TemporalWCS mkBadTemporalWCSBounds()
     //    {
     //

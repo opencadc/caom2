@@ -304,6 +304,31 @@ public class CaomWCSValidatorTest
 
 
     @Test
+    public void testInvalidTemporalWCS()
+    {
+        TemporalWCS time = null;
+
+        try
+        {
+            time = dataGenerator.mkBadTemporalWCSCunit();
+
+            CaomWCSValidator.validateTemporalWCS(time);
+
+            // Null value is acceptable
+            CaomWCSValidator.validateTemporalWCS(null);
+        }
+        catch (Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
+        }
+
+        log.info("done testTemporalWCSValidator");
+    }
+
+
+
+    @Test
     public void testPolarizationWCSValidator()
     {
         PolarizationWCS polarization = null;
