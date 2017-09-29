@@ -78,6 +78,10 @@ import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
+import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
@@ -100,152 +104,183 @@ public class CaomWCSValidator
     {
     }
 
+    /**
+     * Validate all WCS types included in the Chunks belonging to the given Artifact.
+     *
+     * @param a
+     * @throws IllegalArgumentException
+     */
     public static void validate(Artifact a)
-        throws IllegalArgumentException
+            throws IllegalArgumentException
     {
-
         for (Part p : a.getParts())
         {
             for (Chunk c : p.getChunks())
             {
-
-                // Position check
-                try
-                {
-                    // Convert to polygon using native coordinate system
-                    MultiPolygon nextMP = PositionUtil.toPolygon(c.position);
-
-                    Point centre = nextMP.getCenter();
-
-                    WCSWrapper map = new WCSWrapper(c.position, 1, 2);
-                    Transform transform = new Transform(map);
-
-                    double[] coords = new double[2];
-                    coords[0] = centre.cval1;
-                    coords[1] = centre.cval2;
-                    Transform.Result tr = transform.pix2sky(coords);
-
-                }
-                catch (NoSuchKeywordException ne)
-                {
-                    throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
-                }
-                catch (UnsupportedOperationException uoe)
-                {
-                    // from toPolygon if WCS is too near a pole, or if the bounds
-                    // value is not recognized
-                    throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
-                }
-
-
-                // Energy interval checks
-                try
-                {
-                    // convert wcs to energy axis interval
-                    CoordAxis1D energyAxis = c.energy.getAxis();
-
-                    if (energyAxis.range != null)
-                    {
-                        SubInterval s = EnergyUtil.toInterval(c.energy, energyAxis.range);
-                    }
-
-                    if (energyAxis.bounds != null)
-                    {
-                        for (CoordRange1D tile : energyAxis.bounds.getSamples())
-                        {
-                            SubInterval bwmRange = EnergyUtil.toInterval(c.energy, tile);
-                        }
-                    }
-
-                    if (energyAxis.function != null)
-                    {
-                        // check range, bounds and function versions
-                        SubInterval sei = EnergyUtil.toInterval(c.energy, energyAxis.function);
-                    }
-
-                }
-                catch (NoSuchKeywordException ne)
-                {
-                    throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
-                }
-
-
-
-                // Time checks
-                try
-                {
-                    SubInterval sti = TimeUtil.toInterval(c.time, c.time.getAxis().function);
-                    CoordAxis1D timeAxis = c.time.getAxis();
-                    if (timeAxis.range != null)
-                    {
-                        SubInterval s = TimeUtil.toInterval(c.time, timeAxis.range);
-                    }
-                    if (timeAxis.bounds != null)
-                    {
-                        for (CoordRange1D cr : timeAxis.bounds.getSamples())
-                        {
-                            SubInterval s1 = TimeUtil.toInterval(c.time, cr);
-                        }
-                    }
-                    if (timeAxis.function != null)
-                    {
-                        SubInterval s2 = TimeUtil.toInterval(c.time, timeAxis.function);
-                    }
-                }
-                catch (UnsupportedOperationException uoe)
-                {
-                    // timesys or CUNIT error
-                    throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
-                }
-
-
-                // Polarization checks
-                try
-                {
-                    CoordAxis1D polarizationAxis = c.polarization.getAxis();
-                    List<PolarizationState> pol = new ArrayList<PolarizationState>();
-
-                    if (polarizationAxis.range != null)
-                    {
-                        int lb = (int) polarizationAxis.range.getStart().val;
-                        int ub = (int) polarizationAxis.range.getEnd().val;
-                        for (int i=lb; i <= ub; i++)
-                        {
-                            pol.add(PolarizationState.toValue(i));
-                        }
-                    }
-                    else if (polarizationAxis.bounds != null)
-                    {
-                        for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
-                        {
-                            int lb = (int) cr.getStart().val;
-                            int ub = (int) cr.getEnd().val;
-                            for (int i=lb; i <= ub; i++)
-                            {
-                                pol.add(PolarizationState.toValue(i));
-                            }
-                        }
-                    }
-                    else if (polarizationAxis.function != null)
-                    {
-                        for (int i=1; i <= polarizationAxis.function.getNaxis(); i++)
-                        {
-                            double pix = (double) i;
-                            int val = (int) Util.pix2val(polarizationAxis.function, pix);
-                            pol.add(PolarizationState.toValue(val));
-                        }
-                    }
-
-                }
-                catch (UnsupportedOperationException uoe)
-                {
-                    // from toPolygon if WCS is too near a pole, or if the bounds
-                    // value is not recognized
-                    throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
-                }
-
+                validateSpatialWCS(c.position);
+                validateSpectralWCS(c.energy);
+                validateTemporalWCS(c.time);
+                validatePolarizationWCS(c.polarization);
             }
         }
     }
+
+
+    public static void validateChunk(Chunk c)
+            throws IllegalArgumentException
+    {
+            validateSpatialWCS(c.position);
+            validateSpectralWCS(c.energy);
+            validateTemporalWCS(c.time);
+            validatePolarizationWCS(c.polarization);
+    }
+
+
+    public static void validateSpatialWCS(SpatialWCS position)
+    {
+        // Position check
+        try
+        {
+            // Convert to polygon using native coordinate system
+            MultiPolygon nextMP = PositionUtil.toPolygon(position);
+
+            Point centre = nextMP.getCenter();
+
+            WCSWrapper map = new WCSWrapper(position, 1, 2);
+            Transform transform = new Transform(map);
+
+            double[] coords = new double[2];
+            coords[0] = centre.cval1;
+            coords[1] = centre.cval2;
+            Transform.Result tr = transform.pix2sky(coords);
+        }
+        catch (NoSuchKeywordException ne)
+        {
+            throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+            // error thrown from toPolygon if WCS is too near a pole, or if the bounds
+            // value is not recognized
+            throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
+        }
+
+    }
+
+    public static void validateSpectralWCS(SpectralWCS energy)
+    {
+        // Energy interval checks
+        try
+        {
+            // convert wcs to energy axis interval
+            CoordAxis1D energyAxis = energy.getAxis();
+
+            if (energyAxis.range != null)
+            {
+                SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
+            }
+
+            if (energyAxis.bounds != null)
+            {
+                for (CoordRange1D tile : energyAxis.bounds.getSamples())
+                {
+                    SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+                }
+            }
+
+            if (energyAxis.function != null)
+            {
+                // check range, bounds and function versions
+                SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+            }
+
+        }
+        catch (NoSuchKeywordException ne)
+        {
+            throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+        }
+
+    }
+
+    public static void validateTemporalWCS(TemporalWCS time)
+    {
+        // Time checks
+        try
+        {
+            SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
+            CoordAxis1D timeAxis = time.getAxis();
+            if (timeAxis.range != null)
+            {
+                SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
+            }
+            if (timeAxis.bounds != null)
+            {
+                for (CoordRange1D cr : timeAxis.bounds.getSamples())
+                {
+                    SubInterval s1 = TimeUtil.toInterval(time, cr);
+                }
+            }
+            if (timeAxis.function != null)
+            {
+                SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
+            }
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+            // timesys or CUNIT error
+            throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
+        }
+    }
+
+    public static void validatePolarizationWCS(PolarizationWCS polarization)
+    {
+        // Polarization checks
+        try
+        {
+            CoordAxis1D polarizationAxis = polarization.getAxis();
+            List<PolarizationState> pol = new ArrayList<PolarizationState>();
+
+            if (polarizationAxis.range != null)
+            {
+                int lb = (int) polarizationAxis.range.getStart().val;
+                int ub = (int) polarizationAxis.range.getEnd().val;
+                for (int i=lb; i <= ub; i++)
+                {
+                    pol.add(PolarizationState.toValue(i));
+                }
+            }
+            else if (polarizationAxis.bounds != null)
+            {
+                for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
+                {
+                    int lb = (int) cr.getStart().val;
+                    int ub = (int) cr.getEnd().val;
+                    for (int i=lb; i <= ub; i++)
+                    {
+                        pol.add(PolarizationState.toValue(i));
+                    }
+                }
+            }
+            else if (polarizationAxis.function != null)
+            {
+                for (int i=1; i <= polarizationAxis.function.getNaxis(); i++)
+                {
+                    double pix = (double) i;
+                    int val = (int) Util.pix2val(polarizationAxis.function, pix);
+                    pol.add(PolarizationState.toValue(val));
+                }
+            }
+
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+            // from toPolygon if WCS is too near a pole, or if the bounds
+            // value is not recognized
+            throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
+        }
+    }
+
+
+
 
 }
