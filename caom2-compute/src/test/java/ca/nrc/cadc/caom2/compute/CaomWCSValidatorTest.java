@@ -86,7 +86,7 @@ public class CaomWCSValidatorTest
 {
     private static final Logger log = Logger.getLogger(CaomWCSValidatorTest.class);
 
-    private static final String UNEXPECTED_EXCEPTION = "Unexpected exception: ";
+    private static final String UNEXPECTED_EXCEPTION = "Unexpected exception ";
 
     static
     {
@@ -96,7 +96,7 @@ public class CaomWCSValidatorTest
     public CaomWCSValidatorTest() { }
     
     @Test
-    public void testSpatialWCSValidator()
+    public void testWCSValidator()
     {
         // SpatialWCS
         try
@@ -104,7 +104,7 @@ public class CaomWCSValidatorTest
             // Test set with bounds
             // could loop through integer values in getTestSetBounds here if need be.
             Plane plane = PositionUtilTest.getTestSetBounds(1,1);
-            validatePlaneSpatialWCS(plane);
+            validatePlane(plane);
 
             plane = PositionUtilTest.getTestSetRange(1,2);
             validatePlane(plane);
@@ -123,33 +123,35 @@ public class CaomWCSValidatorTest
     @Test
     public void testSpatialWCSValidator()
     {
+        double px = 0.5;
+        double py = 0.5;
+        double sx = 20.0;
+        double sy = 10.0;
+        double dp = 1000.0;
+        double ds = 1.0;
+
         // SpatialWCS
         try
         {
             // Test set with bounds
             // could loop through integer values in getTestSetBounds here if need be.
-            SpatialWCS position = PositionUtilTest.getTestSetBounds(1,1);
+            SpatialWCS position = PositionUtilTest.getTestRange(px,py,sx,sy,dp,ds);
+
             try
             {
                 CaomWCSValidator.validateSpatialWCS(position);
             }
             catch (Exception unexpected)
             {
-                log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
+                log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
+                Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
             }
-
-            plane = PositionUtilTest.getTestSetRange(1,2);
-            validatePlane(plane);
-
-            plane = PositionUtilTest.getTestSetFunction(2,2);
-            validatePlane(plane);
 
         }
         catch(Exception unexpected)
         {
-            log.error(UNEXPECTED_EXCEPTION + " getting test set range", unexpected);
-            Assert.fail(UNEXPECTED_EXCEPTION + " getting test set range: " + unexpected);
+            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
         }
     }
 
@@ -201,154 +203,154 @@ public class CaomWCSValidatorTest
     // or have it's own?
 
 
-    @Test
-    public void testIllegalValues()
-    {
-        // Test failure of each type of WCS
-        try
-        {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
-            // ouch :-)
-            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-
-            double lowErr = -9.0;
-            double highErr = 11.0;
-            double zeroErr = 0.0;
-            RefCoord c1, c2;
-
-            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
-            PolarizationWCS w = new PolarizationWCS(axis);
-            c.polarization = w;
-
-            c1 = new RefCoord(0.5, zeroErr);
-            c2 = new RefCoord(1.5, zeroErr);
-            w.getAxis().range = new CoordRange1D(c1, c2);
-
-            try
-            {
-                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
-                Assert.fail("zeroErr -- expected IllegalArgumentException, got: " + actual);
-            }
-            catch(IllegalArgumentException expected)
-            {
-                log.info("zeroErr -- caught expected: " + expected);
-            }
-
-            c1 = new RefCoord(0.5, lowErr);
-            c2 = new RefCoord(1.5, lowErr);
-            w.getAxis().range = new CoordRange1D(c1, c2);
-
-            try
-            {
-                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
-                Assert.fail("lowErr -- expected IllegalArgumentException, got: " + actual);
-            }
-            catch(IllegalArgumentException expected)
-            {
-                log.info("lowErr -- caught expected: " + expected);
-            }
-
-            c1 = new RefCoord(0.5, highErr);
-            c2 = new RefCoord(1.5, highErr);
-            w.getAxis().range = new CoordRange1D(c1, c2);
-
-            try
-            {
-                CaomWCSValidator.validate()
-            }
-            catch(IllegalArgumentException expected)
-            {
-                log.info("lowErr -- caught expected: " + expected);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    private Plane getTestPlane(ProductType ptype)
-            throws URISyntaxException
-    {
-        Plane plane = new Plane("foo");
-        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
-        plane.getArtifacts().add(na);
-        Part np = new Part("baz");
-        na.getParts().add(np);
-        np.getChunks().add(new Chunk());
-        return plane;
-    }
-
-
-    private SpatialWCS mkGoodSpatialWCS()
-    {
-        Axis axis1 = new Axis("RA---TAN", "deg");
-        Axis axis2 = new Axis("DEC--TAN", "deg");
-        CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
-        SpatialWCS wcs = new SpatialWCS(axis);
-        wcs.equinox = null;
-        Dimension2D dim = new Dimension2D(1024, 1024);
-        Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
-        axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
-    }
-    private SpatialWCS mkBadSpatialWCS()
-    {
-
-    }
-
-
-    private SpectralWCS mkGoodSpectralWCS()
-    {
-
-    }
-    private SpectralWCS mkBadSpectralWCSRange()
-    {
-
-    }
-    private SpectralWCS mkBadSpectralWCSBounds()
-    {
-
-    }
-    private SpectralWCS mkBadSpectralWCSFn()
-    {
-
-    }
-
-    private TemporalWCS mkGoodTemporalWCS()
-    {
-
-    }
-    private TemporalWCS mkBadTemporalWCSRange()
-    {
-
-    }
-    private TemporalWCS mkBadTemporalWCSBounds()
-    {
-
-    }
-    private TemporalWCS mkBadTemporalWCSFn()
-    {
-
-    }
-
-
-    private PolarizationWCS mkGoodPolarizationWCS()
-    {
-
-    }
-    private PolarizationWCS mkBadPolarizationWCSRange()
-    {
-
-    }
-    private PolarizationWCS mkBadPolarizationWCSBounds()
-    {
-
-    }
-    private PolarizationWCS mkBadPolarizationWCSFn()
-    {
-
-    }
+//    @Test
+//    public void testIllegalValues()
+//    {
+//        // Test failure of each type of WCS
+//        try
+//        {
+//            Plane plane = getTestPlane(ProductType.SCIENCE);
+//            // ouch :-)
+//            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+//
+//            double lowErr = -9.0;
+//            double highErr = 11.0;
+//            double zeroErr = 0.0;
+//            RefCoord c1, c2;
+//
+//            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
+//            PolarizationWCS w = new PolarizationWCS(axis);
+//            c.polarization = w;
+//
+//            c1 = new RefCoord(0.5, zeroErr);
+//            c2 = new RefCoord(1.5, zeroErr);
+//            w.getAxis().range = new CoordRange1D(c1, c2);
+//
+//            try
+//            {
+//                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+//                Assert.fail("zeroErr -- expected IllegalArgumentException, got: " + actual);
+//            }
+//            catch(IllegalArgumentException expected)
+//            {
+//                log.info("zeroErr -- caught expected: " + expected);
+//            }
+//
+//            c1 = new RefCoord(0.5, lowErr);
+//            c2 = new RefCoord(1.5, lowErr);
+//            w.getAxis().range = new CoordRange1D(c1, c2);
+//
+//            try
+//            {
+//                Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
+//                Assert.fail("lowErr -- expected IllegalArgumentException, got: " + actual);
+//            }
+//            catch(IllegalArgumentException expected)
+//            {
+//                log.info("lowErr -- caught expected: " + expected);
+//            }
+//
+//            c1 = new RefCoord(0.5, highErr);
+//            c2 = new RefCoord(1.5, highErr);
+//            w.getAxis().range = new CoordRange1D(c1, c2);
+//
+//            try
+//            {
+//                CaomWCSValidator.validate()
+//            }
+//            catch(IllegalArgumentException expected)
+//            {
+//                log.info("lowErr -- caught expected: " + expected);
+//            }
+//        }
+//        catch(Exception unexpected)
+//        {
+//            log.error("unexpected exception", unexpected);
+//            Assert.fail("unexpected exception: " + unexpected);
+//        }
+//    }
+//
+//    private Plane getTestPlane(ProductType ptype)
+//            throws URISyntaxException
+//    {
+//        Plane plane = new Plane("foo");
+//        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
+//        plane.getArtifacts().add(na);
+//        Part np = new Part("baz");
+//        na.getParts().add(np);
+//        np.getChunks().add(new Chunk());
+//        return plane;
+//    }
+//
+//
+//    private SpatialWCS mkGoodSpatialWCS()
+//    {
+//        Axis axis1 = new Axis("RA---TAN", "deg");
+//        Axis axis2 = new Axis("DEC--TAN", "deg");
+//        CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+//        SpatialWCS wcs = new SpatialWCS(axis);
+//        wcs.equinox = null;
+//        Dimension2D dim = new Dimension2D(1024, 1024);
+//        Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+//        axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
+//    }
+//    private SpatialWCS mkBadSpatialWCS()
+//    {
+//
+//    }
+//
+//
+//    private SpectralWCS mkGoodSpectralWCS()
+//    {
+//
+//    }
+//    private SpectralWCS mkBadSpectralWCSRange()
+//    {
+//
+//    }
+//    private SpectralWCS mkBadSpectralWCSBounds()
+//    {
+//
+//    }
+//    private SpectralWCS mkBadSpectralWCSFn()
+//    {
+//
+//    }
+//
+//    private TemporalWCS mkGoodTemporalWCS()
+//    {
+//
+//    }
+//    private TemporalWCS mkBadTemporalWCSRange()
+//    {
+//
+//    }
+//    private TemporalWCS mkBadTemporalWCSBounds()
+//    {
+//
+//    }
+//    private TemporalWCS mkBadTemporalWCSFn()
+//    {
+//
+//    }
+//
+//
+//    private PolarizationWCS mkGoodPolarizationWCS()
+//    {
+//
+//    }
+//    private PolarizationWCS mkBadPolarizationWCSRange()
+//    {
+//
+//    }
+//    private PolarizationWCS mkBadPolarizationWCSBounds()
+//    {
+//
+//    }
+//    private PolarizationWCS mkBadPolarizationWCSFn()
+//    {
+//
+//    }
 
 
 
