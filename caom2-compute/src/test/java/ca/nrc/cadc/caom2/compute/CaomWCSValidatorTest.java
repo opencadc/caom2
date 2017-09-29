@@ -206,7 +206,7 @@ public class CaomWCSValidatorTest
         }
         catch (IllegalArgumentException expected)
         {
-            log.info(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString())
+            log.info(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString());
             Assert.assertTrue(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString() + expected, true);
         }
         catch (Exception unexpected)
