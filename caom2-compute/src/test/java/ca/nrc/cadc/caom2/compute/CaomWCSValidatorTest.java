@@ -87,6 +87,7 @@ public class CaomWCSValidatorTest
     private static final Logger log = Logger.getLogger(CaomWCSValidatorTest.class);
 
     private static final String UNEXPECTED_EXCEPTION = "Unexpected exception ";
+    private EnergyUtilTest euTest = new EnergyUtilTest();
 
     static
     {
@@ -95,7 +96,7 @@ public class CaomWCSValidatorTest
 
     public CaomWCSValidatorTest() { }
     
-    @Test
+//    @Test
     public void testWCSValidator()
     {
         // SpatialWCS
@@ -130,11 +131,8 @@ public class CaomWCSValidatorTest
         double dp = 1000.0;
         double ds = 1.0;
 
-        // SpatialWCS
         try
         {
-            // Test set with bounds
-            // could loop through integer values in getTestSetBounds here if need be.
             SpatialWCS position = PositionUtilTest.getTestFunction(px,py,sx,sy,false);
 
             try
@@ -153,9 +151,41 @@ public class CaomWCSValidatorTest
             log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
         }
-        log.info("done testSpacalWCSValidator");
+        log.info("done testSpatialWCSValidator");
     }
 
+
+    @Test
+    public void testSpectralWCSValidator()
+    {
+        double px = 0.5;
+        double sx = 400.0;
+        double nx = 200.0;
+        double ds = 1.0;
+
+        try
+        {
+            // Test set with bounds
+            SpectralWCS energy = euTest.getTestRange(true,  px, sx*nx*ds, nx, ds);
+
+            try
+            {
+                CaomWCSValidator.validateSpectralWCS(energy);
+            }
+            catch (Exception unexpected)
+            {
+                log.error(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString(), unexpected);
+                Assert.fail(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString() + unexpected);
+            }
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
+        }
+        log.info("done testSpectralWCSValidator");
+    }
 
 
     private void validatePlane(Plane p)

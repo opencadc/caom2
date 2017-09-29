@@ -726,7 +726,7 @@ public class EnergyUtilTest
     }
 
 
-    private SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
+    SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -746,7 +746,7 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    private SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
+    SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -769,7 +769,8 @@ public class EnergyUtilTest
         log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
-    private SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -787,7 +788,8 @@ public class EnergyUtilTest
         log.debug("test function: " + axis.function);
         return wcs;
     }
-    private SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
@@ -811,7 +813,8 @@ public class EnergyUtilTest
         log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
-    private SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
@@ -830,7 +833,7 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    private SpectralWCS getInvalidFunction()
+    SpectralWCS getInvalidFunction()
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
         log.debug("test axis: " + axis);
