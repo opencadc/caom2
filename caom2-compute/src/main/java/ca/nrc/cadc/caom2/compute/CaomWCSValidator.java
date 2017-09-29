@@ -106,14 +106,20 @@ public class CaomWCSValidator
     public static void validate(Artifact a)
             throws IllegalArgumentException
     {
-        for (Part p : a.getParts())
+        if (a != null)
         {
-            for (Chunk c : p.getChunks())
+            for (Part p : a.getParts())
             {
-                validateSpatialWCS(c.position);
-                validateSpectralWCS(c.energy);
-                validateTemporalWCS(c.time);
-                validatePolarizationWCS(c.polarization);
+                if (p != null)
+                {
+                    for (Chunk c : p.getChunks())
+                    {
+                        validateSpatialWCS(c.position);
+                        validateSpectralWCS(c.energy);
+                        validateTemporalWCS(c.time);
+                        validatePolarizationWCS(c.polarization);
+                    }
+                }
             }
         }
     }
@@ -283,5 +289,5 @@ public class CaomWCSValidator
             }
         }
     }
-    
+
 }

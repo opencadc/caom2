@@ -8,8 +8,12 @@ import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.wcs.Axis;
+import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
+import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
@@ -83,24 +87,29 @@ public class ComputeDataGenerator
         double sy = 10.0;
         double dp = 1000.0;
         double ds = 1.0;
-        SpatialWCS position = null;
-
 
         return PositionUtilTest.getTestFunction(px, py, sx, sy, false);
     }
-    //    private SpatialWCS mkBadSpatialWCS()
-    //    {
-    //
-    //    }
-    //
-    //
+
+    SpatialWCS mkBadSpatialWCS()
+    {
+        Axis axis1 = new Axis("RA---TAN", "deg");
+        Axis axis2 = new Axis("DEC--TAN", "deg");
+        CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+        SpatialWCS wcs = new SpatialWCS(axis);
+        wcs.equinox = null;
+        Dimension2D dim = new Dimension2D(1024, 1024);
+        Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+        axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
+        return wcs;
+    }
+
     SpectralWCS mkGoodSpectralWCS()
     {
         double px = 0.5;
         double sx = 400.0;
         double nx = 200.0;
         double ds = 1.0;
-        SpectralWCS energy = null;
 
         return euTest.getTestRange(true, px, sx * nx * ds, nx, ds);
 

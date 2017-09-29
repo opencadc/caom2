@@ -85,6 +85,9 @@ public class CaomWCSValidatorTest
     private static final Logger log = Logger.getLogger(CaomWCSValidatorTest.class);
 
     private static final String UNEXPECTED_EXCEPTION = "Unexpected exception ";
+    private static final String EXPECTED_EXCEPTION = "Exception thrown. ";
+    private static final String VERIFIED_INVALID = " verified as invalid.";
+
     private ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
 
 
@@ -94,7 +97,7 @@ public class CaomWCSValidatorTest
     }
 
     @Test
-    public void testWCSValidator()
+    public void testNullWCS()
     {
         Artifact a = null;
 
@@ -106,14 +109,65 @@ public class CaomWCSValidatorTest
             c.energy = dataGenerator.mkGoodSpectralWCS();
             c.time = dataGenerator.mkGoodTemporalWCS();
             c.polarization = dataGenerator.mkGoodPolarizationWCS();
+            CaomWCSValidator.validate(a);
 
 
-                CaomWCSValidator.validate(a);
-            } catch (Exception unexpected)
-            {
-                log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
-            }
+            // Not probably reasonable Chunks, but should still be valid
+            c.position = null;
+            CaomWCSValidator.validate(a);
+
+            c.position = dataGenerator.mkGoodSpatialWCS();
+            c.energy = null;
+            CaomWCSValidator.validate(a);
+
+            c.energy = dataGenerator.mkGoodSpectralWCS();
+            c.time = null;
+            CaomWCSValidator.validate(a);
+
+            c.time = dataGenerator.mkGoodTemporalWCS();
+            c.polarization = null;
+            CaomWCSValidator.validate(a);
+
+            c.energy = null;
+            CaomWCSValidator.validate(a);
+
+            c.time = null;
+            CaomWCSValidator.validate(a);
+
+            // Assert: all WCS should be null at this step
+            c.position = null;
+            CaomWCSValidator.validate(a);
+
+        } catch (Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
+        }
+
+    }
+
+    @Test
+    public void testValidWCS()
+    {
+        Artifact a = null;
+        try
+        {
+            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
+
+            // Populate all WCS with good values
+            c.position = dataGenerator.mkGoodSpatialWCS();
+            c.energy = dataGenerator.mkGoodSpectralWCS();
+            c.time = dataGenerator.mkGoodTemporalWCS();
+            c.polarization = dataGenerator.mkGoodPolarizationWCS();
+
+            CaomWCSValidator.validate(a);
+        }
+        catch (Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
+        }
 
     }
 
@@ -126,7 +180,11 @@ public class CaomWCSValidatorTest
         {
             position = dataGenerator.mkGoodSpatialWCS();
             CaomWCSValidator.validateSpatialWCS(position);
-        } catch (Exception unexpected)
+
+            // Null value is acceptable
+            CaomWCSValidator.validateSpatialWCS(null);
+        }
+        catch (Exception unexpected)
         {
             log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
@@ -134,6 +192,32 @@ public class CaomWCSValidatorTest
 
         log.info("done testSpatialWCSValidator");
     }
+
+
+    @Test
+    public void testIvalidSpatialWCS()
+    {
+        SpatialWCS position = null;
+
+        try
+        {
+            position = dataGenerator.mkBadSpatialWCS();
+            CaomWCSValidator.validateSpatialWCS(position);
+        }
+        catch (IllegalArgumentException expected)
+        {
+            log.info(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString())
+            Assert.assertTrue(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString() + expected, true);
+        }
+        catch (Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
+        }
+
+        log.info("done testSpatialWCSValidator");
+    }
+
 
 
     @Test
@@ -145,7 +229,11 @@ public class CaomWCSValidatorTest
         {
             energy = dataGenerator.mkGoodSpectralWCS();
             CaomWCSValidator.validateSpectralWCS(energy);
-        } catch (Exception unexpected)
+
+            // Null value is acceptable
+            CaomWCSValidator.validateSpectralWCS(null);
+        }
+        catch (Exception unexpected)
         {
             log.error(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString() + unexpected);
@@ -164,7 +252,11 @@ public class CaomWCSValidatorTest
         {
             time = dataGenerator.mkGoodTemporalWCS();
             CaomWCSValidator.validateTemporalWCS(time);
-        } catch (Exception unexpected)
+
+            // Null value is acceptable
+            CaomWCSValidator.validateTemporalWCS(null);
+        }
+        catch (Exception unexpected)
         {
             log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
@@ -183,7 +275,11 @@ public class CaomWCSValidatorTest
         {
             polarization = dataGenerator.mkGoodPolarizationWCS();
             CaomWCSValidator.validatePolarizationWCS(polarization);
-        } catch (Exception unexpected)
+
+            // Null value is acceptable
+            CaomWCSValidator.validatePolarizationWCS(null);
+        }
+        catch (Exception unexpected)
         {
             log.error(UNEXPECTED_EXCEPTION + " validating PolarizationWCS: " + polarization.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating PolarizationWCS: " + polarization.toString() + unexpected);
@@ -192,20 +288,6 @@ public class CaomWCSValidatorTest
         log.info("done testPolarizationWCSValidator");
     }
 
-    private void validatePlane(Plane p)
-    {
-        for (Artifact a : p.getArtifacts())
-        {
-            try
-            {
-                CaomWCSValidator.validate(a);
-            } catch (Exception unexpected)
-            {
-                log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
-            }
-        }
-    }
 
 
     //    @Test
