@@ -2,6 +2,8 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -11,6 +13,7 @@ import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
@@ -19,6 +22,9 @@ import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,7 +34,11 @@ import java.net.URISyntaxException;
  */
 public class ComputeDataGenerator
 {
+    private static final Logger log = Logger.getLogger(ComputeDataGenerator.class);
+
     private EnergyUtilTest euTest = new EnergyUtilTest();
+    String BANDPASS_NAME= "H-Alpha-narrow";
+    EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
 
     private TimeUtilTest tiTest = new TimeUtilTest();
 
@@ -115,15 +125,31 @@ public class ComputeDataGenerator
 
     }
 
-    //    private SpectralWCS mkBadSpectralWCSRange()
-    //    {
-    //
-    //    }
+    SpectralWCS mkBadSpectralWCSFn ()
+            throws URISyntaxException
+    {
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
+//        log.debug("test axis: " + axis);
+        SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
+        wcs.bandpassName = BANDPASS_NAME;
+        wcs.restwav = 6563.0e-10; // meters
+        wcs.resolvingPower = 33000.0;
+        wcs.transition = TRANSITION;
+
+        Double delta = 0.05;
+        RefCoord c1 = new RefCoord(0.5, 2000.0);
+        wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
+        log.debug("test function: " + axis.function);
+        return wcs;
+
+    }
+    
     //    private SpectralWCS mkBadSpectralWCSBounds()
     //    {
     //
     //    }
-    //    private SpectralWCS mkBadSpectralWCSFn()
+    //    private SpectralWCS  mkBadSpectralWCSRange()
     //    {
     //
     //    }

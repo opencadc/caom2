@@ -246,6 +246,41 @@ public class CaomWCSValidatorTest
 
 
     @Test
+    public void testIvalidSpectralWCS()
+    {
+        SpatialWCS position = null;
+
+//        try
+//        {
+//            double expectedLB = 400e-9;
+//            double expectedUB = 600e-9;
+//            long expectedDimension = 200L;
+//            double expectedSS = 1.0e-9;
+//            double expectedRP = 33000.0;
+//
+//            Plane plane;
+//            Energy actual;
+//
+//            plane = getTestSetFunction(1, 1, 1);
+//            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+//            c.energy = getInvalidFunction(); // replace the func
+//            actual = EnergyUtil.compute(plane.getArtifacts());
+//
+//            Assert.fail("expected WCSlibRuntimeException");
+//
+//        }
+//        catch(WCSLibRuntimeException expected)
+//        {
+//            log.info("caught expected exception: " + expected);
+//        }
+//        catch(Exception unexpected)
+//        {
+//            log.error("unexpected exception", unexpected);
+//            Assert.fail("unexpected exception: " + unexpected);
+//        }
+    }
+
+    @Test
     public void testTemporalWCSValidator()
     {
         TemporalWCS time = null;
