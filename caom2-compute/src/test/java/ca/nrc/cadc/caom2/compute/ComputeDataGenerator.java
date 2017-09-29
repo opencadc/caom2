@@ -144,7 +144,7 @@ public class ComputeDataGenerator
         return wcs;
 
     }
-    
+
     //    private SpectralWCS mkBadSpectralWCSBounds()
     //    {
     //

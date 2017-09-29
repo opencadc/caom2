@@ -192,6 +192,12 @@ public class CaomWCSValidator
                     for (CoordRange1D tile : energyAxis.bounds.getSamples())
                     {
                         SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+
+                        WCSWrapper map = new WCSWrapper(energy, 1);
+                        Transform transform = new Transform(map);
+                        double[] coord = new double[1];
+                        coord[0] = (bwmRange.getUpper() - bwmRange.getLower())/2;
+                        Transform.Result tr = transform.sky2pix(coord);
                     }
                 }
 
@@ -228,6 +234,14 @@ public class CaomWCSValidator
                     for (CoordRange1D cr : timeAxis.bounds.getSamples())
                     {
                         SubInterval s1 = TimeUtil.toInterval(time, cr);
+
+                        // Currently there is no WCSWrapper for time, so sky2pix
+                        // transformation can't be done
+//                        WCSWrapper map = new WCSWrapper(time, 1);
+//                        Transform transform = new Transform(map);
+//                        double[] coord = new double[1];
+//                        coord[0] = (s1.getUpper() - s1.getLower())/2;
+//                        Transform.Result tr = transform.sky2pix(coord);
 
                     }
                 }

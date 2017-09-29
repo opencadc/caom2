@@ -834,22 +834,6 @@ public class EnergyUtilTest
         return wcs;
     }
 
-//    SpectralWCS getInvalidFunction()
-//    {
-//        CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
-//        log.debug("test axis: " + axis);
-//        SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-//        wcs.bandpassName = BANDPASS_NAME;
-//        wcs.restwav = 6563.0e-10; // meters
-//        wcs.resolvingPower = 33000.0;
-//        wcs.transition = TRANSITION;
-//
-//        Double delta = 0.05;
-//        RefCoord c1 = new RefCoord(0.5, 2000.0);
-//        wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
-//        log.debug("test function: " + axis.function);
-//        return wcs;
-//    }
 
 
 }
