@@ -310,16 +310,29 @@ public class CaomWCSValidatorTest
 
         try
         {
-            time = dataGenerator.mkBadTemporalWCSCunit();
+            try
+            {
+                time = dataGenerator.mkBadTemporalWCSCunit();
+                CaomWCSValidator.validateTemporalWCS(time);
+            }
+            catch (IllegalArgumentException iae)
+            {
+                log.info(EXPECTED_EXCEPTION +  " bad cunit.");
+            }
 
-            CaomWCSValidator.validateTemporalWCS(time);
-
-            // Null value is acceptable
-            CaomWCSValidator.validateTemporalWCS(null);
+            try
+            {
+                time = dataGenerator.mkBadTemporalWCSRange();
+                CaomWCSValidator.validateTemporalWCS(time);
+            }
+            catch (IllegalArgumentException iae)
+            {
+                log.info(EXPECTED_EXCEPTION + " bad range.");
+            }
         }
         catch (Exception unexpected)
         {
-            log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
+            log.info(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
         }
 

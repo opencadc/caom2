@@ -179,32 +179,39 @@ public class CaomWCSValidator
         {
             try
             {
-                // convert wcs to energy axis interval
-                CoordAxis1D energyAxis = energy.getAxis();
-
-                if (energyAxis.range != null)
+                if (energy.getAxis() != null)
                 {
-                    SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
-                }
+                    // convert wcs to energy axis interval
+                    CoordAxis1D energyAxis = energy.getAxis();
 
-                if (energyAxis.bounds != null)
-                {
-                    for (CoordRange1D tile : energyAxis.bounds.getSamples())
+                    if (energyAxis.range != null)
                     {
-                        SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+                        SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
+                    }
 
-                        WCSWrapper map = new WCSWrapper(energy, 1);
-                        Transform transform = new Transform(map);
-                        double[] coord = new double[1];
-                        coord[0] = (bwmRange.getUpper() - bwmRange.getLower())/2;
-                        Transform.Result tr = transform.sky2pix(coord);
+                    if (energyAxis.bounds != null)
+                    {
+                        for (CoordRange1D tile : energyAxis.bounds.getSamples())
+                        {
+                            SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+
+                            WCSWrapper map = new WCSWrapper(energy, 1);
+                            Transform transform = new Transform(map);
+                            double[] coord = new double[1];
+                            coord[0] = (bwmRange.getUpper() - bwmRange.getLower()) / 2;
+                            Transform.Result tr = transform.sky2pix(coord);
+                        }
+                    }
+
+                    if (energyAxis.function != null)
+                    {
+                        // check range, bounds and function versions
+                        SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
                     }
                 }
-
-                if (energyAxis.function != null)
+                else
                 {
-                    // check range, bounds and function versions
-                    SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+                    throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + " energy axis cannot be null.");
                 }
 
             }
@@ -223,31 +230,37 @@ public class CaomWCSValidator
         {
             try
             {
-                SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
-                CoordAxis1D timeAxis = time.getAxis();
-                if (timeAxis.range != null)
+                if (time.getAxis() != null)
                 {
-                    SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
-                }
-                if (timeAxis.bounds != null)
-                {
-                    for (CoordRange1D cr : timeAxis.bounds.getSamples())
+                    SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
+                    CoordAxis1D timeAxis = time.getAxis();
+                    if (timeAxis.range != null)
                     {
-                        SubInterval s1 = TimeUtil.toInterval(time, cr);
+                        SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
+                    }
+                    if (timeAxis.bounds != null)
+                    {
+                        for (CoordRange1D cr : timeAxis.bounds.getSamples())
+                        {
+                            SubInterval s1 = TimeUtil.toInterval(time, cr);
 
-                        // Currently there is no WCSWrapper for time, so sky2pix
-                        // transformation can't be done
-//                        WCSWrapper map = new WCSWrapper(time, 1);
-//                        Transform transform = new Transform(map);
-//                        double[] coord = new double[1];
-//                        coord[0] = (s1.getUpper() - s1.getLower())/2;
-//                        Transform.Result tr = transform.sky2pix(coord);
+                            // Currently there is no WCSWrapper for time, so sky2pix
+                            // transformation can't be done
+                            //                        WCSWrapper map = new WCSWrapper(time, 1);
+                            //                        Transform transform = new Transform(map);
+                            //                        double[] coord = new double[1];
+                            //                        coord[0] = (s1.getUpper() - s1.getLower())/2;
+                            //                        Transform.Result tr = transform.sky2pix(coord);
 
+                        }
+                    }
+                    if (timeAxis.function != null)
+                    {
+                        SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
                     }
                 }
-                if (timeAxis.function != null)
-                {
-                    SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
+                else {
+                    throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR + " time axis cannot be null.");
                 }
             }
             catch (UnsupportedOperationException uoe)
@@ -265,35 +278,41 @@ public class CaomWCSValidator
         {
             try
             {
-                CoordAxis1D polarizationAxis = polarization.getAxis();
+                if (polarization.getAxis() != null)
+                {
+                    CoordAxis1D polarizationAxis = polarization.getAxis();
 
-                if (polarizationAxis.range != null)
-                {
-                    int lb = (int) polarizationAxis.range.getStart().val;
-                    int ub = (int) polarizationAxis.range.getEnd().val;
-                    for (int i = lb; i <= ub; i++)
+                    if (polarizationAxis.range != null)
                     {
-                        PolarizationState.toValue(i);
-                    }
-                } else if (polarizationAxis.bounds != null)
-                {
-                    for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
-                    {
-                        int lb = (int) cr.getStart().val;
-                        int ub = (int) cr.getEnd().val;
+                        int lb = (int) polarizationAxis.range.getStart().val;
+                        int ub = (int) polarizationAxis.range.getEnd().val;
                         for (int i = lb; i <= ub; i++)
                         {
                             PolarizationState.toValue(i);
                         }
-                    }
-                } else if (polarizationAxis.function != null)
-                {
-                    for (int i = 1; i <= polarizationAxis.function.getNaxis(); i++)
+                    } else if (polarizationAxis.bounds != null)
                     {
-                        double pix = (double) i;
-                        int val = (int) Util.pix2val(polarizationAxis.function, pix);
-                        PolarizationState.toValue(val);
+                        for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
+                        {
+                            int lb = (int) cr.getStart().val;
+                            int ub = (int) cr.getEnd().val;
+                            for (int i = lb; i <= ub; i++)
+                            {
+                                PolarizationState.toValue(i);
+                            }
+                        }
+                    } else if (polarizationAxis.function != null)
+                    {
+                        for (int i = 1; i <= polarizationAxis.function.getNaxis(); i++)
+                        {
+                            double pix = (double) i;
+                            int val = (int) Util.pix2val(polarizationAxis.function, pix);
+                            PolarizationState.toValue(val);
+                        }
                     }
+                }
+                else {
+                    throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR + " polarization axis cannot be null.");
                 }
 
             }
