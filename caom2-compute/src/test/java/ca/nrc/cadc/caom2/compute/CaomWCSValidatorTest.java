@@ -131,27 +131,19 @@ public class CaomWCSValidatorTest
         double sy = 10.0;
         double dp = 1000.0;
         double ds = 1.0;
+        SpatialWCS position = null;
 
         try
         {
-            SpatialWCS position = PositionUtilTest.getTestFunction(px,py,sx,sy,false);
-
-            try
-            {
-                CaomWCSValidator.validateSpatialWCS(position);
-            }
-            catch (Exception unexpected)
-            {
-                log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
-            }
-
+            position = PositionUtilTest.getTestFunction(px,py,sx,sy,false);
+            CaomWCSValidator.validateSpatialWCS(position);
         }
-        catch(Exception unexpected)
+        catch (Exception unexpected)
         {
-            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
-            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
+            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
         }
+
         log.info("done testSpatialWCSValidator");
     }
 
@@ -159,15 +151,11 @@ public class CaomWCSValidatorTest
     @Test
     public void testSpectralWCSValidator()
     {
-        double px = 0.5;
-        double sx = 400.0;
-        double nx = 200.0;
-        double ds = 1.0;
         SpectralWCS energy = null;
 
         try
         {
-            energy = euTest.getTestRange(true, px, sx * nx * ds, nx, ds);
+            energy = mkGoodSpectralWCS();
             CaomWCSValidator.validateSpectralWCS(energy);
         }
         catch (Exception unexpected)
@@ -183,31 +171,19 @@ public class CaomWCSValidatorTest
     @Test
     public void testTemporalWCSValidator()
     {
-        double px = 0.5;
-        double sx = 54321.0;
-        double nx = 200.0;
-        double ds = 0.01;
+        TemporalWCS time = null;
 
         try
         {
-            TemporalWCS time = tiTest.getTestFunction(true, px, sx*nx*ds, nx, ds);
-
-            try
-            {
-                CaomWCSValidator.validateTemporalWCS(time);
-            }
-            catch (Exception unexpected)
-            {
-                log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
-            }
-
+            time = mkGoodTemporalWCS(); 
+            CaomWCSValidator.validateTemporalWCS(time);
         }
-        catch(Exception unexpected)
+        catch (Exception unexpected)
         {
-            log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: ", unexpected);
-            Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + unexpected);
+            log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
         }
+
         log.info("done testSpectralWCSValidator");
     }
 
@@ -228,34 +204,6 @@ public class CaomWCSValidatorTest
         }
     }
 
-//    private void validatePlane(Plane p)
-//    {
-//        for (Artifact a: p.getArtifacts())
-//        {
-//            try
-//            {
-//                CaomWCSValidator.validate(a);
-//            }
-//            catch (Exception unexpected)
-//            {
-//                log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
-//                Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
-//            }
-//        }
-//    }
-
-    // Need:
-    // - valid SpatialWCS
-    // - valid SpectralWCS
-    // - valid TemporalWCS
-    // - valid PolarizationWCS
-    // - invalid examples of all
-
-    // TODO: this test needs to work all code paths in the validator,
-    // which will be reflected in the number of different types of validation done.
-
-    // CONSIDER: should the validator use the test object generation functions from the other tests,
-    // or have it's own?
 
 
 //    @Test
@@ -355,10 +303,18 @@ public class CaomWCSValidatorTest
 //    }
 //
 //
-//    private SpectralWCS mkGoodSpectralWCS()
-//    {
-//
-//    }
+    SpectralWCS mkGoodSpectralWCS()
+    {
+        double px = 0.5;
+        double sx = 400.0;
+        double nx = 200.0;
+        double ds = 1.0;
+        SpectralWCS energy = null;
+
+        return euTest.getTestRange(true, px, sx * nx * ds, nx, ds);
+
+    }
+
 //    private SpectralWCS mkBadSpectralWCSRange()
 //    {
 //
@@ -372,10 +328,18 @@ public class CaomWCSValidatorTest
 //
 //    }
 //
-//    private TemporalWCS mkGoodTemporalWCS()
-//    {
-//
-//    }
+    TemporalWCS mkGoodTemporalWCS()
+    {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+
+        return tiTest.getTestFunction(true, px, sx*nx*ds, nx, ds);
+
+    }
+
+
 //    private TemporalWCS mkBadTemporalWCSRange()
 //    {
 //
