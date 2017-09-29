@@ -154,6 +154,7 @@ public class CaomWCSValidatorTest
             log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
         }
+        log.info("done testSpacalWCSValidator");
     }
 
 
