@@ -85,9 +85,6 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 /**
  * Created by jeevesh
@@ -99,10 +96,6 @@ public class CaomWCSValidator
     private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS in Chunk: ";
     private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS in Chunk: ";
     private static final String POLARIZATION_WCS_VALIDATION_ERROR = "Invalid PolarizationWCS in Chunk: ";
-
-    public CaomWCSValidator()
-    {
-    }
 
     /**
      * Validate all WCS types included in the Chunks belonging to the given Artifact.
@@ -126,6 +119,11 @@ public class CaomWCSValidator
     }
 
 
+    /**
+     * Validate all WCS values in the given Chunk.
+     * @param c
+     * @throws IllegalArgumentException
+     */
     public static void validateChunk(Chunk c)
             throws IllegalArgumentException
     {
@@ -138,149 +136,152 @@ public class CaomWCSValidator
 
     public static void validateSpatialWCS(SpatialWCS position)
     {
-        // Position check
-        try
+        if (position != null)
         {
-            // Convert to polygon using native coordinate system
-            MultiPolygon nextMP = PositionUtil.toPolygon(position);
+            try
+            {
+                // Convert to polygon using native coordinate system
+                MultiPolygon nextMP = PositionUtil.toPolygon(position);
 
-            Point centre = nextMP.getCenter();
+                Point center = nextMP.getCenter();
 
-            WCSWrapper map = new WCSWrapper(position, 1, 2);
-            Transform transform = new Transform(map);
+                WCSWrapper map = new WCSWrapper(position, 1, 2);
+                Transform transform = new Transform(map);
 
-            double[] coords = new double[2];
-            coords[0] = centre.cval1;
-            coords[1] = centre.cval2;
-            Transform.Result tr = transform.pix2sky(coords);
+                double[] coords = new double[2];
+                coords[0] = center.cval1;
+                coords[1] = center.cval2;
+                Transform.Result tr = transform.sky2pix(coords);
+            }
+            catch (NoSuchKeywordException ne)
+            {
+                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+            }
+            catch (UnsupportedOperationException uoe)
+            {
+                // error thrown from toPolygon if WCS is too near a pole, or if the bounds
+                // value is not recognized
+                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
+            }
         }
-        catch (NoSuchKeywordException ne)
-        {
-            throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
-        }
-        catch (UnsupportedOperationException uoe)
-        {
-            // error thrown from toPolygon if WCS is too near a pole, or if the bounds
-            // value is not recognized
-            throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
-        }
-
     }
+
 
     public static void validateSpectralWCS(SpectralWCS energy)
     {
-        // Energy interval checks
-        try
+        if (energy != null)
         {
-            // convert wcs to energy axis interval
-            CoordAxis1D energyAxis = energy.getAxis();
-
-            if (energyAxis.range != null)
+            try
             {
-                SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
-            }
+                // convert wcs to energy axis interval
+                CoordAxis1D energyAxis = energy.getAxis();
 
-            if (energyAxis.bounds != null)
-            {
-                for (CoordRange1D tile : energyAxis.bounds.getSamples())
+                if (energyAxis.range != null)
                 {
-                    SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+                    SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
                 }
-            }
 
-            if (energyAxis.function != null)
+                if (energyAxis.bounds != null)
+                {
+                    for (CoordRange1D tile : energyAxis.bounds.getSamples())
+                    {
+                        SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
+                    }
+                }
+
+                if (energyAxis.function != null)
+                {
+                    // check range, bounds and function versions
+                    SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+                }
+
+            }
+            catch (NoSuchKeywordException ne)
             {
-                // check range, bounds and function versions
-                SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+                throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
             }
-
-        }
-        catch (NoSuchKeywordException ne)
-        {
-            throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
         }
 
     }
+
 
     public static void validateTemporalWCS(TemporalWCS time)
     {
-        // Time checks
-        try
+        if (time != null)
         {
-            SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
-            CoordAxis1D timeAxis = time.getAxis();
-            if (timeAxis.range != null)
+            try
             {
-                SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
-            }
-            if (timeAxis.bounds != null)
-            {
-                for (CoordRange1D cr : timeAxis.bounds.getSamples())
+                SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
+                CoordAxis1D timeAxis = time.getAxis();
+                if (timeAxis.range != null)
                 {
-                    SubInterval s1 = TimeUtil.toInterval(time, cr);
+                    SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
+                }
+                if (timeAxis.bounds != null)
+                {
+                    for (CoordRange1D cr : timeAxis.bounds.getSamples())
+                    {
+                        SubInterval s1 = TimeUtil.toInterval(time, cr);
+
+                    }
+                }
+                if (timeAxis.function != null)
+                {
+                    SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
                 }
             }
-            if (timeAxis.function != null)
+            catch (UnsupportedOperationException uoe)
             {
-                SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
+                // timesys or CUNIT error
+                throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
             }
         }
-        catch (UnsupportedOperationException uoe)
-        {
-            // timesys or CUNIT error
-            throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
-        }
     }
+
 
     public static void validatePolarizationWCS(PolarizationWCS polarization)
     {
-        // Polarization checks
-        try
+        if (polarization != null)
         {
-            CoordAxis1D polarizationAxis = polarization.getAxis();
-            List<PolarizationState> pol = new ArrayList<PolarizationState>();
+            try
+            {
+                CoordAxis1D polarizationAxis = polarization.getAxis();
 
-            if (polarizationAxis.range != null)
-            {
-                int lb = (int) polarizationAxis.range.getStart().val;
-                int ub = (int) polarizationAxis.range.getEnd().val;
-                for (int i=lb; i <= ub; i++)
+                if (polarizationAxis.range != null)
                 {
-                    pol.add(PolarizationState.toValue(i));
-                }
-            }
-            else if (polarizationAxis.bounds != null)
-            {
-                for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
-                {
-                    int lb = (int) cr.getStart().val;
-                    int ub = (int) cr.getEnd().val;
-                    for (int i=lb; i <= ub; i++)
+                    int lb = (int) polarizationAxis.range.getStart().val;
+                    int ub = (int) polarizationAxis.range.getEnd().val;
+                    for (int i = lb; i <= ub; i++)
                     {
-                        pol.add(PolarizationState.toValue(i));
+                        PolarizationState.toValue(i);
+                    }
+                } else if (polarizationAxis.bounds != null)
+                {
+                    for (CoordRange1D cr : polarizationAxis.bounds.getSamples())
+                    {
+                        int lb = (int) cr.getStart().val;
+                        int ub = (int) cr.getEnd().val;
+                        for (int i = lb; i <= ub; i++)
+                        {
+                            PolarizationState.toValue(i);
+                        }
+                    }
+                } else if (polarizationAxis.function != null)
+                {
+                    for (int i = 1; i <= polarizationAxis.function.getNaxis(); i++)
+                    {
+                        double pix = (double) i;
+                        int val = (int) Util.pix2val(polarizationAxis.function, pix);
+                        PolarizationState.toValue(val);
                     }
                 }
-            }
-            else if (polarizationAxis.function != null)
-            {
-                for (int i=1; i <= polarizationAxis.function.getNaxis(); i++)
-                {
-                    double pix = (double) i;
-                    int val = (int) Util.pix2val(polarizationAxis.function, pix);
-                    pol.add(PolarizationState.toValue(val));
-                }
-            }
 
-        }
-        catch (UnsupportedOperationException uoe)
-        {
-            // from toPolygon if WCS is too near a pole, or if the bounds
-            // value is not recognized
-            throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
+            }
+            catch (UnsupportedOperationException uoe)
+            {
+                throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
+            }
         }
     }
-
-
-
-
+    
 }
