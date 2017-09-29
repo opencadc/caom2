@@ -807,7 +807,9 @@ public class ObservationReader implements Serializable
 
             assignEntityAttributes(planeElement, plane, rc);
 
-            planes.add(plane);
+            boolean added = planes.add(plane);
+            if (!added)
+                throw new IllegalArgumentException("Plane.productID = " +  productID + " is not unique");
         }
     }
     
@@ -1227,7 +1229,9 @@ public class ObservationReader implements Serializable
 
             assignEntityAttributes(artifactElement, artifact, rc);
             
-            artifacts.add(artifact);
+            boolean added = artifacts.add(artifact);
+            if (!added)
+                throw new IllegalArgumentException("Artifact.uri = " +  uri + " is not unique");
         }
     }
     
@@ -1263,11 +1267,12 @@ public class ObservationReader implements Serializable
                 part.productType = ProductType.toValue(productType);
             }
             addChunks(part.getChunks(), partElement, namespace, rc);
-            //part.chunk = getChunk(partElement, namespace, rc);
 
             assignEntityAttributes(partElement, part, rc);
             
-            parts.add(part);
+            boolean added = parts.add(part);
+            if (!added)
+                throw new IllegalArgumentException("Part.name = " +  partName + " is not unique");
         }
     }
     
