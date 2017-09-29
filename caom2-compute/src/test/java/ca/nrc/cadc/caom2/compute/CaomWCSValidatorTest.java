@@ -71,6 +71,7 @@ import ca.nrc.cadc.caom2.*;
 import ca.nrc.cadc.caom2.wcs.*;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibInitializationException;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -205,7 +206,7 @@ public class CaomWCSValidatorTest
             position = dataGenerator.mkBadSpatialWCS();
             CaomWCSValidator.validateSpatialWCS(position);
         }
-        catch ( IllegalArgumentException|WCSLibInitializationException  expected)
+        catch ( IllegalArgumentException|WCSLibRuntimeException expected)
         {
             log.info(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString());
             Assert.assertTrue(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString() + expected, true);
