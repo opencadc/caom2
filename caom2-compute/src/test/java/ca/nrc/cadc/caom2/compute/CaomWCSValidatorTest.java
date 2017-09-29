@@ -93,28 +93,28 @@ public class CaomWCSValidatorTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", Level.INFO);
     }
 
-    //    @Test
+    @Test
     public void testWCSValidator()
     {
-        // SpatialWCS
+        Artifact a = null;
+
         try
         {
-            //            // Test set with bounds
-            //            // could loop through integer values in getTestSetBounds here if need be.
-            //            Plane plane = PositionUtilTest.getTestSetBounds(1,1);
-            //            validatePlane(plane);
-            //
-            //            plane = PositionUtilTest.getTestSetRange(1,2);
-            //            validatePlane(plane);
-            //
-            Plane plane = PositionUtilTest.getTestSetFunction(2, 2);
-            validatePlane(plane);
+            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
+            c.position = dataGenerator.mkGoodSpatialWCS();
+            c.energy = dataGenerator.mkGoodSpectralWCS();
+            c.time = dataGenerator.mkGoodTemporalWCS();
+            c.polarization = dataGenerator.mkGoodPolarizationWCS();
 
-        } catch (Exception unexpected)
-        {
-            log.error(UNEXPECTED_EXCEPTION + " getting test set range", unexpected);
-            Assert.fail(UNEXPECTED_EXCEPTION + " getting test set range: " + unexpected);
-        }
+
+                CaomWCSValidator.validate(a);
+            } catch (Exception unexpected)
+            {
+                log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
+                Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
+            }
+
     }
 
     @Test
@@ -173,7 +173,7 @@ public class CaomWCSValidatorTest
         log.info("done testTemporalWCSValidator");
     }
 
-//    mkGoodPolarizationWCS
+
     @Test
     public void testPolarizationWCSValidator()
     {

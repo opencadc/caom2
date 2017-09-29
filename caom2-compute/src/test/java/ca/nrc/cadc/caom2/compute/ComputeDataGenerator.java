@@ -49,13 +49,27 @@ public class ComputeDataGenerator
     Plane getTestPlane(ProductType ptype)
             throws URISyntaxException
     {
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(ptype.getClass().getName());
         Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
         np.getChunks().add(new Chunk());
         return plane;
+    }
+
+    Chunk getTestChunk(ProductType ptype)
+            throws URISyntaxException
+    {
+        Plane testPlane = getTestPlane(ptype);
+        return testPlane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+    }
+
+    Artifact getTestArtifact(ProductType ptype)
+            throws URISyntaxException
+    {
+        Plane testPlane = getTestPlane(ptype);
+        return testPlane.getArtifacts().iterator().next();
     }
 
     // Functions for generating WCS flavours
