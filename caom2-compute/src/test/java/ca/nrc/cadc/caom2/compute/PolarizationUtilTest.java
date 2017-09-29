@@ -98,6 +98,7 @@ import org.junit.Test;
 public class PolarizationUtilTest 
 {
     private static final Logger log = Logger.getLogger(PolarizationUtilTest.class);
+    private ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
 
     static
     {
@@ -119,17 +120,17 @@ public class PolarizationUtilTest
         }
     }
 
-    private Plane getTestPlane(ProductType ptype)
-        throws URISyntaxException
-    {
-        Plane plane = new Plane("foo");
-        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
-        plane.getArtifacts().add(na);
-        Part np = new Part("baz");
-        na.getParts().add(np);
-        np.getChunks().add(new Chunk());
-        return plane;
-    }
+//    private Plane getTestPlane(ProductType ptype)
+//        throws URISyntaxException
+//    {
+//        Plane plane = new Plane("foo");
+//        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
+//        plane.getArtifacts().add(na);
+//        Part np = new Part("baz");
+//        na.getParts().add(np);
+//        np.getChunks().add(new Chunk());
+//        return plane;
+//    }
 
     @Test
     public void testEmptyList()
@@ -142,7 +143,7 @@ public class PolarizationUtilTest
             Assert.assertNull(pol.states);
             Assert.assertNull(pol.dimension);
 
-            plane = getTestPlane(ProductType.SCIENCE);
+            plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             pol = PolarizationUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(pol);
             Assert.assertNull(pol.states);
@@ -160,7 +161,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -227,7 +228,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -265,7 +266,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -300,7 +301,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -336,7 +337,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -370,7 +371,7 @@ public class PolarizationUtilTest
     {
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -407,7 +408,7 @@ public class PolarizationUtilTest
         log.debug("testRangeFromCalibrationIQ - START");
         try
         {
-            Plane plane = getTestPlane(ProductType.CALIBRATION);
+            Plane plane = dataGenerator.getTestPlane(ProductType.CALIBRATION);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -458,7 +459,7 @@ public class PolarizationUtilTest
         log.debug("testRangeFromCalibrationIQ - START");
         try
         {
-            Plane plane = getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
