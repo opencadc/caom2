@@ -88,6 +88,7 @@ public class CaomWCSValidatorTest
 
     private static final String UNEXPECTED_EXCEPTION = "Unexpected exception ";
     private EnergyUtilTest euTest = new EnergyUtilTest();
+    private TimeUtilTest tiTest = new TimeUtilTest();
 
     static
     {
@@ -162,27 +163,50 @@ public class CaomWCSValidatorTest
         double sx = 400.0;
         double nx = 200.0;
         double ds = 1.0;
+        SpectralWCS energy = null;
 
         try
         {
-            // Test set with bounds
-            SpectralWCS energy = euTest.getTestRange(true,  px, sx*nx*ds, nx, ds);
+            energy = euTest.getTestRange(true, px, sx * nx * ds, nx, ds);
+            CaomWCSValidator.validateSpectralWCS(energy);
+        }
+        catch (Exception unexpected)
+        {
+            log.error(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString() + unexpected);
+        }
+
+        log.info("done testSpectralWCSValidator");
+    }
+
+
+    @Test
+    public void testTemporalWCSValidator()
+    {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+
+        try
+        {
+            TemporalWCS time = tiTest.getTestFunction(true, px, sx*nx*ds, nx, ds);
 
             try
             {
-                CaomWCSValidator.validateSpectralWCS(energy);
+                CaomWCSValidator.validateTemporalWCS(time);
             }
             catch (Exception unexpected)
             {
-                log.error(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString(), unexpected);
-                Assert.fail(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString() + unexpected);
+                log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
+                Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
             }
 
         }
         catch(Exception unexpected)
         {
-            log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: ", unexpected);
-            Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + unexpected);
+            log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: ", unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + unexpected);
         }
         log.info("done testSpectralWCSValidator");
     }
