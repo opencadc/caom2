@@ -199,17 +199,17 @@ public class ComputeDataGenerator
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
-                wcs.exposure = 300.0;
-                wcs.resolution = 0.1;
+        wcs.exposure = 300.0;
+        wcs.resolution = 0.1;
 
-                // divide into 2 samples with a gap between
-                RefCoord c1 = new RefCoord(px, sx);
-                RefCoord c2 = new RefCoord(0,0);
-                RefCoord c3 = new RefCoord(px + nx*0.66, sx + nx*ds*0.66);
-                RefCoord c4 = new RefCoord(px + nx,      sx + nx*ds);
-                wcs.getAxis().bounds = new CoordBounds1D();
-                wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
-                wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
+        // divide into 2 samples with a gap between
+        RefCoord c1 = new RefCoord(px, sx);
+        RefCoord c2 = new RefCoord(0,0);
+        RefCoord c3 = new RefCoord(px + nx*0.66, sx + nx*ds*0.66);
+        RefCoord c4 = new RefCoord(px + nx,      sx + nx*ds);
+        wcs.getAxis().bounds = new CoordBounds1D();
+        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
+        wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
 
         return wcs;
 

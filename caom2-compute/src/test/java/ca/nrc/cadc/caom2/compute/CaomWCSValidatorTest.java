@@ -310,15 +310,15 @@ public class CaomWCSValidatorTest
 
         try
         {
-//            try
-//            {
-//                time = dataGenerator.mkBadTemporalWCSCunit();
-//                CaomWCSValidator.validateTemporalWCS(time);
-//            }
-//            catch (IllegalArgumentException iae)
-//            {
-//                log.info(EXPECTED_EXCEPTION +  " bad cunit.");
-//            }
+            try
+            {
+                time = dataGenerator.mkBadTemporalWCSCunit();
+                CaomWCSValidator.validateTemporalWCS(time);
+            }
+            catch (IllegalArgumentException iae)
+            {
+                log.info(EXPECTED_EXCEPTION +  " bad cunit.");
+            }
 
             try
             {
