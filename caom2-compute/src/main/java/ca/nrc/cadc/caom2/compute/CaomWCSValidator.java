@@ -232,7 +232,6 @@ public class CaomWCSValidator
             {
                 if (time.getAxis() != null)
                 {
-                    SubInterval sti = TimeUtil.toInterval(time, time.getAxis().function);
                     CoordAxis1D timeAxis = time.getAxis();
                     if (timeAxis.range != null)
                     {
