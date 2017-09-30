@@ -181,32 +181,35 @@ public class CaomWCSValidator
             {
                 if (energy.getAxis() != null)
                 {
-                    // convert wcs to energy axis interval
                     CoordAxis1D energyAxis = energy.getAxis();
+                    WCSWrapper map = new WCSWrapper(energy, 1);
+                    Transform transform = new Transform(map);
+                    SubInterval si = null;
+                    double[] coord = new double[1];
+                    Transform.Result tr = null;
 
                     if (energyAxis.range != null)
                     {
-                        SubInterval s = EnergyUtil.toInterval(energy, energyAxis.range);
+                        si = EnergyUtil.toInterval(energy, energyAxis.range);
+                        coord[0] = (si.getUpper() - si.getLower()) / 2;
+                        tr = transform.sky2pix(coord);
                     }
 
                     if (energyAxis.bounds != null)
                     {
                         for (CoordRange1D tile : energyAxis.bounds.getSamples())
                         {
-                            SubInterval bwmRange = EnergyUtil.toInterval(energy, tile);
-
-                            WCSWrapper map = new WCSWrapper(energy, 1);
-                            Transform transform = new Transform(map);
-                            double[] coord = new double[1];
-                            coord[0] = (bwmRange.getUpper() - bwmRange.getLower()) / 2;
-                            Transform.Result tr = transform.sky2pix(coord);
+                            si = EnergyUtil.toInterval(energy, tile);
+                            coord[0] = (si.getUpper() - si.getLower()) / 2;
+                            tr = transform.sky2pix(coord);
                         }
                     }
 
                     if (energyAxis.function != null)
                     {
-                        // check range, bounds and function versions
                         SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+                        coord[0] = (si.getUpper() - si.getLower()) / 2;
+                        tr = transform.sky2pix(coord);
                     }
                 }
                 else
