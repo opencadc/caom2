@@ -372,5 +372,5 @@ public class CaomWCSValidatorTest
         }
     }
 
-   
+
 }
