@@ -349,7 +349,7 @@ public class CaomWCSValidatorTest
         log.info("done testPolarizationWCSValidator");
     }
 
-    
+
     @Test
     public void testInvalidPolarizationlWCS()
             throws URISyntaxException

@@ -149,15 +149,18 @@ public class CaomWCSValidator
                 // Convert to polygon using native coordinate system
                 MultiPolygon nextMP = PositionUtil.toPolygon(position);
 
-                Point center = nextMP.getCenter();
+                if (position.getAxis().function != null)
+                {
+                    Point center = nextMP.getCenter();
 
-                WCSWrapper map = new WCSWrapper(position, 1, 2);
-                Transform transform = new Transform(map);
+                    WCSWrapper map = new WCSWrapper(position, 1, 2);
+                    Transform transform = new Transform(map);
 
-                double[] coords = new double[2];
-                coords[0] = center.cval1;
-                coords[1] = center.cval2;
-                Transform.Result tr = transform.sky2pix(coords);
+                    double[] coords = new double[2];
+                    coords[0] = center.cval1;
+                    coords[1] = center.cval2;
+                    Transform.Result tr = transform.sky2pix(coords);
+                }
             }
             catch (NoSuchKeywordException ne)
             {
@@ -182,17 +185,11 @@ public class CaomWCSValidator
                 if (energy.getAxis() != null)
                 {
                     CoordAxis1D energyAxis = energy.getAxis();
-                    WCSWrapper map = new WCSWrapper(energy, 1);
-                    Transform transform = new Transform(map);
                     SubInterval si = null;
-                    double[] coord = new double[1];
-                    Transform.Result tr = null;
 
                     if (energyAxis.range != null)
                     {
                         si = EnergyUtil.toInterval(energy, energyAxis.range);
-                        coord[0] = (si.getUpper() - si.getLower()) / 2;
-                        tr = transform.sky2pix(coord);
                     }
 
                     if (energyAxis.bounds != null)
@@ -200,14 +197,19 @@ public class CaomWCSValidator
                         for (CoordRange1D tile : energyAxis.bounds.getSamples())
                         {
                             si = EnergyUtil.toInterval(energy, tile);
-                            coord[0] = (si.getUpper() - si.getLower()) / 2;
-                            tr = transform.sky2pix(coord);
                         }
                     }
 
                     if (energyAxis.function != null)
                     {
+
                         SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+
+                        WCSWrapper map = new WCSWrapper(energy, 1);
+                        Transform transform = new Transform(map);
+
+                        double[] coord = new double[1];
+                        Transform.Result tr = null;
                         coord[0] = (si.getUpper() - si.getLower()) / 2;
                         tr = transform.sky2pix(coord);
                     }
@@ -246,19 +248,19 @@ public class CaomWCSValidator
                         {
                             SubInterval s1 = TimeUtil.toInterval(time, cr);
 
-                            // Currently there is no WCSWrapper for time, so sky2pix
-                            // transformation can't be done
-                            //                        WCSWrapper map = new WCSWrapper(time, 1);
-                            //                        Transform transform = new Transform(map);
-                            //                        double[] coord = new double[1];
-                            //                        coord[0] = (s1.getUpper() - s1.getLower())/2;
-                            //                        Transform.Result tr = transform.sky2pix(coord);
-
                         }
                     }
                     if (timeAxis.function != null)
                     {
                         SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
+
+                        // Currently there is no WCSWrapper for time, so sky2pix
+                        // transformation can't be done
+                        //                        WCSWrapper map = new WCSWrapper(time, 1);
+                        //                        Transform transform = new Transform(map);
+                        //                        double[] coord = new double[1];
+                        //                        coord[0] = (s1.getUpper() - s1.getLower())/2;
+                        //                        Transform.Result tr = transform.sky2pix(coord);
                     }
                 }
                 else {
