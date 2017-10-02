@@ -423,12 +423,12 @@ public class BaseSQLGenerator implements SQLGenerator
         };
         if (persistOptimisations)
         {
-            String[] extraCols = new String[]
-            {
-                "metaRelease"
-            };
-            this.numOptArtifactColumns = extraCols.length;
-            artifactColumns = addExtraColumns(artifactColumns, extraCols);
+            //String[] extraCols = new String[]
+            //{
+            //  
+            //};
+            //this.numOptArtifactColumns = extraCols.length;
+            //artifactColumns = addExtraColumns(artifactColumns, extraCols);
         }
         columnMap.put(Artifact.class, artifactColumns);
 
@@ -443,12 +443,12 @@ public class BaseSQLGenerator implements SQLGenerator
         };
         if (persistOptimisations)
         {
-            String[] extraCols = new String[]
-            {
-                "metaRelease"
-            };
-            this.numOptPartColumns = extraCols.length;
-            partColumns = addExtraColumns(partColumns, extraCols);
+            //String[] extraCols = new String[]
+            //{
+            //    
+            //};
+            //this.numOptPartColumns = extraCols.length;
+            //partColumns = addExtraColumns(partColumns, extraCols);
         }
         columnMap.put(Part.class, partColumns);
 
@@ -526,12 +526,12 @@ public class BaseSQLGenerator implements SQLGenerator
         };
         if (persistOptimisations)
         {
-            String[] extraCols = new String[]
-            {
-                "metaRelease"
-            };
-            this.numOptChunkColumns = extraCols.length;
-            chunkColumns = addExtraColumns(chunkColumns, extraCols);
+            //String[] extraCols = new String[]
+            //{
+            //    
+            //};
+            //this.numOptChunkColumns = extraCols.length;
+            //chunkColumns = addExtraColumns(chunkColumns, extraCols);
         }
         columnMap.put(Chunk.class, chunkColumns);
 
@@ -944,6 +944,32 @@ public class BaseSQLGenerator implements SQLGenerator
         return sb.toString();
     }
     
+    // HACK: quick hack to update optimization columns in child classes
+    // lots of hard-coded and assumptions here
+    protected String getUpdateChildOptimisationSQL(Class child)
+    {
+        StringBuilder sb = new StringBuilder();
+        
+        // TODO: lookup instead of hard-coded
+        String[] cols = new String[] { "metaRelease", "planeID" };
+
+        sb.append("UPDATE ");
+        sb.append(getTable(child));
+        sb.append(" SET ");
+        for (int c=0; c<cols.length - 1; c++) // PK is last
+        {
+            if (c > 0)
+                sb.append(",");
+            sb.append(cols[c]);
+            sb.append(" = ?");
+        }
+        sb.append(" WHERE ");
+        sb.append(cols[cols.length-1]); // PK
+        sb.append(" = ?");
+
+        return sb.toString();
+    }
+    
     protected String getUpdateAssetSQL(Class asset, Class ra, boolean add)
     {
         throw new UnsupportedOperationException();
@@ -1286,10 +1312,27 @@ public class BaseSQLGenerator implements SQLGenerator
         private Plane plane;
         private List<CaomEntity> parents;
         
+        private int putCount = 0;
+        private Class childClass = null;
+        
         PlanePut(boolean update) { this.update = update; }
 
         public void execute(JdbcTemplate jdbc)
         {
+            jdbc.update(this);
+
+            if (!persistOptimisations)
+                return;
+
+            putCount++;
+            
+            childClass = Artifact.class;
+            jdbc.update(this);
+            
+            childClass = Part.class;
+            jdbc.update(this);
+            
+            childClass = Chunk.class;
             jdbc.update(this);
         }
         
@@ -1302,13 +1345,23 @@ public class BaseSQLGenerator implements SQLGenerator
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException
         {
             String sql = null;
-            if (update)
-                sql = getUpdateSQL(Plane.class);
+            if (putCount == 0)
+            {
+                if (update)
+                    sql = getUpdateSQL(Plane.class);
+                else
+                    sql = getInsertSQL(Plane.class);
+            }
             else
-                sql = getInsertSQL(Plane.class);
+            {
+                sql = getUpdateChildOptimisationSQL(childClass);
+            }
             PreparedStatement prep = conn.prepareStatement(sql);
             log.debug(sql);
-            loadValues(prep);
+            if (putCount == 0)
+                loadValues(prep);
+            else
+                loadValuesForOpt(prep);
             return prep;
         }
         private void loadValues(PreparedStatement ps)
@@ -1535,6 +1588,24 @@ public class BaseSQLGenerator implements SQLGenerator
             if (sb != null)
                 log.debug(sb.toString());
         }
+        
+        private void loadValuesForOpt(PreparedStatement ps)
+            throws SQLException
+        {
+            StringBuilder sb = null;
+            if (log.isDebugEnabled())
+                sb = new StringBuilder();
+            
+            int col = 1;
+            safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            if (useLongForUUID)
+                safeSetLongUUID(sb, ps, col++, plane.getID());
+            else
+                safeSetUUID(sb, ps, col++, plane.getID());
+            
+            if (sb != null)
+                log.debug(sb.toString());
+        }
     }
 
     private class ArtifactPut implements EntityPut<Artifact> , PreparedStatementCreator
@@ -1601,8 +1672,11 @@ public class BaseSQLGenerator implements SQLGenerator
             safeSetURI(sb, ps, col++, artifact.contentChecksum);
             
             if (persistOptimisations)
-                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
-
+            {
+                // cross-entity update: moved to PlanePut
+                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            }
+            
             safeSetDate(sb, ps, col++, artifact.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), UTC_CAL);
             safeSetInteger(sb, ps, col++, artifact.getStateCode());
@@ -1688,7 +1762,10 @@ public class BaseSQLGenerator implements SQLGenerator
                 safeSetString(sb, ps, col++, null);
             
             if (persistComputed)
-                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            {
+                // cross-entity update: moved to PlanePut
+                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            }
 
             safeSetDate(sb, ps, col++, part.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), UTC_CAL);
@@ -2039,7 +2116,10 @@ public class BaseSQLGenerator implements SQLGenerator
             }
 
             if (persistOptimisations)
-                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            {
+                // cross-entity update: moved to PlanePut
+                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+            }
             
             safeSetDate(sb, ps, col++, chunk.getLastModified(), UTC_CAL);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), UTC_CAL);
@@ -3338,7 +3418,7 @@ public class BaseSQLGenerator implements SQLGenerator
                 Double tub = Util.getDouble(rs, col++);
                 col++; // time_bounds polygon
                 List<SubInterval> tsi = getSubIntervalList(rs, col++);
-                if (elb != null)
+                if (tlb != null)
                     tim.bounds = new Interval(tlb, tub, tsi);
                 log.debug("time_bounds: " + tim.bounds);
                 col++; // width

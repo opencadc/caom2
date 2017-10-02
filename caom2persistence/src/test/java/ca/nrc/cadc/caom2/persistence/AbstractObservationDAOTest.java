@@ -153,9 +153,15 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.MessageDigest;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.UUID;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 /**
  *
@@ -1125,29 +1131,94 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
+    @Test
+    public void testUpdateOptimisationFields()
+    {
+        try
+        {
+            log.info("testUpdateOptimisationFields");
+            Observation orig = getTestObservation(false, 5, false, true);
+            for (Plane p : orig.getPlanes())
+                Assert.assertNull("original metaRelease is null", p.metaRelease); // verify starting state
+            
+            dao.put(orig);
+
+            Observation retrieved = dao.get(orig.getURI());
+            Assert.assertNotNull("found", retrieved);
+            testEqual(orig, retrieved);
+
+            Date d1 = new Date();
+            Date d2 = new Date(d1.getTime() + 3600*1000L); // +1 hour
+            
+            for (Plane p : orig.getPlanes())
+            {
+                p.metaRelease = d1; // assign value; change metaChecksum
+            }
+            dao.put(orig); // maxLastModified increases here due to changes in the planes
+
+            Observation changed = dao.get(orig.getURI());
+            Assert.assertNotNull("found", changed);
+            testEqual(orig, changed);
+            
+            checkOptimizations(orig, d1);
+            
+            // update Plane.metaRelease to d2
+            for (Plane p : orig.getPlanes())
+            {
+                p.metaRelease = d2; // update value; change metaChecksum
+            }
+            dao.put(orig); // maxLastModified increases here due to changes in the planes
+            
+            // check for metaRelease in artifact, part, chunk = d2
+            checkOptimizations(orig, d2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            if ( txnManager.isOpen() )
+                try { txnManager.rollbackTransaction(); }
+                catch(Throwable t)
+                {
+                    log.error("failed to rollback transaction", t);
+                }
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    protected void checkOptimizations(Observation o, Date expectedMetaRelease)
+    {
+        log.info("checkOptimizations: no checks implemented");
+    }
+
     // for comparing lastModified: Sybase isn't reliable to ms accuracy when using UTC
-    private void testEqual(String s, Date expected, Date actual)
+    protected void testEqual(String s, Date expected, Date actual)
     {
         if (expected == null)
         {
             Assert.assertNull(s, actual);
-            return;
         }
-        long dt = Math.abs(expected.getTime() - actual.getTime());
-        Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= TIME_TOLERANCE));
+        else
+        {
+            Assert.assertNotNull(s, actual);
+            long dt = Math.abs(expected.getTime() - actual.getTime());
+            Assert.assertTrue(s + ": " + expected.getTime() + " vs " + actual.getTime(), (dt <= TIME_TOLERANCE));
+        }
     }
     
     // for comparing release dates: compare second
-    private void testEqualSeconds(String s, Date expected, Date actual)
+    protected void testEqualSeconds(String s, Date expected, Date actual)
     {
         if (expected == null)
         {
             Assert.assertNull(s, actual);
-            return;
         }
-        long esec = expected.getTime() / 1000L;
-        long asec = actual.getTime() / 1000L;
-        Assert.assertEquals(s, esec, asec);
+        else
+        {
+            Assert.assertNotNull(s, actual);
+            long esec = expected.getTime() / 1000L;
+            long asec = actual.getTime() / 1000L;
+            Assert.assertEquals(s, esec, asec);
+        }
     }
 
     private void debugStateCodes(CaomEntity expected, CaomEntity actual)
