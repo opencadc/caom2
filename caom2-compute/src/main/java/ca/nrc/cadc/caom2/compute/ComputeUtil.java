@@ -67,15 +67,12 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import org.apache.log4j.Logger;
+
 
 /**
  * Utility class to assign values to fields marked with the computed stereotype
@@ -86,6 +83,7 @@ import org.apache.log4j.Logger;
 public class ComputeUtil 
 {
     private static final Logger log = Logger.getLogger(ComputeUtil.class);
+    public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
 
     private ComputeUtil() { }
     
@@ -112,7 +110,8 @@ public class ComputeUtil
         computeTime(p);
         computePolarization(p);
     }
-    
+
+
     private static void computePosition(Plane p)
     {
         try
@@ -154,4 +153,5 @@ public class ComputeUtil
     {
         p.polarization = PolarizationUtil.compute(p.getArtifacts());
     }
+
 }

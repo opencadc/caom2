@@ -202,7 +202,8 @@ public final class EnergyUtil
     /**
      * Compute mean sample size (pixel scale).
      * 
-     * @param wcs
+     * @param artifacts
+     * @param productType
      * @return a new Polygon computed with the default union scale
      */
     static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
@@ -266,7 +267,9 @@ public final class EnergyUtil
      * Compute dimensionality (number of pixels) from WCS function. This method assumes
      * that the energy axis is roughly continuous (e.g. it ignores gaps).
      * 
-     * @param wcsArray
+     * @param bounds
+     * @param artifacts
+     * @params productType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
@@ -338,7 +341,8 @@ public final class EnergyUtil
     /**
      * Compute dimensionality (number of pixels).
      * 
-     * @param wcsArray
+     * @param artifacts
+     * @param productType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType)
@@ -374,7 +378,8 @@ public final class EnergyUtil
      * Compute the mean resolving power per chunk, weighted by the number of pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts
+     * @param productType
      * @return resolving power
      */
     static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
@@ -471,7 +476,8 @@ public final class EnergyUtil
      * Compute the mean rest wavelength per chunk, weighted by the number of pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts
+     * @param productType
      * @return rest wavelength in meters
      */
     static Double computeRestWav(Set<Artifact> artifacts, ProductType productType)
@@ -519,7 +525,7 @@ public final class EnergyUtil
         return null;
     }
 
-    private static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r)
+    static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r)
     {
         double a = r.getStart().val;
         double b = r.getEnd().val;
@@ -544,7 +550,7 @@ public final class EnergyUtil
         return new SubInterval(Math.min(a,b), Math.max(a,b));
     }
 
-    private static SubInterval toInterval(SpectralWCS wcs, CoordFunction1D f)
+    static SubInterval toInterval(SpectralWCS wcs, CoordFunction1D f)
         throws NoSuchKeywordException, WCSLibRuntimeException
     {
         // convert to TARGET_CTYPE
@@ -585,138 +591,5 @@ public final class EnergyUtil
         }
 
         return new SubInterval(Math.min(a,b), Math.max(a,b));
-    }
-
-    /**
-     * Compute a pixel cutout for the specified bounds. The bounds are assumed to be
-     * barycentric wavelength in meters.
-     *
-     * @param wcs
-     * @param bounds
-     * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
-     *         null if no pixels are included
-     */
-    public static long[] getBounds(SpectralWCS wcs, Interval bounds)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        if (wcs.getAxis().function != null)
-        {
-            // convert wcs to energy axis interval
-            SubInterval si =  toInterval(wcs, wcs.getAxis().function);
-            Interval wbounds = new Interval(si.getLower(), si.getUpper());
-            //log.info("getBounds: wcs = " + wbounds);
-
-            // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
-            //log.info("getBounds: intersection = " + inter);
-            if (inter == null)
-            {
-                log.debug("bounds INTERSECT wcs.function == null");
-                return null;
-            }
-
-            double a = inter.getLower();
-            double b = inter.getUpper();
-
-            WCSKeywords kw = new WCSWrapper(wcs,1);
-            Transform trans = new Transform(kw);
-
-            String ctype = wcs.getAxis().getAxis().getCtype();
-            if ( !ctype.startsWith(EnergyConverter.CORE_CTYPE) )
-            {
-                //log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
-                kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
-                trans = new Transform(kw);
-            }
-
-            Transform.Result p1 = trans.sky2pix(new double[] { a });
-            //log.debug("getBounds: sky2pix " + a + " -> " + p1.coordinates[0] + p1.units[0]);
-            Transform.Result p2 = trans.sky2pix(new double[] { b });
-            //log.debug("getBounds: sky2pix " + b + " -> " + p2.coordinates[0] + p2.units[0]);
-
-            // values can be inverted if WCS is in freq or energy instead of wavelength
-            long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
-            long x2 = (long) Math.max(p1.coordinates[0], p2.coordinates[0]);
-
-            return doClipCheck(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
-        }
-        
-        if (wcs.getAxis().bounds != null)
-        {
-            //log.info("getBounds: " + bounds);
-            // find min and max sky coords
-            double pix1 = Double.MAX_VALUE;
-            double pix2 = Double.MIN_VALUE;
-            long maxPixValue = 0;
-            boolean foundOverlap = false;
-            for (CoordRange1D tile : wcs.getAxis().bounds.getSamples())
-            {
-                //log.warn("getBounds: tile = " + tile);
-                maxPixValue = Math.max(maxPixValue, (long) tile.getEnd().pix);
-                SubInterval bwmRange = toInterval(wcs, tile);
-                Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
-                // compute intersection
-                Interval inter = Interval.intersection(wbounds, bounds);
-                //log.warn("getBounds: " + inter + " = " + wbounds + " X " + bounds);
-                if (inter != null)
-                {
-                    pix1 = Math.min(pix1, tile.getStart().pix);
-                    pix2 = Math.max(pix2, tile.getEnd().pix);
-                    //log.warn("getBonds: pix range is now " + pix1 + "," + pix2);
-                    foundOverlap = true;
-                }
-            }
-            if (foundOverlap)
-            {
-                long p1 = (long) (pix1 + 0.5); // round up
-                long p2 = (long) pix2;         // round down
-                
-                return doClipCheck(maxPixValue, p1, p2);
-            }
-            log.debug("bounds INTERSECT wcs.bounds == null");
-            return null;
-        }
-        
-        if (wcs.getAxis().range != null)
-        {
-            // can only check for complete non-overlap
-            SubInterval bwmRange = toInterval(wcs, wcs.getAxis().range);
-            Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
-            // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
-            //log.info("getBounds: intersection = " + inter);
-            if (inter == null)
-            {
-                log.debug("bounds INTERSECT wcs.range == null");
-                return null;
-            }
-            return new long[0]; // overlap
-        }
-        
-        return null;
-    }
-
-    private static long[] doClipCheck(long len, long x1, long x2)
-    {
-        if (x1 < 1)
-            x1 = 1;
-        if (x2 > len)
-            x2 = len;
-        log.debug("doClipCheck: " + x1 + "," + x2 + " " + len);
-        
-        // validity check
-        if (len == 1 && x1 == 1 && x2 == 1)
-        {
-            return new long[0]; // the single pixel is included
-        }
-        if (x1 >= len || x2 <= 1) // no pixels included
-        {
-            return null;
-        }
-        if (x1 == 1 && x2 == len) // all pixels includes
-        {
-            return new long[0];
-        }
-        return new long[] { x1, x2 }; // an actual cutout
     }
 }
