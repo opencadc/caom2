@@ -15,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.6'
+version = '2.3.7'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 
