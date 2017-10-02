@@ -234,17 +234,23 @@ public class ComputeDataGenerator
         return w;
     }
 
-//        private PolarizationWCS mkBadPolarizationWCSRange() throws URISyntaxException
-//        {
-//            double lowErr = -9.0;
-//            double highErr = 11.0;
-//            double zeroErr = 0.0;
-//            RefCoord c1, c2;
-//
-//            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
-//            PolarizationWCS w = new PolarizationWCS(axis);
-//
-//        }
+    PolarizationWCS mkBadPolarizationWCS() throws URISyntaxException
+    {
+        double lowErr = -9.0;
+        double highErr = 11.0;
+        double zeroErr = 0.0;
+        RefCoord c1, c2;
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
+        PolarizationWCS w = new PolarizationWCS(axis);
+
+
+        c1 = new RefCoord(0.5, zeroErr);
+        c2 = new RefCoord(1.5, zeroErr);
+        w.getAxis().range = new CoordRange1D(c1, c2);
+
+        return w;
+    }
 
     //    private PolarizationWCS mkBadPolarizationWCSBounds()
     //    {
