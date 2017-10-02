@@ -242,9 +242,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
 
                 HttpDownload download = new HttpDownload(url, this);
 
-                log.debug("[" + threadName + "] Starting download of " + artifactURI + " from " + url);
+                log.info("[" + threadName + "] Starting download of " + artifactURI + " from " + url);
                 download.run();
-                log.debug("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
+                log.info("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
 
                 respCode = download.getResponseCode();
                 log.debug("Download response code: " + respCode);
@@ -299,14 +299,14 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
             URI artifactURI = skip.getSkipID();
             try
             {
-                log.debug("[" + threadName + "] Starting upload of " + artifactURI);
+                log.info("[" + threadName + "] Starting upload of " + artifactURI);
                 artifactStore.store(artifactURI, sourceChecksum, sourceLength, inputStream);
-                log.debug("[" + threadName + "] Completed upload of " + artifactURI);
+                log.info("[" + threadName + "] Completed upload of " + artifactURI);
             }
             catch (Throwable t)
             {
                 uploadSuccess = false;
-                log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
+                log.info("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "error uploading artifact: " + t.getMessage();
             }
         }
