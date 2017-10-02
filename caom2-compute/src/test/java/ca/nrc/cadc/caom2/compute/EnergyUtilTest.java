@@ -103,6 +103,7 @@ import org.junit.Test;
 public class EnergyUtilTest
 {
     private static final Logger log = Logger.getLogger(EnergyUtilTest.class);
+    private static ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
 
     static
     {
@@ -374,7 +375,7 @@ public class EnergyUtilTest
 
             plane = getTestSetFunction(1, 1, 1);
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-            c.energy = getInvalidFunction(); // replace the func
+            c.energy = dataGenerator.mkBadSpectralWCSFn(); // replace the func
             actual = EnergyUtil.compute(plane.getArtifacts());
 
             Assert.fail("expected WCSlibRuntimeException");
@@ -403,23 +404,23 @@ public class EnergyUtilTest
             Interval cut = new Interval(420e-9, 440e-9);
             Interval clip = new Interval(300e-9, 500e-9);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
             
-            long[] gapPix =  EnergyUtil.getBounds(wcs, gap);
+            long[] gapPix =  CutoutUtil.getEnergyBounds(wcs, gap);
             Assert.assertNull(gapPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 0, cutPix[0], 1);
             Assert.assertEquals("cut LB", 660, cutPix[1], 1);
             
-            long[] clipPix = EnergyUtil.getBounds(wcs, clip);
+            long[] clipPix = CutoutUtil.getEnergyBounds(wcs, clip);
             Assert.assertNotNull(clipPix);
             Assert.assertEquals("long[2]", 2, clipPix.length);
             Assert.assertEquals("clip LB", 0, clipPix[0], 1);
@@ -442,14 +443,14 @@ public class EnergyUtilTest
             Interval none = new Interval(700e-9, 900e-9);
             Interval cut = new Interval(450e-9, 550e-9);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 500, cutPix[0], 1);
@@ -472,14 +473,14 @@ public class EnergyUtilTest
             Interval none = new Interval(1.0, 2.0);
             Interval cut = new Interval(2.8, 3.2);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
@@ -503,14 +504,14 @@ public class EnergyUtilTest
             Interval none = new Interval(1.0, 2.0);
             Interval cut = new Interval(4.283, 7.5);
 
-            long[] allPix = EnergyUtil.getBounds(wcs, all);
+            long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
             Assert.assertEquals("long[0]", 0, allPix.length);
 
-            long[] noPix = EnergyUtil.getBounds(wcs, none);
+            long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
 
-            long[] cutPix = EnergyUtil.getBounds(wcs, cut);
+            long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
             Assert.assertNotNull(cutPix);
             Assert.assertEquals("long[2]", 2, cutPix.length);
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
@@ -726,7 +727,7 @@ public class EnergyUtilTest
     }
 
 
-    private SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
+    SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -745,7 +746,8 @@ public class EnergyUtilTest
         log.debug("test range: " + axis.range);
         return wcs;
     }
-    private SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -768,7 +770,8 @@ public class EnergyUtilTest
         log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
-    private SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
@@ -786,7 +789,8 @@ public class EnergyUtilTest
         log.debug("test function: " + axis.function);
         return wcs;
     }
-    private SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
@@ -810,7 +814,8 @@ public class EnergyUtilTest
         log.debug("test bounds: " + axis.bounds);
         return wcs;
     }
-    private SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
+
+    SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
@@ -829,22 +834,6 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    private SpectralWCS getInvalidFunction()
-    {
-        CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
-        log.debug("test axis: " + axis);
-        SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        wcs.bandpassName = BANDPASS_NAME;
-        wcs.restwav = 6563.0e-10; // meters
-        wcs.resolvingPower = 33000.0;
-        wcs.transition = TRANSITION;
-
-        Double delta = 0.05;
-        RefCoord c1 = new RefCoord(0.5, 2000.0);
-        wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
-        log.debug("test function: " + axis.function);
-        return wcs;
-    }
 
 
 }

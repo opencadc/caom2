@@ -4,7 +4,7 @@
  * License: not specified
  */
 
-package ca.nrc.cadc.caom2.types.impl;
+package ca.nrc.cadc.caom2.compute.convex;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -25,24 +25,24 @@ import java.util.Comparator;
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-public final class SortablePoint2D implements Comparable<SortablePoint2D>, Serializable 
+public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
 {
     private static final long serialVersionUID = 201603031530L;
     
     /**
      * Compares two points by x-coordinate.
      */
-    public static final Comparator<SortablePoint2D> X_ORDER = new XOrder();
+    public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> X_ORDER = new XOrder();
 
     /**
      * Compares two points by y-coordinate.
      */
-    public static final Comparator<SortablePoint2D> Y_ORDER = new YOrder();
+    public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> Y_ORDER = new YOrder();
 
     /**
      * Compares two points by polar radius.
      */
-    public static final Comparator<SortablePoint2D> R_ORDER = new ROrder();
+    public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> R_ORDER = new ROrder();
 
     private final double x;    // x coordinate
     private final double y;    // y coordinate
@@ -103,7 +103,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      * Returns the angle between this point and that point.
      * @return the angle in radians (between -pi and pi) between this point and that point (0 if equal)
      */
-    private double angleTo(SortablePoint2D that) {
+    private double angleTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
         double dx = that.x - this.x;
         double dy = that.y - this.y;
         return Math.atan2(dy, dx);
@@ -116,7 +116,9 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      * @param c third point
      * @return { -1, 0, +1 } if a-&gt;b-&gt;c is a { clockwise, collinear; counterclocwise } turn.
      */
-    public static int ccw(SortablePoint2D a, SortablePoint2D b, SortablePoint2D c) {
+    public static int ccw(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D a,
+                          ca.nrc.cadc.caom2.compute.convex.SortablePoint2D b,
+                          ca.nrc.cadc.caom2.compute.convex.SortablePoint2D c) {
         double area2 = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
         if      (area2 < 0) return -1;
         else if (area2 > 0) return +1;
@@ -130,7 +132,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      * @param c third point
      * @return twice the signed area of the triangle a-b-c
      */
-    public static double area2(SortablePoint2D a, SortablePoint2D b, SortablePoint2D c) {
+    public static double area2(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D a, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D b, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D c) {
         return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
     }
 
@@ -139,7 +141,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      * @param that the other point
      * @return the Euclidean distance between this point and that point
      */
-    public double distanceTo(SortablePoint2D that) {
+    public double distanceTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
         double dx = this.x - that.x;
         double dy = this.y - that.y;
         return Math.sqrt(dx*dx + dy*dy);
@@ -150,7 +152,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      * @param that the other point
      * @return the square of the Euclidean distance between this point and that point
      */
-    public double distanceSquaredTo(SortablePoint2D that) {
+    public double distanceSquaredTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
         double dx = this.x - that.x;
         double dy = this.y - that.y;
         return dx*dx + dy*dy;
@@ -168,7 +170,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      *         point; and a positive integer if this point is greater than the
      *         argument point
      */
-    public int compareTo(SortablePoint2D that) {
+    public int compareTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
         if (this.y < that.y) return -1;
         if (this.y > that.y) return +1;
         if (this.x < that.x) return -1;
@@ -181,7 +183,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      *
      * @return the comparator
      */
-    public Comparator<SortablePoint2D> polarOrder() {
+    public Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> polarOrder() {
         return new PolarOrder();
     }
 
@@ -190,7 +192,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      *
      * @return the comparator
      */
-    public Comparator<SortablePoint2D> atan2Order() {
+    public Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> atan2Order() {
         return new Atan2Order();
     }
 
@@ -199,16 +201,16 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
      *
      * @return the comparator
      */
-    public Comparator<SortablePoint2D> distanceToOrder() {
+    public Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> distanceToOrder() {
         return new DistanceToOrder();
     }
 
     // compare points according to their x-coordinate
-    private static class XOrder implements Comparator<SortablePoint2D>, Serializable 
+    private static class XOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
 
-        public int compare(SortablePoint2D p, SortablePoint2D q) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
             if (p.x < q.x) return -1;
             if (p.x > q.x) return +1;
             return 0;
@@ -216,11 +218,11 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     }
 
     // compare points according to their y-coordinate
-    private static class YOrder implements Comparator<SortablePoint2D>, Serializable 
+    private static class YOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
 
-        public int compare(SortablePoint2D p, SortablePoint2D q) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
             if (p.y < q.y) return -1;
             if (p.y > q.y) return +1;
             return 0;
@@ -228,11 +230,11 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     }
 
     // compare points according to their polar radius
-    private static class ROrder implements Comparator<SortablePoint2D>, Serializable 
+    private static class ROrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
 
-        public int compare(SortablePoint2D p, SortablePoint2D q) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
             double delta = (p.x*p.x + p.y*p.y) - (q.x*q.x + q.y*q.y);
             if (delta < 0) return -1;
             if (delta > 0) return +1;
@@ -241,11 +243,11 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     }
  
     // compare other points relative to atan2 angle (bewteen -pi/2 and pi/2) they make with this Point
-    private class Atan2Order implements Comparator<SortablePoint2D>, Serializable 
+    private class Atan2Order implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
 
-        public int compare(SortablePoint2D q1, SortablePoint2D q2) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q1, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q2) {
             double angle1 = angleTo(q1);
             double angle2 = angleTo(q2);
             if      (angle1 < angle2) return -1;
@@ -255,11 +257,11 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
     }
 
     // compare other points relative to polar angle (between 0 and 2pi) they make with this Point
-    private class PolarOrder implements Comparator<SortablePoint2D>, Serializable 
+    private class PolarOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
         
-        public int compare(SortablePoint2D q1, SortablePoint2D q2) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q1, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q2) {
             double dx1 = q1.x - x;
             double dy1 = q1.y - y;
             double dx2 = q2.x - x;
@@ -272,18 +274,18 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
                 else if (dx2 >= 0 && dx1 < 0) return +1;
                 else                          return  0;
             }
-            else return -ccw(SortablePoint2D.this, q1, q2);     // both above or below
+            else return -ccw(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D.this, q1, q2);     // both above or below
 
             // Note: ccw() recomputes dx1, dy1, dx2, and dy2
         }
     }
 
     // compare points according to their distance to this point
-    private class DistanceToOrder implements Comparator<SortablePoint2D>, Serializable 
+    private class DistanceToOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable
     {
         private static final long serialVersionUID = 201603031530L;
 
-        public int compare(SortablePoint2D p, SortablePoint2D q) {
+        public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
             double dist1 = distanceSquaredTo(p);
             double dist2 = distanceSquaredTo(q);
             if      (dist1 < dist2) return -1;
@@ -305,7 +307,7 @@ public final class SortablePoint2D implements Comparable<SortablePoint2D>, Seria
         if (other == this) return true;
         if (other == null) return false;
         if (other.getClass() != this.getClass()) return false;
-        SortablePoint2D that = (SortablePoint2D) other;
+        ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that = (ca.nrc.cadc.caom2.compute.convex.SortablePoint2D) other;
         return this.x == that.x && this.y == that.y;
     }
 

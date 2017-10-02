@@ -140,50 +140,50 @@ public class PositionUtilTest
             wcs.equinox = null;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("ICRS", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("ICRS", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
 
             // FK5
             wcs.equinox = 1999.1;
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("FK5", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("FK5", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
             
             // FK5
             wcs.equinox = 2000.9;
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("FK5", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("FK5", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
 
 
             // FK4
             wcs.equinox = 1949.1;
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("FK4", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("FK4", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
 
             wcs.equinox = 1950.9;
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("FK4", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("FK4", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
 
             // swapped
             axis = new CoordAxis2D(axis2, axis1);
             wcs = new SpatialWCS(axis);
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("ICRS", cs.name);
-            Assert.assertEquals(true, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("ICRS", cs.getName());
+            Assert.assertEquals(true, cs.isSwappedAxes());
 
             // GAL
             axis1 = new Axis("GLON-TAN", "deg");
@@ -192,9 +192,9 @@ public class PositionUtilTest
             wcs = new SpatialWCS(axis);
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("GAL", cs.name);
-            Assert.assertEquals(false, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("GAL", cs.getName());
+            Assert.assertEquals(false, cs.isSwappedAxes());
 
             // swapped
             axis1 = new Axis("GLON-TAN", "deg");
@@ -203,9 +203,9 @@ public class PositionUtilTest
             wcs = new SpatialWCS(axis);
             cs = PositionUtil.inferCoordSys(wcs);
             Assert.assertNotNull(cs);
-            Assert.assertNotNull(cs.name);
-            Assert.assertEquals("GAL", cs.name);
-            Assert.assertEquals(true, cs.swappedAxes);
+            Assert.assertNotNull(cs.getName());
+            Assert.assertEquals("GAL", cs.getName());
+            Assert.assertEquals(true, cs.isSwappedAxes());
         }
         catch(Exception unexpected)
         {
@@ -416,6 +416,35 @@ public class PositionUtilTest
         }
     }
 
+
+    @Test
+    public void testCoordFunctionToICRSPolygon()
+    {
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            Dimension2D dim = new Dimension2D(1024, 1024);
+            Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+            axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            for (Vertex v : poly.getVertices())
+                log.debug("testFunctionToPolygon: " + v);
+            Assert.assertNotNull(poly);
+            Assert.assertEquals(5, poly.getVertices().size());
+
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+
     @Test
     public void testInvalidCoordFunctionToPolygon()
     {
@@ -430,6 +459,35 @@ public class PositionUtilTest
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
             MultiPolygon poly = PositionUtil.toPolygon(wcs);
+
+            Assert.fail("expected WCSLibRuntimeException");
+        }
+        catch(WCSLibRuntimeException expected)
+        {
+            log.info("caught expected exception: " + expected);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    //TODO: look at what tests here need to be expanded or changed to cover the toICRSPolygon function...
+    @Test
+    public void testInvalidCoordFunctionToICRSPolygon()
+    {
+        try
+        {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            Dimension2D dim = new Dimension2D(1024, 1024);
+            Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
+            axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
 
             Assert.fail("expected WCSLibRuntimeException");
         }
@@ -582,7 +640,7 @@ public class PositionUtilTest
             dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), ProductType.SCIENCE);
             Assert.assertNull(dim);
             dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), ProductType.SCIENCE);
-            log.debug("[testComputeDimension] dim="+dim);
+            log.debug("ComputeUtil"+dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(3000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);

@@ -67,26 +67,17 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.*;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.wcs.Transform;
@@ -98,6 +89,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.wcs.*;
 
 import jsky.coords.wcscon;
 
@@ -117,7 +111,7 @@ public final class PositionUtil
 
     /**
      * Compute all possible positional metadata for the specified artifacts.
-     * 
+     *
      * @param artifacts
      * @return
      * @throws NoSuchKeywordException
@@ -128,7 +122,7 @@ public final class PositionUtil
     {
         ProductType productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
-                
+
         Position p = new Position();
         if (productType != null)
         {
@@ -157,15 +151,24 @@ public final class PositionUtil
                 {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
                     {
-                        log.debug("generatePolygons: " + a.getURI() + " " 
+                        log.debug("generatePolygons: " + a.getURI() + " "
                                 + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null)
                         {
-                            MultiPolygon poly = toPolygon(c.position);
-                            log.debug("[generatePolygons] wcs: " + poly);
-                            if (poly != null && poly.getArea() > MAX_SANE_AREA)
-                                throw new IllegalPolygonException("area too large, assuming invalid WCS: " 
-                                    + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                            MultiPolygon poly = new MultiPolygon();
+                            try
+                            {
+                                poly = toICRSPolygon(c.position);
+                                log.debug("[generatePolygons] wcs: " + poly);
+                            }
+                            catch (IllegalPolygonException ipe)
+                            {
+                                // augment the error message
+                                log.debug("[generatePolygons] wcs: " + poly);
+                                throw new IllegalPolygonException("area too large, assuming invalid WCS: "
+                                        + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                            }
+
                             if (poly != null)
                                 polys.add(poly);
                         }
@@ -228,7 +231,7 @@ public final class PositionUtil
         }
         if (sw == null)
             return null;
-        
+
         if (num == 1) // single WCS solution
         {
             // deep copy
@@ -236,7 +239,7 @@ public final class PositionUtil
             long iy = sw.getAxis().function.getDimension().naxis2;
             return new Dimension2D(ix, iy);
         }
-        
+
         WCSWrapper map = new WCSWrapper(sw, 1, 2);
         Transform transform = new Transform(map);
 
@@ -439,90 +442,127 @@ public final class PositionUtil
     
     public static MultiPolygon toPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException
+{
+    CoordSys coordsys = inferCoordSys(wcs);
+//    if (!coordsys.supported)
+//        return null;
+
+    CoordRange2D range = wcs.getAxis().range;
+    CoordBounds2D bounds = wcs.getAxis().bounds;
+    CoordFunction2D function = wcs.getAxis().function;
+
+    MultiPolygon poly = new MultiPolygon();
+    if(bounds != null)
+    {
+        if (bounds instanceof CoordCircle2D)
+        {
+            CoordCircle2D cc = (CoordCircle2D) bounds;
+            if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
+                throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
+            double x = cc.getCenter().coord1;
+            double y = cc.getCenter().coord2;
+            double dy = cc.getRadius();
+            double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
+            poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
+        }
+        else if (bounds instanceof CoordPolygon2D)
+        {
+            CoordPolygon2D cp = (CoordPolygon2D) bounds;
+            Iterator<ValueCoord2D> i = cp.getVertices().iterator();
+            while ( i.hasNext() )
+            {
+                ValueCoord2D coord = i.next();
+                if (poly.getVertices().isEmpty())
+                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
+                else
+                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
+            }
+            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            PolygonUtil.validateSegments(poly);
+        }
+        else
+            throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
+    }
+    else if (function != null)
+    {
+        double x1 = 0.5;
+        double x2 = function.getDimension().naxis1 + 0.5;
+        double y1 = 0.5;
+        double y2 = function.getDimension().naxis2 + 0.5;
+        List<Vertex> pixCoords = new ArrayList<Vertex>();
+        pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
+        pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
+        pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
+        poly.getVertices().addAll(skyCoords);
+    }
+    else if (range != null)
+    {
+        double x1 = range.getStart().getCoord1().val;
+        double x2 = range.getEnd().getCoord1().val;
+        double y1 = range.getStart().getCoord2().val;
+        double y2 = range.getEnd().getCoord2().val;
+        poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
+        poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
+        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+    }
+
+    log.debug("[wcs.toPolygon] native " + poly);
+//    toICRS(coordsys, poly.getVertices());
+//
+//    Point c = poly.getCenter();
+//    if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
+//    {
+//        throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+//    }
+//
+//    if (poly != null && poly.getArea() > MAX_SANE_AREA)
+//    {
+//        throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+//                + poly.getArea());
+//    }
+//
+//    log.debug("[wcs.toPolygon] icrs " + poly);
+    return poly;
+}
+
+
+    public static MultiPolygon toICRSPolygon(SpatialWCS wcs)
+            throws NoSuchKeywordException
     {
         CoordSys coordsys = inferCoordSys(wcs);
         if (!coordsys.supported)
             return null;
 
-        CoordRange2D range = wcs.getAxis().range;
-        CoordBounds2D bounds = wcs.getAxis().bounds;
-        CoordFunction2D function = wcs.getAxis().function;
-        
-        MultiPolygon poly = new MultiPolygon();
-        if(bounds != null)
+        MultiPolygon nativePolygon = toPolygon(wcs);
+
+        toICRS(coordsys, nativePolygon.getVertices());
+
+        Point c = nativePolygon.getCenter();
+        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
         {
-            if (bounds instanceof CoordCircle2D)
-            {
-                CoordCircle2D cc = (CoordCircle2D) bounds;
-                if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
-                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
-                double x = cc.getCenter().coord1;
-                double y = cc.getCenter().coord2;
-                double dy = cc.getRadius();
-                double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
-            }
-            else if (bounds instanceof CoordPolygon2D)
-            {
-                CoordPolygon2D cp = (CoordPolygon2D) bounds;
-                Iterator<ValueCoord2D> i = cp.getVertices().iterator();
-                while ( i.hasNext() )
-                {
-                    ValueCoord2D coord = i.next();
-                    if (poly.getVertices().isEmpty())
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
-                    else
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
-                }
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-                PolygonUtil.validateSegments(poly);
-            }
-            else
-                throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
-        }
-        else if (function != null)
-        {
-            double x1 = 0.5;
-            double x2 = function.getDimension().naxis1 + 0.5;
-            double y1 = 0.5;
-            double y2 = function.getDimension().naxis2 + 0.5;
-            List<Vertex> pixCoords = new ArrayList<Vertex>();
-            pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
-            pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
-            pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
-            poly.getVertices().addAll(skyCoords);
-        }
-        else if (range != null)
-        {
-            double x1 = range.getStart().getCoord1().val;
-            double x2 = range.getEnd().getCoord1().val;
-            double y1 = range.getStart().getCoord2().val;
-            double y2 = range.getEnd().getCoord2().val;
-            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         }
 
-        log.debug("[wcs.toPolygon] native " + poly);
-        toICRS(coordsys, poly.getVertices());
-        
-        Point c = poly.getCenter();
-        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
-            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
-        
-        log.debug("[wcs.toPolygon] icrs " + poly);
-        return poly;
+        if (nativePolygon != null && nativePolygon.getArea() > MAX_SANE_AREA)
+        {
+            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+                    + nativePolygon.getArea());
+        }
+
+        log.debug("[wcs.toIRCSPolygon] icrs " + nativePolygon);
+        return nativePolygon;
     }
-    
+
+
     private static Vertex rangeReduce(Vertex v)
     {
         if (v.cval2 > 90.0)
@@ -542,27 +582,46 @@ public final class PositionUtil
         return v;
     }
 
-    static class CoordSys implements Serializable
+    public static class CoordSys implements Serializable
     {
         private static final long serialVersionUID = 201207300900L;
 
-        private static String ICRS = "ICRS";
-        private static String GAL = "GAL";
-        private static String FK4 = "FK4";
-        private static String FK5 = "FK5";
+        public static String ICRS = "ICRS";
+        public static String GAL = "GAL";
+        public static String FK4 = "FK4";
+        public static String FK5 = "FK5";
 
-        private static String ECL = "ECL";
-        private static String HECL = "HELIOECLIPTIC";
-        private static String GAPPT = "GAPPT";
-        
+        public static String ECL = "ECL";
+        public static String HECL = "HELIOECLIPTIC";
+        public static String GAPPT = "GAPPT";
+
         String name;
         Boolean timeDependent;
         boolean supported;
         boolean swappedAxes = false;
 
+        public String getName()
+        {
+            return name;
+        }
+
+        public Boolean getTimeDependent()
+        {
+            return timeDependent;
+        }
+        public boolean isSupported()
+        {
+            return supported;
+        }
+
+        public boolean isSwappedAxes()
+        {
+            return swappedAxes;
+        }
+
     }
 
-    static CoordSys inferCoordSys(SpatialWCS wcs)
+    public static CoordSys inferCoordSys(SpatialWCS wcs)
     {
         CoordSys ret = new CoordSys();
         ret.name = wcs.coordsys;
@@ -700,174 +759,4 @@ public final class PositionUtil
             }
         }
     }
-    
-    public static long[] getBounds(SpatialWCS wcs, Shape s)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        if (s == null)
-            return null;
-        if (s instanceof Circle)
-            return getBounds(wcs, (Circle) s);
-        if (s instanceof Polygon)
-            return getBounds(wcs, ((Polygon) s).getSamples());
-        throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
-    }
-    
-    /**
-     * Find the pixel bounds that enclose the specified circle.
-     *
-     * @param wcs a spatial wcs solution
-     * @param c circle with center in ICRS coordinates
-     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     *         or null if the circle does not intersect the WCS
-     */
-    public static long[] getBounds(SpatialWCS wcs, Circle c)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        // convert the Circle -> Box ~ Polygon
-        // TODO: a WCS-aligned polygon would be better than an axis-aligned Box
-        double x = c.getCenter().cval1;
-        double y = c.getCenter().cval2;
-        double dy = c.getRadius();
-        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-        MultiPolygon poly = new MultiPolygon();
-        poly.getVertices().add(new Vertex(x-dx, y-dy, SegmentType.MOVE));
-        poly.getVertices().add(new Vertex(x+dx, y-dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x+dx, y+dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x-dx, y+dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-        return getBounds(wcs, poly);
-    }
-
-    /**
-     * Compute the range of pixel indices that correspond to the supplied
-     * polygon. This method computes the cutout ranges within the image. The
-     * returned value is null if there is no intersection, an int[4] for a
-     * cutout, and an int[0] when the image is wholly contained within the
-     * polygon (and no cutout is necessary).
-     *
-     * @param wcs a spatial wcs solution
-     * @param poly the shape to cutout
-     * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     *         or null if the circle does not intersect the WCS
-     */
-    public static long[] getBounds(SpatialWCS wcs, MultiPolygon poly)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
-        CoordSys coordsys = inferCoordSys(wcs);
-
-        // detect necessary conversion of target coords to native WCS coordsys
-        boolean gal = false;
-        boolean fk4 = false;
-        if (CoordSys.GAL.equals(coordsys.name))
-            gal = true;
-        else if (CoordSys.FK4.equals(coordsys.name))
-            fk4 = true;
-        else if (!CoordSys.ICRS.equals(coordsys.name) && !CoordSys.FK5.equals(coordsys.name))
-            throw new UnsupportedOperationException("unexpected coordsys: " + coordsys.name);
-
-        WCSWrapper map = new WCSWrapper(wcs, 1, 2);
-        Transform transform = new Transform(map);
-
-        // convert wcs/footprint to sky coords
-        log.debug("computing poly INTERSECT footprint");
-        MultiPolygon foot = toPolygon(wcs);
-        log.debug("input poly: " + poly);
-        log.debug("wcs poly: " + foot);
-        
-        MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
-        if (npoly == null)
-        {
-            log.debug("poly INTERSECT footprint == null");
-            return null;
-        }
-        //log.debug("intersection: " + npoly);
-        
-
-        // npoly is in ICRS
-        if (gal || fk4)
-        {
-            // convert npoly to native coordsys, in place since we created a new npoly above
-            log.debug("converting poly to " + coordsys);
-            for (Vertex v : npoly.getVertices())
-            {
-                if ( !SegmentType.CLOSE.equals(v.getType()) )
-                {
-                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
-
-                    // convert poly coords to native WCS coordsys
-                    if (gal)
-                        pp = wcscon.fk52gal(pp);
-                    else if (fk4)
-                        pp = wcscon.fk524(pp);
-                    v.cval1 = pp.x;
-                    v.cval2 = pp.y;
-                }
-            }
-        }
-
-        // convert npoly to pixel coordinates and find min/max
-        long x1 = Integer.MAX_VALUE;
-        long x2 = -1 * x1;
-        long y1 = x1;
-        long y2 = -1 * y1;
-        log.debug("converting npoly to pixel coordinates");
-        double[] coords = new double[2];
-        for (Vertex v : npoly.getVertices())
-        {
-            if ( !SegmentType.CLOSE.equals(v.getType()) )
-            {
-                coords[0] = v.cval1;
-                coords[1] = v.cval2;
-                if (coordsys.swappedAxes)
-                {
-                    coords[0] = v.cval2;
-                    coords[1] = v.cval1;
-                }
-                Transform.Result tr = transform.sky2pix(coords);
-                // if p2 is null, it was a long way away from the WCS and does not
-                // impose a limit/cutout - so we can safely skip it
-                if (tr != null)
-                {
-                    log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = (long) Math.min(x1, tr.coordinates[0]);
-                    x2 = (long) Math.max(x2, tr.coordinates[0]);
-                    y1 = (long) Math.min(y1, tr.coordinates[1]);
-                    y2 = (long) Math.max(y2, tr.coordinates[1]);
-                }
-                //else
-                //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
-            }
-        }
-
-        // clipping
-        long naxis1 = wcs.getAxis().function.getDimension().naxis1;
-        long naxis2 = wcs.getAxis().function.getDimension().naxis2;
-        return doClipCheck(naxis1, naxis2, x1, x2, y1, y2);
-    }
-
-    private static long[] doClipCheck(long w, long h, long x1, long x2, long y1, long y2)
-    {
-        if (x1 < 1)
-            x1 = 1;
-        if (x2 > w)
-            x2 = w;
-        if (y1 < 1)
-            y1 = 1;
-        if (y2 > h)
-            y2 = h;
-
-        // validity check
-        if (x1 >= w || x2 <= 1 || y1 >= h || y2 <= 1) // no pixels included
-        {
-            return null;
-        }
-        if (x1 == 1 && y1 == 1 && x2 == w && y2 == h) // all pixels includes
-        {
-            return new long[0];
-        }
-        return new long[] { x1, x2, y1, y2 }; // an actual cutout
-    }
-
-
 }

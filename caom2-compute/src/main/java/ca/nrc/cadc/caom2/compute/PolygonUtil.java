@@ -125,7 +125,7 @@ public final class PolygonUtil
      * @param poly
      * @return a simple bounding polygon
      */
-    public static Polygon getOuterHull(final MultiPolygon poly)
+    static Polygon getOuterHull(final MultiPolygon poly)
     {
         Polygon convex = getConvexHull(poly);
         double cvxArea = convex.getArea();
@@ -252,7 +252,7 @@ public final class PolygonUtil
         return ret;
     }
 
-    public static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
+    static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2)
     {
         double[] cube = CartesianTransform.getBoundingCube(p1, null);
         cube = CartesianTransform.getBoundingCube(p2, cube);
@@ -302,7 +302,7 @@ public final class PolygonUtil
     }
 
      // scale, compute, remove-holes, [unscale], smooth; assumes cartesian approx is safe
-    private static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
+     private static MultiPolygon computeUnion(List<MultiPolygon> work, double scale, boolean unscale, boolean removeHoles)
     {
         log.debug("[computeUnion] work=" + work.size() + " scale="+scale 
                 + " unscale="+unscale + " removeHoles="+removeHoles);
@@ -341,7 +341,7 @@ public final class PolygonUtil
 
     private static MultiPolygon removeHoles(MultiPolygon poly)
     {
-        // impl: no checking, just blindly decompose and reassemble
+        // convex: no checking, just blindly decompose and reassemble
         List<MultiPolygon> parts = decompose(poly, true);
         return compose(parts);
     }
