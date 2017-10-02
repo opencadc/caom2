@@ -70,15 +70,12 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.*;
 import ca.nrc.cadc.caom2.wcs.*;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.wcs.exceptions.WCSLibInitializationException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import javax.print.URIException;
-import java.net.URISyntaxException;
 
 
 /**
@@ -224,7 +221,6 @@ public class CaomWCSValidatorTest
     }
 
 
-
     @Test
     public void testSpectralWCSValidator()
     {
@@ -331,7 +327,6 @@ public class CaomWCSValidatorTest
     }
 
 
-
     @Test
     public void testPolarizationWCSValidator()
     {
@@ -354,8 +349,7 @@ public class CaomWCSValidatorTest
         log.info("done testPolarizationWCSValidator");
     }
 
-
-
+    
     @Test
     public void testInvalidPolarizationlWCS()
             throws URISyntaxException

@@ -120,17 +120,6 @@ public class PolarizationUtilTest
         }
     }
 
-//    private Plane getTestPlane(ProductType ptype)
-//        throws URISyntaxException
-//    {
-//        Plane plane = new Plane("foo");
-//        Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
-//        plane.getArtifacts().add(na);
-//        Part np = new Part("baz");
-//        na.getParts().add(np);
-//        np.getChunks().add(new Chunk());
-//        return plane;
-//    }
 
     @Test
     public void testEmptyList()
