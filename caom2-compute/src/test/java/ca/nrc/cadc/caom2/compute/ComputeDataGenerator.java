@@ -125,7 +125,7 @@ public class ComputeDataGenerator
 
         RefCoord c1 = new RefCoord(0.5, 2000.0);
         energy.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
-        return euTest.getTestRange(true, px, sx * nx * ds, nx, ds);
+        return energy;
     }
 
     SpectralWCS mkBadSpectralWCSFn ()
