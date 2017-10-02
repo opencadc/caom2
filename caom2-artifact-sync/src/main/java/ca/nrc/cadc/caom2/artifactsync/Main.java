@@ -159,7 +159,7 @@ public class Main
                     batchSize = Integer.parseInt(am.getValue("batchsize"));
                     if (batchSize < 1 || batchSize > 10000)
                     {
-                        log.error("value for --threads must be between 1 and 10000");
+                        log.error("value for --batchsize must be between 1 and 10000");
                         usage();
                         System.exit(-1);
                     }
