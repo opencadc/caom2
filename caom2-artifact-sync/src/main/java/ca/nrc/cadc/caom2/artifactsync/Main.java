@@ -202,6 +202,16 @@ public class Main
                 }
             }
 
+            // Collection will be used in the future
+//            if (!am.isSet("collection"))
+//            {
+//                log.error("Missing required parameter 'collection'");
+//                usage();
+//                System.exit(-1);
+//            }
+//            String collection = am.getValue("collection");
+            String collection = null;
+
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
@@ -234,7 +244,7 @@ public class Main
             artifactDAO.setConfig(daoConfig);
 
             PrivilegedExceptionAction<Integer> harvester =
-                    new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, dryrun, batchSize);
+                    new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, collection, dryrun, batchSize);
 
             PrivilegedExceptionAction<Object> downloader =
                     new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
@@ -300,9 +310,10 @@ public class Main
     {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n     --artifactStore=fully qualified class name");
+        sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
-        sb.append("\n     --threads=number of threads to be used to import artifacts (default: 1)");
+        sb.append("\n     --collection=<collection> (currently ignored)");
+        sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");

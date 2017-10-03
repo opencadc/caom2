@@ -91,6 +91,7 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
+import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
 
@@ -132,20 +133,56 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
 
         try
         {
+            long start = System.currentTimeMillis();
             List<Future<ArtifactDownloadResult>> results = executor.invokeAll(tasks);
-            int successes = 0;
+            long successes = 0;
+            long totalElapsedTime = 0;
+            long totalBytes = 0;
             for (Future<ArtifactDownloadResult> f : results)
             {
                 ArtifactDownloadResult result = f.get();
                 if (result.success)
                 {
                     successes++;
+                    totalElapsedTime += result.elapsedTimeMillis;
+                    totalBytes += result.bytesTransferred;
                 }
             }
+            long end = System.currentTimeMillis() - start;
 
-            log.info("Completed " + results.size() + " artifact download attempts");
-            log.info("    Successes: " + successes);
-            log.info("    Failures: " + (results.size() - successes));
+            double successRate = 0;
+            if (results.size() > 0)
+            {
+                successRate = (double) successes / results.size();
+            }
+            long totalSeconds = totalElapsedTime / 1000;
+            long bytesPerSecond = totalBytes / totalSeconds;
+            double mbps = (double) bytesPerSecond / 125000;
+
+            log.info("[batch-summary] Completed " + results.size() + " artifact download attempts");
+            log.info("[batch-summary]     Successful file downloads: " + successes);
+            log.info("[batch-summary]     Failed file downloads: " + (results.size() - successes));
+            log.info("[batch-summary]     Success rate: " + successRate);
+            log.info("[batch-summary]     Batch elapsed time (ms): " + end);
+            log.info("[batch-summary]     Download threads: " + threads);
+            log.info("[batch-summary]     Total bytes transferred: " + totalBytes);
+            log.info("[batch-summary]     Data transfer time (ms): " + totalElapsedTime);
+            log.info("[batch-summary]     Bytes/Second: " + bytesPerSecond + " (" + mbps + " Mbps)");
+
+            StringBuilder endMessage = new StringBuilder();
+            endMessage.append("END: {");
+            endMessage.append("\"successCount\":\"").append(successes).append("\"");;
+            endMessage.append(",");
+            endMessage.append("\"failureCount\":\"").append(results.size() - successes).append("\"");
+            endMessage.append(",");
+            endMessage.append("\"time\":\"").append(totalElapsedTime).append("\"");
+            endMessage.append(",");
+            endMessage.append("\"bytes\":\"").append(totalBytes).append("\"");
+            endMessage.append(",");
+            endMessage.append("\"threads\":\"").append(threads).append("\"");
+            endMessage.append("}");
+            log.info(endMessage.toString());
+
         }
         catch (InterruptedException e)
         {
@@ -173,6 +210,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
         HarvestSkipURIDAO harvestSkipURIDAO;
         boolean uploadSuccess = true;
         String uploadErrorMessage;
+        long bytesTransferred;
 
         URI sourceChecksum;
         Long sourceLength;
@@ -191,7 +229,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
             URL url = getSourceURL(artifactURI);
 
             ArtifactDownloadResult result = new ArtifactDownloadResult(artifactURI);
-            result.success = true;
+            result.success = false;
 
             String threadName = Thread.currentThread().getName();
 
@@ -210,10 +248,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                     if (head.getThrowable() != null)
                     {
                         sb.append(head.getThrowable().getMessage());
-                        log.error("[" + threadName + "] error determining artifact checksum",
-                                head.getThrowable());
+                        if (log.isDebugEnabled())
+                        {
+                            log.error("[" + threadName + "] error determining artifact checksum: " + sb.toString(),
+                                    head.getThrowable());
+                        }
+                        else
+                        {
+                            log.error("[" + threadName + "] error determining artifact checksum: " + sb.toString());
+                        }
+
                     }
-                    result.success = false;
                     result.errorMessage = sb.toString();
                     return result;
                 }
@@ -237,14 +282,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                 {
                     log.info("[" + threadName + "] ArtifactStore already has correct copy of "
                             + artifactURI + " with checksum " + sourceChecksum);
+                    result.success = true;
                     return result;
                 }
 
                 HttpDownload download = new HttpDownload(url, this);
 
                 log.info("[" + threadName + "] Starting download of " + artifactURI + " from " + url);
+                long start = System.currentTimeMillis();
                 download.run();
                 log.info("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
+                result.elapsedTimeMillis = System.currentTimeMillis() - start;
 
                 respCode = download.getResponseCode();
                 log.debug("Download response code: " + respCode);
@@ -257,13 +305,15 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                         sb.append(download.getThrowable().getMessage());
                         log.error("[" + threadName + "] error downloading artifact", download.getThrowable());
                     }
-                    result.success = false;
                     result.errorMessage = sb.toString();
                 }
 
-                if (!uploadSuccess)
+                if (uploadSuccess)
                 {
-                    result.success = false;
+                    result.success = true;
+                }
+                else
+                {
                     result.errorMessage = uploadErrorMessage;
                 }
 
@@ -276,6 +326,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                 {
                     if (result.success)
                     {
+                        result.bytesTransferred = bytesTransferred;
                         harvestSkipURIDAO.delete(skip);
                     }
                     else
@@ -297,10 +348,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
         {
             String threadName = Thread.currentThread().getName();
             URI artifactURI = skip.getSkipID();
+            ByteCountInputStream byteCounter = new ByteCountInputStream(inputStream);
             try
             {
                 log.info("[" + threadName + "] Starting upload of " + artifactURI);
-                artifactStore.store(artifactURI, sourceChecksum, sourceLength, inputStream);
+                artifactStore.store(artifactURI, sourceChecksum, sourceLength, byteCounter);
                 log.info("[" + threadName + "] Completed upload of " + artifactURI);
             }
             catch (Throwable t)
@@ -308,6 +360,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                 uploadSuccess = false;
                 log.info("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "error uploading artifact: " + t.getMessage();
+            }
+            finally
+            {
+                if (byteCounter != null)
+                {
+                    bytesTransferred = byteCounter.getByteCount();
+                }
             }
         }
     }
@@ -317,6 +376,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
         URI artifactURI;
         boolean success;
         String errorMessage;
+        long elapsedTimeMillis;
+        long bytesTransferred = 0;
 
         ArtifactDownloadResult(URI artifactURI)
         {

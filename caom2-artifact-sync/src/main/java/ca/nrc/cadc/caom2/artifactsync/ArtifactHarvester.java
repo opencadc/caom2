@@ -96,15 +96,17 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
     private ArtifactStore artifactStore;
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String collection; // Will be used in the future
     private boolean dryrun;
     private int batchSize;
     private String source;
 
 
-    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int batchSize)
+    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, String collection, boolean dryrun, int batchSize)
     {
         this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
+        this.collection = collection;
         this.dryrun = dryrun;
         this.batchSize = batchSize;
 
