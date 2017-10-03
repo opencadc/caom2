@@ -67,22 +67,32 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.*;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Position;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import jsky.coords.wcscon;
+import org.apache.log4j.Logger;
+
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -90,24 +100,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.wcs.*;
-
-import jsky.coords.wcscon;
-
-import org.apache.log4j.Logger;
-
 /**
- *
  * @author pdowler
  */
-public final class PositionUtil
-{
+public final class PositionUtil {
     private static final Logger log = Logger.getLogger(PositionUtil.class);
-    
+
     public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
-    
-    private PositionUtil() { }
+
+    private PositionUtil() {
+    }
 
     /**
      * Compute all possible positional metadata for the specified artifacts.
@@ -118,19 +120,18 @@ public final class PositionUtil
      * @throws WCSLibRuntimeException
      */
     public static Position compute(Set<Artifact> artifacts)
-        throws NoSuchKeywordException, WCSLibRuntimeException
-    {
+        throws NoSuchKeywordException, WCSLibRuntimeException {
         ProductType productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
 
         Position p = new Position();
-        if (productType != null)
-        {
+        if (productType != null) {
             Polygon poly = computeBounds(artifacts, productType);
             p.bounds = poly;
             p.dimension = computeDimensionsFromRange(artifacts, productType);
-            if (p.dimension == null)
+            if (p.dimension == null) {
                 p.dimension = computeDimensionsFromWCS(poly, artifacts, productType);
+            }
             p.resolution = computeResolution(artifacts, productType);
             p.sampleSize = computeSampleSize(artifacts, productType);
             p.timeDependent = computeTimeDependent(artifacts, productType);
@@ -140,37 +141,29 @@ public final class PositionUtil
     }
 
     public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
-        throws NoSuchKeywordException
-    {
+        throws NoSuchKeywordException {
         List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         log.debug("generatePolygons: " + a.getURI() + " "
-                                + a.getProductType() + " " + p.productType + " " + c.productType);
-                        if (c.position != null)
-                        {
+                            + a.getProductType() + " " + p.productType + " " + c.productType);
+                        if (c.position != null) {
                             MultiPolygon poly = new MultiPolygon();
-                            try
-                            {
+                            try {
                                 poly = toICRSPolygon(c.position);
                                 log.debug("[generatePolygons] wcs: " + poly);
-                            }
-                            catch (IllegalPolygonException ipe)
-                            {
+                            } catch (IllegalPolygonException ipe) {
                                 // augment the error message
                                 log.debug("[generatePolygons] wcs: " + poly);
                                 throw new IllegalPolygonException("area too large, assuming invalid WCS: "
-                                        + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                                    + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
                             }
 
-                            if (poly != null)
+                            if (poly != null) {
                                 polys.add(poly);
+                            }
                         }
                     }
                 }
@@ -178,49 +171,45 @@ public final class PositionUtil
         }
         return polys;
     }
+
     public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
-        throws NoSuchKeywordException
-    {
+        throws NoSuchKeywordException {
         // since we compute the union, just blindly use all the polygons
         // derived from spatial wcs
         List<MultiPolygon> polys = generatePolygons(artifacts, productType);
-        if (polys.isEmpty())
+        if (polys.isEmpty()) {
             return null;
+        }
         log.debug("[computeBounds] components: " + polys.size());
         MultiPolygon mp = PolygonUtil.compose(polys);
         Polygon poly = PolygonUtil.getOuterHull(mp);
         log.debug("[computeBounds] done: " + poly);
-        if (poly.getArea() > MAX_SANE_AREA)
+        if (poly.getArea() > MAX_SANE_AREA) {
             throw new IllegalPolygonException("area too large, assuming invalid WCS: " + poly.getArea());
+        }
         return poly;
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
     static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts, ProductType productType)
-        throws NoSuchKeywordException
-    {
+        throws NoSuchKeywordException {
         log.debug("[computeDimensionsFromWCS] " + poly + " " + artifacts.size());
-        if (poly == null)
+        if (poly == null) {
             return null;
+        }
 
         // pick the WCS with the largest pixel size
         SpatialWCS sw = null;
         double scale = 0.0;
         int num = 0;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.position != null && c.position.getAxis().function != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.position != null && c.position.getAxis().function != null) {
                             num++;
                             double ss = Util.getPixelScale(c.position.getAxis().function);
-                            if (ss >= scale)
-                            {
+                            if (ss >= scale) {
                                 scale = ss;
                                 sw = c.position;
                             }
@@ -229,11 +218,11 @@ public final class PositionUtil
                 }
             }
         }
-        if (sw == null)
+        if (sw == null) {
             return null;
+        }
 
-        if (num == 1) // single WCS solution
-        {
+        if (num == 1) { // single WCS solution
             // deep copy
             long ix = sw.getAxis().function.getDimension().naxis1;
             long iy = sw.getAxis().function.getDimension().naxis2;
@@ -249,30 +238,25 @@ public final class PositionUtil
         double y2 = -1 * y1;
         CoordSys csys = inferCoordSys(sw);
         List<long[]> pixv = new ArrayList<long[]>();
-        for (Point pt : poly.getPoints())
-        {
-            double[] coords = new double[] { pt.cval1, pt.cval2 };
-            if (csys.swappedAxes)
-            {
+        for (Point pt : poly.getPoints()) {
+            double[] coords = new double[] {pt.cval1, pt.cval2};
+            if (csys.swappedAxes) {
                 double tmp = coords[0];
                 coords[0] = coords[1];
                 coords[1] = tmp;
             }
             // convert vertices -> wcs sky coordinates -> pixel coords
-            if (csys.name.equals("GAL"))
-            {
+            if (csys.name.equals("GAL")) {
                 Point2D p = wcscon.fk52gal(new Point2D.Double(coords[0], coords[1]));
                 coords[0] = p.getX();
                 coords[1] = p.getY();
-            }
-            else if (csys.name.equals("FK4"))
-            {
+            } else if (csys.name.equals("FK4")) {
                 Point2D p = wcscon.fk524(new Point2D.Double(coords[0], coords[1]));
                 coords[0] = p.getX();
                 coords[1] = p.getY();
             }
             Transform.Result tr = transform.sky2pix(coords);
-            long[] pv = new long[] { (long) tr.coordinates[0], (long) tr.coordinates[1] };
+            long[] pv = new long[] {(long) tr.coordinates[0], (long) tr.coordinates[1]};
             log.debug("[computeDimensionsFromWCS] " + pt.cval1 + "," + pt.cval2 + " -> " + pv[0] + "," + pv[1]);
             pixv.add(pv);
         }
@@ -282,51 +266,52 @@ public final class PositionUtil
         long[] pp = pixv.get(0);
         long px = pp[0];
         long py = pp[1];
-        for (long[] p : pixv)
-        {
+        for (long[] p : pixv) {
             // find minimum px and py
-            if (p[0] < px)
+            if (p[0] < px) {
                 px = p[0];
-            if (p[1] < py)
+            }
+            if (p[1] < py) {
                 py = p[1];
+            }
         }
-        for (long[] p : pixv)
-        {
+        for (long[] p : pixv) {
             // find max distance
             long dix = p[0] - px;
             long diy = p[1] - py;
-            if (dix < 0) dix *= -1;
-            if (diy < 0) diy *= -1;
-            if (dix > ix) ix = dix;
-            if (diy > iy) iy = diy;
+            if (dix < 0) {
+                dix *= -1;
+            }
+            if (diy < 0) {
+                diy *= -1;
+            }
+            if (dix > ix) {
+                ix = dix;
+            }
+            if (diy > iy) {
+                iy = diy;
+            }
             log.debug("[computeDimensionsFromWCS] " + dix + "," + diy + " ::: " + ix + "," + iy);
         }
         log.debug("[computeDimensionsFromWCS] " + ix + "," + iy);
         return new Dimension2D(ix, iy);
     }
 
-    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType)
-    {
+    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType) {
         // assume all the WCS come from a single data array, find min/max pixel values
         double x1 = Double.MAX_VALUE;
         double x2 = -1 * x1;
         double y1 = x1;
         double y2 = -1 * y1;
         boolean found = false;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.position != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.position != null) {
                             CoordRange2D range = c.position.getAxis().range;
                             CoordBounds2D bounds = c.position.getAxis().bounds;
-                            if (range != null)
-                            {
+                            if (range != null) {
                                 x1 = Math.min(x1, range.getStart().getCoord1().pix);
                                 x1 = Math.min(x1, range.getEnd().getCoord1().pix);
                                 x2 = Math.max(x2, range.getStart().getCoord1().pix);
@@ -343,58 +328,48 @@ public final class PositionUtil
                 }
             }
         }
-        if (!found)
+        if (!found) {
             return null;
+        }
         double dx = Math.abs(x2 - x1);
         double dy = Math.abs(y2 - y1);
         return new Dimension2D((long) dx, (long) dy);
     }
 
-    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
-    {
+    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
         double totSampleSize = 0.0;
         double numPixels = 0.0;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.position != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.position != null) {
                             CoordAxis2D axis = c.position.getAxis();
                             double num = Util.getNumPixels(axis);
                             double scale = Util.getPixelScale(axis);
                             totSampleSize += scale * num;
                             numPixels += num;
-                            log.debug("[computeSampleSize] num=" + num + " scale="+scale);
+                            log.debug("[computeSampleSize] num=" + num + " scale=" + scale);
                         }
                     }
                 }
             }
         }
-        if (totSampleSize > 0.0 && numPixels > 0.0)
+        if (totSampleSize > 0.0 && numPixels > 0.0) {
             return new Double(3600.0 * totSampleSize / numPixels); // convert degrees to arcsec
+        }
         return null;
     }
 
     // resolution of SCIENCE data, mean is weighted by number of pixels
-    static Double computeResolution(Set<Artifact> artifacts, ProductType productType)
-    {
+    static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
         double totResolution = 0.0;
         double numPixels = 0.0;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.position != null && c.position.resolution != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.position != null && c.position.resolution != null) {
                             double num = Util.getNumPixels(c.position.getAxis());
                             totResolution += c.position.resolution * num;
                             numPixels += num;
@@ -403,28 +378,22 @@ public final class PositionUtil
                 }
             }
         }
-        if (totResolution > 0.0 && numPixels > 0.0)
+        if (totResolution > 0.0 && numPixels > 0.0) {
             return new Double(totResolution / numPixels);
+        }
         return null;
     }
 
-    static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType)
-    {
+    static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType) {
         boolean foundTD = false;
         boolean foundTI = false;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.position != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.position != null) {
                             CoordSys csys = inferCoordSys(c.position);
-                            if (csys.timeDependent != null)
-                            {
+                            if (csys.timeDependent != null) {
                                 foundTD = foundTD || csys.timeDependent;
                                 foundTI = foundTI || !csys.timeDependent;
                             }
@@ -433,129 +402,122 @@ public final class PositionUtil
                 }
             }
         }
-        if (foundTD && !foundTI)
+        if (foundTD && !foundTI) {
             return Boolean.TRUE;
-        if (!foundTD && foundTI)
+        }
+        if (!foundTD && foundTI) {
             return Boolean.FALSE;
+        }
         return null;
     }
-    
+
     public static MultiPolygon toPolygon(SpatialWCS wcs)
-        throws NoSuchKeywordException
-{
-    CoordSys coordsys = inferCoordSys(wcs);
-//    if (!coordsys.supported)
-//        return null;
+        throws NoSuchKeywordException {
+        CoordSys coordsys = inferCoordSys(wcs);
+        //if (!coordsys.supported) {
+        //    return null;
+        //}
 
-    CoordRange2D range = wcs.getAxis().range;
-    CoordBounds2D bounds = wcs.getAxis().bounds;
-    CoordFunction2D function = wcs.getAxis().function;
+        CoordRange2D range = wcs.getAxis().range;
+        CoordBounds2D bounds = wcs.getAxis().bounds;
+        CoordFunction2D function = wcs.getAxis().function;
 
-    MultiPolygon poly = new MultiPolygon();
-    if(bounds != null)
-    {
-        if (bounds instanceof CoordCircle2D)
-        {
-            CoordCircle2D cc = (CoordCircle2D) bounds;
-            if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) // near a pole
-                throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole ("+cc+")");
-            double x = cc.getCenter().coord1;
-            double y = cc.getCenter().coord2;
-            double dy = cc.getRadius();
-            double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y-dy, SegmentType.MOVE)));
-            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y-dy, SegmentType.LINE)));
-            poly.getVertices().add(rangeReduce(new Vertex(x+dx, y+dy, SegmentType.LINE)));
-            poly.getVertices().add(rangeReduce(new Vertex(x-dx, y+dy, SegmentType.LINE)));
-            poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
-        }
-        else if (bounds instanceof CoordPolygon2D)
-        {
-            CoordPolygon2D cp = (CoordPolygon2D) bounds;
-            Iterator<ValueCoord2D> i = cp.getVertices().iterator();
-            while ( i.hasNext() )
-            {
-                ValueCoord2D coord = i.next();
-                if (poly.getVertices().isEmpty())
-                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
-                else
-                    poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
+        MultiPolygon poly = new MultiPolygon();
+        if (bounds != null) {
+            if (bounds instanceof CoordCircle2D) {
+                CoordCircle2D cc = (CoordCircle2D) bounds;
+                if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) { // near a pole
+                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole (" + cc + ")");
+                }
+                double x = cc.getCenter().coord1;
+                double y = cc.getCenter().coord2;
+                double dy = cc.getRadius();
+                double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+                poly.getVertices().add(rangeReduce(new Vertex(x - dx, y - dy, SegmentType.MOVE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
+                poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
+            } else if (bounds instanceof CoordPolygon2D) {
+                CoordPolygon2D cp = (CoordPolygon2D) bounds;
+                Iterator<ValueCoord2D> i = cp.getVertices().iterator();
+                while (i.hasNext()) {
+                    ValueCoord2D coord = i.next();
+                    if (poly.getVertices().isEmpty()) {
+                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
+                    } else {
+                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
+                    }
+                }
+                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+                PolygonUtil.validateSegments(poly);
+            } else {
+                throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
             }
+        } else if (function != null) {
+            double x1 = 0.5;
+            double x2 = function.getDimension().naxis1 + 0.5;
+            double y1 = 0.5;
+            double y2 = function.getDimension().naxis2 + 0.5;
+            List<Vertex> pixCoords = new ArrayList<Vertex>();
+            pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
+            pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
+            pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
+            pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
+            pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
+            poly.getVertices().addAll(skyCoords);
+        } else if (range != null) {
+            double x1 = range.getStart().getCoord1().val;
+            double x2 = range.getEnd().getCoord1().val;
+            double y1 = range.getStart().getCoord2().val;
+            double y2 = range.getEnd().getCoord2().val;
+            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
+            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
+            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
             poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            PolygonUtil.validateSegments(poly);
         }
-        else
-            throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
-    }
-    else if (function != null)
-    {
-        double x1 = 0.5;
-        double x2 = function.getDimension().naxis1 + 0.5;
-        double y1 = 0.5;
-        double y2 = function.getDimension().naxis2 + 0.5;
-        List<Vertex> pixCoords = new ArrayList<Vertex>();
-        pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
-        pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
-        pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
-        pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
-        pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-        List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
-        poly.getVertices().addAll(skyCoords);
-    }
-    else if (range != null)
-    {
-        double x1 = range.getStart().getCoord1().val;
-        double x2 = range.getEnd().getCoord1().val;
-        double y1 = range.getStart().getCoord2().val;
-        double y2 = range.getEnd().getCoord2().val;
-        poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
-        poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-    }
 
-    log.debug("[wcs.toPolygon] native " + poly);
-//    toICRS(coordsys, poly.getVertices());
-//
-//    Point c = poly.getCenter();
-//    if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
-//    {
-//        throw new IllegalPolygonException("computed polygon has invalid center: " + c);
-//    }
-//
-//    if (poly != null && poly.getArea() > MAX_SANE_AREA)
-//    {
-//        throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
-//                + poly.getArea());
-//    }
-//
-//    log.debug("[wcs.toPolygon] icrs " + poly);
-    return poly;
-}
+        log.debug("[wcs.toPolygon] native " + poly);
+        //toICRS(coordsys, poly.getVertices());
+        //
+        //Point c = poly.getCenter();
+        //if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
+        //{
+        //    throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+        //}
+        //
+        //if (poly != null && poly.getArea() > MAX_SANE_AREA)
+        //{
+        //    throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+        //            + poly.getArea());
+        //}
+        //
+        //log.debug("[wcs.toPolygon] icrs " + poly);
+        return poly;
+    }
 
 
     public static MultiPolygon toICRSPolygon(SpatialWCS wcs)
-            throws NoSuchKeywordException
-    {
+        throws NoSuchKeywordException {
         CoordSys coordsys = inferCoordSys(wcs);
-        if (!coordsys.supported)
+        if (!coordsys.supported) {
             return null;
+        }
 
         MultiPolygon nativePolygon = toPolygon(wcs);
 
         toICRS(coordsys, nativePolygon.getVertices());
 
         Point c = nativePolygon.getCenter();
-        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
-        {
+        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2)) {
             throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         }
 
-        if (nativePolygon != null && nativePolygon.getArea() > MAX_SANE_AREA)
-        {
+        if (nativePolygon != null && nativePolygon.getArea() > MAX_SANE_AREA) {
             throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
-                    + nativePolygon.getArea());
+                + nativePolygon.getArea());
         }
 
         log.debug("[wcs.toIRCSPolygon] icrs " + nativePolygon);
@@ -563,27 +525,25 @@ public final class PositionUtil
     }
 
 
-    private static Vertex rangeReduce(Vertex v)
-    {
-        if (v.cval2 > 90.0)
-        {
+    private static Vertex rangeReduce(Vertex v) {
+        if (v.cval2 > 90.0) {
             v.cval1 += 180.0;
             v.cval2 = 180.0 - v.cval2;
         }
-        if (v.cval2 <  -90.0)
-        {
+        if (v.cval2 < -90.0) {
             v.cval1 += 180.0;
             v.cval2 = -180.0 - v.cval2;
         }
-        if (v.cval1 < 0)
+        if (v.cval1 < 0) {
             v.cval1 += 360.0;
-        if (v.cval1 > 360.0)
+        }
+        if (v.cval1 > 360.0) {
             v.cval1 -= 360.0;
+        }
         return v;
     }
 
-    public static class CoordSys implements Serializable
-    {
+    public static class CoordSys implements Serializable {
         private static final long serialVersionUID = 201207300900L;
 
         public static String ICRS = "ICRS";
@@ -600,109 +560,96 @@ public final class PositionUtil
         boolean supported;
         boolean swappedAxes = false;
 
-        public String getName()
-        {
+        public String getName() {
             return name;
         }
 
-        public Boolean getTimeDependent()
-        {
+        public Boolean getTimeDependent() {
             return timeDependent;
         }
-        public boolean isSupported()
-        {
+
+        public boolean isSupported() {
             return supported;
         }
 
-        public boolean isSwappedAxes()
-        {
+        public boolean isSwappedAxes() {
             return swappedAxes;
         }
 
     }
 
-    public static CoordSys inferCoordSys(SpatialWCS wcs)
-    {
+    public static CoordSys inferCoordSys(SpatialWCS wcs) {
         CoordSys ret = new CoordSys();
         ret.name = wcs.coordsys;
         ret.supported = false;
         String ctype1 = wcs.getAxis().getAxis1().getCtype();
         String ctype2 = wcs.getAxis().getAxis2().getCtype();
 
-        if ( CoordSys.GAPPT.equals(ret.name) )
-        {
+        if (CoordSys.GAPPT.equals(ret.name)) {
             ret.timeDependent = Boolean.TRUE;
             ret.supported = false;
-        }
-        else if((ctype1.startsWith("ELON") && ctype2.startsWith("ELAT"))
-                || (ctype1.startsWith("ELAT") && ctype2.startsWith("ELON")) )
-        {
+        } else if ((ctype1.startsWith("ELON") && ctype2.startsWith("ELAT"))
+            || (ctype1.startsWith("ELAT") && ctype2.startsWith("ELON"))) {
             // ecliptic
             ret.name = CoordSys.ECL;
             ret.timeDependent = Boolean.TRUE;
             ret.supported = false;
-        }
-        else if ( (ctype1.startsWith("HLON") && ctype2.startsWith("HLAT"))
-                || (ctype1.startsWith("HLAT") && ctype2.startsWith("HLON")) )
-        {
+        } else if ((ctype1.startsWith("HLON") && ctype2.startsWith("HLAT"))
+            || (ctype1.startsWith("HLAT") && ctype2.startsWith("HLON"))) {
             // helio-ecliptic
             ret.name = CoordSys.HECL;
             ret.timeDependent = Boolean.TRUE;
             ret.supported = false;
-        }
-        else if((ctype1.startsWith("GLON") && ctype2.startsWith("GLAT"))
-                || (ctype1.startsWith("GLAT") && ctype2.startsWith("GLON")) )
-        {
-            if (CoordSys.GAL.equals(ret.name))
+        } else if ((ctype1.startsWith("GLON") && ctype2.startsWith("GLAT"))
+            || (ctype1.startsWith("GLAT") && ctype2.startsWith("GLON"))) {
+            if (CoordSys.GAL.equals(ret.name)) {
                 log.debug("found coordsys=" + ret.name + " with GLON,GLAT - OK");
-            else if (ret.name != null)
-            {
+            } else if (ret.name != null) {
                 log.debug("found coordsys=" + ret.name + " with GLON,GLAT - ignoring and assuming GAL");
                 ret.name = null;
             }
-            if (ret.name == null)
+            if (ret.name == null) {
                 ret.name = CoordSys.GAL;
-            if (ctype1.startsWith("GLAT"))
+            }
+            if (ctype1.startsWith("GLAT")) {
                 ret.swappedAxes = true;
+            }
             ret.supported = true;
-        }
-        else if ( (ctype1.startsWith("RA") && ctype2.startsWith("DEC"))
-                    || (ctype1.startsWith("DEC") && ctype2.startsWith("RA")) )
-        {
-            if (ret.name == null)
-            {
-                if (wcs.equinox == null)
+        } else if ((ctype1.startsWith("RA") && ctype2.startsWith("DEC"))
+            || (ctype1.startsWith("DEC") && ctype2.startsWith("RA"))) {
+            if (ret.name == null) {
+                if (wcs.equinox == null) {
                     ret.name = CoordSys.ICRS;
-                else if (Math.abs(wcs.equinox.doubleValue() - 1950.0) < 1.0)
+                } else if (Math.abs(wcs.equinox.doubleValue() - 1950.0) < 1.0) {
                     ret.name = CoordSys.FK4;
-                else if (Math.abs(wcs.equinox.doubleValue() - 2000.0) < 1.0)
+                } else if (Math.abs(wcs.equinox.doubleValue() - 2000.0) < 1.0) {
                     ret.name = CoordSys.FK5;
-                else
+                } else {
                     log.debug("cannot infer coordinate system from RA,DEC and equinox = " + wcs.equinox);
+                }
             }
 
-            if ( ctype1.startsWith("DEC") )
+            if (ctype1.startsWith("DEC")) {
                 ret.swappedAxes = true;
-            if (ret.name != null)
+            }
+            if (ret.name != null) {
                 ret.supported = true;
+            }
         }
 
         return ret;
     }
 
     static List<Vertex> getVerticesWcsLib(SpatialWCS wcs, List<Vertex> vertices)
-        throws NoSuchKeywordException
-    {
+        throws NoSuchKeywordException {
         double[] coords = new double[2];
 
         WCSWrapper map = new WCSWrapper(wcs, 1, 2);
         Transform transform = new Transform(map);
         Iterator<Vertex> i = vertices.iterator();
-        while ( i.hasNext() )
-        {
+        while (i.hasNext()) {
             Vertex v = i.next();
-            if ( !SegmentType.CLOSE.equals(v.getType()) )
-            {
+            if (!SegmentType.CLOSE.equals(v.getType())) {
                 coords[0] = v.cval1;
                 coords[1] = v.cval2;
                 Transform.Result tr = transform.pix2sky(coords);
@@ -716,42 +663,32 @@ public final class PositionUtil
         return vertices;
     }
 
-    static void toICRS(CoordSys cs, List<Vertex> vertices)
-    {
+    static void toICRS(CoordSys cs, List<Vertex> vertices) {
         Point2D p;
-        if (CoordSys.GAL.equals(cs.name))
-        {
-            for (int i=0; i<vertices.size(); i++)
-            {
+        if (CoordSys.GAL.equals(cs.name)) {
+            for (int i = 0; i < vertices.size(); i++) {
                 Vertex v = (Vertex) vertices.get(i);
-                if ( !SegmentType.CLOSE.equals(v.getType()) )
-                {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
                     p = wcscon.gal2fk5(new Point2D.Double(v.cval1, v.cval2));
                     v.cval1 = p.getX();
                     v.cval2 = p.getY();
                 }
             }
-        }
-        else if (CoordSys.FK4.equals(cs.name))
-        {
-            for (int i=0; i<vertices.size(); i++)
-            {
+        } else if (CoordSys.FK4.equals(cs.name)) {
+            for (int i = 0; i < vertices.size(); i++) {
                 Vertex v = (Vertex) vertices.get(i);
-                if ( !SegmentType.CLOSE.equals(v.getType()) )
-                {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
                     p = wcscon.fk425(new Point2D.Double(v.cval1, v.cval2));
                     v.cval1 = p.getX();
                     v.cval2 = p.getY();
                 }
             }
-        }
-        else if ( !CoordSys.ICRS.equals(cs.name) && !CoordSys.FK5.equals(cs.name))
+        } else if (!CoordSys.ICRS.equals(cs.name) && !CoordSys.FK5.equals(cs.name)) {
             throw new IllegalArgumentException("unexpected coordsys: " + cs.name);
+        }
 
-        if (cs.swappedAxes)
-        {
-            for (int i=0; i<vertices.size(); i++)
-            {
+        if (cs.swappedAxes) {
+            for (int i = 0; i < vertices.size(); i++) {
                 Vertex v = (Vertex) vertices.get(i);
                 double tmp = v.cval1;
                 v.cval1 = v.cval2;
