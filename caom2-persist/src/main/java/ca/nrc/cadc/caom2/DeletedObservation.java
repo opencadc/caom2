@@ -73,13 +73,10 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- *
  * @author pdowler
  */
-public class DeletedObservation extends DeletedEntity
-{
-    public DeletedObservation(UUID id, Date lastModified)
-    {
+public class DeletedObservation extends DeletedEntity {
+    public DeletedObservation(UUID id, Date lastModified) {
         super(Observation.class, id, lastModified);
     }
 }

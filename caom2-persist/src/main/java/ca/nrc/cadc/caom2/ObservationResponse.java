@@ -68,43 +68,40 @@
 package ca.nrc.cadc.caom2;
 
 
-import org.apache.log4j.Logger;
-
 /**
  * Simple wrapper for returning an observation either fully or with an error.
  * This is intended to wrap responses to support partial success in multi-threaded
  * or batched operations.
- * 
+ *
  * @author pdowler
  */
-public class ObservationResponse 
-{
+public class ObservationResponse {
     public ObservationState observationState;
-    
+
     public Observation observation;
-    
+
     public Exception error;
-    
-    public ObservationResponse() { }
-    
-    public ObservationResponse(ObservationState state) 
-    { 
+
+    public ObservationResponse() {
+    }
+
+    public ObservationResponse(ObservationState state) {
         this.observationState = state;
     }
-    public ObservationResponse(Observation obs) 
-    { 
+
+    public ObservationResponse(Observation obs) {
         this.observation = obs;
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ObservationResponse[");
         sb.append(observationState).append(",");
         sb.append(observation);
-        if (error != null)
+        if (error != null) {
             sb.append(",").append(error);
+        }
         sb.append("]");
         return sb.toString();
     }

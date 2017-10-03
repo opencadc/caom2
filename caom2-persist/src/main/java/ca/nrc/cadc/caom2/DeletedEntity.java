@@ -73,28 +73,24 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- *
  * @author pdowler
  */
-public class DeletedEntity 
-{
+public class DeletedEntity {
     public Class entityClass;
     public UUID id;
     public Date lastModified;
 
-    DeletedEntity(Class entityClass, UUID id, Date lastModified)
-    {
+    DeletedEntity(Class entityClass, UUID id, Date lastModified) {
         this.entityClass = entityClass;
         this.id = id;
         this.lastModified = lastModified;
     }
-    
+
     @Override
-    public String toString() 
-    { 
+    public String toString() {
         return getClass().getSimpleName() + "["
-                + entityClass.getSimpleName() + ","
-                + id + ","
-                + lastModified + "]";
+            + entityClass.getSimpleName() + ","
+            + id + ","
+            + lastModified + "]";
     }
 }
