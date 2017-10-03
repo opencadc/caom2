@@ -84,37 +84,30 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URI;
+
 /**
- *
  * @author pdowler
  */
-public class PolarizationUtilTest 
-{
+public class PolarizationUtilTest {
     private static final Logger log = Logger.getLogger(PolarizationUtilTest.class);
     private ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
+    public void testTemplate() {
+        try {
+            // TODO
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -122,10 +115,8 @@ public class PolarizationUtilTest
 
 
     @Test
-    public void testEmptyList()
-    {
-        try
-        {
+    public void testEmptyList() {
+        try {
             Plane plane = new Plane("foo");
             Polarization pol = PolarizationUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(pol);
@@ -137,19 +128,15 @@ public class PolarizationUtilTest
             Assert.assertNotNull(pol);
             Assert.assertNull(pol.states);
             Assert.assertNull(pol.dimension);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testIllegalValues()
-    {
-        try
-        {
+    public void testIllegalValues() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -158,71 +145,57 @@ public class PolarizationUtilTest
             double highErr = 11.0;
             double zeroErr = 0.0;
             RefCoord c1, c2;
-            
+
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
             PolarizationWCS w = new PolarizationWCS(axis);
             c.polarization = w;
-            
+
             c1 = new RefCoord(0.5, zeroErr);
             c2 = new RefCoord(1.5, zeroErr);
             w.getAxis().range = new CoordRange1D(c1, c2);
-            
-            try
-            {
+
+            try {
                 Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
                 Assert.fail("zeroErr -- expected IllegalArgumentException, got: " + actual);
-            }
-            catch(IllegalArgumentException expected)
-            {
+            } catch (IllegalArgumentException expected) {
                 log.info("zeroErr -- caught expected: " + expected);
             }
-            
+
             c1 = new RefCoord(0.5, lowErr);
             c2 = new RefCoord(1.5, lowErr);
             w.getAxis().range = new CoordRange1D(c1, c2);
-            
-            try
-            {
+
+            try {
                 Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
                 Assert.fail("lowErr -- expected IllegalArgumentException, got: " + actual);
-            }
-            catch(IllegalArgumentException expected)
-            {
+            } catch (IllegalArgumentException expected) {
                 log.info("lowErr -- caught expected: " + expected);
             }
-            
+
             c1 = new RefCoord(0.5, highErr);
             c2 = new RefCoord(1.5, highErr);
             w.getAxis().range = new CoordRange1D(c1, c2);
-            
-            try
-            {
+
+            try {
                 Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
                 Assert.fail("highErr -- expected IllegalArgumentException, got: " + actual);
-            }
-            catch(IllegalArgumentException expected)
-            {
+            } catch (IllegalArgumentException expected) {
                 log.info("lowErr -- caught expected: " + expected);
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testSingleValueRange()
-    {
-        try
-        {
+    public void testSingleValueRange() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
-            for (PolarizationState pol : PolarizationState.values())
-            {
+            for (PolarizationState pol : PolarizationState.values()) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
                 PolarizationWCS w = new PolarizationWCS(axis);
                 RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(pol));
@@ -240,21 +213,16 @@ public class PolarizationUtilTest
                 Assert.assertNotNull(actual.dimension);
                 Assert.assertEquals(1, actual.dimension.intValue());
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    
-     
+
     @Test
-    public void testRangeIQU()
-    {
-        try
-        {
+    public void testRangeIQU() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -264,7 +232,7 @@ public class PolarizationUtilTest
             RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.I));
             RefCoord c2 = new RefCoord(3.5, PolarizationState.intValue(PolarizationState.U));
             w.getAxis().range = new CoordRange1D(c1, c2);
-            
+
             c.polarization = w;
             Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
             log.debug("testRangeIQU: " + actual);
@@ -277,19 +245,15 @@ public class PolarizationUtilTest
             Assert.assertEquals(PolarizationState.U, actual.states.get(2));
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(3, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testFunctionIQUV()
-    {
-        try
-        {
+    public void testFunctionIQUV() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -313,19 +277,15 @@ public class PolarizationUtilTest
 
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(4, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testFunctionRR_LL()
-    {
-        try
-        {
+    public void testFunctionRR_LL() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -347,19 +307,15 @@ public class PolarizationUtilTest
 
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testFunctionVUQI()
-    {
-        try
-        {
+    public void testFunctionVUQI() {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -380,23 +336,19 @@ public class PolarizationUtilTest
             Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
             Assert.assertEquals(PolarizationState.U, actual.states.get(2));
             Assert.assertEquals(PolarizationState.V, actual.states.get(3));
-            
+
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(4, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testRangeFromCalibrationIQ()
-    {
+    public void testRangeFromCalibrationIQ() {
         log.debug("testRangeFromCalibrationIQ - START");
-        try
-        {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.CALIBRATION);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -407,13 +359,13 @@ public class PolarizationUtilTest
             RefCoord c2 = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.Q));
             w.getAxis().range = new CoordRange1D(c1, c2);
             c.polarization = w;
-            
+
             // add some aux artifacts, should not effect result
             Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             plane.getArtifacts().add(at);
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
-            
+
             Chunk ch = new Chunk();
             pt.getChunks().add(ch);
             CoordAxis1D axist = new CoordAxis1D(new Axis("STOKES", null));
@@ -421,9 +373,8 @@ public class PolarizationUtilTest
             RefCoord c1t = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.U));
             RefCoord c2t = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.V));
             ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
-            
-            
-            
+
+
             Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
             log.debug("testRangeIQU: " + actual);
 
@@ -434,20 +385,16 @@ public class PolarizationUtilTest
             Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
-     @Test
-    public void testRangeFromMixedIQ()
-    {
+
+    @Test
+    public void testRangeFromMixedIQ() {
         log.debug("testRangeFromCalibrationIQ - START");
-        try
-        {
+        try {
             Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
@@ -458,7 +405,7 @@ public class PolarizationUtilTest
             RefCoord c2 = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.Q));
             w.getAxis().range = new CoordRange1D(c1, c2);
             c.polarization = w;
-            
+
             // add some cal artifacts, should not effect result
             Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             plane.getArtifacts().add(at);
@@ -471,9 +418,8 @@ public class PolarizationUtilTest
             RefCoord c1t = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.U));
             RefCoord c2t = new RefCoord(2.5, PolarizationState.intValue(PolarizationState.V));
             ch.polarization.getAxis().range = new CoordRange1D(c1t, c2t);
-            
-            
-            
+
+
             Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
             log.debug("testRangeIQU: " + actual);
 
@@ -484,9 +430,7 @@ public class PolarizationUtilTest
             Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

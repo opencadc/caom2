@@ -84,46 +84,38 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
- *
  * @author pdowler
  */
-public class TimeUtilTest 
-{
+public class TimeUtilTest {
     private static final Logger log = Logger.getLogger(TimeUtilTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
     }
 
 
     ////@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
+    public void testTemplate() {
+        try {
+            // TODO
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testEmptyList()
-    {
-        try
-        {
+    public void testEmptyList() {
+        try {
             Plane plane = new Plane("foo");
             Time tim = TimeUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(tim);
@@ -132,21 +124,17 @@ public class TimeUtilTest
             Assert.assertNull(tim.exposure);
             Assert.assertNull(tim.resolution);
             Assert.assertNull(tim.sampleSize);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromRange()
-    {
-        try
-        {
+    public void testComputeFromRange() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -173,21 +161,17 @@ public class TimeUtilTest
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromBounds()
-    {
-        try
-        {
+    public void testComputeFromBounds() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L * 2 / 3;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -214,21 +198,17 @@ public class TimeUtilTest
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromFunction()
-    {
-        try
-        {
+    public void testComputeFromFunction() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -255,22 +235,18 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.0001);
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromMultipleFunction()
-    {
-        try
-        {
+    public void testComputeFromMultipleFunction() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 2*200*0.01;
-            long expectedDimension = 2*200L;
+            double expectedUB = expectedLB + 2 * 200 * 0.01;
+            long expectedDimension = 2 * 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
             double expectedSS = 0.01;
@@ -296,21 +272,17 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.0001);
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromMultipleFunctionOverlap()
-    {
-        try
-        {
+    public void testComputeFromMultipleFunctionOverlap() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -337,21 +309,17 @@ public class TimeUtilTest
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.0001);
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromScience()
-    {
-        try
-        {
+    public void testComputeFromScience() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -361,19 +329,19 @@ public class TimeUtilTest
             Time actual;
 
             plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
-            
+
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
-            
+
             actual = TimeUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
 
-            
+
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
@@ -387,21 +355,17 @@ public class TimeUtilTest
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromCalibration()
-    {
-        try
-        {
+    public void testComputeFromCalibration() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -411,14 +375,14 @@ public class TimeUtilTest
             Time actual;
 
             plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
-            
+
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
-            
+
             actual = TimeUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
@@ -436,21 +400,17 @@ public class TimeUtilTest
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromMixed()
-    {
-        try
-        {
+    public void testComputeFromMixed() {
+        try {
             double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200*0.01;
+            double expectedUB = expectedLB + 200 * 0.01;
             long expectedDimension = 200L;
             double expectedExposure = 300.0;
             double expectedResolution = 0.1;
@@ -460,14 +420,14 @@ public class TimeUtilTest
             Time actual;
 
             plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
-            
+
             // add some CAL artifacts, should not effect result since SCIENCE above
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
-            
+
             actual = TimeUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
@@ -485,43 +445,36 @@ public class TimeUtilTest
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     Plane getTestSetRange(int numA, int numP, int numC)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
     }
 
     Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ptype, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    nc.time = getTestRange(true, px, sx+n*nx*ds, nx, ds);
+                    nc.time = getTestRange(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
             }
@@ -531,28 +484,24 @@ public class TimeUtilTest
     }
 
     Plane getTestSetBounds(int numA, int numP, int numC)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    nc.time = getTestBounds(true, px, sx+n*nx*ds, nx, ds);
+                    nc.time = getTestBounds(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
             }
@@ -562,29 +511,26 @@ public class TimeUtilTest
     }
 
     Plane getTestSetFunction(int numA, int numP, int numC, boolean shift)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
-                    nc.time = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
-                    if (shift)
+                    nc.time = getTestFunction(true, px, sx + n * nx * ds, nx, ds);
+                    if (shift) {
                         n++;
+                    }
                 }
             }
         }
@@ -592,37 +538,34 @@ public class TimeUtilTest
         return plane;
     }
 
-    TemporalWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
-    {
+    TemporalWCS getTestRange(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
-        if (complete)
-        {
+        if (complete) {
             wcs.exposure = 300.0;
             wcs.resolution = 0.1;
         }
-        
+
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px + nx, sx + nx*ds);
+        RefCoord c2 = new RefCoord(px + nx, sx + nx * ds);
         wcs.getAxis().range = new CoordRange1D(c1, c2);
 
         return wcs;
     }
-    TemporalWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
-    {
+
+    TemporalWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
-        if (complete)
-        {
+        if (complete) {
             wcs.exposure = 300.0;
             wcs.resolution = 0.1;
         }
 
         // divide into 2 samples with a gap between
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px + nx*0.33, sx + nx*ds*0.33);
-        RefCoord c3 = new RefCoord(px + nx*0.66, sx + nx*ds*0.66);
-        RefCoord c4 = new RefCoord(px + nx,      sx + nx*ds);
+        RefCoord c2 = new RefCoord(px + nx * 0.33, sx + nx * ds * 0.33);
+        RefCoord c3 = new RefCoord(px + nx * 0.66, sx + nx * ds * 0.66);
+        RefCoord c4 = new RefCoord(px + nx, sx + nx * ds);
         wcs.getAxis().bounds = new CoordBounds1D();
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
@@ -630,19 +573,17 @@ public class TimeUtilTest
         return wcs;
     }
 
-    TemporalWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
-    {
+    TemporalWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
-        if (complete)
-        {
+        if (complete) {
             wcs.exposure = 300.0;
             wcs.resolution = 0.1;
         }
 
         RefCoord c1 = new RefCoord(px, sx);
         wcs.getAxis().function = new CoordFunction1D((long) nx, ds, c1);
-        
+
         return wcs;
     }
 

@@ -89,50 +89,42 @@ import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
- *
  * @author pdowler
  */
-public class EnergyUtilTest
-{
+public class EnergyUtilTest {
     private static final Logger log = Logger.getLogger(EnergyUtilTest.class);
     private static ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    String BANDPASS_NAME= "H-Alpha-narrow";
+    String BANDPASS_NAME = "H-Alpha-narrow";
     EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
     EnergyConverter econv = new EnergyConverter();
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
+    public void testTemplate() {
+        try {
+            // TODO
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testEmptyList()
-    {
-        try
-        {
+    public void testEmptyList() {
+        try {
             Plane plane = new Plane("foo");
             Energy nrg = EnergyUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(nrg);
@@ -143,24 +135,20 @@ public class EnergyUtilTest
             Assert.assertNull(nrg.resolvingPower);
             Assert.assertNull(nrg.sampleSize);
             Assert.assertNull(nrg.transition);
-            
+
             Assert.assertNull(nrg.getFreqWidth());
             Assert.assertNull(nrg.getFreqSampleSize());
-            
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromRange()
-    {
+    public void testComputeFromRange() {
         log.debug("testComputeFromRange: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
             long expectedDimension = 200L;
@@ -173,7 +161,7 @@ public class EnergyUtilTest
             plane = getTestSetRange(1, 1, 1);
             actual = EnergyUtil.compute(plane.getArtifacts());
             log.debug("testComputeFromRange: " + actual);
-            
+
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
@@ -198,10 +186,10 @@ public class EnergyUtilTest
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB+400.0e-9, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(expectedUB + 400.0e-9, actual.bounds.getUpper(), 0.01);
             Assert.assertFalse(actual.bounds.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
-            Assert.assertEquals(expectedDimension*3, actual.dimension.longValue());
+            Assert.assertEquals(expectedDimension * 3, actual.dimension.longValue());
             Assert.assertNotNull(actual.resolvingPower);
             Assert.assertEquals(expectedRP, actual.resolvingPower.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
@@ -211,23 +199,19 @@ public class EnergyUtilTest
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromBounds()
-    {
+    public void testComputeFromBounds() {
         log.debug("testComputeFromBounds: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
-            long expectedDimension = 200*2/3;
+            long expectedDimension = 200 * 2 / 3;
             double expectedSS = 1.0e-9;
             double expectedRP = 33000.0;
 
@@ -254,20 +238,16 @@ public class EnergyUtilTest
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromFunction()
-    {
+    public void testComputeFromFunction() {
         log.debug("testComputeFromFunction: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
             long expectedDimension = 200L;
@@ -297,28 +277,24 @@ public class EnergyUtilTest
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
-            
+
             Assert.assertNotNull(actual.getFreqWidth());
             Assert.assertNotNull(actual.getFreqSampleSize());
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComputeFromFreqRange()
-    {
-        try
-        {
+    public void testComputeFromFreqRange() {
+        try {
             EnergyConverter ec = new EnergyConverter();
             double expectedLB = ec.convert(20.0, "FREQ", "MHz");
             double expectedUB = ec.convert(2.0, "FREQ", "MHz");
             long expectedDimension = 1024L;
-            double expectedSS = (expectedUB - expectedLB)/expectedDimension;
+            double expectedSS = (expectedUB - expectedLB) / expectedDimension;
 
             CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
             SpectralWCS spec = new SpectralWCS(axis, "TOPOCENT");
@@ -330,7 +306,7 @@ public class EnergyUtilTest
             log.debug("testComputeFromFreqRange: " + spec.getAxis().range + " " + spec.getAxis().getAxis().getCunit());
 
             // use this to create the objects, then replace the single SpectralWCS with above
-            Plane plane = getTestSetRange(1,1,1);
+            Plane plane = getTestSetRange(1, 1, 1);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             c.energy = spec;
@@ -350,20 +326,16 @@ public class EnergyUtilTest
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testInvalidComputeFromFunction()
-    {
+    public void testInvalidComputeFromFunction() {
         log.debug("testComputeFromFunction: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
             long expectedDimension = 200L;
@@ -380,23 +352,17 @@ public class EnergyUtilTest
 
             Assert.fail("expected WCSlibRuntimeException");
 
-        }
-        catch(WCSLibRuntimeException expected)
-        {
+        } catch (WCSLibRuntimeException expected) {
             log.info("caught expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetBoundsWaveBounds()
-    {
-        try
-        {
+    public void testGetBoundsWaveBounds() {
+        try {
             SpectralWCS wcs = getTestBounds(false, 0.5, 400, 2000.0, 0.1); // [400,600] in two samples [400,466][534,600]
             Interval all = new Interval(300e-9, 800e-9);
             Interval none = new Interval(700e-9, 900e-9);
@@ -410,8 +376,8 @@ public class EnergyUtilTest
 
             long[] noPix = CutoutUtil.getEnergyBounds(wcs, none);
             Assert.assertNull(noPix);
-            
-            long[] gapPix =  CutoutUtil.getEnergyBounds(wcs, gap);
+
+            long[] gapPix = CutoutUtil.getEnergyBounds(wcs, gap);
             Assert.assertNull(gapPix);
 
             long[] cutPix = CutoutUtil.getEnergyBounds(wcs, cut);
@@ -419,25 +385,21 @@ public class EnergyUtilTest
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 0, cutPix[0], 1);
             Assert.assertEquals("cut LB", 660, cutPix[1], 1);
-            
+
             long[] clipPix = CutoutUtil.getEnergyBounds(wcs, clip);
             Assert.assertNotNull(clipPix);
             Assert.assertEquals("long[2]", 2, clipPix.length);
             Assert.assertEquals("clip LB", 0, clipPix[0], 1);
             Assert.assertEquals("clip LB", 660, clipPix[1], 1);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testGetBoundsWaveFunc()
-    {
-        try
-        {
+    public void testGetBoundsWaveFunc() {
+        try {
             SpectralWCS wcs = getTestFunction(false, 0.5, 400, 2000.0, 0.1); // [400,600]
             Interval all = new Interval(300e-9, 800e-9);
             Interval none = new Interval(700e-9, 900e-9);
@@ -455,19 +417,15 @@ public class EnergyUtilTest
             Assert.assertEquals("long[2]", 2, cutPix.length);
             Assert.assertEquals("cut LB", 500, cutPix[0], 1);
             Assert.assertEquals("cut LB", 1500, cutPix[1], 1);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetBoundsFreqBounds()
-    {
-        try
-        {
+    public void testGetBoundsFreqBounds() {
+        try {
             SpectralWCS wcs = getTestFreqBounds(false, 0.5, 10.0, 1000.0, 0.1); // [10-110] MHz in [1,333][666,1000]
             Interval all = new Interval(2.5, 60.0);
             Interval none = new Interval(1.0, 2.0);
@@ -486,19 +444,15 @@ public class EnergyUtilTest
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
             Assert.assertEquals("cut LB", 660, cutPix[0], 1); // short wave end is in the upper sub-interval
             Assert.assertEquals("cut UB", 1000, cutPix[1], 1);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testGetBoundsFreqFunc()
-    {
-        try
-        {
+    public void testGetBoundsFreqFunc() {
+        try {
             SpectralWCS wcs = getTestFreqFunction(false, 0.5, 10.0, 1000.0, 0.1); // [10-110] MHz
             Interval all = new Interval(2.5, 60.0);
             Interval none = new Interval(1.0, 2.0);
@@ -517,20 +471,16 @@ public class EnergyUtilTest
             log.debug("cut: " + cutPix[0] + ":" + cutPix[1]);
             Assert.assertEquals("cut LB", 300, cutPix[0], 1);
             Assert.assertEquals("cut UB", 600, cutPix[1], 1);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromCalibration()
-    {
+    public void testComputeFromCalibration() {
         log.debug("testComputeFromCalibration: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
             long expectedDimension = 200L;
@@ -547,10 +497,10 @@ public class EnergyUtilTest
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
-            
+
             actual = EnergyUtil.compute(plane.getArtifacts());
             log.debug("testComputeFromCalibration: " + actual);
-            
+
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
@@ -565,20 +515,16 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testComputeFromMixed()
-    {
+    public void testComputeFromMixed() {
         log.debug("testComputeFromMixed: START");
-        try
-        {
+        try {
             double expectedLB = 400e-9;
             double expectedUB = 600e-9;
             long expectedDimension = 200L;
@@ -589,17 +535,17 @@ public class EnergyUtilTest
             Energy actual;
 
             plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
-            
+
             // add some cal artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
-            
+
             actual = EnergyUtil.compute(plane.getArtifacts());
             log.debug("testComputeFromMixed: " + actual);
-            
+
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.bounds);
             Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
@@ -614,45 +560,38 @@ public class EnergyUtilTest
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
             Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     Plane getTestSetRange(int numA, int numP, int numC)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
     }
-    
+
     Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 400.0;
         double nx = 200.0;
         double ds = 1.0;
-        double tot = nx*ds;
-        
+        double tot = nx * ds;
+
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ptype, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    nc.energy = getTestRange(true,  px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestRange(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
             }
@@ -662,30 +601,26 @@ public class EnergyUtilTest
     }
 
     Plane getTestSetBounds(int numA, int numP, int numC)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 400.0;
         double nx = 200.0;
         double ds = 1.0;
-        double tot = nx*ds;
+        double tot = nx * ds;
 
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // just shift to higher values of x for each subsequent chunk
-                    nc.energy = getTestBounds(true,  px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestBounds(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
             }
@@ -695,29 +630,25 @@ public class EnergyUtilTest
     }
 
     Plane getTestSetFunction(int numA, int numP, int numC)
-        throws URISyntaxException
-    {
+        throws URISyntaxException {
         double px = 0.5;
         double sx = 400.0;
         double nx = 200.0;
         double ds = 1.0;
-        double tot = nx*ds;
+        double tot = nx * ds;
         Plane plane = new Plane("foo");
         int n = 0;
-        for (int a=0; a<numA; a++)
-        {
-            Artifact na = new Artifact(new URI("foo", "bar"+a, null), ProductType.SCIENCE, ReleaseType.DATA);
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
-            for (int p=0; p<numP; p++)
-            {
+            for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
                 na.getParts().add(np);
-                for (int c=0; c<numC; c++)
-                {
+                for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // shift px to larger values
-                    nc.energy = getTestFunction(true, px, sx+n*nx*ds, nx, ds);
+                    nc.energy = getTestFunction(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
             }
@@ -727,33 +658,29 @@ public class EnergyUtilTest
     }
 
 
-    SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
-    {
+    SpectralWCS getTestRange(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        if (complete)
-        {
+        if (complete) {
             wcs.bandpassName = BANDPASS_NAME;
             wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
             wcs.transition = TRANSITION;
         }
-        
+
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px+nx, sx + nx*ds);
+        RefCoord c2 = new RefCoord(px + nx, sx + nx * ds);
         wcs.getAxis().range = new CoordRange1D(c1, c2);
         log.debug("test range: " + axis.range);
         return wcs;
     }
 
-    SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
-    {
+    SpectralWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        if (complete)
-        {
+        if (complete) {
             wcs.bandpassName = BANDPASS_NAME;
             wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
@@ -761,9 +688,9 @@ public class EnergyUtilTest
         }
         // divide into 2 samples with a gap between
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px+nx*0.33, sx + nx*0.33*ds);
-        RefCoord c3 = new RefCoord(px+nx*0.66, sx + nx*0.66*ds);
-        RefCoord c4 = new RefCoord(px+nx, sx + nx*ds);
+        RefCoord c2 = new RefCoord(px + nx * 0.33, sx + nx * 0.33 * ds);
+        RefCoord c3 = new RefCoord(px + nx * 0.66, sx + nx * 0.66 * ds);
+        RefCoord c4 = new RefCoord(px + nx, sx + nx * ds);
         wcs.getAxis().bounds = new CoordBounds1D();
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
@@ -771,13 +698,11 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
-    {
+    SpectralWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "nm"));
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        if (complete)
-        {
+        if (complete) {
             wcs.bandpassName = BANDPASS_NAME;
             wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
@@ -790,13 +715,11 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds)
-    {
+    SpectralWCS getTestFreqBounds(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        if (complete)
-        {
+        if (complete) {
             wcs.bandpassName = BANDPASS_NAME;
             wcs.restfrq = econv.toHz(6536.0e-10, "m");
             wcs.resolvingPower = 33000.0;
@@ -805,9 +728,9 @@ public class EnergyUtilTest
 
         // divide into 2 samples with a gap between
         RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(px+nx*0.33, sx + nx*0.33*ds);
-        RefCoord c3 = new RefCoord(px+nx*0.66, sx + nx*0.66*ds);
-        RefCoord c4 = new RefCoord(px+nx, sx + nx*ds);
+        RefCoord c2 = new RefCoord(px + nx * 0.33, sx + nx * 0.33 * ds);
+        RefCoord c3 = new RefCoord(px + nx * 0.66, sx + nx * 0.66 * ds);
+        RefCoord c4 = new RefCoord(px + nx, sx + nx * ds);
         wcs.getAxis().bounds = new CoordBounds1D();
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c1, c2));
         wcs.getAxis().bounds.getSamples().add(new CoordRange1D(c3, c4));
@@ -815,13 +738,11 @@ public class EnergyUtilTest
         return wcs;
     }
 
-    SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds)
-    {
+    SpectralWCS getTestFreqFunction(boolean complete, double px, double sx, double nx, double ds) {
         CoordAxis1D axis = new CoordAxis1D(new Axis("FREQ", "MHz"));
         log.debug("test axis: " + axis);
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
-        if (complete)
-        {
+        if (complete) {
             wcs.bandpassName = BANDPASS_NAME;
             wcs.restwav = 6563.0e-10; // meters
             wcs.resolvingPower = 33000.0;
@@ -833,7 +754,6 @@ public class EnergyUtilTest
         log.debug("test function: " + axis.function);
         return wcs;
     }
-
 
 
 }

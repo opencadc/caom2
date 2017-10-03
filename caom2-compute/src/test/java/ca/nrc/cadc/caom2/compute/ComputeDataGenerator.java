@@ -22,7 +22,6 @@ import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-
 import org.apache.log4j.Logger;
 
 import java.net.URI;
@@ -31,8 +30,7 @@ import java.net.URISyntaxException;
 /**
  * Created by jeevesh
  */
-public class ComputeDataGenerator
-{
+public class ComputeDataGenerator {
     private static final Logger log = Logger.getLogger(ComputeDataGenerator.class);
 
     private EnergyUtilTest euTest = new EnergyUtilTest();
@@ -43,8 +41,7 @@ public class ComputeDataGenerator
 
 
     Plane getTestPlane(ProductType ptype)
-            throws URISyntaxException
-    {
+        throws URISyntaxException {
         Plane plane = new Plane(ptype.getClass().getName());
         Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
         plane.getArtifacts().add(na);
@@ -55,23 +52,20 @@ public class ComputeDataGenerator
     }
 
     Chunk getTestChunk(ProductType ptype)
-            throws URISyntaxException
-    {
+        throws URISyntaxException {
         Plane testPlane = getTestPlane(ptype);
         return testPlane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
     }
 
     Artifact getTestArtifact(ProductType ptype)
-            throws URISyntaxException
-    {
+        throws URISyntaxException {
         Plane testPlane = getTestPlane(ptype);
         return testPlane.getArtifacts().iterator().next();
     }
 
 
     // Functions for generating WCS flavours
-    SpatialWCS mkGoodSpatialWCS()
-    {
+    SpatialWCS mkGoodSpatialWCS() {
         double px = 0.5;
         double py = 0.5;
         double sx = 20.0;
@@ -82,8 +76,7 @@ public class ComputeDataGenerator
         return PositionUtilTest.getTestFunction(px, py, sx, sy, false);
     }
 
-    SpatialWCS mkBadSpatialWCS()
-    {
+    SpatialWCS mkBadSpatialWCS() {
         Axis axis1 = new Axis("RA---TAN", "deg");
         Axis axis2 = new Axis("DEC--TAN", "deg");
         CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
@@ -95,8 +88,7 @@ public class ComputeDataGenerator
         return wcs;
     }
 
-    SpectralWCS mkGoodSpectralWCS()
-    {
+    SpectralWCS mkGoodSpectralWCS() {
         double px = 0.5;
         double sx = 400.0;
         double nx = 200.0;
@@ -109,8 +101,7 @@ public class ComputeDataGenerator
     }
 
     SpectralWCS mkBadSpectralWCSFn()
-            throws URISyntaxException
-    {
+        throws URISyntaxException {
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
         SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
@@ -126,8 +117,7 @@ public class ComputeDataGenerator
 
     }
 
-    TemporalWCS mkGoodTemporalWCS()
-    {
+    TemporalWCS mkGoodTemporalWCS() {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
@@ -137,8 +127,7 @@ public class ComputeDataGenerator
 
     }
 
-    TemporalWCS mkBadTemporalWCSCunit()
-    {
+    TemporalWCS mkBadTemporalWCSCunit() {
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
         TemporalWCS wcs = new TemporalWCS(axis);
@@ -146,8 +135,7 @@ public class ComputeDataGenerator
 
     }
 
-    TemporalWCS mkBadTemporalWCSRange()
-    {
+    TemporalWCS mkBadTemporalWCSRange() {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
@@ -171,8 +159,7 @@ public class ComputeDataGenerator
 
     }
 
-    PolarizationWCS mkGoodPolarizationWCS() throws URISyntaxException
-    {
+    PolarizationWCS mkGoodPolarizationWCS() throws URISyntaxException {
         CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
         PolarizationWCS w = new PolarizationWCS(axis);
         RefCoord c1 = new RefCoord(0.5, PolarizationState.intValue(PolarizationState.CPOLI));
@@ -181,8 +168,7 @@ public class ComputeDataGenerator
         return w;
     }
 
-    PolarizationWCS mkBadPolarizationWCS() throws URISyntaxException
-    {
+    PolarizationWCS mkBadPolarizationWCS() throws URISyntaxException {
         double lowErr = -9.0;
         double highErr = 11.0;
         double zeroErr = 0.0;
