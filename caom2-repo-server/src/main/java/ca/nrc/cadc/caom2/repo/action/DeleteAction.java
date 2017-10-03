@@ -69,35 +69,34 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class DeleteAction extends RepoAction
-{
+public class DeleteAction extends RepoAction {
     private static final Logger log = Logger.getLogger(DeleteAction.class);
 
-    public DeleteAction() { }
+    public DeleteAction() {
+    }
 
     @Override
-    public void doAction()
-        throws Exception
-    {
+    public void doAction() throws Exception {
         ObservationURI uri = getURI();
         log.debug("START: " + uri);
 
         checkWritePermission(uri);
 
         ObservationDAO dao = getDAO();
-        
-        if (!dao.exists(uri))
+
+        if (!dao.exists(uri)) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
 
         dao.delete(uri);
 

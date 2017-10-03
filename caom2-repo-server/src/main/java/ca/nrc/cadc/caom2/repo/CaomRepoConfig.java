@@ -69,57 +69,48 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import ca.nrc.cadc.ac.GroupURI;
+
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
+import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.db.DBUtil;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.ac.GroupURI;
-import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
-import ca.nrc.cadc.caom2.version.InitDatabase;
-import ca.nrc.cadc.db.DBUtil;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class CaomRepoConfig
-{
+public class CaomRepoConfig {
     private static final Logger log = Logger.getLogger(CaomRepoConfig.class);
 
     private List<CaomRepoConfig.Item> config;
 
-    public CaomRepoConfig(File config)
-        throws IOException
-    {
+    public CaomRepoConfig(File config) throws IOException {
         this.config = loadConfig(config);
     }
 
-
-    public Item getConfig(String collection)
-    {
+    public Item getConfig(String collection) {
         Iterator<Item> i = config.iterator();
-        while ( i.hasNext() )
-        {
+        while (i.hasNext()) {
             Item item = i.next();
-            if (item.collection.equals(collection))
-            {
-                try 
-                { 
-                    initDB(item); 
-                }
-                catch(Exception ex)
-                {
+            if (item.collection.equals(collection)) {
+                try {
+                    initDB(item);
+                } catch (Exception ex) {
                     log.error("CAOM database INIT FAILED", ex);
                     return null;
                 }
@@ -129,99 +120,84 @@ public class CaomRepoConfig
         return null;
     }
 
-    public boolean isEmpty() { return config.isEmpty(); }
+    public boolean isEmpty() {
+        return config.isEmpty();
+    }
 
-    public Iterator<Item> iterator()
-    {
+    public Iterator<Item> iterator() {
         return new Initerator(config.iterator());
     }
+
     // need this so availability test loop does init
-    private class Initerator implements Iterator<Item>
-    {
+    private class Initerator implements Iterator<Item> {
         private Iterator<Item> iter;
-        public Initerator(Iterator<Item> iter)
-        {
+
+        public Initerator(Iterator<Item> iter) {
             this.iter = iter;
         }
 
         @Override
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             return iter.hasNext();
         }
 
         @Override
-        public Item next()
-        {
+        public Item next() {
             Item ret = iter.next();
-            try 
-            { 
-                initDB(ret); 
-            }
-            catch(Exception ex)
-            {
+            try {
+                initDB(ret);
+            } catch (Exception ex) {
                 log.error("CAOM database INIT FAILED", ex);
             }
             return ret;
         }
-        public void remove()
-        {
+
+        public void remove() {
             throw new UnsupportedOperationException();
         }
     }
-    
-    private void initDB(CaomRepoConfig.Item i)
-    {
-        if ( PostgreSQLGenerator.class.equals(i.getSqlGenerator()))
-        {
-            try
-            {
+
+    private void initDB(CaomRepoConfig.Item i) {
+        if (PostgreSQLGenerator.class.equals(i.getSqlGenerator())) {
+            try {
                 DataSource ds = DBUtil.findJNDIDataSource(i.getDataSourceName());
                 InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
                 init.doInit();
-            }
-            catch(NamingException ex)
-            {
-                throw new RuntimeException("CONFIG ERROR: failed to init or recognise database", ex);
+            } catch (NamingException ex) {
+                throw new RuntimeException("CONFIG ERROR: failed to init or recognise database",
+                        ex);
             }
         }
     }
 
-
-    public Iterator<String> collectionIterator()
-    {
+    public Iterator<String> collectionIterator() {
         return new CollectionIterator(config.iterator());
     }
 
-    private class CollectionIterator implements Iterator<String>
-    {
+    private class CollectionIterator implements Iterator<String> {
         private Iterator<Item> iter;
-        public CollectionIterator(Iterator<Item> iter)
-        {
+
+        public CollectionIterator(Iterator<Item> iter) {
             this.iter = iter;
         }
 
         @Override
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             return iter.hasNext();
         }
 
         @Override
-        public String next()
-        {
+        public String next() {
             Item ret = iter.next();
             return ret.collection;
         }
-        public void remove()
-        {
+
+        public void remove() {
             throw new UnsupportedOperationException();
         }
     }
 
-
-    public static class Item
-    {
+    public static class Item {
         private Class sqlGenerator;
         private String collection;
         private String dataSourceName;
@@ -230,13 +206,13 @@ public class CaomRepoConfig
         private String obsTableName;
         private GroupURI readOnlyGroup;
         private GroupURI readWriteGroup;
-        
+
         private boolean computeMetadata;
         private boolean computeMetadataValidation;
 
-        Item(Class sqlGenerator, String collection, String dataSourceName, String database, String schema, String obsTableName,
-            GroupURI readOnlyGroup, GroupURI readWriteGroup)
-        {
+        Item(Class sqlGenerator, String collection, String dataSourceName, String database,
+                String schema, String obsTableName, GroupURI readOnlyGroup,
+                GroupURI readWriteGroup) {
             this.sqlGenerator = sqlGenerator;
             this.collection = collection;
             this.dataSourceName = dataSourceName;
@@ -248,162 +224,145 @@ public class CaomRepoConfig
         }
 
         @Override
-        public String toString()
-        {
-            return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + "," + schema + "," + obsTableName + ","
-                    + readOnlyGroup + "," + readWriteGroup + "," 
-                    + sqlGenerator.getSimpleName() + "," + computeMetadata + "," + computeMetadataValidation + "]";
+        public String toString() {
+            return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + ","
+                    + schema + "," + obsTableName + "," + readOnlyGroup + "," + readWriteGroup + ","
+                    + sqlGenerator.getSimpleName() + "," + computeMetadata + ","
+                    + computeMetadataValidation + "]";
         }
 
-        public Class getSqlGenerator()
-        {
+        public Class getSqlGenerator() {
             return sqlGenerator;
         }
 
-        public boolean getComputeMetadata()
-        {
+        public boolean getComputeMetadata() {
             return computeMetadata;
         }
 
-        public boolean getComputeMetadataValidation()
-        {
+        public boolean getComputeMetadataValidation() {
             return computeMetadataValidation;
         }
-        
-        public String getTestTable()
-        {
+
+        public String getTestTable() {
             return database + "." + schema + "." + obsTableName;
         }
 
-        public String getCollection()
-        {
+        public String getCollection() {
             return collection;
         }
 
-        public String getDataSourceName()
-        {
+        public String getDataSourceName() {
             return dataSourceName;
         }
 
-        public String getDatabase()
-        {
+        public String getDatabase() {
             return database;
         }
 
-        public GroupURI getReadOnlyGroup()
-        {
+        public GroupURI getReadOnlyGroup() {
             return readOnlyGroup;
         }
 
-        public GroupURI getReadWriteGroup()
-        {
+        public GroupURI getReadWriteGroup() {
             return readWriteGroup;
         }
 
-        public String getSchema()
-        {
+        public String getSchema() {
             return schema;
         }
 
-        private Item() { }
+        private Item() {
+        }
     }
 
-    static List<CaomRepoConfig.Item> loadConfig(File cf)
-        throws IOException
-    {
+    static List<CaomRepoConfig.Item> loadConfig(File cf) throws IOException {
         long start = System.currentTimeMillis();
         List<CaomRepoConfig.Item> ret = new ArrayList<CaomRepoConfig.Item>();
-        
-        // TODO: this is quick and dirty but is very fragile: requires single space between tokens and
+
+        // TODO: this is quick and dirty but is very fragile: requires single space
+        // between tokens
+        // and
         // doesn't handle blanks, comments, etc.
         Properties props = new Properties();
         props.load(new FileReader(cf));
-        
+
         Iterator<String> iter = props.stringPropertyNames().iterator();
-        while ( iter.hasNext() )
-        {
+        while (iter.hasNext()) {
             String collection = iter.next();
-            try
-            {
+            try {
                 Item rci = getItem(collection, props);
                 ret.add(rci);
-            }
-            catch(Exception ex)
-            {
-                log.error("CaomRepoConfig " + cf.getAbsolutePath() + ", invalid config for " + collection + ": " + ex);
+            } catch (Exception ex) {
+                log.error("CaomRepoConfig " + cf.getAbsolutePath() + ", invalid config for "
+                        + collection + ": " + ex);
             }
         }
         long dur = System.currentTimeMillis() - start;
-        log.debug("load time: " + dur+  "ms");
+        log.debug("load time: " + dur + "ms");
         return ret;
     }
 
     static CaomRepoConfig.Item getItem(String collection, Properties props)
-        throws IllegalArgumentException, URISyntaxException
-    {
+            throws IllegalArgumentException, URISyntaxException {
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
-        if (parts.length >= 6) // 6: backwards compat
-        {
-            String dsName=  parts[0];
+        if (parts.length >= 6) { // 6: backwards compat
+            String dsName = parts[0];
             String database = parts[1];
             String schema = parts[2];
             String obsTable = parts[3];
             String roGroup = parts[4];
             String rwGroup = parts[5];
-            
+
             // temporary default for backwards compatibility to existing config
             Class sqlGen = SybaseSQLGenerator.class;
-            if (parts.length >= 7)
-            {
+            if (parts.length >= 7) {
                 String cname = parts[6];
-                try
-                {
+                try {
                     sqlGen = Class.forName(cname);
-                    if (!SQLGenerator.class.isAssignableFrom(sqlGen))
-                        throw new IllegalArgumentException("invalid SQLGenerator class: does not implement interface " + SQLGenerator.class.getName());
-                }
-                catch(ClassNotFoundException ex)
-                {
-                    throw new IllegalArgumentException("failed to load SQLGenerator class: " + cname, ex);
+                    if (!SQLGenerator.class.isAssignableFrom(sqlGen)) {
+                        throw new IllegalArgumentException(
+                                "invalid SQLGenerator class: does not implement interface "
+                                        + SQLGenerator.class.getName());
+                    }
+                } catch (ClassNotFoundException ex) {
+                    throw new IllegalArgumentException(
+                            "failed to load SQLGenerator class: " + cname, ex);
                 }
             }
-            
+
             // default values for backwards compat to existing config
             boolean computeMetadata = false;
             boolean computeMetadataValidation = true;
-            if (parts.length >= 8)
-            {
+            if (parts.length >= 8) {
                 String options = parts[7];
-                log.debug(collection+  " options: " + options);
+                log.debug(collection + " options: " + options);
                 String[] ss = options.split(","); // comma-separated list of key=value pairs
-                for (String s : ss)
-                {
+                for (String s : ss) {
                     String[] kv = s.split("=");
-                    if (kv.length == 2)
-                    {
-                        if ("computeMetadata".equals(kv[0]))
+                    if (kv.length == 2) {
+                        if ("computeMetadata".equals(kv[0])) {
                             computeMetadata = Boolean.parseBoolean(kv[1]);
-                        else if ("computeMetadataValidation".equals(kv[0]))
+                        } else if ("computeMetadataValidation".equals(kv[0])) {
                             computeMetadataValidation = Boolean.parseBoolean(kv[1]);
-                        
+                        }
+
                         // else: ignore
                     }
                 }
             }
-            
+
             GroupURI ro = new GroupURI(roGroup);
             GroupURI rw = new GroupURI(rwGroup);
 
-            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database, schema, obsTable, ro, rw);
+            CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database,
+                    schema, obsTable, ro, rw);
             rci.computeMetadata = computeMetadata;
             rci.computeMetadataValidation = computeMetadataValidation;
             log.debug(collection + ": loaded " + rci);
             return rci;
-        }
-        else
-        {
+        } else {
             throw new IllegalArgumentException("found " + parts.length + " tokens, expected 6");
         }
     }

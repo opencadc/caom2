@@ -69,11 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
@@ -82,9 +77,12 @@ import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
+import java.io.IOException;
+import java.io.InputStream;
 
-public class ObservationInlineContentHandler implements InlineContentHandler
-{
+import org.apache.log4j.Logger;
+
+public class ObservationInlineContentHandler implements InlineContentHandler {
     private static Logger log = Logger.getLogger(ObservationInlineContentHandler.class);
 
     // 20MB XML Doc size limit
@@ -92,38 +90,37 @@ public class ObservationInlineContentHandler implements InlineContentHandler
 
     public static final String CONTENT_KEY = "obs_name";
 
-    public ObservationInlineContentHandler() { }
+    public ObservationInlineContentHandler() {
+    }
 
     // TODO: Put a check to ensure that this method is only called once.
-    //       For now we just assume that it is and the name associated with
-    //       the observation is hardcoded.
+    // For now we just assume that it is and the name associated with
+    // the observation is hardcoded.
+    /**
+     * Receive data.
+     */
     public Content accept(String name, String contentType, InputStream inputStream)
-        throws InlineContentException, IOException
-    {
-        if (inputStream == null)
+            throws InlineContentException, IOException {
+        if (inputStream == null) {
             throw new IOException("The InputStream is closed");
+        }
 
         // wrap the input stream in a byte counter to limit bytes read
-        ByteCountInputStream sizeLimitInputStream =
-            new ByteCountInputStream(inputStream, DOCUMENT_SIZE_MAX);
+        ByteCountInputStream sizeLimitInputStream = new ByteCountInputStream(inputStream,
+                DOCUMENT_SIZE_MAX);
 
         ObservationReader obsReader = new ObservationReader();
-        try
-        {
+        try {
             Observation observation = obsReader.read(sizeLimitInputStream);
             InlineContentHandler.Content content = new InlineContentHandler.Content();
             content.name = CONTENT_KEY;
             content.value = observation;
             return content;
-        }
-        catch(ObservationParsingException ex)
-        {
+        } catch (ObservationParsingException ex) {
             throw new InlineContentException("Failed to parse observation from document", ex);
-        }
-        catch(ByteLimitExceededException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new ByteLimitExceededException("too large: ", ex.getLimit());
+        } catch (ByteLimitExceededException ex) {
+            log.debug(ex.getMessage(), ex);
+            throw new ByteLimitExceededException("too large: ", ex.getLimit());
         }
     }
 
