@@ -205,14 +205,14 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
                     }
                     catch (Throwable t)
                     {
-                        if (dryrun)
+                        log.error("Failed to determine if artifact " + artifact.getURI() + " exists.", t);
+                        if (!dryrun)
                         {
-                            log.error("Failed to determine if artifact exists, continuing.", t);
-                        }
-                        else
-                        {
-                            log.error("Failed to determine if artifact exists, exiting");
-                            throw new IllegalStateException(t);
+                            log.info("--> Adding artifact to skip table: " + artifact.getURI());
+                            // set the message to be an empty string
+                            HarvestSkipURI skip = new HarvestSkipURI(
+                                    source, STATE_CLASS, artifact.getURI(), "");
+                            harvestSkipURIDAO.put(skip);
                         }
                     }
                 }
