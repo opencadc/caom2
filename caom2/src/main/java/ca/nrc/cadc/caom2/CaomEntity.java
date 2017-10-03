@@ -71,29 +71,29 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HashUtil;
+import ca.nrc.cadc.util.HexUtil;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import ca.nrc.cadc.util.HexUtil;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
