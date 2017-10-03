@@ -73,12 +73,11 @@ package ca.nrc.cadc.caom2.xml;
  *
  * @author pdowler
  */
-public final class XmlConstants
-{
+public final class XmlConstants {
     public static final String CAOM2_0_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0";
-    
+
     public static final String CAOM2_1_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.1";
-    
+
     public static final String CAOM2_2_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2";
 
     public static final String CAOM2_3_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.3";
@@ -87,5 +86,6 @@ public final class XmlConstants
 
     public static final String XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    private XmlConstants() { }
+    private XmlConstants() {
+    }
 }

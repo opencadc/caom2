@@ -76,8 +76,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class Environment implements Serializable
-{
+public class Environment implements Serializable {
     private static final long serialVersionUID = 201205301300L;
     private static final Logger log = Logger.getLogger(Environment.class);
 
@@ -91,8 +90,7 @@ public class Environment implements Serializable
     public Boolean photometric;
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
         sb.append("[s=");

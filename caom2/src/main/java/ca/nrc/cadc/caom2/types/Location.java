@@ -76,41 +76,34 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public class Location implements Shape
-{
+public class Location implements Shape {
     private static final long serialVersionUID = 201202081100L;
-    
+
     private Point coordinates;
 
-    public Location(Point coordinates)
-    {
+    public Location(Point coordinates) {
         CaomValidator.assertNotNull(Location.class, "coordinates", coordinates);
         this.coordinates = coordinates;
     }
 
-    public double getArea()
-    {
+    public double getArea() {
         return 0.0;
     }
 
-    public Point getCenter()
-    {
+    public Point getCenter() {
         return coordinates;
     }
 
-    public double getSize()
-    {
+    public double getSize() {
         return 0.0;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + coordinates + "]";
     }
 
-    public static byte[] encode(Location p)
-    {
+    public static byte[] encode(Location p) {
         byte[] ret = new byte[21];
         byte[] b = HexUtil.toBytes(MAGIC_LOCATION);
         System.arraycopy(b, 0, ret, 0, 4);
@@ -118,17 +111,20 @@ public class Location implements Shape
         System.arraycopy(b, 0, ret, 4, 8);
         b = HexUtil.toBytes(Double.doubleToLongBits(p.coordinates.cval2));
         System.arraycopy(b, 0, ret, 12, 8);
-        ret[ret.length-1] = (byte) 1; // trailing 1 so some broken DBs don't truncate
+        ret[ret.length - 1] = (byte) 1; // trailing 1 so some broken DBs don't truncate
         return ret;
     }
 
-    public static Location decode(byte[] encoded)
-    {
+    public static Location decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
-        if (magic != MAGIC_LOCATION)
-            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_LOCATION");
-        if (encoded.length != 21)
-            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 21");
+        if (magic != MAGIC_LOCATION) {
+            throw new IllegalArgumentException(
+                    "encoded array does not start with Shape.MAGIC_LOCATION");
+        }
+        if (encoded.length != 21) {
+            throw new IllegalStateException("encoded array is wrong length: "
+                    + encoded.length + ", expected 21");
+        }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
         double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 12));

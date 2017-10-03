@@ -73,13 +73,12 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public interface CaomEnum<T>
-{
+public interface CaomEnum<T> {
     /**
-     * @deprecated 
-     * @return 
+     * @return
+     * @deprecated
      */
     int checksum();
-    
+
     T getValue();
 }

@@ -75,8 +75,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class RefCoord implements Serializable
-{
+public class RefCoord implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     public double pix;
@@ -84,16 +83,14 @@ public class RefCoord implements Serializable
     public double val;
 
     public static final String[] CTOR_UTYPES = { "pix", "val" };
-    
-    public RefCoord(double pix, double val)
-    {
+
+    public RefCoord(double pix, double val) {
         this.pix = pix;
         this.val = val;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + pix + "," + val + "]";
     }
 }

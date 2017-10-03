@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordFunction2D implements Serializable
-{
+public class CoordFunction2D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -88,12 +87,11 @@ public class CoordFunction2D implements Serializable
     private Dimension2D dimension;
     private Coord2D refCoord;
 
-    public static final String[] CTOR_UTYPES = 
-        { "dimension", "refCoord", "cd11", "cd12", "cd21", "cd22" };
+    public static final String[] CTOR_UTYPES = { "dimension", "refCoord",
+                                                 "cd11", "cd12", "cd21", "cd22" };
 
-    public CoordFunction2D(Dimension2D dimension, Coord2D refCoord,
-            double cd11, double cd12, double cd21, double cd22)
-    {
+    public CoordFunction2D(Dimension2D dimension, Coord2D refCoord, double cd11,
+            double cd12, double cd21, double cd22) {
         CaomValidator.assertNotNull(getClass(), "dimension", dimension);
         CaomValidator.assertNotNull(getClass(), "refCoord", refCoord);
         this.dimension = dimension;
@@ -104,39 +102,32 @@ public class CoordFunction2D implements Serializable
         this.cd22 = cd22;
     }
 
-    public Dimension2D getDimension()
-    {
+    public Dimension2D getDimension() {
         return dimension;
     }
 
-    public Coord2D getRefCoord()
-    {
+    public Coord2D getRefCoord() {
         return refCoord;
     }
 
-    public double getCd11()
-    {
+    public double getCd11() {
         return cd11;
     }
 
-    public double getCd12()
-    {
+    public double getCd12() {
         return cd12;
     }
 
-    public double getCd21()
-    {
+    public double getCd21() {
         return cd21;
     }
 
-    public double getCd22()
-    {
+    public double getCd22() {
         return cd22;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
         sb.append(dimension.naxis1).append(",");

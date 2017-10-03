@@ -77,95 +77,96 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class PlaneURI implements Comparable<PlaneURI>, Serializable
-{
+public class PlaneURI implements Comparable<PlaneURI>, Serializable {
     private static final long serialVersionUID = 201202091030L;
 
     private URI uri;
 
-    private PlaneURI() { }
+    private PlaneURI() {
+    }
 
-    public PlaneURI(URI uri)
-    {
-        if ( !ObservationURI.SCHEME.equals(uri.getScheme()))
-            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+    public PlaneURI(URI uri) {
+        if (!ObservationURI.SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException(
+                    "invalid scheme: " + uri.getScheme());
+        }
         String ssp = uri.getSchemeSpecificPart();
         CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
         String[] cop = ssp.split("/");
-        if (cop.length == 3)
-        {
+        if (cop.length == 3) {
             String collection = cop[0];
             String observationID = cop[1];
             String productID = cop[2];
-           CaomValidator.assertNotNull(getClass(), "collection", collection);
-            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+            CaomValidator.assertNotNull(getClass(), "collection", collection);
+            CaomValidator.assertValidPathComponent(getClass(), "collection",
+                    collection);
+            CaomValidator.assertNotNull(getClass(), "observationID",
+                    observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID",
+                    observationID);
             CaomValidator.assertNotNull(getClass(), "productID", productID);
-            CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-            this.uri = URI.create(ObservationURI.SCHEME + ":" + collection + "/" + observationID + "/" + productID);
-        }
-        else
+            CaomValidator.assertValidPathComponent(getClass(), "productID",
+                    productID);
+            this.uri = URI.create(ObservationURI.SCHEME + ":" + collection + "/"
+                    + observationID + "/" + productID);
+        } else {
             throw new IllegalArgumentException("input URI has " + cop.length
-                    + " parts ("+ssp+"), expected 3: caom:<collection>/<observationID>/<productID>");
+                    + " parts (" + ssp
+                    + "), expected 3: caom:<collection>/<observationID>/<productID>");
+        }
     }
-    
-    public PlaneURI(ObservationURI parent, String productID)
-    {
+
+    public PlaneURI(ObservationURI parent, String productID) {
         CaomValidator.assertNotNull(getClass(), "parent", parent);
         CaomValidator.assertNotNull(getClass(), "productID", productID);
-        CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
-        this.uri = URI.create(parent.getURI().toASCIIString() + "/" + productID);
-        
+        CaomValidator.assertValidPathComponent(getClass(), "productID",
+                productID);
+        this.uri = URI
+                .create(parent.getURI().toASCIIString() + "/" + productID);
+
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getURI().toASCIIString();
     }
 
-    public URI getURI()
-    {
+    public URI getURI() {
         return uri;
     }
 
-    public ObservationURI getParent()
-    {
+    public ObservationURI getParent() {
         String collection = uri.getSchemeSpecificPart().split("/")[0];
         String observationID = uri.getSchemeSpecificPart().split("/")[1];
         return new ObservationURI(collection, observationID);
     }
 
-    public String getProductID()
-    {
+    public String getProductID() {
         return uri.getSchemeSpecificPart().split("/")[2];
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof PlaneURI)
-        {
+        }
+        if (o instanceof PlaneURI) {
             PlaneURI u = (PlaneURI) o;
-            return ( this.hashCode() == u.hashCode() );
+            return (this.hashCode() == u.hashCode());
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return uri.hashCode();
     }
 
     @Override
-    public int compareTo(PlaneURI u)
-    {
+    public int compareTo(PlaneURI u) {
         return this.uri.compareTo(u.uri);
     }
 }

@@ -75,14 +75,13 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public interface Shape extends Serializable
-{
-    public static final int MAGIC_LOCATION  = 1;
-    public static final int MAGIC_CIRCLE    = 2;
-    public static final int MAGIC_ELLIPSE   = 3;
-    public static final int MAGIC_POLYGON   = 4;
-    public static final int MAGIC_BOX       = 5;
-    
+public interface Shape extends Serializable {
+    public static final int MAGIC_LOCATION = 1;
+    public static final int MAGIC_CIRCLE = 2;
+    public static final int MAGIC_ELLIPSE = 3;
+    public static final int MAGIC_POLYGON = 4;
+    public static final int MAGIC_BOX = 5;
+
     /**
      * Get the central coordinates of this shape.
      *
@@ -98,7 +97,7 @@ public interface Shape extends Serializable
     public double getArea();
 
     /**
-     * Get the size of this shape.  The size is the diameter of the minimum
+     * Get the size of this shape. The size is the diameter of the minimum
      * bounding circle
      *
      * @return area

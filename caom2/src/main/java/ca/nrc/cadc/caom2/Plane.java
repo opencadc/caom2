@@ -84,11 +84,10 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class Plane extends CaomEntity implements Comparable<Plane>
-{
+public class Plane extends CaomEntity implements Comparable<Plane> {
     private static final long serialVersionUID = 201704121420L;
     private static final Logger log = Logger.getLogger(Plane.class);
-    
+
     // immutable state
     private final String productID;
 
@@ -108,53 +107,48 @@ public class Plane extends CaomEntity implements Comparable<Plane>
     public Energy energy;
     public Time time;
     public Polarization polarization;
-    
-    public Plane(String productID)
-    {
-        CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
+
+    public Plane(String productID) {
+        CaomValidator.assertValidPathComponent(getClass(), "productID",
+                productID);
         this.productID = productID;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + productID + "]";
     }
 
-    public String getProductID()
-    {
+    public String getProductID() {
         return productID;
     }
 
-    public Set<Artifact> getArtifacts()
-    {
+    public Set<Artifact> getArtifacts() {
         return artifacts;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof Plane)
-        {
+        }
+        if (o instanceof Plane) {
             Plane p = (Plane) o;
-            return ( this.hashCode() == p.hashCode() );
+            return (this.hashCode() == p.hashCode());
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return productID.hashCode();
     }
 
     @Override
-    public int compareTo(Plane p)
-    {
+    public int compareTo(Plane p) {
         return this.productID.compareTo(p.productID);
     }
 }

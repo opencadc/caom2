@@ -8,13 +8,18 @@ package ca.nrc.cadc.caom2.types;
  * @version $Version$
  * @author pdowler
  */
-public class IllegalPolygonException extends IllegalArgumentException
-{
-   private static final long serialVersionUID = 201112081300L;
+public class IllegalPolygonException extends IllegalArgumentException {
+    private static final long serialVersionUID = 201112081300L;
 
-    public IllegalPolygonException() { super(); }
+    public IllegalPolygonException() {
+        super();
+    }
 
-    public IllegalPolygonException(String msg) { super(msg); }
+    public IllegalPolygonException(String msg) {
+        super(msg);
+    }
 
-    public IllegalPolygonException(String msg, Throwable cause) { super(msg, cause); }
+    public IllegalPolygonException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

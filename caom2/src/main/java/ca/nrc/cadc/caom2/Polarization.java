@@ -76,24 +76,22 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class Polarization implements Serializable
-{
+public class Polarization implements Serializable {
     private static final long serialVersionUID = 201202081400L;
 
     public List<PolarizationState> states;
 
     public Long dimension;
-    
-     @Override
-    public String toString()
-    {
+
+    @Override
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        if (states != null)
-            for (PolarizationState s : states)
-            {
+        if (states != null) {
+            for (PolarizationState s : states) {
                 sb.append(s.stringValue()).append(",");
             }
+        }
         sb.append("d=").append(dimension).append("]");
         return sb.toString();
     }

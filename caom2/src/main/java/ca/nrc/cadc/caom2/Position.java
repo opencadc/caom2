@@ -77,10 +77,9 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Position implements Serializable
-{
+public class Position implements Serializable {
     private static final long serialVersionUID = 201202081400L;
-    
+
     public Shape bounds;
 
     public Dimension2D dimension;
@@ -90,10 +89,9 @@ public class Position implements Serializable
     public Double sampleSize;
 
     public Boolean timeDependent;
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
         sb.append(bounds).append(",d=");

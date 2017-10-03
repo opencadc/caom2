@@ -72,33 +72,34 @@ package ca.nrc.cadc.caom2;
 /**
  * @author pdowler
  */
-public enum TargetType implements CaomEnum<String>
-{
-    OBJECT("object"),
-    FIELD("field");
+public enum TargetType implements CaomEnum<String> {
+    OBJECT("object"), FIELD("field");
 
     private String value;
 
-    private TargetType(String value) { this.value = value; }
+    private TargetType(String value) {
+        this.value = value;
+    }
 
-    public static TargetType toValue(String s)
-    {
-        for (TargetType d : values())
-            if (d.value.equals(s))
+    public static TargetType toValue(String s) {
+        for (TargetType d : values()) {
+            if (d.value.equals(s)) {
                 return d;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
-    
-    public String getValue() { return value; }
 
-    public int checksum()
-    {
+    public String getValue() {
+        return value;
+    }
+
+    public int checksum() {
         return value.hashCode();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

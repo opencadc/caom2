@@ -75,28 +75,27 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Point implements Serializable
-{
+public class Point implements Serializable {
     private static final long serialVersionUID = 201202081100L;
-    
+
     public double cval1;
     public double cval2;
 
     public static final String[] CTOR_UTYPES = { "cval1", "cval2" };
-    
-    public Point() { }
 
-    public Point(double cval1, double cval2)
-    {
+    public Point() {
+    }
+
+    public Point(double cval1, double cval2) {
         this.cval1 = cval1;
         this.cval2 = cval2;
     }
 
-    // NOTE: do not implement equals() method here; PolygonUtil assumes the Object impl
-    
+    // NOTE: do not implement equals() method here; PolygonUtil assumes the
+    // Object impl
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Point[" + cval1 + ", " + cval2 + "]";
     }
 

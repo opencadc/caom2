@@ -77,22 +77,18 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable
-{
+public class CoordPolygon2D implements CoordBounds2D, Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
     private List<ValueCoord2D> vertices;
 
-    public CoordPolygon2D()
-    {
+    public CoordPolygon2D() {
         this.vertices = new ArrayList<ValueCoord2D>();
     }
 
-    public List<ValueCoord2D> getVertices()
-    {
+    public List<ValueCoord2D> getVertices() {
         return vertices;
     }
-
 
 }

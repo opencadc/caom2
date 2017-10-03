@@ -79,8 +79,8 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public abstract class Observation extends CaomEntity implements Comparable<Observation>
-{
+public abstract class Observation extends CaomEntity
+        implements Comparable<Observation> {
     private static final long serialVersionUID = 201604081100L;
 
     // immutable state
@@ -89,7 +89,7 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
 
     // mutable state
     private Algorithm algorithm;
-    
+
     public Integer sequenceNumber;
     public ObservationIntentType intent;
     public String type;
@@ -105,11 +105,13 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
 
-    protected Observation(String collection, String observationID, Algorithm algorithm)
-    {
+    protected Observation(String collection, String observationID,
+            Algorithm algorithm) {
         super();
-        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "collection",
+                collection);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID",
+                observationID);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
         this.collection = collection;
         this.observationID = observationID;
@@ -117,51 +119,45 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     }
 
     @Override
-    public String toString()
-    {
-        return getClass().getSimpleName() + "[" + collection + "/" + observationID + "]";
+    public String toString() {
+        return getClass().getSimpleName() + "[" + collection + "/"
+                + observationID + "]";
     }
 
-    public String getCollection()
-    {
+    public String getCollection() {
         return collection;
     }
 
-    public String getObservationID()
-    {
+    public String getObservationID() {
         return observationID;
     }
 
-    public ObservationURI getURI()
-    {
+    public ObservationURI getURI() {
         return new ObservationURI(collection, observationID);
     }
 
-    public void setAlgorithm(Algorithm algorithm)
-    {
+    public void setAlgorithm(Algorithm algorithm) {
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
         this.algorithm = algorithm;
     }
 
-    public Algorithm getAlgorithm()
-    {
+    public Algorithm getAlgorithm() {
         return algorithm;
     }
 
-    public Set<Plane> getPlanes()
-    {
+    public Set<Plane> getPlanes() {
         return planes;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof Observation)
-        {
+        }
+        if (o instanceof Observation) {
             Observation obs = (Observation) o;
             return (this.compareTo(obs) == 0);
         }
@@ -169,14 +165,12 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return getURI().hashCode();
     }
 
     @Override
-    public int compareTo(Observation o)
-    {
+    public int compareTo(Observation o) {
         return getURI().compareTo(o.getURI());
-    }    
+    }
 }

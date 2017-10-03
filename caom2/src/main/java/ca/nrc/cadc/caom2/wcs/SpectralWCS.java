@@ -77,8 +77,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class SpectralWCS implements Serializable
-{
+public class SpectralWCS implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
@@ -86,7 +85,7 @@ public class SpectralWCS implements Serializable
 
     // non-null but mutable
     private String specsys;
-    
+
     // mutable state
     public String ssysobs;
     public String ssyssrc;
@@ -100,26 +99,22 @@ public class SpectralWCS implements Serializable
     public EnergyTransition transition;
     public Double resolvingPower;
 
-    public SpectralWCS(CoordAxis1D axis, String specsys)
-    {
+    public SpectralWCS(CoordAxis1D axis, String specsys) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         CaomValidator.assertNotNull(getClass(), "specsys", specsys);
         this.axis = axis;
         this.specsys = specsys;
     }
 
-    public CoordAxis1D getAxis()
-    {
+    public CoordAxis1D getAxis() {
         return axis;
     }
 
-    public String getSpecsys()
-    {
+    public String getSpecsys() {
         return specsys;
     }
 
-    public void setSpecsys(String specsys)
-    {
+    public void setSpecsys(String specsys) {
         CaomValidator.assertNotNull(getClass(), "specsys", specsys);
         this.specsys = specsys;
     }

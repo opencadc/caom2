@@ -77,39 +77,36 @@ import java.io.Serializable;
  * 
  * @author pdowler
  */
-public class TargetPosition  implements Serializable
-{
+public class TargetPosition implements Serializable {
     private static final long serialVersionUID = 201311261000L;
 
     // immutable state
     private String coordsys;
     private Point coordinates;
-    
+
     public Double equinox;
 
-    private TargetPosition() { }
-    
-    public TargetPosition(String coordsys, Point coordinates)
-    {
+    private TargetPosition() {
+    }
+
+    public TargetPosition(String coordsys, Point coordinates) {
         CaomValidator.assertNotNull(getClass(), "coordsys", coordsys);
         CaomValidator.assertNotNull(getClass(), "coordinates", coordinates);
         this.coordsys = coordsys;
         this.coordinates = coordinates;
     }
 
-    public String getCoordsys()
-    {
+    public String getCoordsys() {
         return coordsys;
     }
 
-    public Point getCoordinates()
-    {
+    public Point getCoordinates() {
         return coordinates;
     }
-    
+
     @Override
-    public String toString()
-    {
-        return getClass().getSimpleName() + "[" + coordsys + "," + coordinates + "]";
+    public String toString() {
+        return getClass().getSimpleName() + "[" + coordsys + "," + coordinates
+                + "]";
     }
 }

@@ -17,7 +17,7 @@ group = 'org.opencadc'
 version = '2.3'
 
 jar {
-    enabled = false
+    enabled = true
 }
 defaultTasks 'build', 'xslt'
 

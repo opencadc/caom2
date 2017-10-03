@@ -73,32 +73,34 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public enum Status implements CaomEnum<String>
-{
+public enum Status implements CaomEnum<String> {
     FAIL("fail");
 
     private final String value;
 
-    private Status(String value) { this.value = value; }
+    private Status(String value) {
+        this.value = value;
+    }
 
-    public static Status toValue(String s)
-    {
-        for (Status d : values())
-            if (d.value.equals(s))
+    public static Status toValue(String s) {
+        for (Status d : values()) {
+            if (d.value.equals(s)) {
                 return d;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public int checksum()
-    {
+    public int checksum() {
         return value.hashCode();
     }
 
-    public String getValue() { return value; }
+    public String getValue() {
+        return value;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

@@ -75,8 +75,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordError implements Serializable
-{
+public class CoordError implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     public Double syser;
@@ -84,8 +83,7 @@ public class CoordError implements Serializable
 
     public static final String[] CTOR_UTYPES = { "syser", "rnder" };
 
-    public CoordError(Double syser, Double rnder)
-    {
+    public CoordError(Double syser, Double rnder) {
         this.syser = syser;
         this.rnder = rnder;
     }

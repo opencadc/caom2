@@ -76,18 +76,16 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public class Box implements Shape
-{
+public class Box implements Shape {
     private static final long serialVersionUID = 201202081100L;
-    
+
     private Point center;
     private double width;
     private double height;
 
     public static final String[] CTOR_UTYPES = { "center", "width", "height" };
-    
-    private Box(Point center, double width, double height)
-    {
+
+    private Box(Point center, double width, double height) {
         CaomValidator.assertNotNull(Circle.class, "center", center);
         CaomValidator.assertPositive(Circle.class, "width", width);
         CaomValidator.assertPositive(Circle.class, "height", height);
@@ -96,52 +94,49 @@ public class Box implements Shape
         this.height = height;
     }
 
-    public double getHeight()
-    {
+    public double getHeight() {
         return height;
     }
 
-    public double getWidth()
-    {
+    public double getWidth() {
         return width;
     }
 
-    public double getArea()
-    {
+    public double getArea() {
         // TODO: this is cartesian approximation, use spherical geom?
         return width * height;
     }
 
-    public Point getCenter()
-    {
+    public Point getCenter() {
         return center;
     }
 
-    public double getSize()
-    {
-        return Math.sqrt(width*width + height*height);
+    public double getSize() {
+        return Math.sqrt(width * width + height * height);
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + center + "," + width + "," + height + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + center + "," + width
+                + "," + height + "]";
     }
-
 
     /**
      * Decode a previously encoded polygon. This method is supplied to aid in
      * recreating a polygon from a previously encoded byte array.
      *
-     * @param encoded byte[] of length 4 + 20 * number of vertices
+     * @param encoded
+     *            byte[] of length 4 + 20 * number of vertices
      * @return the polygon
-     * @throws IllegalArgumentException if the byte array does not start with Shape.MAGIC_POLYGON
+     * @throws IllegalArgumentException
+     *             if the byte array does not start with Shape.MAGIC_POLYGON
      */
-    public static Box decode(byte[] encoded)
-    {
+    public static Box decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
-        if (magic != Shape.MAGIC_BOX)
-            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_BOX");
+        if (magic != Shape.MAGIC_BOX) {
+            throw new IllegalArgumentException(
+                    "encoded array does not start with Shape.MAGIC_BOX");
+        }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
         double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 12));
@@ -156,10 +151,10 @@ public class Box implements Shape
      *
      * @param box
      * @return byte[] of length 37
-     * @throws IllegalArgumentException if the vertex array is null or empty
+     * @throws IllegalArgumentException
+     *             if the vertex array is null or empty
      */
-    public static byte[] encode(Box box)
-    {
+    public static byte[] encode(Box box) {
         // need 4 bytes for the magic number
         // need 8 bytes per coord: 16 bytes
         // need 8 bytes per dimension: 16 bytes

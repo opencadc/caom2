@@ -10,7 +10,7 @@ jdk:
 before_script: openssl s_client -CApath /etc/ssl/certs/ -connect plugins.gradle.org:443 </dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/gradle.crt; sudo keytool -importcert -noprompt -file /tmp/gradle.crt -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -alias root -storepass changeit
 
 script: 
-  - cd caom2; gradle --info build javadoc install || exit -1; cd ..
+  - cd caom2; gradle --info build javadoc install checkstyleMain || exit -1; cd ..
   - cd caom2-compute; gradle --info assemble javadoc install || exit -1; cd ..
   - cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
   - cd caom2-viz; gradle --info build || exit -1; cd ..

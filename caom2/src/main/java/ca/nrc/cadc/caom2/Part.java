@@ -70,21 +70,19 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
  * A Part (of an Artifact) is one qualitatively specified subsection of a whole.
- * For example, if the Artifact is a tar file, the the Parts would be the individual
- * files within the tar file. If the Artifact is a multi-extension FITS file, the
- * Parts would be the individual extensions.
+ * For example, if the Artifact is a tar file, the the Parts would be the
+ * individual files within the tar file. If the Artifact is a multi-extension
+ * FITS file, the Parts would be the individual extensions.
  * 
  * @author pdowler
  */
-public class Part extends CaomEntity implements Comparable<Part>
-{
+public class Part extends CaomEntity implements Comparable<Part> {
     private static final long serialVersionUID = 201110261400L;
     private static final Logger log = Logger.getLogger(Part.class);
 
@@ -93,55 +91,50 @@ public class Part extends CaomEntity implements Comparable<Part>
 
     // mutable state
     public ProductType productType;
-    
-    // mutable contents
-    private final Set<Chunk> chunks = new TreeSet<Chunk>();;
 
-    public Part(String name)
-    {
+    // mutable contents
+    private final Set<Chunk> chunks = new TreeSet<Chunk>();
+
+    public Part(String name) {
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name;
     }
 
-    public Part(Integer name)
-    {
+    public Part(Integer name) {
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name.toString();
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public Set<Chunk> getChunks()
-    {
+    public Set<Chunk> getChunks() {
         return chunks;
     }
 
     @Override
-    public String toString()
-    {
-        return "Part["+name+"]";
+    public String toString() {
+        return "Part[" + name + "]";
     }
 
     /**
-     * The equals method for this class is consistent with compareTo but
-     * <b>is not consistent</b> with the hashCode method. Do not put Part(s)
-     * into a hash-based data structure.
+     * The equals method for this class is consistent with compareTo but <b>is
+     * not consistent</b> with the hashCode method. Do not put Part(s) into a
+     * hash-based data structure.
      * 
      * @param o
      * @return
      */
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof Part)
-        {
+        }
+        if (o instanceof Part) {
             Part p = (Part) o;
             return (this.compareTo(p) == 0);
         }
@@ -149,8 +142,7 @@ public class Part extends CaomEntity implements Comparable<Part>
     }
 
     @Override
-    public int compareTo(Part p2)
-    {
+    public int compareTo(Part p2) {
         Part p1 = this;
         return p1.name.compareTo(p2.name);
     }

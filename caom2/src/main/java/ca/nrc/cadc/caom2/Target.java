@@ -78,8 +78,7 @@ import java.util.TreeSet;
  *
  * @author pdowler
  */
-public class Target implements Serializable
-{
+public class Target implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
@@ -94,25 +93,21 @@ public class Target implements Serializable
     // mutable content
     private final Set<String> keywords = new TreeSet<String>();
 
-    public Target(String name)
-    {
+    public Target(String name) {
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + type + "," + name + "]";
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public Set<String> getKeywords()
-    {
+    public Set<String> getKeywords() {
         return keywords;
     }
 }

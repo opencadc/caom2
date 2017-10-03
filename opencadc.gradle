@@ -1,0 +1,16 @@
+configurations {
+    checkstyleDep
+}
+
+dependencies {
+    compile 'com.puppycrawl.tools:checkstyle:8.2'
+
+    checkstyleDep 'org.opencadc:cadc-quality:1.+'
+}
+
+checkstyle {
+    ignoreFailures = false
+    config = resources.text.fromArchiveEntry(configurations.checkstyleDep, 'cadc_checkstyle.xml')
+    toolVersion = '8.2'
+    sourceSets = []
+}

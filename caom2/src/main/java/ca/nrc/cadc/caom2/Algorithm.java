@@ -75,27 +75,25 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Algorithm implements Serializable
-{
+public class Algorithm implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     private String name;
 
-    public Algorithm(String name)
-    {
-        if (name == null)
-            throw new IllegalArgumentException(getClass().getSimpleName() + ": null name");
+    public Algorithm(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException(
+                    getClass().getSimpleName() + ": null name");
+        }
         this.name = name;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + name + "]";
     }
 }

@@ -80,8 +80,7 @@ import java.util.TreeSet;
  *
  * @author pdowler
  */
-public class Provenance implements Serializable
-{
+public class Provenance implements Serializable {
     private static final long serialVersionUID = 201202081100L;
 
     // immutable state
@@ -99,34 +98,29 @@ public class Provenance implements Serializable
     private final Set<String> keywords = new TreeSet<String>();
     private final Set<PlaneURI> inputs = new TreeSet<PlaneURI>();
 
-    private Provenance() { }
+    private Provenance() {
+    }
 
-    public Provenance(String name)
-    {
+    public Provenance(String name) {
         CaomValidator.assertNotNull(getClass(), "name", name);
         this.name = name;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + name + "]";
     }
-    
-    public String getName()
-    {
+
+    public String getName() {
         return name;
     }
 
-    public Set<PlaneURI> getInputs()
-    {
+    public Set<PlaneURI> getInputs() {
         return inputs;
     }
 
-    public Set<String> getKeywords()
-    {
+    public Set<String> getKeywords() {
         return keywords;
     }
-
 
 }
