@@ -239,19 +239,11 @@ public class ObservationHarvester extends Harvester
                 //List<ObservationState> stateList = null;
                 if (srcObservationDAO != null)
                 {
-                    //List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, batchSize + 1);
-                    // wrap in ObservationResponse to mimic service response
-                    //obsList = new ArrayList<ObservationResponse>();
-                    //for (Observation o : tmp)
-                    //    obsList.add(new ObservationResponse(o));
-                    
                     obsList = srcObservationDAO.getList(src.getCollection(), startDate, end, batchSize + 1);
-                    //stateList = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
                 }
-                else if (srcObservationService != null)
+                else //if (srcObservationService != null)
                 {
                     obsList = srcObservationService.getList(src.getCollection(), startDate, end, batchSize + 1);
-                    //stateList = srcObservationService.getObservationList(src.getCollection(), startDate, end, batchSize + 1);
                 }
                 entityList = wrap(obsList);
                 //entityListState = wrapState(stateList);
@@ -267,30 +259,21 @@ public class ObservationHarvester extends Harvester
                 {
                     if (!skipped)
                     {
-                        Integer tmpBatchSize = entityList.size() + 1;
+                        Integer tmpBatchSize = (int) (1.5*batchSize);
                         log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
 
                         List<ObservationResponse> obsList = null;
                         //List<ObservationState> stateList = null;
-                        if (!this.service)
+                        if (srcObservationDAO != null)
                         {
-                            List<Observation> tmp = srcObservationDAO.getList(Observation.class, startDate, end, tmpBatchSize);
-                            obsList = new ArrayList<ObservationResponse>();
-
-                            for (Observation o : tmp)
-                            {
-                                obsList.add(new ObservationResponse(o));
-                            }
-                            //stateList = srcObservationDAO.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
+                            obsList = srcObservationDAO.getList(src.getCollection(), startDate, end, tmpBatchSize);
                         }
-                        else
+                        else //if (srcObservationService != null)
                         {
                             obsList = srcObservationService.getList(src.getCollection(), startDate, end, tmpBatchSize);
-                            //stateList = srcObservationService.getObservationList(src.getCollection(), startDate, end, tmpBatchSize);
                         }
 
                         entityList = wrap(obsList);
-                        //entityListState = wrapState(stateList);
                         detectLoop(entityList);
                     }
                     else
@@ -725,8 +708,20 @@ public class ObservationHarvester extends Harvester
                 throw new RuntimeException("detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName() + " at " + format(start.skip.lastModified));
             return;
         }
-        if (start.entity.observation != null && end.entity.observation != null
-                && start.entity.observation.getMaxLastModified().equals(end.entity.observation.getMaxLastModified()))
+        Date d1 = null;
+        Date d2 = null;
+        if (start.entity.observation != null)
+            d1 = start.entity.observation.getMaxLastModified();
+        else if (start.entity.observationState != null)
+            d1 = start.entity.observationState.maxLastModified;
+        if (end.entity.observation != null)
+            d2 = end.entity.observation.getMaxLastModified();
+        else if (end.entity.observationState != null)
+            d2 = end.entity.observationState.maxLastModified;
+        if (d1 == null || d2 == null)
+            throw new RuntimeException("detectLoop: FAIL -- cannotr comapre timestamps " + d1 + " vs " + d2);
+            
+        if (d1.equals(d2))
         {
             throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + format(start.entity.observation.getMaxLastModified()));
         }
