@@ -139,12 +139,12 @@ public class CutoutUtilTest
         {
             try 
             { 
-                CutoutUtil.computeCutout(null, new Circle(new Point(12, 34), 1), null, null, null); 
+                CutoutUtil.computeCutout(null, new Circle(new Point(12, 34), 1), null, null, null);
                 Assert.fail("expected IllegalArgumentException for null artifact");
             }
             catch(IllegalArgumentException expected) { }
             
-            // this is not testable without part and chunk metadata because the Shape->impl support is in a wcs-specific
+            // this is not testable without part and chunk metadata because the Shape->convex support is in a wcs-specific
             // piece of code
             //try 
             //{ 

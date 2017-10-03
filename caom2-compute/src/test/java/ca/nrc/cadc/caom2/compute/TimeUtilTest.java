@@ -592,7 +592,7 @@ public class TimeUtilTest
         return plane;
     }
 
-    private TemporalWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
+    TemporalWCS getTestRange(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
@@ -608,7 +608,7 @@ public class TimeUtilTest
 
         return wcs;
     }
-    private TemporalWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
+    TemporalWCS getTestBounds(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
@@ -629,7 +629,8 @@ public class TimeUtilTest
 
         return wcs;
     }
-    private TemporalWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
+
+    TemporalWCS getTestFunction(boolean complete, double px, double sx, double nx, double ds)
     {
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);

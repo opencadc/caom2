@@ -67,17 +67,7 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-
-import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.util.Log4jInit;
-import java.util.ArrayList;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
