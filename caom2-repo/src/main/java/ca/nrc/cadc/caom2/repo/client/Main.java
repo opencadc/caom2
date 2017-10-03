@@ -67,75 +67,61 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
-
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
-public class Main 
-{
+public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
 
-    public Main() { }
-    
-    public static void main(String[] args)
-    {
-        try
-        {
+    public Main() {
+    }
+
+    public static void main(String[] args) {
+        try {
             ArgumentMap am = new ArgumentMap(args);
 
-            if (am.isSet("d") || am.isSet("debug"))
-            {
+            if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
-            }
-            else if (am.isSet("v") || am.isSet("verbose"))
-            {
+            } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
-            }
-            else
-            {
+            } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
 
             }
 
-            if (am.isSet("h") || am.isSet("help"))
-            {
+            if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
             }
 
             // TODO: implement useful command-line fatures here: 
-            
+
             // setup
             // am.getValue("resourceID")
             // am.getValue("collection")
-            
+
             // get list
             // am.isSet("list")
             // am.getValue("maxrec")
-            
+
             // get a single observation
             // am.getValue("observationID")
-        }
-        catch(Throwable uncaught)
-        {
+        } catch (Throwable uncaught) {
             log.error("uncaught exception", uncaught);
             System.exit(-1);
         }
     }
-    
-    private static void usage()
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2-repo [-v|--verbose|-d|--debug] [-h|--help] ...");
+
+    private static void usage() {
         // TODO: add something useful
-        log.warn(sb.toString());
+        log.warn("\n\nusage: caom2-repo [-v|--verbose|-d|--debug] [-h|--help] ...");
     }
 }
