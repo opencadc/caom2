@@ -156,7 +156,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object>
                 successRate = (double) successes / results.size();
             }
             long totalSeconds = totalElapsedTime / 1000;
-            long bytesPerSecond = totalBytes / totalSeconds;
+            long bytesPerSecond = 0;
+            if (totalSeconds > 0)
+            {
+                bytesPerSecond = totalBytes / totalSeconds;
+            }
             double mbps = (double) bytesPerSecond / 125000;
 
             log.info("[batch-summary] Completed " + results.size() + " artifact download attempts");
