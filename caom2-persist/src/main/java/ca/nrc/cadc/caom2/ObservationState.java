@@ -70,35 +70,32 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
+
 import java.net.URI;
 import java.util.Date;
 
 /**
  * Primary descriptive state of an observation.
- * 
+ *
  * @author pdowler
  */
-public class ObservationState 
-{
+public class ObservationState {
     private final ObservationURI uri;
-    
+
     public Date maxLastModified;
     public URI accMetaChecksum;
 
-    public ObservationState(ObservationURI uri)
-    {
+    public ObservationState(ObservationURI uri) {
         CaomValidator.assertNotNull(ObservationState.class, "uri", uri);
         this.uri = uri;
     }
-    
-    public ObservationURI getURI()
-    {
+
+    public ObservationURI getURI() {
         return uri;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "ObservationState[" + uri.getURI().toASCIIString() + "," + maxLastModified + "," + accMetaChecksum + "]";
     }
 }
