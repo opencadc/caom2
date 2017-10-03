@@ -140,6 +140,8 @@ public class CaomHarvester implements Runnable
                 }
             }
         }
+        log.info("     source: " + src.getIdentifier());
+        log.info("destination: " + dest.getIdentifier());
     }
 
     /**
