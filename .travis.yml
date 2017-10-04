@@ -18,7 +18,7 @@ script:
   # checkstyle and html tasks
   - if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
       cd caom2-dm; gradle --info build initHTML xslt || exit -1; cd ..;
-      for i in caom2 caom2-compute caom2-vis; do
+      for i in caom2 caom2-compute caom2-viz; do
          cd $i;
          gradle checkstyleMain || exit -1;
          cd ..;
