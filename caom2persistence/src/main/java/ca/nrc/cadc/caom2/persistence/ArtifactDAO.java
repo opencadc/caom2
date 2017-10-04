@@ -69,18 +69,19 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
@@ -98,7 +99,7 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact>
      * in order (getList) only.
      */
     public ArtifactDAO() { }
-    
+
     // package access for use by ObservationDAO only
     ArtifactDAO(SQLGenerator gen, boolean forceUpdate, boolean readOnly)
     {

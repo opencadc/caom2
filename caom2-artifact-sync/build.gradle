@@ -3,7 +3,6 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
-    id 'application'
     id 'checkstyle'
 }
 
@@ -16,9 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.0'
-
-mainClassName = 'ca.nrc.cadc.caom2.artifactsync.Main'
+version = '2.3.1'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -28,7 +25,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.0,)'
     compile 'org.opencadc:cadc-registry:[1.2.2,)'
     compile 'org.opencadc:caom2:[2.3.0,)'
-    compile 'org.opencadc:caom2persistence:[2.3.3,)'
+    compile 'org.opencadc:caom2persistence:[2.3.4,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'

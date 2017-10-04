@@ -75,7 +75,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
 
-
 /**
  * An interface to a CAOM2 artifact storage system.
  *
@@ -115,6 +114,8 @@ public interface ArtifactStore {
      *            The artifact identifier.
      * @param checksum
      *            The checksum of the artifact (can be null).
+     * @param contentLength
+     *            The size of the artifact in bytes (can be null).
      * @param data
      *            The artifact data.
      *
@@ -133,7 +134,7 @@ public interface ArtifactStore {
      * @throws RuntimeException
      *             If an unrecovarable error occurs.
      */
-    public void store(URI artifactURI, URI checksum, InputStream data)
+    public void store(URI artifactURI, URI checksum, Long contentLength, InputStream data)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
 }
