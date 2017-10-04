@@ -14,7 +14,7 @@ script:
       gradle --info assemble javadoc install || break -1;
       if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
         gradle checkstyleMain || break -1;
-      fi
+      fi;
       cd ..;
     done
 
