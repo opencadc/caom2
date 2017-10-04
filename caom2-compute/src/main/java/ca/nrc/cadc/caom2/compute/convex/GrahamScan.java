@@ -45,8 +45,8 @@ public class GrahamScan implements Serializable {
             points[i] = pts[i];
         }
 
-        // preprocess so that points[0] has lowest y-coordinate; break ties by
-        // x-coordinate
+        // preprocess so that points[0] has lowest coordY-coordinate; break ties by
+        // coordX-coordinate
         // points[0] is an extreme point of the convex hull
         // (alternatively, could do easily in linear time)
         Arrays.sort(points);

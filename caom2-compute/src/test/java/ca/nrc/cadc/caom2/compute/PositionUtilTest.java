@@ -759,7 +759,7 @@ public class PositionUtilTest {
                 na.getParts().add(np);
                 Chunk nc = new Chunk();
                 np.getChunks().add(nc);
-                // just shift to higher values of x for each subsequent chunk
+                // just shift to higher values of coordX for each subsequent chunk
                 nc.position = getTestRange(px + n * dp, py, sx + n * ds, sy, dp, ds);
                 n++;
             }
@@ -837,7 +837,7 @@ public class PositionUtilTest {
         }
         wcs.equinox = null;
 
-        Dimension2D dim = new Dimension2D(1000, 1000); // 1000 x 1.0e-3 = 1 deg
+        Dimension2D dim = new Dimension2D(1000, 1000); // 1000 coordX 1.0e-3 = 1 deg
         Coord2D ref = new Coord2D(new RefCoord(px, sx), new RefCoord(py, sy));
         axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
         log.debug("test function: " + axis.function);

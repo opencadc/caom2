@@ -90,23 +90,21 @@ import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import jsky.coords.wcscon;
-import org.apache.log4j.Logger;
-
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import jsky.coords.wcscon;
+import org.apache.log4j.Logger;
 
 /**
  * @author pdowler
  */
 public final class PositionUtil {
-    private static final Logger log = Logger.getLogger(PositionUtil.class);
-
     public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
+    private static final Logger log = Logger.getLogger(PositionUtil.class);
 
     private PositionUtil() {
     }
@@ -543,41 +541,6 @@ public final class PositionUtil {
         return v;
     }
 
-    public static class CoordSys implements Serializable {
-        private static final long serialVersionUID = 201207300900L;
-
-        public static String ICRS = "ICRS";
-        public static String GAL = "GAL";
-        public static String FK4 = "FK4";
-        public static String FK5 = "FK5";
-
-        public static String ECL = "ECL";
-        public static String HECL = "HELIOECLIPTIC";
-        public static String GAPPT = "GAPPT";
-
-        String name;
-        Boolean timeDependent;
-        boolean supported;
-        boolean swappedAxes = false;
-
-        public String getName() {
-            return name;
-        }
-
-        public Boolean getTimeDependent() {
-            return timeDependent;
-        }
-
-        public boolean isSupported() {
-            return supported;
-        }
-
-        public boolean isSwappedAxes() {
-            return swappedAxes;
-        }
-
-    }
-
     public static CoordSys inferCoordSys(SpatialWCS wcs) {
         CoordSys ret = new CoordSys();
         ret.name = wcs.coordsys;
@@ -695,5 +658,40 @@ public final class PositionUtil {
                 v.cval2 = tmp;
             }
         }
+    }
+
+    public static class CoordSys implements Serializable {
+        private static final long serialVersionUID = 201207300900L;
+
+        public static String ICRS = "ICRS";
+        public static String GAL = "GAL";
+        public static String FK4 = "FK4";
+        public static String FK5 = "FK5";
+
+        public static String ECL = "ECL";
+        public static String HECL = "HELIOECLIPTIC";
+        public static String GAPPT = "GAPPT";
+
+        String name;
+        Boolean timeDependent;
+        boolean supported;
+        boolean swappedAxes = false;
+
+        public String getName() {
+            return name;
+        }
+
+        public Boolean getTimeDependent() {
+            return timeDependent;
+        }
+
+        public boolean isSupported() {
+            return supported;
+        }
+
+        public boolean isSwappedAxes() {
+            return swappedAxes;
+        }
+
     }
 }

@@ -26,32 +26,28 @@ import java.util.Comparator;
  * @author Kevin Wayne
  */
 public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable {
-    private static final long serialVersionUID = 201603031530L;
-
     /**
-     * Compares two points by x-coordinate.
+     * Compares two points by coordX-coordinate.
      */
     public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> X_ORDER = new XOrder();
-
     /**
-     * Compares two points by y-coordinate.
+     * Compares two points by coordY-coordinate.
      */
     public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> Y_ORDER = new YOrder();
-
     /**
      * Compares two points by polar radius.
      */
     public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> R_ORDER = new ROrder();
-
-    private final double x;    // x coordinate
-    private final double y;    // y coordinate
+    private static final long serialVersionUID = 201603031530L;
+    private final double coordX;    // coordX coordinate
+    private final double coordY;    // coordY coordinate
 
     /**
-     * Initializes a new point (x, y).
+     * Initializes a new point (coordX, coordY).
      *
-     * @param x the x-coordinate
-     * @param y the y-coordinate
-     * @throws IllegalArgumentException if either <tt>x</tt> or <tt>y</tt>
+     * @param x the coordX-coordinate
+     * @param y the coordY-coordinate
+     * @throws IllegalArgumentException if either <tt>coordX</tt> or <tt>coordY</tt>
      *                                  is <tt>Double.NaN</tt>, <tt>Double.POSITIVE_INFINITY</tt> or
      *                                  <tt>Double.NEGATIVE_INFINITY</tt>
      */
@@ -63,63 +59,16 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
             throw new IllegalArgumentException("Coordinates cannot be NaN");
         }
         if (x == 0.0) {
-            this.x = 0.0;  // convert -0.0 to +0.0
+            this.coordX = 0.0;  // convert -0.0 to +0.0
         } else {
-            this.x = x;
+            this.coordX = x;
         }
 
         if (y == 0.0) {
-            this.y = 0.0;  // convert -0.0 to +0.0
+            this.coordY = 0.0;  // convert -0.0 to +0.0
         } else {
-            this.y = y;
+            this.coordY = y;
         }
-    }
-
-    /**
-     * Returns the x-coordinate.
-     *
-     * @return the x-coordinate
-     */
-    public double x() {
-        return x;
-    }
-
-    /**
-     * Returns the y-coordinate.
-     *
-     * @return the y-coordinate
-     */
-    public double y() {
-        return y;
-    }
-
-    /**
-     * Returns the polar radius of this point.
-     *
-     * @return the polar radius of this point in polar coordiantes: sqrt(x*x + y*y)
-     */
-    public double r() {
-        return Math.sqrt(x * x + y * y);
-    }
-
-    /**
-     * Returns the angle of this point in polar coordinates.
-     *
-     * @return the angle (in radians) of this point in polar coordiantes (between -pi/2 and pi/2)
-     */
-    public double theta() {
-        return Math.atan2(y, x);
-    }
-
-    /**
-     * Returns the angle between this point and that point.
-     *
-     * @return the angle in radians (between -pi and pi) between this point and that point (0 if equal)
-     */
-    private double angleTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
-        double dx = that.x - this.x;
-        double dy = that.y - this.y;
-        return Math.atan2(dy, dx);
     }
 
     /**
@@ -133,7 +82,7 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
     public static int ccw(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D a,
                           ca.nrc.cadc.caom2.compute.convex.SortablePoint2D b,
                           ca.nrc.cadc.caom2.compute.convex.SortablePoint2D c) {
-        double area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        double area2 = (b.coordX - a.coordX) * (c.coordY - a.coordY) - (b.coordY - a.coordY) * (c.coordX - a.coordX);
         if (area2 < 0) {
             return -1;
         } else if (area2 > 0) {
@@ -154,7 +103,54 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
     public static double area2(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D a,
                                ca.nrc.cadc.caom2.compute.convex.SortablePoint2D b,
                                ca.nrc.cadc.caom2.compute.convex.SortablePoint2D c) {
-        return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        return (b.coordX - a.coordX) * (c.coordY - a.coordY) - (b.coordY - a.coordY) * (c.coordX - a.coordX);
+    }
+
+    /**
+     * Returns the x-coordinate.
+     *
+     * @return the x-coordinate
+     */
+    public double coordX() {
+        return coordX;
+    }
+
+    /**
+     * Returns the coordY-coordinate.
+     *
+     * @return the coordY-coordinate
+     */
+    public double coordY() {
+        return coordY;
+    }
+
+    /**
+     * Returns the polar radius of this point.
+     *
+     * @return the polar radius of this point in polar coordiantes: sqrt(coordX*coordX + coordY*coordY)
+     */
+    public double radius() {
+        return Math.sqrt(coordX * coordX + coordY * coordY);
+    }
+
+    /**
+     * Returns the angle of this point in polar coordinates.
+     *
+     * @return the angle (in radians) of this point in polar coordiantes (between -pi/2 and pi/2)
+     */
+    public double theta() {
+        return Math.atan2(coordY, coordX);
+    }
+
+    /**
+     * Returns the angle between this point and that point.
+     *
+     * @return the angle in radians (between -pi and pi) between this point and that point (0 if equal)
+     */
+    private double angleTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
+        double dx = that.coordX - this.coordX;
+        double dy = that.coordY - this.coordY;
+        return Math.atan2(dy, dx);
     }
 
     /**
@@ -164,8 +160,8 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      * @return the Euclidean distance between this point and that point
      */
     public double distanceTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
-        double dx = this.x - that.x;
-        double dy = this.y - that.y;
+        double dx = this.coordX - that.coordX;
+        double dy = this.coordY - that.coordY;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
@@ -176,34 +172,34 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      * @return the square of the Euclidean distance between this point and that point
      */
     public double distanceSquaredTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
-        double dx = this.x - that.x;
-        double dy = this.y - that.y;
+        double dx = this.coordX - that.coordX;
+        double dy = this.coordY - that.coordY;
         return dx * dx + dy * dy;
     }
 
     /**
-     * Compares two points by y-coordinate, breaking ties by x-coordinate.
+     * Compares two points by coordY-coordinate, breaking ties by coordX-coordinate.
      * Formally, the invoking point (x0, y0) is less than the argument point (x1, y1)
      * if and only if either y0 &lt; y1 or if y0 = y1 and x0 &lt; x1.
      *
      * @param that the other point
      * @return the value <tt>0</tt> if this string is equal to the argument
-     * string (precisely when <tt>equals()</tt> returns <tt>true</tt>);
-     * a negative integer if this point is less than the argument
-     * point; and a positive integer if this point is greater than the
-     * argument point
+     *     string (precisely when <tt>equals()</tt> returns <tt>true</tt>);
+     *     a negative integer if this point is less than the argument
+     *     point; and a positive integer if this point is greater than the
+     *     argument point
      */
     public int compareTo(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that) {
-        if (this.y < that.y) {
+        if (this.coordY < that.coordY) {
             return -1;
         }
-        if (this.y > that.y) {
+        if (this.coordY > that.coordY) {
             return +1;
         }
-        if (this.x < that.x) {
+        if (this.coordX < that.coordX) {
             return -1;
         }
-        if (this.x > that.x) {
+        if (this.coordX > that.coordX) {
             return +1;
         }
         return 0;
@@ -236,30 +232,74 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
         return new DistanceToOrder();
     }
 
-    // compare points according to their x-coordinate
+    /**
+     * Compares this point to the specified point.
+     *
+     * @param other the other point
+     * @return <tt>true</tt> if this point equals <tt>other</tt>;
+     *     <tt>false</tt> otherwise
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        if (other == null) {
+            return false;
+        }
+        if (other.getClass() != this.getClass()) {
+            return false;
+        }
+        ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that = (ca.nrc.cadc.caom2.compute.convex.SortablePoint2D) other;
+        return this.coordX == that.coordX && this.coordY == that.coordY;
+    }
+
+    /**
+     * Return a string representation of this point.
+     *
+     * @return a string representation of this point in the format (coordX, coordY)
+     */
+    @Override
+    public String toString() {
+        return "(" + coordX + ", " + coordY + ")";
+    }
+
+    /**
+     * Returns an integer hash code for this point.
+     *
+     * @return an integer hash code for this point
+     */
+    @Override
+    public int hashCode() {
+        int hashX = ((Double) coordX).hashCode();
+        int hashY = ((Double) coordY).hashCode();
+        return 31 * hashX + hashY;
+    }
+
+    // compare points according to their coordX-coordinate
     private static class XOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable {
         private static final long serialVersionUID = 201603031530L;
 
         public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
-            if (p.x < q.x) {
+            if (p.coordX < q.coordX) {
                 return -1;
             }
-            if (p.x > q.x) {
+            if (p.coordX > q.coordX) {
                 return +1;
             }
             return 0;
         }
     }
 
-    // compare points according to their y-coordinate
+    // compare points according to their coordY-coordinate
     private static class YOrder implements Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D>, Serializable {
         private static final long serialVersionUID = 201603031530L;
 
         public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
-            if (p.y < q.y) {
+            if (p.coordY < q.coordY) {
                 return -1;
             }
-            if (p.y > q.y) {
+            if (p.coordY > q.coordY) {
                 return +1;
             }
             return 0;
@@ -271,7 +311,7 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
         private static final long serialVersionUID = 201603031530L;
 
         public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D p, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q) {
-            double delta = (p.x * p.x + p.y * p.y) - (q.x * q.x + q.y * q.y);
+            double delta = (p.coordX * p.coordX + p.coordY * p.coordY) - (q.coordX * q.coordX + q.coordY * q.coordY);
             if (delta < 0) {
                 return -1;
             }
@@ -304,10 +344,10 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
         private static final long serialVersionUID = 201603031530L;
 
         public int compare(ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q1, ca.nrc.cadc.caom2.compute.convex.SortablePoint2D q2) {
-            double dx1 = q1.x - x;
-            double dy1 = q1.y - y;
-            double dx2 = q2.x - x;
-            double dy2 = q2.y - y;
+            double dx1 = q1.coordX - coordX;
+            double dy1 = q1.coordY - coordY;
+            double dx2 = q2.coordX - coordX;
+            double dy2 = q2.coordY - coordY;
 
             if (dy1 >= 0 && dy2 < 0) {
                 return -1;    // q1 above; q2 below
@@ -344,50 +384,5 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
                 return 0;
             }
         }
-    }
-
-
-    /**
-     * Compares this point to the specified point.
-     *
-     * @param other the other point
-     * @return <tt>true</tt> if this point equals <tt>other</tt>;
-     * <tt>false</tt> otherwise
-     */
-    @Override
-    public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
-        if (other == null) {
-            return false;
-        }
-        if (other.getClass() != this.getClass()) {
-            return false;
-        }
-        ca.nrc.cadc.caom2.compute.convex.SortablePoint2D that = (ca.nrc.cadc.caom2.compute.convex.SortablePoint2D) other;
-        return this.x == that.x && this.y == that.y;
-    }
-
-    /**
-     * Return a string representation of this point.
-     *
-     * @return a string representation of this point in the format (x, y)
-     */
-    @Override
-    public String toString() {
-        return "(" + x + ", " + y + ")";
-    }
-
-    /**
-     * Returns an integer hash code for this point.
-     *
-     * @return an integer hash code for this point
-     */
-    @Override
-    public int hashCode() {
-        int hashX = ((Double) x).hashCode();
-        int hashY = ((Double) y).hashCode();
-        return 31 * hashX + hashY;
     }
 }

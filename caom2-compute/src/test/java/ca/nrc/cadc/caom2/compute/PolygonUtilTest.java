@@ -438,7 +438,7 @@ public class PolygonUtilTest {
                 new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
                 1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
 
-            Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 r~50 pix
+            Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 radius~50 pix
 
             long[] cutout = CutoutUtil.getPositionBounds(wcs, c);
             Assert.assertNotNull("cutout", cutout);

@@ -80,11 +80,10 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * Internal utility methods.
@@ -170,6 +169,37 @@ public final class Util {
         return 0.0;
     }
 
+    static double getNumPixels(CoordAxis1D axis) {
+        return getNumPixels(axis, true);
+    }
+
+    static double getNumPixels(CoordAxis1D axis, boolean useFunc) {
+        CoordRange1D range = axis.range;
+        CoordBounds1D bounds = axis.bounds;
+        CoordFunction1D function = axis.function;
+        if (range != null) {
+            return Math.abs(range.getEnd().pix - range.getStart().pix);
+        }
+
+        if (bounds != null) {
+            // count number of distinct bins
+            List<SubInterval> bins = new ArrayList<SubInterval>();
+            for (CoordRange1D cr : bounds.getSamples()) {
+                SubInterval si = new SubInterval(cr.getStart().pix, cr.getEnd().pix);
+                Util.mergeIntoList(si, bins, 0.0);
+            }
+            double ret = 0.0;
+            for (SubInterval si : bins) {
+                ret += Math.abs(si.getUpper() - si.getLower());
+            }
+            return ret;
+        }
+        if (useFunc && function != null) {
+            return function.getNaxis();
+        }
+        return 0.0;
+    }
+
     static double getPixelScale(CoordAxis2D axis) {
         CoordRange2D range = axis.range;
         CoordBounds2D bounds = axis.bounds;
@@ -206,37 +236,6 @@ public final class Util {
     static double val2pix(CoordFunction1D function, double val) {
         double refVal = function.getRefCoord().val;
         return function.getRefCoord().pix + (val - refVal) / function.getDelta();
-    }
-
-    static double getNumPixels(CoordAxis1D axis) {
-        return getNumPixels(axis, true);
-    }
-
-    static double getNumPixels(CoordAxis1D axis, boolean useFunc) {
-        CoordRange1D range = axis.range;
-        CoordBounds1D bounds = axis.bounds;
-        CoordFunction1D function = axis.function;
-        if (range != null) {
-            return Math.abs(range.getEnd().pix - range.getStart().pix);
-        }
-
-        if (bounds != null) {
-            // count number of distinct bins
-            List<SubInterval> bins = new ArrayList<SubInterval>();
-            for (CoordRange1D cr : bounds.getSamples()) {
-                SubInterval si = new SubInterval(cr.getStart().pix, cr.getEnd().pix);
-                Util.mergeIntoList(si, bins, 0.0);
-            }
-            double ret = 0.0;
-            for (SubInterval si : bins) {
-                ret += Math.abs(si.getUpper() - si.getLower());
-            }
-            return ret;
-        }
-        if (useFunc && function != null) {
-            return function.getNaxis();
-        }
-        return 0.0;
     }
 
     // merge a SubInterval into a List of SubInterval

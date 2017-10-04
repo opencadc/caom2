@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.viz;
 
-
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
@@ -77,68 +76,58 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
-public class Main 
-{
+public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
 
-    private Main() { }
-    
-    public static void main(String[] args)
-    {       
+    private Main() {
+    }
+
+    public static void main(String[] args) {
         String cur = null;
-        try
-        {
+        try {
             ArgumentMap am = new ArgumentMap(args);
-            
-            if (am.isSet("h") || am.isSet("help"))
-            {
+
+            if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
             }
-            
+
             Level lvl = Level.WARN;
-            if (am.isSet("d") || am.isSet("debug"))
+            if (am.isSet("d") || am.isSet("debug")) {
                 lvl = Level.DEBUG;
-            else if (am.isSet("v") || am.isSet("verbose"))
+            } else if (am.isSet("v") || am.isSet("verbose")) {
                 lvl = Level.INFO;
-                
+            }
+
             Log4jInit.setLevel("ca.nrc.cadc.caom2.viz", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.types", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", lvl);
-                
+
             String fname = am.getValue("in");
             String productID = am.getValue("productID");
             boolean recomp = am.isSet("r");
             boolean headless = am.isSet("headless");
-            if (fname == null)
-            {
+            if (fname == null) {
                 usage();
                 System.exit(1);
             }
             File f = new File(fname);
-            
-            if (headless)
-            {
+
+            if (headless) {
                 ComputeFromXML cu = new ComputeFromXML(f, productID);
                 cu.doit();
-            }
-            else
-            {
+            } else {
                 VizUnion vu = new VizUnion(f, productID, recomp);
                 vu.doit();
             }
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             log.error("failed to display: " + cur, ex);
         }
     }
-    
-    private static void usage()
-    {
+
+    private static void usage() {
         System.out.println("usage: caom2-viz [-h|--help] (to see this message)");
         System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug]");
         System.out.println("                 --in=<caom observation xml file>");

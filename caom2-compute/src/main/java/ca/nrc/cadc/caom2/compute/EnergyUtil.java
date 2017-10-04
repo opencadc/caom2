@@ -85,11 +85,10 @@ import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * Utility class for 1-d Time calculations.

@@ -473,7 +473,7 @@ public class TimeUtilTest {
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
-                    // just shift to higher values of x for each subsequent chunk
+                    // just shift to higher values of coordX for each subsequent chunk
                     nc.time = getTestRange(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }
@@ -500,7 +500,7 @@ public class TimeUtilTest {
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
-                    // just shift to higher values of x for each subsequent chunk
+                    // just shift to higher values of coordX for each subsequent chunk
                     nc.time = getTestBounds(true, px, sx + n * nx * ds, nx, ds);
                     n++;
                 }

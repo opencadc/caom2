@@ -76,11 +76,10 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * @author pdowler

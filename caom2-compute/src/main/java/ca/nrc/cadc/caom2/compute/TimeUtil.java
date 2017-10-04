@@ -78,11 +78,10 @@ import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * Utility class for 1-d Time calculations.
@@ -91,14 +90,12 @@ import java.util.Set;
  */
 public final class TimeUtil {
     private static final Logger log = Logger.getLogger(TimeUtil.class);
-
-    public static double DEFAULT_UNION_SCALE = 0.10;
-
     // sort of a hack: we assume absolute MJD values in the TimeWCS which
     // is the default if MJDREF, JDREF, and DATEREF are all absent = 0.0 in FITS
     private static final String TARGET_TIMESYS = "UTC";
     private static final String TARGET_CTYPE = "TIME";
     private static final String TARGET_CUNIT = "d";
+    public static double DEFAULT_UNION_SCALE = 0.10;
 
     private TimeUtil() {
     }

@@ -78,8 +78,6 @@ import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.types.impl.GrahamScan;
 import ca.nrc.cadc.caom2.types.impl.SortablePoint2D;
-import org.apache.log4j.Logger;
-
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
@@ -88,22 +86,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import org.apache.log4j.Logger;
 
 /**
  * @author pdowler
  */
 public final class PolygonUtil {
-    private static Logger log = Logger.getLogger(PolygonUtil.class);
-
-    private static final double DEFAULT_SCALE = 0.02;
-    private static final double MAX_SCALE = 0.07;
-
     /**
      * Flag to control attempts to use getConcaveHull from getOuterHull.
      * When this is false, the getOuterHull always computes and returns
      * a convex hull. Currently: hard-coded to false.
      */
     public static final boolean ENABLE_CONCAVE_OUTER = false;
+    private static final double DEFAULT_SCALE = 0.02;
+    private static final double MAX_SCALE = 0.07;
+    private static Logger log = Logger.getLogger(PolygonUtil.class);
 
     public static Polygon toPolygon(Shape s) {
         if (s == null) {
@@ -352,7 +349,7 @@ public final class PolygonUtil {
         MultiPolygon prev = null; // needs to be a stack?
         MultiPolygon cur = null;
         for (Vertex v : p.getVertices()) {
-            if (cur == null) {// start new poly
+            if (cur == null) { // start new poly
                 //log.debug("new MultiPolygon");
                 cur = new MultiPolygon();
                 //log.debug("vertex: " + v);
@@ -514,7 +511,7 @@ public final class PolygonUtil {
         Circle msc = poly.getMinimumSpanningCircle();
         double tol = msc.getSize() * rsl;
         //double tol = Math.sqrt(pp.area)*rsl; // ~same for squares, smaller for skinny rectangles
-        log.debug("[smooth.adjacent] r=" + msc.getRadius()
+        log.debug("[smooth.adjacent] radius=" + msc.getRadius()
             + " tol=" + tol);
 
         Iterator<Vertex> vi = poly.getVertices().iterator();
@@ -751,16 +748,6 @@ public final class PolygonUtil {
         }
     }
 
-    private static class ScaledVertex extends Vertex {
-        private static final long serialVersionUID = 201207271500L;
-        Vertex orig;
-
-        ScaledVertex(double c1, double c2, SegmentType t, Vertex orig) {
-            super(c1, c2, t);
-            this.orig = orig;
-        }
-    }
-
     private static MultiPolygon scaleMultiPolygon(MultiPolygon poly, double scale) {
         log.debug("[scaleMultiPolygon] start: " + poly + " BY " + scale);
         MultiPolygon ret = new MultiPolygon();
@@ -848,31 +835,6 @@ public final class PolygonUtil {
         return trans;
     }
 
-    private static class Segment implements Serializable {
-        private static final long serialVersionUID = 201207300900L;
-
-        Vertex v1;
-        Vertex v2;
-
-        Segment(Vertex v1, Vertex v2) {
-            this.v1 = v1;
-            this.v2 = v2;
-        }
-
-        double length() {
-            return Math.sqrt(lengthSquared());
-        }
-
-        double lengthSquared() {
-            return distanceSquared(v1, v2);
-        }
-
-        @Override
-        public String toString() {
-            return "(" + v1 + ":" + v2 + ")";
-        }
-    }
-
     // validate a simple polygon (single loop) for intersecting segments
     // used by PositionUtil to validate CoordMultiPolygon2D
     static void validateSegments(MultiPolygon poly)
@@ -957,7 +919,6 @@ public final class PolygonUtil {
         return false;
     }
 
-
     private static boolean intersects(Segment ab, Segment cd, boolean isNext) {
         log.debug("intersects: " + ab + " vs " + cd);
         // rden = (Bx-Ax)(Dy-Cy)-(By-Ay)(Dx-Cx)
@@ -984,14 +945,14 @@ public final class PolygonUtil {
                 }
                 double dx = Math.abs(s.v1.cval1 - s.v2.cval1);
                 double dy = Math.abs(s.v1.cval2 - s.v2.cval2);
-                if (dx > dy) { // more horizontal = project to x
+                if (dx > dy) { // more horizontal = project to coordX
                     if (ab.v2.cval1 < cd.v1.cval1) {
                         return false; // ab left of cd
                     }
                     if (ab.v1.cval1 > cd.v2.cval1) {
                         return false; // ab right of cd
                     }
-                } else { // more vertical = project to y
+                } else { // more vertical = project to coordY
                     if (ab.v2.cval2 < cd.v1.cval2) {
                         return false; // ab below cd
                     }
@@ -1005,9 +966,9 @@ public final class PolygonUtil {
         }
 
         double r = rnum / den;
-        //log.debug("r = " + r);
+        //log.debug("radius = " + radius);
         // no intersect, =0 or 1 means the ends touch, which is normal  but pg_sphere doesn't like it
-        //if (r < 0.0 || r > 1.0)
+        //if (radius < 0.0 || radius > 1.0)
         if (r <= 0.0 || r >= 1.0) {
             return false;
         }
@@ -1024,7 +985,7 @@ public final class PolygonUtil {
             return false; // no intersect, =0 or 1 means the ends touch, which is normal
         }
 
-        // r in [0,1] and s in [0,1] = intersects
+        // radius in [0,1] and s in [0,1] = intersects
         return true;
     }
 
@@ -1032,8 +993,6 @@ public final class PolygonUtil {
         return (v1.cval1 - v2.cval1) * (v1.cval1 - v2.cval1)
             + (v1.cval2 - v2.cval2) * (v1.cval2 - v2.cval2);
     }
-
-    // from here down: interfaces to "external" libraries with alternate data structures
 
     // use java.awt CAG implementation for 2D cartesian geometry
     static MultiPolygon doUnionCAG(MultiPolygon p1, MultiPolygon p2) {
@@ -1055,6 +1014,8 @@ public final class PolygonUtil {
         }
         return ret;
     }
+
+    // from here down: interfaces to "external" libraries with alternate data structures
 
     static MultiPolygon toMultiPolygon(Area area) {
         MultiPolygon ret = new MultiPolygon();
@@ -1126,6 +1087,41 @@ public final class PolygonUtil {
         ret.getVertices().add(Vertex.CLOSE);
 
         return ret;
+    }
+
+    private static class ScaledVertex extends Vertex {
+        private static final long serialVersionUID = 201207271500L;
+        Vertex orig;
+
+        ScaledVertex(double c1, double c2, SegmentType t, Vertex orig) {
+            super(c1, c2, t);
+            this.orig = orig;
+        }
+    }
+
+    private static class Segment implements Serializable {
+        private static final long serialVersionUID = 201207300900L;
+
+        Vertex v1;
+        Vertex v2;
+
+        Segment(Vertex v1, Vertex v2) {
+            this.v1 = v1;
+            this.v2 = v2;
+        }
+
+        double length() {
+            return Math.sqrt(lengthSquared());
+        }
+
+        double lengthSquared() {
+            return distanceSquared(v1, v2);
+        }
+
+        @Override
+        public String toString() {
+            return "(" + v1 + ":" + v2 + ")";
+        }
     }
 
 

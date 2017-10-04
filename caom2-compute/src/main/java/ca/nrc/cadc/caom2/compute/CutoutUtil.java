@@ -88,12 +88,11 @@ import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import jsky.coords.wcscon;
-import org.apache.log4j.Logger;
-
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
+import jsky.coords.wcscon;
+import org.apache.log4j.Logger;
 
 public final class CutoutUtil {
     private static final Logger log = Logger.getLogger(CutoutUtil.class);
@@ -450,7 +449,7 @@ public final class CutoutUtil {
      * @param wcs a spatial wcs solution
      * @param c   circle with center in ICRS coordinates
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     * or null if the circle does not intersect the WCS
+     *     or null if the circle does not intersect the WCS
      */
     static long[] getPositionBounds(SpatialWCS wcs, Circle c)
         throws NoSuchKeywordException, WCSLibRuntimeException {
@@ -479,7 +478,7 @@ public final class CutoutUtil {
      * @param wcs  a spatial wcs solution
      * @param poly the shape to cutout
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
-     * or null if the circle does not intersect the WCS
+     *     or null if the circle does not intersect the WCS
      */
     static long[] getPositionBounds(SpatialWCS wcs, MultiPolygon poly)
         throws NoSuchKeywordException, WCSLibRuntimeException {
@@ -598,33 +597,32 @@ public final class CutoutUtil {
     }
 
 
-//    public void SpatialWCS convertPolyCoordsys(PositionUtil.CoordSys csys, SpatialWCS wcs, MultiPolygon poly)
-//    {
-//        // npoly is in ICRS
-//        if (PositionUtil.CoordSys.GAL.equals(csys.getName()) ||
-//                PositionUtil.CoordSys.FK4.equals(csys.getName()))
-//        {
-//            // convert npoly to native coordsys, in place since we created a new npoly above
-//            log.debug("converting poly to " + csys);
-//            for (Vertex v : poly.getVertices())
-//            {
-//                if ( !SegmentType.CLOSE.equals(v.getType()) )
-//                {
-//                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
-//
-//                    // convert poly coords to native WCS coordsys
-//                    if (PositionUtil.CoordSys.GAL.equals(csys.getName()))
-//                        pp = wcscon.fk52gal(pp);
-//                    else if (PositionUtil.CoordSys.FK4.equals(csys.getName()))
-//                        pp = wcscon.fk524(pp);
-//                    v.cval1 = pp.x;
-//                    v.cval2 = pp.y;
-//                }
-//            }
-//        }
-//    }
+    //    public void SpatialWCS convertPolyCoordsys(PositionUtil.CoordSys csys, SpatialWCS wcs, MultiPolygon poly)
+    //    {
+    //        // npoly is in ICRS
+    //        if (PositionUtil.CoordSys.GAL.equals(csys.getName()) ||
+    //                PositionUtil.CoordSys.FK4.equals(csys.getName()))
+    //        {
+    //            // convert npoly to native coordsys, in place since we created a new npoly above
+    //            log.debug("converting poly to " + csys);
+    //            for (Vertex v : poly.getVertices())
+    //            {
+    //                if ( !SegmentType.CLOSE.equals(v.getType()) )
+    //                {
+    //                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
+    //
+    //                    // convert poly coords to native WCS coordsys
+    //                    if (PositionUtil.CoordSys.GAL.equals(csys.getName()))
+    //                        pp = wcscon.fk52gal(pp);
+    //                    else if (PositionUtil.CoordSys.FK4.equals(csys.getName()))
+    //                        pp = wcscon.fk524(pp);
+    //                    v.cval1 = pp.coordX;
+    //                    v.cval2 = pp.coordY;
+    //                }
+    //            }
+    //        }
+    //    }
 
-//
 
     /**
      * Compute a pixel cutout for the specified bounds. The bounds are assumed to be
@@ -633,7 +631,7 @@ public final class CutoutUtil {
      * @param wcs
      * @param bounds
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
-     * null if no pixels are included
+     *     null if no pixels are included
      */
     public static long[] getEnergyBounds(SpectralWCS wcs, Interval bounds)
         throws NoSuchKeywordException, WCSLibRuntimeException {
