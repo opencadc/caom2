@@ -66,24 +66,22 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.xml;
 
 /**
  *
  * @author jburke
  */
-public class ObservationParsingException extends Exception
-{
+public class ObservationParsingException extends Exception {
     private static final long serialVersionUID = 201204110757L;
 
-    public ObservationParsingException(String msg)
-    {
+    public ObservationParsingException(String msg) {
         super(msg);
     }
-    
-    public ObservationParsingException(String msg, Throwable cause)
-    {
+
+    public ObservationParsingException(String msg, Throwable cause) {
         super(msg, cause);
     }
-    
+
 }

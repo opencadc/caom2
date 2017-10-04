@@ -79,8 +79,7 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public class CompositeObservation extends Observation
-{
+public class CompositeObservation extends Observation {
     private static final long serialVersionUID = 201110261400L;
 
     // mutable contents
@@ -88,25 +87,26 @@ public class CompositeObservation extends Observation
 
     /**
      * @param collection
-     * @param observationID 
+     * @param observationID
      * @param algorithm
      */
-    public CompositeObservation(String collection, String observationID, Algorithm algorithm)
-    {
+    public CompositeObservation(String collection, String observationID,
+            Algorithm algorithm) {
         super(collection, observationID, algorithm);
     }
-    
-    public Set<ObservationURI> getMembers()
-    {
+
+    public Set<ObservationURI> getMembers() {
         return members;
     }
 
     @Override
-    public void setAlgorithm(Algorithm a)
-    {
+    public void setAlgorithm(Algorithm a) {
         CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
-        if (SimpleObservation.ALGORITHM.getName().equals(a.getName()))
-            throw new IllegalArgumentException("cannot set CompositeObservation.algorithm to " + a + "(reserved for SimpleObservation)");
+        if (SimpleObservation.ALGORITHM.getName().equals(a.getName())) {
+            throw new IllegalArgumentException(
+                    "cannot set CompositeObservation.algorithm to " + a
+                            + "(reserved for SimpleObservation)");
+        }
         super.setAlgorithm(a);
     }
 }

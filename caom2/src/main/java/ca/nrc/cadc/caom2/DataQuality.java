@@ -76,14 +76,12 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class DataQuality  implements Serializable
-{
+public class DataQuality implements Serializable {
     private static final long serialVersionUID = 201411171230L;
-    
+
     private final Quality flag;
-    
-    public DataQuality(Quality flag)
-    {
+
+    public DataQuality(Quality flag) {
         CaomValidator.assertNotNull(DataQuality.class, "flag", flag);
         this.flag = flag;
     }
@@ -91,10 +89,9 @@ public class DataQuality  implements Serializable
     public Quality getFlag() {
         return flag;
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "DataQuality[" + flag.getValue() + "]";
     }
 }

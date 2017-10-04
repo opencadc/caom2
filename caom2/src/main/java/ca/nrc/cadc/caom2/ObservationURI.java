@@ -70,100 +70,100 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.HashUtil;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  *
  * @author pdowler
  */
-public class ObservationURI implements Comparable<ObservationURI>, Serializable
-{
+public class ObservationURI
+        implements Comparable<ObservationURI>, Serializable {
     private static final long serialVersionUID = 201202091030L;
 
     public static final String SCHEME = "caom";
-    
-    private URI uri;
-    
-    private ObservationURI() { }
 
-    public ObservationURI(URI uri)
-    {
-        if ( !SCHEME.equals(uri.getScheme()))
-            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+    private URI uri;
+
+    private ObservationURI() {
+    }
+
+    public ObservationURI(URI uri) {
+        if (!SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException(
+                    "invalid scheme: " + uri.getScheme());
+        }
         String ssp = uri.getSchemeSpecificPart();
         CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
         String[] cop = ssp.split("/");
-        if (cop.length == 2)
-        {
+        if (cop.length == 2) {
             String collection = cop[0];
             String observationID = cop[1];
             CaomValidator.assertNotNull(getClass(), "collection", collection);
-            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
-            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
-            this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "collection",
+                    collection);
+            CaomValidator.assertNotNull(getClass(), "observationID",
+                    observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID",
+                    observationID);
+            this.uri = URI
+                    .create(SCHEME + ":" + collection + "/" + observationID);
+        } else {
+            throw new IllegalArgumentException(
+                    "input URI has " + cop.length + " parts (" + ssp
+                            + "), expected 2: <collection>/<observationID>");
         }
-        else
-            throw new IllegalArgumentException("input URI has " + cop.length + " parts ("+ssp+"), expected 2: <collection>/<observationID>");
     }
 
-    public ObservationURI(String collection, String observationID)
-    {
+    public ObservationURI(String collection, String observationID) {
         CaomValidator.assertNotNull(getClass(), "collection", collection);
-        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        CaomValidator.assertValidPathComponent(getClass(), "collection",
+                collection);
         CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID",
+                observationID);
         this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return uri.toASCIIString();
     }
 
-    public String getCollection()
-    {
+    public String getCollection() {
         return uri.getSchemeSpecificPart().split("/")[0];
     }
 
-    public String getObservationID()
-    {
+    public String getObservationID() {
         return uri.getSchemeSpecificPart().split("/")[1];
     }
 
-    public URI getURI()
-    {
+    public URI getURI() {
         return uri;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof ObservationURI)
-        {
+        }
+        if (o instanceof ObservationURI) {
             ObservationURI u = (ObservationURI) o;
-            return ( this.compareTo(u) == 0 );
+            return (this.compareTo(u) == 0);
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return uri.hashCode();
     }
 
     @Override
-    public int compareTo(ObservationURI u)
-    {
+    public int compareTo(ObservationURI u) {
         return this.uri.compareTo(u.uri);
     }
 }

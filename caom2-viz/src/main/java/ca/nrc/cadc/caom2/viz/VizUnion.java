@@ -66,6 +66,7 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.viz;
 
 import ca.nrc.cadc.caom2.Artifact;
@@ -74,221 +75,196 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.CartesianTransform;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
-import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.compute.Util;
+import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
-
-import org.apache.log4j.Logger;
-
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import org.apache.log4j.Logger;
 
 /**
  * Simple test program that draws resulting geometry.
- * 
- * @version $Version$
+ *
  * @author pdowler
+ * @version $Version$
  */
-public class VizUnion
-{
+public class VizUnion {
     private static Logger log = Logger.getLogger(VizUnion.class);
-    
+
     private final File obsFile;
     private final String productID;
     private boolean forceRecompute = false;
-    
-    public VizUnion(File obsFile, String productID, boolean forceRecompute)
-    {
+
+    public VizUnion(File obsFile, String productID, boolean forceRecompute) {
         this.obsFile = obsFile;
         this.productID = productID;
         this.forceRecompute = forceRecompute;
     }
-    
+
     public void doit()
-        throws Exception
-    {
+        throws Exception {
         ObservationReader r = new ObservationReader();
         Observation o = r.read(new FileReader(obsFile));
 
         boolean done = false;
         Iterator<Plane> iter = o.getPlanes().iterator();
-        while (!done && iter.hasNext())
-        {
+        while (!done && iter.hasNext()) {
             Plane p = iter.next();
             log.info("found: " + p.getProductID());
-            if (productID == null || productID.equals(p.getProductID()))
+            if (productID == null || productID.equals(p.getProductID())) {
                 doit(p);
+            }
         }
     }
-    
+
     private void doit(Plane plane)
-        throws Exception
-    { 
-        DisplayPane dp = new  DisplayPane(forceRecompute);
+        throws Exception {
+        DisplayPane dp = new DisplayPane(forceRecompute);
         dp.setPlane(plane);
         JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getProductID());
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.getContentPane().add(dp); 
-        f.pack(); 
-        f.setLocation(1000,200);
+        f.getContentPane().add(dp);
+        f.pack();
+        f.setLocation(1000, 200);
         f.setVisible(true);
     }
-    
-    static class DisplayPane extends JPanel 
-    {
+
+    static class DisplayPane extends JPanel {
         private DrawArea viewer;
         private boolean recomp;
-     
-        public DisplayPane(boolean recomp) 
-        {
-            super(new BorderLayout()); 
-            JLabel status = new JLabel(""); 
+
+        public DisplayPane(boolean recomp) {
+            super(new BorderLayout());
+            JLabel status = new JLabel("");
             this.viewer = new DrawArea(status, "", false);
-            this.add(viewer, BorderLayout.CENTER); 
-            this.add(status, BorderLayout.SOUTH); 
-            this.setPreferredSize(new Dimension(800,800)); 
-            
+            this.add(viewer, BorderLayout.CENTER);
+            this.add(status, BorderLayout.SOUTH);
+            this.setPreferredSize(new Dimension(800, 800));
+
             this.recomp = recomp;
         }
-     
-        
+
+
         public void setPlane(Plane plane)
-            throws Exception
-        {
+            throws Exception {
             Polygon bounds = null;
             ProductType ptype = Util.choseProductType(plane.getArtifacts());
-            if (plane.position != null && plane.position.bounds != null && !recomp)
-            {
+            if (plane.position != null && plane.position.bounds != null && !recomp) {
                 // use polygon from input file
                 bounds = (Polygon) plane.position.bounds;
-            }
-            else
-            {
-                try 
-                {
+            } else {
+                try {
                     log.info("recomputing union... " + ptype);
                     bounds = PositionUtil.computeBounds(plane.getArtifacts(), ptype);
                     log.info("recomputing union... DONE");
+                } catch (Exception ipe) {
+                    log.warn("computeShape failed", ipe);
                 }
-                catch(Exception ipe) { log.warn("computeShape failed", ipe); }
             }
 
-            if (bounds == null)
-            {
+            if (bounds == null) {
                 log.error("could not compute union...");
                 System.exit(1);
-            }
-            else
-            {
+            } else {
                 log.info("bounds: " + bounds);
                 log.info("center: " + bounds.getCenter());
                 log.info("area: " + bounds.getArea());
             }
-            
+
             viewer.clear();
-            
+
             CartesianTransform trans = CartesianTransform.getTransform(bounds.getSamples());
             setArtifacts(plane.getArtifacts(), trans, ptype);
-            
-            
+
 
             boolean doHull = true;
             MultiPolygon hull = new MultiPolygon();
             SegmentType t = SegmentType.MOVE;
-            for (Point p : bounds.getPoints())
-            {
+            for (Point p : bounds.getPoints()) {
                 hull.getVertices().add(new Vertex(p.cval1, p.cval2, t));
                 t = SegmentType.LINE;
             }
             hull.getVertices().add(Vertex.CLOSE);
             renderPolygon(hull, trans, Color.RED, 4.0f, true);
-            
+
             renderPolygon(bounds.getSamples(), trans, Color.BLUE, 1.0f, false);
-            
-            viewer.repaint(); 
+
+            viewer.repaint();
         }
 
-        public void renderPolygon(MultiPolygon bounds, CartesianTransform trans, Color color, float thick, boolean showVerts)
-        {
+        public void renderPolygon(MultiPolygon bounds, CartesianTransform trans, Color color, float thick, boolean showVerts) {
             log.info("Polygon -> GeneralPath");
             MultiPolygon tmp = trans.transform(bounds);
             GeneralPath gpa = PolygonUtil.toGeneralPath(tmp);
 
             double polySize = tmp.getSize(); //Math.max(box.width, box.height);
-            
+
             // render bounds
-            if (gpa != null) 
-                viewer.add(gpa, color, false, thick); 
-            
-            if (showVerts)
-            {
+            if (gpa != null) {
+                viewer.add(gpa, color, false, thick);
+            }
+
+            if (showVerts) {
                 // render vertices 
-                double sz =0.02*polySize; 
-                for (int i=0; i<tmp.getVertices().size(); i++)
-                {
+                double sz = 0.02 * polySize;
+                for (int i = 0; i < tmp.getVertices().size(); i++) {
                     Vertex v = tmp.getVertices().get(i);
                     log.info("tmp vertex: " + v);
-                    if ( !SegmentType.CLOSE.equals(v.getType()) )
-                    { 
-                        java.awt.Shape s = new Ellipse2D.Double(v.cval1-0.5*sz, v.cval2-0.5*sz, sz, sz); 
-                        viewer.add(s, Color.BLACK, false); 
-                    } 
+                    if (!SegmentType.CLOSE.equals(v.getType())) {
+                        java.awt.Shape s = new Ellipse2D.Double(v.cval1 - 0.5 * sz, v.cval2 - 0.5 * sz, sz, sz);
+                        viewer.add(s, Color.BLACK, false);
+                    }
                 }
 
                 Point c = tmp.getCenter();
                 log.info("tmp center: " + c.cval1 + "," + c.cval2);
                 log.info("tmp area: " + tmp.getArea());
-                java.awt.Shape s = new Ellipse2D.Double(c.cval1-0.5*sz, c.cval2-0.5*sz, sz, sz); 
+                java.awt.Shape s = new Ellipse2D.Double(c.cval1 - 0.5 * sz, c.cval2 - 0.5 * sz, sz, sz);
                 viewer.add(s, color, true);
             }
-            
-            if (!trans.isNull()) 
-            {
+
+            if (!trans.isNull()) {
                 log.info("rendering with " + trans);
                 CartesianTransform vtrans = trans.getInverseTransform();
-                viewer.setTransform(vtrans); 
+                viewer.setTransform(vtrans);
             }
             viewer.setPrefix("sky coordinates: ");
             viewer.setFitShape(gpa);
-         } 
-        
+        }
+
         public void setArtifacts(Set<Artifact> artifacts, CartesianTransform trans, ProductType productType)
-            throws Exception
-        {
+            throws Exception {
             List<MultiPolygon> comps = new ArrayList<MultiPolygon>();
             int i = 0;
-            for (Artifact a : artifacts)
-            {
-                for (Part p : a.getParts())
-                {
-                    for (Chunk c : p.getChunks())
-                    {
-                        if ( Util.useChunk(a.getProductType(), p.productType, c.productType, productType) )
-                            if (c.position != null)
-                        {
-                            MultiPolygon poly = PositionUtil.toPolygon(c.position);
-                            if ( poly != null )
-                                comps.add(poly);
+            for (Artifact a : artifacts) {
+                for (Part p : a.getParts()) {
+                    for (Chunk c : p.getChunks()) {
+                        if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                            if (c.position != null) {
+                                MultiPolygon poly = PositionUtil.toPolygon(c.position);
+                                if (poly != null) {
+                                    comps.add(poly);
+                                }
+                            }
                         }
                     }
                 }
@@ -296,26 +272,25 @@ public class VizUnion
             renderComponents(comps, trans);
         }
 
-        public void renderComponents(List<MultiPolygon> polys, CartesianTransform trans)
-        {
+        public void renderComponents(List<MultiPolygon> polys, CartesianTransform trans) {
             ArrayList<GeneralPath> gpP = new ArrayList<GeneralPath>();
-            if (polys != null)
-            {
+            if (polys != null) {
                 log.info("Polygon[] -> GeneralPath");
-                for (MultiPolygon p : polys)
-                {
+                for (MultiPolygon p : polys) {
                     p = trans.transform(p);
                     gpP.add(PolygonUtil.toGeneralPath(p));
                 }
             }
             log.info("rendering filled artifacts...");
-            for (GeneralPath gp : gpP)
+            for (GeneralPath gp : gpP) {
                 viewer.add(gp, Color.LIGHT_GRAY, true);
+            }
 
             log.info("rendering artifact outlines...");
-            for (GeneralPath gp : gpP)
-                viewer.add(gp, Color.GRAY, false); 
+            for (GeneralPath gp : gpP) {
+                viewer.add(gp, Color.GRAY, false);
+            }
         }
-        
+
     }
 }

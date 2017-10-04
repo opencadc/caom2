@@ -78,33 +78,27 @@ import java.io.FileInputStream;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
-public class ComputeFromXML 
-{
+public class ComputeFromXML {
     private static Logger log = Logger.getLogger(ComputeFromXML.class);
-    
+
     private final File obsFile;
     private final String productID;
 
-    public ComputeFromXML(File obsFile, String productID)
-    {
+    public ComputeFromXML(File obsFile, String productID) {
         this.obsFile = obsFile;
         this.productID = productID;
     }
-        
+
     public void doit()
-        throws Exception
-    {
+        throws Exception {
         ObservationReader r = new ObservationReader();
         Observation o = r.read(new FileInputStream(obsFile));
 
-        for (Plane p : o.getPlanes())
-        {
+        for (Plane p : o.getPlanes()) {
             String pid = p.getProductID();
-            if (productID == null || productID.equals(pid))
-            {
+            if (productID == null || productID.equals(pid)) {
                 log.info("plane: " + pid);
                 ComputeUtil.clearTransientState(p);
                 ComputeUtil.computeTransientState(o, p);
@@ -112,8 +106,7 @@ public class ComputeFromXML
                 StringBuilder sb = new StringBuilder();
                 sb.append(p.getProductID()).append(": ");
                 sb.append("\nposition: ").append(p.position);
-                if (p.position != null && p.position.bounds != null)
-                {
+                if (p.position != null && p.position.bounds != null) {
                     sb.append("\n  center: ").append(p.position.bounds.getCenter());
                     sb.append("\n    area: ").append(p.position.bounds.getArea());
                 }

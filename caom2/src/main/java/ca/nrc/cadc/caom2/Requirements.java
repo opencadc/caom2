@@ -76,14 +76,12 @@ import java.io.Serializable;
  * 
  * @author pdowler
  */
-public class Requirements implements Serializable
-{
+public class Requirements implements Serializable {
     private static final long serialVersionUID = 201411171230L;
-    
+
     private final Status flag;
-    
-    public Requirements(Status flag)
-    {
+
+    public Requirements(Status flag) {
         CaomValidator.assertNotNull(Requirements.class, "flag", flag);
         this.flag = flag;
     }
@@ -93,8 +91,7 @@ public class Requirements implements Serializable
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Requirements[" + flag.getValue() + "]";
     }
 }

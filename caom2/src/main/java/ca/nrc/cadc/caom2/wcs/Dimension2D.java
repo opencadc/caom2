@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Dimension2D implements Serializable
-{
+public class Dimension2D implements Serializable {
     private static final long serialVersionUID = 201202081100L;
 
     // state
@@ -86,8 +85,7 @@ public class Dimension2D implements Serializable
 
     public static final String[] CTOR_UTYPES = { "naxis1", "naxis2" };
 
-    public Dimension2D(long naxis1, long naxis2)
-    {
+    public Dimension2D(long naxis1, long naxis2) {
         CaomValidator.assertPositive(getClass(), "naxis1", naxis1);
         CaomValidator.assertPositive(getClass(), "naxis2", naxis2);
         this.naxis1 = naxis1;
@@ -95,8 +93,7 @@ public class Dimension2D implements Serializable
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Dimension2D[" + naxis1 + "," + naxis2 + "]";
     }
 }

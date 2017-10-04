@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Time implements Serializable
-{
+public class Time implements Serializable {
     private static final long serialVersionUID = 201202081400L;
 
     public Interval bounds;
@@ -91,8 +90,7 @@ public class Time implements Serializable
     public Double exposure;
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Time[");
         sb.append(bounds);

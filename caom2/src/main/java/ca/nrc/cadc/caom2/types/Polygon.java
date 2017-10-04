@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2.types;
 
-
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,28 +75,26 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class Polygon implements Shape
-{
+public class Polygon implements Shape {
     private static final long serialVersionUID = 201708141600L;
 
     private final List<Point> points = new ArrayList<>();
     private MultiPolygon samples;
-    
+
     // lazily computed
     private transient Point center;
     private transient Double area;
     private transient Circle minimumSpanningCircle;
     private transient Boolean ccw;
-    
+
     /**
-     * Construct new polygon. The input must provide at least 3 points
-     * and a valid samples object. 
+     * Construct new polygon. The input must provide at least 3 points and a
+     * valid samples object.
      * 
      * @param points
-     * @param samples 
+     * @param samples
      */
-    public Polygon(List<Point> points, MultiPolygon samples) 
-    { 
+    public Polygon(List<Point> points, MultiPolygon samples) {
         CaomValidator.assertNotNull(Polygon.class, "points", points);
         CaomValidator.assertNotNull(Polygon.class, "samples", samples);
         this.points.addAll(points);
@@ -108,99 +105,98 @@ public class Polygon implements Shape
     /**
      * Validate this polygon for conformance to IVOA DALI polygon rules.
      */
-    public final void validate()
-    {
+    public final void validate() {
         initProps();
     }
-    
+
     /**
-     * Access the coordinates for this polygon. If the coordinate list is modified, the caller
-     * must call validate in order to enforce correctness and recompute the center, area, and
-     * minimum spanning circle (size).
+     * Access the coordinates for this polygon. If the coordinate list is
+     * modified, the caller must call validate in order to enforce correctness
+     * and recompute the center, area, and minimum spanning circle (size).
      * 
-     * @return 
+     * @return
      */
-    public List<Point> getPoints()
-    {
+    public List<Point> getPoints() {
         return points;
     }
 
-    public MultiPolygon getSamples()
-    {
+    public MultiPolygon getSamples() {
         return samples;
     }
 
     @Override
-    public Point getCenter()
-    {
-        if (center == null)
+    public Point getCenter() {
+        if (center == null) {
             initProps();
+        }
         return center;
     }
 
     @Override
-    public double getArea()
-    {
-        if (area == null)
+    public double getArea() {
+        if (area == null) {
             initProps();
+        }
         return area;
     }
 
     @Override
-    public double getSize()
-    {
-        if (minimumSpanningCircle == null)
+    public double getSize() {
+        if (minimumSpanningCircle == null) {
             initProps();
+        }
         return minimumSpanningCircle.getSize();
     }
 
-    public Circle getMinimumSpanningCircle()
-    {
-        if (minimumSpanningCircle == null)
+    public Circle getMinimumSpanningCircle() {
+        if (minimumSpanningCircle == null) {
             initProps();
+        }
         return minimumSpanningCircle;
     }
-    
-    private void initProps()
-    {
-        if (points.size() < 3)
-            throw new IllegalPolygonException("polygon has " + points.size() + " points: minimum 3");
-        
+
+    private void initProps() {
+        if (points.size() < 3) {
+            throw new IllegalPolygonException(
+                    "polygon has " + points.size() + " points: minimum 3");
+        }
+
         MultiPolygon mp = new MultiPolygon();
         SegmentType t = SegmentType.MOVE;
-        for (Point p : points)
-        {
+        for (Point p : points) {
             Vertex v = new Vertex(p.cval1, p.cval2, t);
             mp.getVertices().add(v);
             t = SegmentType.LINE;
         }
         mp.getVertices().add(Vertex.CLOSE);
-        
+
         this.area = mp.getArea();
         this.center = mp.getCenter();
         this.minimumSpanningCircle = mp.getMinimumSpanningCircle();
         this.ccw = mp.getCCW();
-        
+
         // DALI polygons are always CCW so if we detect CW here it is equivalent
-        // to the region outside with area = 4*pi - area and larger than half the 
+        // to the region outside with area = 4*pi - area and larger than half
+        // the
         // sphere
-        if (!ccw)
-            throw new IllegalPolygonException("polygon too large or has clockwise winding direction");
+        if (!ccw) {
+            throw new IllegalPolygonException(
+                    "polygon too large or has clockwise winding direction");
+        }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(Polygon.class.getSimpleName()).append("[");
         sb.append("points={");
-        for (Point p : points)
+        for (Point p : points) {
             sb.append(p).append(",");
+        }
         sb.setCharAt(sb.length() - 1, '}'); // replace last comma
         sb.append(",samples=").append(samples);
         sb.append("]");
         return sb.toString();
     }
-    
-    
+
 }

@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Axis implements Serializable
-{
+public class Axis implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -92,27 +91,24 @@ public class Axis implements Serializable
      * @param ctype
      * @param cunit
      */
-    public Axis(String ctype, String cunit)
-    {
+    public Axis(String ctype, String cunit) {
         CaomValidator.assertNotNull(getClass(), "ctype", ctype);
-        //CaomValidator.assertNotNull(getClass(), "cunit", cunit);
+        // CaomValidator.assertNotNull(getClass(), "cunit", cunit);
         this.ctype = ctype;
         this.cunit = cunit;
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + ctype + ","+  cunit + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + ctype + "," + cunit
+                + "]";
     }
 
-    public String getCtype()
-    {
+    public String getCtype() {
         return ctype;
     }
 
-    public String getCunit()
-    {
+    public String getCunit() {
         return cunit;
     }
 }

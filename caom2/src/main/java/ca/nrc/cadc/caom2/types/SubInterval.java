@@ -75,39 +75,37 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class SubInterval implements Serializable
-{
+public class SubInterval implements Serializable {
     private static final long serialVersionUID = 201202081100L;
 
-    // package mutable 
+    // package mutable
     double lower;
     double upper;
 
     public static final String[] CTOR_UTYPES = { "lower", "upper" };
 
-    private SubInterval() { }
+    private SubInterval() {
+    }
 
-    public SubInterval(double lower, double upper)
-    {
-        if (upper < lower)
-            throw new IllegalArgumentException("Interval: upper < lower for " + lower + "," + upper);
+    public SubInterval(double lower, double upper) {
+        if (upper < lower) {
+            throw new IllegalArgumentException(
+                    "Interval: upper < lower for " + lower + "," + upper);
+        }
         this.lower = lower;
         this.upper = upper;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "SubInterval[" + lower + "," + upper + "]";
     }
 
-    public double getLower()
-    {
+    public double getLower() {
         return lower;
     }
 
-    public double getUpper()
-    {
+    public double getUpper() {
         return upper;
     }
 

@@ -75,7 +75,6 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public interface CoordBounds2D extends Serializable
-{
-    
+public interface CoordBounds2D extends Serializable {
+
 }

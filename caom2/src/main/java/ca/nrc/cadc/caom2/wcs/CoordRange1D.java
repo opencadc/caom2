@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordRange1D implements Serializable
-{
+public class CoordRange1D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -86,34 +85,33 @@ public class CoordRange1D implements Serializable
 
     public static final String[] CTOR_UTYPES = { "start", "end" };
 
-    public CoordRange1D(RefCoord start, RefCoord end)
-    {
+    public CoordRange1D(RefCoord start, RefCoord end) {
         CaomValidator.assertNotNull(getClass(), "start", start);
         CaomValidator.assertNotNull(getClass(), "end", end);
-        
-        // TODO: this constraint would be OK except for single pixel polarization, where start.val===end.val
-        //if (start.pix == end.pix)
-        //    throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal pix bounds");
-        //if (start.val == end.val)
-        //    throw new IllegalArgumentException("invalid range: " + start + " and " + end + " have equal val bounds");
-        
+
+        // TODO: this constraint would be OK except for single pixel
+        // polarization, where start.val===end.val
+        // if (start.pix == end.pix)
+        // throw new IllegalArgumentException("invalid range: " + start + " and
+        // " + end + " have equal pix bounds");
+        // if (start.val == end.val)
+        // throw new IllegalArgumentException("invalid range: " + start + " and
+        // " + end + " have equal val bounds");
+
         this.start = start;
         this.end = end;
     }
 
-    public RefCoord getStart()
-    {
+    public RefCoord getStart() {
         return start;
     }
 
-    public RefCoord getEnd()
-    {
+    public RefCoord getEnd() {
         return end;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + start + "," + end + "]";
     }
 }

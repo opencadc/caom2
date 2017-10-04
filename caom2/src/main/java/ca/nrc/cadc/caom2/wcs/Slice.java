@@ -76,28 +76,24 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Slice implements Serializable
-{
+public class Slice implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
     private Axis axis;
     private long bin;
 
-    public Slice(Axis axis, long bin)
-    {
+    public Slice(Axis axis, long bin) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         this.axis = axis;
         this.bin = bin;
     }
 
-    public Axis getAxis()
-    {
+    public Axis getAxis() {
         return axis;
     }
 
-    public long getBin()
-    {
+    public long getBin() {
         return bin;
     }
 }

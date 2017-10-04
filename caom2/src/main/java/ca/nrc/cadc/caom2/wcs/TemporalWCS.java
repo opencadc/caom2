@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class TemporalWCS implements Serializable
-{
+public class TemporalWCS implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
@@ -90,14 +89,12 @@ public class TemporalWCS implements Serializable
     public Double exposure;
     public Double resolution;
 
-    public TemporalWCS(CoordAxis1D axis)
-    {
+    public TemporalWCS(CoordAxis1D axis) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         this.axis = axis;
     }
 
-    public CoordAxis1D getAxis()
-    {
+    public CoordAxis1D getAxis() {
         return axis;
     }
 }

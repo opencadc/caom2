@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.xml;
 
-
 import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
 import java.io.Serializable;
@@ -83,39 +82,37 @@ import org.jdom2.output.Format;
  *
  * @author pdowler
  */
-public class JsonWriter extends ObservationWriter implements Serializable
-{
+public class JsonWriter extends ObservationWriter implements Serializable {
     private static final long serialVersionUID = 20150205121500L;
-    
+
     private static final Logger log = Logger.getLogger(JsonWriter.class);
 
     private boolean prettyPrint;
-    
-    public JsonWriter()
-    {
+
+    public JsonWriter() {
         this(true);
     }
-    
-    public JsonWriter(boolean prettyPrint)
-    {
+
+    public JsonWriter(boolean prettyPrint) {
         this(prettyPrint, XmlConstants.CAOM2_3_NAMESPACE);
     }
-    
-    public JsonWriter(boolean prettyPrint, String caom2Namespace)
-    {
+
+    public JsonWriter(boolean prettyPrint, String caom2Namespace) {
         super("caom2", caom2Namespace, false);
     }
-    
+
     /**
      * Write the root Element to a writer.
      *
-     * @param root Root Element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param root
+     *            Root Element to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
     @Override
-    protected void write(Element root, Writer writer) throws IOException
-    {
+    protected void write(Element root, Writer writer) throws IOException {
         JsonOutputter outputter = new JsonOutputter();
         outputter.getListElementNames().add("planes");
         outputter.getListElementNames().add("artifacts");
@@ -126,17 +123,17 @@ public class JsonWriter extends ObservationWriter implements Serializable
         outputter.getListElementNames().add("states");
         outputter.getListElementNames().add("samples");
         outputter.getListElementNames().add("members");
-        if (docVersion >= 23)
+        if (docVersion >= 23) {
             outputter.getListElementNames().add("keywords");
-        
+        }
+
         outputter.getStringElementNames().add("observationID");
         outputter.getStringElementNames().add("productID");
         outputter.getStringElementNames().add("sequenceNumber");
         outputter.getStringElementNames().add("name"); // anything with a name
-        
+
         Format fmt = null;
-        if (prettyPrint)
-        {
+        if (prettyPrint) {
             fmt = Format.getPrettyFormat();
             fmt.setIndent("  "); // 2 spaces
         }

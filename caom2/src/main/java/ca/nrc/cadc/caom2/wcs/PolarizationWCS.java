@@ -76,24 +76,24 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class PolarizationWCS implements Serializable
-{
+public class PolarizationWCS implements Serializable {
     private static final long serialVersionUID = 201110261400L;
     public static final String CTYPE = "STOKES";
 
     // immutable state
     private CoordAxis1D axis;
 
-    public PolarizationWCS(CoordAxis1D axis)
-    {
+    public PolarizationWCS(CoordAxis1D axis) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
-        if ( !PolarizationWCS.CTYPE.equals(axis.getAxis().getCtype()) )
-            throw new IllegalArgumentException("PolarizationWCS ctype must be STOKES, found: " + axis.getAxis().getCtype());
+        if (!PolarizationWCS.CTYPE.equals(axis.getAxis().getCtype())) {
+            throw new IllegalArgumentException(
+                    "PolarizationWCS ctype must be STOKES, found: "
+                            + axis.getAxis().getCtype());
+        }
         this.axis = axis;
     }
 
-    public CoordAxis1D getAxis()
-    {
+    public CoordAxis1D getAxis() {
         return axis;
     }
 }

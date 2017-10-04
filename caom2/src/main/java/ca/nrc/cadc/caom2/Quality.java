@@ -73,32 +73,34 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public enum Quality implements CaomEnum<String>
-{
+public enum Quality implements CaomEnum<String> {
     JUNK("junk");
 
     private final String value;
 
-    private Quality(String value) { this.value = value; }
+    private Quality(String value) {
+        this.value = value;
+    }
 
-    public static Quality toValue(String s)
-    {
-        for (Quality d : values())
-            if (d.value.equals(s))
+    public static Quality toValue(String s) {
+        for (Quality d : values()) {
+            if (d.value.equals(s)) {
                 return d;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public int checksum()
-    {
+    public int checksum() {
         return value.hashCode();
     }
 
-    public String getValue() { return value; }
+    public String getValue() {
+        return value;
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

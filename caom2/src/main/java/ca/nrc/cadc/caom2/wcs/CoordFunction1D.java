@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordFunction1D implements Serializable
-{
+public class CoordFunction1D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -86,9 +85,8 @@ public class CoordFunction1D implements Serializable
     private RefCoord refCoord;
 
     public static final String[] CTOR_UTYPES = { "naxis", "delta", "refCoord" };
-    
-    public CoordFunction1D(Long naxis, Double delta, RefCoord refCoord)
-    {
+
+    public CoordFunction1D(Long naxis, Double delta, RefCoord refCoord) {
         CaomValidator.assertNotNull(getClass(), "naxis", naxis);
         CaomValidator.assertNotNull(getClass(), "delta", delta);
         CaomValidator.assertNotNull(getClass(), "refCoord", refCoord);
@@ -97,24 +95,20 @@ public class CoordFunction1D implements Serializable
         this.refCoord = refCoord;
     }
 
-    public Long getNaxis()
-    {
+    public Long getNaxis() {
         return naxis;
     }
 
-    public Double getDelta()
-    {
+    public Double getDelta() {
         return delta;
     }
 
-    public RefCoord getRefCoord()
-    {
+    public RefCoord getRefCoord() {
         return refCoord;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
         sb.append(naxis).append(",");

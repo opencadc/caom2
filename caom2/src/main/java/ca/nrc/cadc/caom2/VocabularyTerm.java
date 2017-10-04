@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2;
 
-
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
 import java.net.URI;
@@ -76,97 +75,92 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class VocabularyTerm implements Serializable
-{
+public class VocabularyTerm implements Serializable {
     private static final long serialVersionUID = 201704061700L;
-    
+
     private final URI namespace;
     private final String term;
     private boolean base;
-    
+
     /**
      * Constructor. This creates a term in the specified vocabulary namepsace
      * with default base = false.
      * 
      * @param namespace
-     * @param term 
+     * @param term
      */
-    public VocabularyTerm(URI namespace, String term)
-    {
+    public VocabularyTerm(URI namespace, String term) {
         this(namespace, term, false);
     }
-    
+
     /**
-     * Constructor. This creates a term in the specified vocabulary namespace. If the value
-     * of base is false (default for convenience constructor) then the string value 
-     * (from getValue()) will just be the namespace URI plus the term added as a fragment.
-     * If the value of base is true, then this is a term in a base vocabulary and the value
-     * will be just the term (without the namespace).
+     * Constructor. This creates a term in the specified vocabulary namespace.
+     * If the value of base is false (default for convenience constructor) then
+     * the string value (from getValue()) will just be the namespace URI plus
+     * the term added as a fragment. If the value of base is true, then this is
+     * a term in a base vocabulary and the value will be just the term (without
+     * the namespace).
      * 
      * @param namespace
      * @param term
-     * @param base 
+     * @param base
      */
-    public VocabularyTerm(URI namespace, String term, boolean base) 
-    { 
-        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace", namespace);
+    public VocabularyTerm(URI namespace, String term, boolean base) {
+        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace",
+                namespace);
         CaomValidator.assertNotNull(VocabularyTerm.class, "term", term);
-        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term", term);
-        if (namespace.getFragment() != null)
-            throw new IllegalArgumentException("vocabulary namespace canniot have a fragment");
+        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term",
+                term);
+        if (namespace.getFragment() != null) {
+            throw new IllegalArgumentException(
+                    "vocabulary namespace canniot have a fragment");
+        }
         this.namespace = namespace;
         this.term = term;
         this.base = base;
     }
 
-    public URI getNamespace()
-    {
+    public URI getNamespace() {
         return namespace;
     }
 
-    public String getTerm()
-    {
+    public String getTerm() {
         return term;
     }
-    
-    public String getValue()
-    {
-        if (base)
+
+    public String getValue() {
+        if (base) {
             return term;
+        }
         URI tmp = URI.create(namespace.toASCIIString() + "#" + term);
         return tmp.toASCIIString();
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (obj instanceof VocabularyTerm)
-        {
+    public boolean equals(Object obj) {
+        if (obj instanceof VocabularyTerm) {
             VocabularyTerm rhs = (VocabularyTerm) obj;
-            return (this.term.equals(rhs.term) && this.namespace.equals(rhs.namespace));
+            return (this.term.equals(rhs.term)
+                    && this.namespace.equals(rhs.namespace));
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return getValue().hashCode();
     }
-    
-    
+
     /**
-     * @deprecated 
-     * @return 
+     * @return
+     * @deprecated
      */
-    public int checksum()
-    {
+    public int checksum() {
         return getValue().hashCode();
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + term + "]";
     }
 }

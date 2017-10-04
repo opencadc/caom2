@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
     id 'application'
+    id 'checkstyle'
 }
 
 repositories {
@@ -33,3 +34,5 @@ configurations {
     runtime.exclude group: 'javax.servlet'
     runtime.exclude group: 'org.springframework'
 }
+
+apply from: '../opencadc.gradle'

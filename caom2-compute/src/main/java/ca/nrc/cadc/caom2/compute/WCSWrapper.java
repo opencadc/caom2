@@ -76,49 +76,44 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.WCSKeywordsImpl;
 
 /**
- *
  * @author pdowler
  */
-public class WCSWrapper extends WCSKeywordsImpl
-{
+public class WCSWrapper extends WCSKeywordsImpl {
     private static final long serialVersionUID = 201207161700L;
 
-    public WCSWrapper(SpatialWCS w, int axis1, int axis2)
-    {
+    public WCSWrapper(SpatialWCS w, int axis1, int axis2) {
         super();
         doPut("RADECSYS", w.coordsys);
         doPut("EQUINOX", w.equinox);
         doPut("NAXIS", new Integer(2));
-        doPut("CTYPE"+axis1, w.getAxis().getAxis1().getCtype());
-        doPut("CUNIT"+axis1, w.getAxis().getAxis1().getCunit());
-        doPut("CTYPE"+axis2, w.getAxis().getAxis2().getCtype());
-        doPut("CUNIT"+axis2, w.getAxis().getAxis2().getCunit());
+        doPut("CTYPE" + axis1, w.getAxis().getAxis1().getCtype());
+        doPut("CUNIT" + axis1, w.getAxis().getAxis1().getCunit());
+        doPut("CTYPE" + axis2, w.getAxis().getAxis2().getCtype());
+        doPut("CUNIT" + axis2, w.getAxis().getAxis2().getCunit());
 
         CoordFunction2D func = w.getAxis().function;
 
-        if (func != null)
-        {
-            doPut("NAXIS"+axis1, func.getDimension().naxis1);
-            doPut("CRPIX"+axis1, func.getRefCoord().getCoord1().pix);
-            doPut("CRVAL"+axis1, func.getRefCoord().getCoord1().val);
-            doPut("NAXIS"+axis2, func.getDimension().naxis2);
-            doPut("CRPIX"+axis2, func.getRefCoord().getCoord2().pix);
-            doPut("CRVAL"+axis2, func.getRefCoord().getCoord2().val);
+        if (func != null) {
+            doPut("NAXIS" + axis1, func.getDimension().naxis1);
+            doPut("CRPIX" + axis1, func.getRefCoord().getCoord1().pix);
+            doPut("CRVAL" + axis1, func.getRefCoord().getCoord1().val);
+            doPut("NAXIS" + axis2, func.getDimension().naxis2);
+            doPut("CRPIX" + axis2, func.getRefCoord().getCoord2().pix);
+            doPut("CRVAL" + axis2, func.getRefCoord().getCoord2().val);
             doPut("CD1_1", func.getCd11());
             doPut("CD1_2", func.getCd12());
             doPut("CD2_1", func.getCd21());
             doPut("CD2_2", func.getCd22());
-        }
-        else
+        } else {
             throw new UnsupportedOperationException("cannot wrap SpatialWCS: no SpatialWCS.axis.function");
+        }
     }
-    
-    public WCSWrapper(SpectralWCS w, int axis)
-    {
+
+    public WCSWrapper(SpectralWCS w, int axis) {
         super();
         doPut("NAXIS", new Integer(1));
-        doPut("CTYPE"+axis, w.getAxis().getAxis().getCtype());
-        doPut("CUNIT"+axis, w.getAxis().getAxis().getCunit());
+        doPut("CTYPE" + axis, w.getAxis().getAxis().getCtype());
+        doPut("CUNIT" + axis, w.getAxis().getAxis().getCunit());
         doPut("SPECSYS", w.getSpecsys());
         doPut("SSYSOBS", w.ssysobs);
         doPut("SSYSSRC", w.ssyssrc);
@@ -130,21 +125,20 @@ public class WCSWrapper extends WCSKeywordsImpl
 
         CoordFunction1D func = w.getAxis().function;
 
-        if (func != null)
-        {
-            doPut("NAXIS"+axis, func.getNaxis());
-            doPut("CRPIX"+axis, func.getRefCoord().pix);
-            doPut("CRVAL"+axis, func.getRefCoord().val);
-            doPut("CDELT"+axis, func.getDelta());
-        }
-        else
+        if (func != null) {
+            doPut("NAXIS" + axis, func.getNaxis());
+            doPut("CRPIX" + axis, func.getRefCoord().pix);
+            doPut("CRVAL" + axis, func.getRefCoord().val);
+            doPut("CDELT" + axis, func.getDelta());
+        } else {
             throw new UnsupportedOperationException("cannot wrap SpectralWCS: no SpectralWCS.axis.function");
+        }
     }
 
     // safely put non-null values intp the map
-    private void doPut(String key, Object val)
-    {
-        if (val != null)
+    private void doPut(String key, Object val) {
+        if (val != null) {
             map.put(key, val);
+        }
     }
 }

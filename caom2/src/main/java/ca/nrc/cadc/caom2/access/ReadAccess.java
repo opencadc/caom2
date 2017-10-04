@@ -79,85 +79,88 @@ import java.util.UUID;
  *
  * @author pdowler
  */
-public class ReadAccess extends CaomEntity implements Comparable<ReadAccess>
-{
+public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
     private static final long serialVersionUID = 201202081620L;
-    
+
     private UUID assetID;
 
     private URI groupID;
-    
-    private ReadAccess() { }
 
-    public ReadAccess(UUID assetID, URI groupID)
-    {
+    private ReadAccess() {
+    }
+
+    public ReadAccess(UUID assetID, URI groupID) {
         super(true);
         CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
         CaomValidator.assertNotNull(this.getClass(), "groupID", groupID);
         this.assetID = assetID;
         this.groupID = groupID;
         String name = getGroupName();
-        if (name == null)
-            throw new IllegalArgumentException("invalid groupID (no group name found in query string or fragment): " + groupID);
+        if (name == null) {
+            throw new IllegalArgumentException(
+                    "invalid groupID (no group name found in query string or fragment): "
+                            + groupID);
+        }
     }
 
-    public UUID getAssetID()
-    {
+    public UUID getAssetID() {
         return assetID;
     }
 
-    public URI getGroupID()
-    {
+    public URI getGroupID() {
         return groupID;
     }
-    
-    public final String getGroupName()
-    {
+
+    public final String getGroupName() {
         // canonical form: ivo://<authority>/<path>?<name>
-        
+
         String ret = groupID.getQuery();
-        if (StringUtil.hasText(ret))
+        if (StringUtil.hasText(ret)) {
             return ret;
-        
+        }
+
         // backwards compat
         ret = groupID.getFragment();
-        if (StringUtil.hasText(ret))
+        if (StringUtil.hasText(ret)) {
             return ret;
-        
+        }
+
         // temporary backwards compat for caom2ac usage hack
         return groupID.toASCIIString();
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if ( !this.getClass().equals(o.getClass()) ) // only exact class match
+        }
+        if (!this.getClass().equals(o.getClass())) {
             return false;
+        }
 
         ReadAccess ra = (ReadAccess) o;
         return this.groupID.equals(ra.groupID)
                 && this.assetID.equals(ra.assetID);
     }
 
-    public int compareTo(ReadAccess o)
-    {
+    public int compareTo(ReadAccess o) {
         // groupID,assetID,classname==permission type
         int ret = this.groupID.compareTo(o.groupID);
-        if (ret == 0)
+        if (ret == 0) {
             ret = this.assetID.compareTo(o.assetID);
-        if (ret == 0)
+        }
+        if (ret == 0) {
             ret = this.getClass().getName().compareTo(o.getClass().getName());
+        }
         return ret;
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName()
-                + "[" + assetID + "," + groupID + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + assetID + "," + groupID
+                + "]";
     }
 }

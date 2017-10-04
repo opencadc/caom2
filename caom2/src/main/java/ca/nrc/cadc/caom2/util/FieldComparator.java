@@ -78,12 +78,10 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public class FieldComparator implements Comparator<Field>, Serializable
-{
+public class FieldComparator implements Comparator<Field>, Serializable {
     private static final long serialVersionUID = 201202161700L;
 
-    public int compare(Field o1, Field o2)
-    {
+    public int compare(Field o1, Field o2) {
         return o1.getName().compareTo(o2.getName());
     }
 }

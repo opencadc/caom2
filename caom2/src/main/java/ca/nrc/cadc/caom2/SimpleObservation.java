@@ -69,15 +69,12 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-
 /**
  * A SimpleObservation is the result of observing with a telescope.
  * 
  * @author pdowler
  */
-public class SimpleObservation extends Observation
-{
+public class SimpleObservation extends Observation {
     private static final long serialVersionUID = 201704131000L;
 
     // Can be used as a default unless an algorithm is
@@ -86,15 +83,14 @@ public class SimpleObservation extends Observation
 
     /**
      * @param collection
-     * @param observationID 
+     * @param observationID
      */
-    public SimpleObservation(String collection, String observationID)
-    {
+    public SimpleObservation(String collection, String observationID) {
         super(collection, observationID, ALGORITHM);
     }
 
-    public SimpleObservation(String collection, String observationID, Algorithm algorithm)
-    {
+    public SimpleObservation(String collection, String observationID,
+            Algorithm algorithm) {
         super(collection, observationID, algorithm);
     }
 

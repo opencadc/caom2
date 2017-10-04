@@ -66,6 +66,7 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.viz;
 
 import ca.nrc.cadc.caom2.types.CartesianTransform;
@@ -85,20 +86,18 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
  * Simple drawing area widget for 2D graphics.
  *
- * @version $Revision: 1.7 $
  * @author $Author: jburke $
+ * @version $Revision: 1.7 $
  */
-public class DrawArea extends JPanel
-{
+public class DrawArea extends JPanel {
     private static final long serialVersionUID = 200002171500L;
-    
+
     private ArrayList shapes;
     private Shape fitShape;
     private AffineTransform trans = null;
@@ -106,7 +105,7 @@ public class DrawArea extends JPanel
     private String prefix;
     private boolean sexiCoords;
     private BufferedImage bimg;
-      
+
     //private double scale;
     private CartesianTransform geomTransform;
 
@@ -115,8 +114,7 @@ public class DrawArea extends JPanel
     private java.awt.geom.Point2D ptDst = new java.awt.geom.Point2D.Double();
     private ca.nrc.cadc.caom2.types.Point ptDisplay = new ca.nrc.cadc.caom2.types.Point();
 
-    public DrawArea(JLabel status, String statusPrefix, boolean sexiCoords)
-    {
+    public DrawArea(JLabel status, String statusPrefix, boolean sexiCoords) {
         super(true); // double-buffered
         this.prefix = statusPrefix;
         //this.sexiCoords = sexiCoords;
@@ -124,152 +122,116 @@ public class DrawArea extends JPanel
         statusField = status;
         makeGUI();
     }
-    
+
     /**
-     * 
      * @param prefix
      */
-    public void setPrefix(String prefix) 
-    {
+    public void setPrefix(String prefix) {
         this.prefix = prefix;
         clearMPD();
     }
-    public void setTransform(CartesianTransform trans)
-    {
+
+    public void setTransform(CartesianTransform trans) {
         this.geomTransform = trans;
     }
-    
-    private void makeGUI()
-    {
+
+    private void makeGUI() {
         setBackground(Color.white);
-        if (statusField != null)
-        {
-            addMouseListener( new MouseHandler() );
-            addMouseMotionListener( new MouseMotionHandler() );
+        if (statusField != null) {
+            addMouseListener(new MouseHandler());
+            addMouseMotionListener(new MouseMotionHandler());
         }
     }
-    
-    private void updateMPD(int x, int y)
-    {
-        if (trans == null)
+
+    private void updateMPD(int x, int y) {
+        if (trans == null) {
             return;
-        ptSrc.setLocation(x, y);
-        try
-        {
-            trans.inverseTransform(ptSrc, ptDst);
         }
-        catch(NoninvertibleTransformException ex)
-        {
+        ptSrc.setLocation(x, y);
+        try {
+            trans.inverseTransform(ptSrc, ptDst);
+        } catch (NoninvertibleTransformException ex) {
             System.out.println("Exception: " + ex);
             return;
         }
         ptDisplay.cval1 = ptDst.getX();
         ptDisplay.cval2 = ptDst.getY();
-        if (geomTransform != null)
+        if (geomTransform != null) {
             ptDisplay = geomTransform.transform(ptDisplay);
-        if (sexiCoords)
-        {
+        }
+        if (sexiCoords) {
             //String[] s = CoordUtil.degreesToSexigessimal(ptDisplay.cval1, ptDisplay.cval1);
             //statusField.setText(prefix + s[0] + "  " + s[1]);
-        }
-        else
-        {
+        } else {
             String sx = Double.toString(ptDisplay.cval1);
             String sy = Double.toString(ptDisplay.cval2);
             int ix = sx.length();
-            if (ix > 10)
-            {
+            if (ix > 10) {
                 ix = 10;
-                if (ptDst.getX() < 0.0)
+                if (ptDst.getX() < 0.0) {
                     ix++;
+                }
             }
             int iy = sy.length();
-            if (iy > 10)
-            {
+            if (iy > 10) {
                 iy = 10;
-                if (ptDst.getY() < 0.0)
+                if (ptDst.getY() < 0.0) {
                     iy++;
+                }
             }
             String s = sx.substring(0, ix) + "  ,  " + sy.substring(0, iy);
             statusField.setText(prefix + s);
         }
     }
+
     // clear the coordinate text
-    private void clearMPD()
-    {
-        if (statusField.getText().startsWith("exit") )
+    private void clearMPD() {
+        if (statusField.getText().startsWith("exit")) {
             return;
+        }
         statusField.setText(prefix);
     }
-    class MouseMotionHandler extends MouseMotionAdapter
-    {
-        public void mouseDragged(MouseEvent e)
-        {
-            updateMPD(e.getX(), e.getY());
-          }
-        public void mouseMoved(MouseEvent e)
-          {
-            updateMPD(e.getX(), e.getY());
-          }
-      }
 
-    class MouseHandler extends MouseAdapter
-     {
-        public void mousePressed(MouseEvent e)
-          {
-            // anything?
-          }
-        public void mouseReleased(MouseEvent e)
-          {
+    public void setFitShape(Shape s) {
+        this.fitShape = s;
+    }
 
-          }
-        public void mouseExited(MouseEvent e)
-          {
-            clearMPD();
-          }
-      }
-
-    public void setFitShape(Shape s) { this.fitShape = s; }
-    
-    
-    public void add(Shape shape, Color color, boolean fill)
-    {
+    public void add(Shape shape, Color color, boolean fill) {
         add(shape, color, fill, 1.0f);
     }
-    
-    public void add(Shape shape, Color color, boolean fill, float thickness)
-    {
-        shapes.add( new CShape(shape, color, fill, thickness) );
+
+    public void add(Shape shape, Color color, boolean fill, float thickness) {
+        shapes.add(new CShape(shape, color, fill, thickness));
     }
-    
+
     /**
      *
      */
-    public void clear() { shapes.clear(); }
-    
+    public void clear() {
+        shapes.clear();
+    }
+
     /**
-     * 
+     *
      */
-    public void paintComponent(Graphics g)
-    {
+    public void paintComponent(Graphics g) {
         Dimension d = getSize();
         Graphics2D g2 = createGraphics2D(d.width, d.height);
         render(g2);
         g2.dispose();
         g.drawImage(bimg, 0, 0, this);
-    }        
+    }
 
     /**
-     * 
      * @param w
      * @param h
      * @return
      */
-    public Graphics2D createGraphics2D(int w, int h) 
-    {
+    public Graphics2D createGraphics2D(int w, int h) {
         Graphics2D g2 = null;
-        if (bimg == null || bimg.getWidth() != w || bimg.getHeight() != h) 
+        if (bimg == null || bimg.getWidth() != w || bimg.getHeight() != h) {
             bimg = (BufferedImage) createImage(w, h);
+        }
 
         g2 = bimg.createGraphics();
         g2.setBackground(Color.WHITE);
@@ -278,49 +240,71 @@ public class DrawArea extends JPanel
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         return g2;
     }
-    
-    private void render(Graphics2D gc)
-    {
-        if (shapes.size() > 0)
-        {
+
+    private void render(Graphics2D gc) {
+        if (shapes.size() > 0) {
             Rectangle2D rect = null;
-            if (fitShape != null)
-                rect =  CoordSystemUtil.getBounds2D(new Shape[] { fitShape });
-            else
+            if (fitShape != null) {
+                rect = CoordSystemUtil.getBounds2D(new Shape[] {fitShape});
+            } else {
                 rect = CoordSystemUtil.getBounds2D(shapes);
-            double space = Math.max(rect.getWidth()*0.1, rect.getHeight()*0.1);
+            }
+            double space = Math.max(rect.getWidth() * 0.1, rect.getHeight() * 0.1);
 
             // try to get line thickness ~2 pixels
-            float thickness = (float) (1.0f * rect.getWidth() / ((float) this.getWidth())); 
-            
-            
-            AffineTransform orig = gc.getTransform();
+            float thickness = (float) (1.0f * rect.getWidth() / ((float) this.getWidth()));
+
             //CoordSystemUtil.setFittedEvenCoordSystem(gc, this, rect, space);
             CoordSystemUtil.setFittedCoordSystem(gc, this, rect, space);
             trans = gc.getTransform();
 
             //paintGrid(gc);
-            
+
             Iterator i = shapes.iterator();
-            while ( i.hasNext() )
-            {
+            while (i.hasNext()) {
                 CShape cs = (CShape) i.next();
-                gc.setStroke(new BasicStroke(thickness*cs.thickness));
+                gc.setStroke(new BasicStroke(thickness * cs.thickness));
                 paintShape(gc, cs.shape, cs.color, cs.fill);
             }
+            AffineTransform orig = gc.getTransform();
             gc.setTransform(orig);
         }
     }
 
     // paints a shape
-    private void paintShape(Graphics2D gc, Shape s, Color c, boolean fill)
-    {
+    private void paintShape(Graphics2D gc, Shape s, Color c, boolean fill) {
         gc.setPaint(c);
         gc.setColor(c);
-        if (fill)
+        if (fill) {
             gc.fill(s);
-        else
+        } else {
             gc.draw(s);
+        }
+    }
+
+    // package access to CoordSystemUtil.getBounds2D(List) can see this class
+    static class CShape {
+        public Shape shape;
+        public Color color;
+        public boolean fill;
+        public float thickness;
+
+        public CShape(Shape s, Color c, boolean f, float t) {
+            shape = s;
+            color = c;
+            fill = f;
+            thickness = t;
+        }
+    }
+
+    class MouseMotionHandler extends MouseMotionAdapter {
+        public void mouseDragged(MouseEvent e) {
+            updateMPD(e.getX(), e.getY());
+        }
+
+        public void mouseMoved(MouseEvent e) {
+            updateMPD(e.getX(), e.getY());
+        }
     }
     
     /*
@@ -335,19 +319,17 @@ public class DrawArea extends JPanel
     }
     */
 
-    // package access to CoordSystemUtil.getBounds2D(List) can see this class
-    static class CShape
-    {
-        public Shape shape;
-        public Color color;
-        public boolean fill;
-        public float thickness;
-        public CShape(Shape s, Color c, boolean f, float t)
-        {
-            shape = s;
-            color = c;
-            fill = f;
-            thickness = t;
+    class MouseHandler extends MouseAdapter {
+        public void mousePressed(MouseEvent e) {
+            // anything?
+        }
+
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        public void mouseExited(MouseEvent e) {
+            clearMPD();
         }
     }
 }

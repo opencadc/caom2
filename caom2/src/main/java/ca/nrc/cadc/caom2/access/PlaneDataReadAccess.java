@@ -76,12 +76,10 @@ import java.util.UUID;
  *
  * @author pdowler
  */
-public class PlaneDataReadAccess extends ReadAccess
-{
+public class PlaneDataReadAccess extends ReadAccess {
     private static final long serialVersionUID = 201202081620L;
-    
-    public PlaneDataReadAccess(UUID assetID, URI groupID)
-    {
+
+    public PlaneDataReadAccess(UUID assetID, URI groupID) {
         super(assetID, groupID);
     }
 }

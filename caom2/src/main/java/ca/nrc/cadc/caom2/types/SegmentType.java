@@ -76,48 +76,53 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public enum SegmentType implements CaomEnum<Integer>
-{
-    CLOSE(0),
-    LINE(1),
-    MOVE(2);
+public enum SegmentType implements CaomEnum<Integer> {
+    CLOSE(0), LINE(1), MOVE(2);
 
     private int value;
 
-    private SegmentType(int s) { this.value = s; }
-
-    public Integer getValue() { return value; }
-
-    public int checksum()
-    {
-       return value;
+    private SegmentType(int s) {
+        this.value = s;
     }
 
-    public static SegmentType toValue(int i)
-    {
-        switch(i)
-        {
-            case 0: return CLOSE;
-            case 1: return LINE;
-            case 2: return MOVE;
+    public Integer getValue() {
+        return value;
+    }
+
+    public int checksum() {
+        return value;
+    }
+
+    public static SegmentType toValue(int i) {
+        switch (i) {
+            case 0:
+                return CLOSE;
+            case 1:
+                return LINE;
+            case 2:
+                return MOVE;
+            default:
+                break;
         }
-        throw new IllegalArgumentException("invalid value: "+i);
+        throw new IllegalArgumentException("invalid value: " + i);
     }
 
-    public String stringValue()
-    {
-        if (this == CLOSE)
-           return "CLOSE";
-        if (this == LINE)
-           return "LINE";
-        if (this == MOVE)
+    public String stringValue() {
+        if (this == CLOSE) {
+            return "CLOSE";
+        }
+        if (this == LINE) {
+            return "LINE";
+        }
+        if (this == MOVE) {
             return "MOVE";
+        }
         throw new IllegalStateException("BUG: unexpected value: " + value);
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + value + "=" + stringValue() + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + value + "="
+                + stringValue() + "]";
     }
 }

@@ -127,7 +127,7 @@ public class CartesianTransformTest
             for (double a=Math.PI/2.0; a <= Math.PI; a += Math.PI/2.0)
             {
                 double increment = Math.toDegrees(a);
-                trans.a = a;
+                trans.angle = a;
                 inv = trans.getInverseTransform();
                 
                 v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
@@ -161,7 +161,7 @@ public class CartesianTransformTest
             trans.axis = CartesianTransform.Y;
             for (double a=Math.PI/4.0; a <= Math.PI/2.0; a += Math.PI/4.0)
             {
-                trans.a = a;
+                trans.angle = a;
                 inv = trans.getInverseTransform();
                 
                 v1 = new Vertex(2.0, 4.0, SegmentType.LINE);
@@ -197,7 +197,7 @@ public class CartesianTransformTest
         try
         {
             CartesianTransform trans = new CartesianTransform();
-            trans.a = Math.PI/2.0; // +180
+            trans.angle = Math.PI/2.0; // +180
             trans.axis = CartesianTransform.Z;
             
             MultiPolygon p1 = new MultiPolygon();
