@@ -89,7 +89,7 @@ public interface ArtifactStore {
      *            The artifact identifier.
      * @param checksum
      *            The checksum of the artifact.
-     * @returns True in the artifact exists with the given checksum.
+     * @return True in the artifact exists with the given checksum.
      *
      * @throws UnsupportedOperationException
      *             If the artifact uri cannot be resolved.
