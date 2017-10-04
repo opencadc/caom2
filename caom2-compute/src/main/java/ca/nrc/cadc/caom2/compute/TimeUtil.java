@@ -97,7 +97,8 @@ public final class TimeUtil {
     private static final String TARGET_CUNIT = "d";
     public static double DEFAULT_UNION_SCALE = 0.10;
 
-    private TimeUtil() {
+    private TimeUtil() 
+    {
     }
 
     public static Time compute(Set<Artifact> artifacts) {
