@@ -74,29 +74,23 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
  * @author pdowler
  */
-public class ComputeUtilTest 
-{
+public class ComputeUtilTest {
     private static final Logger log = Logger.getLogger(ComputeUtilTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", Level.INFO);
     }
-    
-    public ComputeUtilTest() { }
-    
+
+    public ComputeUtilTest() {
+    }
+
     @Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
             // TODO
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

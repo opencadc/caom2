@@ -70,8 +70,8 @@
 package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -91,51 +91,43 @@ import org.junit.Test;
 /**
  * @author pdowler
  */
-public class PolygonUtilTest
-{
+public class PolygonUtilTest {
     private static final Logger log = Logger.getLogger(PolygonUtilTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
+    public void testTemplate() {
+        try {
+            // TODO
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testUnionOverlap()
-    {
-        try
-        {
+    public void testUnionOverlap() {
+        try {
             MultiPolygon p1 = new MultiPolygon(); // 2x2 at 2,2
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             MultiPolygon p2 = new MultiPolygon(); // 2x2 at 3,3
-            p2.getVertices().add( new Vertex( 2.0, 2.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 4.0, 2.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 4.0, 4.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 2.0, 4.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             // area = 7 center=2.5,2.5
             MultiPolygon actual = PolygonUtil.doUnionCAG(p1, p2);
-            
+
             log.debug("testUnionDisjoint: " + p1);
             log.debug("testUnionDisjoint: " + p2);
             log.debug("testUnionDisjoint: " + actual);
@@ -144,7 +136,7 @@ public class PolygonUtilTest
             Assert.assertNotNull(actual);
             Assert.assertTrue(actual.isSimple());
             Assert.assertEquals(9, actual.getVertices().size());
-            
+
             Point center = actual.getCenter();
             Double area = actual.getArea();
 
@@ -154,32 +146,28 @@ public class PolygonUtilTest
 
             Assert.assertNotNull(area);
             Assert.assertEquals(7.0, area, 0.01);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testUnionDisjoint()
-    {
-        try
-        {
+    public void testUnionDisjoint() {
+        try {
             double x = 30.0;
             MultiPolygon p1 = new MultiPolygon(); // 2x2 at 2,2
-            p1.getVertices().add( new Vertex( x+1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( x+3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( x+3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( x+1.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(x + 1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(x + 3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(x + 3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(x + 1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             MultiPolygon p2 = new MultiPolygon(); // 2x2 at 6,6
-            p2.getVertices().add( new Vertex( x+5.0, 5.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( x+7.0, 5.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( x+7.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( x+5.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(x + 5.0, 5.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(x + 7.0, 5.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(x + 7.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(x + 5.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             // area = 8 center=4,4
             MultiPolygon actual = PolygonUtil.doUnionCAG(p1, p2);
@@ -187,7 +175,7 @@ public class PolygonUtilTest
             log.debug("testUnionDisjoint: " + p1);
             log.debug("testUnionDisjoint: " + p2);
             log.debug("testUnionDisjoint: " + actual);
-            
+
             Assert.assertNotNull(actual);
             Assert.assertFalse(actual.isSimple());
             Assert.assertEquals(10, actual.getVertices().size());
@@ -196,40 +184,36 @@ public class PolygonUtilTest
             Double area = actual.getArea();
 
             Assert.assertNotNull(center);
-            Assert.assertEquals(x+4.0, center.cval1, 0.02);
+            Assert.assertEquals(x + 4.0, center.cval1, 0.02);
             Assert.assertEquals(4.0, center.cval2, 0.02);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.02);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetConcaveHullFromHole()
-    {
-        try
-        {
+    public void testGetConcaveHullFromHole() {
+        try {
             // TODO: test polygon with a hole in it
             MultiPolygon p1 = new MultiPolygon(); // 3x3 at 2.5,2.5 with 1x1 hole in middle
             // outside: ccw
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 4.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 4.0, 4.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 4.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(4.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             // hole: cw
-            p1.getVertices().add( new Vertex( 2.0, 2.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 2.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 2.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(2.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 2.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             log.debug("testGetConcaveHullFromHole: " + p1);
-            
+
             Assert.assertFalse(p1.isSimple());
             Point center = p1.getCenter();
             Double area = p1.getArea();
@@ -251,35 +235,31 @@ public class PolygonUtilTest
 
             Assert.assertNotNull(area);
             Assert.assertEquals(9.0, area, 0.02);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetConcaveHullFromClose()
-    {
-        try
-        {
+    public void testGetConcaveHullFromClose() {
+        try {
             MultiPolygon p1 = new MultiPolygon(); // 2x2
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             MultiPolygon p2 = new MultiPolygon(); // 2x2 slightly to right
-            p2.getVertices().add( new Vertex( 3.1, 1.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 5.1, 1.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 5.1, 3.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 3.1, 3.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(3.1, 1.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(5.1, 1.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(5.1, 3.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(3.1, 3.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             log.debug("testGetConcaveHullFromClose: " + p1);
             log.debug("testGetConcaveHullFromClose: " + p2);
-            
+
             MultiPolygon union = PolygonUtil.doUnionCAG(p1, p2);
             Assert.assertNotNull(union);
             log.debug("testGetConcaveHullFromClose: " + union);
@@ -294,7 +274,7 @@ public class PolygonUtilTest
             Assert.assertEquals(8.0, area, 0.01); // 4 + 4
 
             log.debug("computing concave hull from " + union);
-            
+
             Polygon actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.info("testGetConcaveHullFromClose: " + actual);
@@ -307,15 +287,15 @@ public class PolygonUtilTest
             Assert.assertEquals(2.0, center.cval2, 0.01);
 
             Assert.assertNotNull(area);
-            Assert.assertEquals(8.0 + 2*0.1, area, 0.1); // 4 + 4 + gap
+            Assert.assertEquals(8.0 + 2 * 0.1, area, 0.1); // 4 + 4 + gap
 
             // more complex scenario: p2 slightly to the right and up by 1
             p2 = new MultiPolygon(); // 2x2 slightly to right
-            p2.getVertices().add( new Vertex( 3.02, 2.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 5.02, 2.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 5.02, 4.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 3.02, 4.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(3.02, 2.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(5.02, 2.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(5.02, 4.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(3.02, 4.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             log.debug("testGetConcaveHullFromClose: " + p1);
             log.debug("testGetConcaveHullFromClose: " + p2);
@@ -347,32 +327,28 @@ public class PolygonUtilTest
             Assert.assertEquals(2.5, center.cval2, 0.01);
 
             Assert.assertNotNull(area);
-            Assert.assertEquals(8.0 + 2*0.02, area, 0.1); // 4 + 4 + gap
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertEquals(8.0 + 2 * 0.02, area, 0.1); // 4 + 4 + gap
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetConcaveHullFromFar()
-    {
-        try
-        {
+    public void testGetConcaveHullFromFar() {
+        try {
             MultiPolygon p1 = new MultiPolygon(); // 2x2
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             MultiPolygon p2 = new MultiPolygon(); // 2x2 above and to the right
-            p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 7.0, 5.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(5.0, 5.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(5.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(7.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(7.0, 5.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             log.debug("testGetConcaveHullFromFar: " + p1);
             log.debug("testGetConcaveHullFromFar: " + p2);
@@ -394,31 +370,27 @@ public class PolygonUtilTest
 
             Polygon actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNull(actual);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetConvexHull()
-    {
-        try
-        {
+    public void testGetConvexHull() {
+        try {
             MultiPolygon p1 = new MultiPolygon(); // 2x2
-            p1.getVertices().add( new Vertex( 1.0, 1.0, SegmentType.MOVE));
-            p1.getVertices().add( new Vertex( 3.0, 1.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 3.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex( 1.0, 3.0, SegmentType.LINE));
-            p1.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p1.getVertices().add(new Vertex(1.0, 1.0, SegmentType.MOVE));
+            p1.getVertices().add(new Vertex(3.0, 1.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(1.0, 3.0, SegmentType.LINE));
+            p1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             MultiPolygon p2 = new MultiPolygon(); // 2x2 above and to the right
-            p2.getVertices().add( new Vertex( 5.0, 5.0, SegmentType.MOVE));
-            p2.getVertices().add( new Vertex( 5.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 7.0, 7.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex( 7.0, 5.0, SegmentType.LINE));
-            p2.getVertices().add( new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            p2.getVertices().add(new Vertex(5.0, 5.0, SegmentType.MOVE));
+            p2.getVertices().add(new Vertex(5.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(7.0, 7.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(7.0, 5.0, SegmentType.LINE));
+            p2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             log.debug("testGetConvexHull: " + p1);
             log.debug("testGetConvexHull: " + p2);
@@ -449,28 +421,24 @@ public class PolygonUtilTest
 
             Assert.assertNotNull(area);
             Assert.assertEquals(20.0, area, 0.1); // 4 + 4 + 12
-            
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetCutoutFromCircle()
-    {
-        try
-        {
+    public void testGetCutoutFromCircle() {
+        try {
             CoordAxis2D axis = new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg"));
             SpatialWCS wcs = new SpatialWCS(axis);
             wcs.getAxis().function = new CoordFunction2D(
-                    new Dimension2D(1000L, 1000L),
-                    new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
-                    1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
+                new Dimension2D(1000L, 1000L),
+                new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
+                1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
 
-            Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 r~50 pix
+            Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 radius~50 pix
 
             long[] cutout = CutoutUtil.getPositionBounds(wcs, c);
             Assert.assertNotNull("cutout", cutout);
@@ -479,30 +447,26 @@ public class PolygonUtilTest
             Assert.assertEquals(300, cutout[1], 5);
             Assert.assertEquals(450, cutout[2], 5);
             Assert.assertEquals(550, cutout[3], 5);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetBoundsFromMultiPolygon()
-    {
-        try
-        {
+    public void testGetBoundsFromMultiPolygon() {
+        try {
             CoordAxis2D axis = new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg"));
             SpatialWCS wcs = new SpatialWCS(axis);
             wcs.getAxis().function = new CoordFunction2D(
-                    new Dimension2D(1000L, 1000L),
-                    new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
-                    1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
+                new Dimension2D(1000L, 1000L),
+                new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
+                1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
 
             MultiPolygon p = new MultiPolygon();
-            p.getVertices().add(new Vertex(9.9,19.9, SegmentType.MOVE));
-            p.getVertices().add(new Vertex(10.1,20.1, SegmentType.LINE));
-            p.getVertices().add(new Vertex(9.8,20.2, SegmentType.LINE));
+            p.getVertices().add(new Vertex(9.9, 19.9, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(10.1, 20.1, SegmentType.LINE));
+            p.getVertices().add(new Vertex(9.8, 20.2, SegmentType.LINE));
             p.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
 
             long[] cutout = CutoutUtil.getPositionBounds(wcs, p);
@@ -512,9 +476,7 @@ public class PolygonUtilTest
             Assert.assertEquals(600, cutout[1], 5);
             Assert.assertEquals(400, cutout[2], 5);
             Assert.assertEquals(700, cutout[3], 5);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

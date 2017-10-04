@@ -77,34 +77,34 @@ import org.apache.log4j.Logger;
 /**
  * Utility class to assign values to fields marked with the computed stereotype
  * in the data model.
- * 
+ *
  * @author pdowler
  */
-public class ComputeUtil 
-{
+public class ComputeUtil {
     private static final Logger log = Logger.getLogger(ComputeUtil.class);
     public static final double MAX_SANE_AREA = 250.0; // square degrees, CGPS has 235
 
-    private ComputeUtil() { }
-    
+    private ComputeUtil() {
+    }
+
     /**
      * Clear computed plane metadata.
-     * @deprecated 
+     *
+     * @deprecated
      */
-    public static void clearTransientState(Plane p)
-    {
+    public static void clearTransientState(Plane p) {
         p.position = null;
         p.energy = null;
         p.time = null;
         p.polarization = null;
     }
-    
+
     /**
      * Compute plane metadata from WCS.
-     * @deprecated 
+     *
+     * @deprecated
      */
-    public static void computeTransientState(Observation o, Plane p)
-    {
+    public static void computeTransientState(Observation o, Plane p) {
         computePosition(p);
         computeEnergy(p);
         computeTime(p);
@@ -112,45 +112,31 @@ public class ComputeUtil
     }
 
 
-    private static void computePosition(Plane p)
-    {
-        try
-        {
+    private static void computePosition(Plane p) {
+        try {
             p.position = PositionUtil.compute(p.getArtifacts());
-        }
-        catch(NoSuchKeywordException ex)
-        {
+        } catch (NoSuchKeywordException ex) {
             throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
+        } catch (WCSLibRuntimeException ex) {
             throw new IllegalArgumentException("failed to compute Plane.position", ex);
         }
     }
 
-    private static void computeEnergy(Plane p)
-    {
-        try
-        {
+    private static void computeEnergy(Plane p) {
+        try {
             p.energy = EnergyUtil.compute(p.getArtifacts());
-        }
-        catch(NoSuchKeywordException ex)
-        {
+        } catch (NoSuchKeywordException ex) {
             throw new IllegalArgumentException("failed to compute Plane.energy", ex);
-        }
-        catch(WCSLibRuntimeException ex)
-        {
+        } catch (WCSLibRuntimeException ex) {
             throw new IllegalArgumentException("failed to compute Plane.energy", ex);
         }
     }
 
-    private static void computeTime(Plane p)
-    {
+    private static void computeTime(Plane p) {
         p.time = TimeUtil.compute(p.getArtifacts());
     }
 
-    private static void computePolarization(Plane p)
-    {
+    private static void computePolarization(Plane p) {
         p.polarization = PolarizationUtil.compute(p.getArtifacts());
     }
 
