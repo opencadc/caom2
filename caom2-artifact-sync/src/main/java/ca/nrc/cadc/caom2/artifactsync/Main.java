@@ -69,11 +69,6 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
@@ -82,85 +77,68 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 
+import javax.security.auth.Subject;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
  *
  * @author majorb
  */
-public class Main
-{
+public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
 
-    public static void main(String[] args)
-    {
-        try
-        {
+    public static void main(String[] args) {
+        try {
             ArgumentMap am = new ArgumentMap(args);
 
-            if (am.isSet("d") || am.isSet("debug"))
-            {
+            if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
-            }
-            else if (am.isSet("v") || am.isSet("verbose"))
-            {
+            } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
-            }
-            else
-            {
+            } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
 
             }
 
-            if (am.isSet("h") || am.isSet("help"))
-            {
+            if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
             }
 
-            boolean dryrun = am.isSet("dryrun");
-
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
-            if (am.isSet("netrc"))
-            {
+            if (am.isSet("netrc")) {
                 subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            }
-            else if (am.isSet("cert"))
-            {
+            } else if (am.isSet("cert")) {
                 subject = CertCmdArgUtil.initSubject(am);
             }
-            if (subject != null)
-            {
+            if (subject != null) {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
 
-
             String dbParam = am.getValue("database");
-            if (dbParam == null)
-            {
+            if (dbParam == null) {
                 log.error("Must specify database information.");
                 System.exit(-1);
             }
-            String[] dbInfo = dbParam.split("[.]");
 
             int nthreads = 1;
-            if (am.isSet("threads"))
-            {
-                try
-                {
+            if (am.isSet("threads")) {
+                try {
                     nthreads = Integer.parseInt(am.getValue("threads"));
-                }
-                catch (NumberFormatException nfe)
-                {
+                } catch (NumberFormatException nfe) {
                     log.error("Illegal value for --threads: " + am.getValue("threads"));
                     System.exit(-1);
                 }
@@ -171,73 +149,60 @@ public class Main
 
             String asClassName = am.getValue("artifactStore");
             ArtifactStore artifactStore = null;
-            if (asClassName == null)
-            {
+            if (asClassName == null) {
                 log.error("Must specify artifactStore.");
                 System.exit(-1);
             }
-            try
-            {
+            try {
                 log.debug("Artifact store class: " + asClassName);
                 Class<?> asClass = Class.forName(asClassName);
                 artifactStore = (ArtifactStore) asClass.newInstance();
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.error("Failed to load " + asClassName, e);
                 System.exit(-1);
             }
 
-
             // Waiting for a public constructor in ArtifactDAO.
-            //ArtifactDAO artifactDAO = new ArtifactDAO();
+            // ArtifactDAO artifactDAO = new ArtifactDAO();
 
-            Runnable harvester = new ArtifactHarvester(/*artifactDAO,*/ dbInfo, artifactStore, dryrun);
-            Runnable downloader = new DownloadArtifactFiles(/*artifactDAO,*/ dbInfo, artifactStore, dryrun, nthreads);
+            boolean dryrun = am.isSet("dryrun");
+            String[] dbInfo = dbParam.split("[.]");
+            Runnable harvester = new ArtifactHarvester(/* artifactDAO, */ dbInfo, artifactStore, dryrun);
+            Runnable downloader = new DownloadArtifactFiles(/* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads);
 
-            if (subject != null)
-            {
+            if (subject != null) {
                 Subject.doAs(subject, new RunnableAction(harvester));
                 Subject.doAs(subject, new RunnableAction(downloader));
-            }
-            else // anon
-            {
+            } else { // anon
                 harvester.run();
                 downloader.run();
             }
 
             exitValue = 0; // finished cleanly
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             log.error("uncaught exception", t);
             exitValue = -1;
             System.exit(exitValue);
-        }
-        finally
-        {
+        } finally {
             System.exit(exitValue);
         }
     }
 
-    private static class ShutdownHook implements Runnable
-    {
+    private static class ShutdownHook implements Runnable {
 
-        ShutdownHook()
-        {
+        ShutdownHook() {
         }
 
         @Override
-        public void run()
-        {
-            if (exitValue != 0)
+        public void run() {
+            if (exitValue != 0) {
                 log.error("terminating with exit status " + exitValue);
+            }
         }
 
     }
 
-    private static void usage()
-    {
+    private static void usage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n     --artifactStore= fully qualified class name");

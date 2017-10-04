@@ -69,17 +69,14 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-public class DownloadArtifactFiles implements Runnable
-{
+public class DownloadArtifactFiles implements Runnable {
 
-    public DownloadArtifactFiles(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int threads)
-    {
+    public DownloadArtifactFiles(/* ArtifactDAO artifactDAO, */ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int threads) {
         // TBD
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         // TBD
     }
 

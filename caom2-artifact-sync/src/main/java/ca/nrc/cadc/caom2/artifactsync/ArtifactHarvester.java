@@ -69,39 +69,35 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 
-public class ArtifactHarvester implements Runnable
-{
+import org.apache.log4j.Logger;
+
+public class ArtifactHarvester implements Runnable {
 
     private static final Integer SKIPDAO_BATCH_SIZE = Integer.valueOf(1000);
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
-    //private ArtifactDAO artifactDAO;
+    // private ArtifactDAO artifactDAO;
     private ArtifactStore artifactStore;
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private boolean dryrun;
 
-
-    public ArtifactHarvester(/*ArtifactDAO artifactDAO,*/ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun)
-    {
-        //this.artifactDAO = artifactDAO;
+    public ArtifactHarvester(/* ArtifactDAO artifactDAO, */ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun) {
+        // this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
         this.dryrun = dryrun;
 
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(/*artifactDAO.getDatasource()*/null, dbInfo[1], dbInfo[2], SKIPDAO_BATCH_SIZE);
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(/* artifactDAO.getDatasource() */null, dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(/* artifactDAO.getDatasource() */null, dbInfo[1], dbInfo[2], SKIPDAO_BATCH_SIZE);
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         // TODO: Use the ArtifactDAO to find artifacts with
         // maxLastModified > last run.
 
