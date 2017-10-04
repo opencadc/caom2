@@ -88,43 +88,33 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.Log4jInit;
 
-public class RepoClientTest
-{
+public class RepoClientTest {
 
     private static final Logger log = Logger.getLogger(RepoClientTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
         // Log4jInit.setLevel("ca.nrc.cadc.reg", Level.DEBUG);
     }
 
     // @Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetObservationList()
-    {
-        try
-        {
+    public void testGetObservationList() {
+        try {
             Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
                 @Override
-                public Object run() throws Exception
-                {
+                public Object run() throws Exception {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
@@ -143,26 +133,20 @@ public class RepoClientTest
                     return null;
                 }
             });
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetObservationListStsci()
-    {
-        try
-        {
+    public void testGetObservationListStsci() {
+        try {
             Subject s = AuthenticationUtil.getAnonSubject();
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
                 @Override
-                public Object run() throws Exception
-                {
+                public Object run() throws Exception {
                     RepoClient repoC = new RepoClient(URI.create("ivo://mast.stsci.edu/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("HST", null, null, 5);
@@ -171,26 +155,20 @@ public class RepoClientTest
                     return null;
                 }
             });
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetObservationListDenied()
-    {
-        try
-        {
+    public void testGetObservationListDenied() {
+        try {
             Subject s = AuthenticationUtil.getAnonSubject();
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
                 @Override
-                public Object run() throws Exception
-                {
+                public Object run() throws Exception {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
@@ -199,30 +177,22 @@ public class RepoClientTest
                     return null;
                 }
             });
-        }
-        catch (AccessControlException expected)
-        {
+        } catch (AccessControlException expected) {
             log.info("caught expected exception: " + expected);
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetList()
-    {
-        try
-        {
+    public void testGetList() {
+        try {
             Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
                 @Override
-                public Object run() throws Exception
-                {
+                public Object run() throws Exception {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationResponse> list = repoC.getList("IRIS", null, null, 5);
@@ -241,26 +211,20 @@ public class RepoClientTest
                     return null;
                 }
             });
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGet()
-    {
-        try
-        {
+    public void testGet() {
+        try {
             Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
                 @Override
-                public Object run() throws Exception
-                {
+                public Object run() throws Exception {
                     RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     ObservationResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
@@ -270,9 +234,7 @@ public class RepoClientTest
                     return null;
                 }
             });
-        }
-        catch (Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

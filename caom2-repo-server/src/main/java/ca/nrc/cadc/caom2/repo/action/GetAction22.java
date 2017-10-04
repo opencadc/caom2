@@ -69,46 +69,42 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.List;
-
-import com.csvreader.CsvWriter;
-
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 
+import com.csvreader.CsvWriter;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.List;
+
 /**
  * For CAOM 2.2 support.
  */
-public class GetAction22 extends GetAction
-{
+public class GetAction22 extends GetAction {
 
     /**
      * Return the CAOM 2.2 version of the observation writer.
      */
     @Override
-    protected ObservationWriter getObservationWriter()
-    {
+    protected ObservationWriter getObservationWriter() {
         return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
 
     /**
-     * Write in CSV format
+     * Write in CSV format.
      */
     @Override
-    protected long writeObservationList(List<ObservationState> states) throws IOException
-    {
+    protected long writeObservationList(List<ObservationState> states) throws IOException {
         // write in csv format for now
         syncOutput.setHeader("Content-Type", "text/csv");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
-        for (ObservationState state : states)
-        {
+        for (ObservationState state : states) {
             writer.write(state.getURI().getObservationID());
             writer.write(df.format(state.maxLastModified));
             writer.endRecord();

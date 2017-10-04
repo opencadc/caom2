@@ -69,13 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import java.security.AccessControlException;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
-
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.repo.TestSyncOutput;
 import ca.nrc.cadc.log.WebServiceLogInfo;
@@ -83,29 +76,29 @@ import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Log4jInit;
 
+import java.security.AccessControlException;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+
+
 /**
  *
  * @author pdowler
  */
-public class RepoActionTest 
-{
+public class RepoActionTest {
     private static final Logger log = Logger.getLogger(RepoActionTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
+    // @Test
+    public void testTemplate() {
+        try {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -114,14 +107,11 @@ public class RepoActionTest
     // test the exception handling in RepoAction.run()
 
     @Test
-    public void testObservationNotFoundException()
-    {
-        try
-        {
+    public void testObservationNotFoundException() {
+        try {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(
-                new ResourceNotFoundException("Observation not found: " + uri));
+            TestAction ta = new TestAction(new ResourceNotFoundException("Observation not found: " + uri));
             ta.setSyncOutput(out);
 
             ta.run();
@@ -129,23 +119,18 @@ public class RepoActionTest
             String msg = "Observation not found: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testAccessControlException()
-    {
-        try
-        {
+    public void testAccessControlException() {
+        try {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(
-                    new AccessControlException("permission denied: message"));
+            TestAction ta = new TestAction(new AccessControlException("permission denied: message"));
             ta.setSyncOutput(out);
 
             ta.run();
@@ -153,19 +138,15 @@ public class RepoActionTest
             String msg = "permission denied: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testIllegalArgumentException()
-    {
-        try
-        {
+    public void testIllegalArgumentException() {
+        try {
             TestSyncOutput out = new TestSyncOutput();
             TestAction ta = new TestAction(new IllegalArgumentException("testIllegalArgumentException message"));
             ta.setSyncOutput(out);
@@ -175,23 +156,18 @@ public class RepoActionTest
             String msg = "testIllegalArgumentException message";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testObservationAlreadyExistsException()
-    {
-        try
-        {
+    public void testObservationAlreadyExistsException() {
+        try {
             TestSyncOutput out = new TestSyncOutput();
             ObservationURI uri = new ObservationURI("FOO", "bar");
-            TestAction ta = new TestAction(new 
-                   ResourceAlreadyExistsException("Observation already exists: " + uri));
+            TestAction ta = new TestAction(new ResourceAlreadyExistsException("Observation already exists: " + uri));
             ta.setSyncOutput(out);
 
             ta.run();
@@ -199,34 +175,28 @@ public class RepoActionTest
             String msg = "Observation already exists: ";
             String actual = out.getContent().substring(0, msg.length());
             Assert.assertEquals(msg, actual);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    private class TestLogInfo extends WebServiceLogInfo
-    {
-        
+    private class TestLogInfo extends WebServiceLogInfo {
+
     }
 
     // simple test subclass that throws
-    private class TestAction extends RepoAction
-    {
+    private class TestAction extends RepoAction {
         private Exception ex;
 
-        TestAction(Exception ex)
-        {
-        	super();
+        TestAction(Exception ex) {
+            super();
             this.ex = ex;
             setLogInfo(new TestLogInfo());
         }
 
         @Override
-        public void doAction() throws Exception
-        {
+        public void doAction() throws Exception {
             throw ex;
         }
     }
