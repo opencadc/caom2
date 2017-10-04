@@ -67,6 +67,8 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.caom2.compute.convex.GrahamScan;
+import ca.nrc.cadc.caom2.compute.convex.SortablePoint2D;
 import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
@@ -76,8 +78,6 @@ import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.caom2.types.impl.GrahamScan;
-import ca.nrc.cadc.caom2.types.impl.SortablePoint2D;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
@@ -1081,7 +1081,7 @@ public final class PolygonUtil {
         SegmentType t = SegmentType.MOVE;
         GrahamScan gs = new GrahamScan(points);
         for (SortablePoint2D p : gs.hull()) {
-            ret.getVertices().add(new Vertex(p.x(), p.y(), t));
+            ret.getVertices().add(new Vertex(p.getX(), p.getY(), t));
             t = SegmentType.LINE;
         }
         ret.getVertices().add(Vertex.CLOSE);

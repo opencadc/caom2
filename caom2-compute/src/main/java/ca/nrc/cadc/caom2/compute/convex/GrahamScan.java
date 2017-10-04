@@ -6,8 +6,6 @@
 
 package ca.nrc.cadc.caom2.compute.convex;
 
-import ca.nrc.cadc.caom2.types.impl.SortablePoint2D;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Stack;
