@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import ca.nrc.cadc.rest.SyncOutput;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,64 +79,56 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.rest.SyncOutput;
 
 /**
  *
  * @author pdowler
  */
-public class TestSyncOutput extends SyncOutput
-{
+public class TestSyncOutput extends SyncOutput {
     private int code;
-    private Map<String,Object> headers = new TreeMap<String,Object>();
+    private Map<String, Object> headers = new TreeMap<String, Object>();
     private static final Logger log = Logger.getLogger(TestSyncOutput.class);
 
-    public TestSyncOutput() { super(null); }
+    public TestSyncOutput() {
+        super(null);
+    }
 
     private OutputStream outputStream;
-    
+
     @Override
-    public OutputStream getOutputStream() throws IOException
-    {
-        if (outputStream == null)
-        {
+    public OutputStream getOutputStream() throws IOException {
+        if (outputStream == null) {
             outputStream = new ByteArrayOutputStream();
         }
         return outputStream;
     }
 
     @Override
-    public boolean isOpen()
-    {
+    public boolean isOpen() {
         return super.isOpen();
     }
 
     @Override
-    public void setCode(int code)
-    {
+    public void setCode(int code) {
         this.code = code;
     }
 
     @Override
-    public void setHeader(String key, Object value)
-    {
+    public void setHeader(String key, Object value) {
         this.headers.put(key, value);
     }
 
-    public String getContent()
-    {
+    public String getContent() {
         ByteArrayOutputStream myOut = (ByteArrayOutputStream) outputStream;
         byte[] bytes = myOut.toByteArray();
         return new String(bytes);
     }
 
-    public int getCode()
-    {
+    public int getCode() {
         return code;
     }
 
-    public Map<String, Object> getHeaders()
-    {
+    public Map<String, Object> getHeaders() {
         return headers;
     }
 }

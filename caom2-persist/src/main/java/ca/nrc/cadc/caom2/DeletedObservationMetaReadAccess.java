@@ -70,17 +70,15 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+
 import java.util.Date;
 import java.util.UUID;
 
 /**
- *
  * @author pdowler
  */
-public class DeletedObservationMetaReadAccess extends DeletedEntity
-{
-    public DeletedObservationMetaReadAccess(UUID id, Date lastModified)
-    {
+public class DeletedObservationMetaReadAccess extends DeletedEntity {
+    public DeletedObservationMetaReadAccess(UUID id, Date lastModified) {
         super(ObservationMetaReadAccess.class, id, lastModified);
     }
 }

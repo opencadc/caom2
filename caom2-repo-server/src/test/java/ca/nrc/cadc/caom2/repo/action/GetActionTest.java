@@ -74,6 +74,16 @@ import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.repo.TestSyncOutput;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.SyncInput;
+import ca.nrc.cadc.util.Log4jInit;
+
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlException;
@@ -81,7 +91,6 @@ import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -97,16 +106,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.TestSyncOutput;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.SyncInput;
-import ca.nrc.cadc.util.Log4jInit;
-
 
 /**
  *
@@ -114,52 +113,42 @@ import ca.nrc.cadc.util.Log4jInit;
  */
 
 @RunWith(EasyMockRunner.class)
-public class GetActionTest
-{
+public class GetActionTest {
     private static final Logger log = Logger.getLogger(GetActionTest.class);
 
     private ObservationDAO mockDao;
 
-
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         mockDao = EasyMock.createMock(MockType.NICE, ObservationDAO.class);
     }
 
-    @Test(expected=ResourceNotFoundException.class)
-    public void testCollectionNotFoundException() throws Exception
-    {
+    @Test(expected = ResourceNotFoundException.class)
+    public void testCollectionNotFoundException() throws Exception {
 
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-
-        GetAction getAction = new TestGetAction(mockDao);
 
         reset(mockDao);
         expect(mockRequest.getMethod()).andReturn("GET");
         expect(mockRequest.getPathInfo()).andReturn("/BLAH");
-        expect(mockDao.getObservationList("BLAH", null, null, null, true))
-            .andReturn(null);
+        expect(mockDao.getObservationList("BLAH", null, null, null, true)).andReturn(null);
 
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
         replay(mockDao, mockRequest);
+        GetAction getAction = new TestGetAction(mockDao);
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
     }
 
     @Test
-    public void testDoIt() throws Exception
-    {
+    public void testDoIt() throws Exception {
         // test the doIt method when it returns 2 observations
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT,
-                DateUtil.UTC);
 
         GetAction getAction = new TestGetAction(mockDao);
         TestSyncOutput out = new TestSyncOutput();
@@ -173,34 +162,33 @@ public class GetActionTest
         // build the list of observations for the mock dao to return
         List<ObservationState> obsList = new ArrayList<ObservationState>();
 
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ObservationState os1 = new ObservationState(new ObservationURI("TEST", "1234"));
         os1.maxLastModified = df.parse("2010-10-10T10:10:10.10");
         os1.accMetaChecksum = URI.create("md5:5b71d023d4729575d550536dce8439e6");
         obsList.add(os1);
-        
+
         ObservationState os2 = new ObservationState(new ObservationURI("TEST", "6789"));
         os2.maxLastModified = df.parse("2011-11-11T11:11:11.111");
         os2.accMetaChecksum = URI.create("md5:aedbcf5e27a17fc2daa5a0e0d7840009");
         obsList.add(os2);
-        
+
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
 
         // since no maxRec argument given, expect the default one
-        expect(mockDao.getObservationList("TEST", null, null,
-                GetAction.MAX_OBS_LIST_SIZE, true)).andReturn(obsList);
+        expect(mockDao.getObservationList("TEST", null, null, GetAction.MAX_OBS_LIST_SIZE, true)).andReturn(obsList);
 
         replay(mockDao, mockRequest);
 
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
 
-        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(os1.maxLastModified) + "\t" + os1.accMetaChecksum.toString() + "\n" +
-                          "TEST" + "\t" + "6789" + "\t" + df.format(os2.maxLastModified) + "\t" + os2.accMetaChecksum.toString() + "\n";
+        String expected = "TEST" + "\t" + "1234" + "\t" + df.format(os1.maxLastModified) + "\t" + os1.accMetaChecksum.toString() + "\n" + "TEST" + "\t" + "6789"
+                + "\t" + df.format(os2.maxLastModified) + "\t" + os2.accMetaChecksum.toString() + "\n";
         String content = out.getContent();
         log.debug("\n--list content start--\n" + content + "\n--list content end--");
         Assert.assertEquals(expected, content);
-
 
         // repeat test when start, end, maxRec and ascendingOrder specified
         getAction = new TestGetAction(mockDao);
@@ -218,20 +206,16 @@ public class GetActionTest
         keys.add("MAXREC");
         keys.add("Start");
         keys.add("end");
+        params = Collections.enumeration(keys);
         String startDate = "2010-10-10T10:10:10.1";
         String endDate = "2011-11-11T11:11:11.111";
-        params = Collections.enumeration(keys);
         expect(mockRequest.getParameterNames()).andReturn(params);
-        expect(mockRequest.getParameterValues("MAXREC")).
-            andReturn(new String[]{"3"});
-        expect(mockRequest.getParameterValues("Start")).
-            andReturn(new String[]{startDate});
-        expect(mockRequest.getParameterValues("end")).
-            andReturn(new String[]{endDate});
+        expect(mockRequest.getParameterValues("MAXREC")).andReturn(new String[] { "3" });
+        expect(mockRequest.getParameterValues("Start")).andReturn(new String[] { startDate });
+        expect(mockRequest.getParameterValues("end")).andReturn(new String[] { endDate });
 
         // all arguments given
-        expect(mockDao.getObservationList("TEST", df.parse(startDate),
-                df.parse(endDate), 3, true)).andReturn(obsList);
+        expect(mockDao.getObservationList("TEST", df.parse(startDate), df.parse(endDate), 3, true)).andReturn(obsList);
 
         replay(mockDao, mockRequest);
 
@@ -240,34 +224,26 @@ public class GetActionTest
         Assert.assertEquals(expected, out.getContent());
     }
 
-
-
-    private class TestLogInfo extends WebServiceLogInfo
-    {
+    private class TestLogInfo extends WebServiceLogInfo {
 
     }
 
     // simple test subclass that mocks checkReadPermission to always return true
-    private class TestGetAction extends GetAction
-    {
+    private class TestGetAction extends GetAction {
         ObservationDAO dao;
 
-        TestGetAction(ObservationDAO dao)
-        {
+        TestGetAction(ObservationDAO dao) {
             super();
             setLogInfo(new TestLogInfo());
             this.dao = dao;
         }
 
         @Override
-        protected void checkReadPermission(String collection)
-                throws AccessControlException, CertificateException,
-                       ResourceNotFoundException, IOException
-        { }
+        protected void checkReadPermission(String collection) throws AccessControlException, CertificateException, ResourceNotFoundException, IOException {
+        }
 
         @Override
-        protected ObservationDAO getDAO()
-        {
+        protected ObservationDAO getDAO() {
             return dao;
         }
     }

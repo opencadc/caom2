@@ -69,6 +69,20 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.Log4jInit;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -88,125 +102,96 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.Log4jInit;
-
 /**
  * Integration tests for caom2repo_ws
  *
  * @author majorb
- *
  */
-public class CaomRepoBaseIntTests
-{
+class CaomRepoBaseIntTests {
 
     private static final Logger log = Logger.getLogger(CaomRepoBaseIntTests.class);
 
-    protected final String TEST_COLLECTION = "TEST";
+    static final String TEST_COLLECTION = "TEST";
 
     // subject1 has read/write privilege on the TEST collection
-    protected final Subject SUBJECT1;
+    final Subject subject1;
 
     // subject2 has read privilege on the TEST collection
-    protected final Subject SUBJECT2;
+    final Subject subject2;
 
     // subject3 has not read or write permission on the TEST collection
-    protected final Subject SUBJECT3;
+    final Subject subject3;
 
-    protected final URL AVAIL_URL;
-    public final String BASE_HTTP_URL;
-    public final String BASE_HTTPS_URL;
+    final String baseHTTPURL;
+    final String baseHTTPSURL;
 
-    protected final String SCHEME = "caom:";
+    static final String SCHEME = "caom:";
 
     // service should be written to output documents with this version
     private static final String TEXT_XML = "text/xml";
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    protected CaomRepoBaseIntTests()
-    {
-    	SUBJECT1 = null;
-    	SUBJECT2 = null;
-    	SUBJECT3 = null;
-    	AVAIL_URL = null;
-    	BASE_HTTP_URL = null;
-    	BASE_HTTPS_URL = null;
+    CaomRepoBaseIntTests() {
+        subject1 = null;
+        subject2 = null;
+        subject3 = null;
+        baseHTTPURL = null;
+        baseHTTPSURL = null;
     }
 
     /**
      * @param resourceID resource identifier of service to test
-     * @param pem1 PEM file for user with read-write permission
-     * @param pem2 PEM file for user with read-only permission
-     * @param pem3 PEM file for user with no permissions
+     * @param pem1       PEM file for user with read-write permission
+     * @param pem2       PEM file for user with read-only permission
+     * @param pem3       PEM file for user with no permissions
      */
-    public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, String pem1, String pem2, String pem3)
-    {
-        try
-        {
-            File SSL_CERT1 = FileUtil.getFileFromResource(pem1, this.getClass());
-            File SSL_CERT2 = FileUtil.getFileFromResource(pem2, this.getClass());
-            File SSL_CERT3 = FileUtil.getFileFromResource(pem3, this.getClass());
+    public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, String pem1, String pem2, String pem3) {
+        try {
+            File sslCert1 = FileUtil.getFileFromResource(pem1, this.getClass());
+            File sslCert2 = FileUtil.getFileFromResource(pem2, this.getClass());
+            File sslCert3 = FileUtil.getFileFromResource(pem3, this.getClass());
 
-            SUBJECT1 = SSLUtil.createSubject(SSL_CERT1);
-            SUBJECT2 = SSLUtil.createSubject(SSL_CERT2);
-            SUBJECT3 = SSLUtil.createSubject(SSL_CERT3);
+            subject1 = SSLUtil.createSubject(sslCert1);
+            subject2 = SSLUtil.createSubject(sslCert2);
+            subject3 = SSLUtil.createSubject(sslCert3);
 
             RegistryClient rc = new RegistryClient();
 
-            URL serviceURL = rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-            AVAIL_URL = serviceURL;
+            // TODO - Just verifying?
+            rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
 
-            serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.ANON);
-            BASE_HTTP_URL = serviceURL.toExternalForm();
+            URL serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.ANON);
+            baseHTTPURL = serviceURL.toExternalForm();
 
             serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.CERT);
-            BASE_HTTPS_URL = serviceURL.toExternalForm();
+            baseHTTPSURL = serviceURL.toExternalForm();
 
-            log.debug("test service URL: " + BASE_HTTP_URL);
-            log.debug("test service URL: " + BASE_HTTPS_URL);
-        }
-        catch (Throwable t)
-        {
+            log.debug("test service URL: " + baseHTTPURL);
+            log.debug("test service URL: " + baseHTTPSURL);
+        } catch (Throwable t) {
             String message = "Failed int-test initialization: " + t.getMessage();
             log.fatal(message, t);
             throw new ExceptionInInitializerError(message);
         }
     }
 
-    public String generateObservationID(String base)
-    {
+    public String generateObservationID(String base) {
         return base + "-" + UUID.randomUUID().toString();
     }
 
     private HttpURLConnection openConnection(Subject subject, String urlPath)
-            throws Exception
-    {
+        throws Exception {
         HttpURLConnection conn;
         URL url;
-        if (subject == null)
-        {
-            url = new URL(BASE_HTTP_URL + "/" + urlPath);
+        if (subject == null) {
+            url = new URL(baseHTTPURL + "/" + urlPath);
             log.debug("opening connection to: " + url.toString());
             conn = (HttpURLConnection) url.openConnection();
-        }
-        else
-        {
-            url = new URL(BASE_HTTPS_URL + "/" + urlPath);
+        } else {
+            url = new URL(baseHTTPSURL + "/" + urlPath);
             log.debug("opening connection to: " + url.toString());
             conn = (HttpsURLConnection) url.openConnection();
             SSLSocketFactory sf = SSLUtil.getSocketFactory(subject);
@@ -219,24 +204,20 @@ public class CaomRepoBaseIntTests
     }
 
     protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Exception
-    {
+        throws Exception {
         sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
     }
 
-    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
-            throws Exception
-    {
+    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
+                                   String path)
+        throws Exception {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
 
         String urlPath = path;
-        if (urlPath == null)
-        {
+        if (urlPath == null) {
             // extract the path from the observation
             urlPath = observation.getURI().getURI().getSchemeSpecificPart();
         }
-
-        ObservationWriter writer = new ObservationWriter();
 
         HttpURLConnection conn = openConnection(subject, urlPath);
         conn.setRequestMethod(method);
@@ -245,37 +226,36 @@ public class CaomRepoBaseIntTests
         OutputStream out = conn.getOutputStream();
         log.debug("write: " + observation);
         ByteCountOutputStream bcos = new ByteCountOutputStream(out);
+        ObservationWriter writer = new ObservationWriter();
         writer.write(observation, bcos);
         log.debug(" wrote: " + bcos.getByteCount() + " bytes");
 
         int response = -1;
-        try
-        {
+        try {
             log.debug("getResponseCode()");
             response = conn.getResponseCode();
             log.debug("getResponseCode() returned " + response);
-        }
-        catch(IOException ex)
-        {
-            if (expectedResponse != null && expectedResponse.intValue() == 413)
+        } catch (IOException ex) {
+            if (expectedResponse != null && expectedResponse == 413) {
                 log.warn("expected 413 and getResponseCode() threw " + ex + ": known issue in JDK http lib");
+            }
             return;
         }
 
         String message = conn.getResponseMessage();
-        if (response != 200)
+        if (response != 200) {
             message = NetUtil.getErrorBody(conn).trim();
+        }
 
         log.debug(method.toLowerCase() + " response: " + message + " (" + response + ")");
 
-        if (expectedResponse != null)
+        if (expectedResponse != null) {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
+        }
 
-        if (expectedMessage != null)
-        {
+        if (expectedMessage != null) {
             Assert.assertNotNull(message);
-            if (expectedResponse != null && expectedResponse.intValue() == 400 )
-            {
+            if (expectedResponse != null && expectedResponse == 400) {
                 // service provides extra info so check the start only
                 message = message.substring(0, expectedMessage.length());
             }
@@ -286,21 +266,21 @@ public class CaomRepoBaseIntTests
     }
 
     protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, String expectedCaomVersion)
-            throws Exception
-    {
+        throws Exception {
         return getObservation(uri, subject, expectedResponse, expectedMessage, true, expectedCaomVersion);
     }
 
-    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch, String expectedCaomVersion)
-            throws Exception
-    {
+    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch, String
+        expectedCaomVersion)
+        throws Exception {
         log.debug("start get on " + uri);
 
         // extract the path from the uri
         URI ouri = new URI(uri);
-        String surl = BASE_HTTP_URL + "/" + ouri.getSchemeSpecificPart();
-        if (subject != null)
-            surl = BASE_HTTPS_URL + "/" + ouri.getSchemeSpecificPart();
+        String surl = baseHTTPURL + "/" + ouri.getSchemeSpecificPart();
+        if (subject != null) {
+            surl = baseHTTPSURL + "/" + ouri.getSchemeSpecificPart();
+        }
         URL url = new URL(surl);
         ObservationReader reader = new ObservationReader();
 
@@ -311,31 +291,28 @@ public class CaomRepoBaseIntTests
 
         int response = get.getResponseCode();
 
-        if (expectedResponse != null)
+        if (expectedResponse != null) {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
+        }
 
-        if (expectedMessage != null)
-        {
+        if (expectedMessage != null) {
             String message = bos.toString().trim();
             Assert.assertNotNull(message);
-            if (exactMatch)
+            if (exactMatch) {
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
-            else
-            {
+            } else {
                 Assert.assertTrue("message long enough", (message.length() >= expectedMessage.length()));
                 String cmpPart = message.substring(0, expectedMessage.length());
                 Assert.assertEquals("Wrong response message (startsWith)", expectedMessage, cmpPart);
             }
         }
 
-        if (response == 200)
-        {
+        if (response == 200) {
             //InputStream in = conn.getInputStream();
-            if (expectedCaomVersion != null)
-            {
+            if (expectedCaomVersion != null) {
                 String doc = bos.toString();
                 Assert.assertNotNull("document is null", doc);
-                Assert.assertTrue("document namespace="+expectedCaomVersion, doc.contains(expectedCaomVersion));
+                Assert.assertTrue("document namespace=" + expectedCaomVersion, doc.contains(expectedCaomVersion));
             }
             InputStream in = new ByteArrayInputStream(bos.toByteArray());
             Observation observation = reader.read(in);
@@ -349,8 +326,7 @@ public class CaomRepoBaseIntTests
     }
 
     protected void deleteObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage)
-            throws Exception
-    {
+        throws Exception {
         log.debug("start delete on " + uri);
 
         // extract the path from the uri
@@ -361,16 +337,17 @@ public class CaomRepoBaseIntTests
 
         int response = conn.getResponseCode();
         String message = conn.getResponseMessage();
-        if (response != 200)
+        if (response != 200) {
             message = NetUtil.getErrorBody(conn).trim();
+        }
 
         log.debug("delete response: " + message + " (" + response + ")");
 
-        if (expectedResponse != null)
+        if (expectedResponse != null) {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
+        }
 
-        if (expectedMessage != null)
-        {
+        if (expectedMessage != null) {
             Assert.assertNotNull(message);
             Assert.assertEquals("Wrong response message", expectedMessage, message);
         }

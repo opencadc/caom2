@@ -4,6 +4,7 @@ plugins {
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
     id 'application'
+    id 'checkstyle'
 }
 
 repositories {
@@ -37,3 +38,6 @@ dependencies {
     
     testCompile 'junit:junit:4.+'
 }
+
+apply from: '../opencadc.gradle'
+
