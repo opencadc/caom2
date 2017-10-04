@@ -75,24 +75,21 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class ValueCoord2D implements Serializable
-{
+public class ValueCoord2D implements Serializable {
     private static final long serialVersionUID = 201312111230L;
 
     public double coord1;
     public double coord2;
 
     public static final String[] CTOR_UTYPES = { "coord1", "coord2" };
-    
-    public ValueCoord2D(double coord1, double coord2)
-    {
+
+    public ValueCoord2D(double coord1, double coord2) {
         this.coord1 = coord1;
         this.coord2 = coord2;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + coord1 + "," + coord2 + "]";
     }
 }

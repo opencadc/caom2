@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class SpatialWCS implements Serializable
-{
+public class SpatialWCS implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -87,16 +86,13 @@ public class SpatialWCS implements Serializable
     public String coordsys;
     public Double equinox;
     public Double resolution;
-    
 
-    public SpatialWCS(CoordAxis2D axis)
-    {
+    public SpatialWCS(CoordAxis2D axis) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         this.axis = axis;
     }
 
-    public CoordAxis2D getAxis()
-    {
+    public CoordAxis2D getAxis() {
         return axis;
     }
 }

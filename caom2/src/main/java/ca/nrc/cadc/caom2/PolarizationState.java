@@ -75,137 +75,166 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 /**
- * Standard polarization codes for FITS WCS STOKES axis. We have added some additional codes
- * for values outside the original FITS WCS paper from the discussion at
+ * Standard polarization codes for FITS WCS STOKES axis. We have added some
+ * additional codes for values outside the original FITS WCS paper from the
+ * discussion at
  * <p>
  * http://listmgr.cv.nrao.edu/pipermail/fitswcs/2008-March/000408.html
  * </p>
  * 
  * @author pdowler
  */
-public enum PolarizationState implements CaomEnum<String>
-{
-    I("I"),
-    Q("Q"),
-    U("U"),
-    V("V"),
-    POLI("POLI"),   // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
+public enum PolarizationState implements CaomEnum<String> {
+    I("I"), Q("Q"), U("U"), V("V"), POLI("POLI"), /* linear polarized intensity
+                                                   sqrt(Q^2 + U^2), code used
+                                                   in AIPS*/
     FPOLI("FPOLI"), // fractional linear polarization POLI/I, code used in AIPS
-    POLA("POLA"),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
+    POLA("POLA"), // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
     EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
     CPOLI("CPOLI"), // circular polarization intensity |V|
     NPOLI("NPOLI"), // unpolarized intensity I - EPOLI
-    RR("RR"),
-    LL("LL"),
-    RL("RL"),
-    LR("LR"),
-    XX("XX"),
-    YY("YY"),
-    XY("XY"),
-    YX("YX");
+    RR("RR"), LL("LL"), RL("RL"), LR("LR"), XX("XX"), YY("YY"), XY("XY"), YX(
+            "YX");
 
     private String value;
 
-    private PolarizationState(String value) { this.value = value; }
+    private PolarizationState(String value) {
+        this.value = value;
+    }
 
-    public String getValue() { return value; }
-    
+    public String getValue() {
+        return value;
+    }
+
     /**
+     * @return
      * @deprecated use getValue()
-     * @return 
      */
-    public String stringValue()
-    {
+    public String stringValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 
-    public static PolarizationState toValue(int val)
-    {
-        switch(val)
-        {
-            case 1: return I;
-            case 2: return Q;
-            case 3: return U;
-            case 4: return V;
-            case 5: return POLI; 
-            case 6: return FPOLI;
-            case 7: return POLA; 
-            case 8: return EPOLI; 
-            case 9: return CPOLI;
-            case 10: return NPOLI;
-            case -1: return RR;
-            case -2: return LL;
-            case -3: return RL;
-            case -4: return LR;
-            case -5: return XX;
-            case -6: return YY;
-            case -7: return XY;
-            case -8: return YX;
+    public static PolarizationState toValue(int val) {
+        switch (val) {
+            case 1:
+                return I;
+            case 2:
+                return Q;
+            case 3:
+                return U;
+            case 4:
+                return V;
+            case 5:
+                return POLI;
+            case 6:
+                return FPOLI;
+            case 7:
+                return POLA;
+            case 8:
+                return EPOLI;
+            case 9:
+                return CPOLI;
+            case 10:
+                return NPOLI;
+            case -1:
+                return RR;
+            case -2:
+                return LL;
+            case -3:
+                return RL;
+            case -4:
+                return LR;
+            case -5:
+                return XX;
+            case -6:
+                return YY;
+            case -7:
+                return XY;
+            case -8:
+                return YX;
+            default:
+                break;
         }
         throw new IllegalArgumentException("invalid polarization code: " + val);
     }
     
-    public static int intValue(PolarizationState ps)
-    {
-        switch(ps)
-        {
-            case I: return 1;
-            case Q: return 2;
-            case U: return 3;
-            case V: return 4;
-            case POLI: return 5; 
-            case FPOLI: return 6;
-            case POLA: return 7; 
-            case EPOLI: return 8; 
-            case CPOLI: return 9;
-            case NPOLI: return 10;
-            case RR: return -1;
-            case LL: return -2;
-            case RL: return -3;
-            case LR: return -4;
-            case XX: return -5;
-            case YY: return -6;
-            case XY: return -7;
-            case YX: return -8;
-        }
-        throw new IllegalArgumentException("invalid polarization code: " + ps);
-    }
-    
-     public static PolarizationState toValue(String s)
-    {
-        for (PolarizationState ps : values())
-        {
-            if ( ps.value.equals(s))
+    public static PolarizationState toValue(String s) {
+        for (PolarizationState ps : values()) {
+            if (ps.value.equals(s)) {
                 return ps;
+            }
         }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public int checksum()
-    {
+    public static int intValue(PolarizationState ps) {
+        switch (ps) {
+            case I:
+                return 1;
+            case Q:
+                return 2;
+            case U:
+                return 3;
+            case V:
+                return 4;
+            case POLI:
+                return 5;
+            case FPOLI:
+                return 6;
+            case POLA:
+                return 7;
+            case EPOLI:
+                return 8;
+            case CPOLI:
+                return 9;
+            case NPOLI:
+                return 10;
+            case RR:
+                return -1;
+            case LL:
+                return -2;
+            case RL:
+                return -3;
+            case LR:
+                return -4;
+            case XX:
+                return -5;
+            case YY:
+                return -6;
+            case XY:
+                return -7;
+            case YX:
+                return -8;
+            default:
+                break;
+        }
+        throw new IllegalArgumentException("invalid polarization code: " + ps);
+    }
+
+    public int checksum() {
         return intValue(this);
     }
 
-    public static class PolStateComparator implements Comparator<PolarizationState>, Serializable
-    {
+    public static class PolStateComparator
+            implements Comparator<PolarizationState>, Serializable {
         private static final long serialVersionUID = 201706071000L;
-        
-        public int compare(PolarizationState lhs, PolarizationState rhs)
-        {
+
+        public int compare(PolarizationState lhs, PolarizationState rhs) {
             int ri = intValue(rhs);
             int li = intValue(lhs);
-            if (li < ri)
+            if (li < ri) {
                 return -1;
-            if (li > ri)
+            }
+            if (li > ri) {
                 return 1;
+            }
             return 0;
         }
-        
+
     }
 }

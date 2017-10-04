@@ -82,60 +82,44 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
-public final class PolarizationUtil
-{
+public final class PolarizationUtil {
     private static final Logger log = Logger.getLogger(PolarizationUtil.class);
-    
-    private PolarizationUtil() { }
 
-    public static Polarization compute(Set<Artifact> artifacts)
-    {
+    private PolarizationUtil() {
+    }
+
+    public static Polarization compute(Set<Artifact> artifacts) {
         Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
         ProductType productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
         int numPixels = 0;
-        for (Artifact a : artifacts)
-        {
-            for (Part p : a.getParts())
-            {
-                for (Chunk c : p.getChunks())
-                {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType))
-                    {
-                        if (c.polarization != null)
-                        {
+        for (Artifact a : artifacts) {
+            for (Part p : a.getParts()) {
+                for (Chunk c : p.getChunks()) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        if (c.polarization != null) {
                             numPixels += Util.getNumPixels(c.polarization.getAxis());
                             CoordRange1D range = c.polarization.getAxis().range;
                             CoordBounds1D bounds = c.polarization.getAxis().bounds;
                             CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null)
-                            {
+                            if (range != null) {
                                 int lb = (int) range.getStart().val;
                                 int ub = (int) range.getEnd().val;
-                                for (int i=lb; i <= ub; i++)
-                                {
+                                for (int i = lb; i <= ub; i++) {
                                     pol.add(PolarizationState.toValue(i));
                                 }
-                            }
-                            else if (bounds != null)
-                            {
-                                for (CoordRange1D cr : bounds.getSamples())
-                                {
+                            } else if (bounds != null) {
+                                for (CoordRange1D cr : bounds.getSamples()) {
                                     int lb = (int) cr.getStart().val;
                                     int ub = (int) cr.getEnd().val;
-                                    for (int i=lb; i <= ub; i++)
-                                    {
+                                    for (int i = lb; i <= ub; i++) {
                                         pol.add(PolarizationState.toValue(i));
                                     }
                                 }
-                            }
-                            else if (function != null)
-                            {
-                                for (int i=1; i <= function.getNaxis(); i++)
-                                {
+                            } else if (function != null) {
+                                for (int i = 1; i <= function.getNaxis(); i++) {
                                     double pix = (double) i;
                                     int val = (int) Util.pix2val(function, pix);
                                     pol.add(PolarizationState.toValue(val));
@@ -148,8 +132,7 @@ public final class PolarizationUtil
         }
 
         Polarization p = new Polarization();
-        if ( !pol.isEmpty() )
-        {
+        if (!pol.isEmpty()) {
             p.states = new ArrayList<PolarizationState>();
             p.states.addAll(pol);
             p.dimension = new Long(numPixels);

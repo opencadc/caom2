@@ -78,8 +78,7 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class Interval implements Serializable
-{
+public class Interval implements Serializable {
     private static final long serialVersionUID = 201708241230L;
 
     private double lower;
@@ -87,18 +86,17 @@ public class Interval implements Serializable
     private List<SubInterval> samples = new ArrayList<SubInterval>();
 
     public static final String[] CTOR_UTYPES = { "lower", "upper" };
-    
-    private Interval() { }
 
-    public Interval(double lower, double upper)
-    {
-        
+    private Interval() {
+    }
+
+    public Interval(double lower, double upper) {
+
         this.lower = lower;
         this.upper = upper;
     }
-    
-    public Interval(double lower, double upper, List<SubInterval> samples)
-    {
+
+    public Interval(double lower, double upper, List<SubInterval> samples) {
         this.lower = lower;
         this.upper = upper;
         CaomValidator.assertNotNull(Interval.class, "samples", samples);
@@ -106,45 +104,50 @@ public class Interval implements Serializable
         validate();
     }
 
-    public final void validate()
-    {
-        if (upper < lower)
-            throw new IllegalArgumentException("invalid interval (upper < lower): " + lower + "," + upper);
-        CaomValidator.assertNotNull(Interval.class, "samples", samples);    
-        if (samples.isEmpty())
-            throw new IllegalArgumentException("invalid interval (samples cannot be empty)");
-        
+    public final void validate() {
+        if (upper < lower) {
+            throw new IllegalArgumentException(
+                    "invalid interval (upper < lower): " + lower + "," + upper);
+        }
+        CaomValidator.assertNotNull(Interval.class, "samples", samples);
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "invalid interval (samples cannot be empty)");
+        }
+
         SubInterval prev = null;
-        for (SubInterval si : samples)
-        {
-            if (si.getLower() < lower)
-                throw new IllegalArgumentException("invalid interval: sample extends below lower bound: " 
-                        + si + " vs " + lower);
-            if (si.getUpper() > upper)
-                throw new IllegalArgumentException("invalid interval: sample extends above upper bound: " 
-                        + si + " vs " + upper);
-            
-            if (prev != null)
-            {
-                if (si.getLower() <= prev.getUpper())
-                    throw new IllegalArgumentException("invalid interval: sample overlaps previous sample: " 
-                        + si + " vs " + prev);
+        for (SubInterval si : samples) {
+            if (si.getLower() < lower) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends below lower bound: "
+                                + si + " vs " + lower);
+            }
+            if (si.getUpper() > upper) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends above upper bound: "
+                                + si + " vs " + upper);
+            }
+
+            if (prev != null) {
+                if (si.getLower() <= prev.getUpper()) {
+                    throw new IllegalArgumentException(
+                            "invalid interval: sample overlaps previous sample: "
+                                    + si + " vs " + prev);
+                }
             }
             prev = si;
         }
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Interval[").append(lower).append(",").append(upper);
-        if (!samples.isEmpty())
-        {
+        if (!samples.isEmpty()) {
             sb.append(" samples[ ");
-            for (SubInterval si : samples)
-            {
-                sb.append("[").append(si.lower).append(",").append(si.upper).append("] ");
+            for (SubInterval si : samples) {
+                sb.append("[").append(si.lower).append(",").append(si.upper)
+                        .append("] ");
             }
             sb.append("]");
         }
@@ -152,30 +155,26 @@ public class Interval implements Serializable
         return sb.toString();
     }
 
-    public double getLower()
-    {
+    public double getLower() {
         return lower;
     }
 
-    public double getUpper()
-    {
+    public double getUpper() {
         return upper;
     }
 
-    public List<SubInterval> getSamples()
-    {
+    public List<SubInterval> getSamples() {
         return samples;
     }
 
-    public double getWidth()
-    {
+    public double getWidth() {
         return (upper - lower);
     }
 
-    public static Interval intersection(Interval i1, Interval i2)
-    {
-        if (i1.lower > i2.upper || i1.upper < i2.lower)
+    public static Interval intersection(Interval i1, Interval i2) {
+        if (i1.lower > i2.upper || i1.upper < i2.lower) {
             return null; // no overlap
+        }
 
         double lb = Math.max(i1.lower, i2.lower);
         double ub = Math.min(i1.upper, i2.upper);

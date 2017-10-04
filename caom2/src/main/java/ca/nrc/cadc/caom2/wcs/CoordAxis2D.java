@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordAxis2D implements Serializable
-{
+public class CoordAxis2D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -93,8 +92,7 @@ public class CoordAxis2D implements Serializable
 
     public static final String[] CTOR_UTYPES = { "axis1", "axis2" };
 
-    public CoordAxis2D(Axis axis1, Axis axis2)
-    {
+    public CoordAxis2D(Axis axis1, Axis axis2) {
         CaomValidator.assertNotNull(getClass(), "axis1", axis1);
         CaomValidator.assertNotNull(getClass(), "axis2", axis2);
         this.axis1 = axis1;
@@ -102,18 +100,16 @@ public class CoordAxis2D implements Serializable
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + axis1 + "," + axis2 + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + axis1 + "," + axis2
+                + "]";
     }
 
-    public Axis getAxis1()
-    {
+    public Axis getAxis1() {
         return axis1;
     }
 
-    public Axis getAxis2()
-    {
+    public Axis getAxis2() {
         return axis2;
     }
 }

@@ -75,37 +75,38 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
  *
  * @author pdowler
  */
-public class Vertex extends Point
-{
+public class Vertex extends Point {
     private static final long serialVersionUID = 201202081100L;
-    
+
     private SegmentType type;
 
-    public static final Vertex CLOSE = new Vertex(0,0,SegmentType.CLOSE);
-    
-    public static final String[] CTOR_UTYPES = { "cval1", "cval2", "type" };
-    
-    private Vertex() { }
+    public static final Vertex CLOSE = new Vertex(0, 0, SegmentType.CLOSE);
 
-    public Vertex(double cval1, double cval2, SegmentType type)
-    {
+    public static final String[] CTOR_UTYPES = { "cval1", "cval2", "type" };
+
+    private Vertex() {
+    }
+
+    public Vertex(double cval1, double cval2, SegmentType type) {
         super(cval1, cval2);
         CaomValidator.assertNotNull(Circle.class, "type", type);
         this.type = type;
     }
 
-    public SegmentType getType()
-    {
+    public SegmentType getType() {
         return type;
     }
 
-    // NOTE: do not implement equals() method here; PolygonUtil assumes the Object impl
-    
+    // NOTE: do not implement equals() method here; PolygonUtil assumes the
+    // Object impl
+
     @Override
-    public String toString()
-    {
-        if (SegmentType.CLOSE.equals(type))
-            return this.getClass().getSimpleName() + "[" + type.toString() + "]";
-        return this.getClass().getSimpleName() + "[" + cval1 + "," + cval2 + "," + type.toString() + "]";
+    public String toString() {
+        if (SegmentType.CLOSE.equals(type)) {
+            return this.getClass().getSimpleName() + "[" + type.toString()
+                    + "]";
+        }
+        return this.getClass().getSimpleName() + "[" + cval1 + "," + cval2 + ","
+                + type.toString() + "]";
     }
 }

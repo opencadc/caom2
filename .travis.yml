@@ -14,7 +14,13 @@ script:
   - cd caom2-compute; gradle --info assemble javadoc install || exit -1; cd ..
   - cd fits2caom2; gradle --info assemble javadoc || exit -1; cd ..
   - cd caom2-viz; gradle --info build || exit -1; cd ..
-  # hack: switch to jdk8 for this last job
-  - jdk_switcher use oraclejdk8
-  - cd caom2-dm; gradle --info build initHTML xslt || exit -1; cd ..
-
+  
+  # checkstyle and html tasks
+  - if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
+      cd caom2-dm; gradle --info build initHTML xslt || exit -1; cd ..;
+      for i in caom2 caom2-compute caom2-viz; do
+         cd $i;
+         gradle checkstyleMain || break -1;
+         cd ..;
+      done
+    fi

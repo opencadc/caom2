@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Coord2D implements Serializable
-{
+public class Coord2D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -85,24 +84,20 @@ public class Coord2D implements Serializable
     private RefCoord coord2;
 
     public static final String[] CTOR_UTYPES = { "coord1", "coord2" };
-    
-    public Coord2D(RefCoord coord1, RefCoord coord2)
-    {
+
+    public Coord2D(RefCoord coord1, RefCoord coord2) {
         CaomValidator.assertNotNull(getClass(), "coord1", coord1);
         CaomValidator.assertNotNull(getClass(), "coord2", coord2);
         this.coord1 = coord1;
         this.coord2 = coord2;
     }
 
-    public RefCoord getCoord1()
-    {
+    public RefCoord getCoord1() {
         return coord1;
     }
 
-    public RefCoord getCoord2()
-    {
+    public RefCoord getCoord2() {
         return coord2;
     }
-
 
 }

@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class ObservableAxis implements Serializable
-{
+public class ObservableAxis implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
@@ -86,28 +85,26 @@ public class ObservableAxis implements Serializable
     // mutable state
     public Slice independent;
 
-    public ObservableAxis(Slice dependent)
-    {
+    public ObservableAxis(Slice dependent) {
         CaomValidator.assertNotNull(getClass(), "dependent", dependent);
         this.dependent = dependent;
     }
 
-    public Slice getDependent()
-    {
+    public Slice getDependent() {
         return dependent;
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(dependent.getAxis().getCtype()).append(",").append(dependent.getAxis().getCunit()).append(",");
+        sb.append(dependent.getAxis().getCtype()).append(",")
+                .append(dependent.getAxis().getCunit()).append(",");
         sb.append(dependent.getBin());
-        if (independent != null)
-        {
+        if (independent != null) {
             sb.append(" ");
-            sb.append(independent.getAxis().getCtype()).append(",").append(independent.getAxis().getCunit()).append(",");
+            sb.append(independent.getAxis().getCtype()).append(",")
+                    .append(independent.getAxis().getCunit()).append(",");
             sb.append(independent.getBin());
         }
         sb.append("]");

@@ -78,8 +78,7 @@ import java.util.TreeSet;
  *
  * @author pdowler
  */
-public class Telescope implements Serializable
-{
+public class Telescope implements Serializable {
     private static final long serialVersionUID = 201110261400L;
 
     // immutable state
@@ -92,26 +91,22 @@ public class Telescope implements Serializable
 
     // mutable contents
     private final Set<String> keywords = new TreeSet<String>();
-    
-    public Telescope(String name)
-    {
+
+    public Telescope(String name) {
         CaomValidator.assertNotNull(Telescope.class, "name", name);
         this.name = name;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public Set<String> getKeywords()
-    {
+    public Set<String> getKeywords() {
         return keywords;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + name + "]";
     }
 }

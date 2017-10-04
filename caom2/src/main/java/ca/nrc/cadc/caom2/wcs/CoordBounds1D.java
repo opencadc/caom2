@@ -77,20 +77,17 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class CoordBounds1D implements Serializable
-{
+public class CoordBounds1D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // mutable content
     private List<CoordRange1D> samples;
 
-    public CoordBounds1D()
-    {
+    public CoordBounds1D() {
         this.samples = new ArrayList<CoordRange1D>();
     }
 
-    public List<CoordRange1D> getSamples()
-    {
+    public List<CoordRange1D> getSamples() {
         return samples;
     }
 }

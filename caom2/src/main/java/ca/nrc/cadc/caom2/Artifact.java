@@ -77,14 +77,13 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * An artifact is a single physical (stored) result. This is normally a file, but
- * could also be a table in a database or a resource available on the internet
- * (such as a web page).
+ * An artifact is a single physical (stored) result. This is normally a file,
+ * but could also be a table in a database or a resource available on the
+ * internet (such as a web page).
  *
  * @author pdowler
  */
-public class Artifact extends CaomEntity implements Comparable<Artifact>
-{
+public class Artifact extends CaomEntity implements Comparable<Artifact> {
     private static final long serialVersionUID = 201604081100L;
     private static final Logger log = Logger.getLogger(Artifact.class);
 
@@ -95,14 +94,13 @@ public class Artifact extends CaomEntity implements Comparable<Artifact>
     private final Set<Part> parts = new TreeSet<Part>();
     private ProductType productType;
     private ReleaseType releaseType;
-    
+
     // mutable state
     public String contentType;
     public Long contentLength;
     public URI contentChecksum;
-    
-    public Artifact(URI uri, ProductType productType, ReleaseType releaseType)
-    {
+
+    public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
         CaomValidator.assertNotNull(Artifact.class, "productType", productType);
         CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
@@ -112,67 +110,57 @@ public class Artifact extends CaomEntity implements Comparable<Artifact>
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + uri + "]";
     }
 
-    public URI getURI()
-    {
+    public URI getURI() {
         return uri;
     }
 
-    public ProductType getProductType()
-    {
+    public ProductType getProductType() {
         return productType;
     }
 
-    public void setProductType(ProductType productType)
-    {
+    public void setProductType(ProductType productType) {
         CaomValidator.assertNotNull(Artifact.class, "productType", productType);
         this.productType = productType;
     }
 
-    public ReleaseType getReleaseType()
-    {
+    public ReleaseType getReleaseType() {
         return releaseType;
     }
 
-    public void setReleaseType(ReleaseType releaseType)
-    {
+    public void setReleaseType(ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
         this.releaseType = releaseType;
     }
 
-    
-    public Set<Part> getParts()
-    {
+    public Set<Part> getParts() {
         return parts;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof Artifact)
-        {
+        }
+        if (o instanceof Artifact) {
             Artifact a = (Artifact) o;
-            return ( this.hashCode() == a.hashCode() );
+            return (this.hashCode() == a.hashCode());
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
-       return uri.hashCode();
+    public int hashCode() {
+        return uri.hashCode();
     }
 
-    public int compareTo(Artifact a)
-    {
+    public int compareTo(Artifact a) {
         return this.uri.compareTo(a.uri);
     }
 }

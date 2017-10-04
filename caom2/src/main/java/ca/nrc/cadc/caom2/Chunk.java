@@ -78,16 +78,15 @@ import java.util.Date;
 
 /**
  * A Chunk (of a Part) is one quantitatively specified subsection of the whole.
- * The exact subsection is defined as a range (or ranges) in the dimensions of the
- * single data array (the Part). For example, one could divide a 2-dimensional
- * array into arbitrary Chunks of NxM (tiles) in order to describe the range
- * of coordinates in each Chunk without specifying the coordinates of every pixel
- * (usually because the relation is non-linear).
+ * The exact subsection is defined as a range (or ranges) in the dimensions of
+ * the single data array (the Part). For example, one could divide a
+ * 2-dimensional array into arbitrary Chunks of NxM (tiles) in order to describe
+ * the range of coordinates in each Chunk without specifying the coordinates of
+ * every pixel (usually because the relation is non-linear).
  * 
  * @author pdowler
  */
-public class Chunk extends CaomEntity implements Comparable<Chunk>
-{
+public class Chunk extends CaomEntity implements Comparable<Chunk> {
     private static final long serialVersionUID = 201110261400L;
 
     // mutable state
@@ -106,21 +105,19 @@ public class Chunk extends CaomEntity implements Comparable<Chunk>
     public SpectralWCS energy;
     public TemporalWCS time;
     public PolarizationWCS polarization;
-    
-    public Chunk() { }
+
+    public Chunk() {
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[...]";
     }
 
-    public int compareTo(Chunk o)
-    {
+    public int compareTo(Chunk o) {
         return getID().compareTo(o.getID());
     }
 
     // the CaomEntity implementations of equals() and hashCode() are sufficient
-
 
 }

@@ -76,8 +76,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class Metrics implements Serializable
-{
+public class Metrics implements Serializable {
     private static final long serialVersionUID = 201205301300L;
     private static final Logger log = Logger.getLogger(Metrics.class);
 

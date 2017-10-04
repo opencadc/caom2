@@ -77,8 +77,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class EnergyTransition implements Serializable
-{
+public class EnergyTransition implements Serializable {
     private static final long serialVersionUID = 201205301300L;
     private static final Logger log = Logger.getLogger(EnergyTransition.class);
 
@@ -86,43 +85,42 @@ public class EnergyTransition implements Serializable
 
     private String transition;
 
-    private EnergyTransition() { }
-    
+    private EnergyTransition() {
+    }
+
     public static final String[] CTOR_UTYPES = { "species", "transition" };
 
-    public EnergyTransition(String species, String transition)
-    {
+    public EnergyTransition(String species, String transition) {
         CaomValidator.assertNotNull(EnergyTransition.class, "species", species);
-        CaomValidator.assertNotNull(EnergyTransition.class, "transition", transition);
+        CaomValidator.assertNotNull(EnergyTransition.class, "transition",
+                transition);
         this.species = species;
         this.transition = transition;
     }
 
-    public String getSpecies()
-    {
+    public String getSpecies() {
         return species;
     }
 
-    public String getTransition()
-    {
+    public String getTransition() {
         return transition;
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + species + "," + transition + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + species + ","
+                + transition + "]";
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (o instanceof EnergyTransition)
-        {
+        }
+        if (o instanceof EnergyTransition) {
             EnergyTransition et = (EnergyTransition) o;
-            return (species.equals(et.species) && transition.equals(et.transition));
+            return (species.equals(et.species)
+                    && transition.equals(et.transition));
         }
         return false;
     }

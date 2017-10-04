@@ -77,8 +77,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class Energy implements Serializable
-{
+public class Energy implements Serializable {
     private static final long serialVersionUID = 201202081400L;
 
     public Interval bounds;
@@ -94,12 +93,11 @@ public class Energy implements Serializable
     public EnergyBand emBand;
 
     public EnergyTransition transition;
-    
+
     public Double restwav;
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Energy[");
         sb.append(bounds);
@@ -121,22 +119,23 @@ public class Energy implements Serializable
         return sb.toString();
     }
 
-    public Double getFreqWidth()
-    {
-        if (bounds == null)
+    public Double getFreqWidth() {
+        if (bounds == null) {
             return null;
+        }
 
-        return new EnergyConverter().toDeltaHz(bounds.getLower(), bounds.getUpper(), "m");
+        return new EnergyConverter().toDeltaHz(bounds.getLower(),
+                bounds.getUpper(), "m");
     }
 
-    public Double getFreqSampleSize()
-    {
-        if (sampleSize == null || bounds == null)
+    public Double getFreqSampleSize() {
+        if (sampleSize == null || bounds == null) {
             return null;
+        }
 
-         // mid: should really be at crpix/crval like EnergyUtil.toBwmSampleSize
-        double w = 0.5*(bounds.getUpper() + bounds.getLower());
-        double dw = 0.5*sampleSize;
-        return new EnergyConverter().toDeltaHz(w-dw, w+dw, "m");
+        // mid: should really be at crpix/crval like EnergyUtil.toBwmSampleSize
+        double w = 0.5 * (bounds.getUpper() + bounds.getLower());
+        double dw = 0.5 * sampleSize;
+        return new EnergyConverter().toDeltaHz(w - dw, w + dw, "m");
     }
 }

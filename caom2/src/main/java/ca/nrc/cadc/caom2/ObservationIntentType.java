@@ -73,34 +73,34 @@ package ca.nrc.cadc.caom2;
  *
  * @author pdowler
  */
-public enum ObservationIntentType implements CaomEnum<String>
-{
-    CALIBRATION("calibration"),
-    SCIENCE("science");
-    
+public enum ObservationIntentType implements CaomEnum<String> {
+    CALIBRATION("calibration"), SCIENCE("science");
 
     private String value;
 
-    private ObservationIntentType(String value) { this.value = value; }
+    private ObservationIntentType(String value) {
+        this.value = value;
+    }
 
-    public static ObservationIntentType toValue(String s)
-    {
-        for (ObservationIntentType d : values())
-            if (d.value.equals(s))
+    public static ObservationIntentType toValue(String s) {
+        for (ObservationIntentType d : values()) {
+            if (d.value.equals(s)) {
                 return d;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue() { return value; }
+    public String getValue() {
+        return value;
+    }
 
-    public int checksum()
-    {
+    public int checksum() {
         return value.hashCode();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

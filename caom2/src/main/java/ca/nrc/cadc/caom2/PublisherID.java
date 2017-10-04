@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2;
 
-
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
 import java.net.URI;
@@ -78,94 +77,94 @@ import java.net.URI;
  * Globally unique identifer for a CAOM plane. This is meant to be equivalent to
  * an IVOA publisher dataset identifier. Assumption: the Observation.collection
  * is the path component of the resourceID (e.g. the collection is registered as
- * a DataCollection resource in an IVOA registry). 
+ * a DataCollection resource in an IVOA registry).
  * 
  * 
  * @author pdowler
  */
-public class PublisherID implements Comparable<PublisherID>, Serializable
-{
+public class PublisherID implements Comparable<PublisherID>, Serializable {
     private static final long serialVersionUID = 201609271015L;
-    
+
     public static final String SCHEME = "ivo";
-    
+
     private transient URI resourceID;
-    
+
     private final URI uri;
-    
-    public PublisherID(URI uri)
-    {
+
+    public PublisherID(URI uri) {
         CaomValidator.assertNotNull(getClass(), "uri", uri);
-        
-        if ( !SCHEME.equals(uri.getScheme()))
-            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+
+        if (!SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException(
+                    "invalid scheme: " + uri.getScheme());
+        }
         String auth = uri.getAuthority();
         String path = uri.getPath();
         String id = uri.getQuery();
-        
+
         CaomValidator.assertNotNull(getClass(), "authority", auth);
         CaomValidator.assertNotNull(getClass(), "path", path);
         CaomValidator.assertNotNull(getClass(), "id", id);
-        
+
         String[] ids = id.split("/");
-        if (ids.length == 2)
-        {
+        if (ids.length == 2) {
             String oid = ids[0];
             String pid = ids[1];
-            CaomValidator.assertValidPathComponent(getClass(), "observationID", oid);
-            CaomValidator.assertValidPathComponent(getClass(), "productID", pid);
-            
+            CaomValidator.assertValidPathComponent(getClass(), "observationID",
+                    oid);
+            CaomValidator.assertValidPathComponent(getClass(), "productID",
+                    pid);
+
+        } else {
+            throw new IllegalArgumentException(
+                    "input URI has " + ids.length + " id components (" + id
+                            + "), expected 2: <observationID>/<productID>");
         }
-        else
-            throw new IllegalArgumentException("input URI has " + ids.length
-                    + " id components ("+id+"), expected 2: <observationID>/<productID>");
         this.uri = uri;
         this.resourceID = URI.create(SCHEME + "://" + auth + "/" + path);
     }
-    
-    public PublisherID(URI resourceID, String observationID, String productID) 
-    { 
-        CaomValidator.assertNotNull(PublisherID.class, "resourceID", resourceID);
-        CaomValidator.assertNotNull(PublisherID.class, "observationID", observationID);
+
+    public PublisherID(URI resourceID, String observationID, String productID) {
+        CaomValidator.assertNotNull(PublisherID.class, "resourceID",
+                resourceID);
+        CaomValidator.assertNotNull(PublisherID.class, "observationID",
+                observationID);
         CaomValidator.assertNotNull(PublisherID.class, "productID", productID);
-        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID + "/" + productID);
+        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID
+                + "/" + productID);
         this.resourceID = resourceID;
     }
-    
-    public URI getURI()
-    {
+
+    public URI getURI() {
         return uri;
     }
-    
-    public URI getResourceID()
-    {
+
+    public URI getResourceID() {
         return resourceID;
     }
-    
+
     @Override
-    public boolean equals(Object o)
-    {
-        if (o == null)
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
-        if (this == o)
+        }
+        if (this == o) {
             return true;
-        if (o instanceof PublisherID)
-        {
+        }
+        if (o instanceof PublisherID) {
             PublisherID u = (PublisherID) o;
-            return ( this.hashCode() == u.hashCode() );
+            return (this.hashCode() == u.hashCode());
         }
         return false;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return uri.hashCode();
     }
 
     @Override
-    public int compareTo(PublisherID u)
-    {
+    public int compareTo(PublisherID u) {
         return this.uri.compareTo(u.uri);
     }
 }

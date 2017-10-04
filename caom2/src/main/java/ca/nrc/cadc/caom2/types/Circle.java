@@ -76,50 +76,43 @@ import ca.nrc.cadc.util.HexUtil;
  *
  * @author pdowler
  */
-public class Circle implements Shape
-{
+public class Circle implements Shape {
     private static final long serialVersionUID = 201202081100L;
-    
+
     private Point center;
     private double radius;
 
-    public Circle(Point center, double radius)
-    {
+    public Circle(Point center, double radius) {
         CaomValidator.assertNotNull(Circle.class, "center", center);
         CaomValidator.assertPositive(Circle.class, "radius", radius);
         this.center = center;
         this.radius = radius;
     }
 
-    public double getArea()
-    {
+    public double getArea() {
         // TODO: this is cartesian approximation, use spherical geom?
         return Math.PI * radius * radius;
     }
 
-    public Point getCenter()
-    {
+    public Point getCenter() {
         return center;
     }
 
-    public double getRadius()
-    {
+    public double getRadius() {
         return radius;
     }
 
-    public double getSize()
-    {
+    public double getSize() {
         return 2.0 * radius;
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[" + center + "," + radius + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + center + "," + radius
+                + "]";
     }
 
-    public static byte[] encode(Circle c)
-    {
+    public static byte[] encode(Circle c) {
         byte[] ret = new byte[29];
         byte[] b = HexUtil.toBytes(MAGIC_CIRCLE);
         System.arraycopy(b, 0, ret, 0, 4);
@@ -129,17 +122,21 @@ public class Circle implements Shape
         System.arraycopy(b, 0, ret, 12, 8);
         b = HexUtil.toBytes(Double.doubleToLongBits(c.radius));
         System.arraycopy(b, 0, ret, 20, 8);
-        ret[ret.length-1] = (byte) 1; // trailing 1 so some broken DBs don't truncate
+        // trailing 1 so some broken DBs don't truncate
+        ret[ret.length - 1] = (byte) 1; 
         return ret;
     }
 
-    public static Circle decode(byte[] encoded)
-    {
+    public static Circle decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
-        if (magic != MAGIC_CIRCLE)
-            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_CIRCLE");
-        if (encoded.length != 29)
-            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 29");
+        if (magic != MAGIC_CIRCLE) {
+            throw new IllegalArgumentException(
+                    "encoded array does not start with Shape.MAGIC_CIRCLE");
+        }
+        if (encoded.length != 29) {
+            throw new IllegalStateException("encoded array is wrong length: "
+                    + encoded.length + ", expected 29");
+        }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
         double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 12));

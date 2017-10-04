@@ -76,8 +76,7 @@ import java.io.Serializable;
  *
  * @author pdowler
  */
-public class CoordAxis1D implements Serializable
-{
+public class CoordAxis1D implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
@@ -89,20 +88,17 @@ public class CoordAxis1D implements Serializable
     public CoordBounds1D bounds;
     public CoordFunction1D function;
 
-    public CoordAxis1D(Axis axis)
-    {
+    public CoordAxis1D(Axis axis) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         this.axis = axis;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + axis + "]";
     }
 
-    public Axis getAxis()
-    {
+    public Axis getAxis() {
         return axis;
     }
 }
