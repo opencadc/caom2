@@ -4,14 +4,6 @@
     "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-  <!--list of global suppressions -->
-  <suppress checks="CustomImportOrder" files="java$" />
-  <suppress checks="AbbreviationAsWordInName" files="java$" />
-  <suppress checks="NonEmptyAtclauseDescription" files="java$" />
-  <suppress checks="SummaryJavadoc" files="java$" />
-  <suppress checks="JavadocMethod" files="java$" />
-
-  <!-- list of specific suppressions -->
   <suppress checks="MethodName" files="SortablePoint2D.java$" />
   <suppress checks="MemberName" files="SortablePoint2D.java$" />
 </suppressions>
