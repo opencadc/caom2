@@ -79,8 +79,7 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public class MaxLastModifiedComparator
-        implements Comparator<CaomEntity>, Serializable {
+public class MaxLastModifiedComparator implements Comparator<CaomEntity>, Serializable {
     private static final long serialVersionUID = 201311261300L;
 
     public MaxLastModifiedComparator() {

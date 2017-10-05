@@ -77,8 +77,7 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class ObservationURI
-        implements Comparable<ObservationURI>, Serializable {
+public class ObservationURI implements Comparable<ObservationURI>, Serializable {
     private static final long serialVersionUID = 201202091030L;
 
     public static final String SCHEME = "caom";
@@ -90,8 +89,7 @@ public class ObservationURI
 
     public ObservationURI(URI uri) {
         if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException(
-                    "invalid scheme: " + uri.getScheme());
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
         }
         String ssp = uri.getSchemeSpecificPart();
         CaomValidator.assertNotNull(getClass(), "scheme-specific-part", ssp);
@@ -100,28 +98,20 @@ public class ObservationURI
             String collection = cop[0];
             String observationID = cop[1];
             CaomValidator.assertNotNull(getClass(), "collection", collection);
-            CaomValidator.assertValidPathComponent(getClass(), "collection",
-                    collection);
-            CaomValidator.assertNotNull(getClass(), "observationID",
-                    observationID);
-            CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                    observationID);
-            this.uri = URI
-                    .create(SCHEME + ":" + collection + "/" + observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+            CaomValidator.assertNotNull(getClass(), "observationID", observationID);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
+            this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
         } else {
-            throw new IllegalArgumentException(
-                    "input URI has " + cop.length + " parts (" + ssp
-                            + "), expected 2: <collection>/<observationID>");
+            throw new IllegalArgumentException("input URI has " + cop.length + " parts (" + ssp + "), expected 2: <collection>/<observationID>");
         }
     }
 
     public ObservationURI(String collection, String observationID) {
         CaomValidator.assertNotNull(getClass(), "collection", collection);
-        CaomValidator.assertValidPathComponent(getClass(), "collection",
-                collection);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
         CaomValidator.assertNotNull(getClass(), "observationID", observationID);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         this.uri = URI.create(SCHEME + ":" + collection + "/" + observationID);
     }
 

@@ -77,12 +77,10 @@ import java.net.URISyntaxException;
  *
  * @author pdowler
  */
-public class ProductType extends VocabularyTerm
-        implements CaomEnum<String>, Serializable {
+public class ProductType extends VocabularyTerm implements CaomEnum<String>, Serializable {
     private static final long serialVersionUID = 2017040200800L;
 
-    private static final URI CAOM = URI
-            .create("http://www.opencadc.org/caom2/ProductType");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
 
     public static ProductType SCIENCE = new ProductType("science");
     public static ProductType CALIBRATION = new ProductType("calibration");
@@ -102,9 +100,7 @@ public class ProductType extends VocabularyTerm
     public static ProductType CATALOG = new ProductType("catalog");
 
     public static final ProductType[] values() {
-        return new ProductType[] { SCIENCE, CALIBRATION, AUXILIARY, INFO,
-                                   PREVIEW, CATALOG, NOISE, WEIGHT, 
-                                   THUMBNAIL, BIAS, DARK, FLAT };
+        return new ProductType[] { SCIENCE, CALIBRATION, AUXILIARY, INFO, PREVIEW, CATALOG, NOISE, WEIGHT, THUMBNAIL, BIAS, DARK, FLAT };
     }
 
     private ProductType(String term) {
@@ -127,8 +123,7 @@ public class ProductType extends VocabularyTerm
             URI u = new URI(s);
             String t = u.getFragment();
             if (t == null) {
-                throw new IllegalArgumentException(
-                        "invalid value (no term/fragment): " + s);
+                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
             }
             String[] ss = u.toASCIIString().split("#");
             URI ns = new URI(ss[0]);

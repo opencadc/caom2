@@ -87,11 +87,9 @@ public class CoordFunction2D implements Serializable {
     private Dimension2D dimension;
     private Coord2D refCoord;
 
-    public static final String[] CTOR_UTYPES = { "dimension", "refCoord",
-                                                 "cd11", "cd12", "cd21", "cd22" };
+    public static final String[] CTOR_UTYPES = { "dimension", "refCoord", "cd11", "cd12", "cd21", "cd22" };
 
-    public CoordFunction2D(Dimension2D dimension, Coord2D refCoord, double cd11,
-            double cd12, double cd21, double cd22) {
+    public CoordFunction2D(Dimension2D dimension, Coord2D refCoord, double cd11, double cd12, double cd21, double cd22) {
         CaomValidator.assertNotNull(getClass(), "dimension", dimension);
         CaomValidator.assertNotNull(getClass(), "refCoord", refCoord);
         this.dimension = dimension;

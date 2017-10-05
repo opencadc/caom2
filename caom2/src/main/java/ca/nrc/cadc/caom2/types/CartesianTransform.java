@@ -6,8 +6,7 @@ import java.io.Serializable;
 import org.apache.log4j.Logger;
 
 public class CartesianTransform implements Serializable {
-    private static final Logger log = Logger
-            .getLogger(CartesianTransform.class);
+    private static final Logger log = Logger.getLogger(CartesianTransform.class);
 
     private static final long serialVersionUID = 201207300900L;
 
@@ -32,14 +31,12 @@ public class CartesianTransform implements Serializable {
         return getTransform(poly, false);
     }
 
-    public static CartesianTransform getTransform(MultiPolygon poly,
-            boolean force) {
+    public static CartesianTransform getTransform(MultiPolygon poly, boolean force) {
         double[] cube = getBoundingCube(poly, null);
         return getTransform(cube, force);
     }
 
-    public static CartesianTransform getTransform(double[] cube,
-            boolean force) {
+    public static CartesianTransform getTransform(double[] cube, boolean force) {
         double x1 = cube[0];
         double x2 = cube[1];
         double y1 = cube[2];
@@ -105,12 +102,9 @@ public class CartesianTransform implements Serializable {
     }
 
     /**
-     * Convert long,lat coordinates to cartesian coordinates on the unit sphere.
-     * NOTE: this uses a right-handed unit sphere but looking from the outside,
-     * which is opposite to the normal astro convention of looking from the
-     * center (which means theta goes in the other direction in astronomy), but
-     * as long as the opposite conversion is done with toLongLat that is just
-     * fine.
+     * Convert long,lat coordinates to cartesian coordinates on the unit sphere. NOTE: this uses a right-handed unit sphere but looking from the outside, which
+     * is opposite to the normal astro convention of looking from the center (which means theta goes in the other direction in astronomy), but as long as the
+     * opposite conversion is done with toLongLat that is just fine.
      * 
      * @param longitude
      * @param latitude
@@ -205,8 +199,7 @@ public class CartesianTransform implements Serializable {
         }
         for (Vertex v : poly.getVertices()) {
             if (!SegmentType.CLOSE.equals(v.getType())) {
-                double[] xyz = CartesianTransform.toUnitSphere(v.cval1,
-                        v.cval2);
+                double[] xyz = CartesianTransform.toUnitSphere(v.cval1, v.cval2);
                 cube[0] = Math.min(cube[0], xyz[0]);
                 cube[1] = Math.max(cube[1], xyz[0]);
 

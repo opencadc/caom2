@@ -166,37 +166,30 @@ public class ObservationWriter implements Serializable {
     protected final int docVersion; // (int) (major.minor / 10) so CAOM-2.0 == 20
 
     /**
-     * Default constructor. This uses a standard prefix <code>caom2</code>, does
-     * not include empty elements for empty collections, and defaults to the
-     * most recent target namespace.
+     * Default constructor. This uses a standard prefix <code>caom2</code>, does not include empty elements for empty collections, and defaults to the most
+     * recent target namespace.
      */
     public ObservationWriter() {
         this("caom2", null, false);
     }
 
-    public ObservationWriter(String caom2prefix,
-            boolean writeEmptyCollections) {
+    public ObservationWriter(String caom2prefix, boolean writeEmptyCollections) {
         this(caom2prefix, null, writeEmptyCollections);
     }
 
     /**
-     * Constructor. This uses the specified CAOM namespace prefix (null is not
-     * allowed). If writeEmptyCollections is true, empty elements will be
-     * included for any collections that are empty; this is not necessary but is
-     * valid in the schema so is useful for testing.
+     * Constructor. This uses the specified CAOM namespace prefix (null is not allowed). If writeEmptyCollections is true, empty elements will be included for
+     * any collections that are empty; this is not necessary but is valid in the schema so is useful for testing.
      *
      * @param caom2NamespacePrefix
      * @param namespace
      *            a valid CAOM-2.x target namespace
      * @param writeEmptyCollections
      */
-    public ObservationWriter(String caom2NamespacePrefix, String namespace,
-            boolean writeEmptyCollections) {
+    public ObservationWriter(String caom2NamespacePrefix, String namespace, boolean writeEmptyCollections) {
         this.writeEmptyCollections = writeEmptyCollections;
         if (!StringUtil.hasText(caom2NamespacePrefix)) {
-            throw new IllegalArgumentException(
-                    "null or 0-length namespace prefix is not allowed: "
-                            + caom2NamespacePrefix);
+            throw new IllegalArgumentException("null or 0-length namespace prefix is not allowed: " + caom2NamespacePrefix);
         }
 
         if (namespace == null) {
@@ -205,32 +198,24 @@ public class ObservationWriter implements Serializable {
         }
 
         if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
-            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
-                    XmlConstants.CAOM2_3_NAMESPACE);
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_3_NAMESPACE);
             docVersion = 23;
         } else if (XmlConstants.CAOM2_2_NAMESPACE.equals(namespace)) {
-            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
-                    XmlConstants.CAOM2_2_NAMESPACE);
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_2_NAMESPACE);
             docVersion = 22;
         } else if (XmlConstants.CAOM2_1_NAMESPACE.equals(namespace)) {
-            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
-                    XmlConstants.CAOM2_1_NAMESPACE);
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_1_NAMESPACE);
             docVersion = 21;
         } else if (XmlConstants.CAOM2_0_NAMESPACE.equals(namespace)) {
-            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
-                    XmlConstants.CAOM2_0_NAMESPACE);
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix, XmlConstants.CAOM2_0_NAMESPACE);
             docVersion = 20;
         } else {
-            throw new IllegalArgumentException(
-                    "invalid namespace: " + namespace);
+            throw new IllegalArgumentException("invalid namespace: " + namespace);
         }
 
-        this.xsiNamespace = Namespace.getNamespace("xsi",
-                XmlConstants.XMLSCHEMA);
+        this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
 
-        log.debug("output version: " + docVersion + " "
-                + caom2Namespace.getPrefix() + " -> "
-                + caom2Namespace.getURI());
+        log.debug("output version: " + docVersion + " " + caom2Namespace.getPrefix() + " -> " + caom2Namespace.getURI());
     }
 
     /**
@@ -250,12 +235,10 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Set whether to write an empty Element when a java Collection is empty.
-     * The default behavior is not to not write empty Collection elements.
+     * Set whether to write an empty Element when a java Collection is empty. The default behavior is not to not write empty Collection elements.
      * 
      * @param b
-     *            true to write elements for empty Collections, false to not
-     *            write empty Collections.
+     *            true to write elements for empty Collections, false to not write empty Collections.
      */
     public void setWriteEmptyCollections(boolean b) {
         writeEmptyCollections = b;
@@ -295,8 +278,7 @@ public class ObservationWriter implements Serializable {
      * @throws IOException
      *             if the writer fails to write.
      */
-    public void write(Observation obs, StringBuilder builder)
-            throws IOException {
+    public void write(Observation obs, StringBuilder builder) throws IOException {
         write(obs, new StringBuilderWriter(builder));
     }
 
@@ -337,8 +319,7 @@ public class ObservationWriter implements Serializable {
             Map<String, String> instructionMap = new HashMap<String, String>(2);
             instructionMap.put("type", "text/xsl");
             instructionMap.put("href", stylesheetURL);
-            ProcessingInstruction pi = new ProcessingInstruction(
-                    "xml-stylesheet", instructionMap);
+            ProcessingInstruction pi = new ProcessingInstruction("xml-stylesheet", instructionMap);
             document.getContent().add(0, pi);
         }
         outputter.output(document, writer);
@@ -361,30 +342,25 @@ public class ObservationWriter implements Serializable {
 
     private void addEntityAttributes(CaomEntity ce, Element el, DateFormat df) {
         if (docVersion < 21) {
-            el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(),
-                    caom2Namespace);
+            el.setAttribute("id", CaomUtil.uuidToLong(ce.getID()).toString(), caom2Namespace);
         } else {
             el.setAttribute("id", ce.getID().toString(), caom2Namespace);
         }
 
         if (ce.getLastModified() != null) {
-            el.setAttribute("lastModified", df.format(ce.getLastModified()),
-                    el.getNamespace());
+            el.setAttribute("lastModified", df.format(ce.getLastModified()), el.getNamespace());
         }
 
         if (docVersion >= 23 && ce.getMaxLastModified() != null) {
-            el.setAttribute("maxLastModified",
-                    df.format(ce.getMaxLastModified()), el.getNamespace());
+            el.setAttribute("maxLastModified", df.format(ce.getMaxLastModified()), el.getNamespace());
         }
 
         if (docVersion >= 23 && ce.getMetaChecksum() != null) {
-            el.setAttribute("metaChecksum",
-                    ce.getMetaChecksum().toASCIIString(), el.getNamespace());
+            el.setAttribute("metaChecksum", ce.getMetaChecksum().toASCIIString(), el.getNamespace());
         }
 
         if (docVersion >= 23 && ce.getAccMetaChecksum() != null) {
-            el.setAttribute("accMetaChecksum",
-                    ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
+            el.setAttribute("accMetaChecksum", ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
         }
     }
 
@@ -397,12 +373,10 @@ public class ObservationWriter implements Serializable {
      */
     protected Element getObservationElement(Observation obs) {
         // IVOA DateFormat.
-        DateFormat dateFormat = DateUtil
-                .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
         Element element = getCaom2Element("Observation");
-        String type = caom2Namespace.getPrefix() + ":"
-                + obs.getClass().getSimpleName();
+        String type = caom2Namespace.getPrefix() + ":" + obs.getClass().getSimpleName();
         element.setAttribute("type", type, xsiNamespace);
 
         addEntityAttributes(obs, element, dateFormat);
@@ -429,16 +403,14 @@ public class ObservationWriter implements Serializable {
 
         // Members must be the last element.
         if (obs instanceof CompositeObservation) {
-            addMembersElement(((CompositeObservation) obs).getMembers(),
-                    element, dateFormat);
+            addMembersElement(((CompositeObservation) obs).getMembers(), element, dateFormat);
         }
 
         return element;
     }
 
     /**
-     * Builds a JDOM representation of an Algorithm and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Algorithm and adds it to the parent element.
      *
      * @param algorithm
      *            The Algorithm to add to the parent.
@@ -447,8 +419,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addAlgorithmElement(Algorithm algorithm, Element parent,
-            DateFormat dateFormat) {
+    protected void addAlgorithmElement(Algorithm algorithm, Element parent, DateFormat dateFormat) {
         if (algorithm == null) {
             return;
         }
@@ -459,8 +430,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Proposal and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Proposal and adds it to the parent element.
      *
      * @param proposal
      *            The Proposal to add to the parent.
@@ -469,8 +439,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addProposalElement(Proposal proposal, Element parent,
-            DateFormat dateFormat) {
+    protected void addProposalElement(Proposal proposal, Element parent, DateFormat dateFormat) {
         if (proposal == null) {
             return;
         }
@@ -489,8 +458,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Target and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Target and adds it to the parent element.
      *
      * @param target
      *            The Target to add to the parent.
@@ -499,8 +467,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addTargetElement(Target target, Element parent,
-            DateFormat dateFormat) {
+    protected void addTargetElement(Target target, Element parent, DateFormat dateFormat) {
         if (target == null) {
             return;
         }
@@ -522,8 +489,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an TargetPosition and adds it to the
-     * parent element.
+     * Builds a JDOM representation of an TargetPosition and adds it to the parent element.
      *
      * @param targetPosition
      *            The Target to add to the parent.
@@ -532,8 +498,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addTargetPositionElement(TargetPosition targetPosition,
-            Element parent, DateFormat dateFormat) {
+    protected void addTargetPositionElement(TargetPosition targetPosition, Element parent, DateFormat dateFormat) {
         if (targetPosition == null) {
             return;
         }
@@ -548,10 +513,8 @@ public class ObservationWriter implements Serializable {
             element.addContent(equinox);
         }
         Element coords = getCaom2Element("coordinates");
-        addNumberElement("cval1", targetPosition.getCoordinates().cval1,
-                coords);
-        addNumberElement("cval2", targetPosition.getCoordinates().cval2,
-                coords);
+        addNumberElement("cval1", targetPosition.getCoordinates().cval1, coords);
+        addNumberElement("cval2", targetPosition.getCoordinates().cval2, coords);
         element.addContent(coords);
         parent.addContent(element);
     }
@@ -563,8 +526,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      * @param dateFormat
      */
-    protected void addRequirements(Requirements req, Element parent,
-            DateFormat dateFormat) {
+    protected void addRequirements(Requirements req, Element parent, DateFormat dateFormat) {
         if (docVersion < 21) {
             return; // Requirements added in CAOM-2.1
         }
@@ -579,8 +541,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Telescope and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Telescope and adds it to the parent element.
      *
      * @param telescope
      *            The Telescope to add to the parent.
@@ -589,8 +550,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addTelescopeElement(Telescope telescope, Element parent,
-            DateFormat dateFormat) {
+    protected void addTelescopeElement(Telescope telescope, Element parent, DateFormat dateFormat) {
         if (telescope == null) {
             return;
         }
@@ -609,8 +569,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Instrument and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Instrument and adds it to the parent element.
      *
      * @param instrument
      *            The Instrument to add to the parent.
@@ -619,8 +578,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addInstrumentElement(Instrument instrument, Element parent,
-            DateFormat dateFormat) {
+    protected void addInstrumentElement(Instrument instrument, Element parent, DateFormat dateFormat) {
         if (instrument == null) {
             return;
         }
@@ -636,8 +594,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Environment and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Environment and adds it to the parent element.
      *
      * @param environment
      *            The Environment to add to the parent.
@@ -646,8 +603,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addEnvironmentElement(Environment environment,
-            Element parent, DateFormat dateFormat) {
+    protected void addEnvironmentElement(Environment environment, Element parent, DateFormat dateFormat) {
         if (environment == null) {
             return;
         }
@@ -664,8 +620,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of ObservationURI and adds it to
-     * the parent element.
+     * Builds a JDOM representation of a Set of ObservationURI and adds it to the parent element.
      *
      * @param members
      *            The Set of ObservationURI to add to the parent.
@@ -674,8 +629,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addMembersElement(Set<ObservationURI> members,
-            Element parent, DateFormat dateFormat) {
+    protected void addMembersElement(Set<ObservationURI> members, Element parent, DateFormat dateFormat) {
         if (members == null || (members.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -688,8 +642,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of Plane's and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a Set of Plane's and adds it to the parent element.
      *
      * @param planes
      *            The Set of Plane's to add to the parent.
@@ -698,8 +651,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addPlanesElement(Set<Plane> planes, Element parent,
-            DateFormat dateFormat) {
+    protected void addPlanesElement(Set<Plane> planes, Element parent, DateFormat dateFormat) {
         if (planes == null || (planes.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -714,24 +666,17 @@ public class ObservationWriter implements Serializable {
                 addURIElement("creatorID", plane.creatorID, planeElement);
             }
 
-            addDateElement("metaRelease", plane.metaRelease, planeElement,
-                    dateFormat);
-            addDateElement("dataRelease", plane.dataRelease, planeElement,
-                    dateFormat);
+            addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
+            addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
             if (plane.dataProductType != null) {
-                if (docVersion < 23 && DataProductType.CATALOG
-                        .equals(plane.dataProductType)) {
-                    addElement("dataProductType",
-                            plane.dataProductType.getTerm(), planeElement);
+                if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) {
+                    addElement("dataProductType", plane.dataProductType.getTerm(), planeElement);
                 } else {
-                    addElement("dataProductType",
-                            plane.dataProductType.getValue(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
                 }
             }
             if (plane.calibrationLevel != null) {
-                addElement("calibrationLevel",
-                        String.valueOf(plane.calibrationLevel.getValue()),
-                        planeElement);
+                addElement("calibrationLevel", String.valueOf(plane.calibrationLevel.getValue()), planeElement);
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
             addMetricsElement(plane.metrics, planeElement, dateFormat);
@@ -760,15 +705,12 @@ public class ObservationWriter implements Serializable {
         if (comp.bounds != null) {
             if (comp.bounds instanceof Polygon) {
                 if (docVersion < 23) {
-                    throw new UnsupportedOperationException(
-                            "cannot downgrade polygon doc version "
-                                    + docVersion);
+                    throw new UnsupportedOperationException("cannot downgrade polygon doc version " + docVersion);
                 }
 
                 Polygon poly = (Polygon) comp.bounds;
                 Element pe = getCaom2Element("bounds");
-                String xsiType = caom2Namespace.getPrefix() + ":"
-                        + Polygon.class.getSimpleName();
+                String xsiType = caom2Namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
                 pe.setAttribute("type", xsiType, xsiNamespace);
 
                 Element pes = getCaom2Element("points");
@@ -795,8 +737,7 @@ public class ObservationWriter implements Serializable {
                 pe.addContent(se);
                 e.addContent(pe);
             } else {
-                throw new UnsupportedOperationException(
-                        comp.bounds.getClass().getName() + " -> XML");
+                throw new UnsupportedOperationException(comp.bounds.getClass().getName() + " -> XML");
             }
         }
         if (comp.dimension != null) {
@@ -962,8 +903,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of an Telescope and adds it to the parent
-     * element.
+     * Builds a JDOM representation of an Telescope and adds it to the parent element.
      *
      * @param provenance
      *            The Provenance to add to the parent.
@@ -972,8 +912,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addProvenanceElement(Provenance provenance, Element parent,
-            DateFormat dateFormat) {
+    protected void addProvenanceElement(Provenance provenance, Element parent, DateFormat dateFormat) {
         if (provenance == null) {
             return;
         }
@@ -985,8 +924,7 @@ public class ObservationWriter implements Serializable {
         addElement("producer", provenance.producer, element);
         addElement("runID", provenance.runID, element);
         addURIElement("reference", provenance.reference, element);
-        addDateElement("lastExecuted", provenance.lastExecuted, element,
-                dateFormat);
+        addDateElement("lastExecuted", provenance.lastExecuted, element, dateFormat);
         if (docVersion < 23) {
             addStringListElement("keywords", provenance.getKeywords(), element);
         } else {
@@ -996,15 +934,13 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
-    protected void addMetricsElement(Metrics metrics, Element parent,
-            DateFormat dateFormat) {
+    protected void addMetricsElement(Metrics metrics, Element parent, DateFormat dateFormat) {
         if (metrics == null) {
             return;
         }
 
         Element element = getCaom2Element("metrics");
-        addNumberElement("sourceNumberDensity", metrics.sourceNumberDensity,
-                element);
+        addNumberElement("sourceNumberDensity", metrics.sourceNumberDensity, element);
         addNumberElement("background", metrics.background, element);
         addNumberElement("backgroundStddev", metrics.backgroundStddev, element);
         addNumberElement("fluxDensityLimit", metrics.fluxDensityLimit, element);
@@ -1019,8 +955,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      * @param dateFormat
      */
-    protected void addQuaility(DataQuality dq, Element parent,
-            DateFormat dateFormat) {
+    protected void addQuaility(DataQuality dq, Element parent, DateFormat dateFormat) {
         if (docVersion < 21) {
             return; // DataQuality added in CAOM-2.1
         }
@@ -1034,8 +969,7 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
-    protected void addTransitionElement(EnergyTransition transition,
-            Element parent, DateFormat dateFormat) {
+    protected void addTransitionElement(EnergyTransition transition, Element parent, DateFormat dateFormat) {
         if (transition == null) {
             return;
         }
@@ -1047,8 +981,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of PlaneURI and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a Set of PlaneURI and adds it to the parent element.
      *
      * @param inputs
      *            The Set of PlaneURI to add to the parent.
@@ -1057,8 +990,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addInputsElement(Set<PlaneURI> inputs, Element parent,
-            DateFormat dateFormat) {
+    protected void addInputsElement(Set<PlaneURI> inputs, Element parent, DateFormat dateFormat) {
         if (inputs == null || (inputs.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -1071,8 +1003,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of Artifact's and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a Set of Artifact's and adds it to the parent element.
      *
      * @param artifacts
      *            The Set of Artifact's to add to the parent.
@@ -1081,10 +1012,8 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            IVOA DateFormat.
      */
-    protected void addArtifactsElement(Set<Artifact> artifacts, Element parent,
-            DateFormat dateFormat) {
-        if (artifacts == null
-                || (artifacts.isEmpty() && !writeEmptyCollections)) {
+    protected void addArtifactsElement(Set<Artifact> artifacts, Element parent, DateFormat dateFormat) {
+        if (artifacts == null || (artifacts.isEmpty() && !writeEmptyCollections)) {
             return;
         }
 
@@ -1095,24 +1024,19 @@ public class ObservationWriter implements Serializable {
             addURIElement("uri", artifact.getURI(), artifactElement);
 
             if (docVersion >= 22) {
-                addElement("productType", artifact.getProductType().getValue(),
-                        artifactElement);
-                addElement("releaseType", artifact.getReleaseType().getValue(),
-                        artifactElement);
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
+                addElement("releaseType", artifact.getReleaseType().getValue(), artifactElement);
             }
 
             addElement("contentType", artifact.contentType, artifactElement);
-            addNumberElement("contentLength", artifact.contentLength,
-                    artifactElement);
+            addNumberElement("contentLength", artifact.contentLength, artifactElement);
 
             if (docVersion < 22) {
-                addElement("productType", artifact.getProductType().getValue(),
-                        artifactElement);
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
             }
 
             if (docVersion > 22) {
-                addURIElement("contentChecksum", artifact.contentChecksum,
-                        artifactElement);
+                addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
             }
 
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
@@ -1122,8 +1046,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of Part's and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a Set of Part's and adds it to the parent element.
      *
      * @param parts
      *            The Set of Part's to add to the parent.
@@ -1132,8 +1055,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addPartsElement(Set<Part> parts, Element parent,
-            DateFormat dateFormat) {
+    protected void addPartsElement(Set<Part> parts, Element parent, DateFormat dateFormat) {
         if (parts == null || (parts.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -1144,8 +1066,7 @@ public class ObservationWriter implements Serializable {
             addEntityAttributes(part, partElement, dateFormat);
             addElement("name", part.getName(), partElement);
             if (part.productType != null) {
-                addElement("productType", part.productType.getValue(),
-                        partElement);
+                addElement("productType", part.productType.getValue(), partElement);
             }
             addChunksElement(part.getChunks(), partElement, dateFormat);
             element.addContent(partElement);
@@ -1154,8 +1075,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Set of Chunk's and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a Set of Chunk's and adds it to the parent element.
      *
      * @param chunks
      *            The Set of Chunk's to add to the parent.
@@ -1164,8 +1084,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addChunksElement(Set<Chunk> chunks, Element parent,
-            DateFormat dateFormat) {
+    protected void addChunksElement(Set<Chunk> chunks, Element parent, DateFormat dateFormat) {
         if (chunks == null || (chunks.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -1175,28 +1094,21 @@ public class ObservationWriter implements Serializable {
             Element chunkElement = getCaom2Element("chunk");
             addEntityAttributes(chunk, chunkElement, dateFormat);
             if (chunk.productType != null) {
-                addElement("productType", chunk.productType.getValue(),
-                        chunkElement);
+                addElement("productType", chunk.productType.getValue(), chunkElement);
             }
             addNumberElement("naxis", chunk.naxis, chunkElement);
-            addNumberElement("observableAxis", chunk.observableAxis,
-                    chunkElement);
-            addNumberElement("positionAxis1", chunk.positionAxis1,
-                    chunkElement);
-            addNumberElement("positionAxis2", chunk.positionAxis2,
-                    chunkElement);
+            addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
+            addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
+            addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
             addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
             addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
-            addNumberElement("polarizationAxis", chunk.polarizationAxis,
-                    chunkElement);
+            addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
 
-            addObservableAxisElement(chunk.observable, chunkElement,
-                    dateFormat);
+            addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
             addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
             addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
             addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
-            addPolarizationWCSElement(chunk.polarization, chunkElement,
-                    dateFormat);
+            addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
 
             element.addContent(chunkElement);
         }
@@ -1204,37 +1116,25 @@ public class ObservationWriter implements Serializable {
     }
 
     /*
-     * // alt version for one-chunk-per-part that was reverted from caom-2.2
-     * protected void addChunksElement(Chunk chunk, Element parent, DateFormat
-     * dateFormat) { if (chunk == null) return;
+     * // alt version for one-chunk-per-part that was reverted from caom-2.2 protected void addChunksElement(Chunk chunk, Element parent, DateFormat dateFormat)
+     * { if (chunk == null) return;
      * 
-     * Element chunkParent = parent; if (docVersion < 22) { Element chunks =
-     * getCaom2Element("chunks"); parent.addContent(chunks); chunkParent =
-     * chunks; }
+     * Element chunkParent = parent; if (docVersion < 22) { Element chunks = getCaom2Element("chunks"); parent.addContent(chunks); chunkParent = chunks; }
      * 
-     * Element chunkElement = getCaom2Element("chunk");
-     * addEntityAttributes(chunk, chunkElement, dateFormat);
-     * addNumberElement("naxis", chunk.naxis, chunkElement);
-     * addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
-     * addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
-     * addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
-     * addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
-     * addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
-     * addNumberElement("polarizationAxis", chunk.polarizationAxis,
-     * chunkElement);
+     * Element chunkElement = getCaom2Element("chunk"); addEntityAttributes(chunk, chunkElement, dateFormat); addNumberElement("naxis", chunk.naxis,
+     * chunkElement); addNumberElement("observableAxis", chunk.observableAxis, chunkElement); addNumberElement("positionAxis1", chunk.positionAxis1,
+     * chunkElement); addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement); addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
+     * addNumberElement("timeAxis", chunk.timeAxis, chunkElement); addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
      * 
-     * addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
-     * addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
-     * addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
-     * addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
+     * addObservableAxisElement(chunk.observable, chunkElement, dateFormat); addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
+     * addSpectralWCSElement(chunk.energy, chunkElement, dateFormat); addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
      * addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
      * 
      * chunkParent.addContent(chunkElement); }
      */
 
     /**
-     * Builds a JDOM representation of an ObservableAxis and adds it to the
-     * parent element.
+     * Builds a JDOM representation of an ObservableAxis and adds it to the parent element.
      *
      * @param observable
      *            The ObservableAxis to add to the parent.
@@ -1243,8 +1143,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addObservableAxisElement(ObservableAxis observable,
-            Element parent, DateFormat dateFormat) {
+    protected void addObservableAxisElement(ObservableAxis observable, Element parent, DateFormat dateFormat) {
         if (observable == null) {
             return;
         }
@@ -1257,8 +1156,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a SpatialWCS and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a SpatialWCS and adds it to the parent element.
      *
      * @param position
      *            The SpatialWCS to add to the parent.
@@ -1267,8 +1165,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addSpatialWCSElement(SpatialWCS position, Element parent,
-            DateFormat dateFormat) {
+    protected void addSpatialWCSElement(SpatialWCS position, Element parent, DateFormat dateFormat) {
         if (position == null) {
             return;
         }
@@ -1282,8 +1179,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a SpectralWCS and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a SpectralWCS and adds it to the parent element.
      *
      * @param energy
      *            The SpectralWCS to add to the parent.
@@ -1292,8 +1188,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addSpectralWCSElement(SpectralWCS energy, Element parent,
-            DateFormat dateFormat) {
+    protected void addSpectralWCSElement(SpectralWCS energy, Element parent, DateFormat dateFormat) {
         if (energy == null) {
             return;
         }
@@ -1315,8 +1210,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a TemporalWCS and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a TemporalWCS and adds it to the parent element.
      *
      * @param time
      *            The TemporalWCS to add to the parent.
@@ -1325,8 +1219,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addTemporalWCSElement(TemporalWCS time, Element parent,
-            DateFormat dateFormat) {
+    protected void addTemporalWCSElement(TemporalWCS time, Element parent, DateFormat dateFormat) {
         if (time == null) {
             return;
         }
@@ -1342,8 +1235,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a PolarizationWCS and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a PolarizationWCS and adds it to the parent element.
      *
      * @param polarization
      *            The PolarizationWCS to add to the parent.
@@ -1352,8 +1244,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addPolarizationWCSElement(PolarizationWCS polarization,
-            Element parent, DateFormat dateFormat) {
+    protected void addPolarizationWCSElement(PolarizationWCS polarization, Element parent, DateFormat dateFormat) {
         if (polarization == null) {
             return;
         }
@@ -1389,8 +1280,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Coord2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a Coord2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1399,8 +1289,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoord2DElement(String name, Coord2D coord,
-            Element parent) {
+    protected void addCoord2DElement(String name, Coord2D coord, Element parent) {
         if (coord == null) {
             return;
         }
@@ -1412,8 +1301,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a ValueCoord2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a ValueCoord2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1422,8 +1310,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addValueCoord2DElement(String name, ValueCoord2D coord,
-            Element parent) {
+    protected void addValueCoord2DElement(String name, ValueCoord2D coord, Element parent) {
         if (coord == null) {
             return;
         }
@@ -1435,8 +1322,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordAxis1D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordAxis1D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1445,8 +1331,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordAxis1DElement(String name, CoordAxis1D axis,
-            Element parent) {
+    protected void addCoordAxis1DElement(String name, CoordAxis1D axis, Element parent) {
         if (axis == null) {
             return;
         }
@@ -1461,8 +1346,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordAxis2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordAxis2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1471,8 +1355,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordAxis2DElement(String name, CoordAxis2D axis,
-            Element parent) {
+    protected void addCoordAxis2DElement(String name, CoordAxis2D axis, Element parent) {
         if (axis == null) {
             return;
         }
@@ -1489,8 +1372,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordBounds1D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordBounds1D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1499,8 +1381,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordBounds1DElement(String name, CoordBounds1D bounds,
-            Element parent) {
+    protected void addCoordBounds1DElement(String name, CoordBounds1D bounds, Element parent) {
         if (bounds == null) {
             return;
         }
@@ -1511,8 +1392,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordBounds2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordBounds2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1521,8 +1401,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordBounds2DElement(String name, CoordBounds2D bounds,
-            Element parent) {
+    protected void addCoordBounds2DElement(String name, CoordBounds2D bounds, Element parent) {
         if (bounds == null) {
             return;
         }
@@ -1531,19 +1410,15 @@ public class ObservationWriter implements Serializable {
         if (bounds instanceof CoordCircle2D) {
             addCoordCircle2DElement("circle", (CoordCircle2D) bounds, element);
         } else if (bounds instanceof CoordPolygon2D) {
-            addCoordPolygon2DElement("polygon", (CoordPolygon2D) bounds,
-                    element);
+            addCoordPolygon2DElement("polygon", (CoordPolygon2D) bounds, element);
         } else {
-            throw new IllegalStateException(
-                    "BUG: unsupported CoordBounds2D type "
-                            + bounds.getClass().getSimpleName());
+            throw new IllegalStateException("BUG: unsupported CoordBounds2D type " + bounds.getClass().getSimpleName());
         }
         parent.addContent(element);
     }
 
     /**
-     * Builds a JDOM representation of a CoordCircle2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordCircle2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1552,8 +1427,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordCircle2DElement(String name, CoordCircle2D circle,
-            Element parent) {
+    protected void addCoordCircle2DElement(String name, CoordCircle2D circle, Element parent) {
         if (circle == null) {
             return;
         }
@@ -1565,8 +1439,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordError and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordError and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1575,8 +1448,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordErrorElement(String name, CoordError error,
-            Element parent) {
+    protected void addCoordErrorElement(String name, CoordError error, Element parent) {
         if (error == null) {
             return;
         }
@@ -1588,8 +1460,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordFunction1D and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a CoordFunction1D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1598,8 +1469,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordFunction1DElement(String name,
-            CoordFunction1D function, Element parent) {
+    protected void addCoordFunction1DElement(String name, CoordFunction1D function, Element parent) {
         if (function == null) {
             return;
         }
@@ -1612,8 +1482,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordFunction2D and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a CoordFunction2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1622,8 +1491,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordFunction2DElement(String name,
-            CoordFunction2D function, Element parent) {
+    protected void addCoordFunction2DElement(String name, CoordFunction2D function, Element parent) {
         if (function == null) {
             return;
         }
@@ -1639,8 +1507,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordPolygon2D and adds it to the
-     * parent element.
+     * Builds a JDOM representation of a CoordPolygon2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1649,8 +1516,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordPolygon2DElement(String name, CoordPolygon2D polygon,
-            Element parent) {
+    protected void addCoordPolygon2DElement(String name, CoordPolygon2D polygon, Element parent) {
         if (polygon == null) {
             return;
         }
@@ -1667,8 +1533,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordRange1D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordRange1D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1677,8 +1542,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordRange1DElement(String name, CoordRange1D range,
-            Element parent) {
+    protected void addCoordRange1DElement(String name, CoordRange1D range, Element parent) {
         if (range == null) {
             return;
         }
@@ -1690,8 +1554,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a CoordRange2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a CoordRange2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1700,8 +1563,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordRange2DElement(String name, CoordRange2D range,
-            Element parent) {
+    protected void addCoordRange2DElement(String name, CoordRange2D range, Element parent) {
         if (range == null) {
             return;
         }
@@ -1713,8 +1575,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Dimension2D and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a Dimension2D and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1723,8 +1584,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addDimension2DElement(String name, Dimension2D dimension,
-            Element parent) {
+    protected void addDimension2DElement(String name, Dimension2D dimension, Element parent) {
         if (dimension == null) {
             return;
         }
@@ -1736,8 +1596,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a RefCoord and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a RefCoord and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1746,8 +1605,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addRefCoordElement(String name, RefCoord refCoord,
-            Element parent) {
+    protected void addRefCoordElement(String name, RefCoord refCoord, Element parent) {
         if (refCoord == null) {
             return;
         }
@@ -1759,8 +1617,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of a Slice and adds it to the parent
-     * element.
+     * Builds a JDOM representation of a Slice and adds it to the parent element.
      * 
      * @param name
      *            The name of the element.
@@ -1785,8 +1642,7 @@ public class ObservationWriter implements Serializable {
      */
 
     /**
-     * Builds a JDOM representation Element with the given name and sets the
-     * text to the given value, then adds the element to the parent.
+     * Builds a JDOM representation Element with the given name and sets the text to the given value, then adds the element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1806,8 +1662,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation Element with the given name and sets the
-     * text to the given value, then adds the element to the parent.
+     * Builds a JDOM representation Element with the given name and sets the text to the given value, then adds the element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1816,8 +1671,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addNumberElement(String name, Number number,
-            Element parent) {
+    protected void addNumberElement(String name, Number number, Element parent) {
         if (number == null) {
             return;
         }
@@ -1828,9 +1682,8 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation Element with the given name and sets the
-     * text to true if the value is true, else sets the text to false, then adds
-     * the element to the parent.
+     * Builds a JDOM representation Element with the given name and sets the text to true if the value is true, else sets the text to false, then adds the
+     * element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1839,8 +1692,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addBooleanElement(String name, Boolean value,
-            Element parent) {
+    protected void addBooleanElement(String name, Boolean value, Element parent) {
         if (value == null) {
             return;
         }
@@ -1851,8 +1703,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation Element with the given name and sets the
-     * text to the given value, then adds the element to the parent.
+     * Builds a JDOM representation Element with the given name and sets the text to the given value, then adds the element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1872,8 +1723,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation Element with the given name and adds space
-     * delimited List values as the text, then adds the element to the parent.
+     * Builds a JDOM representation Element with the given name and adds space delimited List values as the text, then adds the element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1882,8 +1732,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addStringListElement(String name, Collection<String> values,
-            Element parent) {
+    protected void addStringListElement(String name, Collection<String> values, Element parent) {
         if (values == null || (values.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -1897,8 +1746,7 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
-    protected void addKeywordsElement(Collection<String> values,
-            Element parent) {
+    protected void addKeywordsElement(Collection<String> values, Element parent) {
         if (values == null || (values.isEmpty() && !writeEmptyCollections)) {
             return;
         }
@@ -1914,8 +1762,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation Element with the given name and adds space
-     * delimited List values as the text, then adds the element to the parent.
+     * Builds a JDOM representation Element with the given name and adds space delimited List values as the text, then adds the element to the parent.
      * 
      * @param name
      *            The name of the element.
@@ -1924,8 +1771,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      *            The parent element for this child element.
      */
-    protected void addCoordRange1DListElement(String name,
-            List<CoordRange1D> values, Element parent) {
+    protected void addCoordRange1DListElement(String name, List<CoordRange1D> values, Element parent) {
         if (values == null) {
             return;
         }
@@ -1938,8 +1784,7 @@ public class ObservationWriter implements Serializable {
     }
 
     /**
-     * Builds a JDOM representation of the Date in IVOA format and adds it to
-     * the Observation element.
+     * Builds a JDOM representation of the Date in IVOA format and adds it to the Observation element.
      * 
      * @param name
      *            The name of the element.
@@ -1950,8 +1795,7 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            IVOA DateFormat.
      */
-    protected void addDateElement(String name, Date date, Element parent,
-            DateFormat dateFormat) {
+    protected void addDateElement(String name, Date date, Element parent, DateFormat dateFormat) {
         if (date == null) {
             return;
         }

@@ -26,15 +26,12 @@ public class EnergyConverter implements Serializable {
     private static final String[] enUnits = new String[] { "eV", "keV", "MeV", "GeV" };
     private static final double[] enMult = new double[] { 1.0, 1.0e3, 1.0e6, 1.0e9 };
 
-    private static final String[] waveUnits = new String[] { "m", "cm", "mm",
-                                                             "um", "µm", "nm", "A" };
-    private static final double[] waveMult = new double[] { 1.0, 1.0e-2, 1.0e-3,
-                                                            1.0e-6, 1.0e-6, 1.0e-9, 1.0e-10, };
+    private static final String[] waveUnits = new String[] { "m", "cm", "mm", "um", "µm", "nm", "A" };
+    private static final double[] waveMult = new double[] { 1.0, 1.0e-2, 1.0e-3, 1.0e-6, 1.0e-6, 1.0e-9, 1.0e-10, };
 
     // Lay out the actual units only once, then coalesce them.
     static {
-        final List<String> allUnitList = new ArrayList<String>(
-                Arrays.asList(freqUnits));
+        final List<String> allUnitList = new ArrayList<String>(Arrays.asList(freqUnits));
         allUnitList.addAll(Arrays.asList(enUnits));
         allUnitList.addAll(Arrays.asList(waveUnits));
 
@@ -56,8 +53,7 @@ public class EnergyConverter implements Serializable {
     }
 
     /**
-     * Convert the supplied value/units to a value expressed in core energy
-     * units.
+     * Convert the supplied value/units to a value expressed in core energy units.
      */
     public double convert(double value, String ctype, String cunit) {
         // TODO: check ctype instead of just relying on units
@@ -65,17 +61,13 @@ public class EnergyConverter implements Serializable {
     }
 
     /*
-     * public double convert(double value, String ctype, String fromUnit, String
-     * toUnit) { double valueM = toMeters(value, fromUnit);
+     * public double convert(double value, String ctype, String fromUnit, String toUnit) { double valueM = toMeters(value, fromUnit);
      * 
-     * int i = ArrayUtil.matches("^" + toUnit + "$", freqUnits, true); if ( i !=
-     * -1 ) return waveToFreq(valueM, i);
+     * int i = ArrayUtil.matches("^" + toUnit + "$", freqUnits, true); if ( i != -1 ) return waveToFreq(valueM, i);
      * 
-     * i = ArrayUtil.matches("^" + toUnit + "$", enUnits, true); if ( i != -1 )
-     * return waveToEnergy(valueM, i);
+     * i = ArrayUtil.matches("^" + toUnit + "$", enUnits, true); if ( i != -1 ) return waveToEnergy(valueM, i);
      * 
-     * i = ArrayUtil.matches("^" + toUnit + "$", waveUnits, true); if (i != -1)
-     * return waveToWave(valueM, i);
+     * i = ArrayUtil.matches("^" + toUnit + "$", waveUnits, true); if (i != -1) return waveToWave(valueM, i);
      * 
      * throw new IllegalArgumentException("unknown units: " + toUnit); }
      */
@@ -85,8 +77,7 @@ public class EnergyConverter implements Serializable {
     }
 
     /**
-     * Convert the energy value d from the specified units to wavelength in
-     * meters.
+     * Convert the energy value d from the specified units to wavelength in meters.
      * 
      * @param d
      * @param units
@@ -196,41 +187,26 @@ public class EnergyConverter implements Serializable {
     /*
      * private double waveToWave(double d, int i) { return d / waveMult[i]; }
      * 
-     * private double waveToFreq(double d, int i) { double nu = d * c; nu /=
-     * freqMult[i]; return nu; }
+     * private double waveToFreq(double d, int i) { double nu = d * c; nu /= freqMult[i]; return nu; }
      * 
-     * private double waveToEnergy(double d, int i) { double e = c * h / d; e /=
-     * enMult[i]; return e; }
+     * private double waveToEnergy(double d, int i) { double e = c * h / d; e /= enMult[i]; return e; }
      */
 
     /*
-     * public static void main(String[] args) { EnergyConverter euc = new
-     * EnergyConverter();
+     * public static void main(String[] args) { EnergyConverter euc = new EnergyConverter();
      * 
      * 
-     * for (String u : waveUnits) { System.out.println("absolute: 5"+u+" = " +
-     * euc.toMeters(5.0, u) + "m == " + euc.toHz(5.0, u) + "Hz");
-     * System.out.println("relative: 4-6"+u+" = " + euc.toDeltaMeters(4.0, 6.0,
-     * u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) + "Hz"); }
+     * for (String u : waveUnits) { System.out.println("absolute: 5"+u+" = " + euc.toMeters(5.0, u) + "m == " + euc.toHz(5.0, u) + "Hz");
+     * System.out.println("relative: 4-6"+u+" = " + euc.toDeltaMeters(4.0, 6.0, u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) + "Hz"); }
      * 
-     * System.out.println("========"); for (String u : freqUnits) {
-     * System.out.println("absolute: 5"+u+" = " + euc.toMeters(5.0, u) + "m == "
-     * + euc.toHz(5.0, u) + "Hz"); System.out.println("relative: 4-6"+u+" = " +
-     * euc.toDeltaMeters(4.0, 6.0, u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) +
-     * "Hz"); }
+     * System.out.println("========"); for (String u : freqUnits) { System.out.println("absolute: 5"+u+" = " + euc.toMeters(5.0, u) + "m == " + euc.toHz(5.0, u)
+     * + "Hz"); System.out.println("relative: 4-6"+u+" = " + euc.toDeltaMeters(4.0, 6.0, u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) + "Hz"); }
      * 
-     * System.out.println("========"); for (String u : enUnits) {
-     * System.out.println("absolute: 5"+u+" = " + euc.toMeters(5.0, u) + "m == "
-     * + euc.toHz(5.0, u) + "Hz"); System.out.println("relative: 4-6"+u+" = " +
-     * euc.toDeltaMeters(4.0, 6.0, u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) +
-     * "Hz"); }
+     * System.out.println("========"); for (String u : enUnits) { System.out.println("absolute: 5"+u+" = " + euc.toMeters(5.0, u) + "m == " + euc.toHz(5.0, u) +
+     * "Hz"); System.out.println("relative: 4-6"+u+" = " + euc.toDeltaMeters(4.0, 6.0, u) + "m == " + euc.toDeltaHz(4.0, 6.0, u) + "Hz"); }
      * 
-     * double d = 5.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); d = 10.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); d = 40.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); d = 70.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); d = 110.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); d = 120.0; System.out.println(d + "MHz = " + euc.toMeters(d,
-     * "MHz")); }
+     * double d = 5.0; System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); d = 10.0; System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); d = 40.0;
+     * System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); d = 70.0; System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); d = 110.0;
+     * System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); d = 120.0; System.out.println(d + "MHz = " + euc.toMeters(d, "MHz")); }
      */
 }

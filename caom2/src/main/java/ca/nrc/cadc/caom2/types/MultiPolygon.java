@@ -104,9 +104,8 @@ public class MultiPolygon implements Serializable {
     }
 
     /**
-     * Access the vertices for this polygon. If the vertex list is modified, the
-     * caller must call validate in order to enforce correctness and recompute
-     * the center, area, and minimum spanning circle (size).
+     * Access the vertices for this polygon. If the vertex list is modified, the caller must call validate in order to enforce correctness and recompute the
+     * center, area, and minimum spanning circle (size).
      * 
      * @return
      */
@@ -166,38 +165,32 @@ public class MultiPolygon implements Serializable {
 
     private void initProps() {
         if (vertices.size() < 4) {
-            throw new IllegalPolygonException(
-                    "invalid polygon: " + vertices.size() + " vertices");
+            throw new IllegalPolygonException("invalid polygon: " + vertices.size() + " vertices");
         }
 
         Vertex end = vertices.get(0);
         if (!SegmentType.MOVE.equals(end.getType())) {
-            throw new IllegalPolygonException(
-                    "invalid polygon: first vertex must be MOVE, found " + end);
+            throw new IllegalPolygonException("invalid polygon: first vertex must be MOVE, found " + end);
         }
         end = vertices.get(vertices.size() - 1);
         if (!SegmentType.CLOSE.equals(end.getType())) {
-            throw new IllegalPolygonException(
-                    "invalid polygon: last vertex must be CLOSE, found " + end);
+            throw new IllegalPolygonException("invalid polygon: last vertex must be CLOSE, found " + end);
         }
 
         boolean openLoop = false;
         for (Vertex v : vertices) {
             if (SegmentType.MOVE.equals(v.getType())) {
                 if (openLoop) {
-                    throw new IllegalPolygonException(
-                            "invalid polygon: found MOVE when loop already open");
+                    throw new IllegalPolygonException("invalid polygon: found MOVE when loop already open");
                 }
                 openLoop = true;
             } else if (SegmentType.CLOSE.equals(v.getType())) {
                 if (!openLoop) {
-                    throw new IllegalPolygonException(
-                            "invalid polygon: found CLOSE without MOVE");
+                    throw new IllegalPolygonException("invalid polygon: found CLOSE without MOVE");
                 }
                 openLoop = false;
             } else if (!openLoop) {
-                throw new IllegalPolygonException(
-                        "invalid polygon: found LINE without MOVE");
+                throw new IllegalPolygonException("invalid polygon: found LINE without MOVE");
             }
         }
 
@@ -304,15 +297,14 @@ public class MultiPolygon implements Serializable {
             a *= -1.0;
         }
         ret.area = a;
-        
+
         CartesianTransform inv = trans.getInverseTransform();
-        
+
         ret.center = inv.transform(new Point(cx, cy));
 
         // midpoint between vertices
         if (e1 != null && e2 != null && d > 0.0) {
-            Point cen = new Point(0.5 * Math.abs(e1.cval1 + e2.cval1),
-                    0.5 * Math.abs(e1.cval2 + e2.cval2));
+            Point cen = new Point(0.5 * Math.abs(e1.cval1 + e2.cval1), 0.5 * Math.abs(e1.cval2 + e2.cval2));
             Point mscc = inv.transform(cen);
             ret.minSpanCircle = new Circle(mscc, d / 2.0);
         }
@@ -321,8 +313,7 @@ public class MultiPolygon implements Serializable {
     }
 
     /**
-     * Decode a previously encoded polygon. This method is supplied to aid in
-     * recreating a polygon from a previously encoded byte array.
+     * Decode a previously encoded polygon. This method is supplied to aid in recreating a polygon from a previously encoded byte array.
      *
      * @param encoded
      *            byte[] of length 4 + 20 * number of vertices
@@ -334,16 +325,13 @@ public class MultiPolygon implements Serializable {
         int len = (encoded.length - 4 - 1) / 20; // extra 1 for trailing byte
         int magic = HexUtil.toInt(encoded, 0);
         if (magic != Shape.MAGIC_POLYGON) {
-            throw new IllegalArgumentException(
-                    "encoded array does not start with Shape.MAGIC_POLYGON");
+            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_POLYGON");
         }
 
         MultiPolygon ret = new MultiPolygon();
         for (int i = 0; i < len; i++) {
-            double x = Double
-                    .longBitsToDouble(HexUtil.toLong(encoded, 4 + i * 20));
-            double y = Double
-                    .longBitsToDouble(HexUtil.toLong(encoded, 4 + i * 20 + 8));
+            double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4 + i * 20));
+            double y = Double.longBitsToDouble(HexUtil.toLong(encoded, 4 + i * 20 + 8));
             int s = HexUtil.toInt(encoded, 4 + i * 20 + 16);
             ret.getVertices().add(new Vertex(x, y, SegmentType.toValue(s)));
         }
@@ -351,8 +339,7 @@ public class MultiPolygon implements Serializable {
     }
 
     /**
-     * Encode a polygon as a byte array. This method is supplied to aid in
-     * storing the polygon in binary format.
+     * Encode a polygon as a byte array. This method is supplied to aid in storing the polygon in binary format.
      *
      * @param poly
      *            the polygon to encode

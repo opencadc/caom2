@@ -80,9 +80,7 @@ import java.util.List;
  * @author pdowler
  */
 public enum EnergyBand implements CaomEnum<String> {
-    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), OPTICAL(
-            "Optical"), UV(
-                    "UV"), EUV("EUV"), XRAY("X-ray"), GAMMARAY("Gamma-ray");
+    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), OPTICAL("Optical"), UV("UV"), EUV("EUV"), XRAY("X-ray"), GAMMARAY("Gamma-ray");
 
     private String value;
 
@@ -108,8 +106,7 @@ public enum EnergyBand implements CaomEnum<String> {
     }
 
     /**
-     * Compute the EnergyBand from the wavelength coverage. This finds the band
-     * that overlaps the largest fraction of the specified interval; the current
+     * Compute the EnergyBand from the wavelength coverage. This finds the band that overlaps the largest fraction of the specified interval; the current
      * implementation ignores the sub-intervals.
      *
      * @param bounds
@@ -145,42 +142,28 @@ public enum EnergyBand implements CaomEnum<String> {
     static {
         EnergyConverter ec = new EnergyConverter();
         // radio: freq < 30 GHz or wave > 10mm
-        energyBands.add(new EnergyBandWrapper(EnergyBand.RADIO,
-                ec.convert(10.0, "WAVE", "mm"), Double.MAX_VALUE));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.RADIO, ec.convert(10.0, "WAVE", "mm"), Double.MAX_VALUE));
 
         // millimeter: 0.1-10 mm
-        energyBands.add(new EnergyBandWrapper(EnergyBand.MILLIMETER,
-                ec.convert(0.1, "WAVE", "mm"), ec.convert(10.0, "WAVE", "mm")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.MILLIMETER, ec.convert(0.1, "WAVE", "mm"), ec.convert(10.0, "WAVE", "mm")));
 
         // infrared: 1-100 um
-        energyBands.add(new EnergyBandWrapper(EnergyBand.INFRARED,
-                ec.convert(1.0, "WAVE", "um"),
-                ec.convert(100.0, "WAVE", "um")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.INFRARED, ec.convert(1.0, "WAVE", "um"), ec.convert(100.0, "WAVE", "um")));
 
         // optical: 300-1000 nm
-        energyBands.add(new EnergyBandWrapper(EnergyBand.OPTICAL,
-                ec.convert(300.0, "WAVE", "nm"),
-                ec.convert(1000.0, "WAVE", "nm")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.OPTICAL, ec.convert(300.0, "WAVE", "nm"), ec.convert(1000.0, "WAVE", "nm")));
 
         // uv: 100-300 nm
-        energyBands.add(new EnergyBandWrapper(EnergyBand.UV,
-                ec.convert(100.0, "WAVE", "nm"),
-                ec.convert(300.0, "WAVE", "nm")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.UV, ec.convert(100.0, "WAVE", "nm"), ec.convert(300.0, "WAVE", "nm")));
 
         // euv: 10-100 nm
-        energyBands.add(new EnergyBandWrapper(EnergyBand.EUV,
-                ec.convert(10.0, "WAVE", "nm"),
-                ec.convert(100.0, "WAVE", "nm")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.EUV, ec.convert(10.0, "WAVE", "nm"), ec.convert(100.0, "WAVE", "nm")));
 
         // xray: 0.12-120 keV
-        energyBands.add(new EnergyBandWrapper(EnergyBand.XRAY,
-                ec.convert(0.12, "ENER", "keV"),
-                ec.convert(120.0, "ENER", "keV")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.XRAY, ec.convert(0.12, "ENER", "keV"), ec.convert(120.0, "ENER", "keV")));
 
         // gamma: 120-1e6 keV
-        energyBands.add(new EnergyBandWrapper(EnergyBand.GAMMARAY,
-                ec.convert(120.0, "ENER", "keV"),
-                ec.convert(1.0e6, "ENER", "keV")));
+        energyBands.add(new EnergyBandWrapper(EnergyBand.GAMMARAY, ec.convert(120.0, "ENER", "keV"), ec.convert(1.0e6, "ENER", "keV")));
     }
 
     private static final class EnergyBandWrapper implements Serializable {

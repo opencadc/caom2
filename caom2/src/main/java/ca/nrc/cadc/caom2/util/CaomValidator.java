@@ -85,45 +85,37 @@ public final class CaomValidator {
     private CaomValidator() {
     }
 
-    public static void assertNotNull(Class caller, String name, Object test)
-            throws IllegalArgumentException {
+    public static void assertNotNull(Class caller, String name, Object test) throws IllegalArgumentException {
         if (test == null) {
-            throw new IllegalArgumentException(
-                    caller.getSimpleName() + ": null " + name);
+            throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
         }
     }
 
     /**
-     * Keywords can contain any valid UTF-8 character except the pipe (|). The
-     * pipe character is reserved for use as a separator in persistence
-     * implementations so the list of keywords can be serialized in a single
-     * string to support querying.
+     * Keywords can contain any valid UTF-8 character except the pipe (|). The pipe character is reserved for use as a separator in persistence implementations
+     * so the list of keywords can be serialized in a single string to support querying.
      * 
      * @param caller
      * @param name
      * @param val
      */
-    public static void assertValidKeyword(Class caller, String name,
-            String val) {
+    public static void assertValidKeyword(Class caller, String name, String val) {
         assertNotNull(caller, name, val);
         boolean pipe = (val.indexOf('|') >= 0);
         if (!pipe) {
             return;
         }
-        throw new IllegalArgumentException(caller.getSimpleName() + ": invalid "
-                + name + ": may not contain pipe (|)");
+        throw new IllegalArgumentException(caller.getSimpleName() + ": invalid " + name + ": may not contain pipe (|)");
     }
 
     /**
-     * A valid path component has no space ( ), slash (/), escape (\), or
-     * percent (%) characters.
+     * A valid path component has no space ( ), slash (/), escape (\), or percent (%) characters.
      * 
      * @param caller
      * @param name
      * @param test
      */
-    public static void assertValidPathComponent(Class caller, String name,
-            String test) {
+    public static void assertValidPathComponent(Class caller, String name, String test) {
         assertNotNull(caller, name, test);
         boolean space = (test.indexOf(' ') >= 0);
         boolean slash = (test.indexOf('/') >= 0);
@@ -133,15 +125,13 @@ public final class CaomValidator {
         if (!space && !slash && !escape && !percent) {
             return;
         }
-        throw new IllegalArgumentException(caller.getSimpleName() + ": invalid "
-                + name
-                + ": may not contain space ( ), slash (/), escape (\\), or percent (%)");
+        throw new IllegalArgumentException(
+                caller.getSimpleName() + ": invalid " + name + ": may not contain space ( ), slash (/), escape (\\), or percent (%)");
     }
 
     public static void assertPositive(Class caller, String name, double test) {
         if (test <= 0.0) {
-            throw new IllegalArgumentException(
-                    caller.getSimpleName() + ": " + name + " must be > 0.0");
+            throw new IllegalArgumentException(caller.getSimpleName() + ": " + name + " must be > 0.0");
         }
     }
 
@@ -152,8 +142,7 @@ public final class CaomValidator {
     }
 
     /**
-     * Validate the keywords fields and make sure they don't contain invalid
-     * characters (currently space and single-quote).
+     * Validate the keywords fields and make sure they don't contain invalid characters (currently space and single-quote).
      * 
      * @param obs
      */
@@ -168,23 +157,19 @@ public final class CaomValidator {
             validateKeywords("telescope.keywords", obs.telescope.getKeywords());
         }
         if (obs.instrument != null) {
-            validateKeywords("instrument.keywords",
-                    obs.instrument.getKeywords());
+            validateKeywords("instrument.keywords", obs.instrument.getKeywords());
         }
 
         for (Plane p : obs.getPlanes()) {
             if (p.provenance != null) {
-                validateKeywords("provenance.keywords",
-                        p.provenance.getKeywords());
+                validateKeywords("provenance.keywords", p.provenance.getKeywords());
             }
         }
     }
 
     /**
-     * Validate Artifact.productType for consistency with Observation.intent.
-     * Observations with intent=science have no artifacts with
-     * productType=calibration. Observations with intent=calibration have no
-     * artifacts with productType=science.
+     * Validate Artifact.productType for consistency with Observation.intent. Observations with intent=science have no artifacts with productType=calibration.
+     * Observations with intent=calibration have no artifacts with productType=science.
      * 
      * @param obs
      */
@@ -200,25 +185,21 @@ public final class CaomValidator {
         for (Plane p : obs.getPlanes()) {
             for (Artifact a : p.getArtifacts()) {
                 if (ban.equals(a.getProductType())) {
-                    throw new IllegalArgumentException("Observation.intent = "
-                            + obs.intent + " but artifact "
-                            + a.getURI().toASCIIString() + " has productType = "
-                            + a.getProductType());
+                    throw new IllegalArgumentException(
+                            "Observation.intent = " + obs.intent + " but artifact " + a.getURI().toASCIIString() + " has productType = " + a.getProductType());
                 }
             }
         }
     }
 
     /**
-     * Validate Plane.position.bounds, Plane.energy,bounds, and
-     * Plane.time.bounds for valid polygon and interval respectively.
+     * Validate Plane.position.bounds, Plane.energy,bounds, and Plane.time.bounds for valid polygon and interval respectively.
      * 
      * @param obs
      */
     public static void validatePlanes(Observation obs) {
         for (Plane p : obs.getPlanes()) {
-            if (p.position != null && p.position.bounds != null
-                    && p.position.bounds instanceof Polygon) {
+            if (p.position != null && p.position.bounds != null && p.position.bounds instanceof Polygon) {
                 Polygon poly = (Polygon) p.position.bounds;
                 poly.validate();
             }

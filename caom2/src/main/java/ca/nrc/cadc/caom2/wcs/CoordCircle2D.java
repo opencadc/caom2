@@ -100,7 +100,6 @@ public class CoordCircle2D implements CoordBounds2D, Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + center + "," + radius
-                + "]";
+        return this.getClass().getSimpleName() + "[" + center + "," + radius + "]";
     }
 }

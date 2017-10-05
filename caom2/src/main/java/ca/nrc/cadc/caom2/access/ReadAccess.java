@@ -97,9 +97,7 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
         this.groupID = groupID;
         String name = getGroupName();
         if (name == null) {
-            throw new IllegalArgumentException(
-                    "invalid groupID (no group name found in query string or fragment): "
-                            + groupID);
+            throw new IllegalArgumentException("invalid groupID (no group name found in query string or fragment): " + groupID);
         }
     }
 
@@ -142,8 +140,7 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
         }
 
         ReadAccess ra = (ReadAccess) o;
-        return this.groupID.equals(ra.groupID)
-                && this.assetID.equals(ra.assetID);
+        return this.groupID.equals(ra.groupID) && this.assetID.equals(ra.assetID);
     }
 
     public int compareTo(ReadAccess o) {
@@ -160,7 +157,6 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + assetID + "," + groupID
-                + "]";
+        return this.getClass().getSimpleName() + "[" + assetID + "," + groupID + "]";
     }
 }

@@ -141,8 +141,7 @@ public class CaomUtil implements Serializable {
         if (id.getMostSignificantBits() == 0) {
             return id.getLeastSignificantBits();
         }
-        throw new IllegalArgumentException(
-                "lossy conversion from UUID to Long: " + id);
+        throw new IllegalArgumentException("lossy conversion from UUID to Long: " + id);
 
     }
 
@@ -195,8 +194,7 @@ public class CaomUtil implements Serializable {
         StringBuilder sb = new StringBuilder();
 
         // sort into canonical order
-        List<PolarizationState> tmp = new ArrayList<PolarizationState>(
-                states.size());
+        List<PolarizationState> tmp = new ArrayList<PolarizationState>(states.size());
         tmp.addAll(states);
         Collections.sort(tmp, new PolarizationState.PolStateComparator());
 
@@ -246,8 +244,7 @@ public class CaomUtil implements Serializable {
     }
 
     /**
-     * Parse a list of keywords from string using the CAOM-2.3+ reserved
-     * character.
+     * Parse a list of keywords from string using the CAOM-2.3+ reserved character.
      * 
      * @param val
      * @param out
@@ -277,8 +274,7 @@ public class CaomUtil implements Serializable {
         return sb.toString();
     }
 
-    public static void decodeObservationURIs(String val,
-            Set<ObservationURI> out) {
+    public static void decodeObservationURIs(String val, Set<ObservationURI> out) {
         if (val == null) {
             return;
         }
@@ -294,8 +290,7 @@ public class CaomUtil implements Serializable {
                     ObservationURI puri = new ObservationURI(uri);
                     out.add(puri);
                 } catch (URISyntaxException ex) {
-                    throw new RuntimeException("failed to decode URI: " + s,
-                            ex);
+                    throw new RuntimeException("failed to decode URI: " + s, ex);
                 }
             }
         }
@@ -357,14 +352,11 @@ public class CaomUtil implements Serializable {
         }
         String[] c = s.split("/");
         try {
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]),
-                    Double.parseDouble(c[1]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]),
-                    Double.parseDouble(c[3]));
+            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]), Double.parseDouble(c[1]));
+            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
             return new CoordRange1D(c1, c2);
         } catch (NumberFormatException bug) {
-            throw new RuntimeException(
-                    "BUG: failed to decode CoordRange1D from " + s, bug);
+            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
         }
     }
 
@@ -427,12 +419,10 @@ public class CaomUtil implements Serializable {
         try {
             Long naxis = Long.parseLong(c[0]);
             Double delta = Double.parseDouble(c[1]);
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]),
-                    Double.parseDouble(c[3]));
+            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
             return new CoordFunction1D(naxis, delta, c2);
         } catch (NumberFormatException bug) {
-            throw new RuntimeException(
-                    "BUG: failed to decode CoordRange1D from " + s, bug);
+            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
         }
     }
 
@@ -465,18 +455,13 @@ public class CaomUtil implements Serializable {
         }
         String[] c = s.split("/");
         try {
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]),
-                    Double.parseDouble(c[1]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]),
-                    Double.parseDouble(c[3]));
-            RefCoord c3 = new RefCoord(Double.parseDouble(c[4]),
-                    Double.parseDouble(c[5]));
-            RefCoord c4 = new RefCoord(Double.parseDouble(c[6]),
-                    Double.parseDouble(c[7]));
+            RefCoord c1 = new RefCoord(Double.parseDouble(c[0]), Double.parseDouble(c[1]));
+            RefCoord c2 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
+            RefCoord c3 = new RefCoord(Double.parseDouble(c[4]), Double.parseDouble(c[5]));
+            RefCoord c4 = new RefCoord(Double.parseDouble(c[6]), Double.parseDouble(c[7]));
             return new CoordRange2D(new Coord2D(c1, c2), new Coord2D(c3, c4));
         } catch (NumberFormatException bug) {
-            throw new RuntimeException(
-                    "BUG: failed to decode CoordRange1D from " + s, bug);
+            throw new RuntimeException("BUG: failed to decode CoordRange1D from " + s, bug);
         }
     }
 
@@ -525,8 +510,7 @@ public class CaomUtil implements Serializable {
                 double rad = Double.parseDouble(c[3]);
                 return new CoordCircle2D(new ValueCoord2D(c1, c2), rad);
             } catch (NumberFormatException bug) {
-                throw new RuntimeException(
-                        "BUG: failed to decode CoordCircle2D from " + s, bug);
+                throw new RuntimeException("BUG: failed to decode CoordCircle2D from " + s, bug);
             }
         }
         if ("P".equals(c[0])) {
@@ -538,15 +522,12 @@ public class CaomUtil implements Serializable {
                     double c2 = Double.parseDouble(cc[1]);
                     poly.getVertices().add(new ValueCoord2D(c1, c2));
                 } catch (Exception bug) {
-                    throw new RuntimeException(
-                            "BUG: failed to decode CoordPolygon2D from " + s,
-                            bug);
+                    throw new RuntimeException("BUG: failed to decode CoordPolygon2D from " + s, bug);
                 }
             }
             return poly;
         }
-        throw new RuntimeException(
-                "BUG: failed to decode CoordBounds2D from " + s);
+        throw new RuntimeException("BUG: failed to decode CoordBounds2D from " + s);
     }
 
     public static String encodeCoordFunction2D(CoordFunction2D cr) {
@@ -583,19 +564,13 @@ public class CaomUtil implements Serializable {
         }
         String[] c = s.split("/");
         try {
-            Dimension2D dim = new Dimension2D(Long.parseLong(c[0]),
-                    Long.parseLong(c[1]));
-            RefCoord c1 = new RefCoord(Double.parseDouble(c[2]),
-                    Double.parseDouble(c[3]));
-            RefCoord c2 = new RefCoord(Double.parseDouble(c[4]),
-                    Double.parseDouble(c[5]));
+            Dimension2D dim = new Dimension2D(Long.parseLong(c[0]), Long.parseLong(c[1]));
+            RefCoord c1 = new RefCoord(Double.parseDouble(c[2]), Double.parseDouble(c[3]));
+            RefCoord c2 = new RefCoord(Double.parseDouble(c[4]), Double.parseDouble(c[5]));
             Coord2D rc = new Coord2D(c1, c2);
-            return new CoordFunction2D(dim, rc, Double.parseDouble(c[6]),
-                    Double.parseDouble(c[7]), Double.parseDouble(c[8]),
-                    Double.parseDouble(c[9]));
+            return new CoordFunction2D(dim, rc, Double.parseDouble(c[6]), Double.parseDouble(c[7]), Double.parseDouble(c[8]), Double.parseDouble(c[9]));
         } catch (NumberFormatException bug) {
-            throw new RuntimeException(
-                    "BUG: failed to decode CoordFunction2D from " + s, bug);
+            throw new RuntimeException("BUG: failed to decode CoordFunction2D from " + s, bug);
         }
 
     }

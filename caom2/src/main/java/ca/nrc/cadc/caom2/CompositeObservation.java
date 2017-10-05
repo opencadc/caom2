@@ -74,8 +74,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * A CompositeObservation is created by collecting data from multiple
- * SimpleObservations together.
+ * A CompositeObservation is created by collecting data from multiple SimpleObservations together.
  * 
  * @author pdowler
  */
@@ -90,8 +89,7 @@ public class CompositeObservation extends Observation {
      * @param observationID
      * @param algorithm
      */
-    public CompositeObservation(String collection, String observationID,
-            Algorithm algorithm) {
+    public CompositeObservation(String collection, String observationID, Algorithm algorithm) {
         super(collection, observationID, algorithm);
     }
 
@@ -103,9 +101,7 @@ public class CompositeObservation extends Observation {
     public void setAlgorithm(Algorithm a) {
         CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
         if (SimpleObservation.ALGORITHM.getName().equals(a.getName())) {
-            throw new IllegalArgumentException(
-                    "cannot set CompositeObservation.algorithm to " + a
-                            + "(reserved for SimpleObservation)");
+            throw new IllegalArgumentException("cannot set CompositeObservation.algorithm to " + a + "(reserved for SimpleObservation)");
         }
         super.setAlgorithm(a);
     }

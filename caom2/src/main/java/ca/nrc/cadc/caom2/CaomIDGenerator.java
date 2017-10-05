@@ -19,8 +19,7 @@ public class CaomIDGenerator implements Serializable {
     private long prev = 0L;
 
     /**
-     * Get the singleton instance of the generator. This is used by CaomEntity
-     * constructors to assign IDs.
+     * Get the singleton instance of the generator. This is used by CaomEntity constructors to assign IDs.
      * 
      * @return an IDGenerator
      */
@@ -41,7 +40,7 @@ public class CaomIDGenerator implements Serializable {
         // 2^16 = 64k prefixes with 2^48ms ~ 8900 years of IDs each
         try {
             Thread.sleep(1L);
-        }  catch (InterruptedException ignore) {
+        } catch (InterruptedException ignore) {
             // ignore
         }
         long t = System.currentTimeMillis();

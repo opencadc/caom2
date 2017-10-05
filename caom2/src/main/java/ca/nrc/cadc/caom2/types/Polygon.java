@@ -88,8 +88,7 @@ public class Polygon implements Shape {
     private transient Boolean ccw;
 
     /**
-     * Construct new polygon. The input must provide at least 3 points and a
-     * valid samples object.
+     * Construct new polygon. The input must provide at least 3 points and a valid samples object.
      * 
      * @param points
      * @param samples
@@ -110,9 +109,8 @@ public class Polygon implements Shape {
     }
 
     /**
-     * Access the coordinates for this polygon. If the coordinate list is
-     * modified, the caller must call validate in order to enforce correctness
-     * and recompute the center, area, and minimum spanning circle (size).
+     * Access the coordinates for this polygon. If the coordinate list is modified, the caller must call validate in order to enforce correctness and recompute
+     * the center, area, and minimum spanning circle (size).
      * 
      * @return
      */
@@ -157,8 +155,7 @@ public class Polygon implements Shape {
 
     private void initProps() {
         if (points.size() < 3) {
-            throw new IllegalPolygonException(
-                    "polygon has " + points.size() + " points: minimum 3");
+            throw new IllegalPolygonException("polygon has " + points.size() + " points: minimum 3");
         }
 
         MultiPolygon mp = new MultiPolygon();
@@ -180,8 +177,7 @@ public class Polygon implements Shape {
         // the
         // sphere
         if (!ccw) {
-            throw new IllegalPolygonException(
-                    "polygon too large or has clockwise winding direction");
+            throw new IllegalPolygonException("polygon too large or has clockwise winding direction");
         }
     }
 

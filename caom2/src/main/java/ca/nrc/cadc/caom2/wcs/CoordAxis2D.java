@@ -101,8 +101,7 @@ public class CoordAxis2D implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + axis1 + "," + axis2
-                + "]";
+        return this.getClass().getSimpleName() + "[" + axis1 + "," + axis2 + "]";
     }
 
     public Axis getAxis1() {

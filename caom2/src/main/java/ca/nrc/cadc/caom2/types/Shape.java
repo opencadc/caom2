@@ -97,8 +97,7 @@ public interface Shape extends Serializable {
     public double getArea();
 
     /**
-     * Get the size of this shape. The size is the diameter of the minimum
-     * bounding circle
+     * Get the size of this shape. The size is the diameter of the minimum bounding circle
      *
      * @return area
      */

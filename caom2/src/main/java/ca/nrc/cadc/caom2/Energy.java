@@ -124,8 +124,7 @@ public class Energy implements Serializable {
             return null;
         }
 
-        return new EnergyConverter().toDeltaHz(bounds.getLower(),
-                bounds.getUpper(), "m");
+        return new EnergyConverter().toDeltaHz(bounds.getLower(), bounds.getUpper(), "m");
     }
 
     public Double getFreqSampleSize() {

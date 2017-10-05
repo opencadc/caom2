@@ -79,8 +79,7 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public abstract class Observation extends CaomEntity
-        implements Comparable<Observation> {
+public abstract class Observation extends CaomEntity implements Comparable<Observation> {
     private static final long serialVersionUID = 201604081100L;
 
     // immutable state
@@ -105,13 +104,10 @@ public abstract class Observation extends CaomEntity
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
 
-    protected Observation(String collection, String observationID,
-            Algorithm algorithm) {
+    protected Observation(String collection, String observationID, Algorithm algorithm) {
         super();
-        CaomValidator.assertValidPathComponent(getClass(), "collection",
-                collection);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                observationID);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        CaomValidator.assertValidPathComponent(getClass(), "observationID", observationID);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
         this.collection = collection;
         this.observationID = observationID;
@@ -120,8 +116,7 @@ public abstract class Observation extends CaomEntity
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + collection + "/"
-                + observationID + "]";
+        return getClass().getSimpleName() + "[" + collection + "/" + observationID + "]";
     }
 
     public String getCollection() {

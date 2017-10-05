@@ -108,8 +108,7 @@ public class Circle implements Shape {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + center + "," + radius
-                + "]";
+        return this.getClass().getSimpleName() + "[" + center + "," + radius + "]";
     }
 
     public static byte[] encode(Circle c) {
@@ -123,19 +122,17 @@ public class Circle implements Shape {
         b = HexUtil.toBytes(Double.doubleToLongBits(c.radius));
         System.arraycopy(b, 0, ret, 20, 8);
         // trailing 1 so some broken DBs don't truncate
-        ret[ret.length - 1] = (byte) 1; 
+        ret[ret.length - 1] = (byte) 1;
         return ret;
     }
 
     public static Circle decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
         if (magic != MAGIC_CIRCLE) {
-            throw new IllegalArgumentException(
-                    "encoded array does not start with Shape.MAGIC_CIRCLE");
+            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_CIRCLE");
         }
         if (encoded.length != 29) {
-            throw new IllegalStateException("encoded array is wrong length: "
-                    + encoded.length + ", expected 29");
+            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 29");
         }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));

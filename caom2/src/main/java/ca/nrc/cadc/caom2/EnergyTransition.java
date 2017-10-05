@@ -92,8 +92,7 @@ public class EnergyTransition implements Serializable {
 
     public EnergyTransition(String species, String transition) {
         CaomValidator.assertNotNull(EnergyTransition.class, "species", species);
-        CaomValidator.assertNotNull(EnergyTransition.class, "transition",
-                transition);
+        CaomValidator.assertNotNull(EnergyTransition.class, "transition", transition);
         this.species = species;
         this.transition = transition;
     }
@@ -108,8 +107,7 @@ public class EnergyTransition implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + species + ","
-                + transition + "]";
+        return this.getClass().getSimpleName() + "[" + species + "," + transition + "]";
     }
 
     @Override
@@ -119,8 +117,7 @@ public class EnergyTransition implements Serializable {
         }
         if (o instanceof EnergyTransition) {
             EnergyTransition et = (EnergyTransition) o;
-            return (species.equals(et.species)
-                    && transition.equals(et.transition));
+            return (species.equals(et.species) && transition.equals(et.transition));
         }
         return false;
     }

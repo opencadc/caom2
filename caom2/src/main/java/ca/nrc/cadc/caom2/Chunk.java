@@ -77,12 +77,9 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import java.util.Date;
 
 /**
- * A Chunk (of a Part) is one quantitatively specified subsection of the whole.
- * The exact subsection is defined as a range (or ranges) in the dimensions of
- * the single data array (the Part). For example, one could divide a
- * 2-dimensional array into arbitrary Chunks of NxM (tiles) in order to describe
- * the range of coordinates in each Chunk without specifying the coordinates of
- * every pixel (usually because the relation is non-linear).
+ * A Chunk (of a Part) is one quantitatively specified subsection of the whole. The exact subsection is defined as a range (or ranges) in the dimensions of the
+ * single data array (the Part). For example, one could divide a 2-dimensional array into arbitrary Chunks of NxM (tiles) in order to describe the range of
+ * coordinates in each Chunk without specifying the coordinates of every pixel (usually because the relation is non-linear).
  * 
  * @author pdowler
  */

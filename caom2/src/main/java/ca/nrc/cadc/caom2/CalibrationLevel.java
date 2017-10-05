@@ -76,8 +76,7 @@ import ca.nrc.cadc.util.HexUtil;
  * @author pdowler
  */
 public enum CalibrationLevel implements CaomEnum<Integer> {
-    PLANNED(-1), RAW_INSTRUMENTAL(0), RAW_STANDARD(1), CALIBRATED(2), PRODUCT(
-            3), ANALYSIS_PRODUCT(4);
+    PLANNED(-1), RAW_INSTRUMENTAL(0), RAW_STANDARD(1), CALIBRATED(2), PRODUCT(3), ANALYSIS_PRODUCT(4);
 
     private int value;
 
@@ -137,7 +136,6 @@ public enum CalibrationLevel implements CaomEnum<Integer> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "="
-                + stringValue() + "]";
+        return this.getClass().getSimpleName() + "[" + value + "=" + stringValue() + "]";
     }
 }

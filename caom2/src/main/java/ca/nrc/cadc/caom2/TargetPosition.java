@@ -106,7 +106,6 @@ public class TargetPosition implements Serializable {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + coordsys + "," + coordinates
-                + "]";
+        return getClass().getSimpleName() + "[" + coordsys + "," + coordinates + "]";
     }
 }
