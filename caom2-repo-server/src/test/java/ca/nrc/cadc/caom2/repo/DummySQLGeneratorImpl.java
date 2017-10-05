@@ -69,15 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-
-import java.net.URI;
-import java.util.Date;
-import java.util.UUID;
-
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
-
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -87,147 +78,132 @@ import ca.nrc.cadc.caom2.persistence.EntityPut;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 
+import java.net.URI;
+import java.util.Date;
+import java.util.UUID;
+
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
+
 /**
  *
  * @author pdowler
  */
-public class DummySQLGeneratorImpl implements SQLGenerator
-{
+public class DummySQLGeneratorImpl implements SQLGenerator {
     private static final Logger log = Logger.getLogger(DummySQLGeneratorImpl.class);
 
-    public DummySQLGeneratorImpl() { }
-
-    @Override
-    public String getSelectSQL(ObservationURI ouri, int i)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public DummySQLGeneratorImpl() {
     }
 
     @Override
-    public String getSelectSQL(ObservationURI ouri, int i, boolean bln)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(ObservationURI ouri, int i) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectSQL(UUID uuid, int i, boolean bln)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(ObservationURI ouri, int i, boolean bln) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectSQL(Class<? extends ReadAccess> type, UUID uuid, URI uri)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(UUID uuid, int i, boolean bln) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectSQL(Class type, UUID uuid)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(Class<? extends ReadAccess> type, UUID uuid, URI uri) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectLastModifiedRangeSQL(Class type, Date date, Date date1, Integer intgr)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(Class type, UUID uuid) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getObservationSelectSQL(Class type, Date date, Date date1, int i)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, boolean bln, String string) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public ResultSetExtractor getObservationExtractor()
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Class<? extends Skeleton> getSkeletonClass(Class type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public RowMapper getObservationStateMapper()
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getSelectLastModifiedRangeSQL(Class type, Date date, Date date1, Integer intgr) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getSelectSQL(Class type, Date date, Date date1, Integer intgr, boolean bln, String string)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getObservationSelectSQL(Class type, Date date, Date date1, int i) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public RowMapper getArtifactMapper()
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public ResultSetExtractor getObservationExtractor() {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Class<? extends Skeleton> getSkeletonClass(Class type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RowMapper getObservationStateMapper() {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RowMapper getArtifactMapper() {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public RowMapper getReadAccessMapper(Class<? extends ReadAccess> type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public RowMapper getDeletedEntityMapper(Class<? extends DeletedEntity> type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RowMapper getReadAccessMapper(Class<? extends ReadAccess> type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public RowMapper getTimestampRowMapper()
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RowMapper getDeletedEntityMapper(Class<? extends DeletedEntity> type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EntityPut getEntityPut(Class<? extends CaomEntity> type, boolean bln)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RowMapper getTimestampRowMapper() {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EntityDelete getEntityDelete(Class<? extends CaomEntity> type, boolean bln)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public EntityPut getEntityPut(Class<? extends CaomEntity> type, boolean bln) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String literal(Object o)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public EntityDelete getEntityDelete(Class<? extends CaomEntity> type, boolean bln) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getTable(Class type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String literal(Object o) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String getPrimaryKeyColumn(Class type)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String getTable(Class type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public String getPrimaryKeyColumn(Class type) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
+    }
 
 }

@@ -69,29 +69,26 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
+
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class PostAction extends RepoAction
-{
+public class PostAction extends RepoAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    public PostAction() { }
+    public PostAction() {
+    }
 
     @Override
-    public void doAction()
-        throws Exception
-    {
+    public void doAction() throws Exception {
         ObservationURI uri = getURI();
         log.debug("START: " + uri);
 
@@ -99,24 +96,25 @@ public class PostAction extends RepoAction
 
         Observation obs = getInputObservation();
 
-        if ( !uri.equals(obs.getURI()) )
+        if (!uri.equals(obs.getURI())) {
             throw new IllegalArgumentException("invalid input: " + uri);
-        
+        }
+
         ObservationDAO dao = getDAO();
-        
-        if (!dao.exists(uri))
+
+        if (!dao.exists(uri)) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
 
         validate(obs);
 
         dao.put(obs);
-        
+
         log.debug("DONE: " + uri);
     }
-    
+
     @Override
-    protected InlineContentHandler getInlineContentHandler()
-    {
-    	return new ObservationInlineContentHandler();
+    protected InlineContentHandler getInlineContentHandler() {
+        return new ObservationInlineContentHandler();
     }
 }

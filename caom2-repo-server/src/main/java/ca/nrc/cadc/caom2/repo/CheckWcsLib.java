@@ -78,25 +78,19 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class CheckWcsLib implements CheckResource
-{
+public class CheckWcsLib implements CheckResource {
     private static Logger log = Logger.getLogger(CheckWcsLib.class);
 
-    public CheckWcsLib() { }
-    
-    public void check() 
-        throws CheckException
-    {
-        try
-        {
+    public CheckWcsLib() {
+    }
+
+    public void check() throws CheckException {
+        try {
             VerifyWCS ver = new VerifyWCS();
             ver.run();
-        }
-        catch(Throwable t)
-        {
+        } catch (Throwable t) {
             throw new CheckException("wcslib not available", t);
         }
     }
-    
-    
+
 }

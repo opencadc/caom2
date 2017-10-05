@@ -69,6 +69,17 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+
+import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -77,27 +88,13 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import org.apache.log4j.Logger;
-
-import com.csvreader.CsvWriter;
-
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 
 /**
  *
  * @author pdowler
  */
-public class GetAction extends RepoAction
-{
+public class GetAction extends RepoAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
 
@@ -107,77 +104,64 @@ public class GetAction extends RepoAction
 
     public static final int MAX_OBS_LIST_SIZE = 100000;
 
-    public GetAction()
-    {
+    public GetAction() {
     }
 
     @Override
-    public void doAction() throws Exception
-    {
+    public void doAction() throws Exception {
         log.debug("GET ACTION");
         ObservationURI uri = getURI();
-        if (uri != null)
-        {
+        if (uri != null) {
             doGetObservation(uri);
             return;
-        }
-        else if (getCollection() != null)
-        {
+        } else if (getCollection() != null) {
             // maxRec == null means list all
             String maxRecString = syncInput.getParameter("maxrec");
             String orderString = syncInput.getParameter("order");
             boolean isAscending = true;
             Integer maxRec = MAX_OBS_LIST_SIZE;
-            if (maxRecString != null)
-            {
+            if (maxRecString != null) {
                 int m = Integer.valueOf(maxRecString);
-                if (m < maxRec)
+                if (m < maxRec) {
                     maxRec = m;
-            }
-            
-            if (orderString != null)
-            {
-            	if (orderString.equals("desc"))
-            	{
-            		isAscending = false;
-            	}
-            	else if (!orderString.equals("asc"))
-            	{
-                    throw new IllegalArgumentException("wrong order value");
-            	}
+                }
             }
 
-            try
-            {
+            if (orderString != null) {
+                if (orderString.equals("desc")) {
+                    isAscending = false;
+                } else if (!orderString.equals("asc")) {
+                    throw new IllegalArgumentException("wrong order value");
+                }
+            }
+
+            try {
                 // start date is optional
                 Date start = null;
                 String startString = syncInput.getParameter("start");
-                if (startString != null)
+                if (startString != null) {
                     start = df.parse(startString);
+                }
 
                 // end date is optional
                 Date end = null;
                 String endString = syncInput.getParameter("end");
-                if (endString != null)
+                if (endString != null) {
                     end = df.parse(endString);
+                }
 
                 doList(maxRec, start, end, isAscending);
-            }
-            catch (ParseException e)
-            {
+            } catch (ParseException e) {
                 throw new IllegalArgumentException("wrong date format", e);
             }
-        }
-        else
-        {
+        } else {
             // Responds to requests where no collection is provided.
             // Returns list of all collections.
             doGetCollectionList();
         }
     }
 
-    protected void doGetObservation(ObservationURI uri) throws Exception
-    {
+    protected void doGetObservation(ObservationURI uri) throws Exception {
         log.debug("START: " + uri);
 
         checkReadPermission(uri.getCollection());
@@ -185,8 +169,9 @@ public class GetAction extends RepoAction
         ObservationDAO dao = getDAO();
         Observation obs = dao.get(uri);
 
-        if (obs == null)
+        if (obs == null) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
 
         // write with default schema
         ObservationWriter ow = getObservationWriter();
@@ -200,18 +185,19 @@ public class GetAction extends RepoAction
         log.debug("DONE: " + uri);
     }
 
-    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception
-    {
+    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
         log.debug("START: " + getCollection());
 
         checkReadPermission(getCollection());
 
         ObservationDAO dao = getDAO();
 
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec, isAscending);
+        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
+                isAscending);
 
-        if (states == null)
+        if (states == null) {
             throw new ResourceNotFoundException("Collection not found: " + getCollection());
+        }
 
         long byteCount = writeObservationList(states);
         logInfo.setBytes(byteCount);
@@ -219,37 +205,28 @@ public class GetAction extends RepoAction
         log.debug("DONE: " + getCollection());
     }
 
-    protected ObservationWriter getObservationWriter()
-    {
+    protected ObservationWriter getObservationWriter() {
         return new ObservationWriter();
     }
 
-    protected long writeObservationList(List<ObservationState> states) throws IOException
-    {
+    protected long writeObservationList(List<ObservationState> states) throws IOException {
         // write in tsv format
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
         CsvWriter writer = new CsvWriter(out, '\t');
-        for (ObservationState state : states)
-        {
+        for (ObservationState state : states) {
             writer.write(state.getURI().getCollection());
             writer.write(state.getURI().getObservationID());
-            if (state.maxLastModified != null)
-            {
+            if (state.maxLastModified != null) {
                 writer.write(df.format(state.maxLastModified));
-            }
-            else
-            {
+            } else {
                 writer.write("");
             }
-            if (state.accMetaChecksum != null)
-            {
+            if (state.accMetaChecksum != null) {
                 writer.write(state.accMetaChecksum.toASCIIString());
-            }
-            else
-            {
+            } else {
                 writer.write("");
             }
             writer.endRecord();
@@ -260,11 +237,11 @@ public class GetAction extends RepoAction
 
     /**
      * Get list of collection names from repo configuration.
+     * 
      * @throws Exception
+     *             Errors encountered while getting the list of collection names
      */
-    protected void doGetCollectionList()
-            throws Exception
-    {
+    protected void doGetCollectionList() throws Exception {
         CaomRepoConfig curConfig = getConfig();
         Iterator<String> collectionListIterator = curConfig.collectionIterator();
 
@@ -278,8 +255,7 @@ public class GetAction extends RepoAction
             String collectionName = collectionListIterator.next();
 
             // Write out a single column as one entry per row
-            if (!collectionName.isEmpty())
-            {
+            if (!collectionName.isEmpty()) {
                 writer.write(collectionName);
                 writer.endRecord();
             }

@@ -70,18 +70,9 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import ca.nrc.cadc.ac.GroupURI;
-import java.io.IOException;
-import java.net.URI;
-import java.security.AccessControlException;
-import java.security.cert.CertificateException;
-import java.util.HashMap;
-import java.util.Map;
-
-import ca.nrc.cadc.caom2.Artifact;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
@@ -95,15 +86,21 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import org.apache.log4j.Logger;
+
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.AccessControlException;
+import java.security.cert.CertificateException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- *
  * @author pdowler
  */
-public abstract class RepoAction extends RestAction
-{
+public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
     public static final String MODE_KEY = RepoAction.class.getName() + ".state";
@@ -113,11 +110,11 @@ public abstract class RepoAction extends RestAction
     public static final String READ_ONLY_MSG = "System is in read-only mode for maintainence";
     public static final String READ_WRITE = "ReadWrite";
     private boolean readable = true;
-    private boolean writable  = true;
+    private boolean writable = true;
 
     public static final String ERROR_MIMETYPE = "text/plain";
 
-    private final GroupURI CADC_GROUP_URI  = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
+    private static final GroupURI CADC_GROUP_URI = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
 
     private String collection;
     protected ObservationURI uri;
@@ -127,90 +124,96 @@ public abstract class RepoAction extends RestAction
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
 
-    protected RepoAction() { }
+    protected RepoAction() {
+    }
 
     // this method will only downgrade the state to !readable and !writable
     // and will never restore them to true - that is intentional
-    private void initState()
-    {
+    private void initState() {
         String key = RepoAction.MODE_KEY;
         String val = System.getProperty(key);
-        if (OFFLINE.equals(val))
-        {
+        if (OFFLINE.equals(val)) {
             readable = false;
             writable = false;
-        }
-        else if (READ_ONLY.equals(val))
-        {
+        } else if (READ_ONLY.equals(val)) {
             writable = false;
         }
     }
 
-    private void initTarget()
-    {
-        if (collection == null)
-        {
+    private void initTarget() {
+        if (collection == null) {
             String path = syncInput.getPath();
-            if (path != null)
-            {
+            if (path != null) {
                 String[] parts = path.split("/");
                 this.collection = parts[0];
-                if (parts.length > 1)
-                {
+                if (parts.length > 1) {
                     String suri = "caom:" + path;
-                    try
-                    {
+                    try {
                         this.uri = new ObservationURI(new URI(suri));
-                    } catch (URISyntaxException | IllegalArgumentException ex)
-                    {
+                    } catch (URISyntaxException | IllegalArgumentException ex) {
                         throw new IllegalArgumentException("invalid input: " + suri, ex);
                     }
                 }
             }
         }
     }
-    
+
     // return uri for get-observation, null for get-list, and throw for invalid
-    protected ObservationURI getURI()
-    {
+    protected ObservationURI getURI() {
         initTarget();
         return uri;
     }
 
     // return the specified collection or throw for invalid
-    protected String getCollection()
-    {
+    protected String getCollection() {
         initTarget();
         return collection;
     }
 
-    protected ObservationDAO getDAO()
-        throws IOException
-    {
-        if (dao == null)
+    protected ObservationDAO getDAO() throws IOException {
+        if (dao == null) {
             dao = getDAO(getCollection());
+        }
         return dao;
     }
 
-    // read the input stream (POST and PUT) and extract the observation from the XML document
-    protected Observation getInputObservation()
-        throws IOException
-    {
-        /*
-        // check content-type of input once we have a client that can set it
-        List<String> types = syncInput.getHeaders("Content-Type");
-        if (types.isEmpty())
-            throw new IllegalArgumentException("no Content-Type found");
-        String contentType = types.get(0);
-        if (!CAOM_MIMETYPE.equalsIgnoreCase(contentType))
-            throw new IllegalArgumentException("unexpected Content-Type found: " + contentType);
-        */
+    // create DAO
+    private ObservationDAO getDAO(String collection) throws IOException {
+        CaomRepoConfig.Item i = getCollectionConfig(collection);
+        if (i != null) {
+            this.computeMetadata = i.getComputeMetadata();
+            this.computeMetadataValidation = i.getComputeMetadataValidation();
 
-    	Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
-    	if (obs != null)
-    		return (Observation) obs;
-    	else
-    		return null;
+            Map<String, Object> props = new HashMap<String, Object>();
+            props.put("jndiDataSourceName", i.getDataSourceName());
+            props.put("database", i.getDatabase());
+            props.put("schema", i.getSchema());
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
+            ObservationDAO ret = new ObservationDAO();
+            ret.setConfig(props);
+
+            return ret;
+        }
+        throw new IllegalArgumentException("unknown collection: " + collection);
+    }
+
+    // read the input stream (POST and PUT) and extract the observation from the XML
+    // document
+    protected Observation getInputObservation() throws IOException {
+        /*
+         * // check content-type of input once we have a client that can set it List<String> types =
+         * syncInput.getHeaders("Content-Type"); if (types.isEmpty()) throw new
+         * IllegalArgumentException("no Content-Type found"); String contentType = types.get(0); if
+         * (!CAOM_MIMETYPE.equalsIgnoreCase(contentType)) throw new
+         * IllegalArgumentException("unexpected Content-Type found: " + contentType);
+         */
+
+        Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
+        if (obs != null) {
+            return (Observation) obs;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -222,51 +225,51 @@ public abstract class RepoAction extends RestAction
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission(String collection)
-        throws AccessControlException, CertificateException,
-               ResourceNotFoundException, IOException
-    {
+    protected void checkReadPermission(String collection) throws AccessControlException,
+        CertificateException, ResourceNotFoundException, IOException {
         initState();
-        if (!readable)
-        {
-            if (!writable)
+        if (!readable) {
+            if (!writable) {
                 throw new IllegalStateException(OFFLINE_MSG);
+            }
             throw new IllegalStateException(READ_ONLY_MSG);
         }
 
         CaomRepoConfig.Item i = getCollectionConfig(collection);
-        if (i == null)
+        if (i == null) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
 
-        try
-        {
-            if ( CredUtil.checkCredentials() )
-            {
+        try {
+            if (CredUtil.checkCredentials()) {
                 GroupURI grw = i.getReadWriteGroup();
-                GMSClient gms = new GMSClient(grw.getServiceID());                
-                if (gms.isMember(grw.getName()))
-                	return;
-                
-                GroupURI gro = i.getReadOnlyGroup();
-                if (!grw.getServiceID().equals(gro.getServiceID()))
-                    gms = new GMSClient(gro.getServiceID());
-                    
-                if (gms.isMember(gro.getName()))
-                	return;
+                GMSClient gms = new GMSClient(grw.getServiceID());
+                if (gms.isMember(grw.getName())) {
+                    return;
+                }
 
-                if (!gro.getServiceID().equals(CADC_GROUP_URI.getServiceID()))
+                GroupURI gro = i.getReadOnlyGroup();
+                if (!grw.getServiceID().equals(gro.getServiceID())) {
+                    gms = new GMSClient(gro.getServiceID());
+                }
+
+                if (gms.isMember(gro.getName())) {
+                    return;
+                }
+
+                if (!gro.getServiceID().equals(CADC_GROUP_URI.getServiceID())) {
                     gms = new GMSClient(CADC_GROUP_URI.getServiceID());
-                if (gms.isMember(CADC_GROUP_URI.getName()))
-                	return;
+                }
+                if (gms.isMember(CADC_GROUP_URI.getName())) {
+                    return;
+                }
             }
-        }
-        catch(AccessControlException ex)
-        {
-            throw new AccessControlException("read permission denied (credentials not found): " + getURI());
-        }
-        catch(UserNotFoundException ex)
-        {
-            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        } catch (AccessControlException ex) {
+            throw new AccessControlException(
+                "read permission denied (credentials not found): " + getURI());
+        } catch (UserNotFoundException ex) {
+            throw new AccessControlException(
+                "read permission denied (user not found): " + getURI());
         }
         throw new AccessControlException("permission denied: " + getURI());
     }
@@ -280,165 +283,121 @@ public abstract class RepoAction extends RestAction
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission(ObservationURI uri)
-        throws AccessControlException, CertificateException,
-               ResourceNotFoundException, IOException
-    {
+    protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
+        CertificateException, ResourceNotFoundException, IOException {
         initState();
-        if (!writable)
-        {
-            if (readable)
+        if (!writable) {
+            if (readable) {
                 throw new IllegalStateException(READ_ONLY_MSG);
+            }
             throw new IllegalStateException(OFFLINE_MSG);
         }
 
         CaomRepoConfig.Item i = getCollectionConfig(uri.getCollection());
-        if (i == null)
-            throw new ResourceNotFoundException(
-                    "not found: " + uri);
+        if (i == null) {
+            throw new ResourceNotFoundException("not found: " + uri);
+        }
 
-        try
-        {
-            if ( CredUtil.checkCredentials() )
-            {
+        try {
+            if (CredUtil.checkCredentials()) {
                 GroupURI guri = i.getReadWriteGroup();
-                URI gmsURI = guri.getServiceID();
-                GMSClient gms = new GMSClient(gmsURI);                
-                if (gms.isMember(guri.getName()))
+                URI gmsUri = guri.getServiceID();
+                GMSClient gms = new GMSClient(gmsUri);
+                if (gms.isMember(guri.getName())) {
                     return;
+                }
             }
-        }
-        catch(AccessControlException ex)
-        {
-            throw new AccessControlException("read permission denied (credentials not found): " + getURI());
-        }
-        catch(UserNotFoundException ex)
-        {
-            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        } catch (AccessControlException ex) {
+            throw new AccessControlException(
+                "read permission denied (credentials not found): " + getURI());
+        } catch (UserNotFoundException ex) {
+            throw new AccessControlException(
+                "read permission denied (user not found): " + getURI());
         }
 
         throw new AccessControlException("permission denied: " + getURI());
     }
-    
-    protected void validate(Observation obs)
-    {
-        try 
-        {
+
+    protected void validate(Observation obs) {
+        try {
             CaomValidator.validate(obs);
 
-            for (Plane pl: obs.getPlanes()) {
-                for (Artifact a: pl.getArtifacts()) {
+            for (Plane pl : obs.getPlanes()) {
+                for (Artifact a : pl.getArtifacts()) {
                     CaomWCSValidator.validate(a);
                 }
             }
 
-            if (computeMetadata || computeMetadataValidation)
-            {
-                String ostr = obs.getCollection() + "/" + obs.getObservationID();
-                String cur = ostr;
-                try
-                {
-                    for (Plane p : obs.getPlanes())
-                    {
-                        cur = ostr + "/" + p.getProductID();
-                        ComputeUtil.clearTransientState(p);
-                        ComputeUtil.computeTransientState(obs, p);
+            if (computeMetadata || computeMetadataValidation) {
+                    String ostr = obs.getCollection() + "/" + obs.getObservationID();
+                    String cur = ostr;
+                    try {
+                        for (Plane p : obs.getPlanes()) {
+                            cur = ostr + "/" + p.getProductID();
+                            ComputeUtil.clearTransientState(p);
+                            ComputeUtil.computeTransientState(obs, p);
+                        }
+                    } catch (Error er) {
+                        throw new RuntimeException("failed to compute metadata for plane " + cur, er);
+                    } catch (Exception ex) {
+                        throw new IllegalArgumentException(
+                            "failed to compute metadata for plane " + cur, ex);
+                    } finally {
+                        if (!computeMetadata) {
+                            for (Plane p : obs.getPlanes()) {
+                                ComputeUtil.clearTransientState(p);
+                            }
+                        }
                     }
                 }
-                catch(Error er)
-                {
-                    throw new RuntimeException("failed to compute metadata for plane " + cur, er);
-                }
-                catch(Exception ex)
-                {
-                    throw new IllegalArgumentException("failed to compute metadata for plane " + cur, ex);
-                }
-                finally
-                {
-                    if (!computeMetadata) // do not impact checksums
-                        for (Plane p : obs.getPlanes())
-                        {
-                            ComputeUtil.clearTransientState(p);
-                        }
-                }
+            } catch(IllegalArgumentException ex){
+                log.debug(ex.getMessage(), ex);
+                throw new IllegalArgumentException("invalid input: " + uri, ex);
+            } catch(RuntimeException ex){
+                log.debug(ex.getMessage(), ex);
+                throw new RuntimeException("invalid input: " + uri, ex);
             }
-        } 
-        catch (IllegalArgumentException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new IllegalArgumentException("invalid input: " + uri, ex);
         }
-        catch (RuntimeException ex)
-        {
-        	log.debug(ex.getMessage(), ex);
-        	throw new RuntimeException("invalid input: " + uri, ex);
+
+        @Override
+        protected InlineContentHandler getInlineContentHandler () {
+            return null;
         }
-    }
 
-    @Override
-    protected InlineContentHandler getInlineContentHandler()
-    {
-    	return null;
-    }
+        /**
+         * Get configuration for specified collection.
+         *
+         * @param collection
+         * @return
+         * @throws IOException
+         */
 
-
-    /**
-     * Get configuration for specified collection
-     * @param collection
-     * @return
-     * @throws IOException
-     */
-    private CaomRepoConfig.Item getCollectionConfig(String collection)
-            throws IOException
-    {
-        if (this.repoConfig == null)
-        {
+    private CaomRepoConfig.Item getCollectionConfig(String collection) throws IOException {
+        if (this.repoConfig == null) {
             getConfig();
         }
 
         return this.repoConfig.getConfig(collection);
     }
 
-
-    public CaomRepoConfig getConfig()
-            throws IOException
-    {
-        if (this.repoConfig == null)
-        {
+    /**
+     * Get the CaomRepo configuration.
+     *
+     * @return CaomRepo configuration
+     * @throws IOException Error encountered while reading the configuration file
+     */
+    public CaomRepoConfig getConfig() throws IOException {
+        if (this.repoConfig == null) {
             String serviceName = syncInput.getContextPath();
-            File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
+            File config = new File(System.getProperty("user.home") + "/config",
+                serviceName + ".properties");
             this.repoConfig = new CaomRepoConfig(config);
 
-            if (this.repoConfig.isEmpty())
-            {
+            if (this.repoConfig.isEmpty()) {
                 throw new IllegalStateException("no RepoConfig.Item(s)found");
             }
 
         }
         return this.repoConfig;
-    }
-
-
-    // create DAO
-    private ObservationDAO getDAO(String collection)
-        throws IOException
-    {
-        CaomRepoConfig.Item i = getCollectionConfig(collection);
-        if (i != null)
-        {
-            this.computeMetadata = i.getComputeMetadata();
-            this.computeMetadataValidation = i.getComputeMetadataValidation();
-            
-            ObservationDAO ret = new ObservationDAO();
-            Map<String,Object> props = new HashMap<String,Object>();
-            props.put("jndiDataSourceName", i.getDataSourceName());
-            props.put("database", i.getDatabase());
-            props.put("schema", i.getSchema());
-            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
-            ret.setConfig(props);
-            
-            return ret;
-        }
-        throw new IllegalArgumentException("unknown collection: " + collection);
     }
 }

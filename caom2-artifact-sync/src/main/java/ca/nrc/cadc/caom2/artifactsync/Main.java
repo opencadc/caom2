@@ -69,182 +69,216 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.CertCmdArgUtil;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.net.NetrcAuthenticator;
+import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
+
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.CertCmdArgUtil;
-import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.net.NetrcAuthenticator;
-import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
  *
  * @author majorb
  */
-public class Main
-{
+public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
 
-    public static void main(String[] args)
-    {
-        try
-        {
+    public static void main(String[] args) {
+        try {
             ArgumentMap am = new ArgumentMap(args);
 
-            if (am.isSet("d") || am.isSet("debug"))
-            {
+            if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
-            }
-            else if (am.isSet("v") || am.isSet("verbose"))
-            {
+                Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
+            } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
-            }
-            else
-            {
+            } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
 
             }
 
-            if (am.isSet("h") || am.isSet("help"))
-            {
+            if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
             }
 
-            boolean dryrun = am.isSet("dryrun");
-
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
-            if (am.isSet("netrc"))
-            {
+            if (am.isSet("netrc")) {
                 subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            }
-            else if (am.isSet("cert"))
-            {
+            } else if (am.isSet("cert")) {
                 subject = CertCmdArgUtil.initSubject(am);
             }
-            if (subject != null)
-            {
+            if (subject != null) {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
 
-
-            String dbParam = am.getValue("database");
-            if (dbParam == null)
-            {
-                log.error("Must specify database information.");
-                System.exit(-1);
-            }
-            String[] dbInfo = dbParam.split("[.]");
-
-            int nthreads = 1;
-            if (am.isSet("threads"))
-            {
-                try
-                {
-                    nthreads = Integer.parseInt(am.getValue("threads"));
-                }
-                catch (NumberFormatException nfe)
-                {
-                    log.error("Illegal value for --threads: " + am.getValue("threads"));
+            int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
+            if (am.isSet("batchsize")) {
+                try {
+                    batchSize = Integer.parseInt(am.getValue("batchsize"));
+                    if (batchSize < 1 || batchSize > 10000) {
+                        log.error("value for --batchsize must be between 1 and 10000");
+                        usage();
+                        System.exit(-1);
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Illegal value for --batchsize: " + am.getValue("batchsize"));
+                    usage();
                     System.exit(-1);
                 }
             }
+
+            String dbParam = am.getValue("database");
+            if (dbParam == null) {
+                log.error("Must specify database information.");
+                usage();
+                System.exit(-1);
+            }
+
+            int nthreads = 1;
+            if (am.isSet("threads")) {
+                try {
+                    nthreads = Integer.parseInt(am.getValue("threads"));
+                    if (nthreads < 1 || nthreads > 25) {
+                        log.error("value for --threads must be between 1 and 25");
+                        usage();
+                        System.exit(-1);
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Illegal value for --threads: " + am.getValue("threads"));
+                    usage();
+                    System.exit(-1);
+                }
+            }
+
+            // Collection will be used in the future
+            // if (!am.isSet("collection"))
+            // {
+            // log.error("Missing required parameter 'collection'");
+            // usage();
+            // System.exit(-1);
+            // }
+            // String collection = am.getValue("collection");
 
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             String asClassName = am.getValue("artifactStore");
             ArtifactStore artifactStore = null;
-            if (asClassName == null)
-            {
+            if (asClassName == null) {
                 log.error("Must specify artifactStore.");
+                usage();
                 System.exit(-1);
             }
-            try
-            {
+            try {
                 log.debug("Artifact store class: " + asClassName);
                 Class<?> asClass = Class.forName(asClassName);
                 artifactStore = (ArtifactStore) asClass.newInstance();
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.error("Failed to load " + asClassName, e);
                 System.exit(-1);
             }
 
+            String[] dbInfo = dbParam.split("[.]");
+            Map<String, Object> daoConfig = new HashMap<String, Object>(2);
+            daoConfig.put("server", dbInfo[0]);
+            daoConfig.put("database", dbInfo[1]);
+            daoConfig.put("schema", dbInfo[2]);
+            daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            ArtifactDAO artifactDAO = new ArtifactDAO();
+            artifactDAO.setConfig(daoConfig);
 
-            // Waiting for a public constructor in ArtifactDAO.
-            //ArtifactDAO artifactDAO = new ArtifactDAO();
+            String collection = null;
+            boolean dryrun = am.isSet("dryrun");
+            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, collection, dryrun, batchSize);
 
-            Runnable harvester = new ArtifactHarvester(/*artifactDAO,*/ dbInfo, artifactStore, dryrun);
-            Runnable downloader = new DownloadArtifactFiles(/*artifactDAO,*/ dbInfo, artifactStore, dryrun, nthreads);
+            PrivilegedExceptionAction<Object> downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
 
-            if (subject != null)
-            {
-                Subject.doAs(subject, new RunnableAction(harvester));
-                Subject.doAs(subject, new RunnableAction(downloader));
-            }
-            else // anon
-            {
-                harvester.run();
-                downloader.run();
-            }
+            int num = 0;
+            int loopNum = 1;
+            boolean loop = am.isSet("continue");
+            do {
+                if (loop) {
+                    log.info("-- STARTING LOOP #" + loopNum + " --");
+                }
+
+                if (subject != null) {
+                    num = Subject.doAs(subject, harvester);
+                    if (!dryrun) {
+                        Subject.doAs(subject, downloader);
+                    }
+                } else { // anon
+                    num = harvester.run();
+                    if (!dryrun) {
+                        downloader.run();
+                    }
+                }
+
+                if (loop) {
+                    log.info("-- ENDING LOOP #" + loopNum + " --");
+                }
+
+                loopNum++;
+            } while (loop && num == batchSize); // continue if `batch size` records found
 
             exitValue = 0; // finished cleanly
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             log.error("uncaught exception", t);
             exitValue = -1;
             System.exit(exitValue);
-        }
-        finally
-        {
+        } finally {
             System.exit(exitValue);
         }
     }
 
-    private static class ShutdownHook implements Runnable
-    {
+    private static class ShutdownHook implements Runnable {
 
-        ShutdownHook()
-        {
+        ShutdownHook() {
         }
 
         @Override
-        public void run()
-        {
-            if (exitValue != 0)
+        public void run() {
+            if (exitValue != 0) {
                 log.error("terminating with exit status " + exitValue);
+            }
         }
 
     }
 
-    private static void usage()
-    {
+    private static void usage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n     --artifactStore= fully qualified class name");
-        sb.append("\n     --database= <server.database.schema>");
-        sb.append("\n     --threads= number  of threads to be used to import artifacts (default: 1)");
+        sb.append("\n     --artifactStore=<fully qualified class name>");
+        sb.append("\n     --database=<server.database.schema>");
+        sb.append("\n     --collection=<collection> (currently ignored)");
+        sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --dryrun : check for work but don't do anything");
+        sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
+        sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
