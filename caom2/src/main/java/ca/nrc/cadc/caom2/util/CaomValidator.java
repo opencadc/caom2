@@ -85,6 +85,25 @@ public final class CaomValidator {
     private CaomValidator() {
     }
 
+    /**
+     * Perform all validation of the content of an observation.
+     * 
+     * @param obs
+     * @throws IllegalArgumentException 
+     */
+    public static void validate(Observation obs) {
+        validateKeywords(obs);
+        validatePlanes(obs);
+    }
+    
+    /**
+     * Utility method so constructors can validate arguments.
+     * 
+     * @param caller
+     * @param name
+     * @param test
+     * @throws IllegalArgumentException 
+     */
     public static void assertNotNull(Class caller, String name, Object test)
             throws IllegalArgumentException {
         if (test == null) {
@@ -102,6 +121,7 @@ public final class CaomValidator {
      * @param caller
      * @param name
      * @param val
+     * @throws IllegalArgumentException 
      */
     public static void assertValidKeyword(Class caller, String name,
             String val) {
@@ -121,6 +141,7 @@ public final class CaomValidator {
      * @param caller
      * @param name
      * @param test
+     * @throws IllegalArgumentException 
      */
     public static void assertValidPathComponent(Class caller, String name,
             String test) {
@@ -138,6 +159,14 @@ public final class CaomValidator {
                 + ": may not contain space ( ), slash (/), escape (\\), or percent (%)");
     }
 
+    /**
+     * Numeric validation.
+     * 
+     * @param caller
+     * @param name
+     * @param test 
+     * @throws IllegalArgumentException 
+     */
     public static void assertPositive(Class caller, String name, double test) {
         if (test <= 0.0) {
             throw new IllegalArgumentException(
@@ -151,13 +180,8 @@ public final class CaomValidator {
         }
     }
 
-    /**
-     * Validate the keywords fields and make sure they don't contain invalid
-     * characters (currently space and single-quote).
-     * 
-     * @param obs
-     */
-    public static void validateKeywords(Observation obs) {
+    // validate all keywords fields
+    private static void validateKeywords(Observation obs) {
         if (obs.proposal != null) {
             validateKeywords("proposal.keywords", obs.proposal.getKeywords());
         }
@@ -180,15 +204,9 @@ public final class CaomValidator {
         }
     }
 
-    /**
-     * Validate Artifact.productType for consistency with Observation.intent.
-     * Observations with intent=science have no artifacts with
-     * productType=calibration. Observations with intent=calibration have no
-     * artifacts with productType=science.
-     * 
-     * @param obs
-     */
-    public static void validateIntent(Observation obs) {
+    // restrict Observation.intent and Artiafct.productType combinations
+    // NOTE: no longer used in validate(Observation)
+    private static void validateIntent(Observation obs) {
         if (obs.intent == null) {
             return;
         }
@@ -209,18 +227,13 @@ public final class CaomValidator {
         }
     }
 
-    /**
-     * Validate Plane.position.bounds, Plane.energy,bounds, and
-     * Plane.time.bounds for valid polygon and interval respectively.
-     * 
-     * @param obs
-     */
-    public static void validatePlanes(Observation obs) {
+    private static void validatePlanes(Observation obs) {
         for (Plane p : obs.getPlanes()) {
-            if (p.position != null && p.position.bounds != null
-                    && p.position.bounds instanceof Polygon) {
-                Polygon poly = (Polygon) p.position.bounds;
-                poly.validate();
+            if (p.position != null) {
+                if (p.position.bounds != null && p.position.bounds instanceof Polygon) {
+                    Polygon poly = (Polygon) p.position.bounds;
+                    poly.validate();
+                }
             }
             if (p.energy != null && p.energy.bounds != null) {
                 p.energy.bounds.validate();
@@ -229,18 +242,5 @@ public final class CaomValidator {
                 p.time.bounds.validate();
             }
         }
-    }
-
-    /**
-     * Perform all validation of the content of an observation.
-     * 
-     * @param obs
-     */
-    public static void validate(Observation obs) {
-        validateKeywords(obs);
-
-        validateIntent(obs);
-
-        validatePlanes(obs);
     }
 }
