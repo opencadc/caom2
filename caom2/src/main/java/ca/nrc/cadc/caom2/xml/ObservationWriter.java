@@ -96,6 +96,7 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
@@ -758,13 +759,23 @@ public class ObservationWriter implements Serializable {
 
         Element e = getCaom2Element("position");
         if (comp.bounds != null) {
-            if (comp.bounds instanceof Polygon) {
-                if (docVersion < 23) {
-                    throw new UnsupportedOperationException(
-                            "cannot downgrade polygon doc version "
-                                    + docVersion);
-                }
+            if (comp.bounds instanceof Circle) {
+                Circle circ = (Circle) comp.bounds;
+                Element pe = getCaom2Element("bounds");
+                String xsiType = caom2Namespace.getPrefix() + ":"
+                        + Circle.class.getSimpleName();
+                pe.setAttribute("type", xsiType, xsiNamespace);
 
+                Element ce = getCaom2Element("center");
+                addNumberElement("cval1", circ.getCenter().cval1, ce);
+                addNumberElement("cval2", circ.getCenter().cval2, ce);
+                pe.addContent(ce);
+                addNumberElement("radius", circ.getRadius(), pe);
+                e.addContent(pe);
+            } else if (comp.bounds instanceof Polygon) {
+                if (docVersion < 23) {
+                    throw new UnsupportedOperationException("cannot downgrade polygon doc version " + docVersion);
+                }
                 Polygon poly = (Polygon) comp.bounds;
                 Element pe = getCaom2Element("bounds");
                 String xsiType = caom2Namespace.getPrefix() + ":"

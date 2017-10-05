@@ -66,6 +66,7 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;

@@ -177,4 +177,64 @@ public class PolygonTest
         }
     }
     
+    @Test
+    public void testValidateSegments()
+    {
+        try
+        {
+            MultiPolygon validMP = new MultiPolygon();
+            validMP.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            validMP.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            validMP.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            validMP.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            validMP.getVertices().add(Vertex.CLOSE);
+            validMP.validate();
+            List<Point> pts = new ArrayList<Point>();
+            for (Vertex v : validMP.getVertices()) {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
+                    pts.add(new Point(v.cval1, v.cval2));
+                }
+            }
+            Polygon poly = new Polygon(pts, validMP);
+            poly.validate();
+            
+            poly.getPoints().clear();
+            poly.getPoints().add(new Point(2.0, 2.0));
+            poly.getPoints().add(new Point(2.0, 4.0));
+            poly.getPoints().add(new Point(4.0, 2.0));
+            poly.getPoints().add(new Point(4.0, 4.0));
+            
+            try {
+                poly.validate();
+                Assert.fail("expected IllegalPolygonException - got: " + poly);
+            }
+            catch(IllegalPolygonException expected)
+            {
+                log.info("testValidateSegments: butterfly " + expected);
+                Assert.assertTrue(expected.getMessage().contains("intersects"));
+            }
+            
+            poly.getPoints().clear();
+            poly.getPoints().add(new Point(2.0, 2.0));
+            poly.getPoints().add(new Point(2.0, 4.0));
+            poly.getPoints().add(new Point(5.0, 4.0)); // extra small loop
+            poly.getPoints().add(new Point(4.0, 5.0));
+            poly.getPoints().add(new Point(4.0, 2.0));
+            
+            try {
+                poly.validate();
+                Assert.fail("expected IllegalPolygonException - got: " + poly);
+            }
+            catch(IllegalPolygonException expected)
+            {
+                log.info("testValidateSegments: small loop " + expected);
+                Assert.assertTrue(expected.getMessage().contains("intersects"));
+            }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
