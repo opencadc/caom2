@@ -101,11 +101,21 @@ public class Main {
     public static void main(String[] args) {
         try {
             ArgumentMap am = new ArgumentMap(args);
+
             String asClassName = am.getValue("artifactStore");
+            ArtifactStore artifactStore = null;
             String asPackage = null;
+            Exception asException = null;
+
             if (asClassName != null) {
-                int lastDot = asClassName.lastIndexOf(".");
-                asPackage = asClassName.substring(0, lastDot);
+                try {
+                    log.debug("Artifact store class: " + asClassName);
+                    Class<?> asClass = Class.forName(asClassName);
+                    artifactStore = (ArtifactStore) asClass.newInstance();
+                    asPackage = asClass.getPackage().getName();
+                } catch (Exception e) {
+                    asException = e;
+                }
             }
 
             if (am.isSet("d") || am.isSet("debug")) {
@@ -137,6 +147,16 @@ public class Main {
             if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
+            }
+
+            if (asClassName == null) {
+                log.error("Must specify artifactStore.");
+                usage();
+                System.exit(-1);
+            }
+            if (asException != null) {
+                log.error("Failed to load " + asClassName, asException);
+                System.exit(-1);
             }
 
             // setup optional authentication for harvesting from a web service
@@ -202,20 +222,7 @@ public class Main {
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-            ArtifactStore artifactStore = null;
-            if (asClassName == null) {
-                log.error("Must specify artifactStore.");
-                usage();
-                System.exit(-1);
-            }
-            try {
-                log.debug("Artifact store class: " + asClassName);
-                Class<?> asClass = Class.forName(asClassName);
-                artifactStore = (ArtifactStore) asClass.newInstance();
-            } catch (Exception e) {
-                log.error("Failed to load " + asClassName, e);
-                System.exit(-1);
-            }
+
 
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<String, Object>(2);
