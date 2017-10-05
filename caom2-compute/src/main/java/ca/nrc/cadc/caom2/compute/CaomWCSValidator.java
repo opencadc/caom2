@@ -180,8 +180,7 @@ public class CaomWCSValidator {
                     }
 
                     if (energyAxis.function != null) {
-
-                        SubInterval sei = EnergyUtil.toInterval(energy, energyAxis.function);
+                        si = EnergyUtil.toInterval(energy, energyAxis.function);
 
                         WCSWrapper map = new WCSWrapper(energy, 1);
                         Transform transform = new Transform(map);
