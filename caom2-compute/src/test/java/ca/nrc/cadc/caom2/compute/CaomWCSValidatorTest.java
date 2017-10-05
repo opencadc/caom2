@@ -189,7 +189,7 @@ public class CaomWCSValidatorTest {
 
 
     @Test
-    public void testIvalidSpatialWCS() {
+    public void testInvalidSpatialWCS() {
         SpatialWCS position = null;
 
         try {
