@@ -77,6 +77,7 @@ import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
 
+import ca.nrc.cadc.caom2.Artifact;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.ac.UserNotFoundException;
@@ -84,6 +85,7 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -323,6 +325,12 @@ public abstract class RepoAction extends RestAction
         try 
         {
             CaomValidator.validate(obs);
+
+            for (Plane pl: obs.getPlanes()) {
+                for (Artifact a: pl.getArtifacts()) {
+                    CaomWCSValidator.validate(a);
+                }
+            }
 
             if (computeMetadata || computeMetadataValidation)
             {
