@@ -82,8 +82,7 @@ public class Algorithm implements Serializable {
 
     public Algorithm(String name) {
         if (name == null) {
-            throw new IllegalArgumentException(
-                    getClass().getSimpleName() + ": null name");
+            throw new IllegalArgumentException(getClass().getSimpleName() + ": null name");
         }
         this.name = name;
     }

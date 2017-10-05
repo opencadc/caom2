@@ -78,9 +78,8 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * A Plane is a specific science data product resulting from an observation. As
- * the data for an observation is processed in different ways this makes new
- * data products (e.g. new Planes) with different characteristics.
+ * A Plane is a specific science data product resulting from an observation. As the data for an observation is processed in different ways this makes new data
+ * products (e.g. new Planes) with different characteristics.
  * 
  * @author pdowler
  */
@@ -109,8 +108,7 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
     public Polarization polarization;
 
     public Plane(String productID) {
-        CaomValidator.assertValidPathComponent(getClass(), "productID",
-                productID);
+        CaomValidator.assertValidPathComponent(getClass(), "productID", productID);
         this.productID = productID;
     }
 

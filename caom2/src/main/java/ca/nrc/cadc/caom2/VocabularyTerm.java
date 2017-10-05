@@ -83,8 +83,7 @@ public class VocabularyTerm implements Serializable {
     private boolean base;
 
     /**
-     * Constructor. This creates a term in the specified vocabulary namepsace
-     * with default base = false.
+     * Constructor. This creates a term in the specified vocabulary namepsace with default base = false.
      * 
      * @param namespace
      * @param term
@@ -94,26 +93,20 @@ public class VocabularyTerm implements Serializable {
     }
 
     /**
-     * Constructor. This creates a term in the specified vocabulary namespace.
-     * If the value of base is false (default for convenience constructor) then
-     * the string value (from getValue()) will just be the namespace URI plus
-     * the term added as a fragment. If the value of base is true, then this is
-     * a term in a base vocabulary and the value will be just the term (without
-     * the namespace).
+     * Constructor. This creates a term in the specified vocabulary namespace. If the value of base is false (default for convenience constructor) then the
+     * string value (from getValue()) will just be the namespace URI plus the term added as a fragment. If the value of base is true, then this is a term in a
+     * base vocabulary and the value will be just the term (without the namespace).
      * 
      * @param namespace
      * @param term
      * @param base
      */
     public VocabularyTerm(URI namespace, String term, boolean base) {
-        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace",
-                namespace);
+        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace", namespace);
         CaomValidator.assertNotNull(VocabularyTerm.class, "term", term);
-        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term",
-                term);
+        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term", term);
         if (namespace.getFragment() != null) {
-            throw new IllegalArgumentException(
-                    "vocabulary namespace canniot have a fragment");
+            throw new IllegalArgumentException("vocabulary namespace canniot have a fragment");
         }
         this.namespace = namespace;
         this.term = term;
@@ -140,8 +133,7 @@ public class VocabularyTerm implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof VocabularyTerm) {
             VocabularyTerm rhs = (VocabularyTerm) obj;
-            return (this.term.equals(rhs.term)
-                    && this.namespace.equals(rhs.namespace));
+            return (this.term.equals(rhs.term) && this.namespace.equals(rhs.namespace));
         }
         return false;
     }

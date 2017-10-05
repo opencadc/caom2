@@ -74,10 +74,8 @@ import java.io.Serializable;
 import java.net.URI;
 
 /**
- * Globally unique identifer for a CAOM plane. This is meant to be equivalent to
- * an IVOA publisher dataset identifier. Assumption: the Observation.collection
- * is the path component of the resourceID (e.g. the collection is registered as
- * a DataCollection resource in an IVOA registry).
+ * Globally unique identifer for a CAOM plane. This is meant to be equivalent to an IVOA publisher dataset identifier. Assumption: the Observation.collection is
+ * the path component of the resourceID (e.g. the collection is registered as a DataCollection resource in an IVOA registry).
  * 
  * 
  * @author pdowler
@@ -95,8 +93,7 @@ public class PublisherID implements Comparable<PublisherID>, Serializable {
         CaomValidator.assertNotNull(getClass(), "uri", uri);
 
         if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException(
-                    "invalid scheme: " + uri.getScheme());
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
         }
         String auth = uri.getAuthority();
         String path = uri.getPath();
@@ -110,28 +107,21 @@ public class PublisherID implements Comparable<PublisherID>, Serializable {
         if (ids.length == 2) {
             String oid = ids[0];
             String pid = ids[1];
-            CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                    oid);
-            CaomValidator.assertValidPathComponent(getClass(), "productID",
-                    pid);
+            CaomValidator.assertValidPathComponent(getClass(), "observationID", oid);
+            CaomValidator.assertValidPathComponent(getClass(), "productID", pid);
 
         } else {
-            throw new IllegalArgumentException(
-                    "input URI has " + ids.length + " id components (" + id
-                            + "), expected 2: <observationID>/<productID>");
+            throw new IllegalArgumentException("input URI has " + ids.length + " id components (" + id + "), expected 2: <observationID>/<productID>");
         }
         this.uri = uri;
         this.resourceID = URI.create(SCHEME + "://" + auth + "/" + path);
     }
 
     public PublisherID(URI resourceID, String observationID, String productID) {
-        CaomValidator.assertNotNull(PublisherID.class, "resourceID",
-                resourceID);
-        CaomValidator.assertNotNull(PublisherID.class, "observationID",
-                observationID);
+        CaomValidator.assertNotNull(PublisherID.class, "resourceID", resourceID);
+        CaomValidator.assertNotNull(PublisherID.class, "observationID", observationID);
         CaomValidator.assertNotNull(PublisherID.class, "productID", productID);
-        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID
-                + "/" + productID);
+        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID + "/" + productID);
         this.resourceID = resourceID;
     }
 

@@ -136,9 +136,8 @@ public abstract class CaomEntity implements Serializable {
     }
 
     /**
-     * Get the timestamp of the last modification of the state of this object.
-     * The last modified date includes all local state but not the state of
-     * child objects contained in collections.
+     * Get the timestamp of the last modification of the state of this object. The last modified date includes all local state but not the state of child
+     * objects contained in collections.
      * 
      * @return
      */
@@ -147,8 +146,7 @@ public abstract class CaomEntity implements Serializable {
     }
 
     /**
-     * Get the maximum timestamp of the last modification of the state of this
-     * object and any child entities..
+     * Get the maximum timestamp of the last modification of the state of this object and any child entities..
      *
      * @return
      */
@@ -157,8 +155,7 @@ public abstract class CaomEntity implements Serializable {
     }
 
     /**
-     * Get the checksum for the state of this entity. This checksum does not
-     * include child entities.
+     * Get the checksum for the state of this entity. This checksum does not include child entities.
      * 
      * @return checksum URI in the form algorithm:value
      */
@@ -167,9 +164,7 @@ public abstract class CaomEntity implements Serializable {
     }
 
     /**
-     * Get the accumulated checksum for the state of this entity. The
-     * accumulated checksum includes the state of this entity and all child
-     * entities.
+     * Get the accumulated checksum for the state of this entity. The accumulated checksum includes the state of this entity and all child entities.
      * 
      * @return checksum URI in the form algorithm:value
      */
@@ -231,9 +226,8 @@ public abstract class CaomEntity implements Serializable {
     }
 
     /**
-     * Compute new metadata checksum for this entity. The computed value is
-     * based on the current state and is returned without changing the stored
-     * value that is accessed via the getMetaChecksum() method.
+     * Compute new metadata checksum for this entity. The computed value is based on the current state and is returned without changing the stored value that is
+     * accessed via the getMetaChecksum() method.
      * 
      * @param digest
      * @return
@@ -246,10 +240,7 @@ public abstract class CaomEntity implements Serializable {
             String alg = digest.getAlgorithm().toLowerCase();
             return new URI(alg, hexMetaChecksum, null);
         } catch (URISyntaxException e) {
-            throw new RuntimeException(
-                    "Unable to create metadata checksum URI for "
-                            + this.getClass().getName(),
-                    e);
+            throw new RuntimeException("Unable to create metadata checksum URI for " + this.getClass().getName(), e);
         }
     }
 
@@ -274,8 +265,7 @@ public abstract class CaomEntity implements Serializable {
                 CaomEntity ce = (CaomEntity) o;
                 digest.update(primitiveValueToBytes(ce.id));
                 if (MCS_DEBUG) {
-                    log.debug("metaChecksum: " + ce.getClass().getSimpleName()
-                            + ".id " + ce.id);
+                    log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
                 }
             }
 
@@ -292,8 +282,7 @@ public abstract class CaomEntity implements Serializable {
                         CaomEnum ce = (CaomEnum) fo;
                         digest.update(primitiveValueToBytes(ce.getValue()));
                         if (MCS_DEBUG) {
-                            log.debug("metaChecksum: " + cf + ".getValue() "
-                                    + ce.getValue());
+                            log.debug("metaChecksum: " + cf + ".getValue() " + ce.getValue());
                         }
                     } else if (isLocalClass(ac)) {
                         calcMetaChecksum(ac, fo, digest);
@@ -306,11 +295,9 @@ public abstract class CaomEntity implements Serializable {
                             if (co instanceof CaomEnum) {
                                 // use ce.getValue
                                 CaomEnum ce = (CaomEnum) co;
-                                digest.update(
-                                        primitiveValueToBytes(ce.getValue()));
+                                digest.update(primitiveValueToBytes(ce.getValue()));
                                 if (MCS_DEBUG) {
-                                    log.debug("metaChecksum: " + cf
-                                            + ".getValue() " + ce.getValue());
+                                    log.debug("metaChecksum: " + cf + ".getValue() " + ce.getValue());
                                 }
                             } else if (isLocalClass(cc)) {
                                 calcMetaChecksum(cc, co, digest);
@@ -333,9 +320,7 @@ public abstract class CaomEntity implements Serializable {
             }
 
         } catch (IllegalAccessException bug) {
-            throw new RuntimeException(
-                    "Unable to calculate metaChecksum for class " + c.getName(),
-                    bug);
+            throw new RuntimeException("Unable to calculate metaChecksum for class " + c.getName(), bug);
         }
     }
 
@@ -362,26 +347,20 @@ public abstract class CaomEntity implements Serializable {
             long sec = (date.getTime() / 1000L);
             ret = HexUtil.toBytes(sec);
         } else if (o instanceof Float) {
-            ret = HexUtil.toBytes(Float.floatToIntBits((Float) o)); /* auto-unbox,
-                                                                     IEEE754
-                                                                     single */
+            ret = HexUtil.toBytes(Float.floatToIntBits((Float) o)); // auto-unbox, IEEE754 single
         } else if (o instanceof Double) {
-            ret = HexUtil.toBytes(Double.doubleToLongBits((Double) o)); /* auto-unbox,
-                                                                         IEEE754
-                                                                         double */
+            ret = HexUtil.toBytes(Double.doubleToLongBits((Double) o)); // auto-unbox, IEEE754 double
         } else if (o instanceof String) {
             try {
                 ret = ((String) o).getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
-                throw new RuntimeException(
-                        "BUG: failed to encode String in UTF-8", ex);
+                throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
         } else if (o instanceof URI) {
             try {
                 ret = ((URI) o).toASCIIString().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
-                throw new RuntimeException(
-                        "BUG: failed to encode String in UTF-8", ex);
+                throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
             }
         } else if (o instanceof UUID) {
             UUID uuid = (UUID) o;
@@ -394,21 +373,17 @@ public abstract class CaomEntity implements Serializable {
 
         if (ret != null) {
             if (MCS_DEBUG) {
-                log.debug(o.getClass().getSimpleName() + " " + o.toString()
-                        + " " + ret.length);
+                log.debug(o.getClass().getSimpleName() + " " + o.toString() + " " + ret.length);
             }
             return ret;
         }
 
-        throw new UnsupportedOperationException(
-                "unexpected primitive/value type: " + o.getClass().getName());
+        throw new UnsupportedOperationException("unexpected primitive/value type: " + o.getClass().getName());
     }
 
     /**
-     * Compute new accumulated metadata checksum for this entity. The computed
-     * value is based on the current state of this entity and all child
-     * entities. The value is returned without changing the stored value that is
-     * accessed via the getAccumulatedMetaChecksum() method.
+     * Compute new accumulated metadata checksum for this entity. The computed value is based on the current state of this entity and all child entities. The
+     * value is returned without changing the stored value that is accessed via the getAccumulatedMetaChecksum() method.
      * 
      * @param digest
      * @return
@@ -421,10 +396,7 @@ public abstract class CaomEntity implements Serializable {
             String alg = digest.getAlgorithm().toLowerCase();
             return new URI(alg, accHexMetaChecksum, null);
         } catch (URISyntaxException e) {
-            throw new RuntimeException(
-                    "Unable to create metadata checksum URI for "
-                            + this.getClass().getName(),
-                    e);
+            throw new RuntimeException("Unable to create metadata checksum URI for " + this.getClass().getName(), e);
         }
     }
 
@@ -446,8 +418,7 @@ public abstract class CaomEntity implements Serializable {
 
             SortedSet<Field> fields = getChildFields(c);
             if (MCS_DEBUG) {
-                log.debug("calcAccMetaChecksum: " + c.getName() + " has "
-                        + fields.size() + " child fields");
+                log.debug("calcAccMetaChecksum: " + c.getName() + " has " + fields.size() + " child fields");
             }
 
             for (Field f : fields) {
@@ -455,8 +426,7 @@ public abstract class CaomEntity implements Serializable {
                 Object fo = f.get(o);
                 if (fo != null) {
                     if (MCS_DEBUG) {
-                        log.debug("calcAccMetaChecksum: value type is "
-                                + fo.getClass().getName());
+                        log.debug("calcAccMetaChecksum: value type is " + fo.getClass().getName());
                     }
                     if (fo instanceof Collection) {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
@@ -474,8 +444,7 @@ public abstract class CaomEntity implements Serializable {
                             // md.reset();
                             sorted.put(ce.getID(), bb);
                         }
-                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet()
-                                .iterator();
+                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet().iterator();
                         while (si.hasNext()) {
                             Map.Entry<UUID, byte[]> me = si.next();
                             if (MCS_DEBUG) {
@@ -484,9 +453,7 @@ public abstract class CaomEntity implements Serializable {
                             digest.update(me.getValue());
                         }
                     } else {
-                        throw new UnsupportedOperationException(
-                                "found single child field " + f.getName()
-                                        + " in " + c.getName());
+                        throw new UnsupportedOperationException("found single child field " + f.getName() + " in " + c.getName());
                     }
                 }
                 // child sets are never null
@@ -494,13 +461,9 @@ public abstract class CaomEntity implements Serializable {
                 // f.getName());
             }
         } catch (IllegalAccessException bug) {
-            throw new RuntimeException(
-                    "BUG: Unable to calculate metaChecksum for class "
-                            + c.getName(),
-                    bug);
+            throw new RuntimeException("BUG: Unable to calculate metaChecksum for class " + c.getName(), bug);
         } catch (NoSuchAlgorithmException oops) {
-            throw new RuntimeException("BUG: Unable to clone MessageDigest "
-                    + digest.getAlgorithm(), oops);
+            throw new RuntimeException("BUG: Unable to clone MessageDigest " + digest.getAlgorithm(), oops);
         }
     }
 
@@ -514,8 +477,7 @@ public abstract class CaomEntity implements Serializable {
                 Object fo = f.get(o);
                 if (fo != null) {
                     if (SC_DEBUG) {
-                        log.debug("checksum: value type is "
-                                + fo.getClass().getName());
+                        log.debug("checksum: value type is " + fo.getClass().getName());
                     }
                     Class ac = fo.getClass(); // actual class
                     if (fo instanceof CaomEnum) {
@@ -527,13 +489,10 @@ public abstract class CaomEntity implements Serializable {
                         if (cs != 0) {
                             ret = HashUtil.hash(ret, cs);
                             if (SC_DEBUG) {
-                                log.debug("checksum: " + c.getName() + "."
-                                        + f.getName() + " = " + cs + " -> "
-                                        + ret);
+                                log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + cs + " -> " + ret);
                             }
                         } else if (SC_DEBUG) {
-                            log.debug(
-                                    "skip: " + c.getName() + "." + f.getName());
+                            log.debug("skip: " + c.getName() + "." + f.getName());
                         }
                     } else if (fo instanceof Collection) {
                         Collection stuff = (Collection) fo;
@@ -548,8 +507,7 @@ public abstract class CaomEntity implements Serializable {
                                 if (cs != 0) {
                                     ret = HashUtil.hash(ret, cs);
                                     if (SC_DEBUG) {
-                                        log.debug("checksum: " + cc.getName()
-                                                + " = " + cs + " -> " + ret);
+                                        log.debug("checksum: " + cc.getName() + " = " + cs + " -> " + ret);
                                     }
                                 } else if (SC_DEBUG) {
                                     log.debug("skip: " + cc.getName());
@@ -558,9 +516,7 @@ public abstract class CaomEntity implements Serializable {
                                 int hc = fo.hashCode();
                                 ret = HashUtil.hash(ret, hc);
                                 if (SC_DEBUG) {
-                                    log.debug("checksum: " + c.getName() + "."
-                                            + f.getName() + " = " + hc + " -> "
-                                            + ret);
+                                    log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + hc + " -> " + ret);
                                 }
                             }
                         }
@@ -570,17 +526,14 @@ public abstract class CaomEntity implements Serializable {
                         long sec = (date.getTime() / 1000L);
                         ret = HashUtil.hash(ret, sec);
                         if (SC_DEBUG) {
-                            log.debug("checksum: " + c.getName() + "."
-                                    + f.getName() + " = " + sec + " -> " + ret);
+                            log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + sec + " -> " + ret);
                         }
                     } else { // non-caom2 class
                         int hc = fo.hashCode();
                         if (hc != 0) {
                             ret = HashUtil.hash(ret, hc);
                             if (SC_DEBUG) {
-                                log.debug("checksum: " + c.getName() + "."
-                                        + f.getName() + " = " + hc + " -> "
-                                        + ret);
+                                log.debug("checksum: " + c.getName() + "." + f.getName() + " = " + hc + " -> " + ret);
                             }
                         }
                     }
@@ -589,8 +542,7 @@ public abstract class CaomEntity implements Serializable {
                 }
             }
         } catch (IllegalAccessException bug) {
-            throw new RuntimeException("BUG accessing field via reflection",
-                    bug);
+            throw new RuntimeException("BUG accessing field via reflection", bug);
         }
         return ret;
     }
@@ -623,8 +575,7 @@ public abstract class CaomEntity implements Serializable {
         return false;
     }
 
-    static SortedSet<Field> getStateFields(Class c, boolean includeTransient)
-            throws IllegalAccessException {
+    static SortedSet<Field> getStateFields(Class c, boolean includeTransient) throws IllegalAccessException {
         SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
         Field[] fields = c.getDeclaredFields();
         for (Field f : fields) {
@@ -646,14 +597,12 @@ public abstract class CaomEntity implements Serializable {
         return ret;
     }
 
-    static SortedSet<Field> getChildFields(Class c)
-            throws IllegalAccessException {
+    static SortedSet<Field> getChildFields(Class c) throws IllegalAccessException {
         SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
         Field[] fields = c.getDeclaredFields();
         for (Field f : fields) {
             int m = f.getModifiers();
-            if (!Modifier.isTransient(m) && !Modifier.isStatic(m)
-                    && (isChildCollection(f) || isChildEntity(f))) {
+            if (!Modifier.isTransient(m) && !Modifier.isStatic(m) && (isChildCollection(f) || isChildEntity(f))) {
                 ret.add(f);
             }
         }

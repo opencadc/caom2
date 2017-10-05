@@ -118,12 +118,10 @@ public class Location implements Shape {
     public static Location decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
         if (magic != MAGIC_LOCATION) {
-            throw new IllegalArgumentException(
-                    "encoded array does not start with Shape.MAGIC_LOCATION");
+            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_LOCATION");
         }
         if (encoded.length != 21) {
-            throw new IllegalStateException("encoded array is wrong length: "
-                    + encoded.length + ", expected 21");
+            throw new IllegalStateException("encoded array is wrong length: " + encoded.length + ", expected 21");
         }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));

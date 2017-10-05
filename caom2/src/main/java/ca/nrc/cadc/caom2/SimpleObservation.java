@@ -89,8 +89,7 @@ public class SimpleObservation extends Observation {
         super(collection, observationID, ALGORITHM);
     }
 
-    public SimpleObservation(String collection, String observationID,
-            Algorithm algorithm) {
+    public SimpleObservation(String collection, String observationID, Algorithm algorithm) {
         super(collection, observationID, algorithm);
     }
 

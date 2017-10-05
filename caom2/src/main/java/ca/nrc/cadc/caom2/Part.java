@@ -75,10 +75,8 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * A Part (of an Artifact) is one qualitatively specified subsection of a whole.
- * For example, if the Artifact is a tar file, the the Parts would be the
- * individual files within the tar file. If the Artifact is a multi-extension
- * FITS file, the Parts would be the individual extensions.
+ * A Part (of an Artifact) is one qualitatively specified subsection of a whole. For example, if the Artifact is a tar file, the the Parts would be the
+ * individual files within the tar file. If the Artifact is a multi-extension FITS file, the Parts would be the individual extensions.
  * 
  * @author pdowler
  */
@@ -119,9 +117,8 @@ public class Part extends CaomEntity implements Comparable<Part> {
     }
 
     /**
-     * The equals method for this class is consistent with compareTo but <b>is
-     * not consistent</b> with the hashCode method. Do not put Part(s) into a
-     * hash-based data structure.
+     * The equals method for this class is consistent with compareTo but <b>is not consistent</b> with the hashCode method. Do not put Part(s) into a hash-based
+     * data structure.
      * 
      * @param o
      * @return

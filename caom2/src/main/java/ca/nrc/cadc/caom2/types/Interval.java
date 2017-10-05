@@ -106,33 +106,25 @@ public class Interval implements Serializable {
 
     public final void validate() {
         if (upper < lower) {
-            throw new IllegalArgumentException(
-                    "invalid interval (upper < lower): " + lower + "," + upper);
+            throw new IllegalArgumentException("invalid interval (upper < lower): " + lower + "," + upper);
         }
         CaomValidator.assertNotNull(Interval.class, "samples", samples);
         if (samples.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "invalid interval (samples cannot be empty)");
+            throw new IllegalArgumentException("invalid interval (samples cannot be empty)");
         }
 
         SubInterval prev = null;
         for (SubInterval si : samples) {
             if (si.getLower() < lower) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends below lower bound: "
-                                + si + " vs " + lower);
+                throw new IllegalArgumentException("invalid interval: sample extends below lower bound: " + si + " vs " + lower);
             }
             if (si.getUpper() > upper) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends above upper bound: "
-                                + si + " vs " + upper);
+                throw new IllegalArgumentException("invalid interval: sample extends above upper bound: " + si + " vs " + upper);
             }
 
             if (prev != null) {
                 if (si.getLower() <= prev.getUpper()) {
-                    throw new IllegalArgumentException(
-                            "invalid interval: sample overlaps previous sample: "
-                                    + si + " vs " + prev);
+                    throw new IllegalArgumentException("invalid interval: sample overlaps previous sample: " + si + " vs " + prev);
                 }
             }
             prev = si;
@@ -146,8 +138,7 @@ public class Interval implements Serializable {
         if (!samples.isEmpty()) {
             sb.append(" samples[ ");
             for (SubInterval si : samples) {
-                sb.append("[").append(si.lower).append(",").append(si.upper)
-                        .append("] ");
+                sb.append("[").append(si.lower).append(",").append(si.upper).append("] ");
             }
             sb.append("]");
         }

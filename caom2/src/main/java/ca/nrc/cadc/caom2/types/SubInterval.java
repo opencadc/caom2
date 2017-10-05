@@ -89,8 +89,7 @@ public class SubInterval implements Serializable {
 
     public SubInterval(double lower, double upper) {
         if (upper < lower) {
-            throw new IllegalArgumentException(
-                    "Interval: upper < lower for " + lower + "," + upper);
+            throw new IllegalArgumentException("Interval: upper < lower for " + lower + "," + upper);
         }
         this.lower = lower;
         this.upper = upper;

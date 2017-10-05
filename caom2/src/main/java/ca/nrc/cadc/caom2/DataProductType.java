@@ -74,43 +74,32 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
- * An extensible vocabulary masquerading as an enumeration, or the other way
- * around.
+ * An extensible vocabulary masquerading as an enumeration, or the other way around.
  * 
  * @author pdowler
  */
-public class DataProductType extends VocabularyTerm
-        implements CaomEnum<String>, Serializable {
+public class DataProductType extends VocabularyTerm implements CaomEnum<String>, Serializable {
     private static final long serialVersionUID = 201704061700L;
 
-    private static final URI OBSCORE = URI
-            .create("http://www.ivoa.net/std/ObsCore");
-    private static final URI CAOM = URI
-            .create("http://www.opencadc.org/caom2/DataProductType");
+    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/DataProductType");
 
     // ObsCore-1.0
     public static final DataProductType IMAGE = new DataProductType("image");
-    public static final DataProductType SPECTRUM = new DataProductType(
-            "spectrum");
-    public static final DataProductType TIMESERIES = new DataProductType(
-            "timeseries");
-    public static final DataProductType VISIBILITY = new DataProductType(
-            "visibility");
-    public static final DataProductType EVENTLIST = new DataProductType(
-            "eventlist");
+    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
+    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
+    public static final DataProductType VISIBILITY = new DataProductType("visibility");
+    public static final DataProductType EVENTLIST = new DataProductType("eventlist");
     public static final DataProductType CUBE = new DataProductType("cube");
 
     // ObsCore-1.1
-    public static final DataProductType MEASUREMENTS = new DataProductType(
-            "measurements");
+    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
 
     // CAOM-2.3
-    public static final DataProductType CATALOG = new DataProductType(CAOM,
-            "catalog");
+    public static final DataProductType CATALOG = new DataProductType(CAOM, "catalog");
 
     public static final DataProductType[] values() {
-        return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       EVENTLIST, CUBE, MEASUREMENTS, CATALOG };
+        return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY, EVENTLIST, CUBE, MEASUREMENTS, CATALOG };
     }
 
     private DataProductType(String value) {
@@ -137,8 +126,7 @@ public class DataProductType extends VocabularyTerm
             URI u = new URI(s);
             String t = u.getFragment();
             if (t == null) {
-                throw new IllegalArgumentException(
-                        "invalid value (no term/fragment): " + s);
+                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
             }
             String[] ss = u.toASCIIString().split("#");
             URI ns = new URI(ss[0]);

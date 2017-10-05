@@ -75,9 +75,8 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 /**
- * Standard polarization codes for FITS WCS STOKES axis. We have added some
- * additional codes for values outside the original FITS WCS paper from the
- * discussion at
+ * Standard polarization codes for FITS WCS STOKES axis. We have added some additional codes for values outside the original FITS WCS paper from the discussion
+ * at
  * <p>
  * http://listmgr.cv.nrao.edu/pipermail/fitswcs/2008-March/000408.html
  * </p>
@@ -85,16 +84,13 @@ import java.util.Comparator;
  * @author pdowler
  */
 public enum PolarizationState implements CaomEnum<String> {
-    I("I"), Q("Q"), U("U"), V("V"), POLI("POLI"), /* linear polarized intensity
-                                                   sqrt(Q^2 + U^2), code used
-                                                   in AIPS*/
+    I("I"), Q("Q"), U("U"), V("V"), POLI("POLI"), // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
     FPOLI("FPOLI"), // fractional linear polarization POLI/I, code used in AIPS
     POLA("POLA"), // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
     EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
     CPOLI("CPOLI"), // circular polarization intensity |V|
     NPOLI("NPOLI"), // unpolarized intensity I - EPOLI
-    RR("RR"), LL("LL"), RL("RL"), LR("LR"), XX("XX"), YY("YY"), XY("XY"), YX(
-            "YX");
+    RR("RR"), LL("LL"), RL("RL"), LR("LR"), XX("XX"), YY("YY"), XY("XY"), YX("YX");
 
     private String value;
 
@@ -162,7 +158,7 @@ public enum PolarizationState implements CaomEnum<String> {
         }
         throw new IllegalArgumentException("invalid polarization code: " + val);
     }
-    
+
     public static PolarizationState toValue(String s) {
         for (PolarizationState ps : values()) {
             if (ps.value.equals(s)) {
@@ -220,8 +216,7 @@ public enum PolarizationState implements CaomEnum<String> {
         return intValue(this);
     }
 
-    public static class PolStateComparator
-            implements Comparator<PolarizationState>, Serializable {
+    public static class PolStateComparator implements Comparator<PolarizationState>, Serializable {
         private static final long serialVersionUID = 201706071000L;
 
         public int compare(PolarizationState lhs, PolarizationState rhs) {

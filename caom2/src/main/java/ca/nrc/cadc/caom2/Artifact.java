@@ -77,9 +77,8 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * An artifact is a single physical (stored) result. This is normally a file,
- * but could also be a table in a database or a resource available on the
- * internet (such as a web page).
+ * An artifact is a single physical (stored) result. This is normally a file, but could also be a table in a database or a resource available on the internet
+ * (such as a web page).
  *
  * @author pdowler
  */

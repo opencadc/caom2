@@ -117,13 +117,11 @@ public class Box implements Shape {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + center + "," + width
-                + "," + height + "]";
+        return this.getClass().getSimpleName() + "[" + center + "," + width + "," + height + "]";
     }
 
     /**
-     * Decode a previously encoded polygon. This method is supplied to aid in
-     * recreating a polygon from a previously encoded byte array.
+     * Decode a previously encoded polygon. This method is supplied to aid in recreating a polygon from a previously encoded byte array.
      *
      * @param encoded
      *            byte[] of length 4 + 20 * number of vertices
@@ -134,8 +132,7 @@ public class Box implements Shape {
     public static Box decode(byte[] encoded) {
         int magic = HexUtil.toInt(encoded, 0);
         if (magic != Shape.MAGIC_BOX) {
-            throw new IllegalArgumentException(
-                    "encoded array does not start with Shape.MAGIC_BOX");
+            throw new IllegalArgumentException("encoded array does not start with Shape.MAGIC_BOX");
         }
 
         double x = Double.longBitsToDouble(HexUtil.toLong(encoded, 4));
@@ -146,8 +143,7 @@ public class Box implements Shape {
     }
 
     /**
-     * Encode a polygon as a byte array. This method is supplied to aid in
-     * storing the polygon in binary format.
+     * Encode a polygon as a byte array. This method is supplied to aid in storing the polygon in binary format.
      *
      * @param box
      * @return byte[] of length 37

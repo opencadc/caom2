@@ -98,13 +98,11 @@ public class ObservableAxis implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(dependent.getAxis().getCtype()).append(",")
-                .append(dependent.getAxis().getCunit()).append(",");
+        sb.append(dependent.getAxis().getCtype()).append(",").append(dependent.getAxis().getCunit()).append(",");
         sb.append(dependent.getBin());
         if (independent != null) {
             sb.append(" ");
-            sb.append(independent.getAxis().getCtype()).append(",")
-                    .append(independent.getAxis().getCunit()).append(",");
+            sb.append(independent.getAxis().getCtype()).append(",").append(independent.getAxis().getCunit()).append(",");
             sb.append(independent.getBin());
         }
         sb.append("]");

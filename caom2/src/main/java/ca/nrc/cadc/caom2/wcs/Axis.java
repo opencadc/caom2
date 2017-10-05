@@ -100,8 +100,7 @@ public class Axis implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + ctype + "," + cunit
-                + "]";
+        return this.getClass().getSimpleName() + "[" + ctype + "," + cunit + "]";
     }
 
     public String getCtype() {

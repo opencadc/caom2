@@ -86,9 +86,7 @@ public class PolarizationWCS implements Serializable {
     public PolarizationWCS(CoordAxis1D axis) {
         CaomValidator.assertNotNull(getClass(), "axis", axis);
         if (!PolarizationWCS.CTYPE.equals(axis.getAxis().getCtype())) {
-            throw new IllegalArgumentException(
-                    "PolarizationWCS ctype must be STOKES, found: "
-                            + axis.getAxis().getCtype());
+            throw new IllegalArgumentException("PolarizationWCS ctype must be STOKES, found: " + axis.getAxis().getCtype());
         }
         this.axis = axis;
     }

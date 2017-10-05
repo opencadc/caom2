@@ -122,7 +122,6 @@ public enum SegmentType implements CaomEnum<Integer> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "="
-                + stringValue() + "]";
+        return this.getClass().getSimpleName() + "[" + value + "=" + stringValue() + "]";
     }
 }

@@ -103,10 +103,8 @@ public class Vertex extends Point {
     @Override
     public String toString() {
         if (SegmentType.CLOSE.equals(type)) {
-            return this.getClass().getSimpleName() + "[" + type.toString()
-                    + "]";
+            return this.getClass().getSimpleName() + "[" + type.toString() + "]";
         }
-        return this.getClass().getSimpleName() + "[" + cval1 + "," + cval2 + ","
-                + type.toString() + "]";
+        return this.getClass().getSimpleName() + "[" + cval1 + "," + cval2 + "," + type.toString() + "]";
     }
 }
