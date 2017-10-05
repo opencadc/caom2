@@ -103,8 +103,7 @@ public class Main {
             ArgumentMap am = new ArgumentMap(args);
             String asClassName = am.getValue("artifactStore");
             String asPackage = null;
-            if (asClassName != null)
-            {
+            if (asClassName != null) {
                 int lastDot = asClassName.lastIndexOf(".");
                 asPackage = asClassName.substring(0, lastDot);
             }
