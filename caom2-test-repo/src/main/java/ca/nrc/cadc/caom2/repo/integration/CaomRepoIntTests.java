@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
@@ -220,6 +221,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutSuccessWCS() throws Throwable {
+        log.info("starting testPutSuccessWCS");
         String observationID = generateObservationID("testPutSuccessWCS");
 
         // put an observation using subject1
@@ -246,6 +248,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
+        log.info("ending testPutSuccessWCS");
     }
 
     @Test
@@ -496,6 +499,49 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         params.put("barKey", "barValue");
 
         testPostMultipartWithParamsSuccess(observationID, params);
+    }
+
+    @Test
+    public void testPostInvalidWCS() throws Throwable {
+        log.info("starting testPostInvalidWCS");
+
+        try {
+            // create an observation using subject1
+            String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
+            SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+
+            Plane plane = new Plane("science");
+            plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
+            Artifact na = new Artifact(new URI("foo", "bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            plane.getArtifacts().add(na);
+            Part np = new Part("baz");
+            na.getParts().add(np);
+            Chunk c = new Chunk();
+            np.getChunks().add(new Chunk());
+            CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
+            SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
+
+            wcs.bandpassName = "H-Alpha-narrow";
+            wcs.restwav = 6563.0e-10; // meters
+            wcs.resolvingPower = 33000.0;
+            wcs.transition = new EnergyTransition("H", "alpha");
+
+            RefCoord c1 = new RefCoord(0.5, 2000.0);
+            wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
+
+            c.energy = wcs;
+
+            observation.getPlanes().add(plane);
+
+            putObservation(observation, subject1, null, null, null);
+            Assert.fail("CaomWCSValidation failed: expected IllegalArgumentException.");
+        } catch (IllegalArgumentException iae)
+        {
+            log.info("passed testPostInvalidWCS");
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception" + e.toString());
+        }
+        log.info("ending testPostInvalidWCS");
     }
 
     private SimpleObservation generateObservation(String observationID) throws Exception {
