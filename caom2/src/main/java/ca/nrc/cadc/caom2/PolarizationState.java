@@ -84,9 +84,7 @@ import java.util.Comparator;
  * @author pdowler
  */
 public enum PolarizationState implements CaomEnum<String> {
-    I("I"), Q("Q"), U("U"), V("V"), POLI("POLI"), /*
-                                                   * linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
-                                                   */
+    I("I"), Q("Q"), U("U"), V("V"), POLI("POLI"), // linear polarized intensity sqrt(Q^2 + U^2), code used in AIPS
     FPOLI("FPOLI"), // fractional linear polarization POLI/I, code used in AIPS
     POLA("POLA"), // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
     EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
