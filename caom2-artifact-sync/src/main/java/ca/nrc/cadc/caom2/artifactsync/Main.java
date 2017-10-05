@@ -243,12 +243,12 @@ public class Main {
 
                 if (subject != null) {
                     num = Subject.doAs(subject, harvester);
-                    if (!dryrun) {
+                    if (!dryrun && num > 0) {
                         Subject.doAs(subject, downloader);
                     }
                 } else { // anon
                     num = harvester.run();
-                    if (!dryrun) {
+                    if (!dryrun && num > 0) {
                         downloader.run();
                     }
                 }
