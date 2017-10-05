@@ -69,15 +69,6 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
@@ -87,6 +78,15 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.security.auth.Subject;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
