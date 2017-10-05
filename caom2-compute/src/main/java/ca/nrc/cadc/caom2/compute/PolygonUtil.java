@@ -168,7 +168,8 @@ public final class PolygonUtil {
             log.debug("[getConcaveHull] union = " + tmp);
             if (tmp.isSimple()) {
                 try {
-                    validateSegments(tmp);
+                    //validateSegments(tmp);
+                    tmp.validate();
                     outer = tmp;
                 } catch (IllegalPolygonException skip) {
                     log.debug("scale: " + scale + " -> " + skip);
@@ -177,8 +178,8 @@ public final class PolygonUtil {
             scale += DEFAULT_SCALE; // 2x, 3x, etc
         }
         if (outer != null) {
-            log.debug("[getConcaveHull] SUCCESS: " + outer);
             boolean ccw = outer.getCCW();
+            log.info("[getConcaveHull] SUCCESS: " + outer +  " ccw="+ccw);
             List<Point> pts = new ArrayList<Point>();
             for (Vertex v : outer.getVertices()) {
                 if (!SegmentType.CLOSE.equals(v.getType())) {
@@ -328,60 +329,12 @@ public final class PolygonUtil {
     private static MultiPolygon removeHoles(MultiPolygon poly) {
         // convex: no checking, just blindly decompose and reassemble
         List<MultiPolygon> parts = decompose(poly, true);
-        return compose(parts);
-    }
-
-    static MultiPolygon compose(List<MultiPolygon> parts) {
-        MultiPolygon poly = new MultiPolygon();
-        for (MultiPolygon p : parts) {
-            for (Vertex v : p.getVertices()) {
-                poly.getVertices().add(v);
-            }
-        }
-        return poly;
-    }
-
-    static List<MultiPolygon> decompose(MultiPolygon p) {
-        if (p == null) {
-            return null;
-        }
-        List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
-        MultiPolygon prev = null; // needs to be a stack?
-        MultiPolygon cur = null;
-        for (Vertex v : p.getVertices()) {
-            if (cur == null) { // start new poly
-                //log.debug("new MultiPolygon");
-                cur = new MultiPolygon();
-                //log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            } else if (SegmentType.MOVE.equals(v.getType())) {
-                //log.debug("vertex: " + v);
-                //cur.getVertices().add(new Vertex(0.0, 0.0,SegmentType.CLOSE));
-                //polys.add(cur);
-                //log.debug("close MultiPolygon");
-                prev = cur; // embedded loop
-
-                //log.debug("new MultiPolygon");
-                cur = new MultiPolygon();
-                //log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            } else if (SegmentType.CLOSE.equals(v.getType())) {
-                //log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-                polys.add(cur);
-                cur = prev;
-                //log.debug("close MultiPolygon");
-            } else {
-                //log.debug("vertex: " + v);
-                cur.getVertices().add(v);
-            }
-        }
-        return polys;
+        return MultiPolygon.compose(parts);
     }
 
     static List<MultiPolygon> decompose(MultiPolygon poly, boolean removeHoles) {
         log.debug("[decompose] START: " + poly + " removeHoles=" + removeHoles);
-        List<MultiPolygon> samples = decompose(poly);
+        List<MultiPolygon> samples = MultiPolygon.decompose(poly);
 
         // find samples and holes via sign of the area
         boolean cw = poly.getCCW();
@@ -474,7 +427,7 @@ public final class PolygonUtil {
     }
 
     private static void smooth(MultiPolygon poly) {
-        List<MultiPolygon> parts = decompose(poly);
+        List<MultiPolygon> parts = MultiPolygon.decompose(poly);
         poly.getVertices().clear();
         for (MultiPolygon p : parts) {
             int prev = p.getVertices().size();
@@ -796,7 +749,8 @@ public final class PolygonUtil {
                     ret.getVertices().set(i, v);
                     if (validSeg) {
                         try {
-                            validateSegments(ret);
+                            //validateSegments(ret);
+                            ret.validate();
                         } catch (IllegalPolygonException oops) {
                             log.debug("[unscaleMultiPolygon] REVERT: " + v + " -> " + pv);
                             ret.getVertices().set(i, pv); // undo
@@ -837,6 +791,8 @@ public final class PolygonUtil {
 
     // validate a simple polygon (single loop) for intersecting segments
     // used by PositionUtil to validate CoordMultiPolygon2D
+    
+    /*
     static void validateSegments(MultiPolygon poly)
         throws IllegalPolygonException {
         CartesianTransform trans = CartesianTransform.getTransform(poly);
@@ -889,7 +845,8 @@ public final class PolygonUtil {
             }
         }
     }
-
+    */
+    
     // ab.v2 == bc.v1
     private static boolean colinear(Segment ab, Segment bc, double da) {
         // determine dot-product of ba.bc since b is in the middle
@@ -919,6 +876,7 @@ public final class PolygonUtil {
         return false;
     }
 
+    /*
     private static boolean intersects(Segment ab, Segment cd, boolean isNext) {
         log.debug("intersects: " + ab + " vs " + cd);
         // rden = (Bx-Ax)(Dy-Cy)-(By-Ay)(Dx-Cx)
@@ -988,7 +946,8 @@ public final class PolygonUtil {
         // radius in [0,1] and s in [0,1] = intersects
         return true;
     }
-
+    */
+    
     private static double distanceSquared(Vertex v1, Vertex v2) {
         return (v1.cval1 - v2.cval1) * (v1.cval1 - v2.cval1)
             + (v1.cval2 - v2.cval2) * (v1.cval2 - v2.cval2);

@@ -179,7 +179,7 @@ public final class PositionUtil {
             return null;
         }
         log.debug("[computeBounds] components: " + polys.size());
-        MultiPolygon mp = PolygonUtil.compose(polys);
+        MultiPolygon mp = MultiPolygon.compose(polys);
         Polygon poly = PolygonUtil.getOuterHull(mp);
         log.debug("[computeBounds] done: " + poly);
         if (poly.getArea() > MAX_SANE_AREA) {
@@ -448,7 +448,7 @@ public final class PositionUtil {
                     }
                 }
                 poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-                PolygonUtil.validateSegments(poly);
+                poly.validate();
             } else {
                 throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
             }

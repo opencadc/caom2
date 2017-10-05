@@ -92,14 +92,13 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Iterator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Iterator;
 
 /**
  * @author pdowler
