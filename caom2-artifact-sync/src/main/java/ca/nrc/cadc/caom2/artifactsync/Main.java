@@ -69,6 +69,15 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.security.auth.Subject;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
@@ -78,15 +87,6 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
-import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
@@ -101,6 +101,13 @@ public class Main {
     public static void main(String[] args) {
         try {
             ArgumentMap am = new ArgumentMap(args);
+            String asClassName = am.getValue("artifactStore");
+            String asPackage = null;
+            if (asClassName != null)
+            {
+                int lastDot = asClassName.lastIndexOf(".");
+                asPackage = asClassName.substring(0, lastDot);
+            }
 
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
@@ -108,15 +115,25 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.DEBUG);
+                }
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.INFO);
+                }
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
-
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.WARN);
+                }
             }
+
+            log.debug("Artifact store package: " + asPackage);
 
             if (am.isSet("h") || am.isSet("help")) {
                 usage();
@@ -186,7 +203,6 @@ public class Main {
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-            String asClassName = am.getValue("artifactStore");
             ArtifactStore artifactStore = null;
             if (asClassName == null) {
                 log.error("Must specify artifactStore.");
