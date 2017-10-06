@@ -251,6 +251,47 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
     }
 
     @Test
+    public void testPutInvalidWCS() throws Throwable {
+        log.info("starting testPostInvalidWCS");
+
+        try {
+            String observationID = generateObservationID("testPutSuccessWCS");
+
+            SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+            Plane plane = new Plane("foo");
+            observation.getPlanes().add(plane);
+
+            Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+            plane.getArtifacts().add(artifact);
+
+            Part part = new Part(0);
+            artifact.getParts().add(part);
+
+            Chunk ch = new Chunk();
+            part.getChunks().add(ch);
+
+            // Use invalid cunit
+            ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Fred")), "TOPOCENT");
+
+            //set delta to 0
+            ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+
+            ch.energy = wcs;
+
+            observation.getPlanes().add(plane);
+
+            putObservation(observation, subject1, null, null, null);
+
+            Assert.fail("CaomWCSValidation failed: expected IllegalArgumentException.");
+
+        } catch (IllegalArgumentException iae) {
+            log.info("passed testPostInvalidWCS");
+        }
+
+        log.info("ending testPostInvalidWCS");
+    }
+
+    @Test
     public void testPutNoWritePermission() throws Throwable {
         String observationID = generateObservationID("testPutNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
@@ -500,47 +541,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         testPostMultipartWithParamsSuccess(observationID, params);
     }
 
-    @Test
-    public void testPostInvalidWCS() throws Throwable {
-        log.info("starting testPostInvalidWCS");
 
-        try {
-            String observationID = generateObservationID("testPutSuccessWCS");
-
-            // put an observation using subject1
-            SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-            Plane plane = new Plane("foo");
-            observation.getPlanes().add(plane);
-
-            Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
-            plane.getArtifacts().add(artifact);
-
-            Part part = new Part(0);
-            artifact.getParts().add(part);
-
-            Chunk ch = new Chunk();
-            part.getChunks().add(ch);
-
-            ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
-
-            //set delta and pix to negative
-            ch.energy.getAxis().function = new CoordFunction1D(10L, -1.0, new RefCoord(-0.5, 100.0e6)); // 100MHz
-
-            ch.energy = wcs;
-
-            observation.getPlanes().add(plane);
-
-            putObservation(observation, subject1, null, null, null);
-            Assert.fail("CaomWCSValidation failed: expected IllegalArgumentException.");
-
-        } catch (IllegalArgumentException iae)
-        {
-            log.info("passed testPostInvalidWCS");
-        } catch (Exception e) {
-            Assert.fail("Unexpected exception" + e.toString());
-        }
-        log.info("ending testPostInvalidWCS");
-    }
 
     private SimpleObservation generateObservation(String observationID) throws Exception {
         // create an observation using subject1
