@@ -235,7 +235,7 @@ public class CaomWCSValidatorTest {
             CaomWCSValidator.validateSpectralWCS(energy);
 
             Assert.fail("expected WCSlibRuntimeException");
-        } catch (WCSLibRuntimeException expected) {
+        } catch (IllegalArgumentException expected) {
             log.info("caught expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
