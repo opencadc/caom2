@@ -255,8 +255,10 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         log.info("starting testPostInvalidWCS");
 
         try {
-            String observationID = generateObservationID("testPostInvalidWCS ...");
+            log.info("got to this line");
+            String observationID = generateObservationID("testPostInvalidWCS");
 
+            log.info("got to next message");
             SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
 
             log.info("keyword count: " + observation.instrument.getKeywords().size());
