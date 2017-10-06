@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DataProductType;
-import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
@@ -506,35 +505,34 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         log.info("starting testPostInvalidWCS");
 
         try {
-            // create an observation using subject1
-            String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
+            String observationID = generateObservationID("testPutSuccessWCS");
+
+            // put an observation using subject1
             SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+            Plane plane = new Plane("foo");
+            observation.getPlanes().add(plane);
 
-            Plane plane = new Plane("science");
-            plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
-            Artifact na = new Artifact(new URI("foo", "bar", null), ProductType.SCIENCE, ReleaseType.DATA);
-            plane.getArtifacts().add(na);
-            Part np = new Part("baz");
-            na.getParts().add(np);
-            Chunk c = new Chunk();
-            np.getChunks().add(new Chunk());
-            CoordAxis1D axis = new CoordAxis1D(new Axis("WAVE", "Angstroms"));
-            SpectralWCS wcs = new SpectralWCS(axis, "TOPOCENT");
+            Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+            plane.getArtifacts().add(artifact);
 
-            wcs.bandpassName = "H-Alpha-narrow";
-            wcs.restwav = 6563.0e-10; // meters
-            wcs.resolvingPower = 33000.0;
-            wcs.transition = new EnergyTransition("H", "alpha");
+            Part part = new Part(0);
+            artifact.getParts().add(part);
 
-            RefCoord c1 = new RefCoord(0.5, 2000.0);
-            wcs.getAxis().function = new CoordFunction1D((long) 100.0, 10.0, c1);
+            Chunk ch = new Chunk();
+            part.getChunks().add(ch);
 
-            c.energy = wcs;
+            ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
+
+            //set delta and pix to negative
+            ch.energy.getAxis().function = new CoordFunction1D(10L, -1.0, new RefCoord(-0.5, 100.0e6)); // 100MHz
+
+            ch.energy = wcs;
 
             observation.getPlanes().add(plane);
 
             putObservation(observation, subject1, null, null, null);
             Assert.fail("CaomWCSValidation failed: expected IllegalArgumentException.");
+
         } catch (IllegalArgumentException iae)
         {
             log.info("passed testPostInvalidWCS");
