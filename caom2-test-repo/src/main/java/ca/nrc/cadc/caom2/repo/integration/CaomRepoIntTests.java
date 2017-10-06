@@ -276,8 +276,6 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
             //set delta to 0
             ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 
-            ch.energy = wcs;
-
             observation.getPlanes().add(plane);
 
             putObservation(observation, subject1, null, null, null);
