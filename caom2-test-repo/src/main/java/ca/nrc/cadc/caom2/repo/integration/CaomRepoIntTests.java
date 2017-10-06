@@ -260,6 +260,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
             SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
             Plane plane = new Plane("foo");
             observation.getPlanes().add(plane);
+            log.info("keyword count: " + observation.instrument.getKeywords().size());
             for (String s: observation.instrument.getKeywords())
             {
                 log.info("keyword "+ s);
