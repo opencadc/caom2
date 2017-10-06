@@ -255,11 +255,15 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         log.info("starting testPostInvalidWCS");
 
         try {
-            String observationID = generateObservationID("testPutSuccessWCS");
+            String observationID = generateObservationID("testPutSuccessWCS ...");
 
             SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
             Plane plane = new Plane("foo");
             observation.getPlanes().add(plane);
+            for (String s: observation.instrument.getKeywords())
+            {
+                log.info("keyword "+ s);
+            }
 
             Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(artifact);
@@ -277,6 +281,10 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
             ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 
             observation.getPlanes().add(plane);
+            for (String s: observation.instrument.getKeywords())
+            {
+                log.info("keyword "+ s);
+            }
 
             putObservation(observation, subject1, null, null, null);
 
