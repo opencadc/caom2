@@ -102,25 +102,61 @@ public class Main {
         try {
             ArgumentMap am = new ArgumentMap(args);
 
+            String asClassName = am.getValue("artifactStore");
+            ArtifactStore artifactStore = null;
+            String asPackage = null;
+            Exception asException = null;
+
+            if (asClassName != null) {
+                try {
+                    log.debug("Artifact store class: " + asClassName);
+                    Class<?> asClass = Class.forName(asClassName);
+                    artifactStore = (ArtifactStore) asClass.newInstance();
+                    asPackage = asClass.getPackage().getName();
+                } catch (Exception e) {
+                    asException = e;
+                }
+            }
+
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.DEBUG);
+                }
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.INFO);
+                }
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
-
+                if (asPackage != null) {
+                    Log4jInit.setLevel(asPackage, Level.WARN);
+                }
             }
+
+            log.debug("Artifact store package: " + asPackage);
 
             if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
+            }
+
+            if (asClassName == null) {
+                log.error("Must specify artifactStore.");
+                usage();
+                System.exit(-1);
+            }
+            if (asException != null) {
+                log.error("Failed to load " + asClassName, asException);
+                System.exit(-1);
             }
 
             // setup optional authentication for harvesting from a web service
@@ -186,21 +222,7 @@ public class Main {
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-            String asClassName = am.getValue("artifactStore");
-            ArtifactStore artifactStore = null;
-            if (asClassName == null) {
-                log.error("Must specify artifactStore.");
-                usage();
-                System.exit(-1);
-            }
-            try {
-                log.debug("Artifact store class: " + asClassName);
-                Class<?> asClass = Class.forName(asClassName);
-                artifactStore = (ArtifactStore) asClass.newInstance();
-            } catch (Exception e) {
-                log.error("Failed to load " + asClassName, e);
-                System.exit(-1);
-            }
+
 
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<String, Object>(2);
@@ -227,12 +249,12 @@ public class Main {
 
                 if (subject != null) {
                     num = Subject.doAs(subject, harvester);
-                    if (!dryrun) {
+                    if (!dryrun && num > 0) {
                         Subject.doAs(subject, downloader);
                     }
                 } else { // anon
                     num = harvester.run();
-                    if (!dryrun) {
+                    if (!dryrun && num > 0) {
                         downloader.run();
                     }
                 }
