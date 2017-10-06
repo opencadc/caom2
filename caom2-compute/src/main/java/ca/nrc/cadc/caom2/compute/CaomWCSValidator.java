@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 
 
 /**
@@ -153,6 +154,8 @@ public class CaomWCSValidator {
                 }
             } catch (NoSuchKeywordException ne) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+            } catch (WCSLibRuntimeException re) {
+                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + re , re);
             } catch (UnsupportedOperationException uoe) {
                 // error thrown from toPolygon if WCS is too near a pole, or if the bounds
                 // value is not recognized
@@ -196,6 +199,8 @@ public class CaomWCSValidator {
 
             } catch (NoSuchKeywordException ne) {
                 throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+            } catch (WCSLibRuntimeException re) {
+                throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + re , re);
             }
         }
 
