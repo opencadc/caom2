@@ -255,16 +255,18 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         log.info("starting testPostInvalidWCS");
 
         try {
-            String observationID = generateObservationID("testPutSuccessWCS ...");
+            String observationID = generateObservationID("testPostInvalidWCS ...");
 
             SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-            Plane plane = new Plane("foo");
-            observation.getPlanes().add(plane);
+
             log.info("keyword count: " + observation.instrument.getKeywords().size());
             for (String s: observation.instrument.getKeywords())
             {
                 log.info("keyword "+ s);
             }
+            Plane plane = new Plane("foo");
+            observation.getPlanes().add(plane);
+
 
             Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(artifact);
