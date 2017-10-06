@@ -329,48 +329,48 @@ public abstract class RepoAction extends RestAction {
             }
 
             if (computeMetadata || computeMetadataValidation) {
-                    String ostr = obs.getCollection() + "/" + obs.getObservationID();
-                    String cur = ostr;
-                    try {
+                String ostr = obs.getCollection() + "/" + obs.getObservationID();
+                String cur = ostr;
+                try {
+                    for (Plane p : obs.getPlanes()) {
+                        cur = ostr + "/" + p.getProductID();
+                        ComputeUtil.clearTransientState(p);
+                        ComputeUtil.computeTransientState(obs, p);
+                    }
+                } catch (Error er) {
+                    throw new RuntimeException("failed to compute metadata for plane " + cur, er);
+                } catch (Exception ex) {
+                    throw new IllegalArgumentException(
+                        "failed to compute metadata for plane " + cur, ex);
+                } finally {
+                    if (!computeMetadata) {
                         for (Plane p : obs.getPlanes()) {
-                            cur = ostr + "/" + p.getProductID();
                             ComputeUtil.clearTransientState(p);
-                            ComputeUtil.computeTransientState(obs, p);
-                        }
-                    } catch (Error er) {
-                        throw new RuntimeException("failed to compute metadata for plane " + cur, er);
-                    } catch (Exception ex) {
-                        throw new IllegalArgumentException(
-                            "failed to compute metadata for plane " + cur, ex);
-                    } finally {
-                        if (!computeMetadata) {
-                            for (Plane p : obs.getPlanes()) {
-                                ComputeUtil.clearTransientState(p);
-                            }
                         }
                     }
                 }
-            } catch(IllegalArgumentException ex){
-                log.debug(ex.getMessage(), ex);
-                throw new IllegalArgumentException("invalid input: " + uri, ex);
-            } catch(RuntimeException ex){
-                log.debug(ex.getMessage(), ex);
-                throw new RuntimeException("invalid input: " + uri, ex);
             }
+        } catch (IllegalArgumentException ex) {
+            log.debug(ex.getMessage(), ex);
+            throw new IllegalArgumentException("invalid input: " + uri, ex);
+        } catch (RuntimeException ex) {
+            log.debug(ex.getMessage(), ex);
+            throw new RuntimeException("invalid input: " + uri, ex);
         }
+    }
 
-        @Override
-        protected InlineContentHandler getInlineContentHandler () {
-            return null;
-        }
+    @Override
+    protected InlineContentHandler getInlineContentHandler() {
+        return null;
+    }
 
-        /**
-         * Get configuration for specified collection.
-         *
-         * @param collection
-         * @return
-         * @throws IOException
-         */
+    /**
+     * Get configuration for specified collection.
+     *
+     * @param collection
+     * @return
+     * @throws IOException
+     */
 
     private CaomRepoConfig.Item getCollectionConfig(String collection) throws IOException {
         if (this.repoConfig == null) {
