@@ -142,81 +142,81 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
     }
 
-//    @Test
-//    public void testCleanPutGetSuccess() throws Throwable {
-//        String observationID = generateObservationID("testCleanPutGetSuccess");
-//
-//        // create an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        Plane p = new Plane("foo");
-//        observation.getPlanes().add(p);
-//
-//        Artifact a = new Artifact(URI.create("ad:FOO/foo"), ProductType.SCIENCE, ReleaseType.DATA);
-//        p.getArtifacts().add(a);
-//
-//        Part pa = new Part(0);
-//        a.getParts().add(pa);
-//
-//        Chunk ch = new Chunk();
-//        pa.getChunks().add(ch);
-//
-//        ch.naxis = 0;
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        String uri = SCHEME + TEST_COLLECTION + "/" + observationID;
-//
-//        // get the observation using subject2
-//        Observation ret = getObservation(uri, subject2, 200, null, EXPECTED_CAOM_VERSION);
-//        Assert.assertEquals("wrong observation", observation, ret);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testGetNoReadPermission() throws Throwable {
-//        String observationID = generateObservationID("testGetNoReadPermission");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // get the observation using subject3
-//        getObservation(uri, subject3, 403, "permission denied: " + uri, EXPECTED_CAOM_VERSION);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testGetNotFound() throws Throwable {
-//        String observationID = generateObservationID("testGetNotFound");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
-//    }
-//
-//    @Test
-//    public void testCollectionNotFound() throws Throwable {
-//        String collection = "NoSuchCollection";
-//        String observationID = generateObservationID("testCollectionNotFound");
-//        String path = collection + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
-//    }
-//
-//    @Test
-//    public void testInvalidURI() throws Throwable {
-//        String observationID = generateObservationID("testInvalidURI");
-//        String path = TEST_COLLECTION + "/" + observationID + "/extraElementsInPath";
-//        String uri = SCHEME + path;
-//
-//        super.getObservation(uri, subject2, 400, "invalid input: " + uri, false, EXPECTED_CAOM_VERSION);
-//    }
+    @Test
+    public void testCleanPutGetSuccess() throws Throwable {
+        String observationID = generateObservationID("testCleanPutGetSuccess");
+
+        // create an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        Plane p = new Plane("foo");
+        observation.getPlanes().add(p);
+
+        Artifact a = new Artifact(URI.create("ad:FOO/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+        p.getArtifacts().add(a);
+
+        Part pa = new Part(0);
+        a.getParts().add(pa);
+
+        Chunk ch = new Chunk();
+        pa.getChunks().add(ch);
+
+        ch.naxis = 0;
+        putObservation(observation, subject1, 200, "OK", null);
+
+        String uri = SCHEME + TEST_COLLECTION + "/" + observationID;
+
+        // get the observation using subject2
+        Observation ret = getObservation(uri, subject2, 200, null, EXPECTED_CAOM_VERSION);
+        Assert.assertEquals("wrong observation", observation, ret);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testGetNoReadPermission() throws Throwable {
+        String observationID = generateObservationID("testGetNoReadPermission");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // get the observation using subject3
+        getObservation(uri, subject3, 403, "permission denied: " + uri, EXPECTED_CAOM_VERSION);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testGetNotFound() throws Throwable {
+        String observationID = generateObservationID("testGetNotFound");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
+    }
+
+    @Test
+    public void testCollectionNotFound() throws Throwable {
+        String collection = "NoSuchCollection";
+        String observationID = generateObservationID("testCollectionNotFound");
+        String path = collection + "/" + observationID;
+        String uri = SCHEME + path;
+
+        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
+    }
+
+    @Test
+    public void testInvalidURI() throws Throwable {
+        String observationID = generateObservationID("testInvalidURI");
+        String path = TEST_COLLECTION + "/" + observationID + "/extraElementsInPath";
+        String uri = SCHEME + path;
+
+        super.getObservation(uri, subject2, 400, "invalid input: " + uri, false, EXPECTED_CAOM_VERSION);
+    }
 
     @Test
     public void testPutSuccessWCS() throws Throwable {
@@ -254,303 +254,284 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
     public void testPutInvalidWCS() throws Throwable {
         log.info("starting testPostInvalidWCS");
 
-        try {
-            log.info("got to this line");
-            String observationID = generateObservationID("testPostInvalidWCS");
+        String observationID = generateObservationID("testPostInvalidWCS");
 
-            log.info("got to next message");
-            SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
 
-            log.info("keyword count: " + observation.instrument.getKeywords().size());
-            for (String s: observation.instrument.getKeywords())
-            {
-                log.info("keyword "+ s);
-            }
-            Plane plane = new Plane("foo");
-            observation.getPlanes().add(plane);
+        Plane plane = new Plane("foo");
+        observation.getPlanes().add(plane);
 
+        Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+        plane.getArtifacts().add(artifact);
 
-            Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
-            plane.getArtifacts().add(artifact);
+        Part part = new Part(0);
+        artifact.getParts().add(part);
 
-            Part part = new Part(0);
-            artifact.getParts().add(part);
+        Chunk ch = new Chunk();
+        part.getChunks().add(ch);
 
-            Chunk ch = new Chunk();
-            part.getChunks().add(ch);
+        // Use invalid cunit
+        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Fred")), "TOPOCENT");
 
-            // Use invalid cunit
-            ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Fred")), "TOPOCENT");
+        //set delta to 0
+        ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 
-            //set delta to 0
-            ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+        observation.getPlanes().add(plane);
 
-            observation.getPlanes().add(plane);
-            for (String s: observation.instrument.getKeywords())
-            {
-                log.info("keyword "+ s);
-            }
-
-            putObservation(observation, subject1, null, null, null);
-
-            Assert.fail("CaomWCSValidation failed: expected IllegalArgumentException.");
-
-        } catch (IllegalArgumentException iae) {
-            log.info("passed testPostInvalidWCS");
-        }
+        putObservation(observation, subject1, 400, "invalid input: ", null);
 
         log.info("ending testPostInvalidWCS");
     }
 
-//    @Test
-//    public void testPutNoWritePermission() throws Throwable {
-//        String observationID = generateObservationID("testPutNoWritePermission");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject2
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
-//    }
-//
-//    @Test
-//    public void testPutByteLimitExceeded() {
-//        try {
-//            String observationID = generateObservationID("testPutByteLimitExceeded");
-//
-//            // create an observation using subject1
-//            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-//            putObservation(observation, subject1, 413, "too large:", null);
-//        } catch (Exception unexpected) {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testPutURIsDontMatch() throws Throwable {
-//        String observationID = generateObservationID("testPutURIsDontMatch");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject1 but with a different path on the url
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject1, 400, "invalid input: " + uri + "-alt", path + "-alt");
-//    }
-//
-//    @Test
-//    public void testPutURIAlreadyExists() throws Throwable {
-//        String observationID = generateObservationID("testPutURIAlreadyExists");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject1, null, null, null);
-//
-//        // create it again to see the conflict
-//        putObservation(observation, subject1, 409, "already exists: " + uri, null);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testPutValidationFails() throws Throwable {
-//        String observationID = generateObservationID("testPutValidationFails");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject1
-//        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject1, 400, "invalid input: " + uri, null);
-//    }
-//
-//    @Test
-//    public void testPostSuccess() throws Throwable {
-//        String observationID = generateObservationID("testPostSuccess");
-//
-//        // create an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        Plane plane = new Plane("foo");
-//        plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
-//        observation.getPlanes().add(plane);
-//
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // modify the plane since that also tweaks the Observation.maxLastModified
-//        plane.dataProductType = DataProductType.CUBE;
-//
-//        // overwrite the observation with a post
-//        postObservation(observation, subject1, 200, "OK", null);
-//
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testPostNoWritePermission() throws Throwable {
-//        String observationID = generateObservationID("testPostNoWritePermission");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // create an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // overwrite the observation with a post
-//        postObservation(observation, subject2, 403, "permission denied: " + uri, null);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testPostByteLimitExceeded() {
-//        try {
-//            String observationID = generateObservationID("testPostByteLimitExceeded");
-//
-//            // (byte limit exception will happen before 'doesnt exist'
-//            // exception)
-//
-//            // create an observation using subject1
-//            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-//            postObservation(observation, subject1, 413, "too large:", null);
-//        } catch (Exception unexpected) {
-//            log.error("unexpected exception", unexpected);
-//            Assert.fail("unexpected exception: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testPostURIsDontMatch() throws Throwable {
-//        String observationID = generateObservationID("testPostURIsDontMatch");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//
-//        // delete any previous run (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//
-//        // create an observation using subject1
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // post an observation using subject1 but with a different path on the url
-//        postObservation(observation, subject1, 400, "invalid input: " + uri + "-alt", path + "-alt");
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testPostURIDoesntExist() throws Throwable {
-//        String observationID = generateObservationID("testPostURIDoesntExist");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // post an observation using subject1
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//        postObservation(observation, subject1, 404, "not found: " + uri, null);
-//    }
-//
-//    @Test
-//    public void testPostValidationFails() throws Throwable {
-//        String observationID = generateObservationID("testPostValidationFails");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // Create one to overwrite with a post (ok to fail)
-//        SimpleObservation initialOb = new SimpleObservation(TEST_COLLECTION, observationID);
-//        putObservation(initialOb, subject1, null, null, null);
-//
-//        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
-//
-//        // create an observation using subject1
-//        postObservation(observation, subject1, 400, "invalid input: " + uri, null);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testDeleteSuccess() throws Throwable {
-//        String observationID = generateObservationID("testDeleteSuccess");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//
-//        // delete any previous run (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//
-//        // create an observation using subject1
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // delete the observation
-//        deleteObservation(uri, subject1, 200, "OK");
-//
-//        // ensure we can't find it on a get
-//        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
-//    }
-//
-//    @Test
-//    public void testDeleteNoWritePermission() throws Throwable {
-//        String observationID = generateObservationID("testDeleteNoWritePermission");
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-//
-//        // create an observation using subject1
-//        putObservation(observation, subject1, 200, "OK", null);
-//
-//        // delete the observation using subject 2
-//        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
-//
-//        // cleanup (ok to fail)
-//        deleteObservation(uri, subject1, null, null);
-//    }
-//
-//    @Test
-//    public void testDeleteNotFound() throws Throwable {
-//
-//        String observationID = "testDeleteNotFound";
-//        String path = TEST_COLLECTION + "/" + observationID;
-//        String uri = SCHEME + path;
-//
-//        // delete the non-existent observation
-//        deleteObservation(uri, subject1, 404, "not found: " + uri);
-//    }
-//
-//    @Test
-//    public void testPostMultipartSingleParamSuccess() {
-//        try {
-//            String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
-//            final SimpleObservation observation = this.generateObservation(observationID);
-//            Map<String, Object> params = new HashMap<String, Object>();
-//            params.put("file", convertToFile(observation));
-//
-//            testPostMultipartWithParamsSuccess(observationID, params);
-//        } catch (Exception unexpected) {
-//            log.error("unexpected", unexpected);
-//            Assert.fail("unexpected: " + unexpected);
-//        }
-//    }
-//
-//    @Test
-//    public void testPostMultipartMultipleParamSuccess() throws Throwable {
-//        String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
-//        final SimpleObservation observation = this.generateObservation(observationID);
-//        Map<String, Object> params = new HashMap<String, Object>();
-//        params.put("fooKey", "fooValue");
-//        params.put("file", convertToFile(observation));
-//        params.put("barKey", "barValue");
-//
-//        testPostMultipartWithParamsSuccess(observationID, params);
-//    }
+    @Test
+    public void testPutNoWritePermission() throws Throwable {
+        String observationID = generateObservationID("testPutNoWritePermission");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject2
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
+    }
+
+    @Test
+    public void testPutByteLimitExceeded() {
+        try {
+            String observationID = generateObservationID("testPutByteLimitExceeded");
+
+            // create an observation using subject1
+            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
+            putObservation(observation, subject1, 413, "too large:", null);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testPutURIsDontMatch() throws Throwable {
+        String observationID = generateObservationID("testPutURIsDontMatch");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject1 but with a different path on the url
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject1, 400, "invalid input: " + uri + "-alt", path + "-alt");
+    }
+
+    @Test
+    public void testPutURIAlreadyExists() throws Throwable {
+        String observationID = generateObservationID("testPutURIAlreadyExists");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject1, null, null, null);
+
+        // create it again to see the conflict
+        putObservation(observation, subject1, 409, "already exists: " + uri, null);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testPutValidationFails() throws Throwable {
+        String observationID = generateObservationID("testPutValidationFails");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject1
+        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject1, 400, "invalid input: " + uri, null);
+    }
+
+    @Test
+    public void testPostSuccess() throws Throwable {
+        String observationID = generateObservationID("testPostSuccess");
+
+        // create an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        Plane plane = new Plane("foo");
+        plane.calibrationLevel = CalibrationLevel.RAW_STANDARD;
+        observation.getPlanes().add(plane);
+
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // modify the plane since that also tweaks the Observation.maxLastModified
+        plane.dataProductType = DataProductType.CUBE;
+
+        // overwrite the observation with a post
+        postObservation(observation, subject1, 200, "OK", null);
+
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testPostNoWritePermission() throws Throwable {
+        String observationID = generateObservationID("testPostNoWritePermission");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // create an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // overwrite the observation with a post
+        postObservation(observation, subject2, 403, "permission denied: " + uri, null);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testPostByteLimitExceeded() {
+        try {
+            String observationID = generateObservationID("testPostByteLimitExceeded");
+
+            // (byte limit exception will happen before 'doesnt exist'
+            // exception)
+
+            // create an observation using subject1
+            Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
+            postObservation(observation, subject1, 413, "too large:", null);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testPostURIsDontMatch() throws Throwable {
+        String observationID = generateObservationID("testPostURIsDontMatch");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+
+        // delete any previous run (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+
+        // create an observation using subject1
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // post an observation using subject1 but with a different path on the url
+        postObservation(observation, subject1, 400, "invalid input: " + uri + "-alt", path + "-alt");
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testPostURIDoesntExist() throws Throwable {
+        String observationID = generateObservationID("testPostURIDoesntExist");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // post an observation using subject1
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        postObservation(observation, subject1, 404, "not found: " + uri, null);
+    }
+
+    @Test
+    public void testPostValidationFails() throws Throwable {
+        String observationID = generateObservationID("testPostValidationFails");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // Create one to overwrite with a post (ok to fail)
+        SimpleObservation initialOb = new SimpleObservation(TEST_COLLECTION, observationID);
+        putObservation(initialOb, subject1, null, null, null);
+
+        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
+
+        // create an observation using subject1
+        postObservation(observation, subject1, 400, "invalid input: " + uri, null);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testDeleteSuccess() throws Throwable {
+        String observationID = generateObservationID("testDeleteSuccess");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+
+        // delete any previous run (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+
+        // create an observation using subject1
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // delete the observation
+        deleteObservation(uri, subject1, 200, "OK");
+
+        // ensure we can't find it on a get
+        getObservation(uri, subject2, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
+    }
+
+    @Test
+    public void testDeleteNoWritePermission() throws Throwable {
+        String observationID = generateObservationID("testDeleteNoWritePermission");
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+
+        // create an observation using subject1
+        putObservation(observation, subject1, 200, "OK", null);
+
+        // delete the observation using subject 2
+        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
+
+        // cleanup (ok to fail)
+        deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testDeleteNotFound() throws Throwable {
+
+        String observationID = "testDeleteNotFound";
+        String path = TEST_COLLECTION + "/" + observationID;
+        String uri = SCHEME + path;
+
+        // delete the non-existent observation
+        deleteObservation(uri, subject1, 404, "not found: " + uri);
+    }
+
+    @Test
+    public void testPostMultipartSingleParamSuccess() {
+        try {
+            String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+            final SimpleObservation observation = this.generateObservation(observationID);
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("file", convertToFile(observation));
+
+            testPostMultipartWithParamsSuccess(observationID, params);
+        } catch (Exception unexpected) {
+            log.error("unexpected", unexpected);
+            Assert.fail("unexpected: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testPostMultipartMultipleParamSuccess() throws Throwable {
+        String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
+        final SimpleObservation observation = this.generateObservation(observationID);
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("fooKey", "fooValue");
+        params.put("file", convertToFile(observation));
+        params.put("barKey", "barValue");
+
+        testPostMultipartWithParamsSuccess(observationID, params);
+    }
 
 
 
