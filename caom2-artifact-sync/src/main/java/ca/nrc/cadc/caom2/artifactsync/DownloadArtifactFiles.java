@@ -95,7 +95,7 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
-public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> {
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
     private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
@@ -104,6 +104,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String source;
     private int threads;
+    private Date startDate = null;
+    private Date stopDate;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize) {
         this.artifactStore = artifactStore;
@@ -112,19 +114,27 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
 
         this.threads = threads;
+        this.stopDate = new Date();
     }
 
     @Override
-    public Object run() throws Exception {
+    public Integer run() throws Exception {
 
-        Date nullDate = null;
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, nullDate);
+        // TODO: Add stopDate to this skip query
+        log.debug("Querying for skip records between " + startDate + " and " + stopDate);
+        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate);
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
+        Integer workCount = artifacts.size();
         List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
+
         for (HarvestSkipURI skip : artifacts) {
             ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
             tasks.add(downloader);
+        }
+        // set the start date so that the next batch resumes after our last record
+        if (workCount > 0) {
+            startDate = artifacts.get(workCount - 1).lastModified;
         }
 
         try {
@@ -185,7 +195,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
             log.error("Thread execution error", e);
         }
 
-        return null;
+        return workCount;
     }
 
     private URL getSourceURL(URI artifactURI) throws MalformedURLException {

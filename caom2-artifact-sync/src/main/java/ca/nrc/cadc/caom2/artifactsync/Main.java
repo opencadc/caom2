@@ -109,7 +109,6 @@ public class Main {
 
             if (asClassName != null) {
                 try {
-                    log.debug("Artifact store class: " + asClassName);
                     Class<?> asClass = Class.forName(asClassName);
                     artifactStore = (ArtifactStore) asClass.newInstance();
                     asPackage = asClass.getPackage().getName();
@@ -142,7 +141,7 @@ public class Main {
                 }
             }
 
-            log.debug("Artifact store package: " + asPackage);
+            log.debug("Artifact store class: " + asClassName);
 
             if (am.isSet("h") || am.isSet("help")) {
                 usage();
@@ -237,25 +236,32 @@ public class Main {
             boolean dryrun = am.isSet("dryrun");
             PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, collection, dryrun, batchSize);
 
-            PrivilegedExceptionAction<Object> downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
+            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
 
-            int num = 0;
             int loopNum = 1;
             boolean loop = am.isSet("continue");
+            boolean stopHarvest = false;
+            boolean stopDownload = false;
             do {
                 if (loop) {
                     log.info("-- STARTING LOOP #" + loopNum + " --");
                 }
 
-                if (subject != null) {
-                    num = Subject.doAs(subject, harvester);
-                    if (!dryrun && num > 0) {
-                        Subject.doAs(subject, downloader);
+                if (!stopHarvest) {
+                    if (subject != null) {
+                        stopHarvest = Subject.doAs(subject, harvester) == 0;
                     }
-                } else { // anon
-                    num = harvester.run();
-                    if (!dryrun && num > 0) {
-                        downloader.run();
+                    else {
+                        stopHarvest = harvester.run() == 0;
+                    }
+                }
+
+                if (!stopDownload && !dryrun) {
+                    if (subject != null) {
+                        stopDownload = Subject.doAs(subject, downloader) == 0;
+                    }
+                    else {
+                        stopDownload = downloader.run() == 0;
                     }
                 }
 
@@ -264,7 +270,7 @@ public class Main {
                 }
 
                 loopNum++;
-            } while (loop && num == batchSize); // continue if `batch size` records found
+            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
 
             exitValue = 0; // finished cleanly
         } catch (Throwable t) {
