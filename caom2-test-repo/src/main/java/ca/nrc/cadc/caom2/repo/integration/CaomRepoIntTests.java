@@ -91,7 +91,12 @@ import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
+import javax.security.auth.Subject;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -102,13 +107,6 @@ import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Integration tests for caom2repo_ws
@@ -246,6 +244,35 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
+    }
+
+    @Test
+    public void testPutInvalidWCS() throws Throwable {
+        String observationID = generateObservationID("testPostInvalidWCS");
+
+        SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+
+        Plane plane = new Plane("foo");
+        observation.getPlanes().add(plane);
+
+        Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
+        plane.getArtifacts().add(artifact);
+
+        Part part = new Part(0);
+        artifact.getParts().add(part);
+
+        Chunk ch = new Chunk();
+        part.getChunks().add(ch);
+
+        // Use invalid cunit
+        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Fred")), "TOPOCENT");
+
+        //set delta to 0
+        ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
+
+        observation.getPlanes().add(plane);
+
+        putObservation(observation, subject1, 400, "invalid input: ", null);
     }
 
     @Test
@@ -497,6 +524,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
         testPostMultipartWithParamsSuccess(observationID, params);
     }
+
 
     private SimpleObservation generateObservation(String observationID) throws Exception {
         // create an observation using subject1
