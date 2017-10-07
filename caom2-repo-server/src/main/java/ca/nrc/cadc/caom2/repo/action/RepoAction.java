@@ -86,8 +86,6 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -96,6 +94,7 @@ import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  * @author pdowler
