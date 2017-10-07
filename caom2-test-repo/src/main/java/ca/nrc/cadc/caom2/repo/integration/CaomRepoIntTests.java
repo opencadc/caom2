@@ -91,12 +91,6 @@ import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
-
-import javax.security.auth.Subject;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -107,6 +101,11 @@ import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
+import javax.security.auth.Subject;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Integration tests for caom2repo_ws
