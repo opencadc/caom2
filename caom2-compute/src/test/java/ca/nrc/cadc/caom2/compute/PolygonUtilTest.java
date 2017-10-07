@@ -99,7 +99,7 @@ public class PolygonUtilTest {
     }
 
 
-    //@Test
+    ////@Test
     public void testTemplate() {
         try {
             // TODO
@@ -422,60 +422,6 @@ public class PolygonUtilTest {
             Assert.assertNotNull(area);
             Assert.assertEquals(20.0, area, 0.1); // 4 + 4 + 12
 
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testGetCutoutFromCircle() {
-        try {
-            CoordAxis2D axis = new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg"));
-            SpatialWCS wcs = new SpatialWCS(axis);
-            wcs.getAxis().function = new CoordFunction2D(
-                new Dimension2D(1000L, 1000L),
-                new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
-                1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
-
-            Circle c = new Circle(new Point(9.75, 20.0), 0.05); // @250,500 radius~50 pix
-
-            long[] cutout = CutoutUtil.getPositionBounds(wcs, c);
-            Assert.assertNotNull("cutout", cutout);
-            Assert.assertEquals("length 4", 4, cutout.length);
-            Assert.assertEquals(200, cutout[0], 5);
-            Assert.assertEquals(300, cutout[1], 5);
-            Assert.assertEquals(450, cutout[2], 5);
-            Assert.assertEquals(550, cutout[3], 5);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testGetBoundsFromMultiPolygon() {
-        try {
-            CoordAxis2D axis = new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg"));
-            SpatialWCS wcs = new SpatialWCS(axis);
-            wcs.getAxis().function = new CoordFunction2D(
-                new Dimension2D(1000L, 1000L),
-                new Coord2D(new RefCoord(500.0, 10.0), new RefCoord(500.0, 20.0)),
-                1.0e-3, 0.0, 0.0, 1.0e-3); // 1x1 deg square @ 10,20
-
-            MultiPolygon p = new MultiPolygon();
-            p.getVertices().add(new Vertex(9.9, 19.9, SegmentType.MOVE));
-            p.getVertices().add(new Vertex(10.1, 20.1, SegmentType.LINE));
-            p.getVertices().add(new Vertex(9.8, 20.2, SegmentType.LINE));
-            p.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-
-            long[] cutout = CutoutUtil.getPositionBounds(wcs, p);
-            Assert.assertNotNull("cutout", cutout);
-            Assert.assertEquals("length 4", 4, cutout.length);
-            Assert.assertEquals(300, cutout[0], 5);
-            Assert.assertEquals(600, cutout[1], 5);
-            Assert.assertEquals(400, cutout[2], 5);
-            Assert.assertEquals(700, cutout[3], 5);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

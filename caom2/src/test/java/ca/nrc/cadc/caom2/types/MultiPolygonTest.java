@@ -278,4 +278,83 @@ public class MultiPolygonTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testValidateSegments()
+    {
+        try
+        {
+            MultiPolygon p = new MultiPolygon();
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
+            p.validate();
+            
+            p.getVertices().clear();
+            // butterfly
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
+            
+            try {
+                p.validate();
+                Assert.fail("expected IllegalPolygonException - got: " + p);
+            }
+            catch(IllegalPolygonException expected)
+            {
+                log.info("testValidateSegments: butterfly " + expected);
+            }
+            
+            p.getVertices().clear();
+            // extra small loop off corner
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(5.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 5.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
+            
+            try {
+                p.validate();
+                Assert.fail("expected IllegalPolygonException - got: " + p);
+            }
+            catch(IllegalPolygonException expected)
+            {
+                log.info("testValidateSegments: small loop " + expected);
+            }
+
+            /*          
+             * // to overlapping loops: currently allowed
+            p.getVertices().clear();
+            p.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(2.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 4.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(4.0, 2.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
+            p.getVertices().add(new Vertex(3.0, 3.0, SegmentType.MOVE));
+            p.getVertices().add(new Vertex(3.0, 5.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(5.0, 5.0, SegmentType.LINE));
+            p.getVertices().add(new Vertex(5.0, 3.0, SegmentType.LINE));
+            p.getVertices().add(Vertex.CLOSE);
+            
+            try {
+                p.validate();
+                Assert.fail("expected IllegalPolygonException - got: " + p);
+            }
+            catch(IllegalPolygonException expected)
+            {
+                log.info("testValidateSegments: overlapping loops " + expected);
+            }
+            */
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }

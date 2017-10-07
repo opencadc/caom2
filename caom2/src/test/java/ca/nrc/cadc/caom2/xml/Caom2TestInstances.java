@@ -102,6 +102,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -204,8 +205,8 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         if (complete)
         {
-            observation.type = "flat";
-            observation.intent = ObservationIntentType.CALIBRATION;
+            observation.type = "OBJECT";
+            observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
@@ -228,8 +229,8 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
-            observation.type = "flat";
-            observation.intent = ObservationIntentType.CALIBRATION;
+            observation.type = "OBJECT";
+            observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
@@ -385,16 +386,22 @@ public class Caom2TestInstances
                 p.polarization.states.add(PolarizationState.U);
 
                 p.position = new Position();
-                MultiPolygon poly = new MultiPolygon();
-                poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
-                poly.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
-                poly.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-                List<Point> points = new ArrayList<Point>();
-                for (Vertex v : poly.getVertices())
-                    if (!SegmentType.CLOSE.equals(v.getType()))
-                        points.add(new Point(v.cval1, v.cval2));
-                p.position.bounds = new Polygon(points, poly);
+                if (i == 0) {
+                    MultiPolygon poly = new MultiPolygon();
+                    poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+                    poly.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+                    poly.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+                    poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+                    List<Point> points = new ArrayList<Point>();
+                    for (Vertex v : poly.getVertices()) {
+                        if (!SegmentType.CLOSE.equals(v.getType())) {
+                            points.add(new Point(v.cval1, v.cval2));
+                        }
+                    }
+                    p.position.bounds = new Polygon(points, poly);
+                } else { 
+                    p.position.bounds = new Circle(new Point(2.0, 4.0), 1.0);
+                }
                 p.position.dimension = new Dimension2D(1024, 2048);
                 p.position.resolution = 0.05;
                 p.position.sampleSize = 0.025;

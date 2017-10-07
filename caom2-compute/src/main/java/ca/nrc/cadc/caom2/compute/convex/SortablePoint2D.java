@@ -39,8 +39,8 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      */
     public static final Comparator<ca.nrc.cadc.caom2.compute.convex.SortablePoint2D> R_ORDER = new ROrder();
     private static final long serialVersionUID = 201603031530L;
-    private final double coordX;    // coordX coordinate
-    private final double coordY;    // coordY coordinate
+    private final double coordX;
+    private final double coordY;
 
     /**
      * Initializes a new point (coordX, coordY).
@@ -111,7 +111,7 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      *
      * @return the x-coordinate
      */
-    public double coordX() {
+    public double getX() {
         return coordX;
     }
 
@@ -120,7 +120,7 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      *
      * @return the coordY-coordinate
      */
-    public double coordY() {
+    public double getY() {
         return coordY;
     }
 

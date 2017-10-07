@@ -105,6 +105,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -113,6 +114,7 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -869,7 +871,10 @@ public class ObservationReader implements Serializable {
 
             assignEntityAttributes(planeElement, plane, rc);
 
-            planes.add(plane);
+            boolean added = planes.add(plane);
+            if (!added) {
+                throw new IllegalArgumentException("Plane.productID = " +  productID + " is not unique");
+            }
         }
     }
 
@@ -890,9 +895,9 @@ public class ObservationReader implements Serializable {
             }
             Attribute type = cur.getAttribute("type", xsiNamespace);
             String tval = type.getValue();
-            String extype = namespace.getPrefix() + ":"
-                    + Polygon.class.getSimpleName();
-            if (extype.equals(tval)) {
+            String circleType = namespace.getPrefix() + ":" + Circle.class.getSimpleName();
+            String polyType = namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
+            if (polyType.equals(tval)) {
                 List<Point> points = new ArrayList<Point>();
                 Element pes = cur.getChild("points", namespace);
                 for (Element pe : pes.getChildren()) { // only vertex
@@ -914,12 +919,16 @@ public class ObservationReader implements Serializable {
                     poly.getVertices().add(
                             new Vertex(cval1, cval2, SegmentType.toValue(sv)));
                 }
-
-                Polygon sp = new Polygon(points, poly);
-                pos.bounds = sp;
+                pos.bounds = new Polygon(points, poly);
+            } else if (circleType.equals(tval)) {
+                Element ce = cur.getChild("center", namespace);
+                double cval1 = getChildTextAsDouble("cval1", ce, namespace, true);
+                double cval2 = getChildTextAsDouble("cval2", ce, namespace, true);
+                Point c = new Point(cval1, cval2);
+                double r = getChildTextAsDouble("radius", cur, namespace, true);
+                pos.bounds = new Circle(c, r);
             } else {
-                throw new ObservationParsingException(
-                        "unsupported bounds type: " + tval);
+                throw new UnsupportedOperationException("unsupported shape: " + tval);
             }
         }
 
@@ -1329,7 +1338,10 @@ public class ObservationReader implements Serializable {
 
             assignEntityAttributes(artifactElement, artifact, rc);
 
-            artifacts.add(artifact);
+            boolean added = artifacts.add(artifact);
+            if (!added) {
+                throw new IllegalArgumentException("Artifact.uri = " +  uri + " is not unique");
+            }
         }
     }
 
@@ -1370,11 +1382,13 @@ public class ObservationReader implements Serializable {
                 part.productType = ProductType.toValue(productType);
             }
             addChunks(part.getChunks(), partElement, namespace, rc);
-            // part.chunk = getChunk(partElement, namespace, rc);
 
             assignEntityAttributes(partElement, part, rc);
-
-            parts.add(part);
+            
+            boolean added = parts.add(part);
+            if (!added) {
+                throw new IllegalArgumentException("Part.name = " +  partName + " is not unique");
+            }
         }
     }
 
