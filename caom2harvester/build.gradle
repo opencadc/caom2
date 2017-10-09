@@ -16,7 +16,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.8'
+version = '2.3.7'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 
@@ -28,7 +28,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.0,)'
     compile 'org.opencadc:caom2:[2.3.4,)'
     compile 'org.opencadc:caom2-compute:[2.3.3,)'
-    compile 'org.opencadc:caom2persistence:[2.3.8,)'
+    compile 'org.opencadc:caom2persistence:[2.3.7,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
     compile 'org.opencadc:caom2-repo:[1.0,)'
     compile 'org.opencadc:caom2-persist:[2.3.1,)'
