@@ -1,29 +1,29 @@
 
-drop view if exists caom2.ObsPart;
-drop view if exists caom2.ObsFile;
-drop view if exists caom2.ObsCore;
-drop view if exists caom2.SIAv1;
+drop view if exists <schema>.ObsPart;
+drop view if exists <schema>.ObsFile;
+drop view if exists <schema>.ObsCore;
+drop view if exists <schema>.SIAv1;
 
-drop table if exists caom2.Chunk;
-drop table if exists caom2.Part;
-drop table if exists caom2.Artifact;
-drop table if exists caom2.Plane_inputs;
-drop table if exists caom2.Plane;
-drop table if exists caom2.Observation_members;
-drop table if exists caom2.Observation;
+drop table if exists <schema>.Chunk;
+drop table if exists <schema>.Part;
+drop table if exists <schema>.Artifact;
+drop table if exists <schema>.Plane_inputs;
+drop table if exists <schema>.Plane;
+drop table if exists <schema>.Observation_members;
+drop table if exists <schema>.Observation;
 
-drop table if exists caom2.ObservationMetaReadAccess;
-drop table if exists caom2.PlaneMetaReadAccess;
-drop table if exists caom2.PlaneDataReadAccess;
+drop table if exists <schema>.ObservationMetaReadAccess;
+drop table if exists <schema>.PlaneMetaReadAccess;
+drop table if exists <schema>.PlaneDataReadAccess;
 
-drop table if exists caom2.DeletedObservation;
-drop table if exists caom2.DeletedObservationMetaReadAccess;
-drop table if exists caom2.DeletedPlaneMetaReadAccess;
-drop table if exists caom2.DeletedPlaneDataReadAccess;
+drop table if exists <schema>.DeletedObservation;
+drop table if exists <schema>.DeletedObservationMetaReadAccess;
+drop table if exists <schema>.DeletedPlaneMetaReadAccess;
+drop table if exists <schema>.DeletedPlaneDataReadAccess;
 
-drop table if exists caom2.HarvestState;
-drop table if exists caom2.HarvestSkip;
-drop table if exists caom2.HarvestSkipURI;
+drop table if exists <schema>.HarvestState;
+drop table if exists <schema>.HarvestSkip;
+drop table if exists <schema>.HarvestSkipURI;
 
-drop table if exists caom2.ModelVersion;
+drop table if exists <schema>.ModelVersion;
 

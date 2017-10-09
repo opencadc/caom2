@@ -1,5 +1,5 @@
 
-create table caom2.Observation
+create table <schema>.Observation
 (
     observationURI varchar(512) not null,
     collection varchar(64) not null,
@@ -63,27 +63,27 @@ create table caom2.Observation
 )
 ;
 
-create unique index i_observationURI on caom2.Observation (observationURI)
+create unique index i_observationURI on <schema>.Observation (observationURI)
 ;
 
-create unique index i_observationURI2 on caom2.Observation (collection, observationID)
+create unique index i_observationURI2 on <schema>.Observation (collection, observationID)
 ;
 
 -- harvesting index for recompute mode of caom2harvester
-create index i_maxLastModified on caom2.Observation (maxLastModified)
+create index i_maxLastModified on <schema>.Observation (maxLastModified)
 ;
 
 -- member join support
 -- not currently used/tested
-create table caom2.Observation_members
+create table <schema>.Observation_members
 (
-    compositeID uuid not null references caom2.Observation (obsID),
-    simpleID uuid not null references caom2.Observation (obsID)
+    compositeID uuid not null references <schema>.Observation (obsID),
+    simpleID uuid not null references <schema>.Observation (obsID)
 )
 ;
 
-create unique index i_composite2simple on caom2.Observation_members (compositeID,simpleID)
+create unique index i_composite2simple on <schema>.Observation_members (compositeID,simpleID)
 ;
 
-create unique index i_simple2composite on caom2.Observation_members (simpleID,compositeID)
+create unique index i_simple2composite on <schema>.Observation_members (simpleID,compositeID)
 ;

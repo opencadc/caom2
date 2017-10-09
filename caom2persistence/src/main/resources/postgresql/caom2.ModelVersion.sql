@@ -1,5 +1,5 @@
 
-create table caom2.ModelVersion
+create table <schema>.ModelVersion
 (
     model varchar(16) not null primary key,
     version varchar(16) not null,

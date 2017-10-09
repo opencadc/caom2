@@ -418,7 +418,9 @@ public class ObservationHarvester extends Harvester {
                             // temporary validation hack to avoid tickmarks
                             // in
                             // the keywords columns
-                            CaomValidator.validateKeywords(o);
+                            //TODO Raul Gutierrez: I comment it to solve a compilation error (CaomValidator.validateKeywords() is a
+                            //  private method)
+                            //CaomValidator.validateKeywords(o);
 
                             if (computePlaneMetadata) {
                                 log.debug("computePlaneMetadata: " + o.getObservationID());

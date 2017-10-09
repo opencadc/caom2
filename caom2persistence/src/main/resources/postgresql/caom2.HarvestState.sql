@@ -1,5 +1,5 @@
 
-create table caom2.HarvestState
+create table <schema>.HarvestState
 (
     source          varchar(256) not null,
     cname           varchar(256)  not null,
@@ -12,5 +12,5 @@ create table caom2.HarvestState
 ;
 
 create unique index HarvestState_i1
-    on caom2.HarvestState ( source,cname )
+    on <schema>.HarvestState ( source,cname )
 ;

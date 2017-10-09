@@ -1,5 +1,5 @@
 
-create or replace view caom2.ObsFile
+create or replace view <schema>.ObsFile
 (
     uri,
     content_type,
@@ -28,10 +28,10 @@ AS SELECT
 
     a.planeID,
     a.metaRelease, a.metaReadAccessGroups
-FROM caom2.Artifact AS a
+FROM <schema>.Artifact AS a
 ;
 
-create or replace view caom2.ObsPart
+create or replace view <schema>.ObsPart
 (
     name,
     naxis,
@@ -145,5 +145,5 @@ AS SELECT
 
     p.planeID,
     p.metaRelease, p.metaReadAccessGroups
-FROM caom2.Part AS p JOIN caom2.Chunk AS c ON p.partID = c.partID
+FROM <schema>.Part AS p JOIN <schema>.Chunk AS c ON p.partID = c.partID
 ;
