@@ -1,5 +1,5 @@
 
-create or replace view caom2.ObsCore
+create or replace view <schema>.ObsCore
 (
     dataproduct_type,
     calib_level,
@@ -117,7 +117,7 @@ AS SELECT
     p.planeID,
     p.metaRelease, p.metaReadAccessGroups
 
-FROM caom2.Observation o JOIN caom2.Plane p ON o.obsID=p.obsID
+FROM <schema>.Observation o JOIN <schema>.Plane p ON o.obsID=p.obsID
 WHERE o.intent = 'science' 
   AND p.calibrationLevel IS NOT NULL
   AND p.dataProductType != 'catalog'

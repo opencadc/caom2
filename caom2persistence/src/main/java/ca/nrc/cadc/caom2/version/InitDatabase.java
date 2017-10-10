@@ -168,7 +168,7 @@ public class InitDatabase {
             // execute SQL
             for (String fname : ddls) {
                 log.info("process file: " + fname);
-                List<String> statements = parseDDL(fname);
+                List<String> statements = parseDDL(fname, schema);
                 for (String sql : statements) {
                     if (upgrade) {
                         log.info("execute:\n" + sql);
@@ -211,9 +211,8 @@ public class InitDatabase {
             log.debug("doInit: " + MODEL_NAME + " " + prevVersion + " to " + MODEL_VERSION + " " + dt + "ms");
         }
     }
-
-    static List<String> parseDDL(String fname)
-            throws IOException {
+    
+    static List<String> parseDDL(String fname, String schema) throws IOException {
         List<String> ret = new ArrayList<>();
 
         // find file
@@ -240,6 +239,9 @@ public class InitDatabase {
                     sb.append(line).append(" ");
                     if (eos) {
                         String st = sb.toString();
+                        
+                        st = st.replaceAll("<schema>", schema);
+                        
                         log.debug("statement: " + st);
                         ret.add(st);
                         sb = new StringBuilder();

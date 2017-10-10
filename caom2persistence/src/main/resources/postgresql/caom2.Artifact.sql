@@ -1,5 +1,5 @@
 
-create table caom2.Artifact
+create table <schema>.Artifact
 (
     uri varchar(1024) not null,
     productType varchar(64) not null,
@@ -14,7 +14,7 @@ create table caom2.Artifact
 -- internal
     metaRelease timestamp,
     obsID uuid not null,
-    planeID uuid not null references caom2.Plane (planeID),
+    planeID uuid not null references <schema>.Plane (planeID),
     artifactID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
@@ -25,9 +25,9 @@ create table caom2.Artifact
 ;
 
 -- this is for Plane join Artifact
-create index i_planeID on caom2.Artifact (planeID)
+create index i_planeID on <schema>.Artifact (planeID)
 ;
 
 -- tag the clustering index
-cluster i_planeID on caom2.Artifact
+cluster i_planeID on <schema>.Artifact
 ;

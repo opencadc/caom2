@@ -1,5 +1,5 @@
 
-create table caom2.Chunk
+create table <schema>.Chunk
 (
     productType varchar(64),
     naxis integer,
@@ -125,7 +125,7 @@ create table caom2.Chunk
     obsID uuid not null,
     planeID uuid not null,
     artifactID uuid not null,
-    partID uuid not null references caom2.Part (partID),
+    partID uuid not null references <schema>.Part (partID),
     chunkID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
@@ -136,12 +136,12 @@ create table caom2.Chunk
 ;
 
 -- this is for Part join Chunk
-create index i_partID on caom2.Chunk (partID)
+create index i_partID on <schema>.Chunk (partID)
 ;
 
-cluster i_partID on caom2.Chunk
+cluster i_partID on <schema>.Chunk
 ;
 
 -- this is for asset updates
-create index ic_planeID on caom2.Chunk (planeID)
+create index ic_planeID on <schema>.Chunk (planeID)
 ;
