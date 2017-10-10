@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -384,21 +385,23 @@ public class ObservationHarvester extends Harvester {
                             }
 
                             // try to avoid DataIntegrityViolationException
-                            // due
-                            // to missed deletion of an observation
-                            UUID curID = destObservationDAO.getID(o.getURI());
-                            if (curID != null && !curID.equals(o.getID())) {
-                                ObservationURI oldSrc = srcObservationDAO.getURI(curID);
-                                if (oldSrc == null) {
-                                    // missed harvesting a deletion
-                                    log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
-                                    destObservationDAO.delete(curID);
+                            // due to missed deletion of an observation
+                            if (srcObservationDAO != null) { // need uuid -> URI query in src
+                                UUID curID = destObservationDAO.getID(o.getURI());
+                                if (curID != null && !curID.equals(o.getID())) {
+                                    ObservationURI oldSrc = srcObservationDAO.getURI(curID);
+                                    if (oldSrc == null) {
+                                        // missed harvesting a deletion
+                                        log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
+                                        destObservationDAO.delete(curID);
+                                    }
+                                    // else: the put below with throw a valid
+                                    // exception because source
+                                    // is not enforcing
+                                    // unique ID and URI
                                 }
-                                // else: the put below with throw a valid
-                                // exception because source
-                                // is not enforcing
-                                // unique ID and URI
                             }
+                            
                             if (doCollisionCheck) {
                                 Observation cc = destObservationDAO.getShallow(o.getID());
                                 log.debug("collision check: " + o.getURI() + " " + format(o.getMaxLastModified()) + " vs " + format(cc.getMaxLastModified()));
@@ -408,17 +411,18 @@ public class ObservationHarvester extends Harvester {
                                 }
                             }
 
-                            // advance the date before put as there are
-                            // usually
-                            // lots of fails
+                            // advance the date on success or failure
                             if (skipped) {
                                 startDate = hs.lastModified;
                             }
 
-                            // temporary validation hack to avoid tickmarks
-                            // in
-                            // the keywords columns
-                            CaomValidator.validateKeywords(o);
+                            CaomValidator.validate(o);
+                            
+                            for (Plane p : o.getPlanes()) {
+                                for (Artifact a : p.getArtifacts()) {
+                                    CaomWCSValidator.validate(a);
+                                }
+                            }
 
                             if (computePlaneMetadata) {
                                 log.debug("computePlaneMetadata: " + o.getObservationID());
@@ -468,8 +472,16 @@ public class ObservationHarvester extends Harvester {
                             log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
                             ret.handled++;
                         }
+                    } else if (oops instanceof IllegalArgumentException) {
+                        log.error("CONTENT PROBLEM - validation failure: " + ow.entity.observationState.getURI() 
+                            + " - " + oops.getMessage());
+                        ret.handled++;
                     } else if (oops instanceof ChecksumError) {
-                        log.error("CONTENT PROBLEM - mismatching checksums for " + o);
+                        log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
+                        ret.handled++;
+                    } else if (oops instanceof DataIntegrityViolationException
+                            && str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
+                        log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
                         ret.handled++;
                     } else if (oops instanceof TransientException) {
                         log.error("CONTENT PROBLEM - " + oops.getMessage());
@@ -484,7 +496,6 @@ public class ObservationHarvester extends Harvester {
                         log.error("BUG", oops);
                         BadSqlGrammarException bad = (BadSqlGrammarException) oops;
                         SQLException sex1 = bad.getSQLException();
-
                         if (sex1 != null) {
                             log.error("CAUSE", sex1);
                             SQLException sex2 = sex1.getNextException();
@@ -494,10 +505,6 @@ public class ObservationHarvester extends Harvester {
                     } else if (oops instanceof DataAccessResourceFailureException) {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
-                    } else if (oops instanceof DataIntegrityViolationException
-                            && str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
-                        log.error("CONTENT PROBLEM - duplicate observation: " + o.getURI());
-                        ret.handled++;
                     } else if (oops instanceof UncategorizedSQLException) {
                         if (str.contains("spherepoly_from_array")) {
                             log.error("UNDETECTED illegal polygon: " + o.getURI());
@@ -505,16 +512,10 @@ public class ObservationHarvester extends Harvester {
                         } else {
                             log.error("unexpected exception", oops);
                         }
-                    } else if (oops instanceof IllegalArgumentException
-                            && str.contains("CaomValidator")
-                            && str.contains("keywords")) {
-                        log.error("CONTENT PROBLEM - invalid keywords: " + o.getURI());
-                        ret.handled++;
                     } else {
                         log.error("unexpected exception", oops);
                     }
                 } finally {
-                    //i++; // index over ObservationState collection
                     if (!ok && !dryrun) {
                         if (o != null) {
                             log.warn("failed to insert " + o + ": " + lastMsg);
@@ -572,10 +573,8 @@ public class ObservationHarvester extends Harvester {
                                 harvestSkip.put(skip);
                             }
 
-                            // TBD: delete previous version of obs?
-                            if (o != null) {
-                                destObservationDAO.delete(o.getID());
-                            }
+                            // delete previous version of observation (if any)
+                            destObservationDAO.delete(ow.entity.observationState.getURI());
 
                             log.debug("committing HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
