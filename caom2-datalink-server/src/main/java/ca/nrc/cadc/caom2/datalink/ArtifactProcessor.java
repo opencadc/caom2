@@ -403,18 +403,4 @@ public class ArtifactProcessor
         }
         return url;
     }
-
-    // determine if artifact has sufficient WCS for cutout in any of the chunks
-    private boolean canCutout(Artifact a)
-    {
-        for (Part p : a.getParts())
-        {
-            for (Chunk c : p.getChunks())
-            {
-                if ( CutoutUtil.canCutout(c) )
-                    return true;
-            }
-        }
-        return false;
-    }
 }
