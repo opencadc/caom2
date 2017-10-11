@@ -174,7 +174,7 @@ public class InitDatabaseTest
             {
                 String fname = InitDatabase.CREATE_SQL[i];
                 log.info("process file: " + fname);
-                List<String> statements = InitDatabase.parseDDL(fname);
+                List<String> statements = InitDatabase.parseDDL(fname, schema);
                 Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
             }
         }
@@ -200,7 +200,7 @@ public class InitDatabaseTest
             {
                 String fname = InitDatabase.UPGRADE_SQL[i];
                 log.info("process file: " + fname);
-                List<String> statements = InitDatabase.parseDDL(fname);
+                List<String> statements = InitDatabase.parseDDL(fname, schema);
                 Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
             }
         }
