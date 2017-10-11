@@ -1,6 +1,6 @@
 
 -- ObservationMetaReadAccess --
-create table caom2.ObservationMetaReadAccess
+create table <schema>.ObservationMetaReadAccess
 (
     assetID         uuid not null,
     groupID         varchar(128) not null,
@@ -13,11 +13,11 @@ create table caom2.ObservationMetaReadAccess
 ;
 
 create unique index i_omra_tuple 
-    on caom2.ObservationMetaReadAccess (groupID, assetID)
+    on <schema>.ObservationMetaReadAccess (groupID, assetID)
 ;
 
 -- PlaneMetaReadAccess --
-create table caom2.PlaneMetaReadAccess
+create table <schema>.PlaneMetaReadAccess
 (
     assetID         uuid not null,
     groupID         varchar(128) not null,
@@ -30,11 +30,11 @@ create table caom2.PlaneMetaReadAccess
 ;
 
 create unique index i_pmra_tuple 
-    on caom2.PlaneMetaReadAccess (groupID, assetID)
+    on <schema>.PlaneMetaReadAccess (groupID, assetID)
 ;
 
 -- PlaneDataReadAccess --
-create table caom2.PlaneDataReadAccess
+create table <schema>.PlaneDataReadAccess
 (
     assetID         uuid not null, 
     groupID         varchar(128) not null,
@@ -47,5 +47,5 @@ create table caom2.PlaneDataReadAccess
 ;
 
 create unique index i_pdra_tuple 
-    on caom2.PlaneDataReadAccess (groupID, assetID)
+    on <schema>.PlaneDataReadAccess (groupID, assetID)
 ;
