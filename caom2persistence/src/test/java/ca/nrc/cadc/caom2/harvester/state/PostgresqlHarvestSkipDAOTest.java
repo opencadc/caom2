@@ -155,6 +155,7 @@ public class PostgresqlHarvestSkipDAOTest
 
             HarvestSkip skip;
             Date start = null;
+            Date end = null;
             
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id1, "m1");
             dao.put(skip);
@@ -165,7 +166,7 @@ public class PostgresqlHarvestSkipDAOTest
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id3, null);
             dao.put(skip);
 
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
+            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start, end);
             Assert.assertEquals("skips size", 3, skips.size());
             Assert.assertEquals(id1, skips.get(0).skipID);
             Assert.assertEquals(id2, skips.get(1).skipID);
