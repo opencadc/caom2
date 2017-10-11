@@ -244,30 +244,31 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (head.getThrowable() != null) {
                         sb.append(head.getThrowable().getMessage());
                         if (log.isDebugEnabled()) {
-                            log.error("[" + threadName + "] error determining artifact checksum: " + sb.toString(), head.getThrowable());
+                            log.warn("[" + threadName + "] error determining artifact checksum: " + sb.toString(), head.getThrowable());
                         } else {
-                            log.error("[" + threadName + "] error determining artifact checksum: " + sb.toString());
+                            log.warn("[" + threadName + "] error determining artifact checksum: " + sb.toString());
                         }
 
                     }
-                    result.errorMessage = sb.toString();
-                    return result;
+//                    result.errorMessage = sb.toString();
+//                    return result;
+
+                    String md5String = head.getContentMD5();
+                    log.debug("MAST content MD5: " + md5String);
+                    if (md5String != null) {
+                        sourceChecksum = URI.create("MD5:" + md5String);
+                    }
+
+                    long contentLength = head.getContentLength();
+                    sourceLength = null;
+                    if (contentLength >= 0) {
+                        sourceLength = new Long(contentLength);
+                    }
                 }
 
-                String md5String = head.getContentMD5();
-                log.debug("MAST content MD5: " + md5String);
-                if (md5String != null) {
-                    sourceChecksum = URI.create("MD5:" + md5String);
-                }
-
-                long contentLength = head.getContentLength();
-                sourceLength = null;
-                if (contentLength >= 0) {
-                    sourceLength = new Long(contentLength);
-                }
 
                 // check again to be sure the destination doesn't already have it
-                if (artifactStore.contains(artifactURI, sourceChecksum)) {
+                if (sourceChecksum != null && artifactStore.contains(artifactURI, sourceChecksum)) {
                     log.info("[" + threadName + "] ArtifactStore already has correct copy of " + artifactURI + " with checksum " + sourceChecksum);
                     result.success = true;
                     return result;

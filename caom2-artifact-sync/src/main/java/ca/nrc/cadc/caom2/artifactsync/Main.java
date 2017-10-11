@@ -118,7 +118,7 @@ public class Main {
             }
 
             if (am.isSet("d") || am.isSet("debug")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
@@ -127,7 +127,7 @@ public class Main {
                     Log4jInit.setLevel(asPackage, Level.DEBUG);
                 }
             } else if (am.isSet("v") || am.isSet("verbose")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
                 if (asPackage != null) {
