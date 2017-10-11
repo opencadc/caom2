@@ -177,8 +177,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
                 observations.get(1).getLastModified());
             Assert.assertNotNull("failed to get first observation maxLastModified date",
                 observations.get(2).getLastModified());
-            Date start = getTime(observations.get(0).getLastModified());
-            Date mid = getTime(observations.get(1).getLastModified());
+            final Date start = getTime(observations.get(0).getLastModified());
+            final Date mid = getTime(observations.get(1).getLastModified());
+            final Date end = getTime(observations.get(2).getLastModified());
             Integer maxRec = 3;
 
             // Check that we have maxRec of the observations, use default (ascending) order
@@ -190,7 +191,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
             checkObservationList((baseIDs.size() - 1), SCHEME + TEST_COLLECTION, maxRec, mid,
                 null, subject2, null, observations, 200, null, true);
 
-            Date end = getTime(observations.get(2).getLastModified());
+            
             observations.remove(0);
             // Check that we only have the last observation
             checkObservationList((baseIDs.size() - 2), SCHEME + TEST_COLLECTION, maxRec, end,
