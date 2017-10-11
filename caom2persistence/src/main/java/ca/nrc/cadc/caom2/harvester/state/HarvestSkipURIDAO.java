@@ -118,7 +118,7 @@ public class HarvestSkipURIDAO {
 
     public HarvestSkipURI get(String source, String cname, URI skipID) {
         SelectStatementCreator sel = new SelectStatementCreator();
-        sel.setValues(source, cname, skipID, null, null);
+        sel.setValues(source, cname, skipID, null, null, null);
         List result = jdbc.query(sel, extractor);
         if (result.isEmpty()) {
             return null;
@@ -126,9 +126,9 @@ public class HarvestSkipURIDAO {
         return (HarvestSkipURI) result.get(0);
     }
 
-    public List<HarvestSkipURI> get(String source, String cname, Date start) {
+    public List<HarvestSkipURI> get(String source, String cname, Date start, Date end) {
         SelectStatementCreator sel = new SelectStatementCreator();
-        sel.setValues(source, cname, null, batchSize, start);
+        sel.setValues(source, cname, null, batchSize, start, end);
         List result = jdbc.query(sel, extractor);
         List<HarvestSkipURI> ret = new ArrayList<HarvestSkipURI>(result.size());
         for (Object o : result) {
@@ -166,15 +166,17 @@ public class HarvestSkipURIDAO {
         private Integer batchSize;
         private URI skipID;
         private Date start;
+        private Date end;
 
         public SelectStatementCreator() {
         }
 
-        public void setValues(String source, String cname, URI skipID, Integer batchSize, Date start) {
+        public void setValues(String source, String cname, URI skipID, Integer batchSize, Date start, Date end) {
             this.source = source;
             this.cname = cname;
             this.batchSize = batchSize;
             this.start = start;
+            this.end = end;
             this.skipID = skipID;
         }
 
@@ -184,8 +186,13 @@ public class HarvestSkipURIDAO {
             sb.append(" WHERE source = ? AND cname = ?");
             if (skipID != null) {
                 sb.append(" AND skipID = ?");
-            } else if (start != null) {
-                sb.append(" AND lastModified >= ?");
+            } else {
+                if (start != null) {
+                    sb.append(" AND lastModified >= ?");
+                }
+                if (end != null) {
+                    sb.append(" AND lastModified <= ?");
+                }
             }
             sb.append(" ORDER BY lastModified ASC");
 
@@ -206,8 +213,13 @@ public class HarvestSkipURIDAO {
             ps.setString(2, cname);
             if (skipID != null) {
                 ps.setString(3, skipID.toASCIIString());
-            } else if (start != null) {
-                ps.setTimestamp(3, new Timestamp(start.getTime()), utcCalendar);
+            } else {
+                if (start != null) {
+                    ps.setTimestamp(3, new Timestamp(start.getTime()), utcCalendar);
+                }
+                if (start != null) {
+                    ps.setTimestamp(3, new Timestamp(start.getTime()), utcCalendar);
+                }
             }
         }
     }
