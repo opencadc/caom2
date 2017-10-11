@@ -1,35 +1,35 @@
 
 -- checksum length 136 allows for 128 chars (sha512) + colon + 7 char algorithm
 
-alter table caom2.Observation
+alter table <schema>.Observation
     add column metaChecksum varchar(136),
     add column accMetaChecksum varchar(136);
     
-alter table caom2.Plane
+alter table <schema>.Plane
     add column creatorID varchar(512),
     add column metaChecksum varchar(136),
     add column accMetaChecksum varchar(136);
 
-alter table caom2.Artifact
+alter table <schema>.Artifact
     add column contentChecksum varchar(136),
     add column metaChecksum varchar(136),
     add column accMetaChecksum varchar(136);
 
-alter table caom2.Part
+alter table <schema>.Part
     add column metaChecksum varchar(136),
     add column accMetaChecksum varchar(136);
 
-alter table caom2.Chunk
+alter table <schema>.Chunk
     add column metaChecksum varchar(136),
     add column accMetaChecksum varchar(136);
 
-alter table caom2.ObservationMetaReadAccess
+alter table <schema>.ObservationMetaReadAccess
     add column metaChecksum varchar(136);
 
-alter table caom2.PlaneMetaReadAccess
+alter table <schema>.PlaneMetaReadAccess
     add column metaChecksum varchar(136);
 
-alter table caom2.PlaneDataReadAccess
+alter table <schema>.PlaneDataReadAccess
     add column metaChecksum varchar(136);
 
-create unique index i_creatorID on caom2.Plane(creatorID);
+create unique index i_creatorID on <schema>.Plane(creatorID);

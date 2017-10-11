@@ -1,5 +1,5 @@
 
-create or replace view caom2.SIAv1
+create or replace view <schema>.SIAv1
 (
     collection, publisherDID, instrument_name,
 
@@ -48,7 +48,7 @@ a.contentType,
 p.metaRelease, p.dataRelease, p.metaReadAccessGroups,
 p.planeID
 
-FROM caom2.Observation o JOIN caom2.Plane p ON o.obsID=p.obsID JOIN caom2.Artifact a on p.planeID=a.planeID
+FROM <schema>.Observation o JOIN <schema>.Plane p ON o.obsID=p.obsID JOIN <schema>.Artifact a on p.planeID=a.planeID
 WHERE 
 -- science data only as in ObsCore
   o.intent = 'science' 
@@ -60,6 +60,6 @@ WHERE
 -- SIAv1 specific filtering
   AND p.dataProductType = 'image'
   AND (a.productType = 'science'
-    OR a.productType IS NULL) -- OR to allow HST science data through without joining to caom2.Part
+    OR a.productType IS NULL) -- OR to allow HST science data through without joining to <schema>.Part
   AND (o.collection != 'OMM' OR a.uri NOT LIKE '%prev') -- hack for OMM data engineering issue
 ;

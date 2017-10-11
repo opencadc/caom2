@@ -1,5 +1,5 @@
 
-create table caom2.Plane
+create table <schema>.Plane
 (
     productID varchar(64) not null,
     publisherID varchar(512) not null,
@@ -84,7 +84,7 @@ create table caom2.Plane
     metaReadAccessGroups tsvector default '',
 
 -- internal
-    obsID uuid not null references caom2.Observation (obsID),
+    obsID uuid not null references <schema>.Observation (obsID),
     planeID uuid not null  primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
@@ -95,29 +95,29 @@ create table caom2.Plane
 ;
 
 -- this is for Observation join Plane
-create index i_obsID on caom2.Plane (obsID)
+create index i_obsID on <schema>.Plane (obsID)
 ;
 
 -- tag the clustering index
-cluster i_obsID on caom2.Plane
+cluster i_obsID on <schema>.Plane
 ;
 
-create table caom2.Plane_inputs
+create table <schema>.Plane_inputs
 (
-    outputID uuid not null references caom2.Plane (planeID),
-    inputID uuid not null references caom2.Plane (planeID)
+    outputID uuid not null references <schema>.Plane (planeID),
+    inputID uuid not null references <schema>.Plane (planeID)
 )
 ;
 
-create unique index i_publisherID on caom2.Plane(publisherID)
+create unique index i_publisherID on <schema>.Plane(publisherID)
 ;
 
-create unique index i_creatorID on caom2.Plane(creatorID)
+create unique index i_creatorID on <schema>.Plane(creatorID)
 ;
 
-create unique index i_output2input on caom2.Plane_inputs (outputID,inputID)
+create unique index i_output2input on <schema>.Plane_inputs (outputID,inputID)
 ;
 
-create unique index i_input2output on caom2.Plane_inputs (inputID,outputID)
+create unique index i_input2output on <schema>.Plane_inputs (inputID,outputID)
 ;
 

@@ -1,5 +1,5 @@
 
-create table caom2.HarvestSkipURI
+create table <schema>.HarvestSkipURI
 (
     source          varchar(256) not null,
     cname           varchar(256) not null,
@@ -12,6 +12,6 @@ create table caom2.HarvestSkipURI
 ;
 
 create unique index HarvestSkipURI_i1
-    on caom2.HarvestSkipURI ( source,cname,skipID )
+    on <schema>.HarvestSkipURI ( source,cname,skipID )
 ;
 
