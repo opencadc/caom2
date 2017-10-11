@@ -254,11 +254,14 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         Plane plane = new Plane("foo");
         observation.getPlanes().add(plane);
 
-        Artifact artifact = new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA);
-        plane.getArtifacts().add(artifact);
-
+        // computation test looks at science artifacts; we want to test that complete WCS validation works
+        plane.getArtifacts().add(new Artifact(new URI("ad:TEST/foo"), ProductType.SCIENCE, ReleaseType.DATA));
+        
+        Artifact invalid = new Artifact(new URI("ad:TEST/bar"), ProductType.AUXILIARY, ReleaseType.DATA);
+        plane.getArtifacts().add(invalid);
+        
         Part part = new Part(0);
-        artifact.getParts().add(part);
+        invalid.getParts().add(part);
 
         Chunk ch = new Chunk();
         part.getChunks().add(ch);
