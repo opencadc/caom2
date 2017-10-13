@@ -86,8 +86,8 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class VOSpaceSchemeResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(VOSpaceSchemeResolver.class);
+public class VOSpaceResolver implements StorageResolver {
+    private static final Logger log = Logger.getLogger(VOSpaceResolver.class);
 
     public static final String SCHEME = "vos";
     public static final String CUTOUT_VIEW = "ivo://cadc.nrc.ca/vospace/view#cutout";
@@ -97,10 +97,11 @@ public class VOSpaceSchemeResolver implements StorageResolver {
 
     protected AuthMethod authMethod;
 
-    public VOSpaceSchemeResolver() {
+    public VOSpaceResolver() {
         this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
     }
 
+    @Override
     public URL toURL(URI uri) {
         this.validateScheme(uri);
 
@@ -121,6 +122,7 @@ public class VOSpaceSchemeResolver implements StorageResolver {
         this.authMethod = authMethod;
     }
 
+    @Override
     public String getSchema() {
         return SCHEME;
     }
@@ -147,7 +149,7 @@ public class VOSpaceSchemeResolver implements StorageResolver {
             } else {
                 protocol = PROTOCOL_HTTPS_GET;
             }
-            
+
             StringBuilder query = new StringBuilder();
             query.append(baseURL);
 

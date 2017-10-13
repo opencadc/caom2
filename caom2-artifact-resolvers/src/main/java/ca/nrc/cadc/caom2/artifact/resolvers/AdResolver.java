@@ -44,13 +44,13 @@ import java.net.URLEncoder;
 import org.apache.log4j.Logger;
 
 /**
- * SchemeHandler implementation for the Archive Directory (ad) system. This class can convert an AD URI into a URL. This is an alternate version that uses the
+ * StorageResolver implementation for the Archive Directory (ad) system. This class can convert an AD URI into a URL. This is an alternate version that uses the
  * RegistryClient to find the data web service base URL.
  *
  * @author pdowler
  */
-public class AdSchemeResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(AdSchemeResolver.class);
+public class AdResolver implements StorageResolver {
+    private static final Logger log = Logger.getLogger(AdResolver.class);
 
     public static final String SCHEME = "ad";
 
@@ -60,7 +60,7 @@ public class AdSchemeResolver implements StorageResolver {
     private URI dataURI;
     protected AuthMethod authMethod;
 
-    public AdSchemeResolver() {
+    public AdResolver() {
         this.rc = new RegistryClient();
         try {
             this.dataURI = new URI(DATA_URI);
@@ -70,6 +70,7 @@ public class AdSchemeResolver implements StorageResolver {
         this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
     }
 
+    @Override
     public URL toURL(URI uri) {
         if (!SCHEME.equals(uri.getScheme())) {
             throw new IllegalArgumentException("invalid scheme in " + uri);
@@ -93,11 +94,12 @@ public class AdSchemeResolver implements StorageResolver {
     protected URL toURL(URL serviceURL, String path) throws MalformedURLException {
         return new URL(serviceURL.toExternalForm() + path);
     }
-    
+
     public void setAuthMethod(AuthMethod authMethod) {
         this.authMethod = authMethod;
     }
 
+    @Override
     public String getSchema() {
         return SCHEME;
     }

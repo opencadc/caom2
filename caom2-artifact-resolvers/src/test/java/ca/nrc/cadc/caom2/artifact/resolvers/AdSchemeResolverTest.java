@@ -97,7 +97,7 @@ public class AdSchemeResolverTest
     String INVALID_URI2 = "ad:FOO/bar/baz";
 
 
-    AdSchemeResolver ash = new AdSchemeResolver();
+    AdResolver ash = new AdResolver();
     
     public AdSchemeResolverTest()
     {

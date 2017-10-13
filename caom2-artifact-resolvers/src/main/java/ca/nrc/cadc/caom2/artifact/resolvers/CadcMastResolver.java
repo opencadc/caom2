@@ -46,19 +46,19 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
- * SchemeHandler implementation for the MAST archive. This class can convert an MAST URI into a URL . This is an alternate version that uses the RegistryClient
- * to find the data web service base URL.
+ * StorageResolver implementation for the MAST archive. 
+ * This class can convert an MAST URI into a URL . This is an alternate version that uses the RegistryClient to find the data web service base URL.
  *
  * @author yeunga
  */
-public class CadcMastSchemeResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(CadcMastSchemeResolver.class);
+public class CadcMastResolver implements StorageResolver {
+    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
 
     public static final String SCHEME = "mast";
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
     private String baseDataURL;
 
-    public CadcMastSchemeResolver() {
+    public CadcMastResolver() {
         try {
             RegistryClient rc = new RegistryClient();
             Subject subject = AuthenticationUtil.getCurrentSubject();
@@ -80,6 +80,7 @@ public class CadcMastSchemeResolver implements StorageResolver {
         }
     }
 
+    @Override
     public URL toURL(URI uri) {
         if (!SCHEME.equals(uri.getScheme())) {
             throw new IllegalArgumentException("invalid scheme in " + uri);
@@ -94,6 +95,7 @@ public class CadcMastSchemeResolver implements StorageResolver {
         }
     }
 
+    @Override
     public String getSchema() {
         return SCHEME;
     }
