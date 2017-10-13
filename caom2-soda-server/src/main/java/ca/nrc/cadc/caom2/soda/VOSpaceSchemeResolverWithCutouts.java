@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -67,29 +67,49 @@
 ************************************************************************
 */
 
-
 package ca.nrc.cadc.caom2.soda;
 
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceSchemeResolver;
+import ca.nrc.cadc.net.NetUtil;
+
 /**
- * Interface for handlers that convert a URI to a URL that allows retrieval.
- * 
+ *
  * @author pdowler
  */
-public interface CutoutGenerator
-{
-    /**
-     * Convert the specified URI to one or more URL(s). 
-     * 
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *         the uri is malformed such that a URL cannot be generated, or the uri is null
-     * @param uri the URI to convert
-     * @param cutouts list of cutout representations
-     * @return a URL to the identified resource
-     */
+public class VOSpaceSchemeResolverWithCutouts extends VOSpaceSchemeResolver implements CutoutGenerator
+{    
+    private List<String> cutouts = null;
+
     public URL toURL(URI uri, List<String> cutouts)
-        throws IllegalArgumentException;
+    {
+        this.cutouts = cutouts;
+        return super.toURL(uri);
+    }
+
+    protected String createURL(URI uri)
+    {
+        // assume that the baseQuery already contains one or more parameters
+        String baseQuery = super.createURL(uri);
+        StringBuilder query = new StringBuilder();
+        query.append(baseQuery);
+
+        if (this.cutouts != null && !this.cutouts.isEmpty())
+        {
+            query.append("&");
+            query.append("view=cutout");
+            for (String cutout : this.cutouts)
+            {
+                query.append("&");
+                query.append("cutout");
+                query.append("=");
+                query.append(NetUtil.encode(cutout));
+            }
+        }
+
+        return query.toString();
+    }
 }
