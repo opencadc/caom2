@@ -82,9 +82,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class AdSchemeResolverTest 
+public class AdResolverTest 
 {
-    private static final Logger log = Logger.getLogger(AdSchemeResolverTest.class);
+    private static final Logger log = Logger.getLogger(AdResolverTest.class);
 
     static
     {
@@ -99,7 +99,7 @@ public class AdSchemeResolverTest
 
     AdResolver ash = new AdResolver();
     
-    public AdSchemeResolverTest()
+    public AdResolverTest()
     {
 
     }
