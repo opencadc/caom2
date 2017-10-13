@@ -122,7 +122,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         // TODO: Add stopDate to this skip query
         log.debug("Querying for skip records between " + startDate + " and " + stopDate);
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate);
+        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate);
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         Integer workCount = artifacts.size();
@@ -293,11 +293,12 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     }
                     result.errorMessage = sb.toString();
                 }
-
-                if (uploadSuccess) {
-                    result.success = true;
-                } else {
-                    result.errorMessage = uploadErrorMessage;
+                else {
+                    if (uploadSuccess) {
+                        result.success = true;
+                    } else {
+                        result.errorMessage = uploadErrorMessage;
+                    }
                 }
 
                 return result;

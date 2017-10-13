@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -81,7 +82,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -208,17 +211,17 @@ public class HarvestSkipDAO {
 
         private void loadValues(PreparedStatement ps)
                 throws SQLException {
-            ps.setString(1, source);
-            ps.setString(2, cname);
+            int col = 1;
+            ps.setString(col++, source);
+            ps.setString(col++, cname);
             if (skipID != null) {
-                ps.setObject(3, skipID);
-            } else {
-                if (start != null) {
-                    ps.setTimestamp(3, new Timestamp(start.getTime()), utcCalendar);
-                }
-                if (end != null) {
-                    ps.setTimestamp(4, new Timestamp(end.getTime()), utcCalendar);
-                }
+                ps.setObject(col++, skipID);
+            }
+            if (start != null) {
+                ps.setTimestamp(col++, new Timestamp(start.getTime()), utcCalendar);
+            }
+            if (end != null) {
+                ps.setTimestamp(col++, new Timestamp(end.getTime()), utcCalendar);
             }
         }
     }

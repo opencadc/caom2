@@ -60,6 +60,8 @@ WHERE
 -- SIAv1 specific filtering
   AND p.dataProductType = 'image'
   AND (a.productType = 'science'
-    OR a.productType IS NULL) -- OR to allow HST science data through without joining to <schema>.Part
-  AND (o.collection != 'OMM' OR a.uri NOT LIKE '%prev') -- hack for OMM data engineering issue
+    -- OR to allow HST science data through without joining to <schema>.Part
+    OR a.productType IS NULL) 
+  -- hack for OMM data engineering issue
+  AND (o.collection != 'OMM' OR a.uri NOT LIKE '%prev') 
 ;

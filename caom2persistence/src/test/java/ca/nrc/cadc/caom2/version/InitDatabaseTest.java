@@ -72,8 +72,15 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -83,7 +90,7 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class InitDatabaseTest 
+public class InitDatabaseTest
 {
     private static final Logger log = Logger.getLogger(InitDatabaseTest.class);
 
@@ -91,17 +98,18 @@ public class InitDatabaseTest
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
     }
-    
+
     private DataSource dataSource;
     private String database;
     private String schema;
-    
-    public InitDatabaseTest() 
+
+    public InitDatabaseTest()
     {
         try
         {
             database = "cadctest";
             schema = "caom2";
+            loadTestSchema();
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
             dataSource = DBUtil.getDataSource(cc);
@@ -111,11 +119,37 @@ public class InitDatabaseTest
             log.error("failed to init DataSource", ex);
         }
     }
-    
+
+    /**
+     * If the file test.schema is present, use the content of that file
+     * for the schema instead of the default 'caom2'.
+     */
+    private void loadTestSchema()
+    {
+        Path testSchema = Paths.get("test.schema");
+        if (Files.exists(testSchema))
+        {
+            try
+            {
+                byte[] encoded = Files.readAllBytes(testSchema);
+                String content = new String(encoded, "UTF-8");
+                log.info("Using test schema: " + content);
+                schema = content;
+            } catch (IOException e)
+            {
+                log.warn("Failed to read test schema", e);
+            }
+        }
+        else
+        {
+            log.debug("No test.schema file, using default");
+        }
+    }
+
     // NOTE: tests are currently commented out because the other Postgresql*Test(s)
     // all use InitDatabase.doInit and one of them will have done this anyway; this
     // test will have some value if/when the TODOs are implemented.
-    
+
     @Test
     public void testNewInstall()
     {
@@ -125,9 +159,9 @@ public class InitDatabaseTest
             // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
-            
+
             // TODO: verify that tables were created with test queries
-            
+
             // TODO: verify that init is idempotent
         }
         catch(Exception unexpected)
@@ -136,7 +170,7 @@ public class InitDatabaseTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testUpgradeInstall()
     {
@@ -146,11 +180,11 @@ public class InitDatabaseTest
             // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
-            
+
             // TODO: verify that tables were created with test queries
-            
+
             // TODO: verify that init is idempotent
-            
+
         }
         catch(Exception unexpected)
         {
@@ -158,9 +192,9 @@ public class InitDatabaseTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testParseCreateDDL() 
+    public void testParseCreateDDL()
     {
         try
         {
@@ -169,7 +203,7 @@ public class InitDatabaseTest
                 1, 7, 8, 3, 4, 4, 2, 2, 2, 6, 8, 27, 1, 2, 1
             };
             Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
-            
+
             for (int i = 0; i<numStatementsPerFile.length; i++)
             {
                 String fname = InitDatabase.CREATE_SQL[i];
@@ -184,9 +218,9 @@ public class InitDatabaseTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testParseUpgradeDDL() 
+    public void testParseUpgradeDDL()
     {
         try
         {
@@ -195,7 +229,7 @@ public class InitDatabaseTest
                 15, 1, 2, 1
             };
             Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
-            
+
             for (int i = 0; i<numStatementsPerFile.length; i++)
             {
                 String fname = InitDatabase.UPGRADE_SQL[i];
