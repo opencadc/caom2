@@ -33,17 +33,17 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.AdSchemeResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
 import ca.nrc.cadc.net.NetUtil;
 
 /**
- * SchemeHandler implementation for the Archive Directory (ad) system.
+ * StorageResolver implementation for the Archive Directory (ad) system.
  * This class can convert an AD URI into a URL. This is an alternate version
  * that uses the RegistryClient to find the data web service base URL.
  *
  * @author pdowler
  */
-public class AdSchemeResolverWithCutouts extends AdSchemeResolver implements CutoutGenerator
+public class AdResolverWithCutouts extends AdResolver implements CutoutGenerator
 {
     private List<String> cutouts = null;
 
@@ -54,6 +54,7 @@ public class AdSchemeResolverWithCutouts extends AdSchemeResolver implements Cut
     }
     
 
+    @Override
     protected URL toURL(URL serviceURL, String path) throws MalformedURLException
     {
         StringBuilder query = new StringBuilder("");

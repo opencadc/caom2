@@ -73,14 +73,14 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceSchemeResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
 import ca.nrc.cadc.net.NetUtil;
 
 /**
  *
  * @author pdowler
  */
-public class VOSpaceSchemeResolverWithCutouts extends VOSpaceSchemeResolver implements CutoutGenerator
+public class VOSpaceResolverWithCutouts extends VOSpaceResolver implements CutoutGenerator
 {    
     private List<String> cutouts = null;
 
@@ -90,6 +90,7 @@ public class VOSpaceSchemeResolverWithCutouts extends VOSpaceSchemeResolver impl
         return super.toURL(uri);
     }
 
+    @Override
     protected String createURL(URI uri)
     {
         // assume that the baseQuery already contains one or more parameters
