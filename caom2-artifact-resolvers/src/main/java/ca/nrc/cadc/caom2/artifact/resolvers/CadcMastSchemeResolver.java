@@ -55,11 +55,8 @@ public class CadcMastSchemeResolver implements StorageResolver {
     private static final Logger log = Logger.getLogger(CadcMastSchemeResolver.class);
 
     public static final String SCHEME = "mast";
-
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-
     private String baseDataURL;
-    protected AuthMethod authMethod;
 
     public CadcMastSchemeResolver() {
         try {
