@@ -71,6 +71,8 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.types.CartesianTransform;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -78,7 +80,6 @@ import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.postgresql.PgSpoint;
 import ca.nrc.cadc.dali.postgresql.PgSpoly;
@@ -86,13 +87,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
-import org.postgresql.geometric.PGpoint;
 import org.postgresql.geometric.PGpolygon;
 import org.postgresql.util.PGobject;
 
@@ -103,7 +100,7 @@ import org.postgresql.util.PGobject;
 public class PostgreSQLGenerator extends BaseSQLGenerator {
 
     private static final Logger log = Logger.getLogger(PostgreSQLGenerator.class);
-
+    
     public PostgreSQLGenerator(String database, String schema) {
         super(database, schema);
         this.useIntegerForBoolean = true;
@@ -219,6 +216,40 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             }
         }
     }
+    
+    /**
+     * Store a circle value in a double[] column.
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    @Override
+    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
+            throws SQLException {
+        if (val == null) {
+            ps.setObject(col, null);
+            if (sb != null) {
+                sb.append("null,");
+            }
+        } else {
+            log.debug("[safeSetCircle] in: " + val);
+            Double[] dval = new Double[3];
+            dval[0] = val.getCenter().cval1;
+            dval[1] = val.getCenter().cval2;
+            dval[2] = val.getRadius();
+            java.sql.Array arr = ps.getConnection().createArrayOf("float8", dval);
+            ps.setObject(col, arr);
+            if (sb != null) {
+                sb.append("[");
+                for (double d : dval) {
+                    sb.append(d).append(",");
+                }
+                sb.setCharAt(sb.length() - 1, ']'); // replace last comma with closing ]
+            }
+        }
+    }
 
     /**
      * Store polygon value in an spoly column.
@@ -230,7 +261,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -238,7 +269,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.debug("[safeSetPolygon] in: " + val);
+            log.debug("[safeSetPositionBounds] in: " + val);
             ca.nrc.cadc.dali.Polygon poly = new ca.nrc.cadc.dali.Polygon();
             for (Point p : val.getPoints()) {
                 poly.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));
@@ -250,6 +281,38 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
                 sb.append(pgo.getValue());
                 sb.append(",");
             }
+        }
+    }
+
+    /** 
+     * Store a circle value in an spoly column. This method generates a polygon 
+     * approximation of the circle.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    @Override
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
+            throws SQLException {
+        if (val == null) {
+            ps.setObject(col, null);
+            if (sb != null) {
+                sb.append("null,");
+            }
+        } else {
+            log.warn("[safeSetPositionBounds] in: " + val);
+            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 6);
+            PgSpoly pgs = new PgSpoly();
+            PGobject pgo = pgs.generatePolygon(poly);
+            ps.setObject(col, pgo);
+            if (sb != null) {
+                sb.append(pgo.getValue());
+                sb.append(",");
+            }
+            log.warn("[safeSetPositionBounds] out: " + pgo.getValue());
         }
     }
 
@@ -379,15 +442,36 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             return null;
         }
 
-        List<Point> ret = new ArrayList<Point>();
-        for (int i = 0; i < coords.length; i += 2) {
-            double cval1 = coords[i];
-            double cval2 = coords[i + 1];
+        if (coords.length >= 6) {
+            List<Point> ret = new ArrayList<Point>();
+            for (int i = 0; i < coords.length; i += 2) {
+                double cval1 = coords[i];
+                double cval2 = coords[i + 1];
 
-            Point p = new Point(cval1, cval2);
-            ret.add(p);
+                Point p = new Point(cval1, cval2);
+                ret.add(p);
+            }
+            return ret;
         }
-        return ret;
+        throw new IllegalStateException("array length " + coords.length + "too short for List<Point>");
+    }
+    
+    @Override
+    protected Circle getCircle(ResultSet rs, int col) throws SQLException {
+        double[] coords = Util.getDoubleArray(rs, col);
+        if (coords == null) {
+            return null;
+        }
+        if (coords.length == 3) {
+            double cval1 = coords[0];
+            double cval2 = coords[1];
+            double rad = coords[2];
+            
+            Circle ret = new Circle(new Point(cval1, cval2), rad);
+            log.debug("[getCircle] " + ret);
+            return ret;
+        }
+        throw new IllegalStateException("array length " + coords.length + " invalid for Circle");
     }
 
     @Override
@@ -432,6 +516,24 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         List<SubInterval> ret = new ArrayList<SubInterval>();
         for (ca.nrc.cadc.dali.DoubleInterval di : dis) {
             ret.add(new SubInterval(di.getLower(), di.getUpper()));
+        }
+        return ret;
+    }
+    
+    private ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
+        
+        CartesianTransform trans = CartesianTransform.getTransform(val);
+        Point cen = trans.transform(val.getCenter());
+        double rad = val.getRadius();
+
+        CartesianTransform inv = trans.getInverseTransform();
+        ca.nrc.cadc.dali.Polygon ret = new ca.nrc.cadc.dali.Polygon();        
+        for (int i = 0; i < numVerts; i++) {
+            double x = cen.cval1 + rad * Math.cos(i * 2.0 * Math.PI / ((double) numVerts));
+            double y = cen.cval2 + rad * Math.sin(i * 2.0 * Math.PI / ((double) numVerts));
+            Point p = new Point(x, y);
+            p = inv.transform(p);
+            ret.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));
         }
         return ret;
     }

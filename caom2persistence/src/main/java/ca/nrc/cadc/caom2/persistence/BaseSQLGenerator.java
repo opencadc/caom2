@@ -125,6 +125,7 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneMetaReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -1411,8 +1412,16 @@ public class BaseSQLGenerator implements SQLGenerator {
                     if (pos.bounds instanceof Polygon) {
                         Polygon poly = (Polygon) pos.bounds;
                         safeSetPointList(sb, ps, col++, poly.getPoints());
-                        safeSetPolygon(sb, ps, col++, poly);
+                        safeSetPositionBounds(sb, ps, col++, poly);
                         safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
+                        safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                        safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                    } else if (pos.bounds instanceof Circle) {
+                        Circle circ = (Circle) pos.bounds;
+                        safeSetCircle(sb, ps, col++, circ);
+                        safeSetPositionBounds(sb, ps, col++, circ);
+                        safeSetMultiPolygon(sb, ps, col++, null);
                         safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
                         safeSetDouble(sb, ps, col++, pos.bounds.getArea());
                         safeSetDouble(sb, ps, col++, pos.bounds.getSize());
@@ -1421,7 +1430,7 @@ public class BaseSQLGenerator implements SQLGenerator {
                     }
                 } else {
                     safeSetPointList(sb, ps, col++, null);
-                    safeSetPolygon(sb, ps, col++, null);
+                    safeSetPositionBounds(sb, ps, col++, (Polygon) null);
                     safeSetMultiPolygon(sb, ps, col++, null);
                     safeSetPoint(sb, ps, col++, null);
                     safeSetDouble(sb, ps, col++, null);
@@ -2424,17 +2433,62 @@ public class BaseSQLGenerator implements SQLGenerator {
             throws SQLException {
         throw new UnsupportedOperationException();
     }
-
+    
+    /**
+     * Store a list of points so polygon can be reconstructed.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
-
-    protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+    
+    /**
+     * Store a circle so it can be reconstructed.
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Store a polygon to support queries.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+            throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+    
+    /**
+     * Store a circle to support queries.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val)
+            throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetMultiPolygon(StringBuilder sb, PreparedStatement ps, int col, MultiPolygon val)
             throws SQLException {
         throw new UnsupportedOperationException();
@@ -2445,6 +2499,11 @@ public class BaseSQLGenerator implements SQLGenerator {
         throw new UnsupportedOperationException();
     }
 
+    protected Circle getCircle(ResultSet rs, int col)
+            throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+    
     protected List<Point> getPointList(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
@@ -3193,11 +3252,18 @@ public class BaseSQLGenerator implements SQLGenerator {
 
             if (persistComputed) {
                 Position pos = new Position();
-                List<Point> points = getPointList(rs, col++);
-                col++; // position_bounds spoly
-                MultiPolygon mp = getMultiPolygon(rs, col++);
-                if (points != null) {
-                    pos.bounds = new Polygon(points, mp);
+                try {
+                    pos.bounds = getCircle(rs, col);
+                    col++; // position_bounds_points
+                    col++; // position_bounds (spoly)
+                    col++; // position_bounds_samples
+                } catch (IllegalStateException ex) {
+                    List<Point> points = getPointList(rs, col++);
+                    col++; // position_bounds spoly
+                    MultiPolygon mp = getMultiPolygon(rs, col++);
+                    if (points != null) {
+                        pos.bounds = new Polygon(points, mp);
+                    }
                 }
                 log.debug("position_bounds: " + pos.bounds);
                 col += 3; // center, area, size
