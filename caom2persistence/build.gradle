@@ -22,7 +22,8 @@ dependencies {
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     compile 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    compile 'org.opencadc:cadc-util:1.+'
+    compile 'org.opencadc:cadc-util:[1.0,)'
+    compile 'org.opencadc:cadc-dali-pg:[0.1,)'
     compile 'org.opencadc:caom2:[2.3.4,)'
     compile 'org.opencadc:caom2-persist:[2.3.1,)'
 

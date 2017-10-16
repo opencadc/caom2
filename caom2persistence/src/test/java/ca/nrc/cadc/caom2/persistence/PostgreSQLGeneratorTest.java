@@ -165,30 +165,4 @@ public class PostgreSQLGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
-    
-    
-    @Test
-    public void testGetPolygonFromInterval()
-    {
-        try
-        {
-            Interval i = new Interval(1.0, 3.0);
-            i.getSamples().add(new SubInterval(1.0, 1.2));
-            i.getSamples().add(new SubInterval(2.8, 3.0));
-            
-            PGpolygon ip;
-            
-            ip = gen.generatePolygon2D(i, null);
-            log.info(i + " -> " + ip.getValue());
-            
-            ip = gen.generatePolygon2D(null, i.getSamples());
-            log.info(i + " -> " + ip.getValue());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 }
