@@ -97,7 +97,7 @@ public class AdResolverTest
     String INVALID_URI2 = "ad:FOO/bar/baz";
 
 
-    AdResolver ash = new AdResolver();
+    AdResolver adr = new AdResolver();
     
     public AdResolverTest()
     {
@@ -119,13 +119,19 @@ public class AdResolverTest
     }
     
     @Test
+    public void testGetSchema()
+    {
+        Assert.assertTrue(AdResolver.SCHEME.equals(adr.getSchema()));
+    }
+    
+    @Test
     public void testFileHTTP()
     {
         try
         {
-            ash.setAuthMethod(AuthMethod.ANON);
+            adr.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
+            URL url = adr.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
@@ -143,9 +149,9 @@ public class AdResolverTest
     {
         try
         {
-            ash.setAuthMethod(AuthMethod.CERT);
+            adr.setAuthMethod(AuthMethod.CERT);
             URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
+            URL url = adr.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
@@ -164,7 +170,7 @@ public class AdResolverTest
         try
         {
             URI uri = new URI(INVALID_URI1);
-            URL url = ash.toURL(uri);
+            URL url = adr.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
         }
         catch(IllegalArgumentException expected)
@@ -184,7 +190,7 @@ public class AdResolverTest
         try
         {
             URI uri = new URI(INVALID_URI2);
-            URL url = ash.toURL(uri);
+            URL url = adr.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
         }
         catch(IllegalArgumentException expected)

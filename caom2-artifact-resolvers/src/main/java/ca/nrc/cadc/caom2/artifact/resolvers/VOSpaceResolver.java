@@ -62,7 +62,6 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
@@ -162,7 +161,7 @@ public class VOSpaceResolver implements StorageResolver {
 
             return query.toString();
         } catch (Throwable t) {
-            throw new RuntimeException("failed to convert " + uri + " and cutouts -> URL", t);
+            throw new RuntimeException("failed to convert " + uri, t);
         }
     }
 
