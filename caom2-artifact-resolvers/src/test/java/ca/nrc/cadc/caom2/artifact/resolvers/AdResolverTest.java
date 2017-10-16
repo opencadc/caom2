@@ -82,53 +82,32 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class AdResolverTest 
-{
+public class AdResolverTest {
     private static final Logger log = Logger.getLogger(AdResolverTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String FILE_URI = "ad:FOO/bar";
-    String FILE_PATH = "/data/pub/FOO/bar";
-    String INVALID_URI1 = "ad:FOO";
-    String INVALID_URI2 = "ad:FOO/bar/baz";
-
+    private static final String FILE_URI = "ad:FOO/bar";
+    private static final String FILE_PATH = "/data/pub/FOO/bar";
+    private static final String INVALID_URI1 = "ad:FOO";
+    private static final String INVALID_URI2 = "ad:FOO/bar/baz";
 
     AdResolver adr = new AdResolver();
-    
-    public AdResolverTest()
-    {
+
+    public AdResolverTest() {
 
     }
 
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
     @Test
-    public void testGetSchema()
-    {
+    public void testGetSchema() {
         Assert.assertTrue(AdResolver.SCHEME.equals(adr.getSchema()));
     }
-    
+
     @Test
-    public void testFileHTTP()
-    {
-        try
-        {
+    public void testFileHTTP() {
+        try {
             adr.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
             URL url = adr.toURL(uri);
@@ -136,19 +115,15 @@ public class AdResolverTest
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testFileHTTPS()
-    {
-        try
-        {
+    public void testFileHTTPS() {
+        try {
             adr.setAuthMethod(AuthMethod.CERT);
             URI uri = new URI(FILE_URI);
             URL url = adr.toURL(uri);
@@ -156,49 +131,35 @@ public class AdResolverTest
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testInvalidShortURI()
-    {
-        try
-        {
+    public void testInvalidShortURI() {
+        try {
             URI uri = new URI(INVALID_URI1);
             URL url = adr.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
-        }
-        catch(IllegalArgumentException expected)
-        {
+        } catch (IllegalArgumentException expected) {
             log.debug("expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testInvalidLongURI()
-    {
-        try
-        {
+    public void testInvalidLongURI() {
+        try {
             URI uri = new URI(INVALID_URI2);
             URL url = adr.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
-        }
-        catch(IllegalArgumentException expected)
-        {
+        } catch (IllegalArgumentException expected) {
             log.debug("expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
