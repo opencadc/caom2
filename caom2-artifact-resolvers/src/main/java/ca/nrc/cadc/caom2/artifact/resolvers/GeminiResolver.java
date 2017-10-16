@@ -36,18 +36,67 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
+ * This class can convert a GEMINI URI into a URL.
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
-    private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
+public class GeminiResolver implements StorageResolver {
+    public static final String SCHEME = "gemini";
+    public static final String FILE_URI = "file";
+    public static final String PREVIEW_URI = "preview";
+    private static final Logger log = Logger.getLogger(GeminiResolver.class);
+    private static final String BASE_URL = "https://archive.gemini.edu";
+    private static final String CANNOT_GENERATE_URL = "Can't generate URL from URI.";
 
+    public GeminiResolver() {
+    }
 
-    public MastResolver() {
+    @Override
+    public URL toURL(URI uri) {
+        this.validateScheme(uri);
+        String urlStr = "";
+        try {
+            String path = getPath(uri);
+            urlStr = BASE_URL + path;
+
+            URL url = null;
+            if (urlStr != null) {
+                url = new URL(urlStr);
+            }
+
+            log.debug(uri + " --> " + url);
+            return url;
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: could not generate URL from uri " + urlStr, ex);
+        }
+    }
+
+    public URL toURL(URI uri, List<String> cutouts) throws UnsupportedOperationException {
+        // GEMINI doesn't support cutouts, so if the request hast to go to
+        // that service instead of serving from the local instance,
+        throw new UnsupportedOperationException(CANNOT_GENERATE_URL + "Cutouts not yet supported for MAST URIs.");
+    }
+
+    private String getPath(URI uri) {
+        String[] path = uri.getSchemeSpecificPart().split("/");
+        if (path.length != 2) {
+            throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
+        }
+
+        String requestType = path[0];
+        if (!(requestType.equals(FILE_URI) || requestType.equals(PREVIEW_URI))) {
+            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
+        }
+
+        String fileName = path[1];
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("/");
+        sb.append(requestType);
+        sb.append("/");
+        sb.append(fileName);
+
+        return sb.toString();
     }
 
     @Override
@@ -55,57 +104,10 @@ public class MastResolver implements StorageResolver {
         return SCHEME;
     }
 
-    @Override
-    public URL toURL(URI uri) {
-        this.validateScheme(uri);
-        String s = "";
-        try {
-            s = this.createURL(uri);
-            URL url = null;
-            url = new URL(s);
-
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: could not generate URL from uri " + s, ex);
-        }
-    }
-
-    public URL toURL(URI uri, List<String> cutouts) throws UnsupportedOperationException {
-        // MAST doesn't support cutouts, so if the request hast to go to
-        // that service instead of serving from the local instance,
-        throw new UnsupportedOperationException(CANNOT_GET_URL + "Cutouts not yet supported for MAST URIs.");
-    }
-
-    protected String createURL(URI uri) throws IllegalArgumentException {
-
-        String newURL = "";
-
-        String schemeStr = uri.getScheme();
-
-        if (schemeStr.equals(SCHEME)) {
-            String path = uri.getSchemeSpecificPart();
-            if (path.isEmpty()) {
-                log.error(CANNOT_GET_URL + " Path portion of URI is empty: " + uri.toString());
-                throw new IllegalArgumentException(CANNOT_GET_URL + "Path is empty." + uri.toString());
-            }
-            newURL = MAST_BASE_ARTIFACT_URL + "/" + path;
-        } else {
-            log.error(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
-            throw new IllegalArgumentException(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
-        }
-
-        return newURL;
-    }
-
-    private String getPath(URI uri) {
-        return uri.getSchemeSpecificPart();
-    }
-
     protected void validateScheme(URI uri) {
         if (uri == null) {
-            log.error(CANNOT_GET_URL + " URI can't be null.");
-            throw new IllegalArgumentException(CANNOT_GET_URL + " URI can't be null.");
+            log.error(CANNOT_GENERATE_URL + " URI can't be null.");
+            throw new IllegalArgumentException(CANNOT_GENERATE_URL + " URI can't be null.");
         }
 
         if (!SCHEME.equals(uri.getScheme())) {

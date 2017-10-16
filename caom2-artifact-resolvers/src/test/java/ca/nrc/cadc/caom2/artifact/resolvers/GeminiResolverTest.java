@@ -82,28 +82,24 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class GeminiResolverTest {
+    private static final Logger log = Logger.getLogger(GeminiResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
+    String VALID_FILE1 = "flub.fits";
+    String VALID_FILE2 = "blub.fits";
     String PROTOCOL_STR = "https";
-    String MAST_BASE_ARTIFACT_URL = "masttest.stsci.edu";
-    String MAST_BASE_PATH = "/partners/download/file";
+    String BASE_URL = "archive.gemini.edu";
 
+    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
+    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy.fits";
 
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
+    GeminiResolver geminiResolver = new GeminiResolver();
 
-    MastResolver mastsh = new MastResolver();
-
-    public MastResolverTest() {
-
+    public GeminiResolverTest() {
     }
 
     //@Test
@@ -120,19 +116,23 @@ public class MastResolverTest {
     @Test
     public void testValidURI() {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
+            String uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = geminiResolver.toURL(uri);
 
-            for (String uriStr : validURIs) {
+            Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
+            Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
+            Assert.assertEquals(BASE_URL, url.getHost());
 
-                URI uri = new URI(uriStr);
-                URL url = mastsh.toURL(uri);
 
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
-                Assert.assertEquals(MAST_BASE_PATH + "/" + uri.getSchemeSpecificPart(), url.getPath());
-                Assert.assertEquals(MAST_BASE_ARTIFACT_URL, url.getHost());
-            }
+            uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE2;
+            uri = new URI(uriStr);
+            url = geminiResolver.toURL(uri);
+
+            Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
+            Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
+            Assert.assertEquals(BASE_URL, url.getHost());
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -144,7 +144,7 @@ public class MastResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastsh.toURL(uri);
+            URL url = geminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -158,7 +158,7 @@ public class MastResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = mastsh.toURL(null);
+            URL url = geminiResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -170,15 +170,30 @@ public class MastResolverTest {
 
 
     @Test
+    public void testInvalidUriType() {
+        try {
+            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = geminiResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
     public void testUriCutout() {
         try {
-            URI uri = new URI(VALID_URI);
+            URI uri = new URI(GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE1);
             List<String> cutouts = new ArrayList<String>();
             // For the moment it doesn't matter what goes in here as they aren't supported.
             cutouts.add("a");
             cutouts.add("b");
 
-            URL url = mastsh.toURL(uri, cutouts);
+            URL url = geminiResolver.toURL(uri, cutouts);
             Assert.fail("Expected UnsupportedOperationException. Cutouts are not yet supported for mast scheme. Got URL: " + url.toString());
         } catch (UnsupportedOperationException expected) {
             log.info("UnsupportedOperationException thrown as expected. Test passed.");
