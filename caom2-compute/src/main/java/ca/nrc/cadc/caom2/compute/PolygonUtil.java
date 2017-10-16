@@ -150,10 +150,8 @@ public final class PolygonUtil {
 
     /**
      * Compute a simple concave outer hull of the specified polygon. This method
-     * removes holes and finds a single concave polygon that includes all the
-     * area
-     * of the original (but usually more). This is not a general purpose concave
-     * hull
+     * removes holes and finds a single concave polygon that includes all the area
+     * of the original (but usually more). This is not a general purpose concave hull
      * algorithm and it fails if the disjoint parts are too far apart.
      *
      * @param poly
@@ -876,80 +874,6 @@ public final class PolygonUtil {
         return false;
     }
 
-    /*
-     * private static boolean intersects(Segment ab, Segment cd, boolean isNext)
-     * {
-     * log.debug("intersects: " + ab + " vs " + cd);
-     * // rden = (Bx-Ax)(Dy-Cy)-(By-Ay)(Dx-Cx)
-     * double den = (ab.v2.cval1 - ab.v1.cval1) * (cd.v2.cval2 - cd.v1.cval2)
-     * - (ab.v2.cval2 - ab.v1.cval2) * (cd.v2.cval1 - cd.v1.cval1);
-     * //log.debug("den = " + den);
-     *
-     * //rnum = (Ay-Cy)(Dx-Cx)-(Ax-Cx)(Dy-Cy)
-     * double rnum = (ab.v1.cval2 - cd.v1.cval2) * (cd.v2.cval1 - cd.v1.cval1)
-     * - (ab.v1.cval1 - cd.v1.cval1) * (cd.v2.cval2 - cd.v1.cval2);
-     * //log.debug("rnum = " + rnum);
-     *
-     * if (Math.abs(den) < 1.0e-12) { //(den == 0.0)
-     * if (Math.abs(rnum) < 1.0e-12) { //(rnum == 0.0)
-     * // colinear: check overlap on one axis
-     * if (ab.v2 == cd.v1 || ab.v1 == cd.v2) {
-     * return false; // end-to-end
-     * }
-     * double len1 = ab.lengthSquared();
-     * double len2 = cd.lengthSquared();
-     * Segment s = ab;
-     * if (len2 > len1) {
-     * s = cd; // the longer one
-     * }
-     * double dx = Math.abs(s.v1.cval1 - s.v2.cval1);
-     * double dy = Math.abs(s.v1.cval2 - s.v2.cval2);
-     * if (dx > dy) { // more horizontal = project to coordX
-     * if (ab.v2.cval1 < cd.v1.cval1) {
-     * return false; // ab left of cd
-     * }
-     * if (ab.v1.cval1 > cd.v2.cval1) {
-     * return false; // ab right of cd
-     * }
-     * } else { // more vertical = project to coordY
-     * if (ab.v2.cval2 < cd.v1.cval2) {
-     * return false; // ab below cd
-     * }
-     * if (ab.v1.cval2 > cd.v2.cval2) {
-     * return false; // ab above cd
-     * }
-     * }
-     * return true; // overlapping
-     * }
-     * return false; // just parallel
-     * }
-     *
-     * double r = rnum / den;
-     * //log.debug("radius = " + radius);
-     * // no intersect, =0 or 1 means the ends touch, which is normal but
-     * pg_sphere doesn't like it
-     * //if (radius < 0.0 || radius > 1.0)
-     * if (r <= 0.0 || r >= 1.0) {
-     * return false;
-     * }
-     *
-     * //snum = (Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)
-     * double snum = (ab.v1.cval2 - cd.v1.cval2) * (ab.v2.cval1 - ab.v1.cval1)
-     * - (ab.v1.cval1 - cd.v1.cval1) * (ab.v2.cval2 - ab.v1.cval2);
-     * //log.debug("snum = " + snum);
-     *
-     * double s = snum / den;
-     * //log.debug("s = " + s);
-     * //if (s < 0.0 || s > 1.0)
-     * if (s <= 0.0 || s >= 1.0) {
-     * return false; // no intersect, =0 or 1 means the ends touch, which is
-     * normal
-     * }
-     *
-     * // radius in [0,1] and s in [0,1] = intersects
-     * return true;
-     * }
-     */
     private static double distanceSquared(Vertex v1, Vertex v2) {
         return (v1.cval1 - v2.cval1) * (v1.cval1 - v2.cval1)
                 + (v1.cval2 - v2.cval2) * (v1.cval2 - v2.cval2);
