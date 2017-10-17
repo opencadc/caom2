@@ -93,23 +93,23 @@ public class VOSpaceResolverTest {
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
-    VOSpaceResolver ash = new VOSpaceResolver();
+    VOSpaceResolver vosResolver = new VOSpaceResolver();
 
     public VOSpaceResolverTest() {
 
     }
 
     @Test
-    public void testGetSchema() {
-        Assert.assertTrue(VOSpaceResolver.SCHEME.equals(ash.getSchema()));
+    public void testGetScheme() {
+        Assert.assertTrue(VOSpaceResolver.SCHEME.equals(vosResolver.getScheme()));
     }
 
     @Test
     public void testFileHTTP() {
         try {
-            ash.setAuthMethod(AuthMethod.ANON);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
@@ -126,9 +126,9 @@ public class VOSpaceResolverTest {
     @Test
     public void testFileHTTPS() {
         try {
-            ash.setAuthMethod(AuthMethod.CERT);
+            vosResolver.setAuthMethod(AuthMethod.CERT);
             URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
@@ -146,7 +146,7 @@ public class VOSpaceResolverTest {
     public void testInvalidSchemeURI() {
         try {
             URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = ash.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             Assert.assertTrue(expected.getMessage().contains("invalid scheme"));
@@ -161,7 +161,7 @@ public class VOSpaceResolverTest {
     public void testInvalidNoAuthorityURI() {
         try {
             URI uri = new URI(INVALID_NO_AUTHORITY_URI1);
-            URL url = ash.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
         } catch (RuntimeException expected) {
             Assert.assertTrue(expected.getMessage().contains("failed to convert"));

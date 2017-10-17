@@ -91,22 +91,22 @@ public class CadcMastResolverTest {
     private static final String FILE_PATH = "/data/pub/MAST/FOO/bar";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
-    CadcMastResolver ash = new CadcMastResolver();
+    CadcMastResolver cadcMastResolver = new CadcMastResolver();
 
     public CadcMastResolverTest() {
 
     }
 
     @Test
-    public void testGetSchema() {
-        Assert.assertTrue(CadcMastResolver.SCHEME.equals(ash.getSchema()));
+    public void testGetScheme() {
+        Assert.assertTrue(CadcMastResolver.SCHEME.equals(cadcMastResolver.getScheme()));
     }
 
     @Test
     public void testToURL() {
         try {
             URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
+            URL url = cadcMastResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
@@ -121,7 +121,7 @@ public class CadcMastResolverTest {
     public void testInvalidSchemeURI() {
         try {
             URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = ash.toURL(uri);
+            URL url = cadcMastResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             Assert.assertTrue(expected.getMessage().contains("invalid scheme"));

@@ -112,6 +112,10 @@ public class GeminiResolverTest {
         }
     }
 
+    @Test
+    public void testGetSchema() {
+        Assert.assertTrue(GeminiResolver.SCHEME.equals(geminiResolver.getScheme()));
+    }
 
     @Test
     public void testValidURI() {

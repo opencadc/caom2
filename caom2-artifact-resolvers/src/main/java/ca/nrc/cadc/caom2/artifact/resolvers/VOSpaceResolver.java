@@ -78,22 +78,18 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
 public class VOSpaceResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(VOSpaceResolver.class);
-
     public static final String SCHEME = "vos";
     public static final String CUTOUT_VIEW = "ivo://cadc.nrc.ca/vospace/view#cutout";
     public static final String PROTOCOL_HTTP_GET = "ivo://ivoa.net/vospace/core#httpget";
     public static final String PROTOCOL_HTTPS_GET = "ivo://ivoa.net/vospace/core#httpsget";
     public static final String pullFromVoSpaceValue = "pullFromVoSpace";
-
+    private static final Logger log = Logger.getLogger(VOSpaceResolver.class);
     protected AuthMethod authMethod;
 
     public VOSpaceResolver() {
@@ -122,7 +118,7 @@ public class VOSpaceResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         return SCHEME;
     }
 

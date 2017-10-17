@@ -100,7 +100,7 @@ public class GeminiResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         return SCHEME;
     }
 
