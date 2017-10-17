@@ -303,7 +303,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.warn("[safeSetPositionBounds] in: " + val);
+            log.debug("[safeSetPositionBounds] in: " + val);
             ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 6);
             PgSpoly pgs = new PgSpoly();
             PGobject pgo = pgs.generatePolygon(poly);
@@ -312,7 +312,7 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
                 sb.append(pgo.getValue());
                 sb.append(",");
             }
-            log.warn("[safeSetPositionBounds] out: " + pgo.getValue());
+            log.debug("[safeSetPositionBounds] out: " + pgo.getValue());
         }
     }
 
@@ -521,16 +521,23 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
     }
     
     private ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
+        if (numVerts < 4)
+            throw new IllegalArgumentException("number of vertices in approximation too small (min: 4)");
         
         CartesianTransform trans = CartesianTransform.getTransform(val);
         Point cen = trans.transform(val.getCenter());
         double rad = val.getRadius();
 
+        double phi = 2.0 * Math.PI / ((double) numVerts);
+        // compute distance to vertices so that the edges are tangent and circle is
+        // inside the polygon
+        double vdist = val.getRadius() / Math.sin(phi / 2.0);
+        
         CartesianTransform inv = trans.getInverseTransform();
         ca.nrc.cadc.dali.Polygon ret = new ca.nrc.cadc.dali.Polygon();        
         for (int i = 0; i < numVerts; i++) {
-            double x = cen.cval1 + rad * Math.cos(i * 2.0 * Math.PI / ((double) numVerts));
-            double y = cen.cval2 + rad * Math.sin(i * 2.0 * Math.PI / ((double) numVerts));
+            double x = cen.cval1 + vdist * Math.cos(i * phi);
+            double y = cen.cval2 + vdist * Math.sin(i * phi);
             Point p = new Point(x, y);
             p = inv.transform(p);
             ret.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));

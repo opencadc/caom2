@@ -1875,7 +1875,7 @@ public abstract class AbstractObservationDAOTest
                         points.add(new Point(v.cval1, v.cval2));
                 p.position.bounds = new Polygon(points, mp);
             } else {
-                p.position.bounds = new Circle(new Point(22.0, 33.0), 0.4);
+                p.position.bounds = new Circle(new Point(0.0, 89.0), 2.0);
             }
             
             p.position.dimension = new Dimension2D(1024, 2048);
