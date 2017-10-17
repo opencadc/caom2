@@ -143,7 +143,6 @@ public class GeminiResolverTest {
         }
     }
 
-
     @Test
     public void testInvalidURIBadScheme() {
         try {
@@ -158,7 +157,6 @@ public class GeminiResolverTest {
         }
     }
 
-
     @Test
     public void testInvalidNullURI() {
         try {
@@ -171,7 +169,6 @@ public class GeminiResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
 
     @Test
     public void testInvalidUriType() {
@@ -188,22 +185,4 @@ public class GeminiResolverTest {
         }
     }
 
-    @Test
-    public void testUriCutout() {
-        try {
-            URI uri = new URI(GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE1);
-            List<String> cutouts = new ArrayList<String>();
-            // For the moment it doesn't matter what goes in here as they aren't supported.
-            cutouts.add("a");
-            cutouts.add("b");
-
-            URL url = geminiResolver.toURL(uri, cutouts);
-            Assert.fail("Expected UnsupportedOperationException. Cutouts are not yet supported for mast scheme. Got URL: " + url.toString());
-        } catch (UnsupportedOperationException expected) {
-            log.info("UnsupportedOperationException thrown as expected. Test passed.");
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 }
