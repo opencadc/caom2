@@ -37,11 +37,11 @@ import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
 import ca.nrc.cadc.net.NetUtil;
 
 /**
- * StorageResolver implementation for the Archive Directory (ad) system.
+ * CutoutGenerator implementation for the Archive Directory (ad) system.
  * This class can convert an AD URI into a URL. This is an alternate version
  * that uses the RegistryClient to find the data web service base URL.
  *
- * @author pdowler
+ * @author yeunga
  */
 public class AdResolverWithCutouts extends AdResolver implements CutoutGenerator
 {
