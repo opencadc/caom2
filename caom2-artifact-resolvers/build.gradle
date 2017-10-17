@@ -65,7 +65,4 @@ task intTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
-
-
-
 apply from: '../opencadc.gradle'
