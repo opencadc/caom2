@@ -116,13 +116,11 @@ public class MastResolverTest {
         }
     }
 
-
     @Test
     public void testGetSchema() {
         Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
     }
-
-
+    
     @Test
     public void testValidURI() {
         try {
@@ -145,7 +143,6 @@ public class MastResolverTest {
         }
     }
 
-
     @Test
     public void testInvalidURIBadScheme() {
         try {
@@ -160,7 +157,6 @@ public class MastResolverTest {
         }
     }
 
-
     @Test
     public void testInvalidNullURI() {
         try {
@@ -168,26 +164,6 @@ public class MastResolverTest {
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-
-    @Test
-    public void testUriCutout() {
-        try {
-            URI uri = new URI(VALID_URI);
-            List<String> cutouts = new ArrayList<String>();
-            // For the moment it doesn't matter what goes in here as they aren't supported.
-            cutouts.add("a");
-            cutouts.add("b");
-
-            URL url = mastResolver.toURL(uri, cutouts);
-            Assert.fail("Expected UnsupportedOperationException. Cutouts are not yet supported for mast scheme. Got URL: " + url.toString());
-        } catch (UnsupportedOperationException expected) {
-            log.info("UnsupportedOperationException thrown as expected. Test passed.");
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

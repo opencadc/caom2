@@ -71,12 +71,6 @@ public class GeminiResolver implements StorageResolver {
         }
     }
 
-    public URL toURL(URI uri, List<String> cutouts) throws UnsupportedOperationException {
-        // GEMINI doesn't support cutouts, so if the request hast to go to
-        // that service instead of serving from the local instance,
-        throw new UnsupportedOperationException(CANNOT_GENERATE_URL + "Cutouts not yet supported for MAST URIs.");
-    }
-
     private String getPath(URI uri) {
         String[] path = uri.getSchemeSpecificPart().split("/");
         if (path.length != 2) {

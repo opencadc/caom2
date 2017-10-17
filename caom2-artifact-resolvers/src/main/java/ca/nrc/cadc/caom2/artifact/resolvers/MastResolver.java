@@ -71,12 +71,6 @@ public class MastResolver implements StorageResolver {
         }
     }
 
-    public URL toURL(URI uri, List<String> cutouts) throws UnsupportedOperationException {
-        // MAST doesn't support cutouts, so if the request hast to go to
-        // that service instead of serving from the local instance,
-        throw new UnsupportedOperationException(CANNOT_GET_URL + "Cutouts not yet supported for MAST URIs.");
-    }
-
     protected String createURL(URI uri) throws IllegalArgumentException {
 
         String newURL = "";
