@@ -51,7 +51,7 @@ public class MastResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         return SCHEME;
     }
 

@@ -100,7 +100,7 @@ public class MastResolverTest {
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-    MastResolver mastsh = new MastResolver();
+    MastResolver mastResolver = new MastResolver();
 
     public MastResolverTest() {
 
@@ -118,6 +118,12 @@ public class MastResolverTest {
 
 
     @Test
+    public void testGetSchema() {
+        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
+    }
+
+
+    @Test
     public void testValidURI() {
         try {
             List<String> validURIs = new ArrayList<String>();
@@ -127,7 +133,7 @@ public class MastResolverTest {
             for (String uriStr : validURIs) {
 
                 URI uri = new URI(uriStr);
-                URL url = mastsh.toURL(uri);
+                URL url = mastResolver.toURL(uri);
 
                 Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
                 Assert.assertEquals(MAST_BASE_PATH + "/" + uri.getSchemeSpecificPart(), url.getPath());
@@ -144,7 +150,7 @@ public class MastResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastsh.toURL(uri);
+            URL url = mastResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -158,7 +164,7 @@ public class MastResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = mastsh.toURL(null);
+            URL url = mastResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -178,7 +184,7 @@ public class MastResolverTest {
             cutouts.add("a");
             cutouts.add("b");
 
-            URL url = mastsh.toURL(uri, cutouts);
+            URL url = mastResolver.toURL(uri, cutouts);
             Assert.fail("Expected UnsupportedOperationException. Cutouts are not yet supported for mast scheme. Got URL: " + url.toString());
         } catch (UnsupportedOperationException expected) {
             log.info("UnsupportedOperationException thrown as expected. Test passed.");

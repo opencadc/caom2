@@ -74,14 +74,12 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -91,15 +89,12 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class AdResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(AdResolver.class);
-
     public static final String SCHEME = "ad";
-
+    private static final Logger log = Logger.getLogger(AdResolver.class);
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
-
+    protected AuthMethod authMethod;
     private RegistryClient rc;
     private URI dataURI;
-    protected AuthMethod authMethod;
 
     public AdResolver() {
         this.rc = new RegistryClient();
@@ -109,6 +104,14 @@ public class AdResolver implements StorageResolver {
             throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
         this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+    }
+
+    private static String encodeString(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("BUG", ex);
+        }
     }
 
     @Override
@@ -141,7 +144,7 @@ public class AdResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         return SCHEME;
     }
 
@@ -160,13 +163,5 @@ public class AdResolver implements StorageResolver {
         sb.append(encodeString(fid));
 
         return sb.toString();
-    }
-
-    private static String encodeString(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException("BUG", ex);
-        }
     }
 }

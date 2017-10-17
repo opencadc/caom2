@@ -77,25 +77,21 @@ import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Interface;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
 
 /**
- * StorageResolver implementation for the MAST archive. 
+ * StorageResolver implementation for the MAST archive.
  * This class can convert an MAST URI into a URL . This is an alternate version that uses the RegistryClient to find the data web service base URL.
  *
  * @author yeunga
  */
 public class CadcMastResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
-
     public static final String SCHEME = "mast";
+    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
     private String baseDataURL;
 
@@ -137,7 +133,7 @@ public class CadcMastResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         return SCHEME;
     }
 }

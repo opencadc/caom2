@@ -70,12 +70,11 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.net.StorageResolver;
-
 import java.net.URI;
 import java.net.URL;
 
 /**
- * StorageResolver implementation for the ESAC MAST archive. 
+ * StorageResolver implementation for the ESAC MAST archive.
  * This class can convert an ESAC MAST URI into a URL. This is an alternate version that uses the RegistryClient to find the data web service base URL.
  *
  * @author yeunga
@@ -87,7 +86,7 @@ public class EsacMastResolver implements StorageResolver {
     }
 
     @Override
-    public String getSchema() {
+    public String getScheme() {
         // TODO Auto-generated method stub
         return null;
     }
