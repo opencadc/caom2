@@ -139,7 +139,8 @@ public class CaomSelectListConverterTest
         }
     }
     
-    @Test
+    // feature disabled because position_bounds_points is polymorphic
+    //@Test
     public final void testPositonBoundsNoAlias()
     {
         String[] queries = new String[] 
@@ -173,7 +174,8 @@ public class CaomSelectListConverterTest
         }
     }
 
-    @Test
+    // feature disabled because position_bounds_points is polymorphic
+    //@Test
     public final void testPositonBoundsWithAlias()
     {
         String[] queries = new String[] 

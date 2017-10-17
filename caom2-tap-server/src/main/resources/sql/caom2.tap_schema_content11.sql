@@ -148,6 +148,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_dimension_naxis1', 'dimensions (number of pixels) along one spatial axis', 'caom2:Plane.position.dimension.naxis1', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 54),
 ( 'caom2.Plane', 'position_dimension_naxis2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 55),
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
+( 'caom2.Plane', 'position_bounds_points', 'internal polymorphic shape support', 'caom2:Plane.position.bounds.points', NULL, 'deg', 'double', '*', NULL, 0,0,0 , 50),
 
 ( 'caom2.Plane', 'energy_emBand', 'generic name for energy band (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray)', 'caom2:Plane.energy.emBand', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 60),
 ( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,0,0 , 61),

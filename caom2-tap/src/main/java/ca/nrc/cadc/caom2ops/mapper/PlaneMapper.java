@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -143,46 +144,47 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
               
-            // TODO: get List<Point> directly from caom2:Plane.position.bounds
-            // TODO: get double[] from caom2:Plane.position.bounds.samples
-            
-            ca.nrc.cadc.dali.Polygon posBounds = (ca.nrc.cadc.dali.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
+            //ca.nrc.cadc.dali.Polygon posBounds = (ca.nrc.cadc.dali.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
+            double[] posBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.points"));
             double[] posBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
-            if (posBounds != null)
-            {
-                // HACK: temporary backwards compat: use the position_bounds to construct the DALI polygon and
-                // the CAOM polygon since position_bounds_samples has to be recomputed
+            if (posBounds != null) {
                 plane.position = new Position();
-                MultiPolygon mp = new MultiPolygon();
-                if (posBoundsSamples != null)
-                {
-                    for (int i=0; i<posBoundsSamples.length; i += 3)
-                    {
-                        double cv1 = posBoundsSamples[i];
-                        double cv2 = posBoundsSamples[i+1];
-                        SegmentType st = SegmentType.toValue((int) posBoundsSamples[i+2]);
-                        Vertex v = new Vertex(cv1, cv2, st);
-                        mp.getVertices().add(v);
+                if (posBounds.length == 3) { // circle
+                    plane.position.bounds = new Circle(new Point(posBounds[0], posBounds[1]), posBounds[2]);
+                } else { // polygon
+                    List<Point> pts = new ArrayList<Point>();
+                    for (int i = 0; i < posBounds.length; i += 2) {
+                        pts.add(new Point(posBounds[i], posBounds[i + 1]));
+                    }
+                    MultiPolygon mp = new MultiPolygon();
+                    if (posBoundsSamples != null) {
+                        for (int i = 0; i < posBoundsSamples.length; i += 3) {
+                            double cv1 = posBoundsSamples[i];
+                            double cv2 = posBoundsSamples[i + 1];
+                            SegmentType st = SegmentType.toValue((int) posBoundsSamples[i + 2]);
+                            Vertex v = new Vertex(cv1, cv2, st);
+                            mp.getVertices().add(v);
+                        }
+                        plane.position.bounds = new Polygon(pts, mp);
+                    } else {
+                        log.warn("cannot reconstruct Plane.position.bounds Polygon: Plane.position.bounds.samples was null");
                     }
                 }
-                List<Point> pts = new ArrayList<Point>();
-                for (ca.nrc.cadc.dali.Point dp : posBounds.getVertices())
-                {
-                    pts.add(new Point(dp.getLongitude(), dp.getLatitude()));
-                }
-                plane.position.bounds = new Polygon(pts, mp);
                 
                 Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
                 Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis2"));
-                if (dim1 != null && dim2 != null)
+                if (dim1 != null && dim2 != null) {
                     plane.position.dimension = new Dimension2D(dim1, dim2);
+                }
                 plane.position.resolution = Util.getDouble(data, map.get("caom2:Plane.position.resolution"));
                 plane.position.sampleSize = Util.getDouble(data, map.get("caom2:Plane.position.sampleSize"));
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
             }
             
-            ca.nrc.cadc.dali.DoubleInterval nrgBounds = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
-            ca.nrc.cadc.dali.DoubleInterval[] nrgSamples = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
+            ca.nrc.cadc.dali.DoubleInterval nrgBounds 
+                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
+            ca.nrc.cadc.dali.DoubleInterval[] nrgSamples 
+                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
             if (nrgBounds != null)
             {
                 plane.energy = new Energy();
@@ -212,8 +214,10 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     plane.energy.transition = new EnergyTransition(spec, trans);
             }
             
-            ca.nrc.cadc.dali.DoubleInterval timBounds = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
-            ca.nrc.cadc.dali.DoubleInterval[] timSamples = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
+            ca.nrc.cadc.dali.DoubleInterval timBounds 
+                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
+            ca.nrc.cadc.dali.DoubleInterval[] timSamples 
+                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
             if (timBounds != null)
             {
                 plane.time = new Time();

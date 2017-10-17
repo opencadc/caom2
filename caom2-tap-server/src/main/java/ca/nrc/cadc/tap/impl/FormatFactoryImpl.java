@@ -122,8 +122,8 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     protected Format<Object> getPolygonFormat(TapSelectItem columnDesc)
     {
         log.debug("getPolygonFormat: " + columnDesc);
-        if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds"))
-            return new DoubleArrayFormat(); // see CaomSelectListConverter
+        //if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds"))
+        //    return new DoubleArrayFormat(); // see CaomSelectListConverter
         return new SPolyFormat();
     }
 

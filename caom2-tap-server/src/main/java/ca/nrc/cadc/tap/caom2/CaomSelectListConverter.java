@@ -158,9 +158,12 @@ public class CaomSelectListConverter extends SelectNavigator
                 if (c.getColumnName().equalsIgnoreCase("accessURL"))
                     c.setColumnName("uri");
                 
-                // caom2.Plane
-                if (c.getColumnName().equalsIgnoreCase("position_bounds"))
-                    c.setColumnName("position_bounds_points");
+                // caom2.Plane -- position_bounds_points is polymorphic (circles and polygons)
+                // and position_bounds is not (circle approximated as polygon) so we have to 
+                // return the latter in TAP -- slightly lossy
+                
+                //if (c.getColumnName().equalsIgnoreCase("position_bounds"))
+                //    c.setColumnName("position_bounds_points");
                 
                 // caom2.ObsCore: access_url column in the view contains planeURI values
                 //if (c.getColumnName().equalsIgnoreCase("s_region"))
