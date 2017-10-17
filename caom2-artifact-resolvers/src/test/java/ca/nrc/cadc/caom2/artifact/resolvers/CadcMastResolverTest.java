@@ -68,7 +68,6 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -79,63 +78,39 @@ import org.junit.Test;
 
 /**
  *
- * @author pdowler
+ * @author yeunga
  */
-public class VOSpaceResolverTest {
-    private static final Logger log = Logger.getLogger(VOSpaceResolverTest.class);
+public class CadcMastResolverTest {
+    private static final Logger log = Logger.getLogger(CadcMastResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String FILE_PATH = "/vospace/synctrans";
+    private static final String FILE_URI = "mast:FOO/bar";
+    private static final String FILE_PATH = "/data/pub/MAST/FOO/bar";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
-    VOSpaceResolver ash = new VOSpaceResolver();
+    CadcMastResolver ash = new CadcMastResolver();
 
-    public VOSpaceResolverTest() {
+    public CadcMastResolverTest() {
 
     }
 
     @Test
     public void testGetSchema() {
-        Assert.assertTrue(VOSpaceResolver.SCHEME.equals(ash.getSchema()));
+        Assert.assertTrue(CadcMastResolver.SCHEME.equals(ash.getSchema()));
     }
 
     @Test
-    public void testFileHTTP() {
+    public void testToURL() {
         try {
-            ash.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
             URL url = ash.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
-            String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testFileHTTPS() {
-        try {
-            ash.setAuthMethod(AuthMethod.CERT);
-            URI uri = new URI(FILE_URI);
-            URL url = ash.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("https", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
-            String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -150,22 +125,6 @@ public class VOSpaceResolverTest {
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             Assert.assertTrue(expected.getMessage().contains("invalid scheme"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidNoAuthorityURI() {
-        try {
-            URI uri = new URI(INVALID_NO_AUTHORITY_URI1);
-            URL url = ash.toURL(uri);
-            Assert.fail("expected RuntimeException, got " + url);
-        } catch (RuntimeException expected) {
-            Assert.assertTrue(expected.getMessage().contains("failed to convert"));
-            Assert.assertTrue(expected.getCause().getMessage().contains("missing authority"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
