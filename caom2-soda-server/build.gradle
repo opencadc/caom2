@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.4'
+version = '1.3'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -26,9 +26,9 @@ dependencies {
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-dali:1.+'
+    compile 'org.opencadc:cadc-vos:1.+'
     compile 'org.opencadc:cadc-uws-server:1.+'
     compile 'org.opencadc:caom2:[2.3,3.0)'
-    compile 'org.opencadc:caom2-artifact-resolvers:[1.0,)'
     compile 'org.opencadc:caom2-compute:[2.3,3.0)'
     compile 'org.opencadc:caom2-tap:[1.4,)'
 
