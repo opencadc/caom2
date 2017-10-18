@@ -32,7 +32,6 @@ import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
@@ -90,10 +89,6 @@ public class MastResolver implements StorageResolver {
         }
 
         return newURL;
-    }
-
-    private String getPath(URI uri) {
-        return uri.getSchemeSpecificPart();
     }
 
     protected void validateScheme(URI uri) {

@@ -102,16 +102,6 @@ public class GeminiResolverTest {
     public GeminiResolverTest() {
     }
 
-    //@Test
-    public void testTemplate() {
-        try {
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
     @Test
     public void testGetSchema() {
         Assert.assertTrue(GeminiResolver.SCHEME.equals(geminiResolver.getScheme()));
