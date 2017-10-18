@@ -169,8 +169,13 @@ public class VOSpaceResolver implements StorageResolver {
             path = path.substring(0, path.length() - 1);
         }
 
+        String authority = uri.getAuthority();
+        if (authority == null) {
+            throw new IllegalArgumentException("missing authority in URI: " + uri.toString());
+        }
+        
         try {
-            vosURI = new URI(uri.getScheme(), uri.getAuthority(), path, uri.getQuery(), uri.getFragment());
+            vosURI = new URI(uri.getScheme(), authority, path, uri.getQuery(), uri.getFragment());
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("URI malformed: " + uri.toString());
         }

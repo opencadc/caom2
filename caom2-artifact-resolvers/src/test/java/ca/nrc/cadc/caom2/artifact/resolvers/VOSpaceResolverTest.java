@@ -62,7 +62,6 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
@@ -79,41 +78,45 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ *
  * @author pdowler
  */
-public class AdResolverTest {
-    private static final Logger log = Logger.getLogger(AdResolverTest.class);
+public class VOSpaceResolverTest {
+    private static final Logger log = Logger.getLogger(VOSpaceResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "ad:FOO/bar";
-    private static final String FILE_PATH = "/data/pub/FOO/bar";
-    private static final String INVALID_URI1 = "ad:FOO";
-    private static final String INVALID_URI2 = "ad:FOO/bar/baz";
+    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String FILE_PATH = "/vospace/synctrans";
+    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
-    AdResolver adResolver = new AdResolver();
+    VOSpaceResolver vosResolver = new VOSpaceResolver();
 
-    public AdResolverTest() {
+    public VOSpaceResolverTest() {
 
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(AdResolver.SCHEME.equals(adResolver.getScheme()));
+        Assert.assertTrue(VOSpaceResolver.SCHEME.equals(vosResolver.getScheme()));
     }
 
     @Test
     public void testFileHTTP() {
         try {
-            adResolver.setAuthMethod(AuthMethod.ANON);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
-            URL url = adResolver.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
+            String query = url.getQuery();
+            Assert.assertNotNull(query);
+            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -123,13 +126,16 @@ public class AdResolverTest {
     @Test
     public void testFileHTTPS() {
         try {
-            adResolver.setAuthMethod(AuthMethod.CERT);
+            vosResolver.setAuthMethod(AuthMethod.CERT);
             URI uri = new URI(FILE_URI);
-            URL url = adResolver.toURL(uri);
+            URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
             Assert.assertEquals(FILE_PATH, url.getPath());
+            String query = url.getQuery();
+            Assert.assertNotNull(query);
+            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -137,26 +143,29 @@ public class AdResolverTest {
     }
 
     @Test
-    public void testInvalidShortURI() {
+    public void testInvalidSchemeURI() {
         try {
-            URI uri = new URI(INVALID_URI1);
-            URL url = adResolver.toURL(uri);
-            Assert.fail("expected RuntimeException, got " + url);
+            URI uri = new URI(INVALID_SCHEME_URI1);
+            URL url = vosResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("invalid scheme"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testInvalidLongURI() {
+    public void testInvalidNoAuthorityURI() {
         try {
-            URI uri = new URI(INVALID_URI2);
-            URL url = adResolver.toURL(uri);
+            URI uri = new URI(INVALID_NO_AUTHORITY_URI1);
+            URL url = vosResolver.toURL(uri);
             Assert.fail("expected RuntimeException, got " + url);
-        } catch (IllegalArgumentException expected) {
+        } catch (RuntimeException expected) {
+            Assert.assertTrue(expected.getMessage().contains("failed to convert"));
+            Assert.assertTrue(expected.getCause().getMessage().contains("missing authority"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
