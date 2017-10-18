@@ -106,16 +106,6 @@ public class MastResolverTest {
 
     }
 
-    //@Test
-    public void testTemplate() {
-        try {
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
     @Test
     public void testGetSchema() {
         Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
