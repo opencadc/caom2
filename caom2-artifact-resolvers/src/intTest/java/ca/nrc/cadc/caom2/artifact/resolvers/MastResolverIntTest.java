@@ -69,7 +69,10 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -98,16 +101,6 @@ public class MastResolverIntTest {
     public MastResolverIntTest() {
     }
 
-    //@Test
-    public void testTemplate() {
-        try {
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
     @Test
     public void testValidSiteUrl() throws Exception {
         log.info("starting testValidSiteUrl");
@@ -118,22 +111,14 @@ public class MastResolverIntTest {
             URI mastUri = new URI(VALID_URI);
             URL url = mastResolver.toURL(mastUri);
 
-            Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
-            Assert.assertEquals(MAST_BASE_PATH + "/" + mastUri.getSchemeSpecificPart(), url.getPath());
-            Assert.assertEquals(MAST_BASE_ARTIFACT_URL, url.getHost());
-
             log.debug("opening connection to: " + url.toString());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-            int response = -1;
-
-            log.debug("getResponseCode()");
-            response = conn.getResponseCode();
-            log.debug("getResponseCode() returned " + response);
-            Assert.assertEquals(200, response);
-
-            log.info("response code: " + response);
-
+            OutputStream out = new ByteArrayOutputStream();
+            HttpDownload head = new HttpDownload(url, out);
+            head.setHeadOnly(true);
+            head.run();
+            Assert.assertEquals(200, head.getResponseCode());
+            log.info("response code: " + head.getResponseCode());
         } catch (Exception unexpected) {
             log.error("Unexpected exception", unexpected);
             Assert.fail("Unexpected exception: " + unexpected);

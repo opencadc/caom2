@@ -69,7 +69,10 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -101,23 +104,12 @@ public class GeminiResolverIntTest {
     public GeminiResolverIntTest() {
     }
 
-    //@Test
-    public void testTemplate() {
-        try {
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 
     @Test
     public void testValidSiteUrl() throws Exception {
         log.info("starting testValidSiteUrl");
 
         try {
-            // Get a URL from the MastResolver, then use HTTP request to
-            // see if the URL is valid.
             List<URI> uriList = new ArrayList<URI>();
             uriList.add(new URI(VALID_FILE_URI));
             uriList.add(new URI(VALID_PREVIEW_URI));
@@ -125,20 +117,13 @@ public class GeminiResolverIntTest {
             for (URI uri : uriList) {
                 URL url = resolver.toURL(uri);
 
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
-                Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
-                Assert.assertEquals(BASE_URL, url.getHost());
-
                 log.debug("opening connection to: " + url.toString());
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-                int response = -1;
-                log.debug("getResponseCode()");
-                response = conn.getResponseCode();
-                log.debug("getResponseCode() returned " + response);
-                Assert.assertEquals(200, response);
-
-                log.info("response code: " + response);
+                OutputStream out = new ByteArrayOutputStream();
+                HttpDownload head = new HttpDownload(url, out);
+                head.setHeadOnly(true);
+                head.run();
+                Assert.assertEquals(200, head.getResponseCode());
+                log.info("response code: " + head.getResponseCode());
             }
 
         } catch (Exception unexpected) {
