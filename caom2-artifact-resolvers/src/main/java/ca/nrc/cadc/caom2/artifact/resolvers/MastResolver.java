@@ -56,7 +56,7 @@ public class MastResolver implements StorageResolver {
 
     @Override
     public URL toURL(URI uri) {
-        this.validateScheme(uri);
+        this.validate(uri);
         String s = "";
         try {
             s = this.createURL(uri);
@@ -91,9 +91,8 @@ public class MastResolver implements StorageResolver {
         return newURL;
     }
 
-    protected void validateScheme(URI uri) {
+    protected void validate(URI uri) {
         if (uri == null) {
-            log.error(CANNOT_GET_URL + " URI can't be null.");
             throw new IllegalArgumentException(CANNOT_GET_URL + " URI can't be null.");
         }
 

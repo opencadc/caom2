@@ -74,12 +74,10 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import org.apache.log4j.Logger;
 
 /**
@@ -103,15 +101,6 @@ public class AdResolver implements StorageResolver {
         } catch (URISyntaxException bug) {
             throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
-        this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-    }
-
-    private static String encodeString(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException("BUG", ex);
-        }
     }
 
     @Override
@@ -122,6 +111,11 @@ public class AdResolver implements StorageResolver {
 
         try {
             String path = getPath(uri);
+            
+            // check if authMethod has been set
+            if (this.authMethod == null) {
+                this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            }
             AuthMethod am = this.authMethod;
             if (am == null) {
                 am = AuthMethod.ANON;
@@ -158,9 +152,9 @@ public class AdResolver implements StorageResolver {
 
         StringBuilder sb = new StringBuilder();
         sb.append("/");
-        sb.append(encodeString(arc));
+        sb.append(arc);
         sb.append("/");
-        sb.append(encodeString(fid));
+        sb.append(fid);
 
         return sb.toString();
     }

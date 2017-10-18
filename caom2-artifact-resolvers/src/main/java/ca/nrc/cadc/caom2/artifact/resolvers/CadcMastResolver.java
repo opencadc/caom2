@@ -97,12 +97,12 @@ public class CadcMastResolver implements StorageResolver {
 
     public CadcMastResolver() {
         try {
-            RegistryClient rc = new RegistryClient();
             Subject subject = AuthenticationUtil.getCurrentSubject();
             AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             if (authMethod == null) {
                 authMethod = AuthMethod.ANON;
             }
+            RegistryClient rc = new RegistryClient();
             Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
             Capability dataCap = caps.findCapability(Standards.DATA_10);
             URI securityMethod = Standards.getSecurityMethod(authMethod);
@@ -124,7 +124,7 @@ public class CadcMastResolver implements StorageResolver {
         }
 
         try {
-            URL url = new URL(this.baseDataURL + "/MAST/" + uri.getRawSchemeSpecificPart());
+            URL url = new URL(this.baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {

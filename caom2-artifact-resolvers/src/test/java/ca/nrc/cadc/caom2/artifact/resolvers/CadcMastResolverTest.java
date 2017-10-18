@@ -88,7 +88,6 @@ public class CadcMastResolverTest {
     }
 
     private static final String FILE_URI = "mast:FOO/bar";
-    private static final String FILE_PATH = "/data/pub/MAST/FOO/bar";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
     CadcMastResolver cadcMastResolver = new CadcMastResolver();
@@ -109,8 +108,6 @@ public class CadcMastResolverTest {
             URL url = cadcMastResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

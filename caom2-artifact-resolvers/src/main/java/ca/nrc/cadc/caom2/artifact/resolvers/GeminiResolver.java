@@ -52,7 +52,7 @@ public class GeminiResolver implements StorageResolver {
 
     @Override
     public URL toURL(URI uri) {
-        this.validateScheme(uri);
+        this.validate(uri);
         String urlStr = "";
         try {
             String path = getPath(uri);
@@ -97,9 +97,8 @@ public class GeminiResolver implements StorageResolver {
         return SCHEME;
     }
 
-    protected void validateScheme(URI uri) {
+    protected void validate(URI uri) {
         if (uri == null) {
-            log.error(CANNOT_GENERATE_URL + " URI can't be null.");
             throw new IllegalArgumentException(CANNOT_GENERATE_URL + " URI can't be null.");
         }
 

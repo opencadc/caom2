@@ -111,7 +111,6 @@ public class VOSpaceResolverTest {
             URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
             String query = url.getQuery();
             Assert.assertNotNull(query);
             Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
@@ -129,7 +128,6 @@ public class VOSpaceResolverTest {
             URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("https", url.getProtocol());
             String query = url.getQuery();
             Assert.assertNotNull(query);
             Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));

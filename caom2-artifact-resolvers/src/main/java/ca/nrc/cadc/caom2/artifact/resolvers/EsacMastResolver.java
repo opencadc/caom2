@@ -82,19 +82,16 @@ import java.net.URL;
 public class EsacMastResolver implements StorageResolver {
 
     public EsacMastResolver() {
-        throw new UnsupportedOperationException("");
     }
 
     @Override
     public String getScheme() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("getScheme method currently not supported");
     }
 
     @Override
     public URL toURL(URI arg0) throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("toURL method currently not supported");
     }
 
 }

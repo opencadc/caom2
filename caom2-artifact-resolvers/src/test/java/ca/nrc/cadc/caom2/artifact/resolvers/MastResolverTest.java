@@ -123,7 +123,6 @@ public class MastResolverTest {
                 URI uri = new URI(uriStr);
                 URL url = mastResolver.toURL(uri);
 
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
                 Assert.assertEquals(MAST_BASE_PATH + "/" + uri.getSchemeSpecificPart(), url.getPath());
                 Assert.assertEquals(MAST_BASE_ARTIFACT_URL, url.getHost());
             }
