@@ -73,7 +73,6 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Level;
@@ -92,9 +91,6 @@ public class MastResolverIntTest {
     }
 
     String VALID_URI = "mast:HST/product/u5d00601m/u5d00601m_c0m.fits";
-    String PROTOCOL_STR = "https";
-    String MAST_BASE_ARTIFACT_URL = "masttest.stsci.edu";
-    String MAST_BASE_PATH = "/partners/download/file";
 
     MastResolver mastResolver = new MastResolver();
 
@@ -106,8 +102,6 @@ public class MastResolverIntTest {
         log.info("starting testValidSiteUrl");
 
         try {
-            // Get a URL from the MastResolver, then use HTTP request to
-            // see if the URL is valid.
             URI mastUri = new URI(VALID_URI);
             URL url = mastResolver.toURL(mastUri);
 

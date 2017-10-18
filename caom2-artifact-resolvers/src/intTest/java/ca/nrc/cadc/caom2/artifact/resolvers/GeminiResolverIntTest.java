@@ -73,7 +73,6 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -96,14 +95,10 @@ public class GeminiResolverIntTest {
     String VALID_FILE_URI = "gemini:file/N20101231S0343.fits";
     String VALID_PREVIEW_URI = "gemini:preview/N20101231S0343.fits";
 
-    String PROTOCOL_STR = "https";
-    String BASE_URL = "archive.gemini.edu";
-
     GeminiResolver resolver = new GeminiResolver();
 
     public GeminiResolverIntTest() {
     }
-
 
     @Test
     public void testValidSiteUrl() throws Exception {
