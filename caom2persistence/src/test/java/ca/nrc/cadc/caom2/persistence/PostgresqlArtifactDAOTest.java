@@ -69,6 +69,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 
 import ca.nrc.cadc.caom2.version.InitDatabase;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -79,11 +80,22 @@ public class PostgresqlArtifactDAOTest extends AbstractArtifactDAOTest
 {
     private static final Logger log = Logger.getLogger(PostgresqlArtifactDAOTest.class);
 
-    public PostgresqlArtifactDAOTest() 
-    { 
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2");
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+    static String schema = "caom2";
+
+    static
+    {
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
+    }
+
+    public PostgresqlArtifactDAOTest()
+    {
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
+
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
     }
 }

@@ -68,15 +68,12 @@
 package ca.nrc.cadc.caom2.version;
 
 
+import ca.nrc.cadc.caom2.persistence.UtilTest;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -94,22 +91,28 @@ public class InitDatabaseTest
 {
     private static final Logger log = Logger.getLogger(InitDatabaseTest.class);
 
+    static String schema = "caom2";
+
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
     private DataSource dataSource;
     private String database;
-    private String schema;
 
     public InitDatabaseTest()
     {
         try
         {
             database = "cadctest";
-            schema = "caom2";
-            loadTestSchema();
+
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
             dataSource = DBUtil.getDataSource(cc);
@@ -117,32 +120,6 @@ public class InitDatabaseTest
         catch(Exception ex)
         {
             log.error("failed to init DataSource", ex);
-        }
-    }
-
-    /**
-     * If the file test.schema is present, use the content of that file
-     * for the schema instead of the default 'caom2'.
-     */
-    private void loadTestSchema()
-    {
-        Path testSchema = Paths.get("test.schema");
-        if (Files.exists(testSchema))
-        {
-            try
-            {
-                byte[] encoded = Files.readAllBytes(testSchema);
-                String content = new String(encoded, "UTF-8");
-                log.info("Using test schema: " + content);
-                schema = content;
-            } catch (IOException e)
-            {
-                log.warn("Failed to read test schema", e);
-            }
-        }
-        else
-        {
-            log.debug("No test.schema file, using default");
         }
     }
 

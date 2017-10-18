@@ -69,20 +69,25 @@ package ca.nrc.cadc.caom2.persistence;
 
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -93,7 +98,7 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public abstract class AbstractArtifactDAOTest 
+public abstract class AbstractArtifactDAOTest
 {
     private static final Logger log = Logger.getLogger(AbstractArtifactDAOTest.class);
 
@@ -101,16 +106,16 @@ public abstract class AbstractArtifactDAOTest
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
     }
-    
+
     ObservationDAO obsDAO; // to creater test content
     ArtifactDAO dao;
     TransactionManager txnManager;
-    
+
     Class[] ENTITY_CLASSES =
     {
-        Artifact.class, Plane.class, Observation.class
+        Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
-    
+
     public AbstractArtifactDAOTest(Class genClass, String server, String database, String schema)
     {
         try
@@ -133,24 +138,31 @@ public abstract class AbstractArtifactDAOTest
             throw ex;
         }
     }
-    
+
     @Before
     public void setup()
         throws Exception
     {
-        log.info("clearing old tables...");
-        SQLGenerator gen = dao.getSQLGenerator();
-        DataSource ds = dao.getDataSource();
-        for (Class c : ENTITY_CLASSES)
+        try
         {
-            String cn = c.getSimpleName();
-            String s = gen.getTable(c);
-            
-            String sql = "delete from " + s;
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
+            log.info("clearing old tables...");
+            SQLGenerator gen = dao.getSQLGenerator();
+            DataSource ds = dao.getDataSource();
+            for (Class c : ENTITY_CLASSES)
+            {
+                String cn = c.getSimpleName();
+                String s = gen.getTable(c);
+
+                String sql = "delete from " + s;
+                log.debug("setup: " + sql);
+                ds.getConnection().createStatement().execute(sql);
+            }
+            log.info("clearing old tables... OK");
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
         }
-        log.info("clearing old tables... OK");
+
     }
 
     //@Test
@@ -158,7 +170,7 @@ public abstract class AbstractArtifactDAOTest
     {
         try
         {
-            
+
         }
         catch(Exception unexpected)
         {
@@ -166,7 +178,7 @@ public abstract class AbstractArtifactDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testGetList()
     {
@@ -178,26 +190,26 @@ public abstract class AbstractArtifactDAOTest
             Plane p = new Plane("baz");
             Observation o = new SimpleObservation("FOO", "bar");
             o.getPlanes().add(p);
-            
+
             Date t1 = new Date();
             Thread.sleep(10);
             p.getArtifacts().add(a1);
             obsDAO.put(o);
-            
+
             Thread.sleep(10);
             Date t2 = new Date();
             Thread.sleep(10);
             p.getArtifacts().add(a2);
             obsDAO.put(o);
-            
+
             Thread.sleep(10);
             p.getArtifacts().add(a3);
             obsDAO.put(o);
-            
+
             List<Artifact> artifacts = dao.getList(Artifact.class, null, null, null);
             Assert.assertNotNull(artifacts);
             Assert.assertEquals(3, artifacts.size());
-            
+
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             log.info("getList: t1 " + df.format(t1) + " -> null [null]");
             artifacts = dao.getList(Artifact.class, t1, null, null);
@@ -206,21 +218,21 @@ public abstract class AbstractArtifactDAOTest
             Assert.assertEquals(a1.getURI(), artifacts.get(0).getURI());
             Assert.assertEquals(a2.getURI(), artifacts.get(1).getURI());
             Assert.assertEquals(a3.getURI(), artifacts.get(2).getURI());
-            
+
             log.info("getList: t1 " + df.format(t1) + " -> null [2]");
             artifacts = dao.getList(Artifact.class, t1, null, 2);
             Assert.assertNotNull(artifacts);
             Assert.assertEquals(2, artifacts.size());
             Assert.assertEquals(a1.getURI(), artifacts.get(0).getURI());
             Assert.assertEquals(a2.getURI(), artifacts.get(1).getURI());
-            
+
             log.info("getList: t2 " + df.format(t2) + " -> null [null]");
             artifacts = dao.getList(Artifact.class, t2, null, null);
             Assert.assertNotNull(artifacts);
             Assert.assertEquals(2, artifacts.size());
             Assert.assertEquals(a2.getURI(), artifacts.get(0).getURI());
             Assert.assertEquals(a3.getURI(), artifacts.get(1).getURI());
-            
+
             log.info("getList: t1,t2 " + df.format(t1) + " -> " + df.format(t2) + " [null]");
             artifacts = dao.getList(Artifact.class, t1, t2, null);
             Assert.assertNotNull(artifacts);

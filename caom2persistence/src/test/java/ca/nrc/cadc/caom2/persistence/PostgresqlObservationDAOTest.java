@@ -77,10 +77,12 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -94,22 +96,30 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  */
 public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest
 {
+    static String schema = "caom2";
+
     static
     {
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
     public PostgresqlObservationDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema, false, false);
+
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
     }
-    
+
     @Override
     protected void checkOptimizations(Observation o, Date expectedMetaRelease)
     {
@@ -136,19 +146,19 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest
             Assert.assertEquals("plane.metaRelease", expectedMetaRelease, p.metaRelease);
             for (Artifact a : p.getArtifacts())
             {
-                sql = "select metaRelease from caom2.Artifact where artifactID='"+a.getID().toString()+"'";
+                sql = "select metaRelease from " + schema + ".Artifact where artifactID='"+a.getID().toString()+"'";
                 actual = (Date) jdbc.query(sql, dateExtractor);
                 testEqualSeconds("artifact.metaRelease", expectedMetaRelease, actual);
 
                 for (Part pp : a.getParts())
                 {
-                    sql = "select metaRelease from caom2.Part where partID='"+pp.getID().toString()+"'";
+                    sql = "select metaRelease from " + schema + ".Part where partID='"+pp.getID().toString()+"'";
                     actual = (Date) jdbc.query(sql, dateExtractor);
                     testEqualSeconds("part.metaRelease", expectedMetaRelease, actual);
 
                     for (Chunk c : pp.getChunks())
                     {
-                        sql = "select metaRelease from caom2.Chunk where chunkID='"+c.getID().toString()+"'";
+                        sql = "select metaRelease from " + schema + ".Chunk where chunkID='"+c.getID().toString()+"'";
                         actual = (Date) jdbc.query(sql, dateExtractor);
                         testEqualSeconds("chunk.metaRelease", expectedMetaRelease, actual);
                     }

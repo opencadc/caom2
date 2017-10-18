@@ -78,7 +78,13 @@ import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
+
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -87,16 +93,16 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class UtilTest 
+public class UtilTest
 {
     private static final Logger log = Logger.getLogger(UtilTest.class);
-    
+
     @Test
     public void testTemplate()
     {
         try
         {
-            
+
         }
         catch(Exception unexpected)
         {
@@ -104,7 +110,35 @@ public class UtilTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
+    /**
+     * If the file test.schema is present, use the content of that file
+     * for the schema instead of the default 'caom2'.
+     */
+    public static String getTestSchema()
+    {
+        Path testSchema = Paths.get("test.schema");
+        if (Files.exists(testSchema))
+        {
+            try
+            {
+                byte[] encoded = Files.readAllBytes(testSchema);
+                String schema = new String(encoded, "UTF-8");
+                log.info("Using test schema: " + schema);
+                return schema;
+            } catch (IOException e)
+            {
+                log.warn("Failed to read test schema", e);
+                return null;
+            }
+        }
+        else
+        {
+            log.debug("No test.schema file, using default");
+            return null;
+        }
+    }
+
     // TODO: this is identical to code in CaomUtilTest (module caom2)
     static void testEqual(String s, CoordRange1D expected, CoordRange1D actual)
     {

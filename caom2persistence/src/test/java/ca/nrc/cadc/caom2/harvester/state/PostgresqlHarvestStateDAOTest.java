@@ -69,18 +69,21 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.persistence.UtilTest;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.util.Date;
 import java.util.UUID;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -90,33 +93,39 @@ import org.junit.Test;
 public class PostgresqlHarvestStateDAOTest
 {
     private static final Logger log = Logger.getLogger(PostgresqlHarvestStateDAOTest.class);
-    
+
+    static String schema = "caom2";
+
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
     DataSource dataSource;
     String database;
-    String schema;
 
     public PostgresqlHarvestStateDAOTest()
         throws Exception
     {
         this.database = "cadctest";
-        this.schema = "caom2";
         DBConfig dbrc = new DBConfig();
         ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
         this.dataSource = DBUtil.getDataSource(cc);
-        
-        InitDatabase init = new InitDatabase(dataSource, "cadctest", "caom2");
+
+        InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
         init.doInit();
-        
+
         String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
         log.info("cleanup: " + sql);
         dataSource.getConnection().createStatement().execute(sql);
     }
-    
+
     //@Test
     public void testTemplate()
     {
@@ -225,7 +234,7 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertNotNull(s3);
             Assert.assertNull(s3.curLastModified);
             Assert.assertEquals(s.id, s3.id);
-            
+
         }
         catch(Exception unexpected)
         {
