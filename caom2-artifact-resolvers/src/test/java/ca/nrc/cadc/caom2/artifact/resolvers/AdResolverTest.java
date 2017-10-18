@@ -89,7 +89,6 @@ public class AdResolverTest {
     }
 
     private static final String FILE_URI = "ad:FOO/bar";
-    private static final String FILE_PATH = "/data/pub/FOO/bar";
     private static final String INVALID_URI1 = "ad:FOO";
     private static final String INVALID_URI2 = "ad:FOO/bar/baz";
 
@@ -113,7 +112,6 @@ public class AdResolverTest {
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -129,7 +127,6 @@ public class AdResolverTest {
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

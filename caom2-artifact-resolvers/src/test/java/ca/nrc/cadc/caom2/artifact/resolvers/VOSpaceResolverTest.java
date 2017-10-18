@@ -89,7 +89,6 @@ public class VOSpaceResolverTest {
     }
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String FILE_PATH = "/vospace/synctrans";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
@@ -113,7 +112,6 @@ public class VOSpaceResolverTest {
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
             String query = url.getQuery();
             Assert.assertNotNull(query);
             Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
@@ -132,7 +130,6 @@ public class VOSpaceResolverTest {
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("https", url.getProtocol());
-            Assert.assertEquals(FILE_PATH, url.getPath());
             String query = url.getQuery();
             Assert.assertNotNull(query);
             Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
