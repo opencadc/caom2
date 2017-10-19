@@ -418,7 +418,7 @@ public class ReadAccessHarvester extends Harvester {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]");
         int found = 0;
         int notFound = 0;
-        List<HarvestSkip> skip = harvestSkip.get(source, cname, start);
+        List<HarvestSkip> skip = harvestSkip.get(source, cname, start, null);
         List<SkippedWrapper<ReadAccess>> ret = new ArrayList<SkippedWrapper<ReadAccess>>(skip.size());
         for (HarvestSkip hs : skip) {
             ReadAccess o = srcAccessDAO.get(entityClass, hs.getSkipID());

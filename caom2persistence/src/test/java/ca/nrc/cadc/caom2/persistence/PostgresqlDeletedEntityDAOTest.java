@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -80,18 +81,29 @@ import org.apache.log4j.Logger;
  */
 public class PostgresqlDeletedEntityDAOTest extends AbstractDeletedEntityDAOTest
 {
+
+    static String schema = "caom2";
+
     static
     {
         log = Logger.getLogger(PostgresqlDeletedEntityDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
+
+
 
     public PostgresqlDeletedEntityDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2");
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
+
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
     }
 }

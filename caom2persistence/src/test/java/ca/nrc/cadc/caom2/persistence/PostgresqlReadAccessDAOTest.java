@@ -81,15 +81,16 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
-import static ca.nrc.cadc.caom2.persistence.AbstractReadAccessDAOTest.log;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.UUID;
-import org.junit.Assert;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -100,24 +101,32 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
 {
+    static String schema = "caom2";
+
     static
     {
         log = Logger.getLogger(PostgresqlReadAccessDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
     public PostgresqlReadAccessDAOTest()
         throws Exception
     {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", "caom2", false, false);
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema, false, false);
         this.entityClasses = new Class[]
         {
             ObservationMetaReadAccess.class,
             PlaneMetaReadAccess.class,
             PlaneDataReadAccess.class
         };
-        
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", "caom2");
+
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
     }
 
@@ -152,7 +161,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             org.junit.Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testExtendedUpdate()
     {
@@ -161,7 +170,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
         Util.assignID(pl, assetID);
-        
+
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
@@ -169,23 +178,23 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         ar.getParts().add(pp);
         pl.getArtifacts().add(ar);
         obs.getPlanes().add(pl);
-            
+
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
-            
+
             // cleanup previous test run
             obsDAO.delete(assetID);
-            
+
             obsDAO.put(obs);
-            
+
             URI group1 =  new URI("ivo://cadc.nrc.ca/gms?FOO-333");
             for (Class c : entityClasses)
             {
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group1);
                 dao.put(expected);
-                
+
                 Class[] assetClass = getAssetClasses(expected);
                 for (Class ac : assetClass)
                 {
@@ -199,16 +208,16 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
                     Assert.assertEquals("insert 1", "'"+expected.getGroupName()+"'", groups[0]);
                 }
             }
-            
+
             URI group2 =  new URI("ivo://cadc.nrc.ca/gms?FOO-444");
             for (Class c : entityClasses)
             {
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected1 = (ReadAccess) ctor.newInstance(assetID, group1);
                 ReadAccess expected2 = (ReadAccess) ctor.newInstance(assetID, group2);
-                
+
                 dao.put(expected2);
-                
+
                 Class[] assetClass = getAssetClasses(expected2);
                 for (Class ac : assetClass)
                 {
@@ -223,7 +232,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
                     Assert.assertEquals("insert 2", "'"+expected2.getGroupName()+"'", groups[1]);
                 }
             }
-            
+
             // test removal
             for (Class c : entityClasses)
             {
@@ -231,10 +240,10 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
                 ReadAccess cur = dao.get(c, assetID, group1);
                 Assert.assertNotNull("found group1 tuple", cur);
                 dao.delete(c, cur.getID());
-                
+
                 // now only group 2 should be in the vector
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group2);
-                
+
                 Class[] assetClass = getAssetClasses(cur);
                 for (Class ac : assetClass)
                 {
@@ -248,8 +257,8 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
                     Assert.assertEquals("delete 1", "'"+expected.getGroupName()+"'", groups[0]);
                 }
             }
-            
-            
+
+
         }
         catch(Exception unexpected)
         {
@@ -261,7 +270,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             //obsDAO.delete(obs.getID());
         }
     }
-    
+
     @Override
     protected void checkDelete(String s, ReadAccess expected, ReadAccess actual)
     {
@@ -276,14 +285,14 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             int count = jdbc.queryForInt(sql);
             Assert.assertEquals(s + ".checkDelete for " + ac.getSimpleName(), 0, count);
         }
-        
+
     }
 
     @Override
     protected void checkPut(String s, ReadAccess expected, ReadAccess actual)
     {
         super.checkPut(s, expected, actual);
-        
+
         Class[] assetClass = getAssetClasses(expected);
         for (Class ac : assetClass)
         {
@@ -307,7 +316,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             kCol = gen.getPrimaryKeyColumn(Plane.class);
         }
         String assetLiteral = dao.gen.literal(expected.getAssetID());
-        
+
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select count(*) from ").append(assetTable);
@@ -316,7 +325,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         String sql = sb.toString();
         return sql;
     }
-    
+
     private String getGroupVectorSQL(Class ac, ReadAccess expected)
     {
         BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
@@ -328,9 +337,9 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             // HACK: see PostgresqlSQLGenerator.getUpdateAssetSQL
             kCol = gen.getPrimaryKeyColumn(Plane.class);
         }
-        
+
         String assetLiteral = dao.gen.literal(expected.getAssetID());
-        
+
         String raCol = gen.getReadAccessCol(expected.getClass());
         StringBuilder sb = new StringBuilder();
         sb.append("select ").append(raCol).append(" from ").append(assetTable);
@@ -338,7 +347,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         String sql = sb.toString();
         return sql;
     }
-    
+
     private Class[] getAssetClasses(ReadAccess expected)
     {
         Class[] assetClass = null;
@@ -354,11 +363,11 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         {
             assetClass = new Class[] { Plane.class, Artifact.class, Part.class, Chunk.class };
         }
-        
+
         if (assetClass == null)
             throw new IllegalStateException("unexpected ReadAccess type: " + expected.getClass().getName());
-        
+
         return assetClass;
     }
-    
+
 }

@@ -715,7 +715,7 @@ public class ObservationHarvester extends Harvester {
      */
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
+        List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start, null);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
         for (HarvestSkipURI hs : skip) {

@@ -71,32 +71,39 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.text.DateFormat;
 import java.util.Date;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.postgresql.geometric.PGpolygon;
 
 /**
  *
  * @author pdowler
  */
-public class PostgreSQLGeneratorTest 
+public class PostgreSQLGeneratorTest
 {
     private static final Logger log = Logger.getLogger(PostgreSQLGeneratorTest.class);
+
+    static String schema;
 
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
-    PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", "caom2");
+    PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", schema);
 
     //@Test
     public void testTemplate()
@@ -165,4 +172,5 @@ public class PostgreSQLGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
 }

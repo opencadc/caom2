@@ -72,7 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
-import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
@@ -109,7 +109,6 @@ public class Main {
 
             if (asClassName != null) {
                 try {
-                    log.debug("Artifact store class: " + asClassName);
                     Class<?> asClass = Class.forName(asClassName);
                     artifactStore = (ArtifactStore) asClass.newInstance();
                     asPackage = asClass.getPackage().getName();
@@ -119,7 +118,7 @@ public class Main {
             }
 
             if (am.isSet("d") || am.isSet("debug")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
@@ -128,7 +127,7 @@ public class Main {
                     Log4jInit.setLevel(asPackage, Level.DEBUG);
                 }
             } else if (am.isSet("v") || am.isSet("verbose")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.artifactsync", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
                 if (asPackage != null) {
@@ -142,7 +141,7 @@ public class Main {
                 }
             }
 
-            log.debug("Artifact store package: " + asPackage);
+            log.debug("Artifact store class: " + asClassName);
 
             if (am.isSet("h") || am.isSet("help")) {
                 usage();
@@ -210,19 +209,15 @@ public class Main {
                 }
             }
 
-            // Collection will be used in the future
-            // if (!am.isSet("collection"))
-            // {
-            // log.error("Missing required parameter 'collection'");
-            // usage();
-            // System.exit(-1);
-            // }
-            // String collection = am.getValue("collection");
+            if (!am.isSet("collection")) {
+                log.error("Missing required parameter 'collection'");
+                usage();
+                System.exit(-1);
+            }
+
 
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-
-
 
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<String, Object>(2);
@@ -230,32 +225,41 @@ public class Main {
             daoConfig.put("database", dbInfo[1]);
             daoConfig.put("schema", dbInfo[2]);
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-            ArtifactDAO artifactDAO = new ArtifactDAO();
-            artifactDAO.setConfig(daoConfig);
+            ObservationDAO observationDAO = new ObservationDAO();
+            observationDAO.setConfig(daoConfig);
 
-            String collection = null;
+            String collection = am.getValue("collection");
+
             boolean dryrun = am.isSet("dryrun");
-            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, collection, dryrun, batchSize);
+            boolean full = am.isSet("full");
+            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
+                    observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
 
-            PrivilegedExceptionAction<Object> downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
+            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
+                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize);
 
-            int num = 0;
             int loopNum = 1;
             boolean loop = am.isSet("continue");
+            boolean stopHarvest = false;
+            boolean stopDownload = false;
             do {
                 if (loop) {
                     log.info("-- STARTING LOOP #" + loopNum + " --");
                 }
 
-                if (subject != null) {
-                    num = Subject.doAs(subject, harvester);
-                    if (!dryrun && num > 0) {
-                        Subject.doAs(subject, downloader);
+                if (!stopHarvest) {
+                    if (subject != null) {
+                        stopHarvest = Subject.doAs(subject, harvester) == 0;
+                    } else {
+                        stopHarvest = harvester.run() == 0;
                     }
-                } else { // anon
-                    num = harvester.run();
-                    if (!dryrun && num > 0) {
-                        downloader.run();
+                }
+
+                if (!stopDownload && !dryrun) {
+                    if (subject != null) {
+                        stopDownload = Subject.doAs(subject, downloader) == 0;
+                    } else {
+                        stopDownload = downloader.run() == 0;
                     }
                 }
 
@@ -264,7 +268,7 @@ public class Main {
                 }
 
                 loopNum++;
-            } while (loop && num == batchSize); // continue if `batch size` records found
+            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
 
             exitValue = 0; // finished cleanly
         } catch (Throwable t) {
@@ -298,6 +302,7 @@ public class Main {
         sb.append("\n     --collection=<collection> (currently ignored)");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
+        sb.append("\n     --full : do a full harvest");
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");

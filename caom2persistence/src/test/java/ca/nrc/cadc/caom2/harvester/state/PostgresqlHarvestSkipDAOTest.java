@@ -69,16 +69,20 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.persistence.UtilTest;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -92,14 +96,21 @@ public class PostgresqlHarvestSkipDAOTest
 {
     private static final Logger log = Logger.getLogger(PostgresqlHarvestSkipDAOTest.class);
 
+    static String schema = "caom2";
+
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
 
     DataSource dataSource;
     String database;
-    String schema;
 
     public PostgresqlHarvestSkipDAOTest()
         throws Exception
@@ -107,18 +118,17 @@ public class PostgresqlHarvestSkipDAOTest
         try
         {
             this.database = "cadctest";
-            this.schema = "caom2";
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
             this.dataSource = DBUtil.getDataSource(cc);
-            
-            InitDatabase init = new InitDatabase(dataSource, "cadctest", "caom2");
+
+            InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
             init.doInit();
-        
+
             String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
             log.debug("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
-            
+
             sql = "DELETE FROM " + database + "." + schema + ".HarvestSkipURI";
             log.debug("cleanup: " + sql);
             dataSource.getConnection().createStatement().execute(sql);
@@ -155,7 +165,8 @@ public class PostgresqlHarvestSkipDAOTest
 
             HarvestSkip skip;
             Date start = null;
-            
+            Date end = null;
+
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id1, "m1");
             dao.put(skip);
             Thread.sleep(10L);
@@ -165,7 +176,7 @@ public class PostgresqlHarvestSkipDAOTest
             skip = new HarvestSkip("testInsert", Integer.class.getName(), id3, null);
             dao.put(skip);
 
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start);
+            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start, end);
             Assert.assertEquals("skips size", 3, skips.size());
             Assert.assertEquals(id1, skips.get(0).skipID);
             Assert.assertEquals(id2, skips.get(1).skipID);
@@ -190,7 +201,7 @@ public class PostgresqlHarvestSkipDAOTest
 
             skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1, "initial error message");
             dao.put(skip);
-            
+
             HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
             Assert.assertNotNull(actual1);
             Assert.assertEquals(id1, actual1.skipID);
@@ -218,7 +229,7 @@ public class PostgresqlHarvestSkipDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testInsertURI()
     {
@@ -231,7 +242,8 @@ public class PostgresqlHarvestSkipDAOTest
 
             HarvestSkipURI skip;
             Date start = null;
-            
+            Date end = null;
+
             skip = new HarvestSkipURI("testInsert", Integer.class.getName(), id1, "m1");
             dao.put(skip);
             Thread.sleep(10L);
@@ -241,7 +253,7 @@ public class PostgresqlHarvestSkipDAOTest
             skip = new HarvestSkipURI("testInsert", Integer.class.getName(), id3, null);
             dao.put(skip);
 
-            List<HarvestSkipURI> skips = dao.get("testInsert", Integer.class.getName(), start);
+            List<HarvestSkipURI> skips = dao.get("testInsert", Integer.class.getName(), start, end);
             Assert.assertEquals("skips size", 3, skips.size());
             Assert.assertEquals(id1, skips.get(0).skipID);
             Assert.assertEquals(id2, skips.get(1).skipID);
@@ -266,7 +278,7 @@ public class PostgresqlHarvestSkipDAOTest
 
             skip = new HarvestSkipURI("testUpdate", Integer.class.getName(), id1, "initial error message");
             dao.put(skip);
-            
+
             HarvestSkipURI actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
             Assert.assertNotNull(actual1);
             Assert.assertEquals(id1, actual1.skipID);
