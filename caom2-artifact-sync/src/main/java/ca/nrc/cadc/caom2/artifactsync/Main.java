@@ -209,12 +209,12 @@ public class Main {
                 }
             }
 
-             if (!am.isSet("collection")) {
-                 log.error("Missing required parameter 'collection'");
-                 usage();
-                 System.exit(-1);
-             }
-             String collection = am.getValue("collection");
+            if (!am.isSet("collection")) {
+                log.error("Missing required parameter 'collection'");
+                usage();
+                System.exit(-1);
+            }
+
 
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
@@ -228,11 +228,15 @@ public class Main {
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(daoConfig);
 
+            String collection = am.getValue("collection");
+
             boolean dryrun = am.isSet("dryrun");
             boolean full = am.isSet("full");
-            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
+            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
+                    observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
 
-            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize);
+            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
+                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize);
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -246,8 +250,7 @@ public class Main {
                 if (!stopHarvest) {
                     if (subject != null) {
                         stopHarvest = Subject.doAs(subject, harvester) == 0;
-                    }
-                    else {
+                    } else {
                         stopHarvest = harvester.run() == 0;
                     }
                 }
@@ -255,8 +258,7 @@ public class Main {
                 if (!stopDownload && !dryrun) {
                     if (subject != null) {
                         stopDownload = Subject.doAs(subject, downloader) == 0;
-                    }
-                    else {
+                    } else {
                         stopDownload = downloader.run() == 0;
                     }
                 }

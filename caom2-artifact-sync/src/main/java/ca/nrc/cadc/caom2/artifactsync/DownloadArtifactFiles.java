@@ -270,8 +270,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         sb.append(": " + download.getThrowable().getMessage());
                     }
                     result.message = sb.toString();
-                }
-                else {
+                } else {
                     if (uploadSuccess) {
                         result.success = true;
                     } else {
@@ -330,8 +329,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         }
     }
 
-    private void logStart(HarvestSkipURI skip)
-    {
+    private void logStart(HarvestSkipURI skip) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
@@ -339,8 +337,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         log.info(startMessage.toString());
     }
 
-    private void logEnd(ArtifactDownloadResult result)
-    {
+    private void logEnd(ArtifactDownloadResult result) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("END: {");
         startMessage.append("\"artifact\":\"").append(result.artifactURI).append("\"");

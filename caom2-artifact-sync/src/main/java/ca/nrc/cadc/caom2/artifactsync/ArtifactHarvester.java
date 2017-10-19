@@ -140,8 +140,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         try {
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
-            if (!full || !firstRun)
-            {
+            if (!full || !firstRun) {
                 startDate = state.curLastModified;
             }
             firstRun = false;
@@ -151,8 +150,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             num = observationStates.size();
             log.debug("Found " + num + " observations to process.");
 
-            for (ObservationState observationState : observationStates)
-            {
+            for (ObservationState observationState : observationStates) {
+
                 String observationID = observationState.getURI().getObservationID();
 
                 // TEMPORARY: For now, to keep the data volume low, only harvest
@@ -165,15 +164,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
                     DatabaseTransactionManager txnMgr = new DatabaseTransactionManager(observationDAO.getDataSource());
 
-                    try
-                    {
+                    try {
+
                         txnMgr.startTransaction();
 
                         Observation observation = observationDAO.get(observationState.getURI());
-                        for (Plane plane : observation.getPlanes())
-                        {
-                            for (Artifact artifact : plane.getArtifacts())
-                            {
+                        for (Plane plane : observation.getPlanes()) {
+                            for (Artifact artifact : plane.getArtifacts()) {
                                 logStart(artifact);
                                 boolean success = true;
                                 boolean added = false;
@@ -219,9 +216,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                                         harvestSkipURIDAO.put(skip);
                                         added = true;
                                     }
-                                }
-                                finally
-                                {
+                                } finally {
                                     state.curLastModified = artifact.getLastModified();
                                     logEnd(artifact, success, added, message);
                                 }
@@ -232,13 +227,10 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                             harvestStateDAO.put(state);
                             log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
                         }
-                    }
-                    catch (Throwable t) {
+                    } catch (Throwable t) {
                         txnMgr.rollbackTransaction();
                         throw t;
-                    }
-                    finally
-                    {
+                    } finally {
                         if (txnMgr.isOpen()) {
                             txnMgr.commitTransaction();
                         }
@@ -261,8 +253,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
     }
 
-    private void logStart(Artifact artifact)
-    {
+    private void logStart(Artifact artifact) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
@@ -270,8 +261,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         log.info(startMessage.toString());
     }
 
-    private void logEnd(Artifact artifact, boolean success, boolean added, String message)
-    {
+    private void logEnd(Artifact artifact, boolean success, boolean added, String message) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("END: {");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
