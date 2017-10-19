@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
-import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
@@ -93,6 +92,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.sql.DataSource;
+
 import org.apache.log4j.Logger;
 
 public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
@@ -107,11 +108,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date startDate = null;
     private Date stopDate;
 
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize) {
+    public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize) {
         this.artifactStore = artifactStore;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2], batchSize);
 
         this.threads = threads;
         this.stopDate = new Date();
@@ -153,35 +154,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             }
             final long end = System.currentTimeMillis() - start;
 
-            double successRate = 0;
-            if (results.size() > 0) {
-                successRate = (double) successes / results.size();
-            }
-            long totalSeconds = totalElapsedTime / 1000;
-            long bytesPerSecond = 0;
-            if (totalSeconds > 0) {
-                bytesPerSecond = totalBytes / totalSeconds;
-            }
-            double mbps = (double) bytesPerSecond / 125000;
-
-            log.info("[batch-summary] Completed " + results.size() + " artifact download attempts");
-            log.info("[batch-summary]     Successful file downloads: " + successes);
-            log.info("[batch-summary]     Failed file downloads: " + (results.size() - successes));
-            log.info("[batch-summary]     Success rate: " + successRate);
-            log.info("[batch-summary]     Batch elapsed time (ms): " + end);
-            log.info("[batch-summary]     Download threads: " + threads);
-            log.info("[batch-summary]     Total bytes transferred: " + totalBytes);
-            log.info("[batch-summary]     Data transfer time (ms): " + totalElapsedTime);
-            log.info("[batch-summary]     Bytes/Second: " + bytesPerSecond + " (" + mbps + " Mbps)");
-
             StringBuilder endMessage = new StringBuilder();
-            endMessage.append("END: {");
+            endMessage.append("ENDBATCH: {");
+            endMessage.append("\"total\":\"").append(results.size()).append("\"");
+            endMessage.append(",");
             endMessage.append("\"successCount\":\"").append(successes).append("\"");
-            ;
             endMessage.append(",");
             endMessage.append("\"failureCount\":\"").append(results.size() - successes).append("\"");
             endMessage.append(",");
-            endMessage.append("\"time\":\"").append(totalElapsedTime).append("\"");
+            endMessage.append("\"time\":\"").append(end).append("\"");
+            endMessage.append(",");
+            endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
             endMessage.append(",");
             endMessage.append("\"bytes\":\"").append(totalBytes).append("\"");
             endMessage.append(",");
@@ -223,13 +206,14 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         @Override
         public ArtifactDownloadResult call() throws Exception {
+
+            logStart(skip);
+
             URI artifactURI = skip.getSkipID();
             URL url = getSourceURL(artifactURI);
 
             ArtifactDownloadResult result = new ArtifactDownloadResult(artifactURI);
             result.success = false;
-
-            String threadName = Thread.currentThread().getName();
 
             try {
                 // get the md5 and contentLength of the artifact
@@ -243,15 +227,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     StringBuilder sb = new StringBuilder("(" + respCode + ") ");
                     if (head.getThrowable() != null) {
                         sb.append(head.getThrowable().getMessage());
-                        if (log.isDebugEnabled()) {
-                            log.warn("[" + threadName + "] error determining artifact checksum: " + sb.toString(), head.getThrowable());
-                        } else {
-                            log.warn("[" + threadName + "] error determining artifact checksum: " + sb.toString());
-                        }
-
+                        log.debug("Error determining artifact checksum: " + sb.toString(), head.getThrowable());
+                        result.message = sb.toString();
+                        return result;
                     }
-//                    result.errorMessage = sb.toString();
-//                    return result;
 
                     String md5String = head.getContentMD5();
                     log.debug("MAST content MD5: " + md5String);
@@ -269,35 +248,34 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
                 // check again to be sure the destination doesn't already have it
                 if (sourceChecksum != null && artifactStore.contains(artifactURI, sourceChecksum)) {
-                    log.info("[" + threadName + "] ArtifactStore already has correct copy of " + artifactURI + " with checksum " + sourceChecksum);
+                    result.message = "ArtifactStore already has correct copy";
                     result.success = true;
                     return result;
                 }
 
                 HttpDownload download = new HttpDownload(url, this);
 
-                log.info("[" + threadName + "] Starting download of " + artifactURI + " from " + url);
+                log.debug("Starting download of " + artifactURI + " from " + url);
                 long start = System.currentTimeMillis();
                 download.run();
-                log.info("[" + threadName + "] Completed download of " + artifactURI + " from " + url);
+                log.debug("Completed download of " + artifactURI + " from " + url);
                 result.elapsedTimeMillis = System.currentTimeMillis() - start;
 
                 respCode = download.getResponseCode();
                 log.debug("Download response code: " + respCode);
 
                 if (download.getThrowable() != null || respCode != 200) {
-                    StringBuilder sb = new StringBuilder("(" + respCode + ") ");
+                    StringBuilder sb = new StringBuilder("Download error (" + respCode + ")");
                     if (download.getThrowable() != null) {
-                        sb.append(download.getThrowable().getMessage());
-                        log.error("[" + threadName + "] error downloading artifact", download.getThrowable());
+                        sb.append(": " + download.getThrowable().getMessage());
                     }
-                    result.errorMessage = sb.toString();
+                    result.message = sb.toString();
                 }
                 else {
                     if (uploadSuccess) {
                         result.success = true;
                     } else {
-                        result.errorMessage = uploadErrorMessage;
+                        result.message = uploadErrorMessage;
                     }
                 }
 
@@ -309,12 +287,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         result.bytesTransferred = bytesTransferred;
                         harvestSkipURIDAO.delete(skip);
                     } else {
-                        skip.errorMessage = result.errorMessage;
+                        skip.errorMessage = result.message;
                         harvestSkipURIDAO.put(skip);
                     }
                 } catch (Throwable t) {
-                    log.error("[" + threadName + "] Failed to update or delete from skip table", t);
+                    log.error("Failed to update or delete from skip table", t);
                 }
+                logEnd(result);
             }
         }
 
@@ -324,13 +303,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             URI artifactURI = skip.getSkipID();
             ByteCountInputStream byteCounter = new ByteCountInputStream(inputStream);
             try {
-                log.info("[" + threadName + "] Starting upload of " + artifactURI);
+                log.debug("[" + threadName + "] Starting upload of " + artifactURI);
                 artifactStore.store(artifactURI, sourceChecksum, sourceLength, byteCounter);
-                log.info("[" + threadName + "] Completed upload of " + artifactURI);
+                log.debug("[" + threadName + "] Completed upload of " + artifactURI);
             } catch (Throwable t) {
                 uploadSuccess = false;
-                log.info("[" + threadName + "] Failed to upload " + artifactURI, t);
-                uploadErrorMessage = "error uploading artifact: " + t.getMessage();
+                log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
+                uploadErrorMessage = "Upload error: " + t.getMessage();
             } finally {
                 if (byteCounter != null) {
                     bytesTransferred = byteCounter.getByteCount();
@@ -342,13 +321,41 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     class ArtifactDownloadResult {
         URI artifactURI;
         boolean success;
-        String errorMessage;
+        String message;
         long elapsedTimeMillis;
         long bytesTransferred = 0;
 
         ArtifactDownloadResult(URI artifactURI) {
             this.artifactURI = artifactURI;
         }
+    }
+
+    private void logStart(HarvestSkipURI skip)
+    {
+        StringBuilder startMessage = new StringBuilder();
+        startMessage.append("START: {");
+        startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
+        startMessage.append("}");
+        log.info(startMessage.toString());
+    }
+
+    private void logEnd(ArtifactDownloadResult result)
+    {
+        StringBuilder startMessage = new StringBuilder();
+        startMessage.append("END: {");
+        startMessage.append("\"artifact\":\"").append(result.artifactURI).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"success\":\"").append(result.success).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"time\":\"").append(result.elapsedTimeMillis).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"bytes\":\"").append(result.bytesTransferred).append("\"");
+        if (result.message != null) {
+            startMessage.append(",");
+            startMessage.append("\"message\":\"").append(result.message).append("\"");
+        }
+        startMessage.append("}");
+        log.info(startMessage.toString());
     }
 
 }
