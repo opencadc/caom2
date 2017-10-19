@@ -176,33 +176,27 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                                 boolean added = false;
                                 String message = null;
                                 try {
-                                    // only process mast artifacts for now
-                                    if ("mast".equalsIgnoreCase(artifact.getURI().getScheme())) {
+                                    processedCount++;
 
-                                        processedCount++;
+                                    boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
+                                    log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact.contentChecksum + " exists: " + exists);
+                                    if (!exists) {
 
-                                        boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
-                                        log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact.contentChecksum + " exists: " + exists);
-                                        if (!exists) {
-
-                                            // see if there's already an entry
-                                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                            if (skip == null) {
-                                                downloadCount++;
-                                                if (!dryrun) {
-                                                    // set the message to be an empty string
-                                                    skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
-                                                    harvestSkipURIDAO.put(skip);
-                                                    added = true;
-                                                } else {
-                                                    added = true;
-                                                }
+                                        // see if there's already an entry
+                                        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                                        if (skip == null) {
+                                            downloadCount++;
+                                            if (!dryrun) {
+                                                // set the message to be an empty string
+                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
+                                                harvestSkipURIDAO.put(skip);
+                                                added = true;
                                             } else {
-                                                message = "Artifact already exists in skip table.";
+                                                added = true;
                                             }
+                                        } else {
+                                            message = "Artifact already exists in skip table.";
                                         }
-                                    } else {
-                                        message = "Skipping non-MAST artifact";
                                     }
 
                                 } catch (Throwable t) {

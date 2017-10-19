@@ -71,8 +71,6 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -83,7 +81,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.postgresql.geometric.PGpolygon;
 
 /**
  *
@@ -176,27 +173,4 @@ public class PostgreSQLGeneratorTest
         }
     }
 
-    @Test
-    public void testGetPolygonFromInterval()
-    {
-        try
-        {
-            Interval i = new Interval(1.0, 3.0);
-            i.getSamples().add(new SubInterval(1.0, 1.2));
-            i.getSamples().add(new SubInterval(2.8, 3.0));
-
-            PGpolygon ip;
-
-            ip = gen.generatePolygon2D(i, null);
-            log.info(i + " -> " + ip.getValue());
-
-            ip = gen.generatePolygon2D(null, i.getSamples());
-            log.info(i + " -> " + ip.getValue());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 }
