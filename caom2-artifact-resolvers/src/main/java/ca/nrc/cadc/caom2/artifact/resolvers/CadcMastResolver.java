@@ -95,7 +95,12 @@ public class CadcMastResolver implements StorageResolver {
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
     private String baseDataURL;
 
-    public CadcMastResolver() {
+    @Override
+    public URL toURL(URI uri) {
+        if (!SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException("invalid scheme in " + uri);
+        }
+
         try {
             Subject subject = AuthenticationUtil.getCurrentSubject();
             AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
@@ -110,25 +115,15 @@ public class CadcMastResolver implements StorageResolver {
             if (ifc == null) {
                 throw new IllegalArgumentException("No interface for security method " + securityMethod);
             }
-            this.baseDataURL = ifc.getAccessURL().getURL().toString();
-        } catch (Throwable t) {
-            String message = "Failed to initialize data URL";
-            throw new RuntimeException(message, t);
-        }
-    }
-
-    @Override
-    public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
-        }
-
-        try {
-            URL url = new URL(this.baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
+            String baseDataURL = ifc.getAccessURL().getURL().toString();
+            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG", ex);
+        } catch (Throwable t) {
+            String message = "Failed to convert to data URL";
+            throw new RuntimeException(message, t);
         }
     }
 

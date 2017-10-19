@@ -91,17 +91,6 @@ public class AdResolver implements StorageResolver {
     private static final Logger log = Logger.getLogger(AdResolver.class);
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
     protected AuthMethod authMethod;
-    private RegistryClient rc;
-    private URI dataURI;
-
-    public AdResolver() {
-        this.rc = new RegistryClient();
-        try {
-            this.dataURI = new URI(DATA_URI);
-        } catch (URISyntaxException bug) {
-            throw new RuntimeException("BUG - failed to create data web service URI", bug);
-        }
-    }
 
     @Override
     public URL toURL(URI uri) {
@@ -113,19 +102,23 @@ public class AdResolver implements StorageResolver {
             String path = getPath(uri);
             
             // check if authMethod has been set
-            if (this.authMethod == null) {
-                this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-            }
             AuthMethod am = this.authMethod;
+            if (am == null) {
+                am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            }
             if (am == null) {
                 am = AuthMethod.ANON;
             }
-            URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10, am);
+            
+            RegistryClient rc = new RegistryClient();
+            URL serviceURL = rc.getServiceURL(new URI(DATA_URI), Standards.DATA_10, am);
             URL url = this.toURL(serviceURL, path);
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG", ex);
+        } catch (URISyntaxException bug) {
+            throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
     }
 

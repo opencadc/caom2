@@ -92,10 +92,6 @@ public class VOSpaceResolver implements StorageResolver {
     private static final Logger log = Logger.getLogger(VOSpaceResolver.class);
     protected AuthMethod authMethod;
 
-    public VOSpaceResolver() {
-        this.authMethod = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-    }
-
     @Override
     public URL toURL(URI uri) {
         this.validateScheme(uri);
@@ -133,6 +129,15 @@ public class VOSpaceResolver implements StorageResolver {
         // cutouts through document posting, create cutout urls
         // using synctrans
         try {
+            // check if authMethod has been set
+            AuthMethod am = this.authMethod;
+            if (am == null) {
+                am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            }
+            if (am == null) {
+                am = AuthMethod.ANON;
+            }
+            
             URI vuri = getVOSURI(uri);
             RegistryClient registryClient = new RegistryClient();
             URL baseURL = registryClient.getServiceURL(getServiceURI(vuri), Standards.VOSPACE_SYNC_21, authMethod);
