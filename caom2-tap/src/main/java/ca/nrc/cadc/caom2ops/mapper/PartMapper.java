@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,7 @@ public class PartMapper implements VOTableRowMapper<Part>
      * 
      * @param data
      * @param dateFormat 
-     * @return
+     * @return a part
      */
     public Part mapRow(List<Object> data, DateFormat dateFormat)
     {
