@@ -126,6 +126,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -153,15 +154,9 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.MessageDigest;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.UUID;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 
 /**
  *
@@ -894,7 +889,7 @@ public abstract class AbstractObservationDAOTest
                 Assert.assertEquals(numPlanes, ret1.getPlanes().size());
                 testEqual(orig, ret1);
 
-                Plane newPlane = getTestPlane(full, "newPlane", i);
+                Plane newPlane = getTestPlane(full, "newPlane", i, false);
                 ret1.getPlanes().add(newPlane);
                 
                 log.info("put: added");
@@ -1409,7 +1404,7 @@ public abstract class AbstractObservationDAOTest
         if (expected.position != null)
         {
             Assert.assertNotNull("plane.position", actual.position);
-            if (expected.position.bounds != null)
+            if (expected.position.bounds != null && Polygon.class.equals(expected.position.bounds.getClass()))
             {
                 Polygon ep = (Polygon) expected.position.bounds;
                 Polygon ap = (Polygon) actual.position.bounds;
@@ -1430,6 +1425,12 @@ public abstract class AbstractObservationDAOTest
                     Assert.assertEquals("vertex.cval1", ev.cval1, av.cval1, 0.0);
                     Assert.assertEquals("vertex.cval2", ev.cval2, av.cval2, 0.0);
                 }
+            } else if (expected.position.bounds != null && Circle.class.equals(expected.position.bounds.getClass())) {
+                Circle ep = (Circle) expected.position.bounds;
+                Circle ap = (Circle) actual.position.bounds;
+                Assert.assertEquals("center.cval1", ep.getCenter().cval1, ap.getCenter().cval1, 0.0);
+                Assert.assertEquals("center.cval2", ep.getCenter().cval2, ap.getCenter().cval2, 0.0);
+                Assert.assertEquals("radius", ep.getRadius(), ap.getRadius(), 0.0);
             }
             else
                 Assert.assertNull(actual.position.bounds);
@@ -1801,14 +1802,14 @@ public abstract class AbstractObservationDAOTest
         if (depth == 1)
             return o;
 
-        o.getPlanes().add(getTestPlane(full, "thing1", depth));
-        o.getPlanes().add(getTestPlane(full, "thing2", depth));
+        o.getPlanes().add(getTestPlane(full, "thing1", depth, true));
+        o.getPlanes().add(getTestPlane(full, "thing2", depth, false));
         Assert.assertEquals(2, o.getPlanes().size());
         
         return o;
     }
 
-    protected Plane getTestPlane(boolean full, String productID, int depth)
+    protected Plane getTestPlane(boolean full, String productID, int depth, boolean poly)
         throws Exception
     {
         Plane p = new Plane(productID);
@@ -1862,16 +1863,21 @@ public abstract class AbstractObservationDAOTest
             p.polarization.states.add(PolarizationState.U);
 
             p.position = new Position();
-            MultiPolygon poly = new MultiPolygon();
-                poly.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
-                poly.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
-                poly.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            List<Point> points = new ArrayList<Point>();
-            for (Vertex v : poly.getVertices())
-                if (!SegmentType.CLOSE.equals(v.getType()))
-                    points.add(new Point(v.cval1, v.cval2));
-            p.position.bounds = new Polygon(points, poly);
+            if (poly) {
+                MultiPolygon mp = new MultiPolygon();
+                mp.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+                mp.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+                mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+                mp.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+                List<Point> points = new ArrayList<Point>();
+                for (Vertex v : mp.getVertices())
+                    if (!SegmentType.CLOSE.equals(v.getType()))
+                        points.add(new Point(v.cval1, v.cval2));
+                p.position.bounds = new Polygon(points, mp);
+            } else {
+                p.position.bounds = new Circle(new Point(0.0, 89.0), 2.0);
+            }
+            
             p.position.dimension = new Dimension2D(1024, 2048);
             p.position.resolution = 0.05;
             p.position.sampleSize = 0.025;

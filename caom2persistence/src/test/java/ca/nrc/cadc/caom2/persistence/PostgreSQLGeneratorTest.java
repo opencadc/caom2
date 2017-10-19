@@ -176,8 +176,6 @@ public class PostgreSQLGeneratorTest
         }
     }
 
-
-
     @Test
     public void testGetPolygonFromInterval()
     {
