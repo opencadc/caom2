@@ -521,8 +521,9 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
     }
     
     private ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
-        if (numVerts < 4)
+        if (numVerts < 4) {
             throw new IllegalArgumentException("number of vertices in approximation too small (min: 4)");
+        }
         
         CartesianTransform trans = CartesianTransform.getTransform(val);
         Point cen = trans.transform(val.getCenter());
