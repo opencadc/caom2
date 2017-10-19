@@ -140,7 +140,7 @@ public class VOSpaceResolver implements StorageResolver {
             
             URI vuri = getVOSURI(uri);
             RegistryClient registryClient = new RegistryClient();
-            URL baseURL = registryClient.getServiceURL(getServiceURI(vuri), Standards.VOSPACE_SYNC_21, authMethod);
+            URL baseURL = registryClient.getServiceURL(getServiceURI(vuri), Standards.VOSPACE_SYNC_21, am);
 
             String scheme = baseURL.getProtocol();
             String protocol = null;
