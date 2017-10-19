@@ -32,12 +32,25 @@ public class CartesianTransform implements Serializable {
         return getTransform(poly, false);
     }
 
-    public static CartesianTransform getTransform(MultiPolygon poly,
-            boolean force) {
+    public static CartesianTransform getTransform(MultiPolygon poly, boolean force) {
         double[] cube = getBoundingCube(poly, null);
         return getTransform(cube, force);
     }
 
+    public static CartesianTransform getTransform(Circle c) {
+        return getTransform(c, false);
+    }
+    
+    public static CartesianTransform getTransform(Circle c, boolean force) {
+        double[] xyz = CartesianTransform.toUnitSphere(c.getCenter().cval1, c.getCenter().cval2);
+        double[] cube = new double[] {
+            xyz[0], xyz[0],
+            xyz[1], xyz[1],
+            xyz[2], xyz[2]
+        };
+        return getTransform(cube, force);
+    }
+    
     public static CartesianTransform getTransform(double[] cube,
             boolean force) {
         double x1 = cube[0];
