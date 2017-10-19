@@ -71,6 +71,8 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.types.CartesianTransform;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -78,17 +80,16 @@ import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.dali.postgresql.PgInterval;
+import ca.nrc.cadc.dali.postgresql.PgSpoint;
+import ca.nrc.cadc.dali.postgresql.PgSpoly;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
-import org.postgresql.geometric.PGpoint;
 import org.postgresql.geometric.PGpolygon;
 import org.postgresql.util.PGobject;
 
@@ -99,7 +100,7 @@ import org.postgresql.util.PGobject;
 public class PostgreSQLGenerator extends BaseSQLGenerator {
 
     private static final Logger log = Logger.getLogger(PostgreSQLGenerator.class);
-
+    
     public PostgreSQLGenerator(String database, String schema) {
         super(database, schema);
         this.useIntegerForBoolean = true;
@@ -150,6 +151,15 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         return "'" + value.toString() + "'";
     }
 
+    /**
+     * Store point value of an spoint column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     @Override
     protected void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
             throws SQLException {
@@ -160,24 +170,25 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             }
         } else {
             log.debug("[safeSetPoint] in: " + val);
-            StringBuilder sval = new StringBuilder();
-            sval.append("(");
-            sval.append(val.cval1);
-            sval.append("d,");
-            sval.append(val.cval2);
-            sval.append("d)");
-            PGobject pgo = new PGobject();
-            String spoint = sval.toString();
-            pgo.setType("spoint");
-            pgo.setValue(spoint);
+            PgSpoint pgs = new PgSpoint();
+            PGobject pgo = pgs.generatePoint(new ca.nrc.cadc.dali.Point(val.cval1, val.cval2));
             ps.setObject(col, pgo);
             if (sb != null) {
-                sb.append(spoint);
+                sb.append(pgo.getValue());
                 sb.append(",");
             }
         }
     }
 
+    /**
+     * Store list of points value in a double[] column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     @Override
     protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
             throws SQLException {
@@ -205,9 +216,17 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             }
         }
     }
-
+    
+    /**
+     * Store a circle value in a double[] column.
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     @Override
-    protected void safeSetPolygon(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -215,42 +234,97 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.debug("[safeSetPolygon] in: " + val);
-            // pg_sphere only supports simple polygons
-            Polygon poly = val;
-            log.debug("[safeSetPolygon] hull: " + poly);
-            if (poly == null) {
-                ps.setObject(col, null);
-                log.debug("failed to compute simple outer hull from " + val);
-                if (sb != null) {
-                    sb.append("null,");
+            log.debug("[safeSetCircle] in: " + val);
+            Double[] dval = new Double[3];
+            dval[0] = val.getCenter().cval1;
+            dval[1] = val.getCenter().cval2;
+            dval[2] = val.getRadius();
+            java.sql.Array arr = ps.getConnection().createArrayOf("float8", dval);
+            ps.setObject(col, arr);
+            if (sb != null) {
+                sb.append("[");
+                for (double d : dval) {
+                    sb.append(d).append(",");
                 }
-            } else {
-                StringBuilder sval = new StringBuilder();
-                sval.append("{");
-                for (Point p : poly.getPoints()) {
-                    sval.append("(");
-                    sval.append(Math.toRadians(p.cval1));
-                    sval.append(",");
-                    sval.append(Math.toRadians(p.cval2));
-                    sval.append(")");
-                    sval.append(",");
-                }
-                sval.setCharAt(sval.length() - 1, '}'); // replace last comma with closing }
-                String spoly = sval.toString();
-                log.debug("[in] spoly in radians: " + spoly);
-                PGobject pgo = new PGobject();
-                pgo.setType("spoly");
-                pgo.setValue(spoly);
-                ps.setObject(col, pgo);
-                if (sb != null) {
-                    sb.append(spoly);
-                    sb.append(",");
-                }
+                sb.setCharAt(sb.length() - 1, ']'); // replace last comma with closing ]
             }
         }
     }
 
+    /**
+     * Store polygon value in an spoly column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    @Override
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+            throws SQLException {
+        if (val == null) {
+            ps.setObject(col, null);
+            if (sb != null) {
+                sb.append("null,");
+            }
+        } else {
+            log.debug("[safeSetPositionBounds] in: " + val);
+            ca.nrc.cadc.dali.Polygon poly = new ca.nrc.cadc.dali.Polygon();
+            for (Point p : val.getPoints()) {
+                poly.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));
+            }
+            PgSpoly pgs = new PgSpoly();
+            PGobject pgo = pgs.generatePolygon(poly);
+            ps.setObject(col, pgo);
+            if (sb != null) {
+                sb.append(pgo.getValue());
+                sb.append(",");
+            }
+        }
+    }
+
+    /** 
+     * Store a circle value in an spoly column. This method generates a polygon 
+     * approximation of the circle.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
+    @Override
+    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
+            throws SQLException {
+        if (val == null) {
+            ps.setObject(col, null);
+            if (sb != null) {
+                sb.append("null,");
+            }
+        } else {
+            log.debug("[safeSetPositionBounds] in: " + val);
+            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 6);
+            PgSpoly pgs = new PgSpoly();
+            PGobject pgo = pgs.generatePolygon(poly);
+            ps.setObject(col, pgo);
+            if (sb != null) {
+                sb.append(pgo.getValue());
+                sb.append(",");
+            }
+            log.debug("[safeSetPositionBounds] out: " + pgo.getValue());
+        }
+    }
+
+    /**
+     * Store a MultiPolygon in a double[] column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     @Override
     protected void safeSetMultiPolygon(StringBuilder sb, PreparedStatement ps, int col, MultiPolygon val)
             throws SQLException {
@@ -280,6 +354,15 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         }
     }
 
+    /**
+     * Store an interval in a polygon column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param val
+     * @throws SQLException 
+     */
     @Override
     protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
             throws SQLException {
@@ -290,7 +373,8 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             }
         } else {
             log.debug("[safeSetInterval] in: " + val);
-            PGpolygon poly = generatePolygon2D(val, null);
+            PgInterval pgi = new PgInterval();
+            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.DoubleInterval(val.getLower(), val.getUpper()));
             ps.setObject(col, poly);
             if (sb != null) {
                 sb.append(poly.getValue());
@@ -299,17 +383,32 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         }
     }
 
+    /**
+     * Store a list of intervals in a polygon column.
+     * 
+     * @param sb
+     * @param ps
+     * @param col
+     * @param subs
+     * @throws SQLException 
+     */
     @Override
     protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<SubInterval> subs)
             throws SQLException {
-        if (subs == null) {
+        if (subs == null || subs.isEmpty()) {
             ps.setObject(col, null);
             if (sb != null) {
                 sb.append("null,");
             }
         } else {
             log.debug("[safeSetInterval] in: " + subs.size() + " SubIntervals");
-            PGpolygon poly = generatePolygon2D(null, subs);
+            ca.nrc.cadc.dali.DoubleInterval[] dis = new ca.nrc.cadc.dali.DoubleInterval[subs.size()];
+            int i = 0;
+            for (SubInterval si : subs) {
+                dis[i++] = new ca.nrc.cadc.dali.DoubleInterval(si.getLower(), si.getUpper());
+            }
+            PgInterval pgi = new PgInterval();
+            PGpolygon poly = pgi.generatePolygon2D(dis);
             ps.setObject(col, poly);
             if (sb != null) {
                 sb.append(poly.getValue());
@@ -326,52 +425,12 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         if (s == null) {
             return null;
         }
-
-        // Get the string inside the enclosing brackets.
-        int open = s.indexOf("{");
-        int close = s.indexOf("}");
-        if (open == -1 || close == -1) {
-            throw new IllegalArgumentException("Missing opening or closing brackets " + s);
-        }
-
-        // Get the string inside the enclosing parentheses.
-        s = s.substring(open + 1, close);
-        open = s.indexOf("(");
-        close = s.lastIndexOf(")");
-        if (open == -1 || close == -1) {
-            throw new IllegalArgumentException("Missing opening or closing parentheses " + s);
-        }
-
-        // Each set of vertices is '),(' separated.
-        s = s.substring(open + 1, close);
-        String[] vertices = s.split("\\){1}?\\s*,\\s*{1}\\({1}?");
-
-        // Check minimum vertices to make a polygon.
-        if (vertices.length < 3) {
-            throw new IllegalArgumentException("Minimum 3 vertices required to form a Polygon " + s);
-        }
-
-        // Create STC Polygon and set some defaults.
-        List<Point> ret = new ArrayList<Point>(vertices.length);
-
-        // Loop through each set of vertices.
-        for (int i = 0; i < vertices.length; i++) {
-            // Each vertex is 2 values separated by a comma.
-            String vertex = vertices[i];
-            String[] values = vertex.split(",");
-            if (values.length != 2) {
-                throw new IllegalArgumentException("Each set of vertices must have only 2 values " + vertex);
-            }
-
-            // Coordinates.
-            double x = Double.parseDouble(values[0]);
-            double y = Double.parseDouble(values[1]);
-
-            log.debug("[out] spoly in radians: " + x + "," + y);
-            // convert to degrees and add to Polygon.
-            x = Math.toDegrees(x);
-            y = Math.toDegrees(y);
-            ret.add(new Point(x, y));
+        
+        PgSpoly pgs = new PgSpoly();
+        List<Point> ret = new ArrayList<Point>();
+        ca.nrc.cadc.dali.Polygon poly = pgs.getPolygon(s);
+        for (ca.nrc.cadc.dali.Point p : poly.getVertices()) {
+            ret.add(new Point(p.getLongitude(), p.getLatitude()));
         }
         return ret;
     }
@@ -383,15 +442,36 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
             return null;
         }
 
-        List<Point> ret = new ArrayList<Point>();
-        for (int i = 0; i < coords.length; i += 2) {
-            double cval1 = coords[i];
-            double cval2 = coords[i + 1];
+        if (coords.length >= 6) {
+            List<Point> ret = new ArrayList<Point>();
+            for (int i = 0; i < coords.length; i += 2) {
+                double cval1 = coords[i];
+                double cval2 = coords[i + 1];
 
-            Point p = new Point(cval1, cval2);
-            ret.add(p);
+                Point p = new Point(cval1, cval2);
+                ret.add(p);
+            }
+            return ret;
         }
-        return ret;
+        throw new IllegalStateException("array length " + coords.length + "too short for List<Point>");
+    }
+    
+    @Override
+    protected Circle getCircle(ResultSet rs, int col) throws SQLException {
+        double[] coords = Util.getDoubleArray(rs, col);
+        if (coords == null) {
+            return null;
+        }
+        if (coords.length == 3) {
+            double cval1 = coords[0];
+            double cval2 = coords[1];
+            double rad = coords[2];
+            
+            Circle ret = new Circle(new Point(cval1, cval2), rad);
+            log.debug("[getCircle] " + ret);
+            return ret;
+        }
+        throw new IllegalStateException("array length " + coords.length + " invalid for Circle");
     }
 
     @Override
@@ -420,12 +500,9 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         if (s == null) {
             return null;
         }
-
-        List<Double> vals = parsePolygon2D(s);
-        if (vals.size() == 2) {
-            return new Interval(vals.get(0), vals.get(1));
-        }
-        throw new RuntimeException("BUG: found " + vals.size() + " values for Interval bounds");
+        PgInterval pgi = new PgInterval();
+        ca.nrc.cadc.dali.DoubleInterval di = pgi.getInterval(s);
+        return new Interval(di.getLower(), di.getUpper());
     }
 
     @Override
@@ -434,81 +511,38 @@ public class PostgreSQLGenerator extends BaseSQLGenerator {
         if (s == null) {
             return null;
         }
-
+        PgInterval pgi = new PgInterval();
+        ca.nrc.cadc.dali.DoubleInterval[] dis = pgi.getIntervalArray(s);
         List<SubInterval> ret = new ArrayList<SubInterval>();
-        List<Double> vals = parsePolygon2D(s);
-        for (int i = 0; i < vals.size(); i += 2) {
-            ret.add(new SubInterval(vals.get(i), vals.get(i + 1)));
+        for (ca.nrc.cadc.dali.DoubleInterval di : dis) {
+            ret.add(new SubInterval(di.getLower(), di.getUpper()));
         }
         return ret;
     }
-
-    PGpolygon generatePolygon2D(Interval val, List<SubInterval> subs) {
-        // a query will be a point or line segment at y=0
-        double y1 = -2.0;  // bottom of comb
-        double ym = -1.0;  // bottom of teeth
-        double y2 = 1.0;   // top of teeth
-
-        List<PGpoint> verts = new ArrayList<PGpoint>();
-
-        // draw a 2D polygon that looks like a tooth-up-comb with each tooth having x-range that
-        // corresponds to one (sub) interval... it is a simple box for an Interval with no sub-samples
-        if (subs != null) {
-            // full-span line at y1
-            double lb = subs.get(0).getLower();
-            double ub = subs.get(subs.size() - 1).getUpper();
-            verts.add(new PGpoint(lb, y1));
-            verts.add(new PGpoint(ub, y1));
-
-            LinkedList<SubInterval> samples = new LinkedList<SubInterval>(subs);
-            Iterator<SubInterval> iter = samples.descendingIterator();
-            SubInterval prev = null;
-            while (iter.hasNext()) {
-                SubInterval si = iter.next();
-                if (prev != null) {
-                    verts.add(new PGpoint(prev.getLower(), ym));
-                    verts.add(new PGpoint(si.getUpper(), ym));
-                }
-                verts.add(new PGpoint(si.getUpper(), y2));
-                verts.add(new PGpoint(si.getLower(), y2));
-                prev = si;
-            }
-        } else {
-            // full-span line at y1
-            verts.add(new PGpoint(val.getLower(), y1));
-            verts.add(new PGpoint(val.getUpper(), y1));
-
-            // just the basic bounds interval
-            verts.add(new PGpoint(val.getUpper(), y2));
-            verts.add(new PGpoint(val.getLower(), y2));
+    
+    private ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
+        if (numVerts < 4) {
+            throw new IllegalArgumentException("number of vertices in approximation too small (min: 4)");
         }
+        
+        CartesianTransform trans = CartesianTransform.getTransform(val);
+        Point cen = trans.transform(val.getCenter());
+        double rad = val.getRadius();
 
-        return new PGpolygon(verts.toArray(new PGpoint[verts.size()]));
-    }
-
-    // this parses a postgresql polygon internal representation of a caom2
-    // Interval; the generating code is in the caom2persistence where the basic 
-    // concept is that the intwerval is a comb-shape and the teeth that stick up
-    // above y=0.0 represent the subintervals... a simple interval is just a box;
-    // to reconstruct, simply find all the X values for y > 0.0 and sort them
-    private List<Double> parsePolygon2D(String s) {
-
-        s = s.replaceAll("[()]", ""); // remove all ( )
-        //log.debug("strip: '" + s + "'");
-        String[] points = s.split(",");
-        List<Double> vals = new ArrayList<Double>();
-        for (int i = 0; i < points.length; i += 2) {
-            String xs = points[i];
-            String ys = points[i + 1];
-            //log.debug("check: " + xs + "," + ys);
-            double y = Double.parseDouble(ys);
-            if (y > 0.0) {
-                vals.add(new Double(xs));
-            }
+        double phi = 2.0 * Math.PI / ((double) numVerts);
+        // compute distance to vertices so that the edges are tangent and circle is
+        // inside the polygon
+        double vdist = val.getRadius() / Math.sin(phi / 2.0);
+        
+        CartesianTransform inv = trans.getInverseTransform();
+        ca.nrc.cadc.dali.Polygon ret = new ca.nrc.cadc.dali.Polygon();        
+        for (int i = 0; i < numVerts; i++) {
+            double x = cen.cval1 + vdist * Math.cos(i * phi);
+            double y = cen.cval2 + vdist * Math.sin(i * phi);
+            Point p = new Point(x, y);
+            p = inv.transform(p);
+            ret.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));
         }
-        // sort so we don't care about winding direction of the polygon impl
-        Collections.sort(vals);
-
-        return vals;
+        return ret;
     }
 }

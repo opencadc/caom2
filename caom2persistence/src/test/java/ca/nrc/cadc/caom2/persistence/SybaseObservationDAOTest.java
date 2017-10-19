@@ -99,9 +99,9 @@ public class SybaseObservationDAOTest extends AbstractObservationDAOTest
     }
 
     @Override
-    protected Plane getTestPlane(boolean full, String productID, int depth) throws Exception
+    protected Plane getTestPlane(boolean full, String productID, int depth, boolean poly) throws Exception
     {
-        Plane p = super.getTestPlane(full, productID, depth);
+        Plane p = super.getTestPlane(full, productID, depth, poly);
         
         // not supported by SYBASE impl:
         p.position = null;
