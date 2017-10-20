@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -85,8 +86,8 @@ import org.junit.Test;
 /**
  * @author yeunga
  */
-public class AdCutoutResolverTest {
-    private static final Logger log = Logger.getLogger(AdCutoutResolverTest.class);
+public class VOSpaceCutoutGeneratorTest {
+    private static final Logger log = Logger.getLogger(VOSpaceCutoutGeneratorTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -97,11 +98,12 @@ public class AdCutoutResolverTest {
     private static final String CUTOUT3 = "[3][500:600, 500:600]";
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-    private static final String FILE_URI = "ad:FOO/bar";
+    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpget";
 
-    AdCutoutResolver adResolver = new AdCutoutResolver();
+    VOSpaceCutoutGenerator vosResolver = new VOSpaceCutoutGenerator();
 
-    public AdCutoutResolverTest() {
+    public VOSpaceCutoutGeneratorTest() {
 
     }
 
@@ -114,16 +116,20 @@ public class AdCutoutResolverTest {
             cutouts.add(CUTOUT3);
             cutouts.add(CUTOUT4);
             URI uri = new URI(FILE_URI);
-            adResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = adResolver.toURL(uri, cutouts);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = vosResolver.toURL(uri, cutouts);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertEquals("http", url.getProtocol());
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
+            String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(FILE_URI.toString(), paramArray[0].split("=")[1]);
+            Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
+            Assert.assertEquals(PROTOCOL, paramArray[2].split("=")[1]);
+            Assert.assertEquals("cutout", paramArray[3].split("=")[1]);
+            Assert.assertEquals(CUTOUT1, paramArray[4].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, paramArray[5].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, paramArray[6].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, paramArray[7].split("=")[1]);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

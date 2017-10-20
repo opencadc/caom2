@@ -79,7 +79,7 @@ import ca.nrc.cadc.net.NetUtil;
  *
  * @author yeunga
  */
-public class VOSpaceCutoutResolver extends VOSpaceResolver implements CutoutGenerator
+public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator
 {    
     private List<String> cutouts = null;
 
