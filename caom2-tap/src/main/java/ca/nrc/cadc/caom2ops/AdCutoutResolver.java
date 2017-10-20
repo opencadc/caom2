@@ -43,7 +43,7 @@ import ca.nrc.cadc.net.NetUtil;
  *
  * @author yeunga
  */
-public class AdResolverWithCutouts extends AdResolver implements CutoutGenerator
+public class AdCutoutResolver extends AdResolver implements CutoutGenerator
 {
     private List<String> cutouts = null;
 

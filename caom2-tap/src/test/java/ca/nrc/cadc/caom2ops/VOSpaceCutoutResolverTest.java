@@ -86,8 +86,8 @@ import org.junit.Test;
 /**
  * @author yeunga
  */
-public class VOSpaceResolverWithCutoutsTest {
-    private static final Logger log = Logger.getLogger(VOSpaceResolverWithCutoutsTest.class);
+public class VOSpaceCutoutResolverTest {
+    private static final Logger log = Logger.getLogger(VOSpaceCutoutResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -101,9 +101,9 @@ public class VOSpaceResolverWithCutoutsTest {
     private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
     private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpget";
 
-    VOSpaceResolverWithCutouts vosResolver = new VOSpaceResolverWithCutouts();
+    VOSpaceCutoutResolver vosResolver = new VOSpaceCutoutResolver();
 
-    public VOSpaceResolverWithCutoutsTest() {
+    public VOSpaceCutoutResolverTest() {
 
     }
 

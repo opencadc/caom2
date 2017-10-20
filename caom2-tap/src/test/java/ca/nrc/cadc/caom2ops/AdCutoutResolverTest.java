@@ -62,54 +62,71 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
-import ca.nrc.cadc.net.NetUtil;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- *
  * @author yeunga
  */
-public class VOSpaceResolverWithCutouts extends VOSpaceResolver implements CutoutGenerator
-{    
-    private List<String> cutouts = null;
+public class AdCutoutResolverTest {
+    private static final Logger log = Logger.getLogger(AdCutoutResolverTest.class);
 
-    public URL toURL(URI uri, List<String> cutouts)
-    {
-        this.cutouts = cutouts;
-        return super.toURL(uri);
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    @Override
-    protected String createURL(URI uri)
-    {
-        // assume that the baseQuery already contains one or more parameters
-        String baseQuery = super.createURL(uri);
-        StringBuilder query = new StringBuilder();
-        query.append(baseQuery);
+    private static final String CUTOUT1 = "[1][100:200, 100:200]";
+    private static final String CUTOUT2 = "[2][300:400, 300:400]";
+    private static final String CUTOUT3 = "[3][500:600, 500:600]";
+    private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-        if (this.cutouts != null && !this.cutouts.isEmpty())
-        {
-            query.append("&");
-            query.append("view=cutout");
-            for (String cutout : this.cutouts)
-            {
-                query.append("&");
-                query.append("cutout");
-                query.append("=");
-                query.append(NetUtil.encode(cutout));
-            }
+    private static final String FILE_URI = "ad:FOO/bar";
+
+    AdCutoutResolver adResolver = new AdCutoutResolver();
+
+    public AdCutoutResolverTest() {
+
+    }
+
+    @Test
+    public void testToURL() {
+        try {
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(FILE_URI);
+            adResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = adResolver.toURL(uri, cutouts);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            Assert.assertEquals("http", url.getProtocol());
+            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-
-        return query.toString();
     }
 }
