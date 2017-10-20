@@ -24,7 +24,7 @@ dependencies {
     compile 'org.opencadc:cadc-cdp:[1.0.2,2.0)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-dali:1.+'
+    compile('org.opencadc:cadc-dali:[1.0,1.1)'){ force = true }
     compile 'org.opencadc:cadc-vos:1.+'
     compile 'org.opencadc:cadc-uws-server:1.+'
     compile 'org.opencadc:caom2:[2.3.4,3.0)'
