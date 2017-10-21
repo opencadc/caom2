@@ -62,15 +62,12 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.NetUtil;
+
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -82,47 +79,80 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author yeunga
+ *
+ * @author pdowler
  */
-public class AdCutoutGeneratorTest {
-    private static final Logger log = Logger.getLogger(AdCutoutGeneratorTest.class);
+public class CaomArtifactResolverTest 
+{
+    private static final Logger log = Logger.getLogger(CaomArtifactResolverTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
-
-    private static final String CUTOUT1 = "[1][100:200, 100:200]";
-    private static final String CUTOUT2 = "[2][300:400, 300:400]";
-    private static final String CUTOUT3 = "[3][500:600, 500:600]";
-    private static final String CUTOUT4 = "[4][700:800, 700:800]";
-
-    private static final String FILE_URI = "ad:FOO/bar";
-
-    AdCutoutGenerator adResolver = new AdCutoutGenerator();
-
-    public AdCutoutGeneratorTest() {
-
-    }
-
+    
+    public CaomArtifactResolverTest() { }
+  
     @Test
-    public void testToURL() {
+    public void testBaseURL() {
         try {
+            CaomArtifactResolver car = new CaomArtifactResolver();
+            
+            URI uri = null;
+            URL url = null;
+            
+            uri = URI.create("ad:FOO/bar");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("mast:products/bar/bar.fits");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("gemini:file/N20101231S0343.fits");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testCutoutURL() {
+        try {
+            CaomArtifactResolver car = new CaomArtifactResolver();
+            
+            URI uri = null;
+            URL url = null;
             List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(FILE_URI);
-            adResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = adResolver.toURL(uri, cutouts);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
+            String cut = "[[1][20:40,30;50]";
+            cutouts.add(cut);
+            
+            uri = URI.create("ad:FOO/bar");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+            
+            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+            
+            uri = URI.create("mast:products/bar/bar.fits");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+
+            try {
+                uri = URI.create("gemini:file/N20101231S0343.fits");
+                url = car.getURL(uri, cutouts);
+                Assert.fail(uri + cut + " -> " +url);
+            } catch(IllegalArgumentException expected) {
+                log.info("caught expected: " + expected);
+            }
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

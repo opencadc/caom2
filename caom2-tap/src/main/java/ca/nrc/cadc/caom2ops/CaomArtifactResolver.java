@@ -65,11 +65,13 @@
 *  $Revision: 4 $
 *
 ************************************************************************
-*/
-
+ */
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -78,121 +80,108 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-
 /**
- * Utility class to invoke the appropriate SchemeHandler to convert a URI to URL(s).
- * If no SchemeHandler can be found, the URI.toURL() method is called as a fallback.
+ * Utility class to invoke the appropriate StorageResolver to convert a URI to URL(s).
+ * If no StorageResolver can be found, the URI.toURL() method is called as a fallback.
  *
  * @author pdowler
  */
-public class CaomSchemeHandler implements SchemeHandler
-{
-    private static final Logger log = Logger.getLogger(CaomSchemeHandler.class);
+public class CaomArtifactResolver {
 
-    private static final String CACHE_FILENAME = CaomSchemeHandler.class.getSimpleName() + ".properties";
+    private static final Logger log = Logger.getLogger(CaomArtifactResolver.class);
 
-    private final Map<String,SchemeHandler> handlers = new HashMap<String,SchemeHandler>();
+    private static final String CACHE_FILENAME = CaomArtifactResolver.class.getSimpleName() + ".properties";
+
+    private final Map<String, StorageResolver> handlers = new HashMap<String, StorageResolver>();
 
     private AuthMethod authMethod;
 
     /**
-     * Create a MultiSchemeHandler from the default config. By default, a resource named
-     * MultiSchemeHandler.properties is found via the class loader that loaded this class.
+     * Create a MultiStorageResolver from the default config. By default, a resource named
+     * MultiStorageResolver.properties is found via the class loader that loaded this class.
      */
-    public CaomSchemeHandler()
-    {
-        this(CaomSchemeHandler.class.getClassLoader().getResource(CACHE_FILENAME));
+    public CaomArtifactResolver() {
+        this(CaomArtifactResolver.class.getClassLoader().getResource(CACHE_FILENAME));
     }
 
     /**
-     * Create a MultiSchemeHandler with configuration loaded from the specified URL.
+     * Create a MultiStorageResolver with configuration loaded from the specified URL.
      *
      * The config resource has contains URIs (one per line, comments start line with #, blank lines
-     * are ignored) with a scheme and a class name of a class that implements the SchemeHandler
+     * are ignored) with a scheme and a class name of a class that implements the StorageResolver
      * interface for that particular scheme.
      *
      * @param url
      */
-    public CaomSchemeHandler(URL url)
-    {
-        if (url == null)
-        {
+    public CaomArtifactResolver(URL url) {
+        if (url == null) {
             log.debug("config URL is null: no custom scheme support");
             return;
         }
 
-        try
-        {
+        try {
             Properties props = new Properties();
             props.load(url.openStream());
             Iterator<String> i = props.stringPropertyNames().iterator();
-            while ( i.hasNext() )
-            {
+            while (i.hasNext()) {
                 String scheme = i.next();
                 String cname = props.getProperty(scheme);
-                try
-                {
+                try {
                     log.debug("loading: " + cname);
                     Class c = Class.forName(cname);
                     log.debug("instantiating: " + c);
-                    SchemeHandler handler = (SchemeHandler) c.newInstance();
+                    StorageResolver handler = (StorageResolver) c.newInstance();
                     log.debug("adding: " + scheme + "," + handler);
                     handlers.put(scheme, handler);
                     log.debug("success: " + scheme + " is supported");
-                }
-                catch(Exception fail)
-                {
+                } catch (Exception fail) {
                     log.warn("failed to load " + cname + ", reason: " + fail);
                 }
             }
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             log.error("failed to read config from " + url, ex);
-        }
-        finally
-        {
+        } finally {
 
         }
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
     }
 
-    public void setAuthMethod(AuthMethod authMethod)
-    {
+    /**
+     * Override the authentication method from the current subject in order to generate URLs
+     * with a possibly different authentication method. This override may not be applicable
+     * to all StorsgeResolver implementations.
+     * 
+     * @param authMethod 
+     */
+    public void setAuthMethod(AuthMethod authMethod) {
         this.authMethod = authMethod;
-        for (SchemeHandler sh : handlers.values())
-        {
-            sh.setAuthMethod(authMethod);
-        }
     }
 
     /**
-     * Find and call a suitable SchemeHandler. This method gets the scheme from the
-     * URI and uses it to find a configured SchemeHandler. If that is successful, the
-     * SchemeHandler is used to do the conversion. If no SchemeHandler can be found,
+     * Find and call a suitable StorageResolver. This method gets the scheme from the
+     * URI and uses it to find a configured StorageResolver. If that is successful, the
+     * StorageResolver is used to do the conversion. If no StorageResolver can be found,
      * the URI.toURL() method is called as a fallback, which is sufficient to handle
      * URIs where the scheme is a known transport protocol (e.g. http).
      *
      * @param uri
      * @return a URL to the identified resource; null if the uri was null
      * @throws IllegalArgumentException if a URL cannot be generated
-     * @throws UnsupportedOperationException if there is no SchemeHandler for the URI scheme
+     * @throws UnsupportedOperationException if there is no StorageResolver for the URI scheme
      */
     public URL getURL(URI uri)
-        throws IllegalArgumentException, MalformedURLException
-    {
-        if (uri == null)
+            throws IllegalArgumentException, MalformedURLException {
+        if (uri == null) {
             return null;
+        }
 
-        SchemeHandler sh = (SchemeHandler) handlers.get(uri.getScheme());
-        if (sh != null)
-            return sh.getURL(uri);
+        StorageResolver resolver = (StorageResolver) handlers.get(uri.getScheme());
+        if (resolver != null) {
+            return resolver.toURL(uri);
+        }
 
         // fallback: hope for the best
         return uri.toURL();
@@ -200,36 +189,38 @@ public class CaomSchemeHandler implements SchemeHandler
 
     /**
      * Convert the specified URI to one or more URL(s).
-     *
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *         the uri is malformed such that a URL cannot be generated, or the uri is null
-     * @param uri the URI to convert
-     * @param cutouts A list of cutout strings that should be supported by the returned URL.
-     * @return a URL to the identified resource
+     * 
+     * @param uri
+     * @param cutouts
+     * @return resolved URL with cutouts
+     * @throws IllegalArgumentException if the input URI scheme does not match a known 
+     *     CutoutGenerator implementation
+     * @throws MalformedURLException 
      */
     public URL getURL(URI uri, List<String> cutouts)
-            throws IllegalArgumentException, MalformedURLException
-    {
-        if (uri == null)
+            throws IllegalArgumentException, MalformedURLException {
+        if (uri == null) {
             return null;
+        }
 
-        SchemeHandler sh = (SchemeHandler) handlers.get(uri.getScheme());
-        if (sh != null)
-            return sh.getURL(uri, cutouts);
-
-        // fallback: hope for the best
-        return uri.toURL();
+        StorageResolver resolver = (StorageResolver) handlers.get(uri.getScheme());
+        if (resolver != null && resolver instanceof CutoutGenerator)
+        {
+            CutoutGenerator gen = (CutoutGenerator) resolver;
+            return gen.toURL(uri, cutouts);
+        }
+        throw new IllegalArgumentException("cutout not supported: " + uri.getScheme()
+                + " resolver: " + resolver.getClass().getName());
     }
 
     /**
-     * Add a new SchemeHandler to the converter. If this handler has the same scheme as an
+     * Add a new StorageResolver to the converter. If this handler has the same scheme as an
      * existing handler, it will replace the previous one.
      *
      * @param scheme
      * @param handler
      */
-    public void addSchemeHandler(String scheme, SchemeHandler handler)
-    {
+    public void addStorageResolver(String scheme, StorageResolver handler) {
         handlers.put(scheme, handler);
     }
 }

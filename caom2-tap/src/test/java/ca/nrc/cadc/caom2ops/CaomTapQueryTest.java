@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.dali.tables.ListTableData;
@@ -79,12 +78,10 @@ import ca.nrc.cadc.dali.tables.votable.VOTableField;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;

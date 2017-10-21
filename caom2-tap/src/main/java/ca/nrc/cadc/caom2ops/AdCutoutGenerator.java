@@ -28,13 +28,12 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
+import ca.nrc.cadc.net.NetUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
-
-import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
-import ca.nrc.cadc.net.NetUtil;
 
 /**
  * CutoutGenerator implementation for the Archive Directory (ad) system.
@@ -43,34 +42,41 @@ import ca.nrc.cadc.net.NetUtil;
  *
  * @author yeunga
  */
-public class AdCutoutGenerator extends AdResolver implements CutoutGenerator
-{
-    private List<String> cutouts = null;
+public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
 
     @Override
-    public URL toURL(URI uri, List<String> cutouts)
-    {
-        this.cutouts = cutouts;
-        return super.toURL(uri);
+    public URL toURL(URI uri, List<String> cutouts) {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        appendCutoutQueryString(sb, cutouts);
+
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
     }
-    
 
-    @Override
-    protected URL toURL(URL serviceURL, String path) throws MalformedURLException
-    {
-        StringBuilder query = new StringBuilder("");
-        if (this.cutouts != null && !this.cutouts.isEmpty())
-        {
-            query.append("?");
-            int cutoutIndex = 0;
-            for (String cutout : this.cutouts)
-            {
-                if (cutoutIndex > 0)
-                    query.append("&");
-                cutoutIndex++;
-                query.append("cutout=" + NetUtil.encode(cutout));
+    // package access so other CutoutGenrator implementations can use it
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts) {
+        if (cutouts != null && !cutouts.isEmpty()) {
+            boolean add = (sb.indexOf("?") > 0); // already has query params
+            if (!add) {
+                sb.append("?");
+            }
+            for (String cutout : cutouts) {
+                if (add) {
+                    sb.append("&");
+                }
+                add = true;
+                sb.append("cutout=");
+                sb.append(NetUtil.encode(cutout));
             }
         }
-        
-        return new URL(serviceURL.toExternalForm() + path + query.toString());
-    }}
+    }
+}

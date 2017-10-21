@@ -62,70 +62,45 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.auth.AuthMethod;
+
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
 import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.util.Log4jInit;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- * @author yeunga
+ *
+ * @author pdowler
  */
-public class AdCutoutGeneratorTest {
-    private static final Logger log = Logger.getLogger(AdCutoutGeneratorTest.class);
+public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutGenerator {
+    private static final Logger log = Logger.getLogger(CadcMastCutoutGenerator.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
+    public CadcMastCutoutGenerator() { }
 
-    private static final String CUTOUT1 = "[1][100:200, 100:200]";
-    private static final String CUTOUT2 = "[2][300:400, 300:400]";
-    private static final String CUTOUT3 = "[3][500:600, 500:600]";
-    private static final String CUTOUT4 = "[4][700:800, 700:800]";
-
-    private static final String FILE_URI = "ad:FOO/bar";
-
-    AdCutoutGenerator adResolver = new AdCutoutGenerator();
-
-    public AdCutoutGeneratorTest() {
-
-    }
-
-    @Test
-    public void testToURL() {
+    @Override
+    public URL toURL(URI uri, List<String> cutouts) 
+            throws IllegalArgumentException {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        
         try {
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(FILE_URI);
-            adResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = adResolver.toURL(uri, cutouts);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
     }
 }

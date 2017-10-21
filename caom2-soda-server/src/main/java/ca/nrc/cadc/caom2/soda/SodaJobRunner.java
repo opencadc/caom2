@@ -69,21 +69,6 @@
 
 package ca.nrc.cadc.caom2.soda;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -97,7 +82,7 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
-import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
+import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
@@ -119,6 +104,19 @@ import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
 import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  * This JobRunner implements IVOA WD-SODA-1.0 job semantics.
@@ -293,7 +291,7 @@ public class SodaJobRunner implements JobRunner
                 runID = job.getID();
 
             CaomTapQuery query = new CaomTapQuery(tapURI, runID);
-            SchemeHandler sh = new CaomSchemeHandler();
+            CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
             List<Result> jobResults = new ArrayList<>();
             int serialNum = 1;
             for (URI id : ids)
@@ -331,7 +329,7 @@ public class SodaJobRunner implements JobRunner
                                     if (cutout != null && !cutout.isEmpty())
                                     {
 
-                                        URL url = sh.getURL(a.getURI(), cutout);
+                                        URL url = artifactResolver.getURL(a.getURI(), cutout);
                                         int num = 0;
                                         if (url.getQuery() != null)
                                             num = 1;

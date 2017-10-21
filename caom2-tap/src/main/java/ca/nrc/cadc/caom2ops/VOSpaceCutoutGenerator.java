@@ -68,12 +68,11 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
-
-import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
-import ca.nrc.cadc.net.NetUtil;
 
 /**
  *
@@ -81,35 +80,28 @@ import ca.nrc.cadc.net.NetUtil;
  */
 public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator
 {    
-    private List<String> cutouts = null;
-
-    public URL toURL(URI uri, List<String> cutouts)
-    {
-        this.cutouts = cutouts;
-        return super.toURL(uri);
-    }
-
     @Override
-    protected String createURL(URI uri)
-    {
-        // assume that the baseQuery already contains one or more parameters
-        String baseQuery = super.createURL(uri);
-        StringBuilder query = new StringBuilder();
-        query.append(baseQuery);
-
-        if (this.cutouts != null && !this.cutouts.isEmpty())
-        {
-            query.append("&");
-            query.append("view=cutout");
-            for (String cutout : this.cutouts)
-            {
-                query.append("&");
-                query.append("cutout");
-                query.append("=");
-                query.append(NetUtil.encode(cutout));
-            }
+    public URL toURL(URI uri, List<String> cutouts) 
+            throws IllegalArgumentException {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
         }
 
-        return query.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        if (sb.indexOf("?") > 0) {
+            sb.append("&");
+        } else {
+            sb.append("?");
+        }
+        sb.append("view=cutout");
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
     }
 }
