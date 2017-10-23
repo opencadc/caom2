@@ -143,7 +143,7 @@ public class CaomTapQuery
      * Get an observation.
      * 
      * @param uri
-     * @return
+     * @return an observation
      * @throws IOException
      * @throws UnexpectedContentException
      * @throws AccessControlException
@@ -169,7 +169,7 @@ public class CaomTapQuery
      * 
      * @param uri
      * @param artifactOnly
-     * @return
+     * @return artifact query result
      * @throws IOException
      * @throws UnexpectedContentException
      * @throws AccessControlException
@@ -196,7 +196,7 @@ public class CaomTapQuery
      * 
      * @param uri
      * @param artifactOnly
-     * @return
+     * @return artifact query result
      * @throws IOException
      * @throws UnexpectedContentException
      * @throws AccessControlException
@@ -223,7 +223,7 @@ public class CaomTapQuery
      *  Get a single artifact.
      * 
      * @param uri
-     * @return
+     * @return an artifact
      * @throws IOException
      * @throws UnexpectedContentException
      * @throws AccessControlException

@@ -72,15 +72,12 @@ package ca.nrc.cadc.caom2.pkg;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
-import java.util.Date;
-
-import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
-import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
+import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
@@ -106,9 +103,11 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import javax.security.auth.Subject;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -205,8 +204,8 @@ public class PackageRunner implements JobRunner
 
             CaomTapQuery query = new CaomTapQuery(tapID, runID);
             
-            SchemeHandler sh = new CaomSchemeHandler();
-            sh.setAuthMethod(proxyAuthMethod); // override auth method for proxied calls
+            CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
+            artifactResolver.setAuthMethod(proxyAuthMethod); // override auth method for proxied calls
             
             for (String suri : idList)
             {
@@ -230,9 +229,9 @@ public class PackageRunner implements JobRunner
                 if (idList.size() == 1 && artifacts.size() == 1)
                 {
                     // single file result: redirect
-                    sh.setAuthMethod(authMethod); // original auth method for redirect
+                    artifactResolver.setAuthMethod(authMethod); // original auth method for redirect
                     Artifact a = artifacts.get(0);
-                    URL url = sh.getURL(a.getURI());
+                    URL url = artifactResolver.getURL(a.getURI());
                     log.debug("redirect: " + a.getURI() + " from " + url);
                     syncOutput.setResponseCode(303);
                     syncOutput.setHeader("Location", url.toExternalForm());
@@ -259,7 +258,7 @@ public class PackageRunner implements JobRunner
                     {
                         for (Artifact a : artifacts)
                         {
-                            URL url = sh.getURL(a.getURI());
+                            URL url = artifactResolver.getURL(a.getURI());
                             log.debug("write: " + a.getURI() + " from " + url);
                             try
                             {
