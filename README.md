@@ -1,6 +1,6 @@
 # caom2service
 
-Common Archive Observation Model service implementation libraries.
+Common Archive Observation Model service implementation libraries. The master branch is now updated to work with DALI-1.1 (cadc-dali-1.1) and TAP-1.1 (cadc-tap-server-1.1). The other services that use the CAOM TAP service also assume TAP-1.1.
 
 ## CAOM TAP service
 
