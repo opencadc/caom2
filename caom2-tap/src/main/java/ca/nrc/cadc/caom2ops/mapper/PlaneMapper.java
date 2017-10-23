@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -143,68 +144,61 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
               
-            // TODO: get List<Point> directly from caom2:Plane.position.bounds
-            // TODO: get double[] from caom2:Plane.position.bounds.samples
-            
-            ca.nrc.cadc.stc.Polygon posBounds = (ca.nrc.cadc.stc.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
-            if (posBounds != null)
-            {
-                // HACK: 
+            //ca.nrc.cadc.dali.Polygon posBounds = (ca.nrc.cadc.dali.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
+            double[] posBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.points"));
+            double[] posBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
+            if (posBounds != null) {
                 plane.position = new Position();
-                MultiPolygon mp = new MultiPolygon();
-                SegmentType t = SegmentType.MOVE;
-                for (int i=0; i<posBounds.getCoordPairs().size(); i++)
-                {
-                    ca.nrc.cadc.stc.CoordPair c = posBounds.getCoordPairs().get(i);
-                    Vertex v = new Vertex(c.getX(), c.getY(), t);
-                    mp.getVertices().add(v);
-                    t = SegmentType.LINE; // subsequent vertices
-                }
-                mp.getVertices().add(Vertex.CLOSE);
-                // HACK: temporary backwards compat: use the position_bounds to construct the DALI polygon and
-                // the CAOM polygon
-                boolean ccw = mp.getCCW();
-                List<Point> pts = new ArrayList<Point>();
-                for (Vertex v : mp.getVertices())
-                {
-                    if (!SegmentType.CLOSE.equals(v.getType()))
-                    {
-                        Point p = new Point(v.cval1, v.cval2);
-                        if (ccw)
-                            pts.add(p); // add to end
-                        else
-                            pts.add(0, p); // add to start aka revserse order
+                if (posBounds.length == 3) { // circle
+                    plane.position.bounds = new Circle(new Point(posBounds[0], posBounds[1]), posBounds[2]);
+                } else { // polygon
+                    List<Point> pts = new ArrayList<Point>();
+                    for (int i = 0; i < posBounds.length; i += 2) {
+                        pts.add(new Point(posBounds[i], posBounds[i + 1]));
+                    }
+                    MultiPolygon mp = new MultiPolygon();
+                    if (posBoundsSamples != null) {
+                        for (int i = 0; i < posBoundsSamples.length; i += 3) {
+                            double cv1 = posBoundsSamples[i];
+                            double cv2 = posBoundsSamples[i + 1];
+                            SegmentType st = SegmentType.toValue((int) posBoundsSamples[i + 2]);
+                            Vertex v = new Vertex(cv1, cv2, st);
+                            mp.getVertices().add(v);
+                        }
+                        plane.position.bounds = new Polygon(pts, mp);
+                    } else {
+                        log.warn("cannot reconstruct Plane.position.bounds Polygon: Plane.position.bounds.samples was null");
                     }
                 }
-                plane.position.bounds = new Polygon(pts, mp);
                 
                 Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
                 Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis2"));
-                if (dim1 != null && dim2 != null)
+                if (dim1 != null && dim2 != null) {
                     plane.position.dimension = new Dimension2D(dim1, dim2);
+                }
                 plane.position.resolution = Util.getDouble(data, map.get("caom2:Plane.position.resolution"));
                 plane.position.sampleSize = Util.getDouble(data, map.get("caom2:Plane.position.sampleSize"));
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
             }
             
-            Double nrgBounds1 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.lower"));
-            Double nrgBounds2 = Util.getDouble(data, map.get("caom2:Plane.energy.bounds.upper"));
-            List<Double> eSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.energy.bounds.samples"));
-            if (nrgBounds1 != null && nrgBounds2 != null)
+            ca.nrc.cadc.dali.DoubleInterval nrgBounds 
+                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
+            ca.nrc.cadc.dali.DoubleInterval[] nrgSamples 
+                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
+            if (nrgBounds != null)
             {
                 plane.energy = new Energy();
-                plane.energy.bounds = new Interval(nrgBounds1, nrgBounds2);
-                if (eSampleVals != null) // actual sub-samples
+                plane.energy.bounds = new Interval(nrgBounds.getLower(), nrgBounds.getUpper());
+                if (nrgSamples != null) // actual sub-samples
                 {
-                    for (int i=0; i<eSampleVals.size(); i++)
+                    for (ca.nrc.cadc.dali.DoubleInterval si : nrgSamples)
                     {
-                        plane.energy.bounds.getSamples().add(new SubInterval(eSampleVals.get(i), eSampleVals.get(i+1)));
-                        i++; // skip upper
+                        plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
                     }
                 }
                 else // HACK: backwards compat
                 {
-                    plane.energy.bounds.getSamples().add(new SubInterval(nrgBounds1, nrgBounds2));
+                    plane.energy.bounds.getSamples().add(new SubInterval(nrgBounds.getLower(), nrgBounds.getUpper()));
                 }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
                 plane.energy.dimension = Util.getLong(data, map.get("caom2:Plane.energy.dimension"));
@@ -220,24 +214,24 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     plane.energy.transition = new EnergyTransition(spec, trans);
             }
             
-            Double tBounds1 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.lower"));
-            Double tBounds2 = Util.getDouble(data, map.get("caom2:Plane.time.bounds.upper"));
-            List<Double> tSampleVals = Util.getDoubleList(data, map.get("caom2:Plane.time.bounds.samples"));
-            if (tBounds1 != null && tBounds2 != null)
+            ca.nrc.cadc.dali.DoubleInterval timBounds 
+                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
+            ca.nrc.cadc.dali.DoubleInterval[] timSamples 
+                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
+            if (timBounds != null)
             {
                 plane.time = new Time();
-                plane.time.bounds = new Interval(tBounds1, tBounds2);
-                if (tSampleVals != null) // actual sub-samples
+                plane.time.bounds = new Interval(timBounds.getLower(), timBounds.getUpper());
+                if (timSamples != null) // actual sub-samples
                 {
-                    for (int i=0; i<tSampleVals.size(); i++)
+                    for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
                     {
-                        plane.time.bounds.getSamples().add(new SubInterval(tSampleVals.get(i), tSampleVals.get(i+1)));
-                        i++; // skip upper
+                        plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
                     }
                 }
                 else // HACK: backwards compat
                 {
-                    plane.time.bounds.getSamples().add(new SubInterval(tBounds1, tBounds2));
+                    plane.time.bounds.getSamples().add(new SubInterval(timBounds.getLower(), timBounds.getUpper()));
                 }
                 plane.time.dimension = Util.getLong(data, map.get("caom2:Plane.time.dimension"));
                 plane.time.resolution = Util.getDouble(data, map.get("caom2:Plane.time.resolution"));

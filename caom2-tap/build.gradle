@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.5'
+version = '1.6'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -24,10 +24,49 @@ dependencies {
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-dali:[1.0, 1.1)'
+    compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-vos:1.+'
     compile 'org.opencadc:caom2:[2.3.4,3.0)'
-    compile 'org.opencadc:caom2-artifact-resolvers:1.+'
+    compile 'org.opencadc:caom2-artifact-resolvers:[1.0,)'
  
-    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile 'junit:junit:[4.0,5.0)'
+}
+
+// enable intTest 
+configurations {
+    intTestCompile.extendsFrom testCompile
+    intTestRuntime.extendsFrom testRuntime
+}
+
+sourceSets {
+    intTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/intTest/java')
+        }
+        
+        // set the intTest resource directory
+        resources.srcDir file('src/intTest/resources')
+    }
+}
+
+tasks.withType(Test) {
+    // reset the report destinations so that intTests go to their
+    // own page
+    //reports.html.destination = file("${reporting.baseDir}/${name}")
+    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
+    
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
+}
+
+task intTest(type: Test) {
+    // set the configuration context
+    testClassesDir = sourceSets.intTest.output.classesDir
+    classpath = sourceSets.intTest.runtimeClasspath
+    
+    // run the tests always
+    outputs.upToDateWhen { false }
 }

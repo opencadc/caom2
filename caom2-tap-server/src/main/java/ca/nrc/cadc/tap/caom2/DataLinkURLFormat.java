@@ -69,19 +69,16 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import java.net.URI;
-import java.net.URL;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import java.net.URI;
+import java.net.URL;
+import javax.security.auth.Subject;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -94,23 +91,7 @@ public class DataLinkURLFormat  implements Format<Object>
     private String jobID;
     private URL baseURL;
 
-    private static final URI DATALINK_RESOURCE_IDENTIFIER_URI;
-
-    static
-    {
-        try
-        {
-        	DATALINK_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/caom2ops");
-        }
-        catch(IllegalArgumentException bug)
-        {
-            throw new RuntimeException("BUG: invalid resourceIdentifier string", bug);
-        }
-        catch(NullPointerException bug)
-        {
-            throw new RuntimeException("BUG: null resourceIdentifier string", bug);
-        }
-    }
+    private static final URI DATALINK_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
     private DataLinkURLFormat() { }
 

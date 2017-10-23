@@ -69,28 +69,24 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.tap.writer.format.ResultSetFormat;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.postgresql.PgInterval;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class IntervalFormat  implements ResultSetFormat
+public class IntervalFormat  extends AbstractResultSetFormat
 {
     private static final Logger log = Logger.getLogger(IntervalFormat.class);
 
-    @Override
-    public Object parse(String s)
-    {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
-    }
-
+    private DoubleIntervalFormat fmt = new DoubleIntervalFormat();
+    
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
         throws SQLException
@@ -107,51 +103,13 @@ public class IntervalFormat  implements ResultSetFormat
         {
             String s = (String) object;
             log.debug("in: " + s);
-            List<Double> vals = parsePolyImpl(s);
-            StringBuilder sb = new StringBuilder();
-            for (Double d : vals)
-            {
-                sb.append(d).append(" ");
-            }
-            String ret = sb.toString();
-            log.debug("out: " + ret);
-            return ret;
+            PgInterval pgi = new PgInterval();
+            DoubleInterval i = pgi.getInterval(s);
+            return fmt.format(i);
         }
-        
+        // this might help debugging more than a throw
         return object.toString();
     }
     
-    // this is the reader that parses the interbal-in-postgresql implementation
-    // the writer is in caom2persistence library
-    // TODO: reader and writer should be in together with a nice set of round-trip tests
     
-    // this parses a postgresql polygon internal representation of a caom2
-    // Interval; the generating code is in the caom2persistence where the basic 
-    // concept is that the intwerval is a comb-shape and the teeth that stick up
-    // above y=0.0 represent the subintervals... a simple interval is just a box;
-    // to reconstruct, simply find all the X values for y > 0.0 and sort them
-    private List<Double> parsePolyImpl(String s)
-    {
-        
-        s = s.replaceAll("[()]", ""); // remove all ( )
-        //log.debug("strip: '" + s + "'");
-        String[] points = s.split(",");
-        List<Double> vals = new ArrayList<Double>();
-        for (int i=0; i<points.length; i++)
-        {
-            String xs = points[i];
-            String ys = points[i+1];
-            i++; // skip y
-            //log.debug("check: " + xs + "," + ys);
-            double y = Double.parseDouble(ys);
-            if (y > 0.0)
-            {
-                vals.add(new Double(xs));
-            }
-        }
-        // sort so we don't care about winding direction of the polygon impl
-        Collections.sort(vals);
-        
-        return vals;
-    }
 }

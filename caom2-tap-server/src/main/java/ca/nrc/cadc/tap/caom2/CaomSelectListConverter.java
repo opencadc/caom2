@@ -87,16 +87,16 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 import org.apache.log4j.Logger;
 
 /**
- * Supports converting caom.Artifact.accessURL in the SELECT list to caom.Artifact.uri so that
- * AccessURLFormatter can generate a URL.
+ * Supports converting various CAOM columns from the select list into different
+ * columns that can deliver the correct output.
  * 
  * @author pdowler
  */
-public class AccessURLConverter extends SelectNavigator
+public class CaomSelectListConverter extends SelectNavigator
 {
-    private static Logger log = Logger.getLogger(AccessURLConverter.class);
+    private static Logger log = Logger.getLogger(CaomSelectListConverter.class);
     
-    public AccessURLConverter()
+    public CaomSelectListConverter()
     {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
     }
@@ -158,13 +158,22 @@ public class AccessURLConverter extends SelectNavigator
                 if (c.getColumnName().equalsIgnoreCase("accessURL"))
                     c.setColumnName("uri");
                 
+                // caom2.Plane -- position_bounds_points is polymorphic (circles and polygons)
+                // and position_bounds is not (circle approximated as polygon) so we have to 
+                // return the latter in TAP -- slightly lossy
+                
+                //if (c.getColumnName().equalsIgnoreCase("position_bounds"))
+                //    c.setColumnName("position_bounds_points");
+                
                 // caom2.ObsCore: access_url column in the view contains planeURI values
+                //if (c.getColumnName().equalsIgnoreCase("s_region"))
+                //    c.setColumnName("position_bounds_points");
             }
             
         }
     }
     
-    // this gets called after TableNameConverter does ivoa.ObsCore to caom.ObsCore
+    // this gets called after TableNameConverter does ivoa.ObsCore to caom2.ObsCore
     private boolean isCAOM2(Column c, List<Table> tabs)
     {
         boolean caom2 = false;

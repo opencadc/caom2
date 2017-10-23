@@ -37,15 +37,14 @@ import ca.nrc.cadc.tap.MaxRecValidator;
 import ca.nrc.cadc.tap.schema.ColumnDesc;
 import ca.nrc.cadc.tap.schema.SchemaDesc;
 import ca.nrc.cadc.tap.schema.TableDesc;
+import ca.nrc.cadc.tap.schema.TapDataType;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.Parameter;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import static org.junit.Assert.*;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class MaxRecValidatorImplTest
@@ -60,9 +59,9 @@ public class MaxRecValidatorImplTest
         Log4jInit.setLevel("ca.nrc.cadc.dali", Level.INFO);
         
         
-        ColumnDesc c1 = new ColumnDesc("foo.bar", "a", "adql:INTEGER", null);
-        ColumnDesc c2 = new ColumnDesc("foo.bar", "b", "adql:DOUBLE", null);
-        ColumnDesc c3 = new ColumnDesc("foo.bar", "c", "adql:VARCHAR", 64);
+        ColumnDesc c1 = new ColumnDesc("foo.bar", "a", TapDataType.INTEGER);
+        ColumnDesc c2 = new ColumnDesc("foo.bar", "b", TapDataType.DOUBLE);
+        ColumnDesc c3 = new ColumnDesc("foo.bar", "c", new TapDataType("char", "*", null));
         
         TableDesc td = new TableDesc("foo", "foo.bar");
         td.getColumnDescs().add(c1);
@@ -97,17 +96,17 @@ public class MaxRecValidatorImplTest
             // no limit
             final Integer result1 = testSubject.validate();
             log.debug("no limit: " + result1);
-            assertNull("no limit", result1);
+            Assert.assertNull("no limit", result1);
 
             // large user limit
             job.getParameterList().add(new Parameter("MAXREC", "123456"));
             final int result2 = testSubject.validate();
-            assertEquals("user limit", 123456, result2);
+            Assert.assertEquals("user limit", 123456, result2);
 
             // sync -> vospace: user limit only
             job.getParameterList().add(new Parameter("DEST", "vos://cadc.nrc.ca!vospace/myvospace"));
             final int result3 = testSubject.validate();
-            assertEquals("vospace dest with user limit", 123456, result3);
+            Assert.assertEquals("vospace dest with user limit", 123456, result3);
         }
         finally
         {
@@ -131,21 +130,21 @@ public class MaxRecValidatorImplTest
             // imposed limit
             final Integer defaultLimit = testSubject.validate();
             log.debug("async limit: " + defaultLimit);
-            assertNotNull("async limit", defaultLimit);
+            Assert.assertNotNull("async limit", defaultLimit);
 
             // large user limit
             Integer largeLimit = defaultLimit * 100;
             job.getParameterList().add(new Parameter("MAXREC", largeLimit.toString()));
             final Integer result2 = testSubject.validate();
             log.debug("large limit: " + defaultLimit);
-            assertNotNull("async limit", result2);
-            assertEquals("larger == dynamic", defaultLimit, result2);
+            Assert.assertNotNull("async limit", result2);
+            Assert.assertEquals("larger == dynamic", defaultLimit, result2);
 
             // sync -> vospace: user limit only
             job.getParameterList().add(new Parameter("DEST", "vos://cadc.nrc.ca!vospace/myvospace"));
             final Integer result3 = testSubject.validate();
-            assertNotNull("user limit", result3);
-            assertEquals("vospace dest with user limit", largeLimit, result3);
+            Assert.assertNotNull("user limit", result3);
+            Assert.assertEquals("vospace dest with user limit", largeLimit, result3);
         }
         finally
         {

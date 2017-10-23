@@ -74,19 +74,18 @@ import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.Role;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBConfig;
-import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.tap.schema.ColumnDesc;
+import ca.nrc.cadc.tap.schema.FunctionDesc;
+import ca.nrc.cadc.tap.schema.SchemaDesc;
+import ca.nrc.cadc.tap.schema.TableDesc;
+import ca.nrc.cadc.tap.schema.TapDataType;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.uws.Job;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import javax.security.auth.Subject;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
@@ -102,7 +101,7 @@ public class TestUtil
     {
         // TODO: load tap_schema from files: caom2.tap_schema_content.sql ivoa.tap_schema_content.sql
         // so these tests can run without a DB
-        
+        /*
         try
         {
             DBConfig dbConfig = new DBConfig();
@@ -120,8 +119,38 @@ public class TestUtil
         {
             log.debug("failed to read .dbrc - cannot load TapSchema");
         }
+        */
+        TapDataType uuidType = new TapDataType("char", "36", "caom:uuid");
         
-        return null;
+        
+        
+        TableDesc obs = new TableDesc("caom2", "caom2.Observation");
+        obs.getColumnDescs().add(new ColumnDesc("caom2.Observation", "obsID", uuidType));
+        
+        TableDesc plane = new TableDesc("caom2", "caom2.Plane");
+        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "obsID", uuidType));
+        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "planeID", uuidType));
+        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "position_bounds", TapDataType.POLYGON));
+        
+        SchemaDesc caom2 = new SchemaDesc("caom2");
+        caom2.getTableDescs().add(obs);
+        caom2.getTableDescs().add(plane);
+        
+        TapSchema ret = new TapSchema();
+        ret.getSchemaDescs().add(caom2);
+        
+        ret.getFunctionDescs().addAll(new Sub().getFunctionDescs());
+        
+        return ret;
+    }
+    private static class Sub extends TapSchemaDAO
+    {
+        // make this method accessible
+        @Override
+        public List<FunctionDesc> getFunctionDescs()
+        {
+            return super.getFunctionDescs();
+        }
     }
     
     static Job job = new Job()
