@@ -76,7 +76,6 @@ import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +103,7 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
      * 
      * @param data
      * @param dateFormat
-     * @return
+     * @return an artifact
      */
     public Artifact mapRow(List<Object> data, DateFormat dateFormat)
     {

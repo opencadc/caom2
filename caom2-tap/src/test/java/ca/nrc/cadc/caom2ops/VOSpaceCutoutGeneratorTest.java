@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,79 +67,72 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops.mapper;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
-*
-* @author pdowler
-*/
-public class PartMapper implements VOTableRowMapper<Part>
-{
-    private static final Logger log = Logger.getLogger(PartMapper.class);
-    
-    private Map<String,Integer> map;
+ * @author yeunga
+ */
+public class VOSpaceCutoutGeneratorTest {
+    private static final Logger log = Logger.getLogger(VOSpaceCutoutGeneratorTest.class);
 
-    public PartMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    /**
-     * Map columns from the current row into an Artifact, starting at the 
-     * specified column offset.
-     * 
-     * @param data
-     * @param dateFormat 
-     * @return a part
-     */
-    public Part mapRow(List<Object> data, DateFormat dateFormat)
-    {
-        log.debug("mapping Part");
-        UUID id = Util.getUUID(data, map.get("caom2:Part.id"));
-        if (id == null)
-            return null;
+    private static final String CUTOUT1 = "[1][100:200, 100:200]";
+    private static final String CUTOUT2 = "[2][300:400, 300:400]";
+    private static final String CUTOUT3 = "[3][500:600, 500:600]";
+    private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-        try
-        {
-            String pName = Util.getString(data, map.get("caom2:Part.name"));
-            Part part = new Part(pName);
+    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpget";
 
-            String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null)
-                part.productType = ProductType.toValue(pType);
+    VOSpaceCutoutGenerator vosResolver = new VOSpaceCutoutGenerator();
 
-            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
-            Util.assignLastModified(part, pLastModified, "lastModified");
-            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
+    public VOSpaceCutoutGeneratorTest() {
 
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
-            Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
+    }
 
-            Util.assignID(part, id);
-            
-            return part;
+    @Test
+    public void testToURL() {
+        try {
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(FILE_URI);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = vosResolver.toURL(uri, cutouts);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            Assert.assertEquals("http", url.getProtocol());
+            String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(FILE_URI.toString(), paramArray[0].split("=")[1]);
+            Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
+            Assert.assertEquals(PROTOCOL, paramArray[2].split("=")[1]);
+            Assert.assertEquals("cutout", paramArray[3].split("=")[1]);
+            Assert.assertEquals(CUTOUT1, paramArray[4].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, paramArray[5].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, paramArray[6].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, paramArray[7].split("=")[1]);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
-        }
-        finally { }
     }
 }
-
-

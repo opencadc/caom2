@@ -71,44 +71,37 @@ package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import ca.nrc.cadc.reg.Standards;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.compute.CutoutUtil;
 import ca.nrc.cadc.caom2.compute.EnergyUtil;
 import ca.nrc.cadc.caom2.compute.PolarizationUtil;
-import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.compute.TimeUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
-import ca.nrc.cadc.caom2ops.CaomSchemeHandler;
-import ca.nrc.cadc.caom2ops.SchemeHandler;
+import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import javax.security.auth.Subject;
+import org.apache.log4j.Logger;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -129,7 +122,7 @@ public class ArtifactProcessor
     private final RegistryClient registryClient;
     
     private final String runID;
-    private final SchemeHandler schemeHandler;
+    private final CaomArtifactResolver artifactResolver;
     private boolean downloadOnly;
 
     public ArtifactProcessor(URI sodaID, String runID)
@@ -137,7 +130,7 @@ public class ArtifactProcessor
         this.sodaID = sodaID;
         this.runID = runID;
         this.registryClient = new RegistryClient();
-        this.schemeHandler = new CaomSchemeHandler();
+        this.artifactResolver = new CaomArtifactResolver();
     }
 
     /**
@@ -390,7 +383,7 @@ public class ArtifactProcessor
     protected URL getDownloadURL(Artifact a)
         throws MalformedURLException
     {
-        URL url = schemeHandler.getURL(a.getURI());
+        URL url = artifactResolver.getURL(a.getURI());
 
         if ( StringUtil.hasText(runID) )
         {

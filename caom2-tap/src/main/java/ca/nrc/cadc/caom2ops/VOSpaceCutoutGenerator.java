@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,84 +62,46 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops.mapper;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
+import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
+import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
+import java.net.URL;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.log4j.Logger;
 
 /**
-*
-* @author pdowler
-*/
-public class PartMapper implements VOTableRowMapper<Part>
-{
-    private static final Logger log = Logger.getLogger(PartMapper.class);
-    
-    private Map<String,Integer> map;
-
-    public PartMapper(Map<String,Integer> map)
-    {
-            this.map = map;
-    }
-
-    /**
-     * Map columns from the current row into an Artifact, starting at the 
-     * specified column offset.
-     * 
-     * @param data
-     * @param dateFormat 
-     * @return a part
-     */
-    public Part mapRow(List<Object> data, DateFormat dateFormat)
-    {
-        log.debug("mapping Part");
-        UUID id = Util.getUUID(data, map.get("caom2:Part.id"));
-        if (id == null)
-            return null;
-
-        try
-        {
-            String pName = Util.getString(data, map.get("caom2:Part.name"));
-            Part part = new Part(pName);
-
-            String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null)
-                part.productType = ProductType.toValue(pType);
-
-            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
-            Util.assignLastModified(part, pLastModified, "lastModified");
-            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
-            Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
-
-            Util.assignID(part, id);
-            
-            return part;
+ *
+ * @author yeunga
+ */
+public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator
+{    
+    @Override
+    public URL toURL(URI uri, List<String> cutouts) 
+            throws IllegalArgumentException {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
         }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        if (sb.indexOf("?") > 0) {
+            sb.append("&");
+        } else {
+            sb.append("?");
         }
-        finally { }
+        sb.append("view=cutout");
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
     }
 }
-
-

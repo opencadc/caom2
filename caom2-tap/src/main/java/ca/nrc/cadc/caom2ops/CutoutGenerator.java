@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,84 +62,33 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops.mapper;
 
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
+package ca.nrc.cadc.caom2ops;
+
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
+import java.net.URL;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.log4j.Logger;
 
 /**
-*
-* @author pdowler
-*/
-public class PartMapper implements VOTableRowMapper<Part>
+ * Interface for handlers that convert a URI to a URL that allows retrieval.
+ * 
+ * @author pdowler
+ */
+public interface CutoutGenerator
 {
-    private static final Logger log = Logger.getLogger(PartMapper.class);
-    
-    private Map<String,Integer> map;
-
-    public PartMapper(Map<String,Integer> map)
-    {
-            this.map = map;
-    }
-
     /**
-     * Map columns from the current row into an Artifact, starting at the 
-     * specified column offset.
+     * Convert the specified URI to one or more URL(s). 
      * 
-     * @param data
-     * @param dateFormat 
-     * @return a part
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
+     * @param uri the URI to convert
+     * @param cutouts list of cutout representations
+     * @return a URL to the identified resource
      */
-    public Part mapRow(List<Object> data, DateFormat dateFormat)
-    {
-        log.debug("mapping Part");
-        UUID id = Util.getUUID(data, map.get("caom2:Part.id"));
-        if (id == null)
-            return null;
-
-        try
-        {
-            String pName = Util.getString(data, map.get("caom2:Part.name"));
-            Part part = new Part(pName);
-
-            String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null)
-                part.productType = ProductType.toValue(pType);
-
-            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
-            Util.assignLastModified(part, pLastModified, "lastModified");
-            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
-            Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
-
-            Util.assignID(part, id);
-            
-            return part;
-        }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
-        }
-        finally { }
-    }
+    public URL toURL(URI uri, List<String> cutouts)
+        throws IllegalArgumentException;
 }
-
-

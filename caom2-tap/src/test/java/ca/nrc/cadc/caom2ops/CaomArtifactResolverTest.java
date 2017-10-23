@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,84 +62,100 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops.mapper;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
+
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
-*
-* @author pdowler
-*/
-public class PartMapper implements VOTableRowMapper<Part>
+ *
+ * @author pdowler
+ */
+public class CaomArtifactResolverTest 
 {
-    private static final Logger log = Logger.getLogger(PartMapper.class);
-    
-    private Map<String,Integer> map;
+    private static final Logger log = Logger.getLogger(CaomArtifactResolverTest.class);
 
-    public PartMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
-
-    /**
-     * Map columns from the current row into an Artifact, starting at the 
-     * specified column offset.
-     * 
-     * @param data
-     * @param dateFormat 
-     * @return a part
-     */
-    public Part mapRow(List<Object> data, DateFormat dateFormat)
-    {
-        log.debug("mapping Part");
-        UUID id = Util.getUUID(data, map.get("caom2:Part.id"));
-        if (id == null)
-            return null;
-
-        try
-        {
-            String pName = Util.getString(data, map.get("caom2:Part.name"));
-            Part part = new Part(pName);
-
-            String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null)
-                part.productType = ProductType.toValue(pType);
-
-            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
-            Util.assignLastModified(part, pLastModified, "lastModified");
-            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
-            Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
-
-            Util.assignID(part, id);
+    
+    public CaomArtifactResolverTest() { }
+  
+    @Test
+    public void testBaseURL() {
+        try {
+            CaomArtifactResolver car = new CaomArtifactResolver();
             
-            return part;
+            URI uri = null;
+            URL url = null;
+            
+            uri = URI.create("ad:FOO/bar");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("mast:products/bar/bar.fits");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+            uri = URI.create("gemini:file/N20101231S0343.fits");
+            url = car.getURL(uri);
+            Assert.assertNotNull(uri + " -> URL",url);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
+    }
+    
+    @Test
+    public void testCutoutURL() {
+        try {
+            CaomArtifactResolver car = new CaomArtifactResolver();
+            
+            URI uri = null;
+            URL url = null;
+            List<String> cutouts = new ArrayList<String>();
+            String cut = "[[1][20:40,30;50]";
+            cutouts.add(cut);
+            
+            uri = URI.create("ad:FOO/bar");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+            
+            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+            
+            uri = URI.create("mast:products/bar/bar.fits");
+            url = car.getURL(uri, cutouts);
+            Assert.assertNotNull(uri + cut + " -> URL", url);
+
+            try {
+                uri = URI.create("gemini:file/N20101231S0343.fits");
+                url = car.getURL(uri, cutouts);
+                Assert.fail(uri + cut + " -> " +url);
+            } catch(IllegalArgumentException expected) {
+                log.info("caught expected: " + expected);
+            }
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        finally { }
     }
 }
-
-
