@@ -94,6 +94,8 @@ public class VOSpaceCutoutGeneratorIntTest {
     
     private static final String CUTOUT1 = "[9][100:200,100:200]";
     private static final String CUTOUT2 = "[11][100:200,100:200]";
+    
+    private static final String INVALID_CUTOUT = "[100][100:200]";
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/CADCAuthtest1/cadcIntTest/806045o.fits.fz";
 
@@ -120,6 +122,32 @@ public class VOSpaceCutoutGeneratorIntTest {
                 download.setHeadOnly(false); // head requests don't work with vospace ws
                 download.run();
                 Assert.assertEquals(200, download.getResponseCode());
+                log.info("response code: " + download.getResponseCode());
+            }
+
+        } catch (Exception unexpected) {
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidCutoutUrl() throws Exception {
+        log.info("starting testValidCutoutUrl");
+        try {
+            List<URL> urlList = new ArrayList<URL>();
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(INVALID_CUTOUT);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts);
+            
+            urlList.add(url);
+            for (URL u : urlList) {
+                log.debug("opening connection to: " + u.toString());
+                OutputStream out = new ByteArrayOutputStream();
+                HttpDownload download = new HttpDownload(u, out);
+                download.setHeadOnly(false); // head requests don't work with vospace ws
+                download.run();
+                Assert.assertEquals(400, download.getResponseCode());
                 log.info("response code: " + download.getResponseCode());
             }
 
