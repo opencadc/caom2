@@ -209,6 +209,9 @@ public class CaomRepoConfig {
 
         private boolean computeMetadata;
         private boolean computeMetadataValidation;
+        private boolean proposalGroup;
+        private String operatorGroup;
+        private String staffGroup;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database,
                 String schema, String obsTableName, GroupURI readOnlyGroup,
@@ -228,7 +231,8 @@ public class CaomRepoConfig {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + ","
                     + schema + "," + obsTableName + "," + readOnlyGroup + "," + readWriteGroup + ","
                     + sqlGenerator.getSimpleName() + "," + computeMetadata + ","
-                    + computeMetadataValidation + "]";
+                    + computeMetadataValidation + "," + proposalGroup + "," + operatorGroup + ","
+                    + staffGroup + "]";
         }
 
         public Class getSqlGenerator() {
@@ -241,6 +245,18 @@ public class CaomRepoConfig {
 
         public boolean getComputeMetadataValidation() {
             return computeMetadataValidation;
+        }
+
+        public boolean getProposalGroup() {
+            return proposalGroup;
+        }
+
+        public String getOperatorGroup() {
+            return operatorGroup;
+        }
+
+        public String getStaffGroup() {
+            return staffGroup;
         }
 
         public String getTestTable() {
@@ -335,21 +351,27 @@ public class CaomRepoConfig {
             // default values for backwards compat to existing config
             boolean computeMetadata = false;
             boolean computeMetadataValidation = true;
+            boolean proposalGroup = false;
+            String operatorGroup = null;
+            String staffGroup = null;
             if (parts.length >= 8) {
                 String options = parts[7];
                 log.debug(collection + " options: " + options);
                 String[] ss = options.split(","); // comma-separated list of key=value pairs
                 for (String s : ss) {
                     String[] kv = s.split("=");
-                    if (kv.length == 2) {
-                        if ("computeMetadata".equals(kv[0])) {
-                            computeMetadata = Boolean.parseBoolean(kv[1]);
-                        } else if ("computeMetadataValidation".equals(kv[0])) {
-                            computeMetadataValidation = Boolean.parseBoolean(kv[1]);
-                        }
-
-                        // else: ignore
+                    if ("computeMetadata".equals(kv[0])) {
+                        computeMetadata = Boolean.parseBoolean(kv[1]);
+                    } else if ("computeMetadataValidation".equals(kv[0])) {
+                        computeMetadataValidation = Boolean.parseBoolean(kv[1]);
+                    } else if ("proposalGroup".equals(kv[0])) {
+                        proposalGroup = Boolean.parseBoolean(kv[1]);
+                    } else if ("operatorGroup".equals(kv[0])) {
+                        operatorGroup = kv[1];
+                    } else if ("staffGroup".equals(kv[0])) {
+                        staffGroup = kv[1];
                     }
+                    // else: ignore
                 }
             }
 
@@ -360,6 +382,9 @@ public class CaomRepoConfig {
                     schema, obsTable, ro, rw);
             rci.computeMetadata = computeMetadata;
             rci.computeMetadataValidation = computeMetadataValidation;
+            rci.proposalGroup = proposalGroup;
+            rci.operatorGroup = operatorGroup;
+            rci.staffGroup = staffGroup;
             log.debug(collection + ": loaded " + rci);
             return rci;
         } else {

@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.util.CaomValidator;
@@ -86,6 +87,7 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -119,9 +121,12 @@ public abstract class RepoAction extends RestAction {
     protected ObservationURI uri;
     protected boolean computeMetadata;
     protected boolean computeMetadataValidation;
+    protected Map<String, Object> groupConfig = new HashMap<String, Object>(); 
 
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
+    private transient ReadAccessDAO readAccessDAO;
+    private transient Map<String, Object> daoConfig;
 
     protected RepoAction() {
     }
@@ -169,6 +174,25 @@ public abstract class RepoAction extends RestAction {
         return collection;
     }
 
+    private Map<String, Object> getDAOConfig(String collection) throws IOException {
+        CaomRepoConfig.Item i = getCollectionConfig(collection);
+        if (i != null) {
+            this.computeMetadata = i.getComputeMetadata();
+            this.computeMetadataValidation = i.getComputeMetadataValidation();
+            this.groupConfig.put("proposalGroup", i.getProposalGroup());
+            this.groupConfig.put("operatorGroup", i.getOperatorGroup());
+            this.groupConfig.put("staffGroup", i.getStaffGroup());
+            
+            Map<String, Object> props = new HashMap<String, Object>();
+            props.put("jndiDataSourceName", i.getDataSourceName());
+            props.put("database", i.getDatabase());
+            props.put("schema", i.getSchema());
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
+            return props;
+        }
+        throw new IllegalArgumentException("unknown collection: " + collection);    
+    }
+    
     protected ObservationDAO getDAO() throws IOException {
         if (dao == null) {
             dao = getDAO(getCollection());
@@ -178,24 +202,31 @@ public abstract class RepoAction extends RestAction {
 
     // create DAO
     private ObservationDAO getDAO(String collection) throws IOException {
-        CaomRepoConfig.Item i = getCollectionConfig(collection);
-        if (i != null) {
-            this.computeMetadata = i.getComputeMetadata();
-            this.computeMetadataValidation = i.getComputeMetadataValidation();
-
-            Map<String, Object> props = new HashMap<String, Object>();
-            props.put("jndiDataSourceName", i.getDataSourceName());
-            props.put("database", i.getDatabase());
-            props.put("schema", i.getSchema());
-            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
-            ObservationDAO ret = new ObservationDAO();
-            ret.setConfig(props);
-
-            return ret;
+        if (this.daoConfig == null) {
+            this.daoConfig = getDAOConfig(collection);
         }
-        throw new IllegalArgumentException("unknown collection: " + collection);
+        ObservationDAO ret = new ObservationDAO();
+        ret.setConfig(this.daoConfig);
+        return ret;
+    }
+    
+    protected ReadAccessDAO getReadAccessDAO() throws IOException {
+        if (this.readAccessDAO == null) {
+            this.readAccessDAO = getReadAccessDAO(getCollection());
+        }
+        return this.readAccessDAO;
     }
 
+    // create ReadAccessDAO
+    private ReadAccessDAO getReadAccessDAO(String collection) throws IOException {
+        if (this.daoConfig == null) {
+            this.daoConfig = getDAOConfig(collection);
+        }
+        ReadAccessDAO raDAO = new ReadAccessDAO();
+        raDAO.setConfig(this.daoConfig);
+        return raDAO;
+    }
+    
     // read the input stream (POST and PUT) and extract the observation from the XML
     // document
     protected Observation getInputObservation() throws IOException {
@@ -398,5 +429,9 @@ public abstract class RepoAction extends RestAction {
 
         }
         return this.repoConfig;
+    }
+    
+    public Map<String, Object> getGroupConfig() {
+        return this.groupConfig;
     }
 }
