@@ -138,6 +138,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         long start = System.currentTimeMillis();
 
         try {
+            // Delete harvest skip URI records when in full mode
+            if (full && firstRun) {
+                harvestSkipURIDAO.delete(source, STATE_CLASS);
+                log.debug("Cleared harvest skip URI records for full harvesting.");
+            }
+
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
             if (!full || !firstRun) {

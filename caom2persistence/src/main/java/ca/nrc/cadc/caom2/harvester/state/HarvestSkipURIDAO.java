@@ -162,6 +162,15 @@ public class HarvestSkipURIDAO {
         jdbc.update(sql);
     }
 
+    public void delete(String source, String cname) {
+        if (source == null || cname == null) {
+            throw new IllegalArgumentException("source and cname are required");
+        }
+
+        String sql = "DELETE FROM " + tableName + " WHERE source = '" + source + "' and cname = '" + cname + "'";
+        jdbc.update(sql);
+    }
+
     private class SelectStatementCreator implements PreparedStatementCreator {
 
         private String source;
