@@ -111,7 +111,6 @@ public class ReadAccessTuples {
      * Constructor.
      *
      * @param collection
-     * @param dryrun only show work if true
      * @param raDAO read access DAO
      * @param groupConfig group data from configuration file
      * @throws IOException
