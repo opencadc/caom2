@@ -151,7 +151,7 @@ public class ReadAccessHarvester extends Harvester {
         // tuples are generated
         config2.put("forceUpdate", Boolean.TRUE);
         destAccessDAO.setConfig(config2);
-        destAccessDAO.setComputeLastModified(false); // copy as-is
+        destAccessDAO.setOrigin(false); // copy as-is
 
         initHarvestState(destAccessDAO.getDataSource(), entityClass);
         this.harvestSkip = new HarvestSkipDAO(destAccessDAO.getDataSource(), dest.getDatabase(), dest.getSchema(), batchSize);

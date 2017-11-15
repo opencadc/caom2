@@ -167,7 +167,7 @@ public class ObservationHarvester extends Harvester {
         Map<String, Object> config2 = getConfigDAO(dest);
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
+        destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
