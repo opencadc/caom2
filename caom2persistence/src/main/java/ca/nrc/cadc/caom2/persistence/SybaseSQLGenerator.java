@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.util.HexUtil;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -90,6 +91,12 @@ public class SybaseSQLGenerator extends BaseSQLGenerator {
         super.init();
     }
 
+    @Override
+    public UUID generateID() {
+        return new UUID(0L, CaomIDGenerator.getInstance().generateID());
+    }
+
+    
     @Override
     protected String getTopConstraint(Integer batchSize) {
         if (batchSize == null) {

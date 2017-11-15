@@ -531,27 +531,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     // assign if lastModified changed or a child's maxLastModified changes
     private boolean updateEntity(Observation entity, ObservationSkeleton s) {
         if (s == null) {
-            // new observation: assign all CaomEntity IDs
             CaomUtil.assignID(entity, gen.generateID());
-            /*
-            for (Plane pl : entity.getPlanes()) {
-                CaomUtil.assignID(pl, gen.generateID());
-                for (Artifact ar : pl.getArtifacts()) {
-                    CaomUtil.assignID(ar, gen.generateID());
-                    for (Part pa : ar.getParts()) {
-                        CaomUtil.assignID(pa, gen.generateID());
-                        // Chunk.compareTo uses the entity ID
-                        List<Chunk> tmp = new ArrayList<Chunk>();
-                        tmp.addAll(pa.getChunks());
-                        for (Chunk ch : tmp) {
-                            CaomUtil.assignID(ch, gen.generateID());
-                        }
-                        pa.getChunks().clear();
-                        pa.getChunks().addAll(tmp);
-                    }
-                }
-            }
-            */
         }
         
         if (computeLastModified && s != null) {
