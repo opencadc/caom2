@@ -79,11 +79,11 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.persistence.AbstractDAO;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
+import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -104,17 +104,14 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
     private static Logger log = Logger.getLogger(DeletionHarvester.class);
 
-    private AbstractDAO deletedDAO;
+    private DeletedEntityDAO deletedDAO;
+    private RepoClient repoClient;
+    
     private WrapperDAO entityDAO;
     private TransactionManager txnManager;
 
     private boolean initHarvestState;
     private Date initDate;
-    private boolean service = false;
-
-    private String uri = null;
-    private String collection = null;
-    private int nthreads = 1;
 
     /**
      * Constructor.
@@ -139,7 +136,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
     public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest,
             Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException {
         super(entityClass, src, dest, batchSize, false, dryrun);
-        service = false;
     }
 
     /**
@@ -169,12 +165,18 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @throws URISyntaxException
      * URISyntaxException
      */
-    private void init(String uri, String collection, int threads) throws IOException, URISyntaxException {
-
+    private void init(int threads) throws IOException, URISyntaxException {
+        // source
+        if (src.getDatabaseServer() != null) {
+            Map<String, Object> config1 = getConfigDAO(src);
+            this.deletedDAO = new DeletedEntityDAO();
+            deletedDAO.setConfig(config1);
+        } else {
+            this.repoClient = new RepoClient(src.getResourceID(), threads);
+        }
+        
+        // destination
         Map<String, Object> config2 = getConfigDAO(dest);
-
-        this.deletedDAO = new ServiceDeletedEntityDAO<DeletedObservation>();
-
         if (DeletedObservation.class.equals(entityClass)) {
             ObservationDAO dao = new ObservationDAO();
             dao.setConfig(config2);
@@ -213,7 +215,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
         Map<String, Object> config1 = getConfigDAO(src);
         Map<String, Object> config2 = getConfigDAO(dest);
 
-        this.deletedDAO = new DeletedEntityDAO<DeletedObservation>();
+        this.deletedDAO = new DeletedEntityDAO();
         deletedDAO.setConfig(config1);
 
         if (DeletedObservation.class.equals(entityClass)) {
@@ -309,11 +311,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
     public void run() {
         log.info("START: " + entityClass.getSimpleName());
         try {
-            if (service) {
-                init(uri, collection, nthreads);
-            } else {
-                init();
-            }
+            init();
         } catch (Throwable oops) {
             throw new RuntimeException("failed to init connections and state", oops);
         }
@@ -381,13 +379,13 @@ public class DeletionHarvester extends Harvester implements Runnable {
         }
 
         try {
-            HarvestState state = harvestState.get(source, cname);
+            HarvestState state = harvestStateDAO.get(source, cname);
             log.info("last harvest: " + format(state.curLastModified));
 
             if (initHarvestState && state.curLastModified == null) {
                 state.curLastModified = initDate;
-                harvestState.put(state);
-                state = harvestState.get(source, cname);
+                harvestStateDAO.put(state);
+                state = harvestStateDAO.get(source, cname);
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
 
@@ -401,11 +399,11 @@ public class DeletionHarvester extends Harvester implements Runnable {
             // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
             // minutes ago
             List<DeletedEntity> entityList = null;
-            if (!service) {
-                entityList = ((DeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end, batchSize);
-            } else {
-                entityList = ((ServiceDeletedEntityDAO<DeletedEntity>) deletedDAO).getList(entityClass, start, end, batchSize);
-            }
+            if (deletedDAO != null) {
+                entityList = deletedDAO.getList(src.getCollection(), start, end, batchSize);
+            } //else {
+            //    entityList = repoClient.getDeleted(src.getCollection(), start, end, batchSize);
+            //}
 
             if (entityList.size() == expectedNum) {
                 detectLoop(entityList);
@@ -418,8 +416,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 DeletedEntity de = iter.next();
                 iter.remove(); // allow garbage collection asap
 
-                if (de.id.equals(state.curID)) {
-                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.id + " -- was end of last batch");
+                if (de.getID().equals(state.curID)) {
+                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.getID() + " -- was end of last batch");
                     break;
                 }
 
@@ -428,18 +426,16 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 }
                 boolean ok = false;
                 try {
-                    log.info("put: " + de.getClass().getSimpleName() + " " + de.id + " " + format(de.lastModified));
+                    log.info("put: " + de.getClass().getSimpleName() + " " + de.getID() + " " + format(de.getLastModified()));
                     if (!dryrun) {
-                        state.curLastModified = de.lastModified;
-                        state.curID = de.id;
+                        state.curLastModified = de.getLastModified();
+                        state.curID = de.getID();
 
-                        // keep a record of the deletion
-                        // dORM.put(de);
                         // perform the actual deletion
-                        entityDAO.delete(de.id);
+                        entityDAO.delete(de.getID());
 
                         // track progress
-                        harvestState.put(state);
+                        harvestStateDAO.put(state);
 
                         log.debug("committing transaction");
                         txnManager.commitTransaction();
@@ -473,7 +469,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                     // ahead
                     state.curLastModified = n;
                     log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
-                    harvestState.put(state);
+                    harvestStateDAO.put(state);
                 }
             }
         } finally {
@@ -494,10 +490,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
         }
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
-        if (start.lastModified.equals(end.lastModified)) {
+        if (start.getLastModified().equals(end.getLastModified())) {
             throw new RuntimeException("detected infinite harvesting loop: "
                     + entityClass.getSimpleName() + " at "
-                    + format(start.lastModified));
+                    + format(start.getLastModified()));
         }
 
     }
