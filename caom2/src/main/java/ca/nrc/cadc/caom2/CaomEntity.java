@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HashUtil;
 import ca.nrc.cadc.util.HexUtil;
-
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -93,7 +92,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -115,9 +113,14 @@ public abstract class CaomEntity implements Serializable {
     private URI accMetaChecksum;
 
     protected CaomEntity() {
-        this(false); // default: 64-bit consistent with CAOM-2.0 use of Long
+        this.id = UUID.randomUUID();
     }
 
+    /**
+     * @param fullUUID true for 128-bit, false for 64-bits used in UUID
+     * @deprecated 
+     */
+    @Deprecated
     protected CaomEntity(boolean fullUUID) {
         if (fullUUID) {
             this.id = UUID.randomUUID();
@@ -272,10 +275,12 @@ public abstract class CaomEntity implements Serializable {
         try {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
-                digest.update(primitiveValueToBytes(ce.id));
-                if (MCS_DEBUG) {
-                    log.debug("metaChecksum: " + ce.getClass().getSimpleName()
-                            + ".id " + ce.id);
+                if (ce.id != null) {
+                    digest.update(primitiveValueToBytes(ce.id));
+                    if (MCS_DEBUG) {
+                        log.debug("metaChecksum: " + ce.getClass().getSimpleName()
+                                + ".id " + ce.id);
+                    }
                 }
             }
 
