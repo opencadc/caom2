@@ -89,6 +89,14 @@ public interface SQLGenerator {
     static final int MIN_DEPTH = 1;
     static final int MAX_DEPTH = 5;
 
+    /** 
+     * Generate a new CaomEntity ID. This is a surrogate primary key
+     * used in database tables joins, updates, and deletes.
+     * 
+     * @return 
+     */
+    UUID generateID();
+    
     /**
      * Get SQL to select an Observation from a URI.
      *

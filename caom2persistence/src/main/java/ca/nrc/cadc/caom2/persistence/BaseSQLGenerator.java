@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
@@ -553,6 +554,16 @@ public class BaseSQLGenerator implements SQLGenerator {
         return schema;
     }
 
+    @Override
+    public UUID generateID() {
+        if (useLongForUUID) {
+            long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
+    }
+
+    
     @Override
     public String getSelectSQL(ObservationURI uri, int depth) {
         return getSelectSQL(uri, depth, false);

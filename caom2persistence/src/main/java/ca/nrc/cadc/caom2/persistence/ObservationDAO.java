@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.util.ArrayList;
 import java.util.Date;
@@ -524,10 +525,35 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     // update CaomEntity state: 
+    // assign ID if skeleton is null (new insert)
     // always compute and assign: metaChecksum, accMetaChecksum
     // assign if metaChecksum changes: lastModified
     // assign if lastModified changed or a child's maxLastModified changes
     private boolean updateEntity(Observation entity, ObservationSkeleton s) {
+        if (s == null) {
+            // new observation: assign all CaomEntity IDs
+            CaomUtil.assignID(entity, gen.generateID());
+            /*
+            for (Plane pl : entity.getPlanes()) {
+                CaomUtil.assignID(pl, gen.generateID());
+                for (Artifact ar : pl.getArtifacts()) {
+                    CaomUtil.assignID(ar, gen.generateID());
+                    for (Part pa : ar.getParts()) {
+                        CaomUtil.assignID(pa, gen.generateID());
+                        // Chunk.compareTo uses the entity ID
+                        List<Chunk> tmp = new ArrayList<Chunk>();
+                        tmp.addAll(pa.getChunks());
+                        for (Chunk ch : tmp) {
+                            CaomUtil.assignID(ch, gen.generateID());
+                        }
+                        pa.getChunks().clear();
+                        pa.getChunks().addAll(tmp);
+                    }
+                }
+            }
+            */
+        }
+        
         if (computeLastModified && s != null) {
             // keep timestamps from database
             Util.assignLastModified(entity, s.lastModified, "lastModified");
@@ -586,6 +612,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now) {
+        if (s == null) {
+            CaomUtil.assignID(entity, gen.generateID());
+        }
+        
         if (computeLastModified && s != null) {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -640,6 +670,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     private boolean updateEntity(Artifact entity, ArtifactSkeleton s, Date now) {
+        if (s == null) {
+            CaomUtil.assignID(entity, gen.generateID());
+        }
+        
         if (computeLastModified && s != null) {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -694,6 +728,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     private boolean updateEntity(Part entity, PartSkeleton s, Date now) {
+        if (s == null) {
+            CaomUtil.assignID(entity, gen.generateID());
+        }
+        
         if (computeLastModified && s != null) {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
@@ -712,6 +750,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             boolean ulm = updateEntity(chunk, skel, now);
             updateMax = updateMax || ulm;
         }
+        // Chunk.compareTo uses the entity ID so rebuild Set
+        List<Chunk> tmp = new ArrayList<Chunk>();
+        tmp.addAll(entity.getChunks());
+        entity.getChunks().clear();
+        entity.getChunks().addAll(tmp);
+        
         // check for deleted (unmatched skel)
         if (s != null) {
             for (ChunkSkeleton ss : s.chunks) {
@@ -748,6 +792,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     private boolean updateEntity(Chunk entity, ChunkSkeleton s, Date now) {
+        if (s == null) {
+            CaomUtil.assignID(entity, gen.generateID());
+        }
+        
         if (computeLastModified && s != null) {
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");

@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
@@ -243,8 +244,10 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     }
 
     private void updateEntity(ReadAccess ra, Skeleton s) {
-        int nsc = ra.getStateCode();
-
+        if (s == null) {
+            CaomUtil.assignID(ra, UUID.randomUUID());
+        }
+        
         digest.reset();
         Util.assignMetaChecksum(ra, ra.computeMetaChecksum(digest), "metaChecksum");
 
@@ -252,6 +255,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
             return;
         }
 
+        int nsc = ra.getStateCode();
         boolean delta = false;
         if (s == null) {
             delta = true;

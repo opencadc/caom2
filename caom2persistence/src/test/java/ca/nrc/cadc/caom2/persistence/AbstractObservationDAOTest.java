@@ -190,6 +190,7 @@ public abstract class AbstractObservationDAOTest
         {
             log.error("BUG", oops);
         }
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.eprsistence", Level.INFO);
     }
 
     boolean deletionTrack;
@@ -566,7 +567,7 @@ public abstract class AbstractObservationDAOTest
             
             // this is so we can detect incorrect timestamp round trips
             // caused by assigning something other than what was stored
-            Thread.sleep(2*TIME_TOLERANCE);
+            Thread.sleep(2 * TIME_TOLERANCE);
             
             // EXISTS
             //txnManager.startTransaction();
@@ -1266,6 +1267,12 @@ public abstract class AbstractObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         
         Assert.assertEquals(cn+".ID", expected.getID(), actual.getID());
+    }
+    
+    private void testEntityChecksums(CaomEntity expected, CaomEntity actual)
+    {
+        log.debug("testEqual: " + expected + " == " + actual);
+        String cn = expected.getClass().getSimpleName();
         
         // read from database should always have checksums
         Assert.assertNotNull(cn+".metaChecksum", actual.getMetaChecksum());
@@ -1301,6 +1308,7 @@ public abstract class AbstractObservationDAOTest
     
     private void testEqual(Observation expected, Observation actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals("algorithm.name", expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
 
@@ -1372,7 +1380,7 @@ public abstract class AbstractObservationDAOTest
         while ( e.hasNext() || a.hasNext() )
             testEqual(e.next(), a.next());
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
 
     private void testEqual(String name, Collection<String> expected, Collection<String> actual)
@@ -1382,6 +1390,7 @@ public abstract class AbstractObservationDAOTest
     
     private void testEqual(Plane expected, Plane actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getProductID(), actual.getProductID());
         Assert.assertEquals(expected.creatorID, actual.creatorID);
         Assert.assertEquals(expected.calibrationLevel, actual.calibrationLevel);
@@ -1536,11 +1545,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     
     private void testEqual(Artifact expected, Artifact actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals(expected.contentLength, actual.contentLength);
         Assert.assertEquals(expected.contentType, actual.contentType);
@@ -1559,11 +1569,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     private void testEqual(Part expected, Part actual)
     {
-        log.debug("num Chunks: " + expected.getChunks().size() + " == " + actual.getChunks().size());
+        testEntity(expected, actual);
+        Assert.assertEquals("part.name", expected.getName(), actual.getName());
         Assert.assertEquals("number of chunks", expected.getChunks().size(), actual.getChunks().size());
         Iterator<Chunk> ea = expected.getChunks().iterator();
         Iterator<Chunk> aa = actual.getChunks().iterator();
@@ -1574,10 +1585,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     private void testEqual(Chunk expected, Chunk actual)
     {
+        testEntity(expected, actual);
+        
         Assert.assertEquals("productType", expected.productType, actual.productType);
         Assert.assertEquals("naxis", expected.naxis, actual.naxis);
         Assert.assertEquals("positionAxis1", expected.positionAxis1, actual.positionAxis1);
@@ -1659,7 +1672,7 @@ public abstract class AbstractObservationDAOTest
             }
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
 
     private void testEqual(String s, CoordAxis1D expected, CoordAxis1D actual)

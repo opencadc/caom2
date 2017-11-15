@@ -234,11 +234,8 @@ public abstract class AbstractReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
@@ -250,16 +247,19 @@ public abstract class AbstractReadAccessDAOTest
             
         try
         {
-            // cleanup previous test run
-            obsDAO.delete(assetID);
-            
             obsDAO.put(obs);
+            UUID obsID = obs.getID();
+            UUID planeID = obs.getPlanes().iterator().next().getID();
             
             ReadAccess expected;
             
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
@@ -268,20 +268,21 @@ public abstract class AbstractReadAccessDAOTest
             groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
             
+            obsDAO.delete(obs.getID());
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-        }
-        finally
-        {
-            //obsDAO.delete(obs.getID());
         }
     }
     
@@ -290,23 +291,21 @@ public abstract class AbstractReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
-        
-        UUID assetID = genID();
-        
-        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
         obs.getPlanes().add(pl);
-        
         
         try
         {
-            // cleanup previous test run
-            obsDAO.delete(obs.getID());
             obsDAO.put(obs);
+            UUID obsID = obs.getID();
+            UUID planeID = obs.getPlanes().iterator().next().getID();
             
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
@@ -348,13 +347,11 @@ public abstract class AbstractReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
-        UUID assetID = obs.getID();
         
         try
         {
-            obsDAO.delete(obs.getID());
-            
             obsDAO.put(obs);
+            UUID assetID = obs.getID();
             
             ReadAccess ra;
             URI groupID;
