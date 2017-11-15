@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,47 +62,22 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.version.InitDatabase;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.DeletedEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
  * @author pdowler
+ * @param <T>
  */
-public class PostgresqlDeletedEntityDAOTest extends AbstractDeletedEntityDAOTest
-{
+public interface DeletedEntityPut<T extends DeletedEntity> {
+    void execute(JdbcTemplate jdbc);
 
-    static String schema = "caom2";
+    void setValue(T value);
 
-    static
-    {
-        log = Logger.getLogger(PostgresqlDeletedEntityDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-
-        String testSchema = UtilTest.getTestSchema();
-        if (testSchema != null)
-        {
-            schema = testSchema;
-        }
-    }
-
-
-
-    public PostgresqlDeletedEntityDAOTest()
-        throws Exception
-    {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
-
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
-        init.doInit();
-    }
 }

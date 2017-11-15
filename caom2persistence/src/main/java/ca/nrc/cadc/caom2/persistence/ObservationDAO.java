@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
@@ -105,6 +106,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     private static final Logger log = Logger.getLogger(ObservationDAO.class);
 
     private PlaneDAO planeDAO;
+    private DeletedEntityDAO deletedDAO;
 
     public ObservationDAO() {
     }
@@ -120,6 +122,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     public void setConfig(Map<String, Object> config) {
         super.setConfig(config);
         this.planeDAO = new PlaneDAO(gen, forceUpdate, readOnly);
+        this.deletedDAO = new DeletedEntityDAO(gen, forceUpdate, readOnly);
     }
 
     public boolean exists(ObservationURI uri) {
@@ -373,7 +376,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 for (PlaneSkeleton ps : cur.planes) {
                     Plane p = Util.findPlane(obs.getPlanes(), ps.id);
                     if (p == null) {
-                        log.info("PUT: caused delete: " + ps.id);
+                        log.info("PUT: caused delete plane: " + ps.id);
                         planeDAO.delete(ps, jdbc);
                     }
                 }
@@ -462,6 +465,17 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("DELETE: " + sql);
             ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
             if (skel != null) {
+                if (uri == null) {
+                    uri = getURI(id);
+                } 
+                if (id == null) {
+                    id = skel.id;
+                }
+                if (id.getMostSignificantBits() == 0L) {
+                    // SybaseSQLGenerator will convert this to a long
+                }
+                DeletedObservation de = new DeletedObservation(id, uri);
+                deletedDAO.put(de, jdbc);
                 delete(skel, jdbc);
             } else {
                 log.debug("DELETE: not found: " + id);

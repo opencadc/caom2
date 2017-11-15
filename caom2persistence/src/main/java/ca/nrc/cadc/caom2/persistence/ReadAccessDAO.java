@@ -133,7 +133,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
                     throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
                 }
             }
-            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+            throw new RuntimeException("BUG: query returned an unexpected list type " + result.getClass().getName());
         } finally {
             long dt = System.currentTimeMillis() - t;
             log.debug("GET: " + c.getSimpleName() + " " + assetID + "," + groupID + " " + dt + "ms");

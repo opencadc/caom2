@@ -161,6 +161,8 @@ public interface SQLGenerator {
     RowMapper getTimestampRowMapper();
 
     EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate);
+    
+    DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> c, boolean isUpdate);
 
     EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey);
 

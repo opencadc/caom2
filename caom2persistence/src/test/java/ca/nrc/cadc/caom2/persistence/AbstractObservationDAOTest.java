@@ -69,24 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.sql.DataSource;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
@@ -96,6 +78,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DeletedEntity;
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -153,9 +137,24 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URI;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
+import javax.sql.DataSource;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 
 /**
@@ -196,6 +195,7 @@ public abstract class AbstractObservationDAOTest
     boolean deletionTrack;
     boolean useLongForUUID;
     ObservationDAO dao;
+    DeletedEntityDAO ded;
     TransactionManager txnManager;
 
     Class[] ENTITY_CLASSES =
@@ -219,6 +219,9 @@ public abstract class AbstractObservationDAOTest
             this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();
+            
+            ded = new DeletedEntityDAO();
+            ded.setConfig(config);
         }
         catch(Exception ex)
         {
@@ -587,8 +590,18 @@ public abstract class AbstractObservationDAOTest
             
             // EXISTS
             //txnManager.startTransaction();
-            Assert.assertFalse(dao.exists(orig.getURI()));
+            Assert.assertFalse("exists", dao.exists(orig.getURI()));
             //txnManager.commitTransaction();
+            
+            log.info("check deletion track: " + orig.getID());
+            
+            DeletedEntity de = ded.get(DeletedObservation.class, orig.getID());
+            Assert.assertNotNull("deletion tracker", de);
+            Assert.assertEquals("deleted.id", orig.getID(), de.getID());
+            Assert.assertNotNull("deleted.lastModified", de.getLastModified());
+            
+            DeletedObservation doe = (DeletedObservation) de;
+            Assert.assertEquals("deleted.uri", orig.getURI(), doe.getURI());
             
             Assert.assertFalse("open transaction", txnManager.isOpen());
         }
