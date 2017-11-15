@@ -116,7 +116,10 @@ public class DeletedEntityDAO extends AbstractDAO {
         long t = System.currentTimeMillis();
 
         try {
-            Util.assignDeletedLastModified(de, new Date(), "lastModified");
+            if (de.getLastModified() == null) {
+                // if not null, the entity was harvested so keep original timestamp
+                Util.assignDeletedLastModified(de, new Date(), "lastModified");
+            }
             DeletedEntityPut op = gen.getDeletedEntityPut(de.getClass(), false); // insert only
             op.setValue(de);
             op.execute(jdbc);
