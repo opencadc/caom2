@@ -244,14 +244,14 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     }
 
     private void updateEntity(ReadAccess ra, Skeleton s) {
-        if (s == null) {
+        if (origin && s == null) {
             CaomUtil.assignID(ra, UUID.randomUUID());
         }
         
         digest.reset();
         Util.assignMetaChecksum(ra, ra.computeMetaChecksum(digest), "metaChecksum");
 
-        if (!computeLastModified) {
+        if (!origin) {
             return;
         }
 

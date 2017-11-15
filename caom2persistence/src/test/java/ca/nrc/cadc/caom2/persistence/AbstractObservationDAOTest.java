@@ -554,6 +554,7 @@ public abstract class AbstractObservationDAOTest
         try
         {
             Observation orig = getTestObservation(false, 5, false, true);
+            UUID externalID = orig.getID();
             
             // EXISTS
             //txnManager.startTransaction();
@@ -589,6 +590,9 @@ public abstract class AbstractObservationDAOTest
             dao.delete(orig.getID());
             //txnManager.commitTransaction();
             
+            // origin: check that UUID did change during put
+            Assert.assertNotEquals("origin UUID", externalID, retrieved.getID());
+            
             // EXISTS
             //txnManager.startTransaction();
             Assert.assertFalse("exists", dao.exists(orig.getURI()));
@@ -610,6 +614,79 @@ public abstract class AbstractObservationDAOTest
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+     @Test
+    public void testNonOriginPut()
+    {
+        try
+        {
+            dao.setOrigin(false);
+            Observation orig = getTestObservation(false, 5, false, true);
+            UUID externalID = orig.getID();
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertFalse(dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+
+            // PUT
+            //txnManager.startTransaction();
+            dao.put(orig);
+            //txnManager.commitTransaction();
+            
+            // this is so we can detect incorrect timestamp round trips
+            // caused by assigning something other than what was stored
+            Thread.sleep(2 * TIME_TOLERANCE);
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertTrue(dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+
+            // GET by URI
+            Observation retrieved = dao.get(orig.getURI());
+            Assert.assertNotNull("found by URI", retrieved);
+            testEqual(orig, retrieved);
+
+            // GET by ID
+            retrieved = dao.get(orig.getID());
+            Assert.assertNotNull("found by ID", retrieved);
+            testEqual(orig, retrieved);
+            
+            // non-origin: make sure UUID did not change
+            Assert.assertEquals("non-origin UUID", externalID, retrieved.getID());
+            
+            // DELETE by ID
+            //txnManager.startTransaction();
+            dao.delete(orig.getID());
+            //txnManager.commitTransaction();
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertFalse("exists", dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+            
+            log.info("check deletion track: " + orig.getID());
+            
+            DeletedEntity de = ded.get(DeletedObservation.class, orig.getID());
+            Assert.assertNotNull("deletion tracker", de);
+            Assert.assertEquals("deleted.id", orig.getID(), de.getID());
+            Assert.assertNotNull("deleted.lastModified", de.getLastModified());
+            
+            DeletedObservation doe = (DeletedObservation) de;
+            Assert.assertEquals("deleted.uri", orig.getURI(), doe.getURI());
+            
+            Assert.assertFalse("open transaction", txnManager.isOpen());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally {
+            dao.setOrigin(true);
         }
     }
 
