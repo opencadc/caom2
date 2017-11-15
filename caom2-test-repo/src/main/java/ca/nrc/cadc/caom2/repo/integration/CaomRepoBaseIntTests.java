@@ -144,19 +144,33 @@ class CaomRepoBaseIntTests {
 
     /**
      * @param resourceID resource identifier of service to test
+     * @param repoStandardID    Repository Standard ID to look up.
      * @param pem1       PEM file for user with read-write permission
      * @param pem2       PEM file for user with read-only permission
      * @param pem3       PEM file for user with no permissions
      */
     public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, String pem1, String pem2, String pem3) {
-        try {
-            File sslCert1 = FileUtil.getFileFromResource(pem1, this.getClass());
-            File sslCert2 = FileUtil.getFileFromResource(pem2, this.getClass());
-            File sslCert3 = FileUtil.getFileFromResource(pem3, this.getClass());
+        this(resourceID, repoStandardID,
+            FileUtil.getFileFromResource(pem1, CaomRepoBaseIntTests.class),
+            FileUtil.getFileFromResource(pem2, CaomRepoBaseIntTests.class),
+            FileUtil.getFileFromResource(pem3, CaomRepoBaseIntTests.class));
+    }
 
-            subject1 = SSLUtil.createSubject(sslCert1);
-            subject2 = SSLUtil.createSubject(sslCert2);
-            subject3 = SSLUtil.createSubject(sslCert3);
+    /**
+     * Alternate constructor to pull certs from separate location.
+     *
+     * @param resourceID resource identifier of service to test
+     * @param repoStandardID    Repository Standard ID to look up.
+     * @param readWrite      PEM File instance for read-write access.
+     * @param readOnly      PEM File instance for read-only access.
+     * @param anon      PEM File instance with no permissions.
+     */
+    public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, File readWrite, File readOnly, File anon) {
+        try {
+
+            subject1 = SSLUtil.createSubject(readWrite);
+            subject2 = SSLUtil.createSubject(readOnly);
+            subject3 = SSLUtil.createSubject(anon);
 
             RegistryClient rc = new RegistryClient();
 
@@ -178,7 +192,7 @@ class CaomRepoBaseIntTests {
         }
     }
 
-    public String generateObservationID(String base) {
+    public String generateID(String base) {
         return base + "-" + UUID.randomUUID().toString();
     }
 
@@ -203,12 +217,14 @@ class CaomRepoBaseIntTests {
         return conn;
     }
 
-    protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
+    protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse,
+                                  String expectedMessage, String path)
         throws Exception {
         sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
     }
 
-    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
+    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer
+        expectedResponse, String expectedMessage,
                                    String path)
         throws Exception {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
@@ -265,13 +281,15 @@ class CaomRepoBaseIntTests {
         conn.disconnect();
     }
 
-    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, String expectedCaomVersion)
+    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String
+        expectedMessage, String expectedCaomVersion)
         throws Exception {
         return getObservation(uri, subject, expectedResponse, expectedMessage, true, expectedCaomVersion);
     }
 
-    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch, String
-        expectedCaomVersion)
+    protected Observation getObservation(String uri, Subject subject, Integer expectedResponse, String
+        expectedMessage, boolean exactMatch, String
+                                             expectedCaomVersion)
         throws Exception {
         log.debug("start get on " + uri);
 

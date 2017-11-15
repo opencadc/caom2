@@ -302,7 +302,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
     private List<Observation> putObservations(final List<String> baseIDs) throws Throwable {
         List<Observation> retObs = new ArrayList<>();
         for (String baseID : baseIDs) {
-            String observationID = generateObservationID(baseID);
+            String observationID = generateID(baseID);
 
             // create an observation using subject1
             SimpleObservation observation = new SimpleObservation(
