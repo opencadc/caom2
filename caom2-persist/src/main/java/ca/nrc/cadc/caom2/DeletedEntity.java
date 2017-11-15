@@ -77,13 +77,20 @@ import java.util.UUID;
  */
 public class DeletedEntity {
     public Class entityClass;
-    public UUID id;
-    public Date lastModified;
+    private final UUID id;
+    private Date lastModified;
 
-    DeletedEntity(Class entityClass, UUID id, Date lastModified) {
+    DeletedEntity(Class entityClass, UUID id) {
         this.entityClass = entityClass;
         this.id = id;
-        this.lastModified = lastModified;
+    }
+
+    public UUID getID() {
+        return id;
+    }
+
+    public Date getLastModified() {
+        return lastModified;
     }
 
     @Override
