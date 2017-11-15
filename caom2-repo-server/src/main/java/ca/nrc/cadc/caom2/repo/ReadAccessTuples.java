@@ -103,7 +103,7 @@ public class ReadAccessTuples {
     // group configuration info read from a properties file to determine if a group will be created or updated
     private boolean createOrUpdateProposalGroup = false;
     private URI operatorGroupURI;
-    private URI staffGroupURI;
+    private GroupURI staffGroupURI;
 
     private ReadAccessTuples() {}
 
@@ -146,7 +146,7 @@ public class ReadAccessTuples {
         }
         String staffGroup = (String) groupConfig.get("staffGroup");
         if (StringUtil.hasText(staffGroup)) {
-            this.staffGroupURI = URI.create(staffGroup);
+            this.staffGroupURI = new GroupURI(staffGroup);
         }
 
         // GMSClient to AC webservice        
@@ -176,7 +176,7 @@ public class ReadAccessTuples {
         }
         String staffGroup = (String) groupConfig.get("staffGroup");
         if (StringUtil.hasText(staffGroup)) {
-            this.staffGroupURI = URI.create(staffGroup);
+            this.staffGroupURI = new GroupURI(staffGroup);
         }
 
         // Group URI base comes from LocalAuthority          
@@ -231,10 +231,18 @@ public class ReadAccessTuples {
     Set<GroupURI> getAdminMembers(final String collection)
         throws GroupNotFoundException, AccessControlException, IOException,
             IllegalArgumentException {
+        boolean addStaffGroup = true;
         Set<GroupURI> members = new HashSet<GroupURI>();
         CollectionReadGroups collectionReadGroups = new CollectionReadGroups(collection);
         for (GroupURI readGroupURI : collectionReadGroups.getReadGroups()) {
             members.add(readGroupURI);
+            if (readGroupURI.equals(this.staffGroupURI)) {
+                addStaffGroup = false;
+            }
+        }
+        
+        if (this.staffGroupURI != null && addStaffGroup) {
+            members.add(this.staffGroupURI);
         }
         return members;
     }
@@ -302,13 +310,11 @@ public class ReadAccessTuples {
             
             if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
                 ret.add(new ObservationMetaReadAccess(assetID, proposalGroupID.getURI()));
-                ret.add(new ObservationMetaReadAccess(assetID, this.staffGroupURI));
                 
                 for (GroupURI ag : getAdminGroups()) {
                     ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
                 }
             } else if (this.staffGroupURI != null) {
-                ret.add(new ObservationMetaReadAccess(assetID, this.staffGroupURI));
                 
                 for (GroupURI ag : getAdminGroups()) {
                     ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
@@ -331,13 +337,11 @@ public class ReadAccessTuples {
                 
                 if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneMetaReadAccess(assetID, proposalGroupID.getURI()));
-                    ret.add(new PlaneMetaReadAccess(assetID, this.staffGroupURI));
                     
                     for (GroupURI ag : getAdminGroups()) {
                         ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
                     }
                 } else if (this.staffGroupURI != null) {
-                    ret.add(new PlaneMetaReadAccess(assetID, this.staffGroupURI));
                     
                     for (GroupURI ag : getAdminGroups()) {
                         ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
@@ -361,13 +365,11 @@ public class ReadAccessTuples {
                 
                 if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneDataReadAccess(assetID, proposalGroupID.getURI()));
-                    ret.add(new PlaneDataReadAccess(assetID, this.staffGroupURI));
                     
                     for (GroupURI ag : getAdminGroups()) {
                         ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
                     }
                 } else if (this.staffGroupURI != null) {
-                    ret.add(new PlaneDataReadAccess(assetID, this.staffGroupURI));
                     
                     for (GroupURI ag : getAdminGroups()) {
                         ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
