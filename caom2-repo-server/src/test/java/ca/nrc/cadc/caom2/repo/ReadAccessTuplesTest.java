@@ -40,7 +40,10 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.PropertiesReader;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -50,7 +53,11 @@ import org.junit.Test;
 public class ReadAccessTuplesTest {
     private static final Logger log = Logger.getLogger(ReadAccessTuplesTest.class);
 
-    String archive = "TEST";
+    private static final String OPERATOR_GROUP = "ivo://cadc.nrc.ca/gms?CADC";
+    private static final String STAFF_GROUP = "ivo://cadc.nrc.ca/gms?JCMT-Staff";
+
+    String collection = "TEST";
+    Map<String, Object> groupConfig;
 
     public ReadAccessTuplesTest() { }
     
@@ -59,16 +66,24 @@ public class ReadAccessTuplesTest {
         System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
     }
 
+    protected void setup() throws Exception {
+        this.groupConfig = new HashMap<String, Object>();
+        groupConfig.put("proposalGroup", true);
+        groupConfig.put("operatorGroup", OPERATOR_GROUP);
+        groupConfig.put("staffGroup", STAFF_GROUP);
+    }
+    
     @Test
     public void testPublic() {
         try {
+            setup();
             Date now = new Date();
             
             Observation obs = getSampleObservation("1", 1, now, -20L); // 20ms in the past
 
-            ReadAccessTuples da = new ReadAccessTuples(archive);
+            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
             
-            GroupURI propGroupName = da.getProposalGroupID(archive, obs.proposal);
+            GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
             Assert.assertEquals("omra", 0, omraActual.size());
@@ -88,21 +103,22 @@ public class ReadAccessTuplesTest {
     @Test
     public void testPrivateNull() {
         try {
+            setup();
             Date now = new Date();
             
             Observation obs = getSampleObservation("1", 1, null, 0L); // null release dates
 
-            ReadAccessTuples da = new ReadAccessTuples(archive);
+            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
             
-            GroupURI propGroupName = da.getProposalGroupID(archive, obs.proposal);
+            GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 3, omraActual.size());
+            Assert.assertEquals("omra", 4, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 3, pmraActual.size());
+            Assert.assertEquals("pmra", 4, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 3, pdraActual.size());
+            Assert.assertEquals("pdra", 4, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -112,21 +128,22 @@ public class ReadAccessTuplesTest {
     @Test
     public void testPrivateFuture() {
         try {
+            setup();
             Date now = new Date();
             
             Observation obs = getSampleObservation("1", 1, now, 20L); // 20ms in future
             
-            ReadAccessTuples da = new ReadAccessTuples(archive);
+            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
             
-            GroupURI propGroupName = da.getProposalGroupID(archive, obs.proposal);
+            GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 3, omraActual.size());
+            Assert.assertEquals("omra", 4, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 3, pmraActual.size());
+            Assert.assertEquals("pmra", 4, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 3, pdraActual.size());
+            Assert.assertEquals("pdra", 4, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -136,22 +153,23 @@ public class ReadAccessTuplesTest {
     @Test
     public void testPrivateNullProposal() {
         try {
+            setup();
             Date now = new Date();
             
             Observation obs = getSampleObservation("1", 1, now, 20L); // 20ms in future
             obs.proposal = null;
             
-            ReadAccessTuples da = new ReadAccessTuples(archive);
+            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
             
-            GroupURI propGroupName = da.getProposalGroupID(archive, obs.proposal);
+            GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 2, omraActual.size());
+            Assert.assertEquals("omra", 3, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 2, pmraActual.size());
+            Assert.assertEquals("pmra", 3, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 2, pdraActual.size());
+            Assert.assertEquals("pdra", 3, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

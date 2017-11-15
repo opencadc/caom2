@@ -41,6 +41,7 @@ import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.caom2.persistence.DuplicateEntityException;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.reg.Standards;
@@ -51,7 +52,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,8 +65,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class ReadAccessTuples {
@@ -169,8 +167,18 @@ public class ReadAccessTuples {
     }
 
     // test ctor: enough to test the create-tuples and getProposalGroupName methods
-    ReadAccessTuples(String collection)
+    ReadAccessTuples(String collection, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException {
+        this.createOrUpdateProposalGroup = (boolean) groupConfig.get("proposalGroup");
+        String operatorGroup = (String) groupConfig.get("operatorGroup");
+        if (StringUtil.hasText(operatorGroup)) {
+            this.operatorGroupURI = URI.create(operatorGroup);
+        }
+        String staffGroup = (String) groupConfig.get("staffGroup");
+        if (StringUtil.hasText(staffGroup)) {
+            this.staffGroupURI = URI.create(staffGroup);
+        }
+
         // Group URI base comes from LocalAuthority          
         LocalAuthority localAuthority = new LocalAuthority();                         
         URI gmsURI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
@@ -192,23 +200,23 @@ public class ReadAccessTuples {
         String planeTab = raDAO.getTable(Plane.class);
 
         cleanupTupleSQL.put(ObservationMetaReadAccess.class,
-            "delete " + omraTab +
-            " from " + omraTab + " as ra" +
-            " left join " + obsTab + " as obs" + " on ra.assetID = obs.obsID" +
-            " where obs.metaRelease < getdate()" + // now public
-            " OR obs.obsID IS NULL");              // deleted
+            "delete " + omraTab
+            + " from " + omraTab + " as ra"
+            + " left join " + obsTab + " as obs" + " on ra.assetID = obs.obsID"
+            + " where obs.metaRelease < getdate()" // now public
+            + " OR obs.obsID IS NULL");              // deleted
         cleanupTupleSQL.put(PlaneMetaReadAccess.class,
-            "delete " + pmraTab +
-            " from " + pmraTab + " as ra " +
-            " left join " + planeTab + " as plane on ra.assetID = plane.planeID" +
-            " where plane.metaRelease < getdate()" + // now public
-            " OR plane.planeID IS NULL");              // deleted
+            "delete " + pmraTab 
+            + " from " + pmraTab + " as ra " 
+            + " left join " + planeTab + " as plane on ra.assetID = plane.planeID" 
+            + " where plane.metaRelease < getdate()" // now public
+            + " OR plane.planeID IS NULL");              // deleted
         cleanupTupleSQL.put(PlaneDataReadAccess.class,
-            "delete " + pdraTab +
-            " from " + pdraTab + " as ra" +
-            " left join " + planeTab + " as plane on ra.assetID = plane.planeID" +
-            " where plane.dataRelease < getdate()" + // now public
-            " OR plane.planeID IS NULL");              // deleted
+            "delete " + pdraTab 
+            + " from " + pdraTab + " as ra" 
+            + " left join " + planeTab + " as plane on ra.assetID = plane.planeID" 
+            + " where plane.dataRelease < getdate()" // now public
+            + " OR plane.planeID IS NULL");              // deleted
     }
     
     /**
@@ -224,8 +232,8 @@ public class ReadAccessTuples {
         throws GroupNotFoundException, AccessControlException, IOException,
             IllegalArgumentException {
         Set<GroupURI> members = new HashSet<GroupURI>();
-        ArchiveReadGroups archiveReadGroups = new ArchiveReadGroups(collection);
-        for (GroupURI readGroupURI : archiveReadGroups.getReadGroups()) {
+        CollectionReadGroups collectionReadGroups = new CollectionReadGroups(collection);
+        for (GroupURI readGroupURI : collectionReadGroups.getReadGroups()) {
             members.add(readGroupURI);
         }
         return members;
@@ -288,17 +296,23 @@ public class ReadAccessTuples {
         UUID assetID = o.getID();
         log.debug("createObservationMetaReadAccess: " + formatDate(o.metaRelease));
         if (o.metaRelease == null || now.compareTo(o.metaRelease) <= 0) {
-            if (this.operatorGroupURI == null) {
-                ret.add(new ObservationMetaReadAccess(assetID, cadcGroupID.getURI()));
-            } else {
+            if (this.operatorGroupURI != null) {
                 ret.add(new ObservationMetaReadAccess(assetID, this.operatorGroupURI));
             }
-            if (proposalGroupID != null) {
-                ret.add(new ObservationMetaReadAccess(assetID, proposalGroupID.getURI()));
-            }
             
-            for (GroupURI ag : getAdminGroups()) {
-                ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
+            if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+                ret.add(new ObservationMetaReadAccess(assetID, proposalGroupID.getURI()));
+                ret.add(new ObservationMetaReadAccess(assetID, this.staffGroupURI));
+                
+                for (GroupURI ag : getAdminGroups()) {
+                    ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
+                }
+            } else if (this.staffGroupURI != null) {
+                ret.add(new ObservationMetaReadAccess(assetID, this.staffGroupURI));
+                
+                for (GroupURI ag : getAdminGroups()) {
+                    ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
+                }
             }
         }
         return ret;
@@ -311,13 +325,23 @@ public class ReadAccessTuples {
             UUID assetID = p.getID();
             log.debug("createPlaneMetaReadAccess: " + formatDate(p.metaRelease));
             if (p.metaRelease == null || now.compareTo(p.metaRelease) <= 0) {
-                ret.add(new PlaneMetaReadAccess(assetID, cadcGroupID.getURI()));
-                if (proposalGroupID != null) {
-                    ret.add(new PlaneMetaReadAccess(assetID, proposalGroupID.getURI()));
+                if (this.operatorGroupURI != null) {
+                    ret.add(new PlaneMetaReadAccess(assetID, this.operatorGroupURI));
                 }
                 
-                for (GroupURI ag : getAdminGroups()) {
-                    ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
+                if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+                    ret.add(new PlaneMetaReadAccess(assetID, proposalGroupID.getURI()));
+                    ret.add(new PlaneMetaReadAccess(assetID, this.staffGroupURI));
+                    
+                    for (GroupURI ag : getAdminGroups()) {
+                        ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
+                    }
+                } else if (this.staffGroupURI != null) {
+                    ret.add(new PlaneMetaReadAccess(assetID, this.staffGroupURI));
+                    
+                    for (GroupURI ag : getAdminGroups()) {
+                        ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
+                    }
                 }
             }
         }
@@ -331,13 +355,23 @@ public class ReadAccessTuples {
             UUID assetID = p.getID();
             log.debug("createPlaneDataReadAccess: " + formatDate(p.dataRelease));
             if (p.dataRelease == null || now.compareTo(p.dataRelease) <= 0) {
-                ret.add(new PlaneDataReadAccess(assetID, cadcGroupID.getURI()));
-                if (proposalGroupID != null) {
-                    ret.add(new PlaneDataReadAccess(assetID, proposalGroupID.getURI()));
+                if (this.operatorGroupURI != null) {
+                    ret.add(new PlaneDataReadAccess(assetID, this.operatorGroupURI));
                 }
                 
-                for (GroupURI ag : getAdminGroups()) {
-                    ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
+                if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+                    ret.add(new PlaneDataReadAccess(assetID, proposalGroupID.getURI()));
+                    ret.add(new PlaneDataReadAccess(assetID, this.staffGroupURI));
+                    
+                    for (GroupURI ag : getAdminGroups()) {
+                        ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
+                    }
+                } else if (this.staffGroupURI != null) {
+                    ret.add(new PlaneDataReadAccess(assetID, this.staffGroupURI));
+                    
+                    for (GroupURI ag : getAdminGroups()) {
+                        ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
+                    }
                 }
             }
         }
@@ -356,44 +390,43 @@ public class ReadAccessTuples {
         if (updatedProposalGroups.contains(proposalGroupName)) {
             log.debug("group recently updated: " + proposalGroupName);
         } else {
-            if (this.createOrUpdateProposalGroup) {
-                try {
-                    proposalGroup = gmsClient.getGroup(proposalGroupName);
-                } catch (GroupNotFoundException ignore) {
-                    if (!dryrun) {
-                        proposalGroup = new Group(groupURI);
-                        try {
-                            proposalGroup = gmsClient.createGroup(proposalGroup);
-                            log.info("created group: " + proposalGroupName);
-                        } catch (Exception e) {
-                            throw new RuntimeException("could not create group " + proposalGroupName, e);
-                        }
-                    }
-                    ret++;
-                }
-    
+            try {
+                proposalGroup = gmsClient.getGroup(proposalGroupName);
+            } catch (GroupNotFoundException ignore) {
                 if (!dryrun) {
-                    // Add admin groups to proposal group
-                    for (GroupURI ag : getAdminGroups()) {
-                        proposalGroup.getGroupAdmins().add(new Group(ag));
-                    }
+                    proposalGroup = new Group(groupURI);
                     try {
-                        gmsClient.updateGroup(proposalGroup);
-                    } catch (GroupNotFoundException ex) {
-                        throw new RuntimeException("group not found: " + proposalGroupName + " for update (right after check/create)");
+                        proposalGroup = gmsClient.createGroup(proposalGroup);
+                        log.info("created group: " + proposalGroupName);
                     } catch (Exception e) {
-                        throw new RuntimeException("could not update group " + proposalGroupName, e);
+                        throw new RuntimeException("could not create group " + proposalGroupName, e);
                     }
-                    log.info("added group admins to group: " + proposalGroupName);
                 }
-    
-                // cache groups we have already updated
-                updatedProposalGroups.add(proposalGroupName);
-                if (updatedProposalGroups.size() > 1000) {
-                    // remove the oldest few hundred to keep list size moderate
-                    for (int i = 0; i < 200; i++) {
-                        updatedProposalGroups.remove(0);
-                    }
+                ret++;
+            }
+
+            if (!dryrun) {
+                // Add admin groups to proposal group
+                for (GroupURI ag : getAdminGroups()) {
+                    proposalGroup.getGroupAdmins().add(new Group(ag));
+                }
+                
+                try {
+                    gmsClient.updateGroup(proposalGroup);
+                } catch (GroupNotFoundException ex) {
+                    throw new RuntimeException("group not found: " + proposalGroupName + " for update (right after check/create)");
+                } catch (Exception e) {
+                    throw new RuntimeException("could not update group " + proposalGroupName, e);
+                }
+                log.info("added group admins to group: " + proposalGroupName);
+            }
+
+            // cache groups we have already updated
+            updatedProposalGroups.add(proposalGroupName);
+            if (updatedProposalGroups.size() > 1000) {
+                // remove the oldest few hundred to keep list size moderate
+                for (int i = 0; i < 200; i++) {
+                    updatedProposalGroups.remove(0);
                 }
             }
         }
@@ -507,29 +540,12 @@ public class ReadAccessTuples {
                 }
                 pdraTuplesInserted++;
             }
-        } catch (Throwable oops) {
-            ok = false;
-            if (oops instanceof Error) {
-                log.error("FATAL - probably installation or environment", oops);
-            } else if (oops instanceof NullPointerException) {
-                log.error("BUG", oops);
-            } else if (oops instanceof BadSqlGrammarException) {
-                log.error("BUG", oops);
-                BadSqlGrammarException bad = (BadSqlGrammarException) oops;
-                SQLException se = bad.getSQLException();
-
-                if (se != null) {
-                    log.error("CAUSE", se);
-                    SQLException sex2 = se.getNextException();
-                    log.error("NEXT CAUSE", sex2);
-                }
-            } else if (oops instanceof DataAccessResourceFailureException) {
-                log.error("SEVERE PROBLEM - probably out of space in database", oops);
-            } else if (oops instanceof AccessControlException) {
-                log.error("Not authorizied to access group", oops);
-            } else {
-                log.error("unexpected exception", oops);
-            }
+        } catch (DuplicateEntityException e) {
+            log.error("read access tuple already exists.", e);;
+        } catch (URISyntaxException e) {
+            log.error("failed to create read access tuples.", e);;
+        } catch (IOException | GroupAlreadyExistsException | UserNotFoundException e) {
+            log.error("failure detected while checking the proposal group.", e);;
         } finally {
             log.info("inserted " + omraTuplesInserted + " " + pmraTuplesInserted + " " + pdraTuplesInserted + " tuples");
             log.info("created " + groupsCreated + " groups");

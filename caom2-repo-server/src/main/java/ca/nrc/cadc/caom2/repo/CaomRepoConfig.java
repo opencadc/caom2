@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -318,19 +319,20 @@ public class CaomRepoConfig {
         return ret;
     }
 
+    private static void validateProposalGroup(boolean proposalGroup, String staffGroup) {
+        if (proposalGroup) {
+            if (!StringUtil.hasText(staffGroup)) {
+                throw new IllegalArgumentException("staff group is not specified for proposal group");
+            }
+        }
+    }
+    
     static CaomRepoConfig.Item getItem(String collection, Properties props)
             throws IllegalArgumentException, URISyntaxException {
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
         if (parts.length >= 6) { // 6: backwards compat
-            String dsName = parts[0];
-            String database = parts[1];
-            String schema = parts[2];
-            String obsTable = parts[3];
-            String roGroup = parts[4];
-            String rwGroup = parts[5];
-
             // temporary default for backwards compatibility to existing config
             Class sqlGen = SybaseSQLGenerator.class;
             if (parts.length >= 7) {
@@ -375,6 +377,15 @@ public class CaomRepoConfig {
                 }
             }
 
+            validateProposalGroup(proposalGroup, staffGroup);
+            
+            String dsName = parts[0];
+            String database = parts[1];
+            String schema = parts[2];
+            String obsTable = parts[3];
+            String roGroup = parts[4];
+            String rwGroup = parts[5];
+            
             GroupURI ro = new GroupURI(roGroup);
             GroupURI rw = new GroupURI(rwGroup);
 

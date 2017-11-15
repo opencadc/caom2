@@ -72,10 +72,13 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
+import ca.nrc.cadc.caom2.repo.ReadAccessTuples;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
 import org.apache.log4j.Logger;
+import org.springframework.dao.DataAccessException;
 
 /**
  *
@@ -101,14 +104,43 @@ public class PostAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
+        ReadAccessDAO raDAO = this.getReadAccessDAO();
+        ReadAccessTuples accessControlDA = new ReadAccessTuples(this.getCollection(), raDAO, this.getGroupConfig());
 
         if (!dao.exists(uri)) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
         validate(obs);
-
-        dao.put(obs);
+        long transactionTime = -1;
+        long t = System.currentTimeMillis();
+        try {
+            if (raDAO.getTransactionManager().isOpen()) {
+                throw new RuntimeException("BUG: found open transaction at start of next observation");
+            }
+            log.debug("stating transaction");
+            raDAO.getTransactionManager().startTransaction();
+            dao.put(obs);
+            accessControlDA.generateTuples(obs);
+            
+            log.debug("committing transaction");
+            raDAO.getTransactionManager().commitTransaction();
+            log.debug("commit: OK");
+        } catch (DataAccessException e) {
+            log.debug("failed to insert " + obs + ": ", e);
+            raDAO.getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            throw e;
+        } finally {
+            if (raDAO.getTransactionManager().isOpen()) {
+                log.error("BUG - open transaction in finally");
+                raDAO.getTransactionManager().rollbackTransaction();
+                log.error("rollback: OK");
+            }
+            
+            transactionTime = System.currentTimeMillis() - t;
+            log.debug("time to run transaction: " + transactionTime + "ms");
+        }
 
         log.debug("DONE: " + uri);
     }

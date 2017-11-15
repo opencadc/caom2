@@ -190,7 +190,7 @@ public abstract class RepoAction extends RestAction {
             props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
             return props;
         }
-        throw new IllegalArgumentException("unknown collection: " + collection);    
+        throw new IllegalArgumentException("unknown collection: " + collection);
     }
     
     protected ObservationDAO getDAO() throws IOException {
