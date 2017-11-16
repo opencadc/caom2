@@ -107,18 +107,6 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
     }
 
-    /**
-     * Alternate constructor to pull certs from separate location.
-     *
-     * @param resourceID     resource identifier of service to test
-     * @param readWrite      PEM File instance for read-write access.
-     * @param readOnly       PEM File instance for read-only access.
-     * @param anon           PEM File instance with no permissions.
-     */
-    public CaomRepoTupleTests(URI resourceID, File readWrite, File readOnly, File anon) {
-        super(resourceID, Standards.CAOM2REPO_OBS_23, readWrite, readOnly, anon);
-    }
-
     private void ensurePutAndDelete(final Observation observation, final String URI) throws Exception {
         putObservation(observation, subject1, 200, "OK", null);
 
