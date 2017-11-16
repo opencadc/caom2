@@ -128,7 +128,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
 
     @Test
     public void testNullDates() throws Exception {
-        final String observationID = generateID("testPostURIsDontMatch");
+        final String observationID = generateID("testNullDates");
         final String path = TEST_COLLECTION + "/" + observationID;
         final String productID = generateID(TEST_PRODUCT_ID_PREFIX);
         final String uri = SCHEME + path;
@@ -166,7 +166,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         pastCal.set(1977, Calendar.NOVEMBER, 25, 1, 51, 0);
         pastCal.set(Calendar.MILLISECOND, 0);
 
-        final String observationID = generateID("testPostURIsDontMatch");
+        final String observationID = generateID("testPastDates");
         final String path = TEST_COLLECTION + "/" + observationID;
         final String productID = generateID(TEST_PRODUCT_ID_PREFIX);
         final String uri = SCHEME + path;
@@ -204,7 +204,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         // Thirty years, nice round number.
         futureCal.add(Calendar.YEAR, 30);
 
-        final String observationID = generateID("testPostURIsDontMatch");
+        final String observationID = generateID("testFutureDates");
         final String path = TEST_COLLECTION + "/" + observationID;
         final String productID = generateID(TEST_PRODUCT_ID_PREFIX);
         final String uri = SCHEME + path;
