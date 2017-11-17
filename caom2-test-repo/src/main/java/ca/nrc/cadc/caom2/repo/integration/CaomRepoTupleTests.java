@@ -85,7 +85,7 @@ import org.junit.Test;
  * <p>
  * This class is intended to be extended by concrete service implementations.  It exists here solely to provide a
  * standard by which this library holds to.
- * <p>
+ * </p>
  * jenkinsd 2017.11.15
  */
 public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
