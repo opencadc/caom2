@@ -82,10 +82,10 @@ import org.junit.Test;
 /**
  * Integration tests to ensure no exceptions are thrown in the process of tuple generation for seemingly invalid dates.
  * Note - No content checking is done for tuple generation.
- * <p/>
+ * <p>
  * This class is intended to be extended by concrete service implementations.  It exists here solely to provide a
  * standard by which this library holds to.
- * <p/>
+ * <p>
  * jenkinsd 2017.11.15
  */
 public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
