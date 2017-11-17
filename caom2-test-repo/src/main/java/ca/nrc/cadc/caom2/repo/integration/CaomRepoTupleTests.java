@@ -68,24 +68,24 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
-import org.junit.Test;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.reg.Standards;
 
-import java.io.File;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.junit.Test;
+
 /**
  * Integration tests to ensure no exceptions are thrown in the process of tuple generation for seemingly invalid dates.
  * Note - No content checking is done for tuple generation.
- *
+ * <p/>
  * This class is intended to be extended by concrete service implementations.  It exists here solely to provide a
  * standard by which this library holds to.
- *
+ * <p/>
  * jenkinsd 2017.11.15
  */
 public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
@@ -107,11 +107,11 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
     }
 
-    private void ensurePutAndDelete(final Observation observation, final String URI) throws Exception {
+    private void ensurePutAndDelete(final Observation observation, final String uri) throws Exception {
         putObservation(observation, subject1, 200, "OK", null);
 
         // cleanup (ok to fail)
-        deleteObservation(URI, subject1, null, null);
+        deleteObservation(uri, subject1, null, null);
     }
 
     @Test
