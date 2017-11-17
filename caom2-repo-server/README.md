@@ -14,7 +14,7 @@ The CaomRepoConfig.properties file uses the following format:
 collection = <datasource name> <database> <schema> <obs table> <read-only group> <read-write group> [<SQL generator class>] [<key1=value1,key2=value2,...>]
 ```
 
-Each entry in the properties file configures a collection. The SQL generator and the key=value pairs are optional. The key=value pairs can be used to specify an abitratry operator group, an arbitrary staff group and a proposal group. For example:
+Each entry in the properties file configures a collection. The SQL generator and the key=value pairs are optional. The key=value pairs can be used to specify an abitratry operator group, an arbitrary staff group and a proposal group, in addition to computeMetadata and computeMetadataValidation. For example:
 
 ```
 TEST = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms#caom2TestGroupRead ivo://cadc.nrc.ca/gms#caom2TestGroupWrite ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl proposalGroup=true,staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
