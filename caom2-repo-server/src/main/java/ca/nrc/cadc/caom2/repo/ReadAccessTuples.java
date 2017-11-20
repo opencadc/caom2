@@ -469,77 +469,78 @@ public class ReadAccessTuples {
             Date now = new Date();
             boolean pub = isPublic(observation, now);
             log.info("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
-
-            // Create a Group for this proposalID if it doesn't exist
-            GroupURI proposalGroupID = null;
-            try {
-                proposalGroupID = getProposalGroupID(collection, observation.proposal);
-            } catch (URISyntaxException ex) {
-                log.warn("invalid proposal_id to group name: " + observation.proposal);
-            }
-
             if (!pub) {
-                groupsCreated += checkProposalGroup(proposalGroupID);
-            }
-
-            // get complete list of tuples
-            List<ObservationMetaReadAccess> omra = createObservationMetaReadAccess(observation, now, proposalGroupID);
-            List<PlaneMetaReadAccess> pmra = createPlaneMetaReadAccess(observation, now, proposalGroupID);
-            List<PlaneDataReadAccess> pdra = createPlaneDataReadAccess(observation, now, proposalGroupID);
-
-            // check database for existing tuples
-            ListIterator<ObservationMetaReadAccess> omri = omra.listIterator();
-            while (omri.hasNext()) {
-                ObservationMetaReadAccess m = omri.next();
-                ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
-                if (cur != null) {
-                    log.debug("exists (skip): " + cur);
-                    omri.remove();
+                // Create a Group for this proposalID if it doesn't exist
+                GroupURI proposalGroupID = null;
+                try {
+                    proposalGroupID = getProposalGroupID(collection, observation.proposal);
+                } catch (URISyntaxException ex) {
+                    log.warn("invalid proposal_id to group name: " + observation.proposal);
                 }
-            }
 
-            ListIterator<PlaneMetaReadAccess> pmri = pmra.listIterator();
-            while (pmri.hasNext()) {
-                PlaneMetaReadAccess m = pmri.next();
-                ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
-                if (cur != null) {
-                    log.debug("exists (skip): " + cur);
-                    pmri.remove();
+                if (!pub) {
+                    groupsCreated += checkProposalGroup(proposalGroupID);
                 }
-            }
 
-            ListIterator<PlaneDataReadAccess> pdri = pdra.listIterator();
-            while (pdri.hasNext()) {
-                PlaneDataReadAccess m = pdri.next();
-                ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
-                if (cur != null) {
-                    log.debug("exists (skip): " + cur);
-                    pdri.remove();
-                }
-            }
+                // get complete list of tuples
+                List<ObservationMetaReadAccess> omra = createObservationMetaReadAccess(observation, now, proposalGroupID);
+                List<PlaneMetaReadAccess> pmra = createPlaneMetaReadAccess(observation, now, proposalGroupID);
+                List<PlaneDataReadAccess> pdra = createPlaneDataReadAccess(observation, now, proposalGroupID);
 
-            for (ObservationMetaReadAccess m : omra) {
-                log.debug("insert: " + m);
-                if (!dryrun) {
-                    readAccessDAO.put(m);
+                // check database for existing tuples
+                ListIterator<ObservationMetaReadAccess> omri = omra.listIterator();
+                while (omri.hasNext()) {
+                    ObservationMetaReadAccess m = omri.next();
+                    ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
+                    if (cur != null) {
+                        log.debug("exists (skip): " + cur);
+                        omri.remove();
+                    }
                 }
-                omraTuplesInserted++;
-            }
 
-            for (PlaneMetaReadAccess m : pmra) {
-                log.debug("insert: " + m);
-                if (!dryrun) {
-                    readAccessDAO.put(m);
+                ListIterator<PlaneMetaReadAccess> pmri = pmra.listIterator();
+                while (pmri.hasNext()) {
+                    PlaneMetaReadAccess m = pmri.next();
+                    ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
+                    if (cur != null) {
+                        log.debug("exists (skip): " + cur);
+                        pmri.remove();
+                    }
                 }
-                pmraTuplesInserted++;
-            }
 
-            for (PlaneDataReadAccess m : pdra) {
-                log.debug("insert: " + m);
-                if (!dryrun) {
-                    readAccessDAO.put(m);
+                ListIterator<PlaneDataReadAccess> pdri = pdra.listIterator();
+                while (pdri.hasNext()) {
+                    PlaneDataReadAccess m = pdri.next();
+                    ReadAccess cur = readAccessDAO.get(m.getClass(), m.getAssetID(), m.getGroupID());
+                    if (cur != null) {
+                        log.debug("exists (skip): " + cur);
+                        pdri.remove();
+                    }
                 }
-                pdraTuplesInserted++;
+
+                for (ObservationMetaReadAccess m : omra) {
+                    log.debug("insert: " + m);
+                    if (!dryrun) {
+                        readAccessDAO.put(m);
+                    }
+                    omraTuplesInserted++;
+                }
+
+                for (PlaneMetaReadAccess m : pmra) {
+                    log.debug("insert: " + m);
+                    if (!dryrun) {
+                        readAccessDAO.put(m);
+                    }
+                    pmraTuplesInserted++;
+                }
+
+                for (PlaneDataReadAccess m : pdra) {
+                    log.debug("insert: " + m);
+                    if (!dryrun) {
+                        readAccessDAO.put(m);
+                    }
+                    pdraTuplesInserted++;
+                }
             }
         } catch (DuplicateEntityException e) {
             log.error("read access tuple already exists.", e);;
