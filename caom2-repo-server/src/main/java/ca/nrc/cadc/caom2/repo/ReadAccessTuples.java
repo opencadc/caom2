@@ -84,6 +84,8 @@ import ca.nrc.cadc.caom2.persistence.DuplicateEntityException;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 
 import java.io.IOException;
 import java.net.URI;
@@ -198,8 +200,13 @@ public class ReadAccessTuples {
         this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
         this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
         this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
-        if (this.createProposalGroup) {
+        if (this.staffGroupURI != null) {
             this.groupBaseURI = staffGroupURI.getServiceID();
+        } else if (this.operatorGroupURI != null) {
+            this.groupBaseURI = staffGroupURI.getServiceID();
+        } else {
+            LocalAuthority localAuthority = new LocalAuthority();
+            this.groupBaseURI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
         }
                                        
         // Default collection admin groups             
