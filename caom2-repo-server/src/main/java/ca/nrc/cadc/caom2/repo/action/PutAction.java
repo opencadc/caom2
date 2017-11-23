@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
-import ca.nrc.cadc.caom2.repo.ReadAccessTuples;
+import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
@@ -104,7 +104,6 @@ public class PutAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-        ReadAccessTuples accessControlDA = new ReadAccessTuples(getCollection(), getReadAccessDAO(), getGroupConfig());
 
         if (dao.exists(uri)) {
             throw new ResourceAlreadyExistsException("already exists: " + uri);
@@ -114,10 +113,13 @@ public class PutAction extends RepoAction {
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {
-            log.debug("stating transaction");
+            log.debug("starting transaction");
             dao.getTransactionManager().startTransaction();
             dao.put(obs);
-            accessControlDA.generateTuples(obs);
+            ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
+            if (ratGenerator != null) {
+                ratGenerator.generateTuples(obs);
+            }
             
             log.debug("committing transaction");
             dao.getTransactionManager().commitTransaction();

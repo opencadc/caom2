@@ -72,7 +72,7 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.ReadAccessTuples;
+import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
@@ -103,7 +103,6 @@ public class PostAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-        ReadAccessTuples accessControlDA = new ReadAccessTuples(getCollection(), getReadAccessDAO(), getGroupConfig());
 
         if (!dao.exists(uri)) {
             throw new ResourceNotFoundException("not found: " + uri);
@@ -113,10 +112,13 @@ public class PostAction extends RepoAction {
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {
-            log.debug("stating transaction");
+            log.debug("starting transaction");
             dao.getTransactionManager().startTransaction();
             dao.put(obs);
-            accessControlDA.generateTuples(obs);
+            ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
+            if (ratGenerator != null) {
+                ratGenerator.generateTuples(obs);
+            }
             
             log.debug("committing transaction");
             dao.getTransactionManager().commitTransaction();

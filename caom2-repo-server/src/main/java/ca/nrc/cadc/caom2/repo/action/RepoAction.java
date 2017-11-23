@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.ac.GroupNotFoundException;
 import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
@@ -82,6 +83,7 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -121,7 +123,7 @@ public abstract class RepoAction extends RestAction {
     protected ObservationURI uri;
     protected boolean computeMetadata;
     protected boolean computeMetadataValidation;
-    protected Map<String, Object> groupConfig = new HashMap<String, Object>(); 
+    protected Map<String, Object> raGroupConfig = new HashMap<String, Object>(); 
 
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
@@ -179,9 +181,9 @@ public abstract class RepoAction extends RestAction {
         if (i != null) {
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
-            this.groupConfig.put("proposalGroup", i.getProposalGroup());
-            this.groupConfig.put("operatorGroup", i.getOperatorGroup());
-            this.groupConfig.put("staffGroup", i.getStaffGroup());
+            this.raGroupConfig.put("proposalGroup", i.getProposalGroup());
+            this.raGroupConfig.put("operatorGroup", i.getOperatorGroup());
+            this.raGroupConfig.put("staffGroup", i.getStaffGroup());
             
             Map<String, Object> props = new HashMap<String, Object>();
             props.put("jndiDataSourceName", i.getDataSourceName());
@@ -431,7 +433,30 @@ public abstract class RepoAction extends RestAction {
         return this.repoConfig;
     }
     
-    public Map<String, Object> getGroupConfig() {
-        return this.groupConfig;
+    public Map<String, Object> getReadAccessGroupConfig() {
+        return this.raGroupConfig;
     }
+
+    /**
+     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured. 
+     * Returns null otherwise.
+     *
+     * @param collection
+     * @param raDAO read access DAO
+     * @param raGroupConfig read access group data from configuration file
+     * @throws IOException
+     * @throws URISyntaxException
+     * @throws GroupNotFoundException
+     */
+    protected ReadAccessTuplesGenerator getReadAccessTuplesGenerator(String collection, ReadAccessDAO raDAO, Map<String, Object> raGroupConfig)
+        throws IOException, URISyntaxException, GroupNotFoundException, IllegalArgumentException {
+        ReadAccessTuplesGenerator ratGenerator = null;
+        
+        if (raGroupConfig.get("staffGroup") != null && raGroupConfig.get("operatorGroup") != null) {
+            ratGenerator = new ReadAccessTuplesGenerator(collection, raDAO, raGroupConfig);
+        }
+        
+        return ratGenerator;
+    }
+    
 }

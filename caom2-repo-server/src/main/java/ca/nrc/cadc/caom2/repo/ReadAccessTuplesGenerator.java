@@ -84,8 +84,6 @@ import ca.nrc.cadc.caom2.persistence.DuplicateEntityException;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.TransientException;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.LocalAuthority;
 
 import java.io.IOException;
 import java.net.URI;
@@ -112,8 +110,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * construction time.
  *
  */
-public class ReadAccessTuples {
-    private static Logger log = Logger.getLogger(ReadAccessTuples.class);
+public class ReadAccessTuplesGenerator {
+    private static Logger log = Logger.getLogger(ReadAccessTuplesGenerator.class);
 
     private static final Class[] READACCESS_CLASSES =
     {
@@ -148,7 +146,7 @@ public class ReadAccessTuples {
     private GroupURI operatorGroupURI;
     private GroupURI staffGroupURI;
 
-    private ReadAccessTuples() {}
+    private ReadAccessTuplesGenerator() {}
 
     /**
      * Constructor.
@@ -160,7 +158,7 @@ public class ReadAccessTuples {
      * @throws URISyntaxException
      * @throws GroupNotFoundException
      */
-    public ReadAccessTuples(String collection, ReadAccessDAO raDAO, Map<String, Object> groupConfig)
+    public ReadAccessTuplesGenerator(String collection, ReadAccessDAO raDAO, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException, IllegalArgumentException {
         this(collection, false, raDAO, groupConfig);
     }
@@ -176,7 +174,7 @@ public class ReadAccessTuples {
      * @throws URISyntaxException
      * @throws GroupNotFoundException
      */
-    public ReadAccessTuples(String collection, boolean dryrun, ReadAccessDAO raDAO, Map<String, Object> groupConfig)
+    public ReadAccessTuplesGenerator(String collection, boolean dryrun, ReadAccessDAO raDAO, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException, IllegalArgumentException {
         this.collection = collection;
         this.dryrun = dryrun;
@@ -184,13 +182,15 @@ public class ReadAccessTuples {
         initGroups(collection, groupConfig);
         
         // GMSClient to AC webservice        
-        this.gmsClient = new GMSClient(groupBaseURI);
+        if (this.groupBaseURI != null) {
+            this.gmsClient = new GMSClient(groupBaseURI);
+        }
         
         init(raDAO);
     }
 
     // test ctor: enough to test the create-tuples and getProposalGroupName methods
-    ReadAccessTuples(String collection, Map<String, Object> groupConfig)
+    ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException {
         initGroups(collection, groupConfig);
     }
@@ -205,8 +205,8 @@ public class ReadAccessTuples {
         } else if (this.operatorGroupURI != null) {
             this.groupBaseURI = staffGroupURI.getServiceID();
         } else {
-            LocalAuthority localAuthority = new LocalAuthority();
-            this.groupBaseURI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
+            // no read access tuples to generate
+            this.groupBaseURI = null;
         }
                                        
         // Default collection admin groups             

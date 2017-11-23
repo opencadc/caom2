@@ -81,7 +81,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, now, -20L); // 20ms in the past
 
-            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
+            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -108,7 +108,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, null, 0L); // null release dates
 
-            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
+            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -133,7 +133,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, now, 20L); // 20ms in future
             
-            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
+            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -159,7 +159,7 @@ public class ReadAccessTuplesTest {
             Observation obs = getSampleObservation("1", 1, now, 20L); // 20ms in future
             obs.proposal = null;
             
-            ReadAccessTuples da = new ReadAccessTuples(collection, groupConfig);
+            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
