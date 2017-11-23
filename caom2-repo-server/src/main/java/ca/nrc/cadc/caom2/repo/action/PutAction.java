@@ -104,8 +104,7 @@ public class PutAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-        ReadAccessDAO raDAO = this.getReadAccessDAO();
-        ReadAccessTuples accessControlDA = new ReadAccessTuples(this.getCollection(), raDAO, this.getGroupConfig());
+        ReadAccessTuples accessControlDA = new ReadAccessTuples(getCollection(), getReadAccessDAO(), getGroupConfig());
 
         if (dao.exists(uri)) {
             throw new ResourceAlreadyExistsException("already exists: " + uri);
@@ -115,26 +114,23 @@ public class PutAction extends RepoAction {
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {
-            if (raDAO.getTransactionManager().isOpen()) {
-                throw new RuntimeException("BUG: found open transaction at start of next observation");
-            }
             log.debug("stating transaction");
-            raDAO.getTransactionManager().startTransaction();
+            dao.getTransactionManager().startTransaction();
             dao.put(obs);
             accessControlDA.generateTuples(obs);
             
             log.debug("committing transaction");
-            raDAO.getTransactionManager().commitTransaction();
+            dao.getTransactionManager().commitTransaction();
             log.debug("commit: OK");
         } catch (DataAccessException e) {
             log.debug("failed to insert " + obs + ": ", e);
-            raDAO.getTransactionManager().rollbackTransaction();
+            dao.getTransactionManager().rollbackTransaction();
             log.debug("rollback: OK");
             throw e;
         } finally {
-            if (raDAO.getTransactionManager().isOpen()) {
+            if (dao.getTransactionManager().isOpen()) {
                 log.error("BUG - open transaction in finally");
-                raDAO.getTransactionManager().rollbackTransaction();
+                dao.getTransactionManager().rollbackTransaction();
                 log.error("rollback: OK");
             }
             

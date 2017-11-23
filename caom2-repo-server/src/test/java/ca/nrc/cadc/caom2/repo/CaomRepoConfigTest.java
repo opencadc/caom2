@@ -114,24 +114,26 @@ public class CaomRepoConfigTest {
             props.setProperty("space",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
-                + "proposalGroup=true,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+                + "proposalGroup=true operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
             props.setProperty("group-frag",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
-                + "proposalGroup=false,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+                + "proposalGroup=false operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
             props.setProperty("spaces",
                 "dsname  database  schema  caom2obs  ivo://cadc.nrc.ca/gms?group1  ivo://cadc.nrc.ca/gms?group2  "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl  "
-                + "proposalGroup=false,operatorGroup=" + OPERATOR_GROUP);
+                + "proposalGroup=false  operatorGroup="  +  OPERATOR_GROUP);
             props.setProperty("tabs",
                 "dsname\tdatabase\tschema\tcaom2obs\tivo://cadc.nrc.ca/gms?group1\tivo://cadc.nrc.ca/gms?group2\t"
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl\t"
-                + "proposalGroup=true,staffGroup=" + STAFF_GROUP);
+                + "proposalGroup=true\tstaffGroup=" + STAFF_GROUP);
             props.setProperty("mix",
                 "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t "
-                + "proposalGroup=true,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
-            props.setProperty("def-impl", "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t ");
+                + "proposalGroup=true\t operatorGroup=" + OPERATOR_GROUP + "\t staffGroup=" + STAFF_GROUP);
+            props.setProperty("def-impl", 
+                "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t ");
 
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("space", props);
             Assert.assertNotNull(it);
@@ -145,8 +147,8 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(true, it.getProposalGroup());
-            Assert.assertEquals(OPERATOR_GROUP, it.getOperatorGroup());
-            Assert.assertEquals(STAFF_GROUP, it.getStaffGroup());
+            Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
+            Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
 
             it = CaomRepoConfig.getItem("group-frag", props);
             Assert.assertNotNull(it);
@@ -160,8 +162,8 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(false, it.getProposalGroup());
-            Assert.assertEquals(OPERATOR_GROUP, it.getOperatorGroup());
-            Assert.assertEquals(STAFF_GROUP, it.getStaffGroup());
+            Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
+            Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
 
             it = CaomRepoConfig.getItem("spaces", props);
             Assert.assertNotNull(it);
@@ -175,7 +177,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(false, it.getProposalGroup());
-            Assert.assertEquals(OPERATOR_GROUP, it.getOperatorGroup());
+            Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
             Assert.assertNull(it.getStaffGroup());
 
             it = CaomRepoConfig.getItem("tabs", props);
@@ -191,7 +193,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(true, it.getProposalGroup());
             Assert.assertNull(it.getOperatorGroup());
-            Assert.assertEquals(STAFF_GROUP, it.getStaffGroup());
+            Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
 
             it = CaomRepoConfig.getItem("mix", props);
             Assert.assertNotNull(it);
@@ -205,8 +207,8 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(true, it.getProposalGroup());
-            Assert.assertEquals(OPERATOR_GROUP, it.getOperatorGroup());
-            Assert.assertEquals(STAFF_GROUP, it.getStaffGroup());
+            Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
+            Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
 
             it = CaomRepoConfig.getItem("def-impl", props);
             Assert.assertNotNull(it);
@@ -218,7 +220,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
-            Assert.assertEquals(SybaseSQLGenerator.class, it.getSqlGenerator());
+            Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(false, it.getProposalGroup());
             Assert.assertNull(it.getOperatorGroup());
             Assert.assertNull(it.getStaffGroup());
@@ -326,9 +328,9 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
-            Assert.assertEquals(false, it.getProposalGroup());
-            Assert.assertNull(it.getOperatorGroup());
-            Assert.assertNull(it.getStaffGroup());
+            Assert.assertEquals(true, it.getProposalGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?CADC"), it.getOperatorGroup());
+            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?JCMT-Staff"), it.getStaffGroup());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

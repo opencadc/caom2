@@ -43,7 +43,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -53,8 +52,9 @@ import org.junit.Test;
 public class ReadAccessTuplesTest {
     private static final Logger log = Logger.getLogger(ReadAccessTuplesTest.class);
 
-    private static final String OPERATOR_GROUP = "ivo://cadc.nrc.ca/gms?CADC";
-    private static final String STAFF_GROUP = "ivo://cadc.nrc.ca/gms?JCMT-Staff";
+    private static final String GROUP_BASE_URI = "ivo://cadc.nrc.ca/gms";
+    private static final String OPERATOR_GROUP = GROUP_BASE_URI + "?CADC";
+    private static final String STAFF_GROUP = GROUP_BASE_URI + "?JCMT-Staff";
 
     String collection = "TEST";
     Map<String, Object> groupConfig;
@@ -69,8 +69,8 @@ public class ReadAccessTuplesTest {
     protected void setup() throws Exception {
         this.groupConfig = new HashMap<String, Object>();
         groupConfig.put("proposalGroup", true);
-        groupConfig.put("operatorGroup", OPERATOR_GROUP);
-        groupConfig.put("staffGroup", STAFF_GROUP);
+        groupConfig.put("operatorGroup", new GroupURI(OPERATOR_GROUP));
+        groupConfig.put("staffGroup", new GroupURI(STAFF_GROUP));
     }
     
     @Test

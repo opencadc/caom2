@@ -1,30 +1,69 @@
 /*
- ************************************************************************
- ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
- *
- * (c) 2014.                            (c) 2014.
- * National Research Council            Conseil national de recherches
- * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
- * All rights reserved                  Tous droits reserves
- *
- * NRC disclaims any warranties         Le CNRC denie toute garantie
- * expressed, implied, or statu-        enoncee, implicite ou legale,
- * tory, of any kind with respect       de quelque nature que se soit,
- * to the software, including           concernant le logiciel, y com-
- * without limitation any war-          pris sans restriction toute
- * ranty of merchantability or          garantie de valeur marchande
- * fitness for a particular pur-        ou de pertinence pour un usage
- * pose.  NRC shall not be liable       particulier.  Le CNRC ne
- * in any event for any damages,        pourra en aucun cas etre tenu
- * whether direct or indirect,          responsable de tout dommage,
- * special or general, consequen-       direct ou indirect, particul-
- * tial or incidental, arising          ier ou general, accessoire ou
- * from the use of the software.        fortuit, resultant de l'utili-
- *                                      sation du logiciel.
- *
- ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
- ************************************************************************
- */
+************************************************************************
+*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+*
+*  (c) 2017.                            (c) 2017.
+*  Government of Canada                 Gouvernement du Canada
+*  National Research Council            Conseil national de recherches
+*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+*  All rights reserved                  Tous droits réservés
+*
+*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+*  expressed, implied, or               énoncée, implicite ou légale,
+*  statutory, of any kind with          de quelque nature que ce
+*  respect to the software,             soit, concernant le logiciel,
+*  including without limitation         y compris sans restriction
+*  any warranty of merchantability      toute garantie de valeur
+*  or fitness for a particular          marchande ou de pertinence
+*  purpose. NRC shall not be            pour un usage particulier.
+*  liable in any event for any          Le CNRC ne pourra en aucun cas
+*  damages, whether direct or           être tenu responsable de tout
+*  indirect, special or general,        dommage, direct ou indirect,
+*  consequential or incidental,         particulier ou général,
+*  arising from the use of the          accessoire ou fortuit, résultant
+*  software.  Neither the name          de l'utilisation du logiciel. Ni
+*  of the National Research             le nom du Conseil National de
+*  Council of Canada nor the            Recherches du Canada ni les noms
+*  names of its contributors may        de ses  participants ne peuvent
+*  be used to endorse or promote        être utilisés pour approuver ou
+*  products derived from this           promouvoir les produits dérivés
+*  software without specific prior      de ce logiciel sans autorisation
+*  written permission.                  préalable et particulière
+*                                       par écrit.
+*
+*  This file is part of the             Ce fichier fait partie du projet
+*  OpenCADC project.                    OpenCADC.
+*
+*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+*  you can redistribute it and/or       vous pouvez le redistribuer ou le
+*  modify it under the terms of         modifier suivant les termes de
+*  the GNU Affero General Public        la “GNU Affero General Public
+*  License as published by the          License” telle que publiée
+*  Free Software Foundation,            par la Free Software Foundation
+*  either version 3 of the              : soit la version 3 de cette
+*  License, or (at your option)         licence, soit (à votre gré)
+*  any later version.                   toute version ultérieure.
+*
+*  OpenCADC is distributed in the       OpenCADC est distribué
+*  hope that it will be useful,         dans l’espoir qu’il vous
+*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+*  without even the implied             GARANTIE : sans même la garantie
+*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+*  General Public License for           Générale Publique GNU Affero
+*  more details.                        pour plus de détails.
+*
+*  You should have received             Vous devriez avoir reçu une
+*  a copy of the GNU Affero             copie de la Licence Générale
+*  General Public License along         Publique GNU Affero avec
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+*                                       <http://www.gnu.org/licenses/>.
+*
+************************************************************************
+*/
 
 package ca.nrc.cadc.caom2.repo;
 
@@ -44,9 +83,7 @@ import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.DuplicateEntityException;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.LocalAuthority;
-import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.net.TransientException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -67,6 +104,12 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+/**
+ * A class to generate and clean up the read access tuples of an observation. The proposal group, 
+ * operator group and staff group are added/updated based on the group configuration provided at
+ * construction time.
+ *
+ */
 public class ReadAccessTuples {
     private static Logger log = Logger.getLogger(ReadAccessTuples.class);
 
@@ -98,11 +141,9 @@ public class ReadAccessTuples {
     private GMSClient gmsClient;
     private final List<String> updatedProposalGroups = new LinkedList<String>();
 
-    private String groupBaseURI;
-    
-    // group configuration info read from a properties file to determine if a group will be created or updated
-    private boolean createOrUpdateProposalGroup = false;
-    private URI operatorGroupURI;
+    private boolean createProposalGroup = false;
+    private URI groupBaseURI;
+    private GroupURI operatorGroupURI;
     private GroupURI staffGroupURI;
 
     private ReadAccessTuples() {}
@@ -138,29 +179,10 @@ public class ReadAccessTuples {
         this.collection = collection;
         this.dryrun = dryrun;
         this.readAccessDAO = raDAO;
-        this.createOrUpdateProposalGroup = (boolean) groupConfig.get("proposalGroup");
-        String operatorGroup = (String) groupConfig.get("operatorGroup");
-        if (StringUtil.hasText(operatorGroup)) {
-            this.operatorGroupURI = URI.create(operatorGroup);
-        }
-        String staffGroup = (String) groupConfig.get("staffGroup");
-        if (StringUtil.hasText(staffGroup)) {
-            this.staffGroupURI = new GroupURI(staffGroup);
-        }
-
+        initGroups(collection, groupConfig);
+        
         // GMSClient to AC webservice        
-        this.gmsClient = Util.getGMSClient();
-
-        // Group URI base comes from LocalAuthority
-        LocalAuthority localAuthority = new LocalAuthority();
-        URI gmsURI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
-        this.groupBaseURI = gmsURI.toString() + "?";
-
-        // Default collection admin groups             
-        this.adminGroups = getAdminMembers(collection);
-
-        // ISO date format
-        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+        this.gmsClient = new GMSClient(groupBaseURI);
         
         init(raDAO);
     }
@@ -168,20 +190,17 @@ public class ReadAccessTuples {
     // test ctor: enough to test the create-tuples and getProposalGroupName methods
     ReadAccessTuples(String collection, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException {
-        this.createOrUpdateProposalGroup = (boolean) groupConfig.get("proposalGroup");
-        String operatorGroup = (String) groupConfig.get("operatorGroup");
-        if (StringUtil.hasText(operatorGroup)) {
-            this.operatorGroupURI = URI.create(operatorGroup);
-        }
-        String staffGroup = (String) groupConfig.get("staffGroup");
-        if (StringUtil.hasText(staffGroup)) {
-            this.staffGroupURI = new GroupURI(staffGroup);
-        }
+        initGroups(collection, groupConfig);
+    }
 
-        // Group URI base comes from LocalAuthority          
-        LocalAuthority localAuthority = new LocalAuthority();                         
-        URI gmsURI = localAuthority.getServiceURI(Standards.GMS_GROUPS_01.toString());
-        this.groupBaseURI = gmsURI.toString() + "?";
+    private void initGroups(String collection, Map<String, Object> groupConfig) 
+        throws IOException, URISyntaxException, GroupNotFoundException {
+        this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
+        this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
+        this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
+        if (this.createProposalGroup) {
+            this.groupBaseURI = staffGroupURI.getServiceID();
+        }
                                        
         // Default collection admin groups             
         this.adminGroups = getAdminMembers(collection);
@@ -189,7 +208,7 @@ public class ReadAccessTuples {
         // ISO date format                                                               
         this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
-
+    
     private void init(ReadAccessDAO raDAO) {
         // tuple cleanup for public data
         String omraTab = raDAO.getTable(ObservationMetaReadAccess.class);
@@ -264,7 +283,8 @@ public class ReadAccessTuples {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(groupBaseURI);
+        sb.append(groupBaseURI.toString());
+        sb.append("?");
         sb.append(collection);
         sb.append("-");
         sb.append(proposal.getID().trim());
@@ -297,17 +317,16 @@ public class ReadAccessTuples {
         return ret;
     }
 
-    List<ObservationMetaReadAccess> createObservationMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID)
-        throws URISyntaxException {
+    List<ObservationMetaReadAccess> createObservationMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID) {
         List<ObservationMetaReadAccess> ret = new ArrayList<ObservationMetaReadAccess>();
         UUID assetID = o.getID();
         log.debug("createObservationMetaReadAccess: " + formatDate(o.metaRelease));
         if (o.metaRelease == null || now.compareTo(o.metaRelease) <= 0) {
             if (this.operatorGroupURI != null) {
-                ret.add(new ObservationMetaReadAccess(assetID, this.operatorGroupURI));
+                ret.add(new ObservationMetaReadAccess(assetID, operatorGroupURI.getURI()));
             }
             
-            if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+            if (this.createProposalGroup && proposalGroupID != null) {
                 ret.add(new ObservationMetaReadAccess(assetID, proposalGroupID.getURI()));
                 
                 for (GroupURI ag : getAdminGroups()) {
@@ -323,18 +342,17 @@ public class ReadAccessTuples {
         return ret;
     }
 
-    List<PlaneMetaReadAccess> createPlaneMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID)
-        throws URISyntaxException {
+    List<PlaneMetaReadAccess> createPlaneMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID) {
         List<PlaneMetaReadAccess> ret = new ArrayList<PlaneMetaReadAccess>();
         for (Plane p : o.getPlanes()) {
             UUID assetID = p.getID();
             log.debug("createPlaneMetaReadAccess: " + formatDate(p.metaRelease));
             if (p.metaRelease == null || now.compareTo(p.metaRelease) <= 0) {
                 if (this.operatorGroupURI != null) {
-                    ret.add(new PlaneMetaReadAccess(assetID, this.operatorGroupURI));
+                    ret.add(new PlaneMetaReadAccess(assetID, operatorGroupURI.getURI()));
                 }
                 
-                if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+                if (this.createProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneMetaReadAccess(assetID, proposalGroupID.getURI()));
                     
                     for (GroupURI ag : getAdminGroups()) {
@@ -351,18 +369,17 @@ public class ReadAccessTuples {
         return ret;
     }
 
-    List<PlaneDataReadAccess> createPlaneDataReadAccess(Observation o, Date now, GroupURI proposalGroupID)
-        throws URISyntaxException {
+    List<PlaneDataReadAccess> createPlaneDataReadAccess(Observation o, Date now, GroupURI proposalGroupID) {
         List<PlaneDataReadAccess> ret = new ArrayList<PlaneDataReadAccess>();
         for (Plane p : o.getPlanes()) {
             UUID assetID = p.getID();
             log.debug("createPlaneDataReadAccess: " + formatDate(p.dataRelease));
             if (p.dataRelease == null || now.compareTo(p.dataRelease) <= 0) {
                 if (this.operatorGroupURI != null) {
-                    ret.add(new PlaneDataReadAccess(assetID, this.operatorGroupURI));
+                    ret.add(new PlaneDataReadAccess(assetID, operatorGroupURI.getURI()));
                 }
                 
-                if (this.createOrUpdateProposalGroup && proposalGroupID != null) {
+                if (this.createProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneDataReadAccess(assetID, proposalGroupID.getURI()));
                     
                     for (GroupURI ag : getAdminGroups()) {
@@ -379,8 +396,7 @@ public class ReadAccessTuples {
         return ret;
     }
 
-    int checkProposalGroup(GroupURI groupURI)
-        throws IOException, GroupAlreadyExistsException, UserNotFoundException {
+    int checkProposalGroup(GroupURI groupURI) throws UserNotFoundException, TransientException {
         if (groupURI == null) {
             return 0;
         }
@@ -393,6 +409,8 @@ public class ReadAccessTuples {
         } else {
             try {
                 proposalGroup = gmsClient.getGroup(proposalGroupName);
+            } catch (IOException ioex) {
+                throw new TransientException("GMSClient failed to get proposal group " + proposalGroupName, ioex);
             } catch (GroupNotFoundException ignore) {
                 if (!dryrun) {
                     proposalGroup = new Group(groupURI);
@@ -454,7 +472,8 @@ public class ReadAccessTuples {
         }
     }
 
-    public void generateTuples(Observation observation) {
+    public void generateTuples(Observation observation) 
+            throws DuplicateEntityException, GroupAlreadyExistsException, UserNotFoundException, TransientException {
         log.info("START");
 
         int omraTuplesInserted = 0;
@@ -464,11 +483,9 @@ public class ReadAccessTuples {
         boolean ok = true;
 
         try {
-            System.gc(); // hint
-
             Date now = new Date();
             boolean pub = isPublic(observation, now);
-            log.info("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
+            log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
             if (!pub) {
                 // Create a Group for this proposalID if it doesn't exist
                 GroupURI proposalGroupID = null;
@@ -476,11 +493,10 @@ public class ReadAccessTuples {
                     proposalGroupID = getProposalGroupID(collection, observation.proposal);
                 } catch (URISyntaxException ex) {
                     log.warn("invalid proposal_id to group name: " + observation.proposal);
+                    throw new IllegalArgumentException(ex);
                 }
 
-                if (!pub) {
-                    groupsCreated += checkProposalGroup(proposalGroupID);
-                }
+                groupsCreated += checkProposalGroup(proposalGroupID);
 
                 // get complete list of tuples
                 List<ObservationMetaReadAccess> omra = createObservationMetaReadAccess(observation, now, proposalGroupID);
@@ -542,12 +558,6 @@ public class ReadAccessTuples {
                     pdraTuplesInserted++;
                 }
             }
-        } catch (DuplicateEntityException e) {
-            log.error("read access tuple already exists.", e);;
-        } catch (URISyntaxException e) {
-            log.error("failed to create read access tuples.", e);;
-        } catch (IOException | GroupAlreadyExistsException | UserNotFoundException e) {
-            log.error("failure detected while checking the proposal group.", e);;
         } finally {
             log.info("inserted " + omraTuplesInserted + " " + pmraTuplesInserted + " " + pdraTuplesInserted + " tuples");
             log.info("created " + groupsCreated + " groups");
