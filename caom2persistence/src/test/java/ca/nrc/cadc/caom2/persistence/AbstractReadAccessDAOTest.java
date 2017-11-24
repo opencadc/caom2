@@ -80,6 +80,9 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Date;
@@ -117,16 +120,22 @@ public abstract class AbstractReadAccessDAOTest
         try
         {
             Map<String,Object> config = new TreeMap<String,Object>();
-            config.put("server", server);
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
+            DBUtil.createJNDIDataSource("jdbc/testcaom2", cc);
+            //config.put("server", server);
             config.put("database", database);
+            config.put("jndiDataSourceName", "jdbc/testcaom2");
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+
             this.dao = new ReadAccessDAO();
             dao.setConfig(config);
-            this.txnManager = new DatabaseTransactionManager(dao.getDataSource());
             
             this.obsDAO = new ObservationDAO();
             obsDAO.setConfig(config);
+            
+            this.txnManager = new DatabaseTransactionManager(obsDAO.getDataSource());
         }
         catch(Exception ex)
         {
@@ -158,12 +167,14 @@ public abstract class AbstractReadAccessDAOTest
             String s = gen.getTable(c);
 
             String sql = "delete from " + s;
-            log.debug("setup: " + sql);
+            log.info("setup: " + sql);
+            log.info("dataSource: " + ds);
+            log.info("dataSource.connection: " + ds.getConnection());
             ds.getConnection().createStatement().execute(sql);
             if (deletionTrack)
             {
                 sql = sql.replace(cn, "Deleted"+cn);
-                log.debug("setup: " + sql);
+                log.info("setup: " + sql);
                 ds.getConnection().createStatement().execute(sql);
             }
         }
@@ -247,6 +258,8 @@ public abstract class AbstractReadAccessDAOTest
             
         try
         {
+            //obsDAO.getTransactionManager().startTransaction();
+            
             obsDAO.put(obs);
             UUID obsID = obs.getID();
             UUID planeID = obs.getPlanes().iterator().next().getID();
@@ -278,11 +291,14 @@ public abstract class AbstractReadAccessDAOTest
             }
             
             obsDAO.delete(obs.getID());
+            
+            //obsDAO.getTransactionManager().commitTransaction();
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+            //obsDAO.getTransactionManager().rollbackTransaction();
         }
     }
     

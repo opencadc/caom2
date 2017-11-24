@@ -491,7 +491,7 @@ public abstract class AbstractObservationDAOTest
             txnManager.startTransaction(); // outer txn
             try
             {
-                dao.put(dupe); // nested txn
+                dao.put(dupe); // nested vs completed separate txn
                 Assert.fail("expected exception, successfully put duplicate observation");
             }
             catch(DataIntegrityViolationException expected)
@@ -499,18 +499,33 @@ public abstract class AbstractObservationDAOTest
                 log.info("caught expected: " + expected);
             }
             
-            dao.put(obs2); // another nested txn
+            dao.put(obs2); // nested
             log.info("created: " + obs2);
+            
+            // visible inside outer
+            Assert.assertTrue(dao.exists(obs2.getURI()));
+            
+            Observation dupe2 = new SimpleObservation("FOO", "bar2");
+            try
+            {
+                dao.put(dupe2); // nested can see other nested result
+                Assert.fail("expected exception, successfully put duplicate observation");
+            }
+            catch(DataIntegrityViolationException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            // modifiable inside outer
+            obs2.intent = ObservationIntentType.SCIENCE;
+            dao.put(obs2); // nested
+            log.info("modified: " + obs2);
             
             txnManager.commitTransaction(); // outer txn
             
             Observation check1 = dao.get(obs1.getURI());
             Assert.assertNotNull(check1);
             Assert.assertEquals(obs1.getID(), check1.getID());
-            
-            Observation check2 = dao.get(obs2.getURI());
-            Assert.assertNotNull(check2);
-            Assert.assertEquals(obs2.getID(), check2.getID());
             
         }
         catch(Exception unexpected)
