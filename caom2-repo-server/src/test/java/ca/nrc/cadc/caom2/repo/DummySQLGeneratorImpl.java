@@ -73,15 +73,14 @@ import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityPut;
 import ca.nrc.cadc.caom2.persistence.EntityDelete;
 import ca.nrc.cadc.caom2.persistence.EntityPut;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -94,6 +93,11 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
     private static final Logger log = Logger.getLogger(DummySQLGeneratorImpl.class);
 
     public DummySQLGeneratorImpl() {
+    }
+
+    @Override
+    public UUID generateID() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -191,6 +195,11 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> type, boolean bln) {
+        throw new UnsupportedOperationException();
+    }
+    
     @Override
     public String literal(Object o) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.

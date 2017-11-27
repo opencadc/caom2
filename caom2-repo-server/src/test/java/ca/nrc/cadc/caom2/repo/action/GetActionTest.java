@@ -69,11 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.mock;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -83,7 +78,6 @@ import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.SyncInput;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlException;
@@ -93,12 +87,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.mock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
 import org.easymock.EasyMockRunner;
 import org.easymock.MockType;
 import org.junit.Assert;
@@ -177,7 +173,7 @@ public class GetActionTest {
         expect(mockRequest.getParameterNames()).andReturn(params);
 
         // since no maxRec argument given, expect the default one
-        expect(mockDao.getObservationList("TEST", null, null, GetAction.MAX_OBS_LIST_SIZE, true)).andReturn(obsList);
+        expect(mockDao.getObservationList("TEST", null, null, RepoAction.MAX_LIST_SIZE, true)).andReturn(obsList);
 
         replay(mockDao, mockRequest);
 

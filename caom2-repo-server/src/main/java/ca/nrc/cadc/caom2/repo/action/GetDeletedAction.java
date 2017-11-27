@@ -62,50 +62,90 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.caom2.DeletedEntity;
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
+import java.util.Date;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
- * For CAOM 2.2 support.
+ *
+ * @author pdowler
  */
-public class GetAction22 extends GetAction {
+public class GetDeletedAction extends RepoAction {
+    private static final Logger log = Logger.getLogger(GetDeletedAction.class);
 
-    @Override
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+    public GetDeletedAction() { 
     }
 
     @Override
-    protected long writeObservationList(List<ObservationState> states) throws IOException {
+    public void doAction() throws Exception {
+        // lazy: this currently does not check if extra path elements were included
+        if (getCollection() != null) {
+            InputParams ip = getInputParams();
+            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
+        } else {
+            // Responds to requests where no collection is provided.
+            // Returns list of all collections.
+            doGetCollectionList();
+        }
+    }
+
+    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
+        log.debug("START: " + getCollection());
+
+        checkReadPermission(getCollection());
+
+        DeletedEntityDAO dao = getDeletedDAO();
+
+        List<DeletedEntity> dels = dao.getList(getCollection(), start, end, maxRec);
+
+        if (dels == null) {
+            throw new ResourceNotFoundException("Collection not found: " + getCollection());
+        }
+
+        long byteCount = writeDeleted(dels);
+        logInfo.setBytes(byteCount);
+
+        log.debug("DONE: " + getCollection());
+    }
+    
+    private long writeDeleted(List<DeletedEntity> dels) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        syncOutput.setHeader("Content-Type", "text/csv");
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());
-        for (ObservationState state : states) {
-            writer.write(state.getURI().getObservationID());
-            writer.write(df.format(state.maxLastModified));
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
+        for (DeletedEntity de : dels) {
+            DeletedObservation ddo = (DeletedObservation) de;
+            writer.write(ddo.getID().toString());
+            writer.write(ddo.getURI().getCollection());
+            writer.write(ddo.getURI().getObservationID());
+            if (ddo.getLastModified() != null) {
+                writer.write(df.format(ddo.getLastModified()));
+            } else {
+                writer.write("");
+            }
             writer.endRecord();
         }
         writer.flush();
         return bc.getByteCount();
     }
-
+    
 }
