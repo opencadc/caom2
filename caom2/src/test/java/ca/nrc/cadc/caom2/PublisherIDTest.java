@@ -152,6 +152,13 @@ public class PublisherIDTest
             
             Assert.assertEquals(IVO_RESOURCE_ID, uri.getResourceID());
             Assert.assertEquals(IVO_RESOURCE_ID + "?obs1/prod1", uri.getURI().toASCIIString());
+
+            // Second constructor.
+            uri = new PublisherID(URI.create(IVO_RESOURCE_ID + "?obs1/prod1"));
+            log.debug("created: " + uri);
+
+            Assert.assertEquals(IVO_RESOURCE_ID, uri.getResourceID());
+            Assert.assertEquals(IVO_RESOURCE_ID + "?obs1/prod1", uri.getURI().toASCIIString());
             
             // test various null values
             try
