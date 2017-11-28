@@ -92,7 +92,6 @@ import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -103,9 +102,7 @@ import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -324,17 +321,14 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         observation.getPlanes().add(plane);
 
         putObservation(observation, subject1, 200, "OK", null);
+        
+        Observation po = getObservation(observation.getURI().getURI().toASCIIString(), subject1, 200, null, null);
+        Plane pp = po.getPlanes().iterator().next();
+        pp.dataProductType = DataProductType.CUBE;
+        postObservation(po, subject1, 200, "OK", null);
 
-        // modify the plane since that also tweaks the Observation.maxLastModified
-        plane.dataProductType = DataProductType.CUBE;
-
-        // overwrite the observation with a post
-        postObservation(observation, subject1, 200, "OK", null);
-
-        String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
         // cleanup (ok to fail)
-        deleteObservation(uri, subject1, null, null);
+        deleteObservation(po.getURI().getURI().toASCIIString(), subject1, null, null);
     }
 
     @Test
@@ -509,10 +503,9 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         observation.getPlanes().add(plane);
 
         putObservation(observation, subject1, 200, "OK", null);
-
-        // modify the plane since that also tweaks the Observation.maxLastModified
-        plane.dataProductType = DataProductType.CUBE;
-        return observation;
+        
+        return (SimpleObservation) getObservation(observation.getURI().getURI().toASCIIString(), 
+                subject1, 200, null, null);
     }
 
     private File convertToFile(SimpleObservation observation) throws IOException {

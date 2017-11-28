@@ -78,11 +78,9 @@ import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -93,11 +91,9 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.UUID;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -114,13 +110,13 @@ class CaomRepoBaseIntTests {
     static final String TEST_COLLECTION = "TEST";
 
     // subject1 has read/write privilege on the TEST collection
-    final Subject subject1;
+    Subject subject1;
 
     // subject2 has read privilege on the TEST collection
-    final Subject subject2;
+    Subject subject2;
 
     // subject3 has not read or write permission on the TEST collection
-    final Subject subject3;
+    Subject subject3;
 
     final String baseHTTPURL;
     final String baseHTTPSURL;
@@ -150,18 +146,22 @@ class CaomRepoBaseIntTests {
      */
     public CaomRepoBaseIntTests(URI resourceID, URI repoStandardID, String pem1, String pem2, String pem3) {
         try {
-            File sslCert1 = FileUtil.getFileFromResource(pem1, this.getClass());
-            File sslCert2 = FileUtil.getFileFromResource(pem2, this.getClass());
-            File sslCert3 = FileUtil.getFileFromResource(pem3, this.getClass());
-
-            subject1 = SSLUtil.createSubject(sslCert1);
-            subject2 = SSLUtil.createSubject(sslCert2);
-            subject3 = SSLUtil.createSubject(sslCert3);
+            if (pem1 != null) {
+                File sslCert1 = FileUtil.getFileFromResource(pem1, this.getClass());
+                subject1 = SSLUtil.createSubject(sslCert1);
+            }
+            
+            if (pem2 != null) {
+                File sslCert2 = FileUtil.getFileFromResource(pem2, this.getClass());
+                subject2 = SSLUtil.createSubject(sslCert2);
+            }
+            
+            if (pem3 != null) {
+                File sslCert3 = FileUtil.getFileFromResource(pem3, this.getClass());
+                subject3 = SSLUtil.createSubject(sslCert3);
+            }
 
             RegistryClient rc = new RegistryClient();
-
-            // TODO - Just verifying?
-            rc.getServiceURL(resourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
 
             URL serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.ANON);
             baseHTTPURL = serviceURL.toExternalForm();

@@ -83,7 +83,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -99,9 +98,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -201,9 +198,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
             for (Observation obs : observations) {
                 deleteObservation(obs.getURI().toString(), subject1, null, null);
             }
-        } catch (Throwable t) {
-            log.error("unexpected", t);
-            Assert.fail();
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
