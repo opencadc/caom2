@@ -136,7 +136,6 @@ public class AbstractDAO {
         ret.put("database", String.class);
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
-        ret.put("disableHashJoin", Boolean.class);
         ret.put(SQLGenerator.class.getName(), Class.class);
         return ret;
     }
@@ -154,18 +153,12 @@ public class AbstractDAO {
         }
         try {
             if (jndiDataSourceName != null) {
-                this.dataSource = new DataSourceWrapper(database, DBUtil.findJNDIDataSource(jndiDataSourceName));
+                this.dataSource = DBUtil.findJNDIDataSource(jndiDataSourceName);
             } else {
                 DBConfig dbrc = new DBConfig();
                 ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
                 // for some reason, we need to suppress close when wrapping with delegating DS
-                DataSourceWrapper dsw = new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
-                Boolean disableHashJoin = (Boolean) config.get("disableHashJoin");
-                if (disableHashJoin != null) {
-                    log.debug("disableHashJoin: " + disableHashJoin);
-                    dsw.setDisableHashJoin(disableHashJoin);
-                }
-                this.dataSource = dsw;
+                this.dataSource = DBUtil.getDataSource(cc, true, true);
             }
         } catch (NamingException ex) {
             throw new IllegalArgumentException("cannot find JNDI DataSource: "
