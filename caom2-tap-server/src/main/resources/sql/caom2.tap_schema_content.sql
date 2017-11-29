@@ -176,7 +176,7 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 ( 'caom2.Plane', 'time_exposure', 'median exposure time per pixel', 'caom2:Plane.time.exposure', NULL, 's', 'adql:DOUBLE', NULL, 0,0,0 , 88),
 
 ( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'adql:VARCHAR', 32, 0,0,0 , 90),
-( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'adql:INTEGER', NULL, 0,0,0 , 91),
+( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'adql:BIGINT', NULL, 0,0,0 , 91),
 
 ( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'adql:TIMESTAMP', NULL, 1,1,0 , 100)
 ;
@@ -189,9 +189,10 @@ insert into TAP_SCHEMA.columns (table_name,column_name,description,utype,ucd,uni
 ( 'caom2.Artifact', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Artifact.productType', NULL, NULL, 'adql:VARCHAR', 32, 1,0,0 , 4),
 ( 'caom2.Artifact', 'releaseType',   'release type (data, meta), new: not in use', 'caom2:Artifact.releaseType', NULL, NULL, 'adql:VARCHAR', 16, 1,0,0 , 5),
 ( 'caom2.Artifact', 'contentType',   'content-type of the representation at uri', 'caom2:Artifact.contentType', NULL, NULL, 'adql:VARCHAR', 128, 1,0,0 , 6),
-( 'caom2.Artifact', 'contentLength', 'size of the representation at uri', 'caom2:Artifact.contentLength', NULL, 'byte', 'adql:BIGINT', NULL, 1,0,0 , 7),
-( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'adql:CLOB', NULL, 0,0,0, 8),
-( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'adql:TIMESTAMP', NULL, 1,1,0, 9)
+( 'caom2.Artifact', 'contentChecksum', 'checksum of the content (URI of the form <algorithm>:<value>)', 'caom2:Artifact.contentChecksum', NULL, NULL, 'adql:VARCHAR', NULL, 1,0,0 , 8),
+( 'caom2.Artifact', 'contentLength', 'size of the representation at uri', 'caom2:Artifact.contentLength', NULL, 'byte', 'adql:BIGINT', NULL, 1,0,0 , 9),
+( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'adql:CLOB', NULL, 0,0,0, 10),
+( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'adql:TIMESTAMP', NULL, 1,1,0, 11)
 ;
 
 -- Part
