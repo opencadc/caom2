@@ -109,34 +109,40 @@ public class PostAction extends RepoAction {
         }
 
         validate(obs);
+        ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {
-            log.debug("starting transaction");
-            dao.getTransactionManager().startTransaction();
-            dao.put(obs);
-            ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
-            if (ratGenerator != null) {
+            if (ratGenerator == null) {
+                dao.put(obs);
+            } else {
+                log.debug("starting transaction");
+                dao.getTransactionManager().startTransaction();
+                dao.put(obs);
                 ratGenerator.generateTuples(obs);
+
+                log.debug("committing transaction");
+                dao.getTransactionManager().commitTransaction();
+                log.debug("commit: OK");
             }
-            
-            log.debug("committing transaction");
-            dao.getTransactionManager().commitTransaction();
-            log.debug("commit: OK");
         } catch (DataAccessException e) {
             log.debug("failed to insert " + obs + ": ", e);
-            dao.getTransactionManager().rollbackTransaction();
-            log.debug("rollback: OK");
+            if (ratGenerator != null) {
+                dao.getTransactionManager().rollbackTransaction();
+                log.debug("rollback: OK");
+            }
             throw e;
         } finally {
-            if (dao.getTransactionManager().isOpen()) {
-                log.error("BUG - open transaction in finally");
-                dao.getTransactionManager().rollbackTransaction();
-                log.error("rollback: OK");
+            if (ratGenerator != null) {
+                if (dao.getTransactionManager().isOpen()) {
+                    log.error("BUG - open transaction in finally");
+                    dao.getTransactionManager().rollbackTransaction();
+                    log.error("rollback: OK");
+                }
+                
+                transactionTime = System.currentTimeMillis() - t;
+                log.debug("time to run transaction: " + transactionTime + "ms");
             }
-            
-            transactionTime = System.currentTimeMillis() - t;
-            log.debug("time to run transaction: " + transactionTime + "ms");
         }
 
         log.debug("DONE: " + uri);
