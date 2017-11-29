@@ -125,15 +125,15 @@ public class CaomHarvester implements Runnable {
     /**
      * observationMetaDeleter
      */
-    private DeletionHarvester observationMetaDeleter;
+    private ReadAccessDeletionHarvester observationMetaDeleter;
     /**
      * planeDataDeleter
      */
-    private DeletionHarvester planeDataDeleter;
+    private ReadAccessDeletionHarvester planeDataDeleter;
     /**
      * planeDataDeleter
      */
-    private DeletionHarvester planeMetaDeleter;
+    private ReadAccessDeletionHarvester planeMetaDeleter;
 
     /**
      * Harvest everything.
@@ -196,9 +196,9 @@ public class CaomHarvester implements Runnable {
                 this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
 
                 if (src.getHarvestAC()) {
-                    this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                    this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                    this.planeDataDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.observationMetaDeleter = new ReadAccessDeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.planeMetaDeleter = new ReadAccessDeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.planeDataDeleter = new ReadAccessDeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
                 }
             }
         }

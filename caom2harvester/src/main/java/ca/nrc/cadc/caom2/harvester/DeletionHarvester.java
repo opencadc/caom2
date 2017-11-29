@@ -72,31 +72,21 @@ package ca.nrc.cadc.caom2.harvester;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- * Harvest and perform deletions of CaomEntity instances.
+ * Harvest and perform deletions of observations.
  *
  * @author pdowler
  */
@@ -107,7 +97,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
     private DeletedEntityDAO deletedDAO;
     private RepoClient repoClient;
     
-    private WrapperDAO entityDAO;
+    private ObservationDAO obsDAO;
     private TransactionManager txnManager;
 
     private boolean initHarvestState;
@@ -165,86 +155,23 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @throws URISyntaxException
      * URISyntaxException
      */
-    private void init(int threads) throws IOException, URISyntaxException {
+    private void init() throws IOException, URISyntaxException {
         // source
         if (src.getDatabaseServer() != null) {
             Map<String, Object> config1 = getConfigDAO(src);
             this.deletedDAO = new DeletedEntityDAO();
             deletedDAO.setConfig(config1);
         } else {
-            this.repoClient = new RepoClient(src.getResourceID(), threads);
+            this.repoClient = new RepoClient(src.getResourceID(), 1);
         }
         
         // destination
         Map<String, Object> config2 = getConfigDAO(dest);
-        if (DeletedObservation.class.equals(entityClass)) {
-            ObservationDAO dao = new ObservationDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, null);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneMetaReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneDataReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedObservationMetaReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else {
-            throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
-        }
-    }
-
-    /**
-     * initialize of the harvester
-     *
-     * @throws IOException
-     */
-    private void init() throws IOException {
-        Map<String, Object> config1 = getConfigDAO(src);
-        Map<String, Object> config2 = getConfigDAO(dest);
-
-        this.deletedDAO = new DeletedEntityDAO();
-        deletedDAO.setConfig(config1);
-
-        if (DeletedObservation.class.equals(entityClass)) {
-            ObservationDAO dao = new ObservationDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, null);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneMetaReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, PlaneMetaReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedPlaneDataReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, PlaneDataReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else if (DeletedObservationMetaReadAccess.class.equals(entityClass)) {
-            ReadAccessDAO dao = new ReadAccessDAO();
-            dao.setConfig(config2);
-            this.txnManager = dao.getTransactionManager();
-            this.entityDAO = new WrapperDAO(dao, ObservationMetaReadAccess.class);
-            initHarvestState(dao.getDataSource(), entityClass);
-        } else {
-            throw new UnsupportedOperationException("unsupported class: " + entityClass.getName());
-        }
+        this.obsDAO = new ObservationDAO();
+        obsDAO.setConfig(config2);
+        this.txnManager = obsDAO.getTransactionManager();
+        initHarvestState(obsDAO.getDataSource(), entityClass);
+        
     }
 
     /**
@@ -254,54 +181,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
      */
     private void close() throws IOException {
         // TODO
-    }
-
-    /**
-     * invoke delete(Long) method on an arbitrary object via reflection
-     *
-     */
-    private class WrapperDAO {
-
-        private Object dao;
-        private Method deleteMethod;
-        private Class<?> targetClass;
-
-        WrapperDAO(Object dao, Class<?> targetClass) {
-            this.dao = dao;
-            this.targetClass = targetClass;
-
-            try {
-                if (targetClass != null) {
-                    this.deleteMethod = dao.getClass().getMethod("delete", Class.class, UUID.class);
-                } else {
-                    this.deleteMethod = dao.getClass().getMethod("delete", UUID.class);
-                }
-
-            } catch (NoSuchMethodException bug) {
-                throw new RuntimeException("BUG", bug);
-            }
-            log.debug("created wrapper to call " + dao.getClass().getSimpleName() + ".delete(Long)");
-        }
-
-        public void delete(UUID id) {
-            log.debug("invoking " + deleteMethod + " with id=" + id);
-            try {
-                if (targetClass != null) {
-                    deleteMethod.invoke(dao, targetClass, id);
-                } else {
-                    deleteMethod.invoke(dao, id);
-                }
-            } catch (IllegalAccessException bug) {
-                throw new RuntimeException("BUG", bug);
-            } catch (InvocationTargetException bug) {
-                throw new RuntimeException("BUG", bug);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return deleteMethod.toString();
-        }
     }
 
     /**
@@ -398,7 +277,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             // lastModified is maintained in the DB so we do not need this
             // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
             // minutes ago
-            List<DeletedEntity> entityList = null;
+            List<DeletedObservation> entityList = null;
             if (deletedDAO != null) {
                 entityList = deletedDAO.getList(src.getCollection(), start, end, batchSize);
             } //else {
@@ -411,9 +290,9 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
             ret.found = entityList.size();
             log.info("found: " + entityList.size());
-            ListIterator<DeletedEntity> iter = entityList.listIterator();
+            ListIterator<DeletedObservation> iter = entityList.listIterator();
             while (iter.hasNext()) {
-                DeletedEntity de = iter.next();
+                DeletedObservation de = iter.next();
                 iter.remove(); // allow garbage collection asap
 
                 if (de.getID().equals(state.curID)) {
@@ -432,7 +311,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                         state.curID = de.getID();
 
                         // perform the actual deletion
-                        entityDAO.delete(de.getID());
+                        obsDAO.delete(de.getID());
 
                         // track progress
                         harvestStateDAO.put(state);
@@ -484,7 +363,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @param entityList
      * list of entities to detect loops with
      */
-    private void detectLoop(List<DeletedEntity> entityList) {
+    private void detectLoop(List<DeletedObservation> entityList) {
         if (entityList.size() < 2) {
             return;
         }

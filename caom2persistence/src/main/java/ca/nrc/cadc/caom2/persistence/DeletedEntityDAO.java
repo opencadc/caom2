@@ -224,7 +224,7 @@ public class DeletedEntityDAO extends AbstractDAO {
      * @param batchSize
      * @return 
      */
-    public List<DeletedEntity> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
+    public List<DeletedObservation> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
         checkInit();
 
         log.debug("GET: " + batchSize);
@@ -239,12 +239,12 @@ public class DeletedEntityDAO extends AbstractDAO {
 
             Object result = jdbc.query(sql, gen.getDeletedEntityMapper(DeletedObservation.class));
             if (result == null) {
-                return new ArrayList<DeletedEntity>(0);
+                return new ArrayList<DeletedObservation>(0);
             }
 
             if (result instanceof List) {
                 List obs = (List) result;
-                List<DeletedEntity> ret = new ArrayList<DeletedEntity>(obs.size());
+                List<DeletedObservation> ret = new ArrayList<DeletedObservation>(obs.size());
                 ret.addAll(obs);
                 return ret;
             }
