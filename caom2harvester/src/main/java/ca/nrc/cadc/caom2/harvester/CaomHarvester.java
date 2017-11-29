@@ -193,6 +193,7 @@ public class CaomHarvester implements Runnable {
 
             // deletions in incremental mode only
             if (!full && !skip) {
+                // TODO: once the RepoClient supports deletion harvesting this can be moved out of "extendedFeatures"
                 this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
 
                 if (src.getHarvestAC()) {
