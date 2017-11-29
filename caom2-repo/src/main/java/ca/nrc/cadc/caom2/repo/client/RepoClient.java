@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.repo.client;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -78,7 +79,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -99,22 +99,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
 
 
 public class RepoClient {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
-    private static final URI standardID = Standards.CAOM2REPO_OBS_23;
     private static final Integer MAX_NUMBER = 3000;
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-
+    private RegistryClient rc;
     private URI resourceID = null;
     private URL baseServiceURL = null;
+    private URL baseDeletionURL = null;
 
     private int nthreads = 1;
     private Comparator<ObservationState> maxLasModifiedComparator = new Comparator<ObservationState>() {
@@ -133,25 +131,58 @@ public class RepoClient {
     public RepoClient(URI resourceID, int nthreads) {
         this.nthreads = nthreads;
         this.resourceID = resourceID;
+        this.rc = new RegistryClient();
     }
 
     private void init() {
-        RegistryClient rc = new RegistryClient();
-
         Subject s = AuthenticationUtil.getCurrentSubject();
         AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
         if (meth == null) {
             meth = AuthMethod.ANON;
         }
-        this.baseServiceURL = rc.getServiceURL(this.resourceID, standardID, meth);
+        this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
         if (baseServiceURL == null) {
-            throw new RuntimeException("not found: " + resourceID + " + " + standardID + " + " + meth);
+            throw new RuntimeException("not found: " + resourceID + " + " +  Standards.CAOM2REPO_OBS_23 + " + " + meth);
         }
-
-        log.debug("service URL: " + baseServiceURL.toString());
+        log.debug("observation list URL: " + baseServiceURL.toString());
+        log.debug("AuthMethod:  " + meth);
+    }
+    
+    private void initDel() {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null) {
+            meth = AuthMethod.ANON;
+        }
+        this.baseDeletionURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_DEL_23, meth);
+        if (baseDeletionURL == null) {
+            throw new RuntimeException("not found: " + resourceID + " + " +  Standards.CAOM2REPO_DEL_23 + " + " + meth);
+        }
+        log.debug("deletion list URL: " + baseDeletionURL.toString());
         log.debug("AuthMethod:  " + meth);
     }
 
+    public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
+        initDel();
+        
+        final List<DeletedObservation> ret = new ArrayList<>();
+        
+        // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
+        
+        // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
+        /*
+        UUID id = null;
+        String col = null;
+        String observationID = null;
+        Date lastModified = null;
+        DeletedObservation de = new DeletedObservation(id, new ObservationURI(col, observationID));
+        CaomUtil.assignLastModified(de, lastModified, "lastModified");
+        ret.add(de);
+        */
+        
+        return ret;
+    }
+    
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
         init();
 
