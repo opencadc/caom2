@@ -73,9 +73,9 @@ import ca.nrc.cadc.ac.GroupURI;
 
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -209,6 +209,9 @@ public class CaomRepoConfig {
 
         private boolean computeMetadata;
         private boolean computeMetadataValidation;
+        private boolean proposalGroup;
+        private GroupURI operatorGroup;
+        private GroupURI staffGroup;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database,
                 String schema, String obsTableName, GroupURI readOnlyGroup,
@@ -228,7 +231,8 @@ public class CaomRepoConfig {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + ","
                     + schema + "," + obsTableName + "," + readOnlyGroup + "," + readWriteGroup + ","
                     + sqlGenerator.getSimpleName() + "," + computeMetadata + ","
-                    + computeMetadataValidation + "]";
+                    + computeMetadataValidation + "," + proposalGroup + "," + operatorGroup + ","
+                    + staffGroup + "]";
         }
 
         public Class getSqlGenerator() {
@@ -241,6 +245,18 @@ public class CaomRepoConfig {
 
         public boolean getComputeMetadataValidation() {
             return computeMetadataValidation;
+        }
+
+        public boolean getProposalGroup() {
+            return proposalGroup;
+        }
+
+        public GroupURI getOperatorGroup() {
+            return operatorGroup;
+        }
+
+        public GroupURI getStaffGroup() {
+            return staffGroup;
         }
 
         public String getTestTable() {
@@ -302,68 +318,82 @@ public class CaomRepoConfig {
         return ret;
     }
 
+    private static void validateProposalGroup(boolean proposalGroup, String staffGroup) {
+        if (proposalGroup) {
+            if (!StringUtil.hasText(staffGroup)) {
+                throw new IllegalArgumentException("staff group is not specified for proposal group");
+            }
+        }
+    }
+    
     static CaomRepoConfig.Item getItem(String collection, Properties props)
             throws IllegalArgumentException, URISyntaxException {
         String val = props.getProperty(collection);
         log.debug(collection + " = " + val);
         String[] parts = val.split("[ \t]+"); // one or more spaces and tabs
-        if (parts.length >= 6) { // 6: backwards compat
+        if (parts.length >= 7) { 
+            String cname = parts[6];
+            Class sqlGen = null;
+            try {
+                sqlGen = Class.forName(cname);
+                if (!SQLGenerator.class.isAssignableFrom(sqlGen)) {
+                    throw new IllegalArgumentException(
+                            "invalid SQLGenerator class: does not implement interface "
+                                    + SQLGenerator.class.getName());
+                }
+            } catch (ClassNotFoundException ex) {
+                throw new IllegalArgumentException(
+                        "failed to load SQLGenerator class: " + cname, ex);
+            }
+
+            // default values for backwards compatible to existing config
+            boolean computeMetadata = false;
+            boolean computeMetadataValidation = true;
+            boolean proposalGroup = false;
+            String operatorGroup = null;
+            String staffGroup = null;
+            for (int i = 7; i < parts.length; i++) {
+                String option = parts[i]; // key=value pair
+                log.debug(collection + " options: " + option);
+                String[] kv = option.split("=");
+                if ("computeMetadata".equals(kv[0])) {
+                    computeMetadata = Boolean.parseBoolean(kv[1]);
+                } else if ("computeMetadataValidation".equals(kv[0])) {
+                    computeMetadataValidation = Boolean.parseBoolean(kv[1]);
+                } else if ("proposalGroup".equals(kv[0])) {
+                    proposalGroup = Boolean.parseBoolean(kv[1]);
+                } else if ("operatorGroup".equals(kv[0])) {
+                    operatorGroup = kv[1];
+                } else if ("staffGroup".equals(kv[0])) {
+                    staffGroup = kv[1];
+                }
+                // else: ignore
+            }
+
+            validateProposalGroup(proposalGroup, staffGroup);
+            
             String dsName = parts[0];
             String database = parts[1];
             String schema = parts[2];
             String obsTable = parts[3];
             String roGroup = parts[4];
             String rwGroup = parts[5];
-
-            // temporary default for backwards compatibility to existing config
-            Class sqlGen = SybaseSQLGenerator.class;
-            if (parts.length >= 7) {
-                String cname = parts[6];
-                try {
-                    sqlGen = Class.forName(cname);
-                    if (!SQLGenerator.class.isAssignableFrom(sqlGen)) {
-                        throw new IllegalArgumentException(
-                                "invalid SQLGenerator class: does not implement interface "
-                                        + SQLGenerator.class.getName());
-                    }
-                } catch (ClassNotFoundException ex) {
-                    throw new IllegalArgumentException(
-                            "failed to load SQLGenerator class: " + cname, ex);
-                }
-            }
-
-            // default values for backwards compat to existing config
-            boolean computeMetadata = false;
-            boolean computeMetadataValidation = true;
-            if (parts.length >= 8) {
-                String options = parts[7];
-                log.debug(collection + " options: " + options);
-                String[] ss = options.split(","); // comma-separated list of key=value pairs
-                for (String s : ss) {
-                    String[] kv = s.split("=");
-                    if (kv.length == 2) {
-                        if ("computeMetadata".equals(kv[0])) {
-                            computeMetadata = Boolean.parseBoolean(kv[1]);
-                        } else if ("computeMetadataValidation".equals(kv[0])) {
-                            computeMetadataValidation = Boolean.parseBoolean(kv[1]);
-                        }
-
-                        // else: ignore
-                    }
-                }
-            }
-
+            
             GroupURI ro = new GroupURI(roGroup);
             GroupURI rw = new GroupURI(rwGroup);
 
             CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database,
                     schema, obsTable, ro, rw);
             rci.computeMetadata = computeMetadata;
-            rci.computeMetadataValidation = computeMetadataValidation;
+            rci.computeMetadataValidation = computeMetadataValidation;            
+            rci.operatorGroup = operatorGroup == null ? null : new GroupURI(operatorGroup);
+            rci.staffGroup = staffGroup == null ? null : new GroupURI(staffGroup);
+            rci.proposalGroup = proposalGroup;
+            
             log.debug(collection + ": loaded " + rci);
             return rci;
         } else {
-            throw new IllegalArgumentException("found " + parts.length + " tokens, expected 6");
+            throw new IllegalArgumentException("found " + parts.length + " tokens, expected 7");
         }
     }
 

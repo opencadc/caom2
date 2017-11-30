@@ -72,10 +72,12 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
 import org.apache.log4j.Logger;
+import org.springframework.dao.DataAccessException;
 
 /**
  *
@@ -107,8 +109,41 @@ public class PostAction extends RepoAction {
         }
 
         validate(obs);
+        ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
+        long transactionTime = -1;
+        long t = System.currentTimeMillis();
+        try {
+            if (ratGenerator == null) {
+                dao.put(obs);
+            } else {
+                log.debug("starting transaction");
+                dao.getTransactionManager().startTransaction();
+                dao.put(obs);
+                ratGenerator.generateTuples(obs);
 
-        dao.put(obs);
+                log.debug("committing transaction");
+                dao.getTransactionManager().commitTransaction();
+                log.debug("commit: OK");
+            }
+        } catch (DataAccessException e) {
+            log.debug("failed to insert " + obs + ": ", e);
+            if (ratGenerator != null) {
+                dao.getTransactionManager().rollbackTransaction();
+                log.debug("rollback: OK");
+            }
+            throw e;
+        } finally {
+            if (ratGenerator != null) {
+                if (dao.getTransactionManager().isOpen()) {
+                    log.error("BUG - open transaction in finally");
+                    dao.getTransactionManager().rollbackTransaction();
+                    log.error("rollback: OK");
+                }
+                
+                transactionTime = System.currentTimeMillis() - t;
+                log.debug("time to run transaction: " + transactionTime + "ms");
+            }
+        }
 
         log.debug("DONE: " + uri);
     }

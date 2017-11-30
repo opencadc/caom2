@@ -143,7 +143,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testCleanPutGetSuccess() throws Throwable {
-        String observationID = generateObservationID("testCleanPutGetSuccess");
+        String observationID = generateID("testCleanPutGetSuccess");
 
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -174,7 +174,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testGetNoReadPermission() throws Throwable {
-        String observationID = generateObservationID("testGetNoReadPermission");
+        String observationID = generateID("testGetNoReadPermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -191,7 +191,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testGetNotFound() throws Throwable {
-        String observationID = generateObservationID("testGetNotFound");
+        String observationID = generateID("testGetNotFound");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -201,7 +201,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
     @Test
     public void testCollectionNotFound() throws Throwable {
         String collection = "NoSuchCollection";
-        String observationID = generateObservationID("testCollectionNotFound");
+        String observationID = generateID("testCollectionNotFound");
         String path = collection + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -210,7 +210,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testInvalidURI() throws Throwable {
-        String observationID = generateObservationID("testInvalidURI");
+        String observationID = generateID("testInvalidURI");
         String path = TEST_COLLECTION + "/" + observationID + "/extraElementsInPath";
         String uri = SCHEME + path;
 
@@ -219,7 +219,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutSuccessWCS() throws Throwable {
-        String observationID = generateObservationID("testPutSuccessWCS");
+        String observationID = generateID("testPutSuccessWCS");
 
         // put an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -249,7 +249,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutNoWritePermission() throws Throwable {
-        String observationID = generateObservationID("testPutNoWritePermission");
+        String observationID = generateID("testPutNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -261,7 +261,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
     @Test
     public void testPutByteLimitExceeded() {
         try {
-            String observationID = generateObservationID("testPutByteLimitExceeded");
+            String observationID = generateID("testPutByteLimitExceeded");
             String path = TEST_COLLECTION + "/" + observationID;
             String uri = SCHEME + path;
 
@@ -276,7 +276,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutURIsDontMatch() throws Throwable {
-        String observationID = generateObservationID("testPutURIsDontMatch");
+        String observationID = generateID("testPutURIsDontMatch");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -287,7 +287,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutURIAlreadyExists() throws Throwable {
-        String observationID = generateObservationID("testPutURIAlreadyExists");
+        String observationID = generateID("testPutURIAlreadyExists");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -304,7 +304,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPutValidationFails() throws Throwable {
-        String observationID = generateObservationID("testPutValidationFails");
+        String observationID = generateID("testPutValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -315,7 +315,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostSuccess() throws Throwable {
-        String observationID = generateObservationID("testPostSuccess");
+        String observationID = generateID("testPostSuccess");
 
         // create an observation using subject1
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
@@ -339,7 +339,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostNoWritePermission() throws Throwable {
-        String observationID = generateObservationID("testPostNoWritePermission");
+        String observationID = generateID("testPostNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -357,7 +357,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
     @Test
     public void testPostByteLimitExceeded() {
         try {
-            String observationID = generateObservationID("testPostByteLimitExceeded");
+            String observationID = generateID("testPostByteLimitExceeded");
             String path = TEST_COLLECTION + "/" + observationID;
             String uri = SCHEME + path;
 
@@ -375,7 +375,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostURIsDontMatch() throws Throwable {
-        String observationID = generateObservationID("testPostURIsDontMatch");
+        String observationID = generateID("testPostURIsDontMatch");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -396,7 +396,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostURIDoesntExist() throws Throwable {
-        String observationID = generateObservationID("testPostURIDoesntExist");
+        String observationID = generateID("testPostURIDoesntExist");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -407,7 +407,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostValidationFails() throws Throwable {
-        String observationID = generateObservationID("testPostValidationFails");
+        String observationID = generateID("testPostValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -426,7 +426,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testDeleteSuccess() throws Throwable {
-        String observationID = generateObservationID("testDeleteSuccess");
+        String observationID = generateID("testDeleteSuccess");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -447,7 +447,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testDeleteNoWritePermission() throws Throwable {
-        String observationID = generateObservationID("testDeleteNoWritePermission");
+        String observationID = generateID("testDeleteNoWritePermission");
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
 
@@ -477,7 +477,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
     @Test
     public void testPostMultipartSingleParamSuccess() {
         try {
-            String observationID = generateObservationID("testPostMultipartSingleParamSuccess");
+            String observationID = generateID("testPostMultipartSingleParamSuccess");
             final SimpleObservation observation = this.generateObservation(observationID);
             Map<String, Object> params = new HashMap<String, Object>();
             params.put("file", convertToFile(observation));
@@ -491,7 +491,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
 
     @Test
     public void testPostMultipartMultipleParamSuccess() throws Throwable {
-        String observationID = generateObservationID("testPostMultipartMultipleParamSuccess");
+        String observationID = generateID("testPostMultipartMultipleParamSuccess");
         final SimpleObservation observation = this.generateObservation(observationID);
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("fooKey", "fooValue");
