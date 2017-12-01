@@ -15,25 +15,25 @@ A staff group is associated with a collection, and is added as an admin to the p
 The CaomRepoConfig.properties file uses the following format:
 
 ```
-collection = <datasource name> <database> <schema> <obs table> <read-only group> <read-write group> <SQL generator class> [<key1=value1,key2=value2,...>]
+collection = <datasource name> <database> <schema> <obs table> <read-only group> <read-write group> <SQL generator class> [<key1=value1 key2=value2 ...>]
 ```
 
 Each entry in the properties file configures a collection. The key=value pairs are optional. The key=value pairs can be used to specify an abitratry operator group, an arbitrary staff group and a proposal group, in addition to computeMetadata and computeMetadataValidation. For example:
 
 ```
-TEST = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=true,staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
+TEST = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=true staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
 ```
 
 configures the 'TEST' collection with a proposal group and a staff group.
 
 ```
-TEST1 = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=false,operatorGroup=ivo://cadc.nrc.ca/gms?CADC,staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
+TEST1 = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=false operatorGroup=ivo://cadc.nrc.ca/gms?CADC staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
 ```
 
 configures the 'TEST1' collection with an operator group and a staff group without a proposal group, and is equivalent to:
 
 ```
-TEST1 = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl operatorGroup=ivo://cadc.nrc.ca/gms?CADC,staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff 
+TEST1 = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl operatorGroup=ivo://cadc.nrc.ca/gms?CADC staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff 
 ```
 
 because the default value of 'proposalGroup' is 'false'.

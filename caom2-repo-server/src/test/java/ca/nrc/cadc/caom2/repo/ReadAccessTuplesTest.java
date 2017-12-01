@@ -113,12 +113,12 @@ public class ReadAccessTuplesTest {
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 4, omraActual.size());
+            Assert.assertEquals("omra", 3, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 4, pmraActual.size());
+            Assert.assertEquals("pmra", 3, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 4, pdraActual.size());
+            Assert.assertEquals("pdra", 3, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -138,12 +138,12 @@ public class ReadAccessTuplesTest {
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 4, omraActual.size());
+            Assert.assertEquals("omra", 3, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 4, pmraActual.size());
+            Assert.assertEquals("pmra", 3, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 4, pdraActual.size());
+            Assert.assertEquals("pdra", 3, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -164,12 +164,12 @@ public class ReadAccessTuplesTest {
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
             List<ObservationMetaReadAccess> omraActual = da.createObservationMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("omra", 3, omraActual.size());
+            Assert.assertEquals("omra", 2, omraActual.size());
             
             List<PlaneMetaReadAccess> pmraActual = da.createPlaneMetaReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pmra", 3, pmraActual.size());
+            Assert.assertEquals("pmra", 2, pmraActual.size());
             List<PlaneDataReadAccess> pdraActual = da.createPlaneDataReadAccess(obs, now, propGroupName);
-            Assert.assertEquals("pdra", 3, pdraActual.size());
+            Assert.assertEquals("pdra", 2, pdraActual.size());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

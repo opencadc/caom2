@@ -131,9 +131,6 @@ public class ReadAccessTuplesGenerator {
     // Collection being processed
     private String collection;
 
-    // Default admin groups for an collection
-    private Set<GroupURI> adminGroups;
-
     // ISO date format
     private DateFormat dateFormat;
 
@@ -186,37 +183,6 @@ public class ReadAccessTuplesGenerator {
             this.gmsClient = new GMSClient(groupBaseURI);
         }
         
-        init(raDAO);
-    }
-
-    // test ctor: enough to test the create-tuples and getProposalGroupName methods
-    ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig)
-        throws IOException, URISyntaxException, GroupNotFoundException {
-        initGroups(collection, groupConfig);
-    }
-
-    private void initGroups(String collection, Map<String, Object> groupConfig) 
-        throws IOException, URISyntaxException, GroupNotFoundException {
-        this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
-        this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
-        this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
-        if (this.staffGroupURI != null) {
-            this.groupBaseURI = staffGroupURI.getServiceID();
-        } else if (this.operatorGroupURI != null) {
-            this.groupBaseURI = staffGroupURI.getServiceID();
-        } else {
-            // no read access tuples to generate
-            this.groupBaseURI = null;
-        }
-                                       
-        // Default collection admin groups             
-        this.adminGroups = getAdminMembers(collection);
-                          
-        // ISO date format                                                               
-        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-    }
-    
-    private void init(ReadAccessDAO raDAO) {
         // tuple cleanup for public data
         String omraTab = raDAO.getTable(ObservationMetaReadAccess.class);
         String obsTab = raDAO.getTable(Observation.class);
@@ -242,6 +208,30 @@ public class ReadAccessTuplesGenerator {
             + " left join " + planeTab + " as plane on ra.assetID = plane.planeID" 
             + " where plane.dataRelease < getdate()" // now public
             + " OR plane.planeID IS NULL");              // deleted
+    }
+
+    // test ctor: enough to test the create-tuples and getProposalGroupName methods
+    ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig)
+        throws IOException, URISyntaxException, GroupNotFoundException {
+        initGroups(collection, groupConfig);
+    }
+
+    private void initGroups(String collection, Map<String, Object> groupConfig) 
+        throws IOException, URISyntaxException, GroupNotFoundException {
+        this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
+        this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
+        this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
+        if (this.staffGroupURI != null) {
+            this.groupBaseURI = staffGroupURI.getServiceID();
+        } else if (this.operatorGroupURI != null) {
+            this.groupBaseURI = staffGroupURI.getServiceID();
+        } else {
+            // no read access tuples to generate
+            this.groupBaseURI = null;
+        }
+                                       
+        // ISO date format                                                               
+        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
     
     /**
@@ -305,15 +295,6 @@ public class ReadAccessTuplesGenerator {
         return dateFormat.format(date);
     }
 
-    /**
-     * Returns the Set of Admin Groups for this collection.
-     *
-     * @return Set of admin Group members
-     */
-    protected Set<GroupURI> getAdminGroups() {
-        return this.adminGroups;
-    }
-
     private boolean isPublic(Observation o, Date now) {
         boolean ret = true;
         ret = ret && (o.metaRelease != null && now.compareTo(o.metaRelease) > 0);
@@ -332,18 +313,13 @@ public class ReadAccessTuplesGenerator {
             if (this.operatorGroupURI != null) {
                 ret.add(new ObservationMetaReadAccess(assetID, operatorGroupURI.getURI()));
             }
-            
+
             if (this.createProposalGroup && proposalGroupID != null) {
                 ret.add(new ObservationMetaReadAccess(assetID, proposalGroupID.getURI()));
-                
-                for (GroupURI ag : getAdminGroups()) {
-                    ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
-                }
-            } else if (this.staffGroupURI != null) {
-                
-                for (GroupURI ag : getAdminGroups()) {
-                    ret.add(new ObservationMetaReadAccess(assetID, ag.getURI()));
-                }
+            } 
+
+            if (this.staffGroupURI != null) {
+                ret.add(new ObservationMetaReadAccess(assetID, staffGroupURI.getURI()));
             }
         }
         return ret;
@@ -361,15 +337,10 @@ public class ReadAccessTuplesGenerator {
                 
                 if (this.createProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneMetaReadAccess(assetID, proposalGroupID.getURI()));
-                    
-                    for (GroupURI ag : getAdminGroups()) {
-                        ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
-                    }
-                } else if (this.staffGroupURI != null) {
-                    
-                    for (GroupURI ag : getAdminGroups()) {
-                        ret.add(new PlaneMetaReadAccess(assetID, ag.getURI()));
-                    }
+                } 
+                
+                if (this.staffGroupURI != null) {
+                    ret.add(new PlaneMetaReadAccess(assetID, staffGroupURI.getURI()));
                 }
             }
         }
@@ -388,15 +359,10 @@ public class ReadAccessTuplesGenerator {
                 
                 if (this.createProposalGroup && proposalGroupID != null) {
                     ret.add(new PlaneDataReadAccess(assetID, proposalGroupID.getURI()));
-                    
-                    for (GroupURI ag : getAdminGroups()) {
-                        ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
-                    }
-                } else if (this.staffGroupURI != null) {
-                    
-                    for (GroupURI ag : getAdminGroups()) {
-                        ret.add(new PlaneDataReadAccess(assetID, ag.getURI()));
-                    }
+                } 
+                
+                if (this.staffGroupURI != null) {
+                    ret.add(new PlaneDataReadAccess(assetID, staffGroupURI.getURI()));
                 }
             }
         }
@@ -433,9 +399,7 @@ public class ReadAccessTuplesGenerator {
 
             if (!dryrun) {
                 // Add admin groups to proposal group
-                for (GroupURI ag : getAdminGroups()) {
-                    proposalGroup.getGroupAdmins().add(new Group(ag));
-                }
+                proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
                 
                 try {
                     gmsClient.updateGroup(proposalGroup);

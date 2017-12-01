@@ -452,7 +452,7 @@ public abstract class RepoAction extends RestAction {
         throws IOException, URISyntaxException, GroupNotFoundException, IllegalArgumentException {
         ReadAccessTuplesGenerator ratGenerator = null;
         
-        if (raGroupConfig.get("staffGroup") != null && raGroupConfig.get("operatorGroup") != null) {
+        if (raGroupConfig.get("staffGroup") != null || raGroupConfig.get("operatorGroup") != null) {
             ratGenerator = new ReadAccessTuplesGenerator(collection, raDAO, raGroupConfig);
         }
         
