@@ -124,7 +124,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
     private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_2_NAMESPACE;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
