@@ -125,25 +125,10 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
 
         final Plane plane = new Plane(productID);
 
-        // Test 1
-        // Null data release and null meta release.
-        plane.dataRelease = null;
-        plane.metaRelease = null;
-
         observation.getPlanes().add(plane);
 
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 2
-        // Null data release and set meta release to now.
-        plane.metaRelease = new Date();
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 3
-        // Set data release to now and null meta release.
-        plane.dataRelease = new Date();
-        plane.metaRelease = null;
-        ensurePutAndDelete(observation, uri);
+        //ensurePutAndDelete(observation, uri);
+        sendObservation("PUT", observation, subject1, 200, "OK", null);
     }
 
     @Test
@@ -160,29 +145,18 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-
+        observation.metaRelease = pastCal.getTime();
         final Plane plane = new Plane(productID);
 
         // Test 1
         // Past data release and current meta release.
         plane.dataRelease = pastCal.getTime();
-        plane.metaRelease = new Date();
+        plane.metaRelease = pastCal.getTime();
 
         observation.getPlanes().add(plane);
 
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 2
-        // Current data release and set meta release to past.
-        plane.dataRelease = new Date();
-        plane.metaRelease = pastCal.getTime();
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 3
-        // Set data release to past and meta release to past.
-        plane.dataRelease = pastCal.getTime();
-        plane.metaRelease = pastCal.getTime();
-        ensurePutAndDelete(observation, uri);
+        //ensurePutAndDelete(observation, uri);
+        sendObservation("PUT", observation, subject1, 200, "OK", null);
     }
 
     @Test
@@ -198,28 +172,17 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-
+        observation.metaRelease = futureCal.getTime();
         final Plane plane = new Plane(productID);
 
         // Test 1
         // Future data release and current meta release.
         plane.dataRelease = futureCal.getTime();
-        plane.metaRelease = new Date();
+        plane.metaRelease = futureCal.getTime();
 
         observation.getPlanes().add(plane);
 
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 2
-        // Current data release and set meta release to future.
-        plane.dataRelease = new Date();
-        plane.metaRelease = futureCal.getTime();
-        ensurePutAndDelete(observation, uri);
-
-        // TEST 3
-        // Set data release to future and meta release to future.
-        plane.dataRelease = futureCal.getTime();
-        plane.metaRelease = futureCal.getTime();
-        ensurePutAndDelete(observation, uri);
+        //ensurePutAndDelete(observation, uri);
+        sendObservation("PUT", observation, subject1, 200, "OK", null);
     }
 }
