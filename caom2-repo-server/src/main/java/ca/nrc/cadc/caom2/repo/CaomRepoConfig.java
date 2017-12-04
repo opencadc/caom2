@@ -361,7 +361,13 @@ public class CaomRepoConfig {
                 } else if ("computeMetadataValidation".equals(kv[0])) {
                     computeMetadataValidation = Boolean.parseBoolean(kv[1]);
                 } else if ("proposalGroup".equals(kv[0])) {
-                    proposalGroup = Boolean.parseBoolean(kv[1]);
+                    if (kv[1].equalsIgnoreCase("true") 
+                        || kv[1].equalsIgnoreCase("false")) {
+                        proposalGroup = Boolean.parseBoolean(kv[1]);
+                    } else {
+                        throw new IllegalArgumentException(
+                                "proposalGroup=" + kv[1] + ", instead of true|false");
+                    }
                 } else if ("operatorGroup".equals(kv[0])) {
                     operatorGroup = kv[1];
                 } else if ("staffGroup".equals(kv[0])) {

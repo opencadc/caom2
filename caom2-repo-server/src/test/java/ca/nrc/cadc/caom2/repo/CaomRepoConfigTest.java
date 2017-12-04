@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.ac.GroupURI;
-import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -134,7 +133,7 @@ public class CaomRepoConfigTest {
             props.setProperty("def-impl", 
                 "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t ");
-
+            
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("space", props);
             Assert.assertNotNull(it);
             log.debug("found: " + it);
@@ -224,7 +223,76 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(false, it.getProposalGroup());
             Assert.assertNull(it.getOperatorGroup());
             Assert.assertNull(it.getStaffGroup());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
+    @Test
+    public void testKeyValueSeparator() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("comma-separator",
+                    "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                    + "proposalGroup=true,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("comma-separator", props);
+            Assert.fail("expected IllegalArgumentException to have been thrown");
+        } catch (IllegalArgumentException ex) {
+            if (ex.getMessage().contains("proposalGroup")) {
+                log.debug("caught expected: " + ex);
+            } else {
+                Assert.fail("unexpected exception: " + ex);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testProposalGroupNotBoolean() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("proposal-group-not-boolean",
+                    "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                    + "proposalGroup=groupURI,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("proposal-group-not-boolean", props);
+            Assert.fail("expected IllegalArgumentException to have been thrown");
+        } catch (IllegalArgumentException ex) {
+            if (ex.getMessage().contains("proposalGroup")) {
+                log.debug("caught expected: " + ex);
+            } else {
+                Assert.fail("unexpected exception: " + ex);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+
+    @Test
+    public void testMissingStaffGroup() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("missing-staffGroup",
+                    "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                    + "proposalGroup=true operatorGroup=" + OPERATOR_GROUP);
+
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("missing-staffGroup", props);
+            Assert.fail("expected IllegalArgumentException to have been thrown");
+        } catch (IllegalArgumentException ex) {
+            if (ex.getMessage().contains("staff group is not specified")) {
+                log.debug("caught expected: " + ex);
+            } else {
+                Assert.fail("unexpected exception: " + ex);
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
