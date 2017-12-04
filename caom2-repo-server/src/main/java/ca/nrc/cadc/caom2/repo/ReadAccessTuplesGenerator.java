@@ -223,11 +223,6 @@ public class ReadAccessTuplesGenerator {
         this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
         if (this.staffGroupURI != null) {
             this.groupBaseURI = staffGroupURI.getServiceID();
-        } else if (this.operatorGroupURI != null) {
-            this.groupBaseURI = staffGroupURI.getServiceID();
-        } else {
-            // no read access tuples to generate
-            this.groupBaseURI = null;
         }
                                        
         // ISO date format                                                               
