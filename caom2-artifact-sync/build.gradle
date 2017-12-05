@@ -22,7 +22,7 @@ dependencies {
     compile 'org.jdom:jdom2:2.+'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
 
-    compile 'org.opencadc:cadc-util:[1.0.14,)'
+    compile 'org.opencadc:cadc-util:[1.0.16,)'
     compile 'org.opencadc:cadc-registry:[1.2.2,)'
     compile 'org.opencadc:caom2:[2.3.0,)'
     compile 'org.opencadc:caom2persistence:[2.3.10,)'
