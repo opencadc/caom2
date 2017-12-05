@@ -88,6 +88,12 @@ public interface SQLGenerator {
 
     static final int MIN_DEPTH = 1;
     static final int MAX_DEPTH = 5;
+    
+    /**
+     * Get SQL to select the current date+time from the server.
+     * @return 
+     */
+    String getCurrentTimeSQL();
 
     /**
      * Get SQL to select an Observation from a URI.

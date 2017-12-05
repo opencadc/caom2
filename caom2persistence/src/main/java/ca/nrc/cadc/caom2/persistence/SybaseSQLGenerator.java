@@ -91,6 +91,11 @@ public class SybaseSQLGenerator extends BaseSQLGenerator {
     }
 
     @Override
+    public String getCurrentTimeSQL() {
+        return "select getdate()";
+    }
+
+    @Override
     protected String getTopConstraint(Integer batchSize) {
         if (batchSize == null) {
             return null;

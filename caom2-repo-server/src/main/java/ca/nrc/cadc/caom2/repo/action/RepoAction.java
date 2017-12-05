@@ -89,7 +89,6 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -128,7 +127,6 @@ public abstract class RepoAction extends RestAction {
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
     private transient ReadAccessDAO readAccessDAO;
-    private transient Map<String, Object> daoConfig;
 
     protected RepoAction() {
     }
@@ -197,38 +195,21 @@ public abstract class RepoAction extends RestAction {
     
     protected ObservationDAO getDAO() throws IOException {
         if (dao == null) {
-            dao = getDAO(getCollection());
+            this.dao = new ObservationDAO();
+            dao.setConfig(getDAOConfig(collection));
         }
         return dao;
     }
 
-    // create DAO
-    private ObservationDAO getDAO(String collection) throws IOException {
-        if (this.daoConfig == null) {
-            this.daoConfig = getDAOConfig(collection);
-        }
-        ObservationDAO ret = new ObservationDAO();
-        ret.setConfig(this.daoConfig);
-        return ret;
-    }
-    
     protected ReadAccessDAO getReadAccessDAO() throws IOException {
         if (this.readAccessDAO == null) {
-            this.readAccessDAO = getReadAccessDAO(getCollection());
+            // want to join transactions with ObservationDAO
+            ObservationDAO master = getDAO();
+            this.readAccessDAO = new ReadAccessDAO(master);
         }
         return this.readAccessDAO;
     }
 
-    // create ReadAccessDAO
-    private ReadAccessDAO getReadAccessDAO(String collection) throws IOException {
-        if (this.daoConfig == null) {
-            this.daoConfig = getDAOConfig(collection);
-        }
-        ReadAccessDAO raDAO = new ReadAccessDAO();
-        raDAO.setConfig(this.daoConfig);
-        return raDAO;
-    }
-    
     // read the input stream (POST and PUT) and extract the observation from the XML
     // document
     protected Observation getInputObservation() throws IOException {
