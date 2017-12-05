@@ -93,12 +93,6 @@ public class SybaseObservationDAOTest extends AbstractObservationDAOTest
     }
 
     @Override
-    public void testNestedTransaction()
-    {
-        log.warn("testNestedTransaction: skip because jtds driver doesn't support it");
-    }
-
-    @Override
     protected Plane getTestPlane(boolean full, String productID, int depth, boolean poly) throws Exception
     {
         Plane p = super.getTestPlane(full, productID, depth, poly);

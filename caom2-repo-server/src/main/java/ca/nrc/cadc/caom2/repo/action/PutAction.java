@@ -75,9 +75,7 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.rest.InlineContentHandler;
-
 import org.apache.log4j.Logger;
-import org.springframework.dao.DataAccessException;
 
 /**
  *
@@ -109,15 +107,19 @@ public class PutAction extends RepoAction {
         }
 
         validate(obs);
-        ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
+        final ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {
+            // temporarily written this way so nested transaction will not be attempted
+            // when not really needed - that way this works with jTDS as long as the
+            // collection is not configured to generate tuples
             if (ratGenerator == null) {
                 dao.put(obs);
             } else {
                 log.debug("starting transaction");
                 dao.getTransactionManager().startTransaction();
+                
                 dao.put(obs);
                 ratGenerator.generateTuples(obs);
 
@@ -125,24 +127,22 @@ public class PutAction extends RepoAction {
                 dao.getTransactionManager().commitTransaction();
                 log.debug("commit: OK");
             }
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             log.debug("failed to insert " + obs + ": ", e);
-            if (ratGenerator != null) {
+            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
                 dao.getTransactionManager().rollbackTransaction();
                 log.debug("rollback: OK");
             }
             throw e;
         } finally {
-            if (ratGenerator != null) {
-                if (dao.getTransactionManager().isOpen()) {
-                    log.error("BUG - open transaction in finally");
-                    dao.getTransactionManager().rollbackTransaction();
-                    log.error("rollback: OK");
-                }
-                
-                transactionTime = System.currentTimeMillis() - t;
-                log.debug("time to run transaction: " + transactionTime + "ms");
+            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
+                log.error("BUG - open transaction in finally");
+                dao.getTransactionManager().rollbackTransaction();
+                log.error("rollback: OK");
             }
+                
+            transactionTime = System.currentTimeMillis() - t;
+            log.debug("time to run transaction: " + transactionTime + "ms");
         }
 
         log.debug("DONE: " + uri);

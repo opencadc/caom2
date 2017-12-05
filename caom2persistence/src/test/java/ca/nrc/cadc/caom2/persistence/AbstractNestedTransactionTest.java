@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,94 +62,103 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2.repo.action;
+package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.InlineContentHandler;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.SimpleObservation;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
  * @author pdowler
  */
-public class PostAction extends RepoAction {
-    private static final Logger log = Logger.getLogger(PostAction.class);
+public abstract class AbstractNestedTransactionTest {
 
-    public PostAction() {
-    }
+    private static final Logger log = Logger.getLogger(AbstractNestedTransactionTest.class);
 
-    @Override
-    public void doAction() throws Exception {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
+    boolean useLongForUUID;
+    ObservationDAO dao;
 
-        checkWritePermission(uri);
+    Class[] ENTITY_CLASSES
+            = {
+                Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
+            };
 
-        Observation obs = getInputObservation();
-
-        if (!uri.equals(obs.getURI())) {
-            throw new IllegalArgumentException("invalid input: " + uri);
-        }
-
-        ObservationDAO dao = getDAO();
-
-        if (!dao.exists(uri)) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-
-        validate(obs);
-        final ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
-        long transactionTime = -1;
-        long t = System.currentTimeMillis();
+    protected AbstractNestedTransactionTest(Class genClass, String server, String database, String schema, boolean useLongForUUID)
+            throws Exception {
+        this.useLongForUUID = useLongForUUID;
         try {
-            // temporarily written this way so nested transaction will not be attempted
-            // when not really needed - that way this works with jTDS as long as the
-            // collection is not configured to generate tuples
-            if (ratGenerator == null) {
-                dao.put(obs);
-            } else {
-                log.debug("starting transaction");
-                dao.getTransactionManager().startTransaction();
-
-                dao.put(obs);
-                ratGenerator.generateTuples(obs);
-
-                log.debug("committing transaction");
-                dao.getTransactionManager().commitTransaction();
-                log.debug("commit: OK");
-            }
-        } catch (Exception e) {
-            log.debug("failed to insert " + obs + ": ", e);
-            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
-                dao.getTransactionManager().rollbackTransaction();
-                log.debug("rollback: OK");
-            }
-            throw e;
-        } finally {
-            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
-                log.error("BUG - open transaction in finally");
-                dao.getTransactionManager().rollbackTransaction();
-                log.error("rollback: OK");
-            }
-                
-            transactionTime = System.currentTimeMillis() - t;
-            log.debug("time to run transaction: " + transactionTime + "ms");
+            Map<String, Object> config = new TreeMap<String, Object>();
+            config.put("server", server);
+            config.put("database", database);
+            config.put("schema", schema);
+            config.put(SQLGenerator.class.getName(), genClass);
+            this.dao = new ObservationDAO();
+            dao.setConfig(config);
+        } catch (Exception ex) {
+            // make sure it gets fully dumped
+            log.error("setup DataSource failed", ex);
+            throw ex;
         }
-
-        log.debug("DONE: " + uri);
     }
 
-    @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new ObservationInlineContentHandler();
+    @Test
+    public void testNestedTransaction() {
+        // the ObservationDAO class uses a txn inside the put and delete methods
+        // this verifies that it it fails and does a rollback that an outer txn
+        // can still proceed -- eg it is really nested
+        try {
+            String uniqID1 = "bar-" + UUID.randomUUID().toString();
+            String uniqID2 = "bar2-" + UUID.randomUUID().toString();
+            Observation obs1 = new SimpleObservation("FOO", uniqID1);
+            dao.put(obs1);
+            Assert.assertTrue(dao.exists(obs1.getURI()));
+            log.info("created: " + obs1);
+
+            Observation dupe = new SimpleObservation("FOO", uniqID1);
+            Observation obs2 = new SimpleObservation("FOO", uniqID2);
+
+            log.info("start outer");
+            dao.getTransactionManager().startTransaction(); // outer txn
+            try {
+                dao.put(dupe); // nested txn
+                Assert.fail("expected exception, successfully put duplicate observation");
+            } catch (DataIntegrityViolationException expected) {
+                log.info("caught expected: " + expected);
+            }
+
+            dao.put(obs2); // another nested txn
+            log.info("created: " + obs2);
+            Assert.assertTrue(dao.exists(obs2.getURI()));
+
+            log.info("commit outer");
+            dao.getTransactionManager().commitTransaction(); // outer txn
+            log.info("commit outer [OK]");
+
+            Observation check1 = dao.get(obs1.getURI());
+            Assert.assertNotNull(check1);
+            Assert.assertEquals(obs1.getID(), check1.getID());
+
+            Observation check2 = dao.get(obs2.getURI());
+            Assert.assertNotNull(check2);
+            Assert.assertEquals(obs2.getID(), check2.getID());
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

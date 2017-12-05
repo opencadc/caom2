@@ -85,7 +85,12 @@ import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.date.DateUtil;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -94,6 +99,7 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Persistence layer operations.
@@ -350,11 +356,22 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         boolean txnOpen = false;
         try {
-            log.debug("starting transaction");
-            getTransactionManager().startTransaction();
-            txnOpen = true;
-
+            // get current timestamp from server so that lastModified is closer to
+            // monatonically increasing than if we use client machine clock
+            String tsSQL = gen.getCurrentTimeSQL();
+            log.debug("PUT: " + tsSQL);
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            
+            // make call to server before startTransaction
+            Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
+                @Override
+                public Object mapRow(ResultSet rs, int i) throws SQLException {
+                    return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.LOCAL));
+                }
+            });
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            log.debug("current time: " + df.format(now));
+            
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
             //       if they violate unique keys... but if it was by uri, it would be the same
@@ -364,8 +381,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
             // update metadata checksums, maybe modified timestamps
-            boolean updateMax = updateEntity(obs, cur);
+            updateEntity(obs, cur, now);
 
+            log.debug("starting transaction");
+            getTransactionManager().startTransaction();
+            txnOpen = true;
+            
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
             if (cur != null) {
@@ -373,7 +394,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 for (PlaneSkeleton ps : cur.planes) {
                     Plane p = Util.findPlane(obs.getPlanes(), ps.id);
                     if (p == null) {
-                        log.info("PUT: caused delete: " + ps.id);
+                        log.debug("PUT: caused delete: " + ps.id);
                         planeDAO.delete(ps, jdbc);
                     }
                 }
@@ -513,14 +534,14 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     // always compute and assign: metaChecksum, accMetaChecksum
     // assign if metaChecksum changes: lastModified
     // assign if lastModified changed or a child's maxLastModified changes
-    private boolean updateEntity(Observation entity, ObservationSkeleton s) {
+    private void updateEntity(Observation entity, ObservationSkeleton s, Date now) {
         if (computeLastModified && s != null) {
             // keep timestamps from database
             Util.assignLastModified(entity, s.lastModified, "lastModified");
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        Date now = new Date();
+        //Date now = new Date();
         boolean updateMax = false;
 
         // check for added or modified
@@ -567,8 +588,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         if (computeLastModified && updateMax) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
-
-        return updateMax;
     }
 
     private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now) {

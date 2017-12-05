@@ -84,7 +84,6 @@ import ca.nrc.cadc.caom2.persistence.DuplicateEntityException;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.TransientException;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -100,7 +99,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -122,16 +120,8 @@ public class ReadAccessTuplesGenerator {
 
     private final Map<Class,String> cleanupTupleSQL = new HashMap<Class,String>();
 
-    // Just find work to do, but don't do it
     private boolean dryrun;
-
-    // CADC groupID for all assets
-    private GroupURI cadcGroupID = new GroupURI(URI.create("ivo://cadc.nrc.ca/gms?CADC"));
-
-    // Collection being processed
     private String collection;
-
-    // ISO date format
     private DateFormat dateFormat;
 
     private ReadAccessDAO readAccessDAO;
@@ -223,11 +213,6 @@ public class ReadAccessTuplesGenerator {
         this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
         if (this.staffGroupURI != null) {
             this.groupBaseURI = staffGroupURI.getServiceID();
-        } else if (this.operatorGroupURI != null) {
-            this.groupBaseURI = staffGroupURI.getServiceID();
-        } else {
-            // no read access tuples to generate
-            this.groupBaseURI = null;
         }
                                        
         // ISO date format                                                               
@@ -389,7 +374,7 @@ public class ReadAccessTuplesGenerator {
                     proposalGroup = new Group(groupURI);
                     try {
                         proposalGroup = gmsClient.createGroup(proposalGroup);
-                        log.info("created group: " + proposalGroupName);
+                        log.debug("created group: " + proposalGroupName);
                     } catch (Exception e) {
                         throw new RuntimeException("could not create group " + proposalGroupName, e);
                     }
@@ -408,7 +393,7 @@ public class ReadAccessTuplesGenerator {
                 } catch (Exception e) {
                     throw new RuntimeException("could not update group " + proposalGroupName, e);
                 }
-                log.info("added group admins to group: " + proposalGroupName);
+                log.debug("added group admins to group: " + proposalGroupName);
             }
 
             // cache groups we have already updated
@@ -445,8 +430,6 @@ public class ReadAccessTuplesGenerator {
 
     public void generateTuples(Observation observation) 
             throws DuplicateEntityException, GroupAlreadyExistsException, UserNotFoundException, TransientException {
-        log.info("START");
-
         int omraTuplesInserted = 0;
         int pmraTuplesInserted = 0;
         int pdraTuplesInserted = 0;
@@ -530,10 +513,8 @@ public class ReadAccessTuplesGenerator {
                 }
             }
         } finally {
-            log.info("inserted " + omraTuplesInserted + " " + pmraTuplesInserted + " " + pdraTuplesInserted + " tuples");
-            log.info("created " + groupsCreated + " groups");
-
-            log.info("DONE\n");
+            log.debug("inserted " + omraTuplesInserted + " " + pmraTuplesInserted + " " + pdraTuplesInserted + " tuples");
+            log.debug("created " + groupsCreated + " groups");
         }
     }
 

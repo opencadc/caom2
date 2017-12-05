@@ -73,9 +73,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -93,7 +91,7 @@ public class ModelVersionDAOTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
         if (testSchema != null)
