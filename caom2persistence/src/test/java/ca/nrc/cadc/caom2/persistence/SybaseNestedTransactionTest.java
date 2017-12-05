@@ -88,8 +88,8 @@ public class SybaseNestedTransactionTest extends AbstractNestedTransactionTest {
         super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
     }
 
-    //@Override
-    //public void testNestedTransaction() {
-    //    log.warn("**** this test fails due to a bug in the jTDS JDBC driver -- SKIPPING  ***");
-    //}
+    @Override
+    public void testNestedTransaction() {
+        log.warn("**** this test fails due to a bug in the jTDS JDBC driver -- SKIPPING  ***");
+    }
 }
