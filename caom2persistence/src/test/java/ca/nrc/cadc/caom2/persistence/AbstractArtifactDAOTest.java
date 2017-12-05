@@ -78,16 +78,13 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -104,7 +101,7 @@ public abstract class AbstractArtifactDAOTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
     }
 
     ObservationDAO obsDAO; // to creater test content

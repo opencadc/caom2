@@ -400,12 +400,12 @@ public class BaseSQLGenerator implements SQLGenerator {
             "artifactID"
         };
         if (persistOptimisations) {
-            //String[] extraCols = new String[]
-            //{
-            //  
-            //};
-            //this.numOptArtifactColumns = extraCols.length;
-            //artifactColumns = addExtraColumns(artifactColumns, extraCols);
+            String[] extraCols = new String[]
+            {
+                "metaRelease"
+            };
+            this.numOptArtifactColumns = extraCols.length;
+            artifactColumns = addExtraColumns(artifactColumns, extraCols);
         }
         columnMap.put(Artifact.class, artifactColumns);
 
@@ -417,12 +417,12 @@ public class BaseSQLGenerator implements SQLGenerator {
             "partID"
         };
         if (persistOptimisations) {
-            //String[] extraCols = new String[]
-            //{
-            //    
-            //};
-            //this.numOptPartColumns = extraCols.length;
-            //partColumns = addExtraColumns(partColumns, extraCols);
+            String[] extraCols = new String[]
+            {
+                "metaRelease"
+            };
+            this.numOptPartColumns = extraCols.length;
+            partColumns = addExtraColumns(partColumns, extraCols);
         }
         columnMap.put(Part.class, partColumns);
 
@@ -491,12 +491,12 @@ public class BaseSQLGenerator implements SQLGenerator {
             "chunkID"
         };
         if (persistOptimisations) {
-            //String[] extraCols = new String[]
-            //{
-            //    
-            //};
-            //this.numOptChunkColumns = extraCols.length;
-            //chunkColumns = addExtraColumns(chunkColumns, extraCols);
+            String[] extraCols = new String[]
+            {
+                "metaRelease"
+            };
+            this.numOptChunkColumns = extraCols.length;
+            chunkColumns = addExtraColumns(chunkColumns, extraCols);
         }
         columnMap.put(Chunk.class, chunkColumns);
 
@@ -549,6 +549,16 @@ public class BaseSQLGenerator implements SQLGenerator {
         return schema;
     }
 
+    /**
+     * The default implementation uses the SQL standard CURRENT_TIMESTAMP symbol.
+     * @return 
+     */
+    @Override
+    public String getCurrentTimeSQL() {
+        return "select CURRENT_TIMESTAMP";
+    }
+
+    
     @Override
     public String getSelectSQL(ObservationURI uri, int depth) {
         return getSelectSQL(uri, depth, false);
@@ -1622,8 +1632,7 @@ public class BaseSQLGenerator implements SQLGenerator {
             safeSetURI(sb, ps, col++, artifact.contentChecksum);
 
             if (persistOptimisations) {
-                // cross-entity update: moved to PlanePut
-                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
             }
 
             safeSetDate(sb, ps, col++, artifact.getLastModified(), utcCalendar);
@@ -1713,8 +1722,7 @@ public class BaseSQLGenerator implements SQLGenerator {
             }
 
             if (persistComputed) {
-                // cross-entity update: moved to PlanePut
-                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
             }
 
             safeSetDate(sb, ps, col++, part.getLastModified(), utcCalendar);
@@ -2031,8 +2039,7 @@ public class BaseSQLGenerator implements SQLGenerator {
             }
 
             if (persistOptimisations) {
-                // cross-entity update: moved to PlanePut
-                //safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), UTC_CAL);
+                safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
             }
 
             safeSetDate(sb, ps, col++, chunk.getLastModified(), utcCalendar);

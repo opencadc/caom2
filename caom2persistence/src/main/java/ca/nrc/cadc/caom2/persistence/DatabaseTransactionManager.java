@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import java.sql.SQLException;
 import java.util.Deque;
 import java.util.LinkedList;
 import javax.sql.DataSource;
@@ -90,10 +89,20 @@ public class DatabaseTransactionManager implements TransactionManager {
     private static final Logger log = Logger.getLogger(DatabaseTransactionManager.class);
 
     private DataSourceTransactionManager writeTxnManager;
-    private final TransactionDefinition def = new DefaultTransactionDefinition();
+    private final TransactionDefinition defaultTxnDef = new DefaultTransactionDefinition();
     private final TransactionDefinition nested = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_NESTED);
-    private final Deque<TransactionStatus> txn = new LinkedList<TransactionStatus>();
+    private final Deque<Txn> transactions = new LinkedList<>();
 
+    private class Txn {
+        boolean doCommit;
+        TransactionStatus status;
+        
+        Txn(TransactionStatus status, boolean doCommit) {
+            this.status = status;
+            this.doCommit = doCommit;
+        }
+    }
+    
     private DatabaseTransactionManager() {
     }
 
@@ -102,47 +111,57 @@ public class DatabaseTransactionManager implements TransactionManager {
     }
 
     public boolean isOpen() {
-        return (!txn.isEmpty());
+        return (!transactions.isEmpty());
     }
 
+    @Override
     public void startTransaction() {
-        TransactionStatus ts;
-        if (txn.isEmpty()) {
-            ts = writeTxnManager.getTransaction(def);
+        TransactionDefinition defn;
+        boolean doCommit = true;
+        if (transactions.isEmpty()) {
             log.debug("startTransaction: default");
-        } else {
-            // on sybase, starting a nested transaction will fail if no statements 
-            // have been executed since the outer txn was started... so do something
-            try {
-                writeTxnManager.getDataSource().getConnection().getCatalog();
-            } catch (SQLException oops) {
-                log.warn("getCatalog failed while creating nested transaction");
-            }
-
-            ts = writeTxnManager.getTransaction(nested);
+            defn = defaultTxnDef;
+        } else if (writeTxnManager.isNestedTransactionAllowed()) {
             log.debug("startTransaction: nested");
+            defn = nested;
+        } else {
+            throw new RuntimeException("nested transactions not supported by current configuration");
         }
-        txn.push(ts);
-        log.debug("startTransaction: OK");
+        Txn txn = new Txn(writeTxnManager.getTransaction(defn), doCommit);
+        transactions.push(txn);
+        log.debug("startTransaction: " + transactions.size());
     }
 
+    @Override
     public void commitTransaction() {
-        if (txn.isEmpty()) {
+        if (transactions.isEmpty()) {
             throw new IllegalStateException("no transaction in progress");
         }
-        log.debug("commitTransaction");
-        TransactionStatus ts = txn.pop();
-        writeTxnManager.commit(ts);
-        log.debug("commit: OK");
+        Txn txn = transactions.pop();
+        if (txn.doCommit) {
+            log.debug("commitTransaction");
+            writeTxnManager.commit(txn.status);
+            log.debug("commitTransaction: OK");
+        } else { 
+            log.debug("commitTransaction - skip");
+        }
+        log.debug("commitTransaction: " + transactions.size());
     }
 
+    @Override
     public void rollbackTransaction() {
-        if (txn.isEmpty()) {
+        if (transactions.isEmpty()) {
             throw new IllegalStateException("no transaction in progress");
         }
-        log.debug("rollbackTransaction");
-        TransactionStatus ts = txn.pop();
-        writeTxnManager.rollback(ts);
-        log.debug("rollback: OK");
+        
+        Txn txn = transactions.pop();
+        if (txn.doCommit) {
+            log.debug("rollbackTransaction");
+            writeTxnManager.rollback(txn.status);
+            log.debug("rollbackTransaction: OK");
+        } else {
+            log.debug("rollbackTransaction - skip");
+        }
+        log.debug("rollbackTransaction: " + transactions.size());
     }
 }

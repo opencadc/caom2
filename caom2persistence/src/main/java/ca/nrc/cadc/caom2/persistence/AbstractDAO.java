@@ -153,12 +153,12 @@ public class AbstractDAO {
         }
         try {
             if (jndiDataSourceName != null) {
-                this.dataSource = DBUtil.findJNDIDataSource(jndiDataSourceName);
+                this.dataSource = new DataSourceWrapper(database, DBUtil.findJNDIDataSource(jndiDataSourceName));
             } else {
                 DBConfig dbrc = new DBConfig();
                 ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
                 // for some reason, we need to suppress close when wrapping with delegating DS
-                this.dataSource = DBUtil.getDataSource(cc, true, true);
+                this.dataSource = new DataSourceWrapper(database, DBUtil.getDataSource(cc, true, true));
             }
         } catch (NamingException ex) {
             throw new IllegalArgumentException("cannot find JNDI DataSource: "

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,47 +62,103 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
+import ca.nrc.cadc.caom2.SimpleObservation;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  *
  * @author pdowler
  */
-public class SybaseObservationDAOTest extends AbstractObservationDAOTest
-{
-    static
-    {
-        log = Logger.getLogger(SybaseObservationDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+public abstract class AbstractNestedTransactionTest {
+
+    private static final Logger log = Logger.getLogger(AbstractNestedTransactionTest.class);
+
+    boolean useLongForUUID;
+    ObservationDAO dao;
+
+    Class[] ENTITY_CLASSES
+            = {
+                Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
+            };
+
+    protected AbstractNestedTransactionTest(Class genClass, String server, String database, String schema, boolean useLongForUUID)
+            throws Exception {
+        this.useLongForUUID = useLongForUUID;
+        try {
+            Map<String, Object> config = new TreeMap<String, Object>();
+            config.put("server", server);
+            config.put("database", database);
+            config.put("schema", schema);
+            config.put(SQLGenerator.class.getName(), genClass);
+            this.dao = new ObservationDAO();
+            dao.setConfig(config);
+        } catch (Exception ex) {
+            // make sure it gets fully dumped
+            log.error("setup DataSource failed", ex);
+            throw ex;
+        }
     }
 
-    public SybaseObservationDAOTest()
-        throws Exception
-    {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true, true);
-    }
+    @Test
+    public void testNestedTransaction() {
+        // the ObservationDAO class uses a txn inside the put and delete methods
+        // this verifies that it it fails and does a rollback that an outer txn
+        // can still proceed -- eg it is really nested
+        try {
+            String uniqID1 = "bar-" + UUID.randomUUID().toString();
+            String uniqID2 = "bar2-" + UUID.randomUUID().toString();
+            Observation obs1 = new SimpleObservation("FOO", uniqID1);
+            dao.put(obs1);
+            Assert.assertTrue(dao.exists(obs1.getURI()));
+            log.info("created: " + obs1);
 
-    @Override
-    protected Plane getTestPlane(boolean full, String productID, int depth, boolean poly) throws Exception
-    {
-        Plane p = super.getTestPlane(full, productID, depth, poly);
-        
-        // not supported by SYBASE impl:
-        p.position = null;
-        p.energy = null;
-        p.time = null;
-        p.polarization = null;
-        
-        return p;
+            Observation dupe = new SimpleObservation("FOO", uniqID1);
+            Observation obs2 = new SimpleObservation("FOO", uniqID2);
+
+            log.info("start outer");
+            dao.getTransactionManager().startTransaction(); // outer txn
+            try {
+                dao.put(dupe); // nested txn
+                Assert.fail("expected exception, successfully put duplicate observation");
+            } catch (DataIntegrityViolationException expected) {
+                log.info("caught expected: " + expected);
+            }
+
+            dao.put(obs2); // another nested txn
+            log.info("created: " + obs2);
+            Assert.assertTrue(dao.exists(obs2.getURI()));
+
+            log.info("commit outer");
+            dao.getTransactionManager().commitTransaction(); // outer txn
+            log.info("commit outer [OK]");
+
+            Observation check1 = dao.get(obs1.getURI());
+            Assert.assertNotNull(check1);
+            Assert.assertEquals(obs1.getID(), check1.getID());
+
+            Observation check2 = dao.get(obs2.getURI());
+            Assert.assertNotNull(check2);
+            Assert.assertEquals(obs2.getID(), check2.getID());
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

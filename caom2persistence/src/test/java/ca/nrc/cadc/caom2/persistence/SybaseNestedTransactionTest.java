@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,14 +62,12 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Plane;
+
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -78,31 +76,20 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class SybaseObservationDAOTest extends AbstractObservationDAOTest
-{
+public class SybaseNestedTransactionTest extends AbstractNestedTransactionTest {
+    private static final Logger log = Logger.getLogger(SybaseNestedTransactionTest.class);
+
     static
     {
-        log = Logger.getLogger(SybaseObservationDAOTest.class);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
+    }
+    
+    public SybaseNestedTransactionTest() throws Exception { 
+        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true);
     }
 
-    public SybaseObservationDAOTest()
-        throws Exception
-    {
-        super(SybaseSQLGenerator.class, "CAOM2_SYB_TEST", "cadctest", System.getProperty("user.name"), true, true);
-    }
-
-    @Override
-    protected Plane getTestPlane(boolean full, String productID, int depth, boolean poly) throws Exception
-    {
-        Plane p = super.getTestPlane(full, productID, depth, poly);
-        
-        // not supported by SYBASE impl:
-        p.position = null;
-        p.energy = null;
-        p.time = null;
-        p.polarization = null;
-        
-        return p;
-    }
+    //@Override
+    //public void testNestedTransaction() {
+    //    log.warn("**** this test fails due to a bug in the jTDS JDBC driver -- SKIPPING  ***");
+    //}
 }
