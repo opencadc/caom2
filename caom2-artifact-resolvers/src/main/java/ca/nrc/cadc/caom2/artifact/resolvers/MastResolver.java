@@ -28,6 +28,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -56,7 +57,7 @@ public class MastResolver implements StorageResolver {
 
     @Override
     public URL toURL(URI uri) {
-        this.validate(uri);
+        ResolverUtil.validate(uri, SCHEME);
         String s = "";
         try {
             s = this.createURL(uri);
@@ -91,15 +92,15 @@ public class MastResolver implements StorageResolver {
         return newURL;
     }
 
-    protected void validate(URI uri) {
-        if (uri == null) {
-            throw new IllegalArgumentException(CANNOT_GET_URL + " URI can't be null.");
-        }
-
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("Invalid scheme in " + uri + ". Expected " + SCHEME + ".");
-        }
-    }
+//    protected void validate(URI uri) {
+//        if (uri == null) {
+//            throw new IllegalArgumentException(CANNOT_GET_URL + " URI can't be null.");
+//        }
+//
+//        if (!SCHEME.equals(uri.getScheme())) {
+//            throw new IllegalArgumentException("Invalid scheme in " + uri + ". Expected " + SCHEME + ".");
+//        }
+//    }
 
 }
 
