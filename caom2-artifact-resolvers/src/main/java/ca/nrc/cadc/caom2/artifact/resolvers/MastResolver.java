@@ -60,7 +60,7 @@ public class MastResolver implements StorageResolver {
         ResolverUtil.validate(uri, SCHEME);
         String s = "";
         try {
-            s = this.createURL(uri);
+            s = ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL + "/");
             URL url = null;
             url = new URL(s);
 
@@ -71,35 +71,25 @@ public class MastResolver implements StorageResolver {
         }
     }
 
-    protected String createURL(URI uri) throws IllegalArgumentException {
-
-        String newURL = "";
-
-        String schemeStr = uri.getScheme();
-
-        if (schemeStr.equals(SCHEME)) {
-            String path = uri.getSchemeSpecificPart();
-            if (path.isEmpty()) {
-                log.error(CANNOT_GET_URL + " Path portion of URI is empty: " + uri.toString());
-                throw new IllegalArgumentException(CANNOT_GET_URL + "Path is empty." + uri.toString());
-            }
-            newURL = MAST_BASE_ARTIFACT_URL + "/" + path;
-        } else {
-            log.error(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
-            throw new IllegalArgumentException(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
-        }
-
-        return newURL;
-    }
-
-//    protected void validate(URI uri) {
-//        if (uri == null) {
-//            throw new IllegalArgumentException(CANNOT_GET_URL + " URI can't be null.");
+//    protected String createURL(URI uri) throws IllegalArgumentException {
+//
+//        String newURL = "";
+//
+//        String schemeStr = uri.getScheme();
+//
+//        if (schemeStr.equals(SCHEME)) {
+//            String path = uri.getSchemeSpecificPart();
+//            if (path.isEmpty()) {
+//                log.error(CANNOT_GET_URL + " Path portion of URI is empty: " + uri.toString());
+//                throw new IllegalArgumentException(CANNOT_GET_URL + "Path is empty." + uri.toString());
+//            }
+//            newURL = MAST_BASE_ARTIFACT_URL + "/" + path;
+//        } else {
+//            log.error(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
+//            throw new IllegalArgumentException(CANNOT_GET_URL + " Invalid scheme (should be 'mast'): " + uri.toString());
 //        }
 //
-//        if (!SCHEME.equals(uri.getScheme())) {
-//            throw new IllegalArgumentException("Invalid scheme in " + uri + ". Expected " + SCHEME + ".");
-//        }
+//        return newURL;
 //    }
 
 }

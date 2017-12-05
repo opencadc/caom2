@@ -29,13 +29,17 @@
 package ca.nrc.cadc.caom2.artifact.resolvers.util;
 
 import java.net.URI;
+import org.apache.log4j.Logger;
 
 
 public class ResolverUtil {
 
+    private static final Logger log = Logger.getLogger(ResolverUtil.class);
     private static String INVALID_URI = "Invalid URI: ";
     private static String CANT_BE_NULL = "URI can't be null";
     private static String INVALID_SCHEME = " Got scheme: %s. Expected: %s";
+    private static String CANT_CREATE_URL = "Cannot create URL: ";
+    private static String PATH_EMPTY = "Path portion of URI is empty. ";
 
     public static void validate(URI uri, String scheme) {
         if (uri == null) {
@@ -45,5 +49,18 @@ public class ResolverUtil {
         if (!scheme.equals(uri.getScheme())) {
             throw new IllegalArgumentException(INVALID_URI + uri + String.format(INVALID_SCHEME, uri.getScheme(), scheme));
         }
+    }
+
+    public static String createURLFromPath(URI uri, String baseURL) throws IllegalArgumentException {
+        String newURL = "";
+
+        String path = uri.getSchemeSpecificPart();
+        if (path.isEmpty()) {
+            log.error(CANT_CREATE_URL + PATH_EMPTY + uri.toString());
+            throw new IllegalArgumentException(CANT_CREATE_URL + PATH_EMPTY + uri.toString());
+        }
+        newURL = baseURL + path;
+
+        return newURL;
     }
 }
