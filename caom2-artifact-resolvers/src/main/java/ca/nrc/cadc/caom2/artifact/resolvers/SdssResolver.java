@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 
 import java.net.MalformedURLException;
@@ -86,21 +87,24 @@ public class SdssResolver implements StorageResolver {
     public static final String DEFAULT_ENDPOINT = "https://dr14.sdss.org/sas/dr14";
 
     private final String endPoint;
+    private final ResolverUtil resolverUtil;
 
 
     /**
      * Complete constructor.  Useful for testing.
      * @param endPoint          The Host endpoint to use.
+     * @param resolverUtil      Utility for common items.
      */
-    SdssResolver(final String endPoint) {
+    SdssResolver(final String endPoint, final ResolverUtil resolverUtil) {
         this.endPoint = endPoint;
+        this.resolverUtil = resolverUtil;
     }
 
     /**
      * Default constructor with default end point.
      */
     public SdssResolver() {
-        this(DEFAULT_ENDPOINT);
+        this(DEFAULT_ENDPOINT, new ResolverUtil());
     }
 
     /**
@@ -123,6 +127,7 @@ public class SdssResolver implements StorageResolver {
      */
     @Override
     public URL toURL(final URI uri) throws IllegalArgumentException {
+        resolverUtil.validate(uri, getScheme());
         final String path = uri.getSchemeSpecificPart();
 
         try

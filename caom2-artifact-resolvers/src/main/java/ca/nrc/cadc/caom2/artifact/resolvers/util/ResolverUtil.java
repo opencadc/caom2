@@ -37,7 +37,7 @@ public class ResolverUtil {
     private static String CANT_BE_NULL = "URI can't be null";
     private static String INVALID_SCHEME = " Got scheme: %s. Expected: %s";
 
-    public static void validate(URI uri, String scheme) {
+    public void validate(URI uri, String scheme) {
         if (uri == null) {
             throw new IllegalArgumentException(INVALID_URI + CANT_BE_NULL);
         }
