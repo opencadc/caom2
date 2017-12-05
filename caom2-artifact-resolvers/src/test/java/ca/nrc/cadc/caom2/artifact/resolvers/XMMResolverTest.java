@@ -82,33 +82,35 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class XMMResolverTest {
+    private static final Logger log = Logger.getLogger(XMMResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
-    String MAST_BASE_ARTIFACT_URL = "masttest.stsci.edu";
-    String MAST_BASE_PATH = "/partners/download/file";
+    String VALID_URI = "xmm:FOO";
+    String VALID_URI2 = "xmm:FOO/bar";
+
+    //    http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?
+    String PROTOCOL_STR = "http";
+    String BASE_ARTIFACT_URL = "nxsa.esac.esa.int";
+    String BASE_PATH = "/nxsa-sl/servlet/data-action-aio";
 
 
     // There are no tests that will validate the content of the
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-    MastResolver mastResolver = new MastResolver();
+    XMMResolver xmmResolver = new XMMResolver();
 
-    public MastResolverTest() {
+    public XMMResolverTest() {
 
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
+        Assert.assertTrue(XMMResolver.SCHEME.equals(xmmResolver.getScheme()));
     }
 
     @Test
@@ -119,12 +121,13 @@ public class MastResolverTest {
             validURIs.add(VALID_URI2);
 
             for (String uriStr : validURIs) {
-
                 URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
+                URL url = xmmResolver.toURL(uri);
 
-                Assert.assertEquals(MAST_BASE_PATH + "/" + uri.getSchemeSpecificPart(), url.getPath());
-                Assert.assertEquals(MAST_BASE_ARTIFACT_URL, url.getHost());
+                // XMM uses '?' to POST scheme specific part of the URI to the server
+                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
+                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
+                Assert.assertEquals(BASE_PATH, url.getPath());
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -136,7 +139,7 @@ public class MastResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
+            URL url = xmmResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -149,7 +152,7 @@ public class MastResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = mastResolver.toURL(null);
+            URL url = xmmResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
