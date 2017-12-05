@@ -107,7 +107,7 @@ public class PostAction extends RepoAction {
         }
 
         validate(obs);
-        ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
+        final ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
         long transactionTime = -1;
         long t = System.currentTimeMillis();
         try {

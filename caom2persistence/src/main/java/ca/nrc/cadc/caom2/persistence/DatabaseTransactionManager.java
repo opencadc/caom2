@@ -91,8 +91,11 @@ public class DatabaseTransactionManager implements TransactionManager {
     private DataSourceTransactionManager writeTxnManager;
     private final TransactionDefinition defaultTxnDef = new DefaultTransactionDefinition();
     private final TransactionDefinition nested = new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_NESTED);
-    private final Deque<Txn> transactions = new LinkedList<>();
+    private final Deque<Txn> transactions = new LinkedList();
 
+    // transaction wrapper; the doCommit flag is here in case we want to add support
+    // for TransactionDefinition.PROPAGATION_REQUIRED instead of NESTED and then skip 
+    // the commit; it is not currently always true
     private class Txn {
         boolean doCommit;
         TransactionStatus status;
@@ -110,6 +113,7 @@ public class DatabaseTransactionManager implements TransactionManager {
         this.writeTxnManager = new DataSourceTransactionManager(ds);
     }
 
+    @Override
     public boolean isOpen() {
         return (!transactions.isEmpty());
     }
