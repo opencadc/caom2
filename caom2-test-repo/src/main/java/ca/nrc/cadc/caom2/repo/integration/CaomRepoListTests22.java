@@ -276,7 +276,7 @@ public class CaomRepoListTests22 extends CaomRepoBaseIntTests {
         int i = 0;
         List<Observation> retObs = new ArrayList<>();
         for (String baseID : baseIDs) {
-            String observationID = generateObservationID(baseID);
+            String observationID = generateID(baseID);
             String uri = SCHEME + TEST_COLLECTION + "/" + observationID;
 
             // create an observation using subject1

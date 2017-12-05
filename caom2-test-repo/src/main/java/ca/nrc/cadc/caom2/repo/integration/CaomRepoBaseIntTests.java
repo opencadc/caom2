@@ -178,7 +178,7 @@ class CaomRepoBaseIntTests {
         }
     }
 
-    public String generateObservationID(String base) {
+    public String generateID(String base) {
         return base + "-" + UUID.randomUUID().toString();
     }
 

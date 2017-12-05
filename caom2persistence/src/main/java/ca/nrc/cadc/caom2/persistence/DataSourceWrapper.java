@@ -84,6 +84,7 @@ import org.springframework.jdbc.datasource.DelegatingDataSource;
  *
  * @author pdowler
  */
+@Deprecated
 public class DataSourceWrapper extends DelegatingDataSource {
 
     private static final Logger log = Logger.getLogger(DataSourceWrapper.class);

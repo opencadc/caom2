@@ -109,6 +109,9 @@ create table <schema>.Plane_inputs
 )
 ;
 
+create unique index i_planeURI on <schema>.Plane(planeURI)
+;
+
 create unique index i_publisherID on <schema>.Plane(publisherID)
 ;
 
