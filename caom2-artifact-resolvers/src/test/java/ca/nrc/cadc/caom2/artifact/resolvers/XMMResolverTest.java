@@ -101,6 +101,7 @@ public class XMMResolverTest {
     // There are no tests that will validate the content of the
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
+    String INVALID_NULL_SCHEME = "xmm:bla";
 
     XMMResolver xmmResolver = new XMMResolver();
 
@@ -128,6 +129,7 @@ public class XMMResolverTest {
                 Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
                 Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
                 Assert.assertEquals(BASE_PATH, url.getPath());
+                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -161,4 +163,5 @@ public class XMMResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
 }
