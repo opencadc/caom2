@@ -69,17 +69,16 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
@@ -99,7 +98,6 @@ import org.apache.log4j.Logger;
 public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -181,11 +179,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         return workCount;
     }
 
-    private URL getSourceURL(URI artifactURI) throws MalformedURLException {
-        String artifact = artifactURI.getSchemeSpecificPart();
-        return new URL(MAST_BASE_ARTIFACT_URL + "/" + artifact);
-    }
-
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper {
 
         HarvestSkipURI skip;
@@ -210,7 +203,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             logStart(skip);
 
             URI artifactURI = skip.getSkipID();
-            URL url = getSourceURL(artifactURI);
+            MastResolver resolver = new MastResolver();
+
+            URL url = resolver.toURL(artifactURI);
 
             ArtifactDownloadResult result = new ArtifactDownloadResult(artifactURI);
             result.success = false;
