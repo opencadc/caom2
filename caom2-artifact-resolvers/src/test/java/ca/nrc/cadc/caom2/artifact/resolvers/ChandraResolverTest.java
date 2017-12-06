@@ -82,33 +82,33 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class XMMResolverTest {
-    private static final Logger log = Logger.getLogger(XMMResolverTest.class);
+public class ChandraResolverTest {
+    private static final Logger log = Logger.getLogger(ChandraResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "xmm:FOO";
-    String VALID_URI2 = "xmm:FOO/bar";
+    String VALID_URI = "chandra:FOO";
+    String VALID_URI2 = "chandra:FOO/bar";
 
     //    http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?
     String PROTOCOL_STR = "http";
-    String BASE_ARTIFACT_URL = "nxsa.esac.esa.int";
-    String BASE_PATH = "/nxsa-sl/servlet/data-action-aio";
+    String BASE_ARTIFACT_URL = "";
+    String BASE_PATH = "";
 
     // There are no tests that will validate the content of the
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-    XMMResolver xmmResolver = new XMMResolver();
+    ChandraResolver chandraResolver = new ChandraResolver();
 
-    public XMMResolverTest() {
+    public ChandraResolverTest() {
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(XMMResolver.SCHEME.equals(xmmResolver.getScheme()));
+        Assert.assertTrue(ChandraResolver.SCHEME.equals(chandraResolver.getScheme()));
     }
 
     @Test
@@ -120,13 +120,15 @@ public class XMMResolverTest {
 
             for (String uriStr : validURIs) {
                 URI uri = new URI(uriStr);
-                URL url = xmmResolver.toURL(uri);
+                URL url = chandraResolver.toURL(uri);
 
-                // XMM uses '?' to POST scheme specific part of the URI to the server
-                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
-                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
-                Assert.assertEquals(BASE_PATH, url.getPath());
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
+                // Chandra URL & URI format unknown at this point, so specific
+                // tests will need to be written as part of a later data engineering
+                // user story
+//                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
+//                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
+//                Assert.assertEquals(BASE_PATH, url.getPath());
+//                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -138,7 +140,7 @@ public class XMMResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = xmmResolver.toURL(uri);
+            URL url = chandraResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -151,7 +153,7 @@ public class XMMResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = xmmResolver.toURL(null);
+            URL url = chandraResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);

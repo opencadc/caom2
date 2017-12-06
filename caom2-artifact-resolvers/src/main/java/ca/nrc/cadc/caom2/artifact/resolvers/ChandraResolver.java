@@ -36,18 +36,20 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a XMM URI into a URL.
+ * This class can convert a CHANDRA URI into a URL.
+ * NOTE: At time of first writing, format for CHANDRA URIs and URLs is not known
+ * so this class is a stub that will be updated as part of a future data engineering user story.
  *
  * @author jeevesh
  */
-public class XMMResolver implements StorageResolver {
-    public static final String SCHEME = "xmm";
-    private static final Logger log = Logger.getLogger(XMMResolver.class);
-    private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
+public class ChandraResolver implements StorageResolver {
+    public static final String SCHEME = "chandra";
+    private static final Logger log = Logger.getLogger(ChandraResolver.class);
+    private static final String BASE_ARTIFACT_URL = "http://";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
 
-    public XMMResolver() {
+    public ChandraResolver() {
     }
 
     @Override

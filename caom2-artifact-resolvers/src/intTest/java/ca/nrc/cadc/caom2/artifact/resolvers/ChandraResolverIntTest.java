@@ -69,96 +69,51 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author hjeeves
- */
-public class XMMResolverTest {
-    private static final Logger log = Logger.getLogger(XMMResolverTest.class);
+public class ChandraResolverIntTest {
+    private static final Logger log = Logger.getLogger(ChandraResolverIntTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "xmm:FOO";
-    String VALID_URI2 = "xmm:FOO/bar";
+    String VALID_URI = "chandra:not_currently_defined";
 
-    //    http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?
-    String PROTOCOL_STR = "http";
-    String BASE_ARTIFACT_URL = "nxsa.esac.esa.int";
-    String BASE_PATH = "/nxsa-sl/servlet/data-action-aio";
+    ChandraResolver chandraResolver = new ChandraResolver();
 
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
-
-    XMMResolver xmmResolver = new XMMResolver();
-
-    public XMMResolverTest() {
+    public ChandraResolverIntTest() {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(XMMResolver.SCHEME.equals(xmmResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
+    public void testValidSiteUrl() throws Exception {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
+            URI mastUri = new URI(VALID_URI);
+            URL url = chandraResolver.toURL(mastUri);
 
-            for (String uriStr : validURIs) {
-                URI uri = new URI(uriStr);
-                URL url = xmmResolver.toURL(uri);
+            log.debug("opening connection to: " + url.toString());
 
-                // XMM uses '?' to POST scheme specific part of the URI to the server
-                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
-                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
-                Assert.assertEquals(BASE_PATH, url.getPath());
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
-            }
+            OutputStream out = new ByteArrayOutputStream();
+            HttpDownload head = new HttpDownload(url, out);
+            head.setHeadOnly(true);
+            head.run();
+            // This should fail until the VALID_URI is defined
+            // Commenting this out so file can be a placeholder
+
+//            Assert.assertEquals(200, head.getResponseCode());
+            log.info("response code: " + head.getResponseCode());
         } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
         }
     }
-
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = xmmResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = xmmResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
 }
