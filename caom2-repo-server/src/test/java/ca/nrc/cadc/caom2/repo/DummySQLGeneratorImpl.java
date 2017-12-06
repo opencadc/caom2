@@ -77,11 +77,9 @@ import ca.nrc.cadc.caom2.persistence.EntityDelete;
 import ca.nrc.cadc.caom2.persistence.EntityPut;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -96,6 +94,11 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
     public DummySQLGeneratorImpl() {
     }
 
+    @Override
+    public String getCurrentTimeSQL() {
+        throw new UnsupportedOperationException();
+    }
+    
     @Override
     public String getSelectSQL(ObservationURI ouri, int i) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
