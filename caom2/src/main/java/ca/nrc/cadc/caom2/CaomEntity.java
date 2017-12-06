@@ -103,7 +103,7 @@ public abstract class CaomEntity implements Serializable {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     private static final boolean SC_DEBUG = false; // way to much debug when true
-    private static final boolean MCS_DEBUG = false; // way to much debug when true
+    static boolean MCS_DEBUG = false; // way to much debug when true
 
     // state
     private UUID id;
