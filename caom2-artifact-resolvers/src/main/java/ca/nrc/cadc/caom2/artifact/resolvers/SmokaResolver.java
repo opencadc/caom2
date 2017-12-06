@@ -70,39 +70,35 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
+import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.StorageResolver;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
+public class SmokaResolver implements StorageResolver {
 
-/**
- * Sloan Digital Sky Survey Resolver implementation.
- */
-public class SdssResolver implements StorageResolver {
+    private static final String SCHEME = "smoka";
 
-    private static final String SCHEME = "sdss";
-
-    public static final String DEFAULT_ENDPOINT = "https://dr14.sdss.org/sas/dr14";
+    public static final String DEFAULT_ENDPOINT = "http://smoka.nao.ac.jp/datarequest";
 
     private final String endPoint;
 
 
-    /**
-     * Complete constructor.  Useful for testing.
-     * @param endPoint          The Host endpoint to use.
-     */
-    SdssResolver(final String endPoint) {
+    SmokaResolver(final String endPoint) {
         this.endPoint = endPoint;
     }
 
-    /**
-     * Default constructor with default end point.
-     */
-    public SdssResolver() {
+    public SmokaResolver() {
         this(DEFAULT_ENDPOINT);
     }
+
 
     /**
      * Returns the scheme for the storage resolver.
@@ -125,14 +121,39 @@ public class SdssResolver implements StorageResolver {
     @Override
     public URL toURL(final URI uri) throws IllegalArgumentException {
         ResolverUtil.validate(uri, getScheme());
-        final String path = uri.getSchemeSpecificPart();
 
-        try
-        {
-            return new URL(endPoint + "/" + path);
+        final OutputStream bos = new ByteArrayOutputStream();
+        final OutputStream outputStream = new BufferedOutputStream(bos);
+
+        try {
+            final HttpPost poster = createHttpPost(getPayload(uri), outputStream);
+            poster.run();
         }
         catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }
+
+        return null;
+    }
+
+    private Map<String, Object> getPayload(final URI uri) {
+        final Map<String, Object> payload = new HashMap<>();
+
+        payload.put("frameinfo", getFrameID(uri));
+
+        return payload;
+    }
+
+    String getFrameID(final URI uri) {
+        return uri.getSchemeSpecificPart();
+    }
+
+    HttpPost createHttpPost(final Map<String, Object> payload, final OutputStream outputStream) throws
+        MalformedURLException {
+        final HttpPost post = new HttpPost(new URL(this.endPoint), payload, outputStream);
+
+        post.setFollowRedirects(true);
+
+        return post;
     }
 }

@@ -69,70 +69,29 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.StorageResolver;
+import org.junit.Test;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
+import static org.junit.Assert.assertEquals;
 
-/**
- * Sloan Digital Sky Survey Resolver implementation.
- */
-public class SdssResolver implements StorageResolver {
+public class SmokaResolverTest {
 
-    private static final String SCHEME = "sdss";
-
-    public static final String DEFAULT_ENDPOINT = "https://dr14.sdss.org/sas/dr14";
-
-    private final String endPoint;
-
-
-    /**
-     * Complete constructor.  Useful for testing.
-     * @param endPoint          The Host endpoint to use.
-     */
-    SdssResolver(final String endPoint) {
-        this.endPoint = endPoint;
+    @Test
+    public void getScheme() {
+        assertEquals("Wrong scheme", "smoka", new SmokaResolver().getScheme());
     }
 
-    /**
-     * Default constructor with default end point.
-     */
-    public SdssResolver() {
-        this(DEFAULT_ENDPOINT);
-    }
+    @Test
+    public void toURL() throws Exception {
+        final SmokaResolver testSubject = new SmokaResolver();
 
-    /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
-     */
-    @Override
-    public String getScheme() {
-        return SCHEME;
-    }
+        final URI testURI = URI.create("smoka:file/SUPA01452270");
+        final URL result = testSubject.toURL(testURI);
 
-    /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
-     */
-    @Override
-    public URL toURL(final URI uri) throws IllegalArgumentException {
-        ResolverUtil.validate(uri, getScheme());
-        final String path = uri.getSchemeSpecificPart();
-
-        try
-        {
-            return new URL(endPoint + "/" + path);
-        }
-        catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
+        assertEquals("Wrong URL output.",
+            new URL("http://smoka.nao.ac.jp/data/request/accepted/file.fits"),
+            result);
     }
 }

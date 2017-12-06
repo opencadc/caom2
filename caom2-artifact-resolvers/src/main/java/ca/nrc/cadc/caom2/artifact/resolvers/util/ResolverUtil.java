@@ -40,7 +40,7 @@ public class ResolverUtil {
     private static String CANT_CREATE_URL = "Cannot create URL: ";
     private static String BASEURL_EMPTY = "Base URL can't be null . ";
 
-    public void validate(URI uri, String scheme) {
+    public static void validate(URI uri, String scheme) {
         if (uri == null) {
             log.error(INVALID_URI + CANT_BE_NULL);
             throw new IllegalArgumentException(INVALID_URI + CANT_BE_NULL);
