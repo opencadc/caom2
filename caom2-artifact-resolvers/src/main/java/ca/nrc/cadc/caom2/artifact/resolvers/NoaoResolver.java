@@ -40,14 +40,15 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file/";
+public class NoaoResolver implements StorageResolver {
+    public static final String SCHEME = "noao";
+    private static final Logger log = Logger.getLogger(NoaoResolver.class);
+    // Initial
+    //    noao:kp973912.fits.gz
+    private static final String BASE_ARTIFACT_URL = "http://nsaserver.sdm.noao.edu:7003/?fileRef=";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
-
-    public MastResolver() {
+    public NoaoResolver() {
     }
 
     @Override
@@ -60,7 +61,7 @@ public class MastResolver implements StorageResolver {
         ResolverUtil.validate(uri, SCHEME);
         String s = "";
         try {
-            s = ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+            s = ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
             URL url = null;
             url = new URL(s);
 

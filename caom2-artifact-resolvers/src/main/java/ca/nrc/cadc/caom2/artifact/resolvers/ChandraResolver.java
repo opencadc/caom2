@@ -36,18 +36,20 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
+ * This class can convert a CHANDRA URI into a URL.
+ * NOTE: At time of first writing, format for CHANDRA URIs and URLs is not known
+ * so this class is a stub that will be updated as part of a future data engineering user story.
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file/";
+public class ChandraResolver implements StorageResolver {
+    public static final String SCHEME = "chandra";
+    private static final Logger log = Logger.getLogger(ChandraResolver.class);
+    private static final String BASE_ARTIFACT_URL = "http://";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
 
-    public MastResolver() {
+    public ChandraResolver() {
     }
 
     @Override
@@ -60,7 +62,7 @@ public class MastResolver implements StorageResolver {
         ResolverUtil.validate(uri, SCHEME);
         String s = "";
         try {
-            s = ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+            s = ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
             URL url = null;
             url = new URL(s);
 

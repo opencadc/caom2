@@ -36,18 +36,18 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
+ * This class can convert a XMM URI into a URL.
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file/";
+public class XMMResolver implements StorageResolver {
+    public static final String SCHEME = "xmm";
+    private static final Logger log = Logger.getLogger(XMMResolver.class);
+    private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
 
-    public MastResolver() {
+    public XMMResolver() {
     }
 
     @Override
@@ -60,7 +60,7 @@ public class MastResolver implements StorageResolver {
         ResolverUtil.validate(uri, SCHEME);
         String s = "";
         try {
-            s = ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+            s = ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
             URL url = null;
             url = new URL(s);
 

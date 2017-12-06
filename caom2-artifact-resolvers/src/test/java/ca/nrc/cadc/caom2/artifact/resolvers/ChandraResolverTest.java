@@ -82,33 +82,33 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class ChandraResolverTest {
+    private static final Logger log = Logger.getLogger(ChandraResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
-    String MAST_BASE_ARTIFACT_URL = "masttest.stsci.edu";
-    String MAST_BASE_PATH = "/partners/download/file";
+    String VALID_URI = "chandra:FOO";
+    String VALID_URI2 = "chandra:FOO/bar";
 
+    //    http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?
+    String PROTOCOL_STR = "http";
+    String BASE_ARTIFACT_URL = "";
+    String BASE_PATH = "";
 
     // There are no tests that will validate the content of the
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-    MastResolver mastResolver = new MastResolver();
+    ChandraResolver chandraResolver = new ChandraResolver();
 
-    public MastResolverTest() {
-
+    public ChandraResolverTest() {
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
+        Assert.assertTrue(ChandraResolver.SCHEME.equals(chandraResolver.getScheme()));
     }
 
     @Test
@@ -119,12 +119,16 @@ public class MastResolverTest {
             validURIs.add(VALID_URI2);
 
             for (String uriStr : validURIs) {
-
                 URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
+                URL url = chandraResolver.toURL(uri);
 
-                Assert.assertEquals(MAST_BASE_PATH + "/" + uri.getSchemeSpecificPart(), url.getPath());
-                Assert.assertEquals(MAST_BASE_ARTIFACT_URL, url.getHost());
+                // Chandra URL & URI format unknown at this point, so specific
+                // tests will need to be written as part of a later data engineering
+                // user story
+//                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
+//                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
+//                Assert.assertEquals(BASE_PATH, url.getPath());
+//                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -136,7 +140,7 @@ public class MastResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
+            URL url = chandraResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -149,7 +153,7 @@ public class MastResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = mastResolver.toURL(null);
+            URL url = chandraResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -158,4 +162,5 @@ public class MastResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
 }
