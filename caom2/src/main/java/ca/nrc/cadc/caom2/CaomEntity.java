@@ -376,14 +376,14 @@ public abstract class CaomEntity implements Serializable {
                                                                          double */
         } else if (o instanceof String) {
             try {
-                ret = ((String) o).getBytes("UTF-8");
+                ret = ((String) o).trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
                         "BUG: failed to encode String in UTF-8", ex);
             }
         } else if (o instanceof URI) {
             try {
-                ret = ((URI) o).toASCIIString().getBytes("UTF-8");
+                ret = ((URI) o).toASCIIString().trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
                         "BUG: failed to encode String in UTF-8", ex);
@@ -408,7 +408,7 @@ public abstract class CaomEntity implements Serializable {
         throw new UnsupportedOperationException(
                 "unexpected primitive/value type: " + o.getClass().getName());
     }
-
+    
     /**
      * Compute new accumulated metadata checksum for this entity. The computed
      * value is based on the current state of this entity and all child

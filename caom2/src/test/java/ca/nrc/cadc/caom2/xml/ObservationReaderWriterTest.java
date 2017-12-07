@@ -453,11 +453,11 @@ public class ObservationReaderWriterTest
             actual = r.cleanWhitespace("  trim outside only  ");
             assertEquals("trim outside only", actual);
             
-            actual = r.cleanWhitespace("  trim  multiple \t inside  ");
-            assertEquals("trim multiple inside", actual);
+            //actual = r.cleanWhitespace("  trim  multiple \t inside  ");
+            //assertEquals("trim multiple inside", actual);
             
-            actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
-            assertEquals("trim junk inside phrase", actual);
+            //actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
+            //assertEquals("trim junk inside phrase", actual);
         }
         catch(Exception unexpected)
         {
@@ -510,7 +510,8 @@ public class ObservationReaderWriterTest
             assertEquals("FOO", returned.getURI().getCollection());
             assertEquals("bar", returned.getURI().getObservationID());
             assertNotNull("has telescope", returned.telescope);
-            assertEquals("bar baz 1.0", returned.telescope.getName());
+            // no lnger sanitising
+            assertEquals("bar\tbaz\n1.0", returned.telescope.getName());
 
         }
         catch(Exception unexpected)
