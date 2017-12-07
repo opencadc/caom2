@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -91,6 +93,24 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     public ReadAccessDAO() {
     }
 
+    /** 
+     * Create DAO to participate in transactions with another DAO.
+     * @param copyConfig 
+     */
+    public ReadAccessDAO(AbstractCaomEntityDAO copyConfig) {
+        this.computeLastModified = copyConfig.computeLastModified;
+        this.dataSource = copyConfig.dataSource;
+        this.txnManager = copyConfig.txnManager;
+        this.gen = copyConfig.gen;
+        this.forceUpdate = copyConfig.forceUpdate;
+        this.readOnly = copyConfig.readOnly;
+        try {
+            this.digest = MessageDigest.getInstance(copyConfig.digest.getAlgorithm());
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException("BUG: failed to copy MessageDigest config", ex);
+        }
+    }
+    
     // need to expose this for caom2ac which has to cleanup tuples for caom2 
     // assets that became public
     public String getTable(Class c) {

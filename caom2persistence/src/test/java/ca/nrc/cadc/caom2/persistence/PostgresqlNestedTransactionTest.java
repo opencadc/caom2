@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,94 +62,42 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.InlineContentHandler;
+
+import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class PostAction extends RepoAction {
-    private static final Logger log = Logger.getLogger(PostAction.class);
+public class PostgresqlNestedTransactionTest extends AbstractNestedTransactionTest {
+    private static final Logger log;
 
-    public PostAction() {
+    static String schema = "caom2";
+    static
+    {
+        log = Logger.getLogger(PostgresqlObservationDAOTest.class);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+
+        String testSchema = UtilTest.getTestSchema();
+        if (testSchema != null)
+        {
+            schema = testSchema;
+        }
     }
-
-    @Override
-    public void doAction() throws Exception {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
-
-        checkWritePermission(uri);
-
-        Observation obs = getInputObservation();
-
-        if (!uri.equals(obs.getURI())) {
-            throw new IllegalArgumentException("invalid input: " + uri);
-        }
-
-        ObservationDAO dao = getDAO();
-
-        if (!dao.exists(uri)) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-
-        validate(obs);
-        final ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessDAO(), getReadAccessGroupConfig());
-        long transactionTime = -1;
-        long t = System.currentTimeMillis();
-        try {
-            // temporarily written this way so nested transaction will not be attempted
-            // when not really needed - that way this works with jTDS as long as the
-            // collection is not configured to generate tuples
-            if (ratGenerator == null) {
-                dao.put(obs);
-            } else {
-                log.debug("starting transaction");
-                dao.getTransactionManager().startTransaction();
-
-                dao.put(obs);
-                ratGenerator.generateTuples(obs);
-
-                log.debug("committing transaction");
-                dao.getTransactionManager().commitTransaction();
-                log.debug("commit: OK");
-            }
-        } catch (Exception e) {
-            log.debug("failed to insert " + obs + ": ", e);
-            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
-                dao.getTransactionManager().rollbackTransaction();
-                log.debug("rollback: OK");
-            }
-            throw e;
-        } finally {
-            while (ratGenerator != null && dao.getTransactionManager().isOpen()) {
-                log.error("BUG - open transaction in finally");
-                dao.getTransactionManager().rollbackTransaction();
-                log.error("rollback: OK");
-            }
-                
-            transactionTime = System.currentTimeMillis() - t;
-            log.debug("time to run transaction: " + transactionTime + "ms");
-        }
-
-        log.debug("DONE: " + uri);
-    }
-
-    @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new ObservationInlineContentHandler();
+    
+    public PostgresqlNestedTransactionTest() throws Exception { 
+        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema, false);
+        
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
+        init.doInit();
     }
 }

@@ -84,7 +84,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  *
  * @author pdowler
+ * @deprecated this class will become private again
  */
+@Deprecated
 public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
 
     private static final Logger log = Logger.getLogger(ArtifactDAO.class);

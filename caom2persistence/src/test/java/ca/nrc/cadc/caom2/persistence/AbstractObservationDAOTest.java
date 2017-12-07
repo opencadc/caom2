@@ -69,24 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.sql.DataSource;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
@@ -153,10 +135,25 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URI;
 import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
-import org.springframework.dao.DataIntegrityViolationException;
+import javax.sql.DataSource;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  *
@@ -283,22 +280,24 @@ public abstract class AbstractObservationDAOTest
         try
         {
             String collection = "FOO";
-            Date start = new Date();
+            
             Thread.sleep(10);
             
             Observation obs = new SimpleObservation(collection, "bar1");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
-            log.info("created: " + obs);
+            Observation o = dao.getShallow(obs.getID());
+            Assert.assertNotNull(o);
+            log.info("created: " + o);
+            Date start = new Date(o.getMaxLastModified().getTime() - 2*TIME_TOLERANCE); // before 1
             Thread.sleep(10);
             
             obs = new SimpleObservation(collection, "bar2");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
-            log.info("created: " + obs);
+            o = dao.getShallow(obs.getID());
+            Assert.assertNotNull(o);
+            log.info("created: " + o);
+            Date mid = new Date(o.getMaxLastModified().getTime() + 2*TIME_TOLERANCE); // after 2
             Thread.sleep(10);
-            
-            Date mid = new Date();
             
             obs = new SimpleObservation(collection, "bar3");
             dao.put(obs);
@@ -308,43 +307,47 @@ public abstract class AbstractObservationDAOTest
             
             obs = new SimpleObservation(collection, "bar4");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
-            log.info("created: " + obs);
+            o = dao.getShallow(obs.getID());
+            Assert.assertNotNull(o);
+            log.info("created: " + o);
+            Date end = new Date(o.getMaxLastModified().getTime() + 2*TIME_TOLERANCE); // after 4
             Thread.sleep(10);
             
-            Date end = new Date();
-            
             Integer batchSize = 100;
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             
             List<ObservationState> result = dao.getObservationList(collection, start, end, batchSize);
-            Assert.assertEquals(4, result.size());
             for (int i=0; i<result.size(); i++)
             {
                 ObservationState os = result.get(i);
-                log.info("found: " + os);
+                log.info("found: " + df.format(os.maxLastModified) + " " + os);
                 ObservationURI exp = new ObservationURI(collection, "bar"+(i+1)); // 1 2 3 4
                 Assert.assertEquals(exp, os.getURI());
             }
+            Assert.assertEquals("start-end", 4, result.size());
             
             result = dao.getObservationList(collection, start, end, batchSize, false); // descending order
-            Assert.assertEquals(4, result.size());
             for (int i=0; i<result.size(); i++)
             {
                 ObservationState os = result.get(i);
-                log.info("found: " + os);
+                log.info("start-end found: " + df.format(os.maxLastModified) + " " +  os);
                 ObservationURI exp = new ObservationURI(collection, "bar"+(4-i)); // 4 3 2 1
                 Assert.assertEquals(exp, os.getURI());
             }
+            Assert.assertEquals("start-end", 4, result.size());
             
             result = dao.getObservationList(collection, start, mid, batchSize);
-            Assert.assertEquals(2, result.size());
-            for (ObservationState os : result)
-                log.info("found: " + os);
+            for (ObservationState os : result) {
+                log.info("start-mid found: " + df.format(os.maxLastModified) + " " + os);
+            }
+            Assert.assertEquals("start-mid", 2, result.size());
             
             result = dao.getObservationList(collection, mid, end, batchSize);
+            
+            for (ObservationState os : result) {
+                log.info("mid-end found: " + df.format(os.maxLastModified) + " " + os);
+            }
             Assert.assertEquals(2, result.size());
-            for (ObservationState os : result)
-                log.info("found: " + os);
             
             try
             {
@@ -357,10 +360,10 @@ public abstract class AbstractObservationDAOTest
             }
             
             result = dao.getObservationList(collection, null, end, batchSize);
-            Assert.assertEquals(4, result.size());
+            Assert.assertEquals("-end", 4, result.size());
             
             result = dao.getObservationList(collection, start, null, batchSize);
-            Assert.assertEquals(4, result.size());
+            Assert.assertEquals("start-", 4, result.size());
             
             result = dao.getObservationList(collection, null, null, batchSize);
             
@@ -467,55 +470,6 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    @Test
-    public void testNestedTransaction()
-    {
-        // the ObservationDAO class uses a txn inside the put and delete methods
-        // this verifies that it it fails and does a rollback that an outer txn
-        // can still proceed -- eg it is really nested
-        try
-        {
-            Observation obs1 = new SimpleObservation("FOO", "bar");
-            dao.put(obs1);
-            Assert.assertTrue(dao.exists(obs1.getURI()));
-            log.info("created: " + obs1);
-            
-            
-            Observation dupe = new SimpleObservation("FOO", "bar");
-            Observation obs2 = new SimpleObservation("FOO", "bar2");
-            
-            txnManager.startTransaction(); // outer txn
-            try
-            {
-                dao.put(dupe); // nested txn
-                Assert.fail("expected exception, successfully put duplicate observation");
-            }
-            catch(DataIntegrityViolationException expected)
-            {
-                log.info("caught expected: " + expected);
-            }
-            
-            dao.put(obs2); // another nested txn
-            log.info("created: " + obs2);
-            
-            txnManager.commitTransaction(); // outer txn
-            
-            Observation check1 = dao.get(obs1.getURI());
-            Assert.assertNotNull(check1);
-            Assert.assertEquals(obs1.getID(), check1.getID());
-            
-            Observation check2 = dao.get(obs2.getURI());
-            Assert.assertNotNull(check2);
-            Assert.assertEquals(obs2.getID(), check2.getID());
-            
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
     @Test
     public void testGetDeleteNonExistentObservation()
     {
@@ -872,19 +826,19 @@ public abstract class AbstractObservationDAOTest
                 Observation orig = getTestObservation(full, i, false, true);
                 int numPlanes = orig.getPlanes().size();
                 
-                log.info("put: orig");
+                log.debug("put: orig");
                 //txnManager.startTransaction();
                 dao.put(orig);
                 //txnManager.commitTransaction();
-                log.info("put: orig DONE");
+                log.debug("put: orig DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
 
-                log.info("get: orig");
+                log.debug("get: orig");
                 Observation ret1 = dao.get(orig.getURI());
-                log.info("get: orig DONE");
+                log.debug("get: orig DONE");
                 Assert.assertNotNull("found", ret1);
                 Assert.assertEquals(numPlanes, ret1.getPlanes().size());
                 testEqual(orig, ret1);
@@ -892,38 +846,38 @@ public abstract class AbstractObservationDAOTest
                 Plane newPlane = getTestPlane(full, "newPlane", i, false);
                 ret1.getPlanes().add(newPlane);
                 
-                log.info("put: added");
+                log.debug("put: added");
                 //txnManager.startTransaction();
                 dao.put(ret1);
                 //txnManager.commitTransaction();
-                log.info("put: added DONE");
+                log.debug("put: added DONE");
 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
-                log.info("get: added");
+                log.debug("get: added");
                 Observation ret2 = dao.get(orig.getURI());
-                log.info("get: added DONE");
+                log.debug("get: added DONE");
                 Assert.assertNotNull("found", ret2);
                 Assert.assertEquals(numPlanes+1, ret1.getPlanes().size());
                 testEqual(ret1, ret2);
                 
                 ret2.getPlanes().remove(newPlane);
                 
-                log.info("put: removed");
+                log.debug("put: removed");
                 //txnManager.startTransaction();
                 dao.put(ret2);
                 //txnManager.commitTransaction();
-                log.info("put: removed DONE");
+                log.debug("put: removed DONE");
                 
                 // this is so we can detect incorrect timestamp round trips
                 // caused by assigning something other than what was stored
                 Thread.sleep(2*TIME_TOLERANCE);
                 
-                log.info("get: removed");
+                log.debug("get: removed");
                 Observation ret3 = dao.get(orig.getURI());
-                log.info("get: removed DONE");
+                log.debug("get: removed DONE");
                 Assert.assertNotNull("found", ret3);
                 Assert.assertEquals(numPlanes, ret3.getPlanes().size());
                 testEqual(orig, ret3);
