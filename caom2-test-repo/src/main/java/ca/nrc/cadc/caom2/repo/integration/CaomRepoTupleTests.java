@@ -70,13 +70,11 @@ package ca.nrc.cadc.caom2.repo.integration;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.reg.Standards;
-
 import java.net.URI;
 import java.util.Calendar;
-import java.util.Date;
-
 import org.junit.Test;
 
 /**
@@ -122,7 +120,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-
+        observation.proposal = new Proposal("proposal666");
         final Plane plane = new Plane(productID);
 
         observation.getPlanes().add(plane);
@@ -145,6 +143,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        observation.proposal = new Proposal("proposal666");
         observation.metaRelease = pastCal.getTime();
         final Plane plane = new Plane(productID);
 
@@ -172,6 +171,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
+        observation.proposal = new Proposal("proposal666");
         observation.metaRelease = futureCal.getTime();
         final Plane plane = new Plane(productID);
 
