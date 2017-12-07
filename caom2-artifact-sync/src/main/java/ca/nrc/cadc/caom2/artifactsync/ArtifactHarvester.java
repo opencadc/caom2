@@ -82,7 +82,6 @@ import ca.nrc.cadc.caom2.persistence.DatabaseTransactionManager;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 
 import java.security.PrivilegedExceptionAction;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -158,24 +157,24 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
             for (ObservationState observationState : observationStates) {
 
-                String observationID = observationState.getURI().getObservationID();
+                DatabaseTransactionManager txnMgr = new DatabaseTransactionManager(observationDAO.getDataSource());
 
-                // TEMPORARY: For now, to keep the data volume low, only harvest
-                // MAST files that begin with a W, X, Y, or Z
-                List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
-                String firstChar = observationID.substring(0, 1).toLowerCase();
-                if (!acceptedFilePrefixes.contains(firstChar)) {
-                    log.debug("Observation " + observationState + " skipped by temporary data volume restriction");
-                } else {
+                try {
 
-                    DatabaseTransactionManager txnMgr = new DatabaseTransactionManager(observationDAO.getDataSource());
+                    txnMgr.startTransaction();
 
-                    try {
+                    Observation observation = observationDAO.get(observationState.getURI());
+                    for (Plane plane : observation.getPlanes()) {
 
-                        txnMgr.startTransaction();
+                        // For now, until the work to deal with proprietary data is
+                        // complete, skip non-public artifacts.
 
-                        Observation observation = observationDAO.get(observationState.getURI());
-                        for (Plane plane : observation.getPlanes()) {
+                        // Artifacts will a null dataReleaseData are assumed public
+                        Date dataReleaseDate = plane.dataRelease;
+                        if (dataReleaseDate != null && dataReleaseDate.after(stopDate)) {
+                            log.debug("Skipping proprietary plane: " + plane);
+                        } else {
+
                             for (Artifact artifact : plane.getArtifacts()) {
                                 logStart(artifact);
                                 boolean success = true;
@@ -222,18 +221,18 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                                 }
                             }
                         }
+                    }
 
-                        if (!dryrun) {
-                            harvestStateDAO.put(state);
-                            log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
-                        }
-                    } catch (Throwable t) {
-                        txnMgr.rollbackTransaction();
-                        throw t;
-                    } finally {
-                        if (txnMgr.isOpen()) {
-                            txnMgr.commitTransaction();
-                        }
+                    if (!dryrun) {
+                        harvestStateDAO.put(state);
+                        log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                    }
+                } catch (Throwable t) {
+                    txnMgr.rollbackTransaction();
+                    throw t;
+                } finally {
+                    if (txnMgr.isOpen()) {
+                        txnMgr.commitTransaction();
                     }
                 }
             }
