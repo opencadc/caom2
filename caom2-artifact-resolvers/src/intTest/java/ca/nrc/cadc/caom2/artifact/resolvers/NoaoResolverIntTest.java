@@ -87,7 +87,7 @@ public class NoaoResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "kp973912.fits.gz";
+    String VALID_URI = "noao:c13a_140805_212140_ori.fits.fz";
 
     NoaoResolver noaoResolver = new NoaoResolver();;
 
@@ -97,8 +97,8 @@ public class NoaoResolverIntTest {
     @Test
     public void testValidSiteUrl() throws Exception {
         try {
-            URI mastUri = new URI(VALID_URI);
-            URL url = noaoResolver.toURL(mastUri);
+            URI noaoUri = new URI(VALID_URI);
+            URL url = noaoResolver.toURL(noaoUri);
 
             log.debug("opening connection to: " + url.toString());
 
@@ -106,10 +106,10 @@ public class NoaoResolverIntTest {
             HttpDownload head = new HttpDownload(url, out);
             head.setHeadOnly(true);
             head.run();
-            // This should fail until the VALID_URI and URL are defined
-            // Commenting this out so file can be a placeholder
-
-//            Assert.assertEquals(200, head.getResponseCode());
+            // THe server being hit is apparently only up 80% of
+            // the time, so this assertEquals could throw a large
+            // percentage of 'false failures'
+            Assert.assertEquals(200, head.getResponseCode());
             log.info("response code: " + head.getResponseCode());
         } catch (Exception unexpected) {
             log.error("Unexpected exception", unexpected);
