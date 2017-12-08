@@ -436,11 +436,18 @@ public class ObservationHarvester extends Harvester {
                             } else {
                                 throw new ChecksumError("mismatching checksums");
                             }
+                            
+                            if (hs == null) {
+                                // normal harvest mode: try to cleanup skip records immediately
+                                hs = harvestSkip.get(source, cname, o.getURI().getURI());
+                            }
 
                             if (hs != null) {
                                 log.info("delete: " + hs + " " + format(hs.lastModified));
                                 harvestSkip.delete(hs);
-                            } else {
+                            } 
+                            
+                            if (!skipped) {
                                 harvestState.put(state);
                             }
                         } else if (skipped && ow.entity == null) {
