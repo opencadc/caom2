@@ -92,10 +92,10 @@ import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
  */
 public class CaomWCSValidator {
 
-    private static final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS in Chunk: ";
-    private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS in Chunk: ";
-    private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS in Chunk: ";
-    private static final String POLARIZATION_WCS_VALIDATION_ERROR = "Invalid PolarizationWCS in Chunk: ";
+    private static final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS: ";
+    private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS: ";
+    private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS: ";
+    private static final String POLARIZATION_WCS_VALIDATION_ERROR = "Invalid PolarizationWCS: ";
 
     /**
      * Validate all WCS types included in the Chunks belonging to the given Artifact.
@@ -109,10 +109,9 @@ public class CaomWCSValidator {
             for (Part p : a.getParts()) {
                 if (p != null) {
                     for (Chunk c : p.getChunks()) {
-                        validateSpatialWCS(c.position);
-                        validateSpectralWCS(c.energy);
-                        validateTemporalWCS(c.time);
-                        validatePolarizationWCS(c.polarization);
+                        String context = a.getURI().toASCIIString() 
+                                + "[" + p.getName() + "]:" + c.getID().toString() + " ";
+                        validateChunk(context, c);
                     }
                 }
             }
@@ -126,16 +125,16 @@ public class CaomWCSValidator {
      * @param c
      * @throws IllegalArgumentException
      */
-    public static void validateChunk(Chunk c)
+    public static void validateChunk(String context, Chunk c)
         throws IllegalArgumentException {
-        validateSpatialWCS(c.position);
-        validateSpectralWCS(c.energy);
-        validateTemporalWCS(c.time);
-        validatePolarizationWCS(c.polarization);
+        validateSpatialWCS(context, c.position);
+        validateSpectralWCS(context, c.energy);
+        validateTemporalWCS(context, c.time);
+        validatePolarizationWCS(context, c.polarization);
     }
 
 
-    public static void validateSpatialWCS(SpatialWCS position) {
+    public static void validateSpatialWCS(String context, SpatialWCS position) {
         if (position != null) {
             try {
                 // Convert to polygon using native coordinate system
@@ -153,19 +152,19 @@ public class CaomWCSValidator {
                     Transform.Result tr = transform.sky2pix(coords);
                 }
             } catch (NoSuchKeywordException ne) {
-                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+                throw new IllegalArgumentException(context + SPATIAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
             } catch (WCSLibRuntimeException re) {
-                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + re , re);
+                throw new IllegalArgumentException(context + SPATIAL_WCS_VALIDATION_ERROR + " : " + re , re);
             } catch (UnsupportedOperationException uoe) {
                 // error thrown from toPolygon if WCS is too near a pole, or if the bounds
                 // value is not recognized
-                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR, uoe);
+                throw new IllegalArgumentException(context + SPATIAL_WCS_VALIDATION_ERROR, uoe);
             }
         }
     }
 
 
-    public static void validateSpectralWCS(SpectralWCS energy) {
+    public static void validateSpectralWCS(String context, SpectralWCS energy) {
         if (energy != null) {
             try {
                 if (energy.getAxis() != null) {
@@ -194,20 +193,20 @@ public class CaomWCSValidator {
                         tr = transform.sky2pix(coord);
                     }
                 } else {
-                    throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + " energy axis cannot be null.");
+                    throw new IllegalArgumentException(context + SPECTRAL_WCS_VALIDATION_ERROR + " energy axis cannot be null.");
                 }
 
             } catch (NoSuchKeywordException ne) {
-                throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
+                throw new IllegalArgumentException(context + SPECTRAL_WCS_VALIDATION_ERROR + ": invalid keyword in WCS", ne);
             } catch (WCSLibRuntimeException re) {
-                throw new IllegalArgumentException(SPECTRAL_WCS_VALIDATION_ERROR + re , re);
+                throw new IllegalArgumentException(context + SPECTRAL_WCS_VALIDATION_ERROR + re , re);
             }
         }
 
     }
 
 
-    public static void validateTemporalWCS(TemporalWCS time) {
+    public static void validateTemporalWCS(String context, TemporalWCS time) {
         if (time != null) {
             try {
                 if (time.getAxis() != null) {
@@ -233,17 +232,17 @@ public class CaomWCSValidator {
                         //                        Transform.Result tr = transform.sky2pix(coord);
                     }
                 } else {
-                    throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR + " time axis cannot be null.");
+                    throw new IllegalArgumentException(context + TEMPORAL_WCS_VALIDATION_ERROR + " time axis cannot be null.");
                 }
             } catch (UnsupportedOperationException uoe) {
                 // timesys or CUNIT error
-                throw new IllegalArgumentException(TEMPORAL_WCS_VALIDATION_ERROR, uoe);
+                throw new IllegalArgumentException(context + TEMPORAL_WCS_VALIDATION_ERROR, uoe);
             }
         }
     }
 
 
-    public static void validatePolarizationWCS(PolarizationWCS polarization) {
+    public static void validatePolarizationWCS(String context, PolarizationWCS polarization) {
         if (polarization != null) {
             try {
                 if (polarization.getAxis() != null) {
@@ -271,11 +270,11 @@ public class CaomWCSValidator {
                         }
                     }
                 } else {
-                    throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR + " polarization axis cannot be null.");
+                    throw new IllegalArgumentException(context + POLARIZATION_WCS_VALIDATION_ERROR + " polarization axis cannot be null.");
                 }
 
             } catch (UnsupportedOperationException uoe) {
-                throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR, uoe);
+                throw new IllegalArgumentException(context + POLARIZATION_WCS_VALIDATION_ERROR, uoe);
             }
         }
     }

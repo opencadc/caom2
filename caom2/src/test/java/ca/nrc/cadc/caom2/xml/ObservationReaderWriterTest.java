@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataQuality;
@@ -130,6 +131,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -275,6 +277,7 @@ public class ObservationReaderWriterTest
         try
         {
             Observation obs = new SimpleObservation("FOO", "bar");
+            CaomUtil.assignID(obs, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
             
             ObservationReader validatingReader = new ObservationReader();
             ObservationReader nonvalidatingReader = new ObservationReader(false);
@@ -300,7 +303,8 @@ public class ObservationReaderWriterTest
             obs20 = validatingReader.read(caom20);
             compareObservations(obs, obs20);
             
-            
+            // ID was UUID from CAOM-2.1 onward
+            CaomUtil.assignID(obs, UUID.randomUUID());
             ObservationWriter w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
             w21.write(obs, bos);
@@ -377,6 +381,7 @@ public class ObservationReaderWriterTest
         try
         {
             Observation obs = new SimpleObservation("FOO", "bar");
+            CaomUtil.assignID(obs, new UUID(0L, 1L));
             ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -403,6 +408,7 @@ public class ObservationReaderWriterTest
         try
         {
             Observation obs = new SimpleObservation("FOO", "bar");
+            CaomUtil.assignID(obs, new UUID(0L, 1L));
             ObservationWriter w = new ObservationWriter();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             w.write(obs, bos);
@@ -447,11 +453,11 @@ public class ObservationReaderWriterTest
             actual = r.cleanWhitespace("  trim outside only  ");
             assertEquals("trim outside only", actual);
             
-            actual = r.cleanWhitespace("  trim  multiple \t inside  ");
-            assertEquals("trim multiple inside", actual);
+            //actual = r.cleanWhitespace("  trim  multiple \t inside  ");
+            //assertEquals("trim multiple inside", actual);
             
-            actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
-            assertEquals("trim junk inside phrase", actual);
+            //actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
+            //assertEquals("trim junk inside phrase", actual);
         }
         catch(Exception unexpected)
         {
@@ -504,7 +510,8 @@ public class ObservationReaderWriterTest
             assertEquals("FOO", returned.getURI().getCollection());
             assertEquals("bar", returned.getURI().getObservationID());
             assertNotNull("has telescope", returned.telescope);
-            assertEquals("bar baz 1.0", returned.telescope.getName());
+            // no lnger sanitising
+            assertEquals("bar\tbaz\n1.0", returned.telescope.getName());
 
         }
         catch(Exception unexpected)
@@ -583,10 +590,13 @@ public class ObservationReaderWriterTest
             SimpleObservation observation = getCompleteSimple(5, true);
             testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
 
+            // revert to 2.0 compat
+            CaomUtil.assignID(observation, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
             // nullify optional fields introduced after 2.0 so the comparison will work
             observation.requirements = null;
             for (Plane p : observation.getPlanes())
             {
+                CaomUtil.assignID(p, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
                 p.quality = null;
                 p.creatorID = null;
                 p.position = null;
@@ -595,8 +605,16 @@ public class ObservationReaderWriterTest
                 p.polarization = null;
                 for (Artifact a : p.getArtifacts())
                 {
+                    CaomUtil.assignID(a, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
                     a.contentChecksum = null;
+                    for (Part pa : a.getParts()) {
+                        CaomUtil.assignID(pa, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                        for (Chunk c : pa.getChunks()) {
+                            CaomUtil.assignID(c, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                        }
+                    }
                 }
+                
             }
             testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
         }

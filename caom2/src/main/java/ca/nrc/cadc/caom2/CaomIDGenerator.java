@@ -9,7 +9,9 @@ import java.security.SecureRandom;
  * CAOM unique ID generator.
  * 
  * @author pdowler
+ * @deprecated 
  */
+@Deprecated
 public class CaomIDGenerator implements Serializable {
     private static final long serialVersionUID = 201202141230L;
 

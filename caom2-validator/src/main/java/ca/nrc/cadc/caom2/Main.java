@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,51 +62,110 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
- * 
+ *
  * @author pdowler
  */
-public class TargetPosition implements Serializable {
-    private static final long serialVersionUID = 201311261000L;
+public final class Main {
 
-    // immutable state
-    private String coordsys;
-    private Point coordinates;
+    private static final Logger log = Logger.getLogger(Main.class);
 
-    public Double equinox;
+    public static void main(String[] args) {
+        try {
+            ArgumentMap am = new ArgumentMap(args);
+            if (am.isSet("h") || am.isSet("help")) {
+                usage();
+                System.exit(0);
+            }
 
-    private TargetPosition() {
+            // Set debug mode
+            CaomEntity.MCS_DEBUG = true;
+            if (am.isSet("d") || am.isSet("debug")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+            } else if (am.isSet("v") || am.isSet("verbose")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+            } else {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.WARN);
+            }
+
+            if (am.getPositionalArgs().isEmpty()) {
+                usage();
+                System.exit(1);
+            }
+            
+            String fname = am.getPositionalArgs().get(0);
+            File f = new File(fname);
+            ObservationReader r = new ObservationReader();
+            Observation obs = r.read(new FileReader(f));
+            
+            if (am.getPositionalArgs().size() == 2) {
+                File out = new File(am.getPositionalArgs().get(1));
+                ObservationWriter w = new ObservationWriter();
+                w.write(obs, new FileWriter(out));
+                log.info("wrote copy: " + out.getAbsolutePath());
+            }
+            
+            List<Runnable> validators = new ArrayList<>();
+            if (am.isSet("checksum")) {
+                int depth = 5;
+                if (am.isSet("depth")) {
+                    try { 
+                        depth = Integer.parseInt(am.getValue("depth"));
+                    } catch (NumberFormatException ex) {
+                        log.error("invalid depth: " + am.getValue("depth") + ": must be integer in [1,5]");
+                        usage();
+                        System.exit(1);
+                    }
+                }
+                validators.add(new ChecksumValidator(obs, depth, am.isSet("acc")));
+            }
+            
+            if (am.isSet("wcs")) {
+                validators.add(new WCSValidator(obs));
+            }
+
+            for (Runnable v : validators) {
+                log.info("START " + v.getClass().getName());
+                v.run();
+                log.info("DONE " + v.getClass().getName() + System.getProperty("line.separator"));
+            }
+
+        } catch (Throwable t) {
+            log.error("unexpected failure", t);
+            System.exit(1);
+        }
+        System.exit(0);
     }
 
-    public TargetPosition(String coordsys, Point coordinates) {
-        CaomValidator.assertNotNull(getClass(), "coordsys", coordsys);
-        CaomValidator.assertNotNull(getClass(), "coordinates", coordinates);
-        this.coordsys = coordsys;
-        this.coordinates = coordinates;
-    }
+    
 
-    public String getCoordsys() {
-        return coordsys;
-    }
-
-    public Point getCoordinates() {
-        return coordinates;
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "[" + coordsys + "," + equinox 
-                + "," + coordinates + "]";
+    private static void usage() {
+        StringBuilder sb = new StringBuilder();
+        String lineSep = System.getProperty("line.separator");
+        sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] <validation options> <observation xml file> [<output file>}");
+        sb.append(lineSep).append("       <validation options> is one or more of:");
+        sb.append(lineSep).append("");
+        sb.append(lineSep).append("       --checksum [--acc] [--depth=1..5] : recompute and compare metaChecksum values");
+        sb.append(lineSep).append("       --wcs : enable WCS validation");
+        sb.append(lineSep).append("");
+        sb.append(lineSep).append("       <output file> : reserialise to another file (pretty-print)");
+        System.out.println(sb.toString());
     }
 }

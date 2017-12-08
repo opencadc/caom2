@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HashUtil;
 import ca.nrc.cadc.util.HexUtil;
-
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -93,7 +92,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -105,7 +103,7 @@ public abstract class CaomEntity implements Serializable {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     private static final boolean SC_DEBUG = false; // way to much debug when true
-    private static final boolean MCS_DEBUG = false; // way to much debug when true
+    static boolean MCS_DEBUG = false; // way to much debug when true
 
     // state
     private UUID id;
@@ -115,9 +113,14 @@ public abstract class CaomEntity implements Serializable {
     private URI accMetaChecksum;
 
     protected CaomEntity() {
-        this(false); // default: 64-bit consistent with CAOM-2.0 use of Long
+        this.id = UUID.randomUUID();
     }
 
+    /**
+     * @param fullUUID true for 128-bit, false for 64-bits used in UUID
+     * @deprecated 
+     */
+    @Deprecated
     protected CaomEntity(boolean fullUUID) {
         if (fullUUID) {
             this.id = UUID.randomUUID();
@@ -272,10 +275,12 @@ public abstract class CaomEntity implements Serializable {
         try {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
-                digest.update(primitiveValueToBytes(ce.id));
-                if (MCS_DEBUG) {
-                    log.debug("metaChecksum: " + ce.getClass().getSimpleName()
-                            + ".id " + ce.id);
+                if (ce.id != null) {
+                    digest.update(primitiveValueToBytes(ce.id));
+                    if (MCS_DEBUG) {
+                        log.debug("metaChecksum: " + ce.getClass().getSimpleName()
+                                + ".id " + ce.id);
+                    }
                 }
             }
 
@@ -371,14 +376,14 @@ public abstract class CaomEntity implements Serializable {
                                                                          double */
         } else if (o instanceof String) {
             try {
-                ret = ((String) o).getBytes("UTF-8");
+                ret = ((String) o).trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
                         "BUG: failed to encode String in UTF-8", ex);
             }
         } else if (o instanceof URI) {
             try {
-                ret = ((URI) o).toASCIIString().getBytes("UTF-8");
+                ret = ((URI) o).toASCIIString().trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
                         "BUG: failed to encode String in UTF-8", ex);
@@ -403,7 +408,7 @@ public abstract class CaomEntity implements Serializable {
         throw new UnsupportedOperationException(
                 "unexpected primitive/value type: " + o.getClass().getName());
     }
-
+    
     /**
      * Compute new accumulated metadata checksum for this entity. The computed
      * value is based on the current state of this entity and all child

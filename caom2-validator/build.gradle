@@ -4,8 +4,8 @@ plugins {
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
     id 'checkstyle'
+    id 'application'
 }
-
 
 repositories {
     jcenter()
@@ -16,14 +16,17 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.8'
+version = '2.3.0'
+
+mainClassName = "ca.nrc.cadc.caom2.Main"
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.jdom:jdom2:2.+'
     
-    compile 'org.opencadc:cadc-util:1.+'
-
-    testCompile group: 'junit', name: 'junit', version: '4.+'
+    compile 'org.opencadc:cadc-util:[1.0,2.0)'
+    compile 'org.opencadc:caom2:[2.3.8,3.0)'
+    compile 'org.opencadc:caom2-compute:[2.3.6,3.0)'
 }
+
 apply from: '../opencadc.gradle'
