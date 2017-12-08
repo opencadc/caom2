@@ -94,7 +94,7 @@ import org.springframework.jdbc.core.RowMapper;
 abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
 
     private static final Logger log = Logger.getLogger(AbstractCaomEntityDAO.class);
-    protected boolean computeLastModified = true;
+    protected boolean origin = true;
 
     protected MessageDigest digest;
 
@@ -115,8 +115,16 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
         this.readOnly = readOnly;
     }
 
-    public void setComputeLastModified(boolean computeLastModified) {
-        this.computeLastModified = computeLastModified;
+    /**
+     * Set origin flag. When true, the persistence classes behave as origin metadata
+     * repositories: they are responsible for assigning entity IDs and modification
+     * timestamps when entities are put. When false (not an origin) the provided
+     * IDs and timestamps are used directly.
+     * 
+     * @param origin 
+     */
+    public void setOrigin(boolean origin) {
+        this.origin = origin;
     }
 
     public T get(UUID id) {

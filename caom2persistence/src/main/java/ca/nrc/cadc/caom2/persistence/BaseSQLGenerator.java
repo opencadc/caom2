@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
@@ -507,13 +508,17 @@ public class BaseSQLGenerator implements SQLGenerator {
         columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
         columnMap.put(PlaneDataReadAccess.class, metaReadAccessCols);
 
-        String[] deletedCols = new String[]{
+        String[] deletedObservationCols = new String[]{
+            "collection", "observationID", "lastModified", "id"
+        };
+        columnMap.put(DeletedObservation.class, deletedObservationCols);
+        
+        String[] deletedEntityCols = new String[]{
             "lastModified", "id"
         };
-        columnMap.put(DeletedObservation.class, deletedCols);
-        columnMap.put(DeletedObservationMetaReadAccess.class, deletedCols);
-        columnMap.put(DeletedPlaneMetaReadAccess.class, deletedCols);
-        columnMap.put(DeletedPlaneDataReadAccess.class, deletedCols);
+        columnMap.put(DeletedObservationMetaReadAccess.class, deletedEntityCols);
+        columnMap.put(DeletedPlaneMetaReadAccess.class, deletedEntityCols);
+        columnMap.put(DeletedPlaneDataReadAccess.class, deletedEntityCols);
 
         columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "obsID"});
         columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "planeID"});
@@ -556,6 +561,16 @@ public class BaseSQLGenerator implements SQLGenerator {
     @Override
     public String getCurrentTimeSQL() {
         return "select CURRENT_TIMESTAMP";
+    }
+
+    
+    @Override
+    public UUID generateID() {
+        if (useLongForUUID) {
+            long lsb = CaomIDGenerator.getInstance().generateID();
+            return new UUID(0L, lsb);
+        }
+        return UUID.randomUUID();
     }
 
     
@@ -720,7 +735,7 @@ public class BaseSQLGenerator implements SQLGenerator {
         sb.append(literal(id));
         return sb.toString();
     }
-
+    
     // select Observation(s) with maxLastmodified in [minLastModified,maxLastModified]
     @Override
     public String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth) {
@@ -970,6 +985,128 @@ public class BaseSQLGenerator implements SQLGenerator {
         }
 
         throw new UnsupportedOperationException();
+    }
+    
+    public DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> c, boolean isUpdate) {
+        if (DeletedObservation.class.equals(c)) {
+            return new DeletedObservationPut(isUpdate);
+        }
+        return new DeletedReadAccessPut(c, isUpdate);
+    }
+    
+    private class DeletedObservationPut implements DeletedEntityPut<DeletedObservation>, PreparedStatementCreator {
+        private boolean update;
+        private DeletedObservation value;
+
+        public DeletedObservationPut(boolean update) {
+            this.update = update;
+        }
+        
+        @Override
+        public void execute(JdbcTemplate jdbc) {
+            jdbc.update(this);
+        }
+
+        @Override
+        public void setValue(DeletedObservation value) {
+            this.value = value;
+        }
+        
+        @Override
+        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
+            String sql = null;
+            if (update) {
+                sql = getUpdateSQL(DeletedObservation.class);
+            } else {
+                sql = getInsertSQL(DeletedObservation.class);
+            }
+            PreparedStatement prep = conn.prepareStatement(sql);
+            log.debug(sql);
+            loadValues(prep);
+            return prep;
+        }
+
+        private void loadValues(PreparedStatement ps)
+                throws SQLException {
+            if (value == null) {
+                throw new IllegalStateException("null DeletedObservation");
+            }
+
+            StringBuilder sb = null;
+            if (log.isDebugEnabled()) {
+                sb = new StringBuilder();
+            }
+
+            int col = 1;
+            safeSetString(sb, ps, col++, value.getURI().getCollection());
+            safeSetString(sb, ps, col++, value.getURI().getObservationID());
+            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
+            if (useLongForUUID) {
+                safeSetLongUUID(sb, ps, col++, value.getID());
+            } else {
+                safeSetUUID(sb, ps, col++, value.getID());
+            }
+
+            if (sb != null) {
+                log.debug(sb.toString());
+            }
+        }
+        
+    }
+    
+    private class DeletedReadAccessPut implements DeletedEntityPut<DeletedEntity>, PreparedStatementCreator {
+        private boolean update;
+        private Class<? extends DeletedEntity> clz;
+        private DeletedEntity value;
+
+        public DeletedReadAccessPut(Class<? extends DeletedEntity> c, boolean update) {
+            this.clz = c;
+            this.update = update;
+        }
+        
+        @Override
+        public void execute(JdbcTemplate jdbc) {
+            jdbc.update(this);
+        }
+
+        @Override
+        public void setValue(DeletedEntity value) {
+            this.value = value;
+        }
+        
+        @Override
+        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
+            String sql = null;
+            if (update) {
+                sql = getUpdateSQL(clz);
+            } else {
+                sql = getInsertSQL(clz);
+            }
+            PreparedStatement prep = conn.prepareStatement(sql);
+            log.debug(sql);
+            loadValues(prep);
+            return prep;
+        }
+
+        private void loadValues(PreparedStatement ps)
+                throws SQLException {
+            if (value == null) {
+                throw new IllegalStateException("null DeletedEntity");
+            }
+
+            StringBuilder sb = null;
+            if (log.isDebugEnabled()) {
+                sb = new StringBuilder();
+            }
+
+            int col = 1;
+            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
+            safeSetUUID(sb, ps, col++, value.getID());
+
+            if (sb != null) {
+                log.debug(sb.toString());
+            }
+        }
     }
 
     @Override
@@ -2588,7 +2725,7 @@ public class BaseSQLGenerator implements SQLGenerator {
         // subclass must override this until useLongForUUID is usable for all UUID values
         throw new UnsupportedOperationException();
     }
-
+    
     protected Class getClassFromUtype(String utype)
             throws ClassNotFoundException {
         int i = utype.indexOf('.');
@@ -2930,6 +3067,9 @@ public class BaseSQLGenerator implements SQLGenerator {
     }
 
     public RowMapper getDeletedEntityMapper(Class<? extends DeletedEntity> c) {
+        if (DeletedObservation.class.equals(c)) {
+            return new DeletedObservationMapper();
+        }
         return new DeletedEntityMapper(c);
     }
 
@@ -3813,6 +3953,28 @@ public class BaseSQLGenerator implements SQLGenerator {
         }
     }
 
+    private class DeletedObservationMapper implements RowMapper {
+
+        public DeletedObservationMapper() {
+        }
+
+        public DeletedObservation mapRow(ResultSet rs, int row)
+            throws SQLException {
+            int col = 1;
+            String collection = rs.getString(col++);
+            String observationID = rs.getString(col++);
+            ObservationURI uri = new ObservationURI(collection, observationID);
+            Date lastModified = Util.getDate(rs, col++, utcCalendar);
+            UUID id = Util.getUUID(rs, col++);
+            DeletedObservation ret = new DeletedObservation(id, uri);
+            Util.assignDeletedLastModified(ret, lastModified, "lastModified");
+
+            log.debug("found: " + ret);
+            return ret;
+        }
+    }
+    
+    // used for Deleted*ReadAccess only
     private class DeletedEntityMapper implements RowMapper {
 
         private Class<? extends DeletedEntity> entityClass;
@@ -3828,8 +3990,10 @@ public class BaseSQLGenerator implements SQLGenerator {
                 Date lastModified = Util.getDate(rs, col++, utcCalendar);
                 UUID id = Util.getUUID(rs, col++);
 
-                Constructor<? extends DeletedEntity> ctor = entityClass.getConstructor(UUID.class, Date.class);
-                DeletedEntity ret = ctor.newInstance(id, lastModified);
+                Constructor<? extends DeletedEntity> ctor = entityClass.getConstructor(UUID.class);
+                DeletedEntity ret = ctor.newInstance(id);
+                Util.assignDeletedLastModified(ret, lastModified, "lastModified");
+                
                 log.debug("found: " + ret);
                 return ret;
             } catch (Exception bug) {

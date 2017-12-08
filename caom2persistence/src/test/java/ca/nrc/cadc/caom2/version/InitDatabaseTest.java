@@ -73,11 +73,8 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.util.List;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -203,7 +200,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                15, 1, 2, 1
+                3
             };
             Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
 

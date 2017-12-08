@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -98,7 +99,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
      * @param copyConfig 
      */
     public ReadAccessDAO(AbstractCaomEntityDAO copyConfig) {
-        this.computeLastModified = copyConfig.computeLastModified;
+        this.origin = copyConfig.origin;
         this.dataSource = copyConfig.dataSource;
         this.txnManager = copyConfig.txnManager;
         this.gen = copyConfig.gen;
@@ -153,7 +154,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
                     throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
                 }
             }
-            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+            throw new RuntimeException("BUG: query returned an unexpected list type " + result.getClass().getName());
         } finally {
             long dt = System.currentTimeMillis() - t;
             log.debug("GET: " + c.getSimpleName() + " " + assetID + "," + groupID + " " + dt + "ms");
@@ -263,15 +264,18 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     }
 
     private void updateEntity(ReadAccess ra, Skeleton s) {
-        int nsc = ra.getStateCode();
-
+        if (origin && s == null) {
+            CaomUtil.assignID(ra, UUID.randomUUID());
+        }
+        
         digest.reset();
         Util.assignMetaChecksum(ra, ra.computeMetaChecksum(digest), "metaChecksum");
 
-        if (!computeLastModified) {
+        if (!origin) {
             return;
         }
 
+        int nsc = ra.getStateCode();
         boolean delta = false;
         if (s == null) {
             delta = true;

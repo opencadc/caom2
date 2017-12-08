@@ -95,6 +95,14 @@ public interface SQLGenerator {
      */
     String getCurrentTimeSQL();
 
+    /** 
+     * Generate a new CaomEntity ID. This is a surrogate primary key
+     * used in database tables joins, updates, and deletes.
+     * 
+     * @return 
+     */
+    UUID generateID();
+    
     /**
      * Get SQL to select an Observation from a URI.
      *
@@ -167,6 +175,8 @@ public interface SQLGenerator {
     RowMapper getTimestampRowMapper();
 
     EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate);
+    
+    DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> c, boolean isUpdate);
 
     EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey);
 
