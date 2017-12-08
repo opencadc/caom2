@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.harvester;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
@@ -100,9 +99,7 @@ import java.util.concurrent.ExecutionException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
-import org.springframework.jdbc.UncategorizedSQLException;
 
 /**
  *
@@ -431,31 +428,26 @@ public class ObservationHarvester extends Harvester {
                                 }
                             }
 
-                            if (nochecksum || checkChecksumsAlt(o)) {
-                                destObservationDAO.put(o);
-                            } else {
-                                throw new ChecksumError("mismatching checksums");
+                            if (!nochecksum) {
+                                validateChecksum(o);
+                            }
+
+                            // everything is OK
+                            destObservationDAO.put(o);
+                            
+                            if (!skipped) {
+                                 harvestStateDAO.put(state);
                             }
                             
                             if (hs == null) {
                                 // normal harvest mode: try to cleanup skip records immediately
-                                hs = harvestSkip.get(source, cname, o.getURI().getURI());
+                                hs = harvestSkipDAO.get(source, cname, o.getURI().getURI());
                             }
 
                             if (hs != null) {
                                 log.info("delete: " + hs + " " + format(hs.lastModified));
-<<<<<<< HEAD
-                                harvestSkip.delete(hs);
-                            } 
-                            
-                            if (!skipped) {
-                                harvestState.put(state);
-=======
                                 harvestSkipDAO.delete(hs);
-                            } else {
-                                harvestStateDAO.put(state);
->>>>>>> b15c9061f502d98aaebce73d056144caa9cddad6
-                            }
+                            } 
                         } else if (skipped && ow.entity == null) {
                             log.info("delete: " + hs + " " + format(hs.lastModified));
                             harvestSkipDAO.delete(hs);
@@ -492,8 +484,7 @@ public class ObservationHarvester extends Harvester {
                     } else if (oops instanceof ChecksumError) {
                         log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
                         ret.handled++;
-                    } else if (oops instanceof DataIntegrityViolationException
-                            && str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
+                    } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
                         log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
                         ret.handled++;
                     } else if (oops instanceof TransientException) {
@@ -518,13 +509,9 @@ public class ObservationHarvester extends Harvester {
                     } else if (oops instanceof DataAccessResourceFailureException) {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
-                    } else if (oops instanceof UncategorizedSQLException) {
-                        if (str.contains("spherepoly_from_array")) {
+                    } else if (str.contains("spherepoly_from_array")) {
                             log.error("UNDETECTED illegal polygon: " + o.getURI());
                             ret.handled++;
-                        } else {
-                            log.error("unexpected exception", oops);
-                        }
                     } else {
                         log.error("unexpected exception", oops);
                     }
@@ -620,36 +607,19 @@ public class ObservationHarvester extends Harvester {
         return ret;
     }
 
-    private boolean checkChecksums(ObservationState os, Observation o) throws ChecksumError {
-        try {
-            URI calculatedUri = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-
-            log.debug("o.getURI() " + o.getURI());
-            log.debug("os.getURI() " + os.getURI());
-            log.debug("calculatedUri " + calculatedUri);
-            log.debug("o.getAccMetaChecksum() " + o.getAccMetaChecksum());
-            log.debug("os.accMetaChecksum " + os.accMetaChecksum);
-            if (o != null && o.getAccMetaChecksum() != null && os != null && os.accMetaChecksum != null && calculatedUri != null
-                    && o.getAccMetaChecksum().equals(os.accMetaChecksum) && o.getAccMetaChecksum().equals(calculatedUri)) {
-                return true;
-            }
-            return false;
-        } catch (NoSuchAlgorithmException e) {
-            throw new ChecksumError("no MD5 digest algorithm available");
+    private void validateChecksum(Observation o) throws ChecksumError {
+        if (o.getAccMetaChecksum() == null) {
+            return; // no check
         }
-    }
-
-    private boolean checkChecksumsAlt(Observation o) throws ChecksumError {
         try {
             URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
 
-            log.debug("checkChecksumsAlt: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
-            if (o.getAccMetaChecksum() != null && o.getAccMetaChecksum().equals(calculatedChecksum)) {
-                return true;
+            log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+            if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
+                throw new ChecksumError(("checksum mismatch: " + o.getAccMetaChecksum() + " != " + calculatedChecksum));
             }
-            return false;
         } catch (NoSuchAlgorithmException e) {
-            throw new ChecksumError("no MD5 digest algorithm available");
+            throw new RuntimeException("MD5 digest algorithm not available");
         }
     }
 
