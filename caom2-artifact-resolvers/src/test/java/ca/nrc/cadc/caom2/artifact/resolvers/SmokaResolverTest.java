@@ -89,10 +89,9 @@ public class SmokaResolverTest {
 
     String VALID_FILE1 = "SUPE01318470";
     String VALID_FILE2 = "SUPE01318470";
-    String FILE_BASE_URL = "smoka.nao.ac.jp";
+    String BASE_URL = "smoka.nao.ac.jp";
     String FILE_URL_PATH = "/fssearch";
-    String PREVIEW_URL_PATH = "/ijiraq";
-    String PREVIEW_BASE_URL = "gist.github.com";
+    String PREVIEW_URL_PATH = "/qlis/ImagePNG";
 
     // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
     String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
@@ -116,15 +115,16 @@ public class SmokaResolverTest {
 
             Assert.assertEquals(FILE_URL_PATH, url.getPath());
             Assert.assertEquals(SmokaResolver.FILE_URL_QUERY + VALID_FILE1, url.getQuery());
-            Assert.assertEquals(FILE_BASE_URL, url.getHost());
+            Assert.assertEquals(BASE_URL, url.getHost());
 
 
             uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.PREVIEW_URI + "/" + VALID_FILE2;
             uri = new URI(uriStr);
             url = smokaResolver.toURL(uri);
 
-            Assert.assertEquals(PREVIEW_URL_PATH + "/" + VALID_FILE2, url.getPath());
-            Assert.assertEquals(PREVIEW_BASE_URL, url.getHost());
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(SmokaResolver.PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
+            Assert.assertEquals(BASE_URL, url.getHost());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
