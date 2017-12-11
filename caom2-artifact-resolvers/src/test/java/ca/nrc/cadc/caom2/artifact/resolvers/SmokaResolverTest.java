@@ -72,8 +72,6 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -82,54 +80,52 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class NoaoResolverTest {
-    private static final Logger log = Logger.getLogger(NoaoResolverTest.class);
+public class SmokaResolverTest {
+    private static final Logger log = Logger.getLogger(SmokaResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "noao:FOO";
-    String VALID_URI2 = "noao:FOO/bar";
+    String VALID_FILE1 = "SUPE01318470";
+    String VALID_FILE2 = "SUPE01318470";
+    String FILE_BASE_URL = "smoka.nao.ac.jp";
+    String FILE_URL_PATH = "/fssearch";
+    String PREVIEW_URL_PATH = "/ijiraq";
+    String PREVIEW_BASE_URL = "gist.github.com";
 
-    //    URL: http://nsaserver.sdm.noao.edu:7003/?fileRef=c13a_140805_212140_ori.fits.fz
-    //    URI: noao:c13a_140805_212140_ori.fits.fz
-    String PROTOCOL_STR = "http";
-    String BASE_ARTIFACT_URL = "nsaserver.sdm.noao.edu";
-    String URL_QUERY = "fileRef=";
-    String BASE_PATH = "/";
+    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
+    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
 
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
+    SmokaResolver smokaResolver = new SmokaResolver();
 
-    NoaoResolver noaoResolver = new NoaoResolver();
-
-    public NoaoResolverTest() {
+    public SmokaResolverTest() {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(NoaoResolver.SCHEME.equals(noaoResolver.getScheme()));
+    public void testGetSchema() {
+        Assert.assertTrue(SmokaResolver.SCHEME.equals(smokaResolver.getScheme()));
     }
 
     @Test
     public void testValidURI() {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
+            String uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.FILE_URI + "/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = smokaResolver.toURL(uri);
 
-            for (String uriStr : validURIs) {
-                URI uri = new URI(uriStr);
-                URL url = noaoResolver.toURL(uri);
+            Assert.assertEquals(FILE_URL_PATH, url.getPath());
+            Assert.assertEquals(SmokaResolver.FILE_URL_QUERY + VALID_FILE1, url.getQuery());
+            Assert.assertEquals(FILE_BASE_URL, url.getHost());
 
-                // NOAO uses '?' to POST scheme specific part of the URI to the server
-                Assert.assertEquals(URL_QUERY + uri.getSchemeSpecificPart(), url.getQuery());
-                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
-                Assert.assertEquals(BASE_PATH, url.getPath());
-                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
-            }
+
+            uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.PREVIEW_URI + "/" + VALID_FILE2;
+            uri = new URI(uriStr);
+            url = smokaResolver.toURL(uri);
+
+            Assert.assertEquals(PREVIEW_URL_PATH + "/" + VALID_FILE2, url.getPath());
+            Assert.assertEquals(PREVIEW_BASE_URL, url.getHost());
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -140,7 +136,7 @@ public class NoaoResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = noaoResolver.toURL(uri);
+            URL url = smokaResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -153,7 +149,22 @@ public class NoaoResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = noaoResolver.toURL(null);
+            URL url = smokaResolver.toURL(null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidUriType() {
+        try {
+            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = smokaResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
