@@ -40,14 +40,14 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class XMMResolver implements StorageResolver {
+public class XmmResolver implements StorageResolver {
     public static final String SCHEME = "xmm";
-    private static final Logger log = Logger.getLogger(XMMResolver.class);
+    private static final Logger log = Logger.getLogger(XmmResolver.class);
     private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
 
-    public XMMResolver() {
+    public XmmResolver() {
     }
 
     @Override
