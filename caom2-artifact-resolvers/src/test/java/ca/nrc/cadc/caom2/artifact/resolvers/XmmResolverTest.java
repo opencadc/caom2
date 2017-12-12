@@ -82,8 +82,8 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class XMMResolverTest {
-    private static final Logger log = Logger.getLogger(XMMResolverTest.class);
+public class XmmResolverTest {
+    private static final Logger log = Logger.getLogger(XmmResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -101,14 +101,14 @@ public class XMMResolverTest {
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-    XMMResolver xmmResolver = new XMMResolver();
+    XmmResolver xmmResolver = new XmmResolver();
 
-    public XMMResolverTest() {
+    public XmmResolverTest() {
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(XMMResolver.SCHEME.equals(xmmResolver.getScheme()));
+        Assert.assertTrue(XmmResolver.SCHEME.equals(xmmResolver.getScheme()));
     }
 
     @Test

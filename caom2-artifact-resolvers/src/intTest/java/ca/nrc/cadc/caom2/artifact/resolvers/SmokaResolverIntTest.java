@@ -69,9 +69,14 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -80,98 +85,45 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class SmokaResolverTest {
-    private static final Logger log = Logger.getLogger(SmokaResolverTest.class);
+public class SmokaResolverIntTest {
+    private static final Logger log = Logger.getLogger(SmokaResolverIntTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE1 = "SUPE01318470";
-    String VALID_FILE2 = "SUPE01318470";
-    String BASE_URL = "smoka.nao.ac.jp";
-    String FILE_URL_PATH = "/fssearch";
-    String PREVIEW_URL_PATH = "/qlis/ImagePNG";
+    String VALID_FILE_URI = "subaru:file/SUPE01318470";
+    String VALID_PREVIEW_URI = "subaru:preview/SUPE01318470";
 
-    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
-    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
+    SmokaResolver resolver = new SmokaResolver();
 
-    SmokaResolver smokaResolver = new SmokaResolver();
-
-    public SmokaResolverTest() {
+    public SmokaResolverIntTest() {
     }
 
     @Test
-    public void testGetSchema() {
-        Assert.assertTrue(SmokaResolver.SCHEME.equals(smokaResolver.getScheme()));
-    }
+    public void testValidSiteUrl() throws Exception {
+        log.info("starting testValidSiteUrl");
 
-    @Test
-    public void testValidURI() {
         try {
-            String uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.FILE_URI + "/" + VALID_FILE1;
-            URI uri = new URI(uriStr);
-            URL url = smokaResolver.toURL(uri);
+            List<URI> uriList = new ArrayList<URI>();
+            uriList.add(new URI(VALID_FILE_URI));
+            uriList.add(new URI(VALID_PREVIEW_URI));
 
-            Assert.assertEquals(FILE_URL_PATH, url.getPath());
-            Assert.assertEquals(SmokaResolver.FILE_URL_QUERY + VALID_FILE1, url.getQuery());
-            Assert.assertEquals(BASE_URL, url.getHost());
+            for (URI uri : uriList) {
+                URL url = resolver.toURL(uri);
 
-
-            uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.PREVIEW_URI + "/" + VALID_FILE2;
-            uri = new URI(uriStr);
-            url = smokaResolver.toURL(uri);
-
-            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
-            Assert.assertEquals(SmokaResolver.PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
-            Assert.assertEquals(BASE_URL, url.getHost());
+                log.debug("opening connection to: " + url.toString());
+                OutputStream out = new ByteArrayOutputStream();
+                HttpDownload head = new HttpDownload(url, out);
+                head.setHeadOnly(true);
+                head.run();
+                Assert.assertEquals(200, head.getResponseCode());
+                log.info("response code: " + head.getResponseCode());
+            }
 
         } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
         }
     }
-
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = smokaResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = smokaResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidUriType() {
-        try {
-            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
-            URI uri = new URI(uriStr);
-            URL url = smokaResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
 }

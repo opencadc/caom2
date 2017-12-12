@@ -92,11 +92,12 @@ public class NoaoResolverTest {
     String VALID_URI = "noao:FOO";
     String VALID_URI2 = "noao:FOO/bar";
 
-    //    URL: http://nsaserver.sdm.noao.edu:7003/?fileRef=kp973912.fits.gz
-    //    URI: noao:kp973912.fits.gz
+    //    URL: http://nsaserver.sdm.noao.edu:7003/?fileRef=c13a_140805_212140_ori.fits.fz
+    //    URI: noao:c13a_140805_212140_ori.fits.fz
     String PROTOCOL_STR = "http";
     String BASE_ARTIFACT_URL = "nsaserver.sdm.noao.edu";
-    String BASE_PATH = "";
+    String URL_QUERY = "fileRef=";
+    String BASE_PATH = "/";
 
     // There are no tests that will validate the content of the
     // path other than empty.
@@ -124,7 +125,7 @@ public class NoaoResolverTest {
                 URL url = noaoResolver.toURL(uri);
 
                 // NOAO uses '?' to POST scheme specific part of the URI to the server
-                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
+                Assert.assertEquals(URL_QUERY + uri.getSchemeSpecificPart(), url.getQuery());
                 Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
                 Assert.assertEquals(BASE_PATH, url.getPath());
                 Assert.assertEquals(PROTOCOL_STR, url.getProtocol());

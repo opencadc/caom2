@@ -80,8 +80,8 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class XMMResolverIntTest {
-    private static final Logger log = Logger.getLogger(XMMResolverIntTest.class);
+public class XmmResolverIntTest {
+    private static final Logger log = Logger.getLogger(XmmResolverIntTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -89,9 +89,9 @@ public class XMMResolverIntTest {
 
     String VALID_URI = "xmm:not_currently_defined";
 
-    XMMResolver xmmResolver = new XMMResolver();
+    XmmResolver xmmResolver = new XmmResolver();
 
-    public XMMResolverIntTest() {
+    public XmmResolverIntTest() {
     }
 
     @Test

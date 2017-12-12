@@ -1,159 +1,120 @@
-
 /*
  ************************************************************************
- *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
- **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  *
- *  (c) 2017.                            (c) 2017.
- *  Government of Canada                 Gouvernement du Canada
- *  National Research Council            Conseil national de recherches
- *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
- *  All rights reserved                  Tous droits réservés
+ * (c) 2017.                            (c) 2017.
+ * National Research Council            Conseil national de recherches
+ * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ * All rights reserved                  Tous droits reserves
  *
- *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
- *  expressed, implied, or               énoncée, implicite ou légale,
- *  statutory, of any kind with          de quelque nature que ce
- *  respect to the software,             soit, concernant le logiciel,
- *  including without limitation         y compris sans restriction
- *  any warranty of merchantability      toute garantie de valeur
- *  or fitness for a particular          marchande ou de pertinence
- *  purpose. NRC shall not be            pour un usage particulier.
- *  liable in any event for any          Le CNRC ne pourra en aucun cas
- *  damages, whether direct or           être tenu responsable de tout
- *  indirect, special or general,        dommage, direct ou indirect,
- *  consequential or incidental,         particulier ou général,
- *  arising from the use of the          accessoire ou fortuit, résultant
- *  software.  Neither the name          de l'utilisation du logiciel. Ni
- *  of the National Research             le nom du Conseil National de
- *  Council of Canada nor the            Recherches du Canada ni les noms
- *  names of its contributors may        de ses  participants ne peuvent
- *  be used to endorse or promote        être utilisés pour approuver ou
- *  products derived from this           promouvoir les produits dérivés
- *  software without specific prior      de ce logiciel sans autorisation
- *  written permission.                  préalable et particulière
- *                                       par écrit.
+ * NRC disclaims any warranties         Le CNRC denie toute garantie
+ * expressed, implied, or statu-        enoncee, implicite ou legale,
+ * tory, of any kind with respect       de quelque nature que se soit,
+ * to the software, including           concernant le logiciel, y com-
+ * without limitation any war-          pris sans restriction toute
+ * ranty of merchantability or          garantie de valeur marchande
+ * fitness for a particular pur-        ou de pertinence pour un usage
+ * pose.  NRC shall not be liable       particulier.  Le CNRC ne
+ * in any event for any damages,        pourra en aucun cas etre tenu
+ * whether direct or indirect,          responsable de tout dommage,
+ * special or general, consequen-       direct ou indirect, particul-
+ * tial or incidental, arising          ier ou general, accessoire ou
+ * from the use of the software.        fortuit, resultant de l'utili-
+ *                                      sation du logiciel.
  *
- *  This file is part of the             Ce fichier fait partie du projet
- *  OpenCADC project.                    OpenCADC.
- *
- *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
- *  you can redistribute it and/or       vous pouvez le redistribuer ou le
- *  modify it under the terms of         modifier suivant les termes de
- *  the GNU Affero General Public        la “GNU Affero General Public
- *  License as published by the          License” telle que publiée
- *  Free Software Foundation,            par la Free Software Foundation
- *  either version 3 of the              : soit la version 3 de cette
- *  License, or (at your option)         licence, soit (à votre gré)
- *  any later version.                   toute version ultérieure.
- *
- *  OpenCADC is distributed in the       OpenCADC est distribué
- *  hope that it will be useful,         dans l’espoir qu’il vous
- *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
- *  without even the implied             GARANTIE : sans même la garantie
- *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
- *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
- *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
- *  General Public License for           Générale Publique GNU Affero
- *  more details.                        pour plus de détails.
- *
- *  You should have received             Vous devriez avoir reçu une
- *  a copy of the GNU Affero             copie de la Licence Générale
- *  General Public License along         Publique GNU Affero avec
- *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
- *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
- *                                       <http://www.gnu.org/licenses/>.
- *
- *
+ ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.StorageResolver;
-
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.log4j.Logger;
 
+/**
+ * This class can convert a GEMINI URI into a URL.
+ *
+ * @author jeevesh
+ */
 public class SmokaResolver implements StorageResolver {
-
-    private static final String SCHEME = "smoka";
-
-    public static final String DEFAULT_ENDPOINT = "http://smoka.nao.ac.jp/datarequest";
-
-    private final String endPoint;
-
-
-    SmokaResolver(final String endPoint) {
-        this.endPoint = endPoint;
-    }
+    public static final String SCHEME = "subaru";
+    public static final String FILE_URI = "file";
+    public static final String PREVIEW_URI = "preview";
+    public static final String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
+        + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
+        + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
+        + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
+        + "&multiselect_0=SUP&multiselect_0=HSC&obs_mod=IMAG&obs_mod=SPEC&obs_mod=IPOL&multiselect_1=IMAG&multiselect_1=SPEC"
+        + "&multiselect_1=IPOL&multiselect_1=IMAG&multiselect_1=SPEC&multiselect_1=IPOL&data_typ=OBJECT&multiselect_2=OBJECT"
+        + "&multiselect_2=OBJECT&bandwidth_type=FILTER&band=&dispcol=FRAMEID&dispcol=DATE_OBS&dispcol=FITS_SIZE&dispcol=OBS_MODE"
+        + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
+        + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
+        + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
+    public static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+    private static final Logger log = Logger.getLogger(SmokaResolver.class);
+    private static final String BASE_URL = "http://smoka.nao.ac.jp";
+    public static final String PREVIEW_BASE_URL = BASE_URL + "/qlis/ImagePNG";
+    private static final String FILE_BASE_URL = BASE_URL + "/fssearch";
 
     public SmokaResolver() {
-        this(DEFAULT_ENDPOINT);
     }
 
+    @Override
+    public URL toURL(URI uri) {
+        ResolverUtil.validate(uri, SCHEME);
+        String urlStr = "";
+        try {
+            urlStr = createURLFromPath(uri);
 
-    /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
-     */
+            URL url = null;
+            if (urlStr != null) {
+                url = new URL(urlStr);
+            }
+
+            log.debug(uri + " --> " + url);
+            return url;
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: could not generate URL from uri " + urlStr, ex);
+        }
+    }
+
+    private String createURLFromPath(URI uri) {
+        String[] path = uri.getSchemeSpecificPart().split("/");
+        if (path.length != 2) {
+            throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
+        }
+
+        String requestType = path[0];
+        String fileName = path[1];
+        StringBuilder sb = new StringBuilder();
+
+        if (requestType.equals(FILE_URI)) {
+            // Returns a quick search-style URL for SMOKA Search page
+            sb.append(FILE_BASE_URL);
+            sb.append("?");
+            sb.append(FILE_URL_QUERY);
+        } else if (requestType.equals(PREVIEW_URI)) {
+            // Returns a web page reference
+            sb.append(PREVIEW_BASE_URL);
+            sb.append("?");
+            sb.append(PREVIEW_URL_QUERY);
+        } else {
+            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
+        }
+
+        sb.append(fileName);
+
+        return sb.toString();
+    }
+
     @Override
     public String getScheme() {
         return SCHEME;
     }
 
-    /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
-     */
-    @Override
-    public URL toURL(final URI uri) throws IllegalArgumentException {
-        ResolverUtil.validate(uri, getScheme());
-
-        final OutputStream bos = new ByteArrayOutputStream();
-        final OutputStream outputStream = new BufferedOutputStream(bos);
-
-        try {
-            final HttpPost poster = createHttpPost(getPayload(uri), outputStream);
-            poster.run();
-        }
-        catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-
-        return null;
-    }
-
-    private Map<String, Object> getPayload(final URI uri) {
-        final Map<String, Object> payload = new HashMap<>();
-
-        payload.put("frameinfo", getFrameID(uri));
-
-        return payload;
-    }
-
-    String getFrameID(final URI uri) {
-        return uri.getSchemeSpecificPart();
-    }
-
-    HttpPost createHttpPost(final Map<String, Object> payload, final OutputStream outputStream) throws
-        MalformedURLException {
-        final HttpPost post = new HttpPost(new URL(this.endPoint), payload, outputStream);
-
-        post.setFollowRedirects(true);
-
-        return post;
-    }
 }
+
