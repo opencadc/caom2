@@ -110,7 +110,7 @@ public class NoaoResolverTest {
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(NoaoResolver.SCHEME.equals(noaoResolver.getScheme()));
+        Assert.assertTrue(noaoResolver.getScheme().equals(noaoResolver.getScheme()));
     }
 
     @Test

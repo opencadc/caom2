@@ -28,6 +28,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -52,7 +53,7 @@ public class GeminiResolver implements StorageResolver {
 
     @Override
     public URL toURL(URI uri) {
-        this.validate(uri);
+        ResolverUtil.validate(uri, SCHEME);
         String urlStr = "";
         try {
             String path = getPath(uri);
@@ -97,15 +98,7 @@ public class GeminiResolver implements StorageResolver {
         return SCHEME;
     }
 
-    protected void validate(URI uri) {
-        if (uri == null) {
-            throw new IllegalArgumentException(CANNOT_GENERATE_URL + " URI can't be null.");
-        }
 
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("Invalid scheme in " + uri + ". Expected " + SCHEME + ".");
-        }
-    }
 
 }
 

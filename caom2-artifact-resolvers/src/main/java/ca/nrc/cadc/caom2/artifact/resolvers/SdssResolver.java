@@ -1,4 +1,3 @@
-
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -71,38 +70,15 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
-
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-
 
 /**
  * Sloan Digital Sky Survey Resolver implementation.
  */
 public class SdssResolver implements StorageResolver {
-
     private static final String SCHEME = "sdss";
-
-    public static final String DEFAULT_ENDPOINT = "https://dr14.sdss.org/sas/dr14";
-
-    private final String endPoint;
-
-
-    /**
-     * Complete constructor.  Useful for testing.
-     * @param endPoint          The Host endpoint to use.
-     */
-    SdssResolver(final String endPoint) {
-        this.endPoint = endPoint;
-    }
-
-    /**
-     * Default constructor with default end point.
-     */
-    public SdssResolver() {
-        this(DEFAULT_ENDPOINT);
-    }
+    private static final String DEFAULT_ENDPOINT = "https://dr14.sdss.org/sas/dr14/";
 
     /**
      * Returns the scheme for the storage resolver.
@@ -123,16 +99,8 @@ public class SdssResolver implements StorageResolver {
      *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
      */
     @Override
-    public URL toURL(final URI uri) throws IllegalArgumentException {
-        ResolverUtil.validate(uri, getScheme());
-        final String path = uri.getSchemeSpecificPart();
-
-        try
-        {
-            return new URL(endPoint + "/" + path);
-        }
-        catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
+    public URL toURL(URI uri) throws IllegalArgumentException {
+        ResolverUtil.validate(uri, SCHEME);
+        return ResolverUtil.createURLFromPath(uri, DEFAULT_ENDPOINT);
     }
 }

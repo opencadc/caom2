@@ -90,6 +90,21 @@ public class SmokaResolverTest {
     String VALID_FILE1 = "SUPE01318470";
     String VALID_FILE2 = "SUPE01318470";
     String BASE_URL = "smoka.nao.ac.jp";
+
+    // Copied from SmokaResolver for use in testing
+    String FILE_URI = "file";
+    String PREVIEW_URI = "preview";
+    String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
+        + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
+        + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
+        + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
+        + "&multiselect_0=SUP&multiselect_0=HSC&obs_mod=IMAG&obs_mod=SPEC&obs_mod=IPOL&multiselect_1=IMAG&multiselect_1=SPEC"
+        + "&multiselect_1=IPOL&multiselect_1=IMAG&multiselect_1=SPEC&multiselect_1=IPOL&data_typ=OBJECT&multiselect_2=OBJECT"
+        + "&multiselect_2=OBJECT&bandwidth_type=FILTER&band=&dispcol=FRAMEID&dispcol=DATE_OBS&dispcol=FITS_SIZE&dispcol=OBS_MODE"
+        + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
+        + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
+        + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
+    String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
     String FILE_URL_PATH = "/fssearch";
     String PREVIEW_URL_PATH = "/qlis/ImagePNG";
 
@@ -103,27 +118,27 @@ public class SmokaResolverTest {
 
     @Test
     public void testGetSchema() {
-        Assert.assertTrue(SmokaResolver.SCHEME.equals(smokaResolver.getScheme()));
+        Assert.assertTrue(smokaResolver.getScheme().equals(smokaResolver.getScheme()));
     }
 
     @Test
     public void testValidURI() {
         try {
-            String uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.FILE_URI + "/" + VALID_FILE1;
+            String uriStr = smokaResolver.getScheme() + ":" + FILE_URI + "/" + VALID_FILE1;
             URI uri = new URI(uriStr);
             URL url = smokaResolver.toURL(uri);
 
             Assert.assertEquals(FILE_URL_PATH, url.getPath());
-            Assert.assertEquals(SmokaResolver.FILE_URL_QUERY + VALID_FILE1, url.getQuery());
+            Assert.assertEquals(FILE_URL_QUERY + VALID_FILE1, url.getQuery());
             Assert.assertEquals(BASE_URL, url.getHost());
 
 
-            uriStr = SmokaResolver.SCHEME + ":" + SmokaResolver.PREVIEW_URI + "/" + VALID_FILE2;
+            uriStr = smokaResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
             uri = new URI(uriStr);
             url = smokaResolver.toURL(uri);
 
             Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
-            Assert.assertEquals(SmokaResolver.PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
+            Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
             Assert.assertEquals(BASE_URL, url.getHost());
 
         } catch (Exception unexpected) {

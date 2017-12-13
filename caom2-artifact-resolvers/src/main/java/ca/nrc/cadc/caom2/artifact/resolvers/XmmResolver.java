@@ -30,7 +30,6 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Logger;
@@ -44,31 +43,32 @@ public class XmmResolver implements StorageResolver {
     public static final String SCHEME = "xmm";
     private static final Logger log = Logger.getLogger(XmmResolver.class);
     private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
-    private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
-
 
     public XmmResolver() {
     }
 
+    /**
+     * Returns the scheme for the storage resolver.
+     *
+     * @return a String representing the schema.
+     */
     @Override
     public String getScheme() {
         return SCHEME;
     }
 
+    /**
+     * Convert the specified URI to one or more URL(s).
+     *
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     */
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-        String s = "";
-        try {
-            s = ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
-            URL url = null;
-            url = new URL(s);
-
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(CANNOT_GET_URL + s, ex);
-        }
+        return ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
     }
 
 }

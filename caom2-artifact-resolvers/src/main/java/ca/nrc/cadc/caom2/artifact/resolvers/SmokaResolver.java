@@ -41,10 +41,10 @@ import org.apache.log4j.Logger;
  * @author jeevesh
  */
 public class SmokaResolver implements StorageResolver {
-    public static final String SCHEME = "subaru";
-    public static final String FILE_URI = "file";
-    public static final String PREVIEW_URI = "preview";
-    public static final String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
+    private static final String SCHEME = "subaru";
+    private static final String FILE_URI = "file";
+    private static final String PREVIEW_URI = "preview";
+    private static final String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
         + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
         + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
         + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
@@ -54,35 +54,39 @@ public class SmokaResolver implements StorageResolver {
         + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
         + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
         + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
-    public static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+    private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
     private static final Logger log = Logger.getLogger(SmokaResolver.class);
     private static final String BASE_URL = "http://smoka.nao.ac.jp";
-    public static final String PREVIEW_BASE_URL = BASE_URL + "/qlis/ImagePNG";
+    private static final String PREVIEW_BASE_URL = BASE_URL + "/qlis/ImagePNG";
     private static final String FILE_BASE_URL = BASE_URL + "/fssearch";
 
     public SmokaResolver() {
     }
 
+    /**
+     * Convert the specified URI to one or more URL(s).
+     *
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     */
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-        String urlStr = "";
-        try {
-            urlStr = createURLFromPath(uri);
-
-            URL url = null;
-            if (urlStr != null) {
-                url = new URL(urlStr);
-            }
-
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: could not generate URL from uri " + urlStr, ex);
-        }
+        return createURLFromPath(uri);
     }
 
-    private String createURLFromPath(URI uri) {
+    /**
+     * Validate path portion of URI for structure and create URL if possible
+     *
+     * @param uri
+     * @return URL
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     */
+    private URL createURLFromPath(URI uri) {
+        URL newUrl = null;
         String[] path = uri.getSchemeSpecificPart().split("/");
         if (path.length != 2) {
             throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
@@ -90,27 +94,33 @@ public class SmokaResolver implements StorageResolver {
 
         String requestType = path[0];
         String fileName = path[1];
-        StringBuilder sb = new StringBuilder();
+        String sb = "";
 
         if (requestType.equals(FILE_URI)) {
             // Returns a quick search-style URL for SMOKA Search page
-            sb.append(FILE_BASE_URL);
-            sb.append("?");
-            sb.append(FILE_URL_QUERY);
+            sb = FILE_BASE_URL + "?" + FILE_URL_QUERY + fileName;
         } else if (requestType.equals(PREVIEW_URI)) {
             // Returns a web page reference
-            sb.append(PREVIEW_BASE_URL);
-            sb.append("?");
-            sb.append(PREVIEW_URL_QUERY);
+            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + fileName;
         } else {
             throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
         }
 
-        sb.append(fileName);
+        try {
+            newUrl = new URL(sb);
+            log.debug(uri + " --> " + newUrl);
+            return newUrl;
+        } catch (MalformedURLException ex) {
+            throw new IllegalArgumentException("Malformed URI: could not generate URL from uri " + sb, ex);
+        }
 
-        return sb.toString();
     }
 
+    /**
+     * Returns the scheme for the storage resolver.
+     *
+     * @return a String representing the schema.
+     */
     @Override
     public String getScheme() {
         return SCHEME;
