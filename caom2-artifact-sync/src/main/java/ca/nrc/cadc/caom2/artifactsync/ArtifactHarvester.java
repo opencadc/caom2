@@ -78,7 +78,6 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
-import ca.nrc.cadc.caom2.persistence.DatabaseTransactionManager;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 
 import java.security.PrivilegedExceptionAction;
@@ -157,11 +156,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
             for (ObservationState observationState : observationStates) {
 
-                DatabaseTransactionManager txnMgr = new DatabaseTransactionManager(observationDAO.getDataSource());
-
                 try {
 
-                    txnMgr.startTransaction();
+                    observationDAO.getTransactionManager().startTransaction();
 
                     Observation observation = observationDAO.get(observationState.getURI());
                     for (Plane plane : observation.getPlanes()) {
@@ -228,11 +225,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                         log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
                     }
                 } catch (Throwable t) {
-                    txnMgr.rollbackTransaction();
+                    observationDAO.getTransactionManager().rollbackTransaction();
                     throw t;
                 } finally {
-                    if (txnMgr.isOpen()) {
-                        txnMgr.commitTransaction();
+                    if (observationDAO.getTransactionManager().isOpen()) {
+                        observationDAO.getTransactionManager().commitTransaction();
                     }
                 }
             }

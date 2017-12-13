@@ -167,6 +167,7 @@ public class HarvestSkipURIDAO {
             throw new IllegalArgumentException("source and cname are required");
         }
 
+        // TODO: re-implement with PreparedStatement
         String sql = "DELETE FROM " + tableName + " WHERE source = '" + source + "' and cname = '" + cname + "'";
         jdbc.update(sql);
     }
