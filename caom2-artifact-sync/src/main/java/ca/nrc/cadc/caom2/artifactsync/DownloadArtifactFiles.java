@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -128,8 +129,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
 
         for (HarvestSkipURI skip : artifacts) {
-            ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
-            tasks.add(downloader);
+            // TEMPORARY HACK THAT IS TO BE REMOVED: DON'T DOWNLOAD THOSE WITH PREVIOUS ERRORS
+            if (skip.errorMessage == null || skip.errorMessage.trim().equals("")) {
+                ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
+                tasks.add(downloader);
+            } else {
+                log.debug("Skipping " + skip + " due to previous download error");
+            }
         }
         // set the start date so that the next batch resumes after our last record
         if (workCount > 0) {
