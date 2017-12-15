@@ -216,8 +216,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                                     if (!dryrun) {
                                         log.debug("Adding artifact to skip table: " + artifact.getURI());
                                         // set the message to be an empty string
-                                        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI
-                                            (), "");
+                                        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS,
+                                            artifact.getURI(), "");
                                         harvestSkipURIDAO.put(skip);
                                         added = true;
                                     }

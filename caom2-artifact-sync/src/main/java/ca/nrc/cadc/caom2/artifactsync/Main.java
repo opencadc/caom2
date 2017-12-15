@@ -171,11 +171,16 @@ public class Main {
                 log.info("authentication using: " + meth);
             }
 
-            final Mode mode;
+            Mode mode = Mode.getDefault();
             if (am.isSet(MODE_ARG)) {
-                mode = Mode.valueOf(am.getValue(MODE_ARG).toUpperCase());
-            } else {
-                mode = Mode.getDefault();
+                final String modeValue = am.getValue(MODE_ARG);
+                try {
+                    mode = Mode.valueOf(modeValue.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.error(String.format("Unrecognized mode value '%s'.", modeValue));
+                    usage();
+                    System.exit(-1);
+                }
             }
 
             int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
@@ -322,5 +327,21 @@ public class Main {
         sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());
+    }
+
+    public enum Mode {
+        HARVEST, DOWNLOAD, DUAL;
+
+        static Mode getDefault() {
+            return DUAL;
+        }
+
+        boolean isDownloadMode() {
+            return (this == DOWNLOAD) || (this == DUAL);
+        }
+
+        boolean isHarvestMode() {
+            return (this == HARVEST) || (this == DUAL);
+        }
     }
 }
