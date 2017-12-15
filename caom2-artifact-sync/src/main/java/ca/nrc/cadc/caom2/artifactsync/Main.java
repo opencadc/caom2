@@ -97,6 +97,7 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
+    private static final String MODE_ARG = "mode";
 
     public static void main(String[] args) {
         try {
@@ -170,6 +171,18 @@ public class Main {
                 log.info("authentication using: " + meth);
             }
 
+            Mode mode = Mode.getDefault();
+            if (am.isSet(MODE_ARG)) {
+                final String modeValue = am.getValue(MODE_ARG);
+                try {
+                    mode = Mode.valueOf(modeValue.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.error(String.format("Unrecognized mode value '%s'.", modeValue));
+                    usage();
+                    System.exit(-1);
+                }
+            }
+
             int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
             if (am.isSet("batchsize")) {
                 try {
@@ -220,7 +233,7 @@ public class Main {
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             String[] dbInfo = dbParam.split("[.]");
-            Map<String, Object> daoConfig = new HashMap<String, Object>(2);
+            Map<String, Object> daoConfig = new HashMap<>(2);
             daoConfig.put("server", dbInfo[0]);
             daoConfig.put("database", dbInfo[1]);
             daoConfig.put("schema", dbInfo[2]);
@@ -240,8 +253,8 @@ public class Main {
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
-            boolean stopHarvest = false;
-            boolean stopDownload = false;
+            boolean stopHarvest = !mode.isHarvestMode();
+            boolean stopDownload = !mode.isDownloadMode();
             do {
                 if (loop) {
                     log.info("-- STARTING LOOP #" + loopNum + " --");
@@ -303,6 +316,8 @@ public class Main {
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
+        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), " +
+            "just harvest to the database, or just initiate downloads.");
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
@@ -312,5 +327,21 @@ public class Main {
         sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());
+    }
+
+    public enum Mode {
+        HARVEST, DOWNLOAD, DUAL;
+
+        static Mode getDefault() {
+            return DUAL;
+        }
+
+        boolean isDownloadMode() {
+            return (this == DOWNLOAD) || (this == DUAL);
+        }
+
+        boolean isHarvestMode() {
+            return (this == HARVEST) || (this == DUAL);
+        }
     }
 }
