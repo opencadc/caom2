@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
@@ -84,6 +85,7 @@ import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -167,6 +169,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             endMessage.append("\"failureCount\":\"").append(results.size() - successes).append("\"");
             endMessage.append(",");
             endMessage.append("\"time\":\"").append(end).append("\"");
+            endMessage.append(",");
+            endMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
             endMessage.append(",");
             endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
             endMessage.append(",");
@@ -311,9 +315,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "Upload error: " + t.getMessage();
             } finally {
-                if (byteCounter != null) {
-                    bytesTransferred = byteCounter.getByteCount();
-                }
+                bytesTransferred = byteCounter.getByteCount();
             }
         }
     }
@@ -334,6 +336,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
@@ -352,8 +356,20 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             startMessage.append(",");
             startMessage.append("\"message\":\"").append(result.message).append("\"");
         }
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
 
+    /**
+     * Obtain the current UTC Date and format it.
+     * TODO - This really ought to go into org.opencadc:cadc-util:ca.nrc.cadc.DateUtil.
+     * TODO - 2017.12.15  jenkinsd
+     * @return  String formatted UTC date.  Never null
+     */
+    private String currentDateUTC() {
+        return DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_Z, DateUtil
+            .UTC).format(Calendar.getInstance(DateUtil.UTC).getTime());
+    }
 }

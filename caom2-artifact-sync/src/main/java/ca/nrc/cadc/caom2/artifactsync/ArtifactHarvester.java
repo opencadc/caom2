@@ -79,8 +79,10 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.date.DateUtil;
 
 import java.security.PrivilegedExceptionAction;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -243,6 +245,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             batchMessage.append("\"added\":\"").append(downloadCount).append("\"");
             batchMessage.append(",");
             batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start).append("\"");
+            batchMessage.append(",");
+            batchMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
             batchMessage.append("}");
             log.info(batchMessage.toString());
         }
@@ -253,6 +257,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
@@ -269,8 +275,20 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             startMessage.append(",");
             startMessage.append("\"message\":\"").append(message).append("\"");
         }
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
 
+    /**
+     * Obtain the current UTC Date and format it.
+     * TODO - This really ought to go into org.opencadc:cadc-util:ca.nrc.cadc.DateUtil.
+     * TODO - 2017.12.15  jenkinsd
+     * @return  String formatted UTC date.  Never null
+     */
+    private String currentDateUTC() {
+        return DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_Z, DateUtil
+            .UTC).format(Calendar.getInstance(DateUtil.UTC).getTime());
+    }
 }
