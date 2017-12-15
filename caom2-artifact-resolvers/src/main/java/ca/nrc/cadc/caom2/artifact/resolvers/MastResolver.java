@@ -29,9 +29,11 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -42,7 +44,8 @@ import org.apache.log4j.Logger;
 public class MastResolver implements StorageResolver {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
+    //private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file";
+    private static final String MAST_BASE_ARTIFACT_URL = "http://mastpartners.stsci.edu/portal/Download/file";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
 
