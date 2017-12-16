@@ -253,14 +253,14 @@ public class Main {
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
-            boolean stopHarvest = !mode.isHarvestMode();
-            boolean stopDownload = !mode.isDownloadMode();
+            boolean stopHarvest = false;
+            boolean stopDownload = false;
             do {
                 if (loop) {
                     log.info("-- STARTING LOOP #" + loopNum + " --");
                 }
 
-                if (!stopHarvest) {
+                if (!stopHarvest && mode.isHarvestMode()) {
                     if (subject != null) {
                         stopHarvest = Subject.doAs(subject, harvester) == 0;
                     } else {
@@ -268,7 +268,7 @@ public class Main {
                     }
                 }
 
-                if (!stopDownload && !dryrun) {
+                if (!stopDownload && mode.isDownloadMode() && !dryrun) {
                     if (subject != null) {
                         stopDownload = Subject.doAs(subject, downloader) == 0;
                     } else {
