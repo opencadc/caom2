@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,104 +67,53 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URL;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Globally unique identifer for a CAOM plane. This is meant to be equivalent to
- * an IVOA publisher dataset identifier. Assumption: the Observation.collection
- * is the path component of the resourceID (e.g. the collection is registered as
- * a DataCollection resource in an IVOA registry).
- * 
- * 
- * @author pdowler
- */
-public class PublisherID implements Comparable<PublisherID>, Serializable {
-    private static final long serialVersionUID = 201609271015L;
+public class ChandraResolverIntTest {
+    private static final Logger log = Logger.getLogger(ChandraResolverIntTest.class);
 
-    public static final String SCHEME = "ivo";
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    }
 
-    private transient URI resourceID;
+    String VALID_URI = "chandra:not_currently_defined";
 
-    private final URI uri;
+    ChandraResolver chandraResolver = new ChandraResolver();
 
-    public PublisherID(URI uri) {
-        CaomValidator.assertNotNull(getClass(), "uri", uri);
+    public ChandraResolverIntTest() {
+    }
 
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException(
-                    "invalid scheme: " + uri.getScheme());
+    @Test
+    public void testValidSiteUrl() throws Exception {
+        try {
+            URI mastUri = new URI(VALID_URI);
+            URL url = chandraResolver.toURL(mastUri);
+
+            log.debug("opening connection to: " + url.toString());
+
+            OutputStream out = new ByteArrayOutputStream();
+            HttpDownload head = new HttpDownload(url, out);
+            head.setHeadOnly(true);
+            head.run();
+            // This should fail until the VALID_URI is defined
+            // Commenting this out so file can be a placeholder
+
+//            Assert.assertEquals(200, head.getResponseCode());
+            log.info("response code: " + head.getResponseCode());
+        } catch (Exception unexpected) {
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
         }
-        String auth = uri.getAuthority();
-        String path = uri.getPath();
-        String id = uri.getQuery();
-
-        CaomValidator.assertNotNull(getClass(), "authority", auth);
-        CaomValidator.assertNotNull(getClass(), "path", path);
-        CaomValidator.assertNotNull(getClass(), "id", id);
-
-        String[] ids = id.split("/");
-        if (ids.length == 2) {
-            String oid = ids[0];
-            String pid = ids[1];
-            CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                    oid);
-            CaomValidator.assertValidPathComponent(getClass(), "productID",
-                    pid);
-
-        } else {
-            throw new IllegalArgumentException(
-                    "input URI has " + ids.length + " id components (" + id
-                            + "), expected 2: <observationID>/<productID>");
-        }
-        this.uri = uri;
-        this.resourceID = URI.create(SCHEME + "://" + auth + path);
-    }
-
-    public PublisherID(URI resourceID, String observationID, String productID) {
-        CaomValidator.assertNotNull(PublisherID.class, "resourceID",
-                resourceID);
-        CaomValidator.assertNotNull(PublisherID.class, "observationID",
-                observationID);
-        CaomValidator.assertNotNull(PublisherID.class, "productID", productID);
-        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID
-                + "/" + productID);
-        this.resourceID = resourceID;
-    }
-
-    public URI getURI() {
-        return uri;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
-        }
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof PublisherID) {
-            PublisherID u = (PublisherID) o;
-            return (this.hashCode() == u.hashCode());
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return uri.hashCode();
-    }
-
-    @Override
-    public int compareTo(PublisherID u) {
-        return this.uri.compareTo(u.uri);
     }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,104 +67,98 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Globally unique identifer for a CAOM plane. This is meant to be equivalent to
- * an IVOA publisher dataset identifier. Assumption: the Observation.collection
- * is the path component of the resourceID (e.g. the collection is registered as
- * a DataCollection resource in an IVOA registry).
- * 
- * 
- * @author pdowler
+ * @author hjeeves
  */
-public class PublisherID implements Comparable<PublisherID>, Serializable {
-    private static final long serialVersionUID = 201609271015L;
+public class XmmResolverTest {
+    private static final Logger log = Logger.getLogger(XmmResolverTest.class);
 
-    public static final String SCHEME = "ivo";
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    }
 
-    private transient URI resourceID;
+    String VALID_URI = "xmm:FOO";
+    String VALID_URI2 = "xmm:FOO/bar";
 
-    private final URI uri;
+    //    http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?
+    String PROTOCOL_STR = "http";
+    String BASE_ARTIFACT_URL = "nxsa.esac.esa.int";
+    String BASE_PATH = "/nxsa-sl/servlet/data-action-aio";
 
-    public PublisherID(URI uri) {
-        CaomValidator.assertNotNull(getClass(), "uri", uri);
+    // There are no tests that will validate the content of the
+    // path other than empty.
+    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
 
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException(
-                    "invalid scheme: " + uri.getScheme());
+    XmmResolver xmmResolver = new XmmResolver();
+
+    public XmmResolverTest() {
+    }
+
+    @Test
+    public void testGetScheme() {
+        Assert.assertTrue(XmmResolver.SCHEME.equals(xmmResolver.getScheme()));
+    }
+
+    @Test
+    public void testValidURI() {
+        try {
+            List<String> validURIs = new ArrayList<String>();
+            validURIs.add(VALID_URI);
+            validURIs.add(VALID_URI2);
+
+            for (String uriStr : validURIs) {
+                URI uri = new URI(uriStr);
+                URL url = xmmResolver.toURL(uri);
+
+                // XMM uses '?' to POST scheme specific part of the URI to the server
+                Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
+                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
+                Assert.assertEquals(BASE_PATH, url.getPath());
+                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        String auth = uri.getAuthority();
-        String path = uri.getPath();
-        String id = uri.getQuery();
+    }
 
-        CaomValidator.assertNotNull(getClass(), "authority", auth);
-        CaomValidator.assertNotNull(getClass(), "path", path);
-        CaomValidator.assertNotNull(getClass(), "id", id);
-
-        String[] ids = id.split("/");
-        if (ids.length == 2) {
-            String oid = ids[0];
-            String pid = ids[1];
-            CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                    oid);
-            CaomValidator.assertValidPathComponent(getClass(), "productID",
-                    pid);
-
-        } else {
-            throw new IllegalArgumentException(
-                    "input URI has " + ids.length + " id components (" + id
-                            + "), expected 2: <observationID>/<productID>");
+    @Test
+    public void testInvalidURIBadScheme() {
+        try {
+            URI uri = new URI(INVALID_URI_BAD_SCHEME);
+            URL url = xmmResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        this.uri = uri;
-        this.resourceID = URI.create(SCHEME + "://" + auth + path);
     }
 
-    public PublisherID(URI resourceID, String observationID, String productID) {
-        CaomValidator.assertNotNull(PublisherID.class, "resourceID",
-                resourceID);
-        CaomValidator.assertNotNull(PublisherID.class, "observationID",
-                observationID);
-        CaomValidator.assertNotNull(PublisherID.class, "productID", productID);
-        this.uri = URI.create(resourceID.toASCIIString() + "?" + observationID
-                + "/" + productID);
-        this.resourceID = resourceID;
-    }
-
-    public URI getURI() {
-        return uri;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
+    @Test
+    public void testInvalidNullURI() {
+        try {
+            URL url = xmmResolver.toURL(null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof PublisherID) {
-            PublisherID u = (PublisherID) o;
-            return (this.hashCode() == u.hashCode());
-        }
-        return false;
     }
 
-    @Override
-    public int hashCode() {
-        return uri.hashCode();
-    }
-
-    @Override
-    public int compareTo(PublisherID u) {
-        return this.uri.compareTo(u.uri);
-    }
 }
