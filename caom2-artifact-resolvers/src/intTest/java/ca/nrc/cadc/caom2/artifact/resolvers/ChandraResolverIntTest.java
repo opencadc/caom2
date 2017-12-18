@@ -111,6 +111,8 @@ public class ChandraResolverIntTest {
 
 //            Assert.assertEquals(200, head.getResponseCode());
             log.info("response code: " + head.getResponseCode());
+        } catch (UnsupportedOperationException expected) {
+            log.info("caught expected: " + expected);
         } catch (Exception unexpected) {
             log.error("Unexpected exception", unexpected);
             Assert.fail("Unexpected exception: " + unexpected);

@@ -69,16 +69,14 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -89,7 +87,7 @@ public class SdssResolverIntTest {
     private static final Logger LOGGER = Logger.getLogger(MastResolverIntTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     private final SdssResolver resolver = new SdssResolver();
