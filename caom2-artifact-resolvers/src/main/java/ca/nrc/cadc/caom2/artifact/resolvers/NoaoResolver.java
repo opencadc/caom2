@@ -32,18 +32,17 @@ import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import java.net.URI;
 import java.net.URL;
-import org.apache.log4j.Logger;
 
 /**
  * This class can convert a MAST URI into a URL.
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-    public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://masttest.stsci.edu/partners/download/file/";
+public class NoaoResolver implements StorageResolver {
+    private static final String SCHEME = "noao";
+    private static final String BASE_ARTIFACT_URL = "http://nsaserver.sdm.noao.edu:7003/?fileRef=";
 
-    public MastResolver() {
+    public NoaoResolver() {
     }
 
     /**
@@ -67,7 +66,7 @@ public class MastResolver implements StorageResolver {
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+        return ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
     }
 
 }
