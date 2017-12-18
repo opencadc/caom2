@@ -28,10 +28,11 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.URI;
 import java.net.URL;
+
 
 /**
  * This class can convert a CHANDRA URI into a URL.
@@ -41,9 +42,6 @@ import java.net.URL;
  * @author jeevesh
  */
 public class ChandraResolver implements StorageResolver {
-    public static final String SCHEME = "chandra";
-    private static final String BASE_ARTIFACT_URL = "http://";
-
     public ChandraResolver() {
     }
 
@@ -54,7 +52,7 @@ public class ChandraResolver implements StorageResolver {
      */
     @Override
     public String getScheme() {
-        return SCHEME;
+        throw new UnsupportedOperationException("getScheme method currently not supported");
     }
 
     /**
@@ -67,9 +65,6 @@ public class ChandraResolver implements StorageResolver {
      */
     @Override
     public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
+        throw new UnsupportedOperationException("toURL method currently not supported");
     }
-
 }
-
