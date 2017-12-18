@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
@@ -563,14 +562,15 @@ public class BaseSQLGenerator implements SQLGenerator {
         return "select CURRENT_TIMESTAMP";
     }
 
-    
+    /**
+     * Default implementation: return the argument ID as-is.
+     * 
+     * @param id
+     * @return id
+     */
     @Override
-    public UUID generateID() {
-        if (useLongForUUID) {
-            long lsb = CaomIDGenerator.getInstance().generateID();
-            return new UUID(0L, lsb);
-        }
-        return UUID.randomUUID();
+    public UUID generateID(UUID id) {
+        return id;
     }
 
     

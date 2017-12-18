@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
@@ -230,16 +229,6 @@ public abstract class AbstractObservationDAOTest
             log.error("setup DataSource failed", ex);
             throw ex;
         }
-    }
-    
-    protected UUID genID()
-    {
-        if (useLongForUUID)
-        {
-            Long lsb = CaomIDGenerator.getInstance().generateID();
-            return new UUID(0L, lsb);
-        }
-        return UUID.randomUUID();
     }
     
     @Before
@@ -489,7 +478,7 @@ public abstract class AbstractObservationDAOTest
             UUID notFound = dao.getID(uri);
             Assert.assertNull(uri.toString(), notFound);
             
-            UUID uuid = genID();
+            UUID uuid = UUID.randomUUID();
             ObservationURI nuri = dao.getURI(uuid);
             Assert.assertNull(uuid.toString(), nuri);
             Observation nobs = dao.get(uuid);
@@ -546,9 +535,6 @@ public abstract class AbstractObservationDAOTest
             //txnManager.startTransaction();
             dao.delete(orig.getID());
             //txnManager.commitTransaction();
-            
-            // origin: check that UUID did change during put
-            Assert.assertNotEquals("origin UUID", externalID, retrieved.getID());
             
             // EXISTS
             //txnManager.startTransaction();

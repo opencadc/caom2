@@ -552,7 +552,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     // assign if lastModified changed or a child's maxLastModified changes
     private void updateEntity(Observation entity, ObservationSkeleton s, Date now) {
         if (origin && s == null) {
-            CaomUtil.assignID(entity, gen.generateID());
+            CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
         
         if (origin && s != null) {
@@ -612,7 +612,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now) {
         if (origin && s == null) {
-            CaomUtil.assignID(entity, gen.generateID());
+            CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
         
         if (origin && s != null) {
@@ -670,7 +670,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     private boolean updateEntity(Artifact entity, ArtifactSkeleton s, Date now) {
         if (origin && s == null) {
-            CaomUtil.assignID(entity, gen.generateID());
+            CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
         
         if (origin && s != null) {
@@ -728,7 +728,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     private boolean updateEntity(Part entity, PartSkeleton s, Date now) {
         if (origin && s == null) {
-            CaomUtil.assignID(entity, gen.generateID());
+            CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
         
         if (origin && s != null) {
@@ -795,7 +795,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     private boolean updateEntity(Chunk entity, ChunkSkeleton s, Date now) {
         if (origin && s == null) {
-            CaomUtil.assignID(entity, gen.generateID());
+            CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
         
         if (origin && s != null) {
