@@ -19,3 +19,6 @@ partition by roundrobin 16
 create index i_lastModified on caom2_DeletedObservation (lastModified)
 ;
 
+grant select on caom2_DeletedObservation to public;
+
+grant insert, update, delete on caom2_DeletedObservation to caom2;

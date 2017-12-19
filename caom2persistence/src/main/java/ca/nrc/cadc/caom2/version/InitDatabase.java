@@ -89,7 +89,7 @@ public class InitDatabase {
 
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
-    // caom2persistence 2.3.11 modifies DeletedObservation table
+    // caom2persistence 2.3.12 modifies DeletedObservation table
     public static final String MODEL_NAME = "CAOM";
     public static final String MODEL_VERSION = "2.3.12";
     public static final String PREV_MODEL_VERSION = "2.3.5";
