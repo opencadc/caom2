@@ -436,7 +436,7 @@ public class ObservationHarvester extends Harvester {
                             destObservationDAO.put(o);
                             
                             if (!skipped) {
-                                 harvestStateDAO.put(state);
+                                harvestStateDAO.put(state);
                             }
                             
                             if (hs == null) {
@@ -510,8 +510,8 @@ public class ObservationHarvester extends Harvester {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
                     } else if (str.contains("spherepoly_from_array")) {
-                            log.error("UNDETECTED illegal polygon: " + o.getURI());
-                            ret.handled++;
+                        log.error("UNDETECTED illegal polygon: " + o.getURI());
+                        ret.handled++;
                     } else {
                         log.error("unexpected exception", oops);
                     }

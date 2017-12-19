@@ -63,10 +63,9 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.repo.integration;
-
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Observation;
@@ -90,30 +89,31 @@ import org.junit.Test;
 
 /**
  * Integration tests for the deleted observation resource.
- * 
+ *
  * @author pdowler
  */
 public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
+
     private static final Logger log = Logger.getLogger(CaomRepoDeletedTest.class);
 
     private final URI resourceID;
-    
+
     public CaomRepoDeletedTest(URI resourceID, String pem1, String pem2, String pem3) {
         super(resourceID, Standards.CAOM2REPO_DEL_23, pem1, pem2, pem3);
         this.resourceID = resourceID;
     }
-    
+
     @Test
     public void testListCollections() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(new URL(baseHTTPURL), bos);
             get.run();
-            
+
             Assert.assertNull("testListCollections", get.getThrowable());
-            Assert.assertEquals("testListCollections", 200,  get.getResponseCode());
+            Assert.assertEquals("testListCollections", 200, get.getResponseCode());
             Assert.assertEquals("testListCollections", "text/tab-separated-values", get.getContentType());
-            
+
             boolean found = false;
             LineNumberReader r = new LineNumberReader(new InputStreamReader(new ByteArrayInputStream(bos.toByteArray())));
             String line = r.readLine();
@@ -124,36 +124,37 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
                 line = r.readLine();
             }
             Assert.assertTrue("testListCollections: found " + TEST_COLLECTION, found);
-            
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testListDeletedDenied() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(new URL(baseHTTPURL + "/" + TEST_COLLECTION), bos);
             get.run();
-            
+
             Assert.assertNotNull("testListDeletedDenied", get.getThrowable());
-            Assert.assertEquals("testListDeletedDenied permission denied", 403,  get.getResponseCode());
-            
+            Assert.assertEquals("testListDeletedDenied permission denied", 403, get.getResponseCode());
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     // need a separate instance of base class to mess with content
     private class HackRepoClient extends CaomRepoBaseIntTests {
+
         HackRepoClient(URI resourceID) {
             super(resourceID, Standards.CAOM2REPO_OBS_23, null, null, null);
         }
     }
-    
+
     @Test
     public void testListDeletedSuccess() {
         try {
@@ -162,36 +163,36 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
             final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             Observation obs = new SimpleObservation(TEST_COLLECTION, "testListDeletedSuccess-" + UUID.randomUUID().toString());
             log.info("setup: " + obs.getURI());
-            
+
             final long t1 = System.currentTimeMillis();
             rc.putObservation(obs, subject1, 200, "OK", null);
             obs = rc.getObservation(obs.getURI().getURI().toASCIIString(), subject1, 200, null, null);
             Assert.assertNotNull("test setup", obs);
             final long t2 = System.currentTimeMillis();
             final long st = obs.getMaxLastModified().getTime(); // between t1 and t2 but offset by client-server time diff
-            
+
             rc.deleteObservation(obs.getURI().getURI().toASCIIString(), subject1, null, null);
             final long t3 = System.currentTimeMillis();
             final long delta = t3 - t1; // clock diff between client and server
-            
+
             Date inserted = obs.getMaxLastModified();
             Date afterDelete = new Date(st + delta);
-            
+
             StringBuilder sb = new StringBuilder();
             sb.append(baseHTTPSURL).append("/").append(TEST_COLLECTION);
             sb.append("?").append("maxrec=1");
             sb.append("&").append("start=").append(df.format(inserted));
             sb.append("&").append("end=").append(df.format(afterDelete));
-            
+
             URL url = new URL(sb.toString());
             log.info("testListDeletedSuccess: " + url.toExternalForm());
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(url, bos);
             Subject.doAs(subject1, new RunnableAction(get));
-            
+
             Assert.assertNull(get.getThrowable());
-            Assert.assertEquals(200,  get.getResponseCode());
-            
+            Assert.assertEquals(200, get.getResponseCode());
+
             int num = 0;
             LineNumberReader r = new LineNumberReader(new InputStreamReader(new ByteArrayInputStream(bos.toByteArray())));
             String line = r.readLine();
@@ -202,24 +203,24 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
 
                 UUID id = UUID.fromString(tokens[0]);
                 Assert.assertNotNull("id", id);
-                
+
                 String collection = tokens[1];
                 Assert.assertEquals("collection", TEST_COLLECTION, collection);
-                
+
                 String observationID = tokens[2];
                 Assert.assertEquals("observationID", obs.getObservationID(), observationID);
-                
+
                 Date lastModified = df.parse(tokens[3]);
                 Assert.assertTrue(inserted.compareTo(lastModified) < 0);
                 Assert.assertTrue(afterDelete.compareTo(lastModified) > 0);
-                
-                log.info("[testListDeletedSuccess] " + id + " " 
-                        + collection +  " " + observationID + " " + df.format(lastModified));
-                
+
+                log.info("[testListDeletedSuccess] " + id + " "
+                        + collection + " " + observationID + " " + df.format(lastModified));
+
                 line = r.readLine();
             }
             Assert.assertEquals("one line", 1, num); // if zero then test setup assumptions fail
-            
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

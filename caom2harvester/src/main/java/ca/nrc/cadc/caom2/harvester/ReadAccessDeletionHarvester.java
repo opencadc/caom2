@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2.harvester;
 
-
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
@@ -111,7 +110,7 @@ public class ReadAccessDeletionHarvester extends Harvester implements Runnable {
         super(entityClass, src, dest, batchSize, false, dryrun);
     }
     
-     /**
+    /**
      * Initialise harvest state with the current date.
      *
      * @param initHarvestState

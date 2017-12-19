@@ -101,7 +101,7 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
     }
     
     @Override
-    public UUID generateID() {
+    public UUID generateID(UUID id) {
         throw new UnsupportedOperationException();
     }
 
