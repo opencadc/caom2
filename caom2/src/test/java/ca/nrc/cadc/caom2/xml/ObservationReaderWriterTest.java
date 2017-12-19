@@ -453,11 +453,11 @@ public class ObservationReaderWriterTest
             actual = r.cleanWhitespace("  trim outside only  ");
             assertEquals("trim outside only", actual);
             
-            //actual = r.cleanWhitespace("  trim  multiple \t inside  ");
-            //assertEquals("trim multiple inside", actual);
+            actual = r.cleanWhitespace("  trim  multiple \t inside  ");
+            assertEquals("trim  multiple \t inside", actual); // leave inside alone
             
-            //actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
-            //assertEquals("trim junk inside phrase", actual);
+            actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
+            assertEquals("trim\njunk\rinside\tphrase", actual); // leave inside alone
         }
         catch(Exception unexpected)
         {
