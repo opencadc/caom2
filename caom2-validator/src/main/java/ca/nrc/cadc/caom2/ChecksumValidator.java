@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2;
 
-
 import java.net.URI;
 import java.security.MessageDigest;
 import org.apache.log4j.Logger;
