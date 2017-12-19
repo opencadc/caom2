@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,51 +62,51 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
+import org.apache.log4j.Logger;
 
 /**
- * 
+ *
  * @author pdowler
  */
-public class TargetPosition implements Serializable {
-    private static final long serialVersionUID = 201311261000L;
+public class WCSValidator implements Runnable {
+    private static final Logger log = Logger.getLogger(WCSValidator.class);
 
-    // immutable state
-    private String coordsys;
-    private Point coordinates;
-
-    public Double equinox;
-
-    private TargetPosition() {
+    private final Observation obs;
+    
+    public WCSValidator(Observation obs) {
+        this.obs = obs;
     }
 
-    public TargetPosition(String coordsys, Point coordinates) {
-        CaomValidator.assertNotNull(getClass(), "coordsys", coordsys);
-        CaomValidator.assertNotNull(getClass(), "coordinates", coordinates);
-        this.coordsys = coordsys;
-        this.coordinates = coordinates;
+    private void out(String s) {
+        System.out.println(s);
     }
-
-    public String getCoordsys() {
-        return coordsys;
-    }
-
-    public Point getCoordinates() {
-        return coordinates;
-    }
-
+    
     @Override
-    public String toString() {
-        return getClass().getSimpleName() + "[" + coordsys + "," + equinox 
-                + "," + coordinates + "]";
+    public void run() {
+        try {
+            for (Plane p : obs.getPlanes()) {
+                out("validate: " + p.getProductID());
+                for (Artifact a : p.getArtifacts()) {
+                    try {
+                        out("validate: " + a.getURI());
+                        CaomWCSValidator.validate(a);
+                        out("validate: " + a.getURI() + " [OK]");
+                    } catch (Exception ex) {
+                        out("validate: " + a.getURI() + " [FAIL] " + ex.getMessage());
+                        log.debug("validate: " + a.getURI() + " -- ", ex);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error("unexpected exception", ex);
+        }
     }
+    
+    
 }

@@ -69,16 +69,10 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
@@ -138,12 +132,10 @@ public class CaomUtil implements Serializable {
     }
 
     public static Long uuidToLong(UUID id) {
-        if (id.getMostSignificantBits() == 0) {
-            return id.getLeastSignificantBits();
+        if (id.getMostSignificantBits() != 0) {
+            log.debug("WARN: lossy conversion of UIID to Long");
         }
-        throw new IllegalArgumentException(
-                "lossy conversion from UUID to Long: " + id);
-
+        return id.getLeastSignificantBits();
     }
 
     // methods to assign to private field in CaomEntity
