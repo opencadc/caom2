@@ -28,26 +28,21 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.URI;
 import java.net.URL;
 
-import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
+ * This class can convert a CHANDRA URI into a URL.
+ * NOTE: At time of first writing, format for CHANDRA URIs and URLs is not known
+ * so this class is a stub that will be updated as part of a future data engineering user story.
  *
  * @author jeevesh
  */
-public class MastResolver implements StorageResolver {
-
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(MastResolver.class);
-    private static final String MAST_BASE_ARTIFACT_URL = "http://mastpartners.stsci.edu/portal/Download/file";
-    private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
-
-    public MastResolver() {
+public class ChandraResolver implements StorageResolver {
+    public ChandraResolver() {
     }
 
     /**
@@ -57,7 +52,7 @@ public class MastResolver implements StorageResolver {
      */
     @Override
     public String getScheme() {
-        return SCHEME;
+        throw new UnsupportedOperationException("getScheme method currently not supported");
     }
 
     /**
@@ -70,9 +65,6 @@ public class MastResolver implements StorageResolver {
      */
     @Override
     public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+        throw new UnsupportedOperationException("toURL method currently not supported");
     }
-
 }
-

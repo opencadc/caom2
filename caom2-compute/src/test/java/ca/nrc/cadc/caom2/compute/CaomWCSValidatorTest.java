@@ -76,12 +76,11 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.URISyntaxException;
 
 
 /**
@@ -175,10 +174,10 @@ public class CaomWCSValidatorTest {
 
         try {
             position = dataGenerator.mkGoodSpatialWCS();
-            CaomWCSValidator.validateSpatialWCS(position);
+            CaomWCSValidator.validateSpatialWCS("test", position);
 
             // Null value is acceptable
-            CaomWCSValidator.validateSpatialWCS(null);
+            CaomWCSValidator.validateSpatialWCS("test", null);
         } catch (Exception unexpected) {
             log.error(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpatialWCS: " + position.toString() + unexpected);
@@ -194,7 +193,7 @@ public class CaomWCSValidatorTest {
 
         try {
             position = dataGenerator.mkBadSpatialWCS();
-            CaomWCSValidator.validateSpatialWCS(position);
+            CaomWCSValidator.validateSpatialWCS("test", position);
         } catch (IllegalArgumentException | WCSLibRuntimeException expected) {
             log.info(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString());
             Assert.assertTrue(EXPECTED_EXCEPTION + "SpatialWCS" + VERIFIED_INVALID + position.toString() + expected, true);
@@ -213,10 +212,10 @@ public class CaomWCSValidatorTest {
 
         try {
             energy = dataGenerator.mkGoodSpectralWCS();
-            CaomWCSValidator.validateSpectralWCS(energy);
+            CaomWCSValidator.validateSpectralWCS("test", energy);
 
             // Null value is acceptable
-            CaomWCSValidator.validateSpectralWCS(null);
+            CaomWCSValidator.validateSpectralWCS("test", null);
         } catch (Exception unexpected) {
             log.error(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating SpectralWCS: " + energy.toString() + unexpected);
@@ -232,7 +231,7 @@ public class CaomWCSValidatorTest {
 
         try {
             energy = dataGenerator.mkBadSpectralWCSFn();
-            CaomWCSValidator.validateSpectralWCS(energy);
+            CaomWCSValidator.validateSpectralWCS("test", energy);
 
             Assert.fail("expected WCSlibRuntimeException");
         } catch (IllegalArgumentException expected) {
@@ -249,10 +248,10 @@ public class CaomWCSValidatorTest {
 
         try {
             time = dataGenerator.mkGoodTemporalWCS();
-            CaomWCSValidator.validateTemporalWCS(time);
+            CaomWCSValidator.validateTemporalWCS("test", time);
 
             // Null value is acceptable
-            CaomWCSValidator.validateTemporalWCS(null);
+            CaomWCSValidator.validateTemporalWCS("test", null);
         } catch (Exception unexpected) {
             log.error(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString() + unexpected);
@@ -269,14 +268,14 @@ public class CaomWCSValidatorTest {
         try {
             try {
                 time = dataGenerator.mkBadTemporalWCSCunit();
-                CaomWCSValidator.validateTemporalWCS(time);
+                CaomWCSValidator.validateTemporalWCS("test", time);
             } catch (IllegalArgumentException iae) {
                 log.info(EXPECTED_EXCEPTION + " bad cunit.");
             }
 
             try {
                 time = dataGenerator.mkBadTemporalWCSRange();
-                CaomWCSValidator.validateTemporalWCS(time);
+                CaomWCSValidator.validateTemporalWCS("test", time);
             } catch (IllegalArgumentException iae) {
                 log.info(EXPECTED_EXCEPTION + " bad range.");
             }
@@ -295,10 +294,10 @@ public class CaomWCSValidatorTest {
 
         try {
             polarization = dataGenerator.mkGoodPolarizationWCS();
-            CaomWCSValidator.validatePolarizationWCS(polarization);
+            CaomWCSValidator.validatePolarizationWCS("test", polarization);
 
             // Null value is acceptable
-            CaomWCSValidator.validatePolarizationWCS(null);
+            CaomWCSValidator.validatePolarizationWCS("test", null);
         } catch (Exception unexpected) {
             log.error(UNEXPECTED_EXCEPTION + " validating PolarizationWCS: " + polarization.toString(), unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + " validating PolarizationWCS: " + polarization.toString() + unexpected);
@@ -314,7 +313,7 @@ public class CaomWCSValidatorTest {
         PolarizationWCS w = dataGenerator.mkBadPolarizationWCS();
 
         try {
-            CaomWCSValidator.validatePolarizationWCS(w);
+            CaomWCSValidator.validatePolarizationWCS("test", w);
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
             log.info("zeroErr -- caught expected: " + expected);

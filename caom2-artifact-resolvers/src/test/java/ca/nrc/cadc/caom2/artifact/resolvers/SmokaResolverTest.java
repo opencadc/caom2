@@ -70,12 +70,8 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -84,46 +80,67 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class SmokaResolverTest {
+    private static final Logger log = Logger.getLogger(SmokaResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
+    String VALID_FILE1 = "SUPE01318470";
+    String VALID_FILE2 = "SUPE01318470";
+    String BASE_URL = "smoka.nao.ac.jp";
 
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
+    // Copied from SmokaResolver for use in testing
+    String FILE_URI = "file";
+    String PREVIEW_URI = "preview";
+    String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
+        + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
+        + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
+        + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
+        + "&multiselect_0=SUP&multiselect_0=HSC&obs_mod=IMAG&obs_mod=SPEC&obs_mod=IPOL&multiselect_1=IMAG&multiselect_1=SPEC"
+        + "&multiselect_1=IPOL&multiselect_1=IMAG&multiselect_1=SPEC&multiselect_1=IPOL&data_typ=OBJECT&multiselect_2=OBJECT"
+        + "&multiselect_2=OBJECT&bandwidth_type=FILTER&band=&dispcol=FRAMEID&dispcol=DATE_OBS&dispcol=FITS_SIZE&dispcol=OBS_MODE"
+        + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
+        + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
+        + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
+    String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+    String FILE_URL_PATH = "/fssearch";
+    String PREVIEW_URL_PATH = "/qlis/ImagePNG";
 
-    MastResolver mastResolver = new MastResolver();
+    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
+    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
 
-    public MastResolverTest() {
+    SmokaResolver smokaResolver = new SmokaResolver();
 
+    public SmokaResolverTest() {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
+    public void testGetSchema() {
+        Assert.assertTrue(smokaResolver.getScheme().equals(smokaResolver.getScheme()));
     }
 
     @Test
     public void testValidURI() {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
+            String uriStr = smokaResolver.getScheme() + ":" + FILE_URI + "/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = smokaResolver.toURL(uri);
 
-            for (String uriStr : validURIs) {
+            Assert.assertEquals(FILE_URL_PATH, url.getPath());
+            Assert.assertEquals(FILE_URL_QUERY + VALID_FILE1, url.getQuery());
+            Assert.assertEquals(BASE_URL, url.getHost());
 
-                URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
 
-                Assert.assertTrue(url.getPath().endsWith(uri.getSchemeSpecificPart()));
-            }
+            uriStr = smokaResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
+            uri = new URI(uriStr);
+            url = smokaResolver.toURL(uri);
+
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
+            Assert.assertEquals(BASE_URL, url.getHost());
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -134,7 +151,7 @@ public class MastResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
+            URL url = smokaResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -147,7 +164,7 @@ public class MastResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = mastResolver.toURL(null);
+            URL url = smokaResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -156,4 +173,20 @@ public class MastResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testInvalidUriType() {
+        try {
+            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = smokaResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

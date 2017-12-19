@@ -62,98 +62,51 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.util.Log4jInit;
-
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.log4j.Level;
+import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- * @author hjeeves
+ *
+ * @author pdowler
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class WCSValidator implements Runnable {
+    private static final Logger log = Logger.getLogger(WCSValidator.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    private final Observation obs;
+    
+    public WCSValidator(Observation obs) {
+        this.obs = obs;
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
-
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
-
-    MastResolver mastResolver = new MastResolver();
-
-    public MastResolverTest() {
-
+    private void out(String s) {
+        System.out.println(s);
     }
-
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
+    
+    @Override
+    public void run() {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
-
-            for (String uriStr : validURIs) {
-
-                URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
-
-                Assert.assertTrue(url.getPath().endsWith(uri.getSchemeSpecificPart()));
+            for (Plane p : obs.getPlanes()) {
+                out("validate: " + p.getProductID());
+                for (Artifact a : p.getArtifacts()) {
+                    try {
+                        out("validate: " + a.getURI());
+                        CaomWCSValidator.validate(a);
+                        out("validate: " + a.getURI() + " [OK]");
+                    } catch (Exception ex) {
+                        out("validate: " + a.getURI() + " [FAIL] " + ex.getMessage());
+                        log.debug("validate: " + a.getURI() + " -- ", ex);
+                    }
+                }
             }
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+        } catch (Exception ex) {
+            log.error("unexpected exception", ex);
         }
     }
-
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = mastResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+    
+    
 }

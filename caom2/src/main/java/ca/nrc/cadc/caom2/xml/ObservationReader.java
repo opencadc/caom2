@@ -114,7 +114,6 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -2371,7 +2370,6 @@ public class ObservationReader implements Serializable {
         if (s.isEmpty()) {
             return null;
         }
-        s = s.replaceAll("\\s+", " ");
         return s;
     }
 }

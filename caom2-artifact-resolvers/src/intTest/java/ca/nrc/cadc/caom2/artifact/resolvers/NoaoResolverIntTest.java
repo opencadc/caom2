@@ -69,91 +69,51 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
-
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author hjeeves
- */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class NoaoResolverIntTest {
+    private static final Logger log = Logger.getLogger(NoaoResolverIntTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
+    String VALID_URI = "noao:c13a_140805_212140_ori.fits.fz";
 
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
+    NoaoResolver noaoResolver = new NoaoResolver();;
 
-    MastResolver mastResolver = new MastResolver();
-
-    public MastResolverTest() {
-
+    public NoaoResolverIntTest() {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
+    public void testValidSiteUrl() throws Exception {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
+            URI noaoUri = new URI(VALID_URI);
+            URL url = noaoResolver.toURL(noaoUri);
 
-            for (String uriStr : validURIs) {
+            log.debug("opening connection to: " + url.toString());
 
-                URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
-
-                Assert.assertTrue(url.getPath().endsWith(uri.getSchemeSpecificPart()));
-            }
+            OutputStream out = new ByteArrayOutputStream();
+            HttpDownload head = new HttpDownload(url, out);
+            head.setHeadOnly(true);
+            head.run();
+            // THe server being hit is apparently only up 80% of
+            // the time, so this assertEquals could throw a large
+            // percentage of 'false failures'
+            Assert.assertEquals(200, head.getResponseCode());
+            log.info("response code: " + head.getResponseCode());
         } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = mastResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
         }
     }
 }

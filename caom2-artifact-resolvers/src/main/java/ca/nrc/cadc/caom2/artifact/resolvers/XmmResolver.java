@@ -30,75 +30,46 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a GEMINI URI into a URL.
+ * This class can convert a XMM URI into a URL.
  *
  * @author jeevesh
  */
-public class GeminiResolver implements StorageResolver {
-    public static final String SCHEME = "gemini";
-    public static final String FILE_URI = "file";
-    public static final String PREVIEW_URI = "preview";
-    private static final Logger log = Logger.getLogger(GeminiResolver.class);
-    private static final String BASE_URL = "https://archive.gemini.edu";
-    private static final String CANNOT_GENERATE_URL = "Can't generate URL from URI.";
+public class XmmResolver implements StorageResolver {
+    public static final String SCHEME = "xmm";
+    private static final Logger log = Logger.getLogger(XmmResolver.class);
+    private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
 
-    public GeminiResolver() {
+    public XmmResolver() {
     }
 
-    @Override
-    public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        String urlStr = "";
-        try {
-            String path = getPath(uri);
-            urlStr = BASE_URL + path;
-
-            URL url = null;
-            if (urlStr != null) {
-                url = new URL(urlStr);
-            }
-
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: could not generate URL from uri " + urlStr, ex);
-        }
-    }
-
-    private String getPath(URI uri) {
-        String[] path = uri.getSchemeSpecificPart().split("/");
-        if (path.length != 2) {
-            throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
-        }
-
-        String requestType = path[0];
-        if (!(requestType.equals(FILE_URI) || requestType.equals(PREVIEW_URI))) {
-            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
-        }
-
-        String fileName = path[1];
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("/");
-        sb.append(requestType);
-        sb.append("/");
-        sb.append(fileName);
-
-        return sb.toString();
-    }
-
+    /**
+     * Returns the scheme for the storage resolver.
+     *
+     * @return a String representing the schema.
+     */
     @Override
     public String getScheme() {
         return SCHEME;
     }
 
-
+    /**
+     * Convert the specified URI to one or more URL(s).
+     *
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     */
+    @Override
+    public URL toURL(URI uri) {
+        ResolverUtil.validate(uri, SCHEME);
+        return ResolverUtil.createURLFromPath(uri, BASE_ARTIFACT_URL);
+    }
 
 }
 

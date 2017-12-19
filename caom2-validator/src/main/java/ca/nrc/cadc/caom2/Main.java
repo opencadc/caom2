@@ -62,98 +62,110 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
-import java.net.URI;
-import java.net.URL;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- * @author hjeeves
+ *
+ * @author pdowler
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public final class Main {
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
+    private static final Logger log = Logger.getLogger(Main.class);
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-    String PROTOCOL_STR = "https";
-
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
-
-    MastResolver mastResolver = new MastResolver();
-
-    public MastResolverTest() {
-
-    }
-
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
+    public static void main(String[] args) {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
-
-            for (String uriStr : validURIs) {
-
-                URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
-
-                Assert.assertTrue(url.getPath().endsWith(uri.getSchemeSpecificPart()));
+            ArgumentMap am = new ArgumentMap(args);
+            if (am.isSet("h") || am.isSet("help")) {
+                usage();
+                System.exit(0);
             }
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+
+            // Set debug mode
+            CaomEntity.MCS_DEBUG = true;
+            if (am.isSet("d") || am.isSet("debug")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+            } else if (am.isSet("v") || am.isSet("verbose")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+            } else {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.WARN);
+            }
+
+            if (am.getPositionalArgs().isEmpty()) {
+                usage();
+                System.exit(1);
+            }
+            
+            String fname = am.getPositionalArgs().get(0);
+            File f = new File(fname);
+            ObservationReader r = new ObservationReader();
+            Observation obs = r.read(new FileReader(f));
+            
+            if (am.getPositionalArgs().size() == 2) {
+                File out = new File(am.getPositionalArgs().get(1));
+                ObservationWriter w = new ObservationWriter();
+                w.write(obs, new FileWriter(out));
+                log.info("wrote copy: " + out.getAbsolutePath());
+            }
+            
+            List<Runnable> validators = new ArrayList<>();
+            if (am.isSet("checksum")) {
+                int depth = 5;
+                if (am.isSet("depth")) {
+                    try { 
+                        depth = Integer.parseInt(am.getValue("depth"));
+                    } catch (NumberFormatException ex) {
+                        log.error("invalid depth: " + am.getValue("depth") + ": must be integer in [1,5]");
+                        usage();
+                        System.exit(1);
+                    }
+                }
+                validators.add(new ChecksumValidator(obs, depth, am.isSet("acc")));
+            }
+            
+            if (am.isSet("wcs")) {
+                validators.add(new WCSValidator(obs));
+            }
+
+            for (Runnable v : validators) {
+                log.info("START " + v.getClass().getName());
+                v.run();
+                log.info("DONE " + v.getClass().getName() + System.getProperty("line.separator"));
+            }
+
+        } catch (Throwable t) {
+            log.error("unexpected failure", t);
+            System.exit(1);
         }
+        System.exit(0);
     }
 
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+    
 
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = mastResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    private static void usage() {
+        StringBuilder sb = new StringBuilder();
+        String lineSep = System.getProperty("line.separator");
+        sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] <validation options> <observation xml file> [<output file>}");
+        sb.append(lineSep).append("       <validation options> is one or more of:");
+        sb.append(lineSep).append("");
+        sb.append(lineSep).append("       --checksum [--acc] [--depth=1..5] : recompute and compare metaChecksum values");
+        sb.append(lineSep).append("       --wcs : enable WCS validation");
+        sb.append(lineSep).append("");
+        sb.append(lineSep).append("       <output file> : reserialise to another file (pretty-print)");
+        System.out.println(sb.toString());
     }
 }

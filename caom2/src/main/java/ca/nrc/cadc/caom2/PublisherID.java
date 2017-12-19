@@ -121,7 +121,7 @@ public class PublisherID implements Comparable<PublisherID>, Serializable {
                             + "), expected 2: <observationID>/<productID>");
         }
         this.uri = uri;
-        this.resourceID = URI.create(SCHEME + "://" + auth + "/" + path);
+        this.resourceID = URI.create(SCHEME + "://" + auth + path);
     }
 
     public PublisherID(URI resourceID, String observationID, String productID) {
