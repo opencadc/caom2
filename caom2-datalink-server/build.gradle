@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.7'
+version = '1.7.1'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -29,7 +29,7 @@ dependencies {
     compile 'org.opencadc:cadc-uws-server:1.+'
     compile 'org.opencadc:caom2:[2.3.4,3.0)'
     compile 'org.opencadc:caom2-compute:[2.3,3.0)'
-    compile 'org.opencadc:caom2-tap:[1.6,)'
+    compile 'org.opencadc:caom2-tap:[1.6.1,)'
 
     testCompile 'junit:junit:[4.0,5.0)'
 }
