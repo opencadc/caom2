@@ -151,7 +151,7 @@ public class ReadAccessHarvester extends Harvester {
         // tuples are generated
         config2.put("forceUpdate", Boolean.TRUE);
         destAccessDAO.setConfig(config2);
-        destAccessDAO.setComputeLastModified(false); // copy as-is
+        destAccessDAO.setOrigin(false); // copy as-is
 
         initHarvestState(destAccessDAO.getDataSource(), entityClass);
         this.harvestSkip = new HarvestSkipDAO(destAccessDAO.getDataSource(), dest.getDatabase(), dest.getSchema(), batchSize);
@@ -238,7 +238,7 @@ public class ReadAccessHarvester extends Harvester {
         try {
             HarvestState state = null;
             if (!skipped) {
-                state = harvestState.get(source, cname);
+                state = harvestStateDAO.get(source, cname);
                 log.info("last harvest: " + format(state.curLastModified));
             }
 
@@ -312,7 +312,7 @@ public class ReadAccessHarvester extends Harvester {
                                 log.info("delete: " + hs + " " + format(hs.lastModified));
                                 harvestSkip.delete(hs);
                             } else {
-                                harvestState.put(state);
+                                harvestStateDAO.put(state);
                             }
                         } else if (skipped) {
                             log.info("delete: " + hs + " " + format(hs.lastModified));
@@ -349,7 +349,7 @@ public class ReadAccessHarvester extends Harvester {
                                 log.info("skip: " + skip);
 
                                 // track the harvest state progress
-                                harvestState.put(state);
+                                harvestStateDAO.put(state);
                                 // track the fail
                                 harvestSkip.put(skip);
                                 // delete previous version of entity
@@ -383,7 +383,7 @@ public class ReadAccessHarvester extends Harvester {
                     // ahead
                     state.curLastModified = n;
                     log.info("reached last " + entityClass.getSimpleName() + ": setting curLastModified to " + format(state.curLastModified));
-                    harvestState.put(state);
+                    harvestStateDAO.put(state);
                 }
             }
         } finally {

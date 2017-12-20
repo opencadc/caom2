@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.harvester.state;
 
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
@@ -81,34 +82,83 @@ import java.util.UUID;
  */
 public class HarvestSkipURI {
 
-    public String source;
-    public String cname;
-    public URI skipID;
+    private String source;
+    private String name;
+    private URI skipID;
+    private Date tryAfter;
+    
     public String errorMessage;
-
-    public Date lastModified;
+    
+    Date lastModified;
     UUID id;
 
-    HarvestSkipURI() {
+    private HarvestSkipURI() {
     }
 
-    public HarvestSkipURI(String source, String cname, URI skipID, String msg) {
+    /**
+     * Primary constructor. All arguments must have values.
+     * 
+     * @param source
+     * @param name
+     * @param skipID
+     * @param tryAfter 
+     */
+    public HarvestSkipURI(String source, String name, URI skipID, Date tryAfter) {
+        this(source, name, skipID, tryAfter, null);
+    }
+    
+    /**
+     * Convenience constructor with optional error message.
+     * 
+     * @param source
+     * @param name
+     * @param skipID
+     * @param tryAfter
+     * @param emsg 
+     */
+    public HarvestSkipURI(String source, String name, URI skipID, Date tryAfter, String emsg) {
+        CaomValidator.assertNotNull(HarvestSkipURI.class, "source", source);
+        CaomValidator.assertNotNull(HarvestSkipURI.class, "name", name);
+        CaomValidator.assertNotNull(HarvestSkipURI.class, "skipID", skipID);
+        CaomValidator.assertNotNull(HarvestSkipURI.class, "tryAfter", tryAfter);
         this.source = source;
-        this.cname = cname;
+        this.name = name;
         this.skipID = skipID;
-        this.errorMessage = msg;
+        this.tryAfter = tryAfter;
+        this.errorMessage = emsg;
     }
 
     @Override
     public String toString() {
-        return "HarvestSkipURI[" + source + "," + cname + "," + skipID + "]";
+        return "HarvestSkipURI[" + source + "," + name + "," + skipID + "]";
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public URI getSkipID() {
         return skipID;
     }
 
+    public Date getTryAfter() {
+        return tryAfter;
+    }
+
+    public void setTryAfter(Date tryAfter) {
+        CaomValidator.assertNotNull(HarvestSkipURI.class, "tryAfter", tryAfter);
+        this.tryAfter = tryAfter;
+    }
+    
     public UUID getID() {
         return id;
+    }
+
+    public Date getLastModified() {
+        return lastModified;
     }
 }

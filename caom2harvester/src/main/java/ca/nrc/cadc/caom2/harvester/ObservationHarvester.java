@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.harvester;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
@@ -100,9 +99,7 @@ import java.util.concurrent.ExecutionException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
-import org.springframework.jdbc.UncategorizedSQLException;
 
 /**
  *
@@ -124,7 +121,7 @@ public class ObservationHarvester extends Harvester {
     private boolean computePlaneMetadata = false;
     private boolean nochecksum = false;
 
-    HarvestSkipURIDAO harvestSkip = null;
+    HarvestSkipURIDAO harvestSkipDAO = null;
 
     public ObservationHarvester(HarvestResource src, HarvestResource dest, Integer batchSize,
             boolean full, boolean dryrun, boolean nochecksum, int nthreads)
@@ -167,7 +164,7 @@ public class ObservationHarvester extends Harvester {
         Map<String, Object> config2 = getConfigDAO(dest);
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
+        destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
@@ -243,7 +240,7 @@ public class ObservationHarvester extends Harvester {
             HarvestState state = null;
 
             if (!skipped) {
-                state = harvestState.get(source, Observation.class.getSimpleName());
+                state = harvestStateDAO.get(source, Observation.class.getSimpleName());
                 log.debug("state " + state);
             }
 
@@ -370,12 +367,12 @@ public class ObservationHarvester extends Harvester {
                         String treeSize = computeTreeSize(o);
                         log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
                     } else if (hs != null) {
-                        log.info("error put: " + hs.cname + " " + hs.skipID + " " + format(hs.lastModified));
+                        log.info("error put: " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
 
                     }
                     if (!dryrun) {
                         if (skipped) {
-                            startDate = hs.lastModified;
+                            startDate = hs.getLastModified();
                         }
 
                         if (o != null) {
@@ -413,7 +410,7 @@ public class ObservationHarvester extends Harvester {
 
                             // advance the date on success or failure
                             if (skipped) {
-                                startDate = hs.lastModified;
+                                startDate = hs.getLastModified();
                             }
 
                             CaomValidator.validate(o);
@@ -431,21 +428,29 @@ public class ObservationHarvester extends Harvester {
                                 }
                             }
 
-                            if (nochecksum || checkChecksumsAlt(o)) {
-                                destObservationDAO.put(o);
-                            } else {
-                                throw new ChecksumError("mismatching checksums");
+                            if (!nochecksum) {
+                                validateChecksum(o);
+                            }
+
+                            // everything is OK
+                            destObservationDAO.put(o);
+                            
+                            if (!skipped) {
+                                harvestStateDAO.put(state);
+                            }
+                            
+                            if (hs == null) {
+                                // normal harvest mode: try to cleanup skip records immediately
+                                hs = harvestSkipDAO.get(source, cname, o.getURI().getURI());
                             }
 
                             if (hs != null) {
-                                log.info("delete: " + hs + " " + format(hs.lastModified));
-                                harvestSkip.delete(hs);
-                            } else {
-                                harvestState.put(state);
-                            }
+                                log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                                harvestSkipDAO.delete(hs);
+                            } 
                         } else if (skipped && ow.entity == null) {
-                            log.info("delete: " + hs + " " + format(hs.lastModified));
-                            harvestSkip.delete(hs);
+                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                            harvestSkipDAO.delete(hs);
                         } else if (ow.entity.error != null) {
                             // try to make progress on failures
                             if (state != null && ow.entity.observationState.maxLastModified != null) {
@@ -479,8 +484,7 @@ public class ObservationHarvester extends Harvester {
                     } else if (oops instanceof ChecksumError) {
                         log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
                         ret.handled++;
-                    } else if (oops instanceof DataIntegrityViolationException
-                            && str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
+                    } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
                         log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
                         ret.handled++;
                     } else if (oops instanceof TransientException) {
@@ -505,13 +509,9 @@ public class ObservationHarvester extends Harvester {
                     } else if (oops instanceof DataAccessResourceFailureException) {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
-                    } else if (oops instanceof UncategorizedSQLException) {
-                        if (str.contains("spherepoly_from_array")) {
-                            log.error("UNDETECTED illegal polygon: " + o.getURI());
-                            ret.handled++;
-                        } else {
-                            log.error("unexpected exception", oops);
-                        }
+                    } else if (str.contains("spherepoly_from_array")) {
+                        log.error("UNDETECTED illegal polygon: " + o.getURI());
+                        ret.handled++;
                     } else {
                         log.error("unexpected exception", oops);
                     }
@@ -534,17 +534,17 @@ public class ObservationHarvester extends Harvester {
                             boolean putSkip = true;
                             HarvestSkipURI skip = null;
                             if (o != null) {
-                                skip = harvestSkip.get(source, cname, o.getURI().getURI());
+                                skip = harvestSkipDAO.get(source, cname, o.getURI().getURI());
                             } else {
-                                skip = harvestSkip.get(source, cname, ow.entity.observationState.getURI().getURI());
+                                skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
                             log.debug("skip == " + skip);
-
+                            Date tryAfter = new Date(); // TODO: could implement retry delaying/ordering/priority here
                             if (skip == null) {
                                 if (o != null) {
-                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), tryAfter, skipMsg);
                                 } else {
-                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
                                 }
                             } else {
                                 log.debug("skipMsg == " + skipMsg);
@@ -564,13 +564,13 @@ public class ObservationHarvester extends Harvester {
 
                             if (!skipped) {
                                 // track the harvest state progress
-                                harvestState.put(state);
+                                harvestStateDAO.put(state);
                             }
 
                             // track the fail
                             if (putSkip) {
                                 log.info("put: " + skip);
-                                harvestSkip.put(skip);
+                                harvestSkipDAO.put(skip);
                             }
 
                             // delete previous version of observation (if any)
@@ -607,36 +607,19 @@ public class ObservationHarvester extends Harvester {
         return ret;
     }
 
-    private boolean checkChecksums(ObservationState os, Observation o) throws ChecksumError {
-        try {
-            URI calculatedUri = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-
-            log.debug("o.getURI() " + o.getURI());
-            log.debug("os.getURI() " + os.getURI());
-            log.debug("calculatedUri " + calculatedUri);
-            log.debug("o.getAccMetaChecksum() " + o.getAccMetaChecksum());
-            log.debug("os.accMetaChecksum " + os.accMetaChecksum);
-            if (o != null && o.getAccMetaChecksum() != null && os != null && os.accMetaChecksum != null && calculatedUri != null
-                    && o.getAccMetaChecksum().equals(os.accMetaChecksum) && o.getAccMetaChecksum().equals(calculatedUri)) {
-                return true;
-            }
-            return false;
-        } catch (NoSuchAlgorithmException e) {
-            throw new ChecksumError("no MD5 digest algorithm available");
+    private void validateChecksum(Observation o) throws ChecksumError {
+        if (o.getAccMetaChecksum() == null) {
+            return; // no check
         }
-    }
-
-    private boolean checkChecksumsAlt(Observation o) throws ChecksumError {
         try {
             URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
 
-            log.debug("checkChecksumsAlt: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
-            if (o.getAccMetaChecksum() != null && o.getAccMetaChecksum().equals(calculatedChecksum)) {
-                return true;
+            log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+            if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
+                throw new ChecksumError(("checksum mismatch: " + o.getAccMetaChecksum() + " != " + calculatedChecksum));
             }
-            return false;
         } catch (NoSuchAlgorithmException e) {
-            throw new ChecksumError("no MD5 digest algorithm available");
+            throw new RuntimeException("MD5 digest algorithm not available");
         }
     }
 
@@ -664,9 +647,9 @@ public class ObservationHarvester extends Harvester {
         SkippedWrapperURI<ObservationResponse> start = entityList.get(0);
         SkippedWrapperURI<ObservationResponse> end = entityList.get(entityList.size() - 1);
         if (skipped) {
-            if (start.skip.lastModified.equals(end.skip.lastModified)) {
+            if (start.skip.getLastModified().equals(end.skip.getLastModified())) {
                 throw new RuntimeException("detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName()
-                        + " at " + format(start.skip.lastModified));
+                        + " at " + format(start.skip.getLastModified()));
             }
             return;
         }
@@ -715,7 +698,7 @@ public class ObservationHarvester extends Harvester {
      */
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start, null);
+        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
         for (HarvestSkipURI hs : skip) {
@@ -768,6 +751,6 @@ public class ObservationHarvester extends Harvester {
     @Override
     protected void initHarvestState(DataSource ds, Class c) {
         super.initHarvestState(ds, c);
-        this.harvestSkip = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema(), batchSize);
+        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema());
     }
 }

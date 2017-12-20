@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -86,16 +87,25 @@ import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import com.csvreader.CsvWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import org.apache.log4j.Logger;
 
@@ -116,6 +126,8 @@ public abstract class RepoAction extends RestAction {
 
     public static final String ERROR_MIMETYPE = "text/plain";
 
+    public static final int MAX_LIST_SIZE = 100000;
+
     private static final GroupURI CADC_GROUP_URI = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
 
     private String collection;
@@ -127,6 +139,7 @@ public abstract class RepoAction extends RestAction {
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
     private transient ReadAccessDAO readAccessDAO;
+    private transient DeletedEntityDAO deletedDAO;
 
     protected RepoAction() {
     }
@@ -162,6 +175,87 @@ public abstract class RepoAction extends RestAction {
         }
     }
 
+    protected void doGetCollectionList() throws Exception {
+        log.debug("START: (collection list)");
+        CaomRepoConfig curConfig = getConfig();
+        Iterator<String> collectionListIterator = curConfig.collectionIterator();
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
+        while (collectionListIterator.hasNext()) {
+            String collectionName = collectionListIterator.next();
+            // Write out a single column as one entry per row
+            if (!collectionName.isEmpty()) {
+                writer.write(collectionName);
+                writer.endRecord();
+            }
+        }
+        writer.flush();
+        logInfo.setBytes(bc.getByteCount());
+    }
+
+    protected class InputParams {
+        // default values if called with no params
+        public Integer maxrec = MAX_LIST_SIZE;
+        public boolean ascending = true;
+        public Date start = null;
+        public Date end = null;
+    }
+    
+    /**
+     * Get InputParams object with listing output control parameters.
+     * 
+     * @return 
+     */
+    protected InputParams getInputParams() {
+        InputParams ret = new InputParams();
+
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        String str = null;
+        try {
+            str = syncInput.getParameter("maxrec");
+            if (str != null) {
+                int m = Integer.valueOf(str);
+                if (m <= 0) {
+                    throw new IllegalArgumentException("invalid maxrec value: " + m + ", maxrec must be > 0");
+                }
+                if (m < ret.maxrec) {
+                    ret.maxrec = m;
+                }
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("invalid maxrec value: " + str, ex);
+        }
+        
+        try {
+            str = syncInput.getParameter("start");
+            if (str != null) {
+                ret.start = df.parse(str);
+            }
+
+            str = syncInput.getParameter("end");
+            if (str != null) {
+                ret.end = df.parse(str);
+            }
+        } catch (ParseException ex) {
+            throw new IllegalArgumentException("invalid date format: " + str, ex);
+        }
+        
+        str = syncInput.getParameter("order");
+        if (str != null) {
+            if (str.equals("desc")) {
+                ret.ascending = false;
+            } else if (!str.equals("asc")) {
+                throw new IllegalArgumentException("invalid order value: " + str);
+            }
+        }
+            
+        return ret;
+    }
+    
     // return uri for get-observation, null for get-list, and throw for invalid
     protected ObservationURI getURI() {
         initTarget();
@@ -210,6 +304,30 @@ public abstract class RepoAction extends RestAction {
         return this.readAccessDAO;
     }
 
+    protected DeletedEntityDAO getDeletedDAO() throws IOException {
+        if (deletedDAO == null) {
+            this.deletedDAO = getDeletedDAO(getCollection());
+        }
+        return deletedDAO;
+    }
+    
+    // create DAO
+    private DeletedEntityDAO getDeletedDAO(String collection) throws IOException {
+        CaomRepoConfig.Item i = getCollectionConfig(collection);
+        if (i != null) {
+            Map<String, Object> props = new HashMap<String, Object>();
+            props.put("jndiDataSourceName", i.getDataSourceName());
+            props.put("database", i.getDatabase());
+            props.put("schema", i.getSchema());
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
+            DeletedEntityDAO ret = new DeletedEntityDAO();
+            ret.setConfig(props);
+
+            return ret;
+        }
+        throw new IllegalArgumentException("unknown collection: " + collection);
+    }
+    
     // read the input stream (POST and PUT) and extract the observation from the XML
     // document
     protected Observation getInputObservation() throws IOException {

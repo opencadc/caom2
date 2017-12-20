@@ -96,6 +96,11 @@ public class SybaseSQLGenerator extends BaseSQLGenerator {
     }
 
     @Override
+    public UUID generateID(UUID id) {
+        return new UUID(0L, id.getLeastSignificantBits());
+    }
+
+    @Override
     protected String getTopConstraint(Integer batchSize) {
         if (batchSize == null) {
             return null;
