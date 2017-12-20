@@ -367,12 +367,12 @@ public class ObservationHarvester extends Harvester {
                         String treeSize = computeTreeSize(o);
                         log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
                     } else if (hs != null) {
-                        log.info("error put: " + hs.cname + " " + hs.skipID + " " + format(hs.lastModified));
+                        log.info("error put: " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
 
                     }
                     if (!dryrun) {
                         if (skipped) {
-                            startDate = hs.lastModified;
+                            startDate = hs.getLastModified();
                         }
 
                         if (o != null) {
@@ -410,7 +410,7 @@ public class ObservationHarvester extends Harvester {
 
                             // advance the date on success or failure
                             if (skipped) {
-                                startDate = hs.lastModified;
+                                startDate = hs.getLastModified();
                             }
 
                             CaomValidator.validate(o);
@@ -445,11 +445,11 @@ public class ObservationHarvester extends Harvester {
                             }
 
                             if (hs != null) {
-                                log.info("delete: " + hs + " " + format(hs.lastModified));
+                                log.info("delete: " + hs + " " + format(hs.getLastModified()));
                                 harvestSkipDAO.delete(hs);
                             } 
                         } else if (skipped && ow.entity == null) {
-                            log.info("delete: " + hs + " " + format(hs.lastModified));
+                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
                             harvestSkipDAO.delete(hs);
                         } else if (ow.entity.error != null) {
                             // try to make progress on failures
@@ -539,12 +539,12 @@ public class ObservationHarvester extends Harvester {
                                 skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
                             log.debug("skip == " + skip);
-
+                            Date tryAfter = new Date(); // TODO: could implement retry delaying/ordering/priority here
                             if (skip == null) {
                                 if (o != null) {
-                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), tryAfter, skipMsg);
                                 } else {
-                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
                                 }
                             } else {
                                 log.debug("skipMsg == " + skipMsg);
@@ -647,9 +647,9 @@ public class ObservationHarvester extends Harvester {
         SkippedWrapperURI<ObservationResponse> start = entityList.get(0);
         SkippedWrapperURI<ObservationResponse> end = entityList.get(entityList.size() - 1);
         if (skipped) {
-            if (start.skip.lastModified.equals(end.skip.lastModified)) {
+            if (start.skip.getLastModified().equals(end.skip.getLastModified())) {
                 throw new RuntimeException("detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName()
-                        + " at " + format(start.skip.lastModified));
+                        + " at " + format(start.skip.getLastModified()));
             }
             return;
         }
@@ -698,7 +698,7 @@ public class ObservationHarvester extends Harvester {
      */
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null);
+        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
         for (HarvestSkipURI hs : skip) {
@@ -751,6 +751,6 @@ public class ObservationHarvester extends Harvester {
     @Override
     protected void initHarvestState(DataSource ds, Class c) {
         super.initHarvestState(ds, c);
-        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema(), batchSize);
+        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema());
     }
 }
