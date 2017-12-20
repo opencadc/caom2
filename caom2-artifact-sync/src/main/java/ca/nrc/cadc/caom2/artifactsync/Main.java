@@ -241,15 +241,25 @@ public class Main {
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(daoConfig);
 
-            String collection = am.getValue("collection");
+            Integer retryAfterHours = null;
+            if (am.isSet("retryAfter")) {
+                try {
+                    retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                } catch (NumberFormatException e) {
+                    log.error("Illegal value for --retryAfter: " + am.getValue("retryAfter"));
+                    usage();
+                    System.exit(-1);
+                }
+            }
 
+            String collection = am.getValue("collection");
             boolean dryrun = am.isSet("dryrun");
             boolean full = am.isSet("full");
             PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
                     observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
 
             PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
-                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize);
+                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize, retryAfterHours);
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -321,6 +331,7 @@ public class Main {
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
+        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");

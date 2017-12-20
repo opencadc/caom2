@@ -102,48 +102,52 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
+    private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 7 * 24;
+
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String source;
+    private int batchSize;
     private int threads;
     private Date startDate = null;
     private Date stopDate;
+    private int retryAfterHours;
 
     public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads,
-                                 int batchSize) {
+                                 int batchSize, Integer retryAfterHours) {
         this.artifactStore = artifactStore;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2], batchSize);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
 
         this.threads = threads;
+        this.batchSize = batchSize;
         this.stopDate = new Date();
+        if (retryAfterHours == null) {
+            retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
+        } else {
+            this.retryAfterHours = retryAfterHours;
+        }
     }
 
     @Override
     public Integer run() throws Exception {
 
-        // TODO: Add stopDate to this skip query
         log.debug("Querying for skip records between " + startDate + " and " + stopDate);
         List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate,
-            stopDate);
+            stopDate, batchSize);
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         Integer workCount = artifacts.size();
         List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
 
         for (HarvestSkipURI skip : artifacts) {
-            // TEMPORARY HACK THAT IS TO BE REMOVED: DON'T DOWNLOAD THOSE WITH PREVIOUS ERRORS
-            if (skip.errorMessage == null || skip.errorMessage.trim().equals("")) {
-                ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
-                tasks.add(downloader);
-            } else {
-                log.debug("Skipping " + skip + " due to previous download error");
-            }
+            ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
+            tasks.add(downloader);
         }
         // set the start date so that the next batch resumes after our last record
         if (workCount > 0) {
-            startDate = artifacts.get(workCount - 1).lastModified;
+            startDate = artifacts.get(workCount - 1).getLastModified();
         }
 
         try {
@@ -294,6 +298,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         harvestSkipURIDAO.delete(skip);
                     } else {
                         skip.errorMessage = result.message;
+                        Date tryAfter = getTryAfter();
+                        skip.setTryAfter(tryAfter);
                         harvestSkipURIDAO.put(skip);
                     }
                 } catch (Throwable t) {
@@ -301,6 +307,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
                 logEnd(result);
             }
+        }
+
+        private Date getTryAfter() {
+            Calendar c = Calendar.getInstance();
+            c.setTime(stopDate);
+            c.add(Calendar.HOUR, retryAfterHours);
+            return c.getTime();
         }
 
         @Override

@@ -122,7 +122,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
 
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
 
         this.startDate = null;
         this.stopDate = new Date();
@@ -167,64 +167,61 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                     Observation observation = observationDAO.get(observationState.getURI());
                     for (Plane plane : observation.getPlanes()) {
 
-                        // For now, until the work to deal with proprietary data is
-                        // complete, skip non-public artifacts.
+                        // set the date of the download to be the data release date
+                        // (past or future)
+                        Date downloadDate = plane.dataRelease;
+                        if (downloadDate == null) {
+                            // Artifacts will a null dataReleaseData are assumed public
+                            downloadDate = new Date();
+                        }
 
-                        // Artifacts will a null dataReleaseData are assumed public
-                        Date dataReleaseDate = plane.dataRelease;
-                        if (dataReleaseDate != null && dataReleaseDate.after(stopDate)) {
-                            log.debug("Skipping proprietary plane: " + plane);
-                        } else {
+                        for (Artifact artifact : plane.getArtifacts()) {
 
-                            for (Artifact artifact : plane.getArtifacts()) {
-                                logStart(artifact);
-                                boolean success = true;
-                                boolean added = false;
-                                String message = null;
-                                try {
-                                    processedCount++;
+                            logStart(artifact);
+                            boolean success = true;
+                            boolean added = false;
+                            String message = null;
+                            try {
+                                processedCount++;
 
-                                    boolean exists = artifactStore.contains(artifact.getURI(), artifact
-                                        .contentChecksum);
-                                    log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
-                                        .contentChecksum + " exists: " + exists);
-                                    if (!exists) {
+                                boolean exists = artifactStore.contains(artifact.getURI(), artifact
+                                    .contentChecksum);
+                                log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
+                                    .contentChecksum + " exists: " + exists);
+                                if (!exists) {
 
-                                        // see if there's already an entry
-                                        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact
-                                            .getURI());
-                                        if (skip == null) {
-                                            downloadCount++;
-                                            if (!dryrun) {
-                                                // set the message to be an empty string
-                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
-                                                harvestSkipURIDAO.put(skip);
-                                                added = true;
-                                            } else {
-                                                added = true;
-                                            }
+                                    // see if there's already an entry
+                                    HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact
+                                        .getURI());
+                                    if (skip == null) {
+                                        downloadCount++;
+                                        if (!dryrun) {
+                                            // set the message to be an empty string
+                                            skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                            harvestSkipURIDAO.put(skip);
+                                            added = true;
                                         } else {
-                                            message = "Artifact already exists in skip table.";
+                                            added = true;
                                         }
+                                    } else {
+                                        message = "Artifact already exists in skip table.";
                                     }
-
-                                } catch (Throwable t) {
-                                    success = false;
-                                    message = "Failed to determine if artifact " + artifact.getURI() + " exists: " +
-                                        t.getMessage();
-                                    log.error(message, t);
-                                    if (!dryrun) {
-                                        log.debug("Adding artifact to skip table: " + artifact.getURI());
-                                        // set the message to be an empty string
-                                        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS,
-                                            artifact.getURI(), "");
-                                        harvestSkipURIDAO.put(skip);
-                                        added = true;
-                                    }
-                                } finally {
-                                    state.curLastModified = artifact.getLastModified();
-                                    logEnd(artifact, success, added, message);
                                 }
+
+                            } catch (Throwable t) {
+                                success = false;
+                                message = "Failed to determine if artifact " + artifact.getURI() + " exists: " +
+                                    t.getMessage();
+                                log.error(message, t);
+                                if (!dryrun) {
+                                    log.debug("Adding artifact to skip table: " + artifact.getURI());
+                                    HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                    harvestSkipURIDAO.put(skip);
+                                    added = true;
+                                }
+                            } finally {
+                                state.curLastModified = artifact.getLastModified();
+                                logEnd(artifact, success, added, message);
                             }
                         }
                     }
@@ -299,4 +296,5 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         return DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil
             .UTC).format(Calendar.getInstance(DateUtil.UTC).getTime());
     }
+
 }
