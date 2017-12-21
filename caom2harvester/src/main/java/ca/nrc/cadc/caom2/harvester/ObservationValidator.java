@@ -135,7 +135,7 @@ public class ObservationValidator extends Harvester {
         Map<String, Object> config2 = getConfigDAO(dest);
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setComputeLastModified(false); // copy as-is
+        destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
@@ -250,13 +250,15 @@ public class ObservationValidator extends Harvester {
                                 log.debug("starting HarvestSkipURI transaction");
                                 boolean putSkip = true;
                                 HarvestSkipURI skip = harvestSkip.get(source, cname, o.getObs().getURI().getURI());
+                                Date tryAfter = new Date(); // TODO: could implement retry delaying/ordering/priority here
                                 if (skip == null) {
-                                    skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
                                 } else if (skipMsg != null && !skipMsg.equals(skip.errorMessage)) {
+                                    skip.setTryAfter(tryAfter);
                                     skip.errorMessage = skipMsg; // possible
                                     // update
                                 } else {
-                                    putSkip = false; // avoid timestamp
+                                    putSkip = false; // avoid lastModified update for no change
                                     // update
                                 }
 
@@ -406,6 +408,6 @@ public class ObservationValidator extends Harvester {
     @Override
     protected void initHarvestState(DataSource ds, @SuppressWarnings("rawtypes") Class c) {
         super.initHarvestState(ds, c);
-        this.harvestSkip = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema(), batchSize);
+        this.harvestSkip = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema());
     }
 }

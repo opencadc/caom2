@@ -26,10 +26,10 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.+'
     
     compile 'org.opencadc:cadc-util:[1.0.14,)'
-    compile 'org.opencadc:caom2:[2.3.0,3.0)'
-    compile 'org.opencadc:caom2-persist:[2.3.0,3.0)'
+    compile 'org.opencadc:caom2:[2.3.5,3.0)'
+    compile 'org.opencadc:caom2-persist:[2.3.2,3.0)'
 
-    compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-registry:[1.2,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
 
     

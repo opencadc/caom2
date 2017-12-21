@@ -125,15 +125,15 @@ public class CaomHarvester implements Runnable {
     /**
      * observationMetaDeleter
      */
-    private DeletionHarvester observationMetaDeleter;
+    private ReadAccessDeletionHarvester observationMetaDeleter;
     /**
      * planeDataDeleter
      */
-    private DeletionHarvester planeDataDeleter;
+    private ReadAccessDeletionHarvester planeDataDeleter;
     /**
      * planeDataDeleter
      */
-    private DeletionHarvester planeMetaDeleter;
+    private ReadAccessDeletionHarvester planeMetaDeleter;
 
     /**
      * Harvest everything.
@@ -193,12 +193,13 @@ public class CaomHarvester implements Runnable {
 
             // deletions in incremental mode only
             if (!full && !skip) {
+                // TODO: once the RepoClient supports deletion harvesting this can be moved out of "extendedFeatures"
                 this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
 
                 if (src.getHarvestAC()) {
-                    this.observationMetaDeleter = new DeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                    this.planeMetaDeleter = new DeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
-                    this.planeDataDeleter = new DeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.observationMetaDeleter = new ReadAccessDeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.planeMetaDeleter = new ReadAccessDeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
+                    this.planeDataDeleter = new ReadAccessDeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
                 }
             }
         }
@@ -236,7 +237,7 @@ public class CaomHarvester implements Runnable {
             boolean initDel = init;
             if (!init) {
                 // check if we have ever harvested before
-                HarvestState hs = observationMetaHarvester.harvestState.get(observationMetaHarvester.source, observationMetaHarvester.cname);
+                HarvestState hs = observationMetaHarvester.harvestStateDAO.get(observationMetaHarvester.source, observationMetaHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             observationMetaDeleter.setInitHarvestState(initDel);
@@ -247,7 +248,7 @@ public class CaomHarvester implements Runnable {
             boolean initDel = init;
             if (!init) {
                 // check if we have ever harvested before
-                HarvestState hs = planeDataHarvester.harvestState.get(planeDataHarvester.source, planeDataHarvester.cname);
+                HarvestState hs = planeDataHarvester.harvestStateDAO.get(planeDataHarvester.source, planeDataHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             planeDataDeleter.setInitHarvestState(initDel);
@@ -258,7 +259,7 @@ public class CaomHarvester implements Runnable {
             boolean initDel = init;
             if (!init) {
                 // check if we have ever harvested before
-                HarvestState hs = planeMetaHarvester.harvestState.get(planeMetaHarvester.source, planeMetaHarvester.cname);
+                HarvestState hs = planeMetaHarvester.harvestStateDAO.get(planeMetaHarvester.source, planeMetaHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             planeMetaDeleter.setInitHarvestState(initDel);
@@ -272,7 +273,7 @@ public class CaomHarvester implements Runnable {
             boolean initDel = init;
             if (!init) {
                 // check if we have ever harvested before
-                HarvestState hs = obsHarvester.harvestState.get(obsHarvester.source, obsHarvester.cname);
+                HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
                 initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
             }
             log.info("init: " + obsDeleter.source + " " + obsDeleter.cname);

@@ -69,14 +69,20 @@
 
 package ca.nrc.cadc.caom2;
 
-import java.util.Date;
 import java.util.UUID;
 
 /**
  * @author pdowler
  */
 public class DeletedObservation extends DeletedEntity {
-    public DeletedObservation(UUID id, Date lastModified) {
-        super(Observation.class, id, lastModified);
+    private ObservationURI uri;
+    
+    public DeletedObservation(UUID id,ObservationURI uri) {
+        super(Observation.class, id);
+        this.uri = uri;
+    }
+
+    public ObservationURI getURI() {
+        return uri;
     }
 }

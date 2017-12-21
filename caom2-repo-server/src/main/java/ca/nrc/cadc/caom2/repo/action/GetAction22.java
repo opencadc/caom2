@@ -72,13 +72,13 @@ package ca.nrc.cadc.caom2.repo.action;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-
 import com.csvreader.CsvWriter;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
 import java.util.List;
 
 /**
@@ -86,21 +86,16 @@ import java.util.List;
  */
 public class GetAction22 extends GetAction {
 
-    /**
-     * Return the CAOM 2.2 version of the observation writer.
-     */
     @Override
     protected ObservationWriter getObservationWriter() {
         return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
 
-    /**
-     * Write in CSV format.
-     */
     @Override
     protected long writeObservationList(List<ObservationState> states) throws IOException {
-        // write in csv format for now
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/csv");
+        
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         CsvWriter writer = new CsvWriter(bc, ',', Charset.defaultCharset());

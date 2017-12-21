@@ -124,7 +124,7 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
                 for (PartSkeleton s : cs.parts) {
                     Part p = Util.findPart(a.getParts(), s.id);
                     if (p == null) {
-                        log.debug("put caused delete: " + p);
+                        log.debug("put caused delete part: " + p);
                         partDAO.delete(s, jdbc);
                     }
                 }
