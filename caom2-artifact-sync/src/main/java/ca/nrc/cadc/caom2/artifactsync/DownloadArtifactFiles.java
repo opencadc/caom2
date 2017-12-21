@@ -76,7 +76,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,9 +92,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 
 public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
@@ -197,9 +194,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper {
 
-        HarvestSkipURI skip;
-        ArtifactStore artifactStore;
-        HarvestSkipURIDAO harvestSkipURIDAO;
+        final HarvestSkipURI skip;
+        final ArtifactStore artifactStore;
+        final HarvestSkipURIDAO harvestSkipURIDAO;
         boolean uploadSuccess = true;
         String uploadErrorMessage;
         long bytesTransferred;
@@ -293,14 +290,16 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             } finally {
                 // Update the skip table
                 try {
-                    if (result.success) {
-                        result.bytesTransferred = bytesTransferred;
-                        harvestSkipURIDAO.delete(skip);
-                    } else {
-                        skip.errorMessage = result.message;
-                        Date tryAfter = getTryAfter();
-                        skip.setTryAfter(tryAfter);
-                        harvestSkipURIDAO.put(skip);
+                    synchronized (harvestSkipURIDAO) {
+                        if (result.success) {
+                            result.bytesTransferred = bytesTransferred;
+                            harvestSkipURIDAO.delete(skip);
+                        } else {
+                            skip.errorMessage = result.message;
+                            Date tryAfter = getTryAfter();
+                            skip.setTryAfter(tryAfter);
+                            harvestSkipURIDAO.put(skip);
+                        }
                     }
                 } catch (Throwable t) {
                     log.error("Failed to update or delete from skip table", t);

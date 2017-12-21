@@ -78,13 +78,10 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -326,8 +323,8 @@ public class Main {
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
-        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), " +
-            "just harvest to the database, or just initiate downloads.");
+        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), ");
+        sb.append("          just harvest to the database, or just initiate downloads.");
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
