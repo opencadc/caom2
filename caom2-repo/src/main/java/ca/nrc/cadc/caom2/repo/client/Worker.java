@@ -69,22 +69,23 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
-import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.net.HttpDownload;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.Callable;
+
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
+
+import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.net.HttpDownload;
 
 public class Worker implements Callable<ObservationResponse> {
 
@@ -133,7 +134,7 @@ public class Worker implements Callable<ObservationResponse> {
             wr.observation = obsReader.read(bos.toString());
         } catch (Exception e) {
             String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            wr.error = new IllegalStateException(e.getMessage());
         }
         return wr;
     }
@@ -164,7 +165,7 @@ public class Worker implements Callable<ObservationResponse> {
             wr.observation = obsReader.read(bos.toString());
         } catch (ObservationParsingException e) {
             String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            wr.error = new IllegalStateException(e.getMessage());
         }
         return wr;
     }

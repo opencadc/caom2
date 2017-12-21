@@ -69,6 +69,22 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.log4j.Logger;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
@@ -86,20 +102,6 @@ import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.log4j.Logger;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Persistence layer operations.
@@ -172,8 +174,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param ascendingOrder
      * @return
      */
-    public List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified,
-            Integer batchSize, boolean ascendingOrder) {
+    public List<ObservationState> getObservationList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascendingOrder) {
         checkInit();
         log.debug("getObservationStates: " + collection + " " + batchSize);
 
@@ -191,7 +192,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             List result = jdbc.query(sql, gen.getObservationStateMapper());
-            return (List<ObservationState>) result;
+            return result;
         } finally {
             long dt = System.currentTimeMillis() - t;
             log.debug("getObservationStates: " + collection + " " + batchSize + " " + dt + "ms");
@@ -211,7 +212,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     return null;
                 }
             } catch (Exception ex) {
-                ret.error = new IllegalStateException("failed to read " + s.getURI() + " from database", ex);
+                ret.error = new IllegalStateException(ex.getMessage());
             }
             return ret;
         } finally {
@@ -241,7 +242,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 try {
                     r.observation = get(s.getURI());
                 } catch (Exception ex) {
-                    r.error = new IllegalStateException("failed to read " + s.getURI() + " from database", ex);
+                    r.error = new IllegalStateException(ex.getMessage());
                 }
                 ret.add(r);
             }
@@ -253,8 +254,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     /**
-     * Get list of observations to non-standard depth. This method will get
-     * observations (depth=1), planes (depth=2), etc. Values from 1 to
+     * Get list of observations to non-standard depth. This method will get observations (depth=1), planes (depth=2), etc. Values from 1 to
      * SQLGenerator.MAX_DEPTH (5) are valid.
      *
      * @param c
@@ -361,7 +361,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             String tsSQL = gen.getCurrentTimeSQL();
             log.debug("PUT: " + tsSQL);
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            
+
             // make call to server before startTransaction
             Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
                 @Override
@@ -371,7 +371,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             });
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             log.debug("current time: " + df.format(now));
-            
+
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
             //       if they violate unique keys... but if it was by uri, it would be the same
@@ -386,7 +386,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("starting transaction");
             getTransactionManager().startTransaction();
             txnOpen = true;
-            
+
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
             if (cur != null) {
@@ -530,7 +530,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // update CaomEntity state: 
+    // update CaomEntity state:
     // always compute and assign: metaChecksum, accMetaChecksum
     // assign if metaChecksum changes: lastModified
     // assign if lastModified changed or a child's maxLastModified changes
