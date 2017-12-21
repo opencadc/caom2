@@ -102,7 +102,7 @@ public class Main {
                 System.exit(0);
             }
 
-            // TODO: implement useful command-line fatures here: 
+            // TODO: implement useful command-line fatures here:
 
             // setup
             // am.getValue("resourceID")
