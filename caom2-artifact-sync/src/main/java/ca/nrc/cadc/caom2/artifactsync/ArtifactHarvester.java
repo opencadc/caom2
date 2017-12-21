@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -108,6 +109,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     private Date startDate;
     private Date stopDate;
     private boolean firstRun;
+    private DateFormat df;
 
     public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
                              ArtifactStore artifactStore, String collection, boolean dryrun, boolean full, int
@@ -129,6 +131,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         this.stopDate = new Date();
 
         this.firstRun = true;
+        
+        df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
     @Override
@@ -258,7 +262,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             batchMessage.append(",");
             batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start).append("\"");
             batchMessage.append(",");
-            batchMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+            batchMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
             batchMessage.append("}");
             log.info(batchMessage.toString());
         }
@@ -270,7 +274,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
         startMessage.append(",");
-        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
@@ -288,21 +292,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             startMessage.append("\"message\":\"").append(message).append("\"");
         }
         startMessage.append(",");
-        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
-    }
-
-    /**
-     * Obtain the current UTC Date and format it.
-     * TODO - This really ought to go into org.opencadc:cadc-util:ca.nrc.cadc.DateUtil.
-     * TODO - 2017.12.15  jenkinsd
-     *
-     * @return String formatted UTC date.  Never null
-     */
-    private String currentDateUTC() {
-        return DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil
-            .UTC).format(Calendar.getInstance(DateUtil.UTC).getTime());
     }
 
 }

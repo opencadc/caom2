@@ -83,6 +83,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -109,6 +110,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
+    private DateFormat df;
 
     public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads,
                                  int batchSize, Integer retryAfterHours) {
@@ -125,6 +127,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         } else {
             this.retryAfterHours = retryAfterHours;
         }
+        
+        df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
     @Override
@@ -173,7 +177,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             endMessage.append(",");
             endMessage.append("\"time\":\"").append(end).append("\"");
             endMessage.append(",");
-            endMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+            endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
             endMessage.append(",");
             endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
             endMessage.append(",");
@@ -310,7 +314,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         private Date getTryAfter() {
             Calendar c = Calendar.getInstance();
-            c.setTime(stopDate);
             c.add(Calendar.HOUR, retryAfterHours);
             return c.getTime();
         }
@@ -351,7 +354,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
         startMessage.append(",");
-        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
@@ -371,20 +374,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             startMessage.append("\"message\":\"").append(result.message).append("\"");
         }
         startMessage.append(",");
-        startMessage.append("\"date\":\"").append(currentDateUTC()).append("\"");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
 
-    /**
-     * Obtain the current UTC Date and format it.
-     * TODO - This really ought to go into org.opencadc:cadc-util:ca.nrc.cadc.DateUtil.
-     * TODO - 2017.12.15  jenkinsd
-     *
-     * @return String formatted UTC date.  Never null
-     */
-    private String currentDateUTC() {
-        return DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil
-            .UTC).format(Calendar.getInstance(DateUtil.UTC).getTime());
-    }
 }
