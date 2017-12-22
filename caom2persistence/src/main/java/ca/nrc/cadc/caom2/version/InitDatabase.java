@@ -89,9 +89,10 @@ public class InitDatabase {
 
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
+    // caom2persistence 2.3.12 modifies DeletedObservation table
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.3.5";
-    public static final String PREV_MODEL_VERSION = "2.3";
+    public static final String MODEL_VERSION = "2.3.12";
+    public static final String PREV_MODEL_VERSION = "2.3.5";
 
     static String[] CREATE_SQL = new String[]{
         "caom2.ModelVersion.sql",
@@ -112,10 +113,7 @@ public class InitDatabase {
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.3.5.sql",
-        "caom2.ObsCore.sql",
-        "caom2.ObsCore-x.sql",
-        "caom2.SIAv1.sql"
+        "caom2.upgrade-2.3.12.sql"
     };
 
     private final DataSource dataSource;

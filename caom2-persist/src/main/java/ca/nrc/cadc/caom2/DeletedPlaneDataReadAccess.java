@@ -70,15 +70,13 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
-
-import java.util.Date;
 import java.util.UUID;
 
 /**
  * @author pdowler
  */
 public class DeletedPlaneDataReadAccess extends DeletedEntity {
-    public DeletedPlaneDataReadAccess(UUID id, Date lastModified) {
-        super(PlaneDataReadAccess.class, id, lastModified);
+    public DeletedPlaneDataReadAccess(UUID id) {
+        super(PlaneDataReadAccess.class, id);
     }
 }

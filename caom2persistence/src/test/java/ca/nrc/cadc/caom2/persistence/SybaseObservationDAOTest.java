@@ -105,4 +105,11 @@ public class SybaseObservationDAOTest extends AbstractObservationDAOTest
         
         return p;
     }
+
+    @Override
+    public void testNonOriginPut() {
+        // not supported by sybase because origins can use 128-bit UUID
+    }
+    
+    
 }

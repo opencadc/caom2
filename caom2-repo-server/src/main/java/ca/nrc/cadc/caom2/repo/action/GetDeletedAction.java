@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,42 +62,88 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+import com.csvreader.CsvWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.text.DateFormat;
 import java.util.Date;
-import java.util.UUID;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
+ *
  * @author pdowler
  */
-public class DeletedEntity {
-    public Class entityClass;
-    private final UUID id;
-    private Date lastModified;
+public class GetDeletedAction extends RepoAction {
+    private static final Logger log = Logger.getLogger(GetDeletedAction.class);
 
-    DeletedEntity(Class entityClass, UUID id) {
-        this.entityClass = entityClass;
-        this.id = id;
-    }
-
-    public UUID getID() {
-        return id;
-    }
-
-    public Date getLastModified() {
-        return lastModified;
+    public GetDeletedAction() { 
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName() + "["
-            + entityClass.getSimpleName() + ","
-            + id + ","
-            + lastModified + "]";
+    public void doAction() throws Exception {
+        // lazy: this currently does not check if extra path elements were included
+        if (getCollection() != null) {
+            InputParams ip = getInputParams();
+            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
+        } else {
+            // Responds to requests where no collection is provided.
+            // Returns list of all collections.
+            doGetCollectionList();
+        }
     }
+
+    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
+        log.debug("START: " + getCollection());
+
+        checkReadPermission(getCollection());
+
+        DeletedEntityDAO dao = getDeletedDAO();
+
+        List<DeletedObservation> dels = dao.getList(getCollection(), start, end, maxRec);
+
+        if (dels == null) {
+            throw new ResourceNotFoundException("Collection not found: " + getCollection());
+        }
+
+        long byteCount = writeDeleted(dels);
+        logInfo.setBytes(byteCount);
+
+        log.debug("DONE: " + getCollection());
+    }
+    
+    private long writeDeleted(List<DeletedObservation> dels) throws IOException {
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        
+        OutputStream os = syncOutput.getOutputStream();
+        ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        CsvWriter writer = new CsvWriter(out, '\t');
+        for (DeletedObservation ddo : dels) {
+            writer.write(ddo.getID().toString());
+            writer.write(ddo.getURI().getCollection());
+            writer.write(ddo.getURI().getObservationID());
+            if (ddo.getLastModified() != null) {
+                writer.write(df.format(ddo.getLastModified()));
+            } else {
+                writer.write("");
+            }
+            writer.endRecord();
+        }
+        writer.flush();
+        return bc.getByteCount();
+    }
+    
 }

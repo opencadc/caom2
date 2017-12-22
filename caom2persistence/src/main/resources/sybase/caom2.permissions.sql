@@ -24,7 +24,7 @@ grant insert, update, delete on caom2_Artifact to caom2;
 grant insert, update, delete on caom2_Plane to caom2;
 grant insert, update, delete on caom2_Observation to caom2;
 
-grant insert on caom2_DeletedObservation to caom2;
+grant insert, update, delete on caom2_DeletedObservation to caom2;
 grant insert, update, delete on caom2_ObservationMetaReadAccess to caom2;
 grant insert, update, delete on caom2_PlaneMetaReadAccess to caom2;
 grant insert, update, delete on caom2_PlaneDataReadAccess to caom2;

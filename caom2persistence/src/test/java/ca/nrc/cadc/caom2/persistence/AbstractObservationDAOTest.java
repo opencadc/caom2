@@ -73,11 +73,12 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DeletedEntity;
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -188,11 +189,13 @@ public abstract class AbstractObservationDAOTest
         {
             log.error("BUG", oops);
         }
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.eprsistence", Level.INFO);
     }
 
     boolean deletionTrack;
     boolean useLongForUUID;
     ObservationDAO dao;
+    DeletedEntityDAO ded;
     TransactionManager txnManager;
 
     Class[] ENTITY_CLASSES =
@@ -216,6 +219,9 @@ public abstract class AbstractObservationDAOTest
             this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();
+            
+            ded = new DeletedEntityDAO();
+            ded.setConfig(config);
         }
         catch(Exception ex)
         {
@@ -223,16 +229,6 @@ public abstract class AbstractObservationDAOTest
             log.error("setup DataSource failed", ex);
             throw ex;
         }
-    }
-    
-    protected UUID genID()
-    {
-        if (useLongForUUID)
-        {
-            Long lsb = CaomIDGenerator.getInstance().generateID();
-            return new UUID(0L, lsb);
-        }
-        return UUID.randomUUID();
     }
     
     @Before
@@ -382,22 +378,24 @@ public abstract class AbstractObservationDAOTest
         try
         {
             String collection = "FOO";
-            Date start = new Date();
-            Thread.sleep(10);
             
             Observation obs = new SimpleObservation(collection, "bar1");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
+            obs = dao.get(obs.getURI());
+            Assert.assertNotNull(obs);
+            Date start = new Date(obs.getMaxLastModified().getTime() - 5L);
             log.info("created: " + obs);
+            
             Thread.sleep(10);
             
             obs = new SimpleObservation(collection, "bar2");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
+            obs = dao.get(obs.getURI());
+            Assert.assertNotNull(obs);
             log.info("created: " + obs);
-            Thread.sleep(10);
+            Date mid = new Date(obs.getMaxLastModified().getTime() + 5L);
             
-            Date mid = new Date();
+            Thread.sleep(10);
             
             obs = new SimpleObservation(collection, "bar3");
             dao.put(obs);
@@ -407,40 +405,39 @@ public abstract class AbstractObservationDAOTest
             
             obs = new SimpleObservation(collection, "bar4");
             dao.put(obs);
-            Assert.assertTrue(dao.exists(obs.getURI()));
+            obs = dao.get(obs.getURI());
+            Assert.assertNotNull(obs);
             log.info("created: " + obs);
-            Thread.sleep(10);
-            
-            Date end = new Date();
+            Date end = new Date(obs.getMaxLastModified().getTime() + 5L);
             
             Integer batchSize = 100;
             
             List<ObservationResponse> result = dao.getList(collection, start, end, batchSize);
-            Assert.assertEquals(4, result.size());
             for (ObservationResponse os : result)
             {
                 log.info("found: " + os);
                 Assert.assertNotNull(os.observationState);
                 Assert.assertNotNull(os.observation);
             }
+            Assert.assertEquals(4, result.size());
             
             result = dao.getList(collection, start, mid, batchSize);
-            Assert.assertEquals(2, result.size());
             for (ObservationResponse os : result)
             {
                 log.info("found: " + os);
                 Assert.assertNotNull(os.observationState);
                 Assert.assertNotNull(os.observation);
             }
+            Assert.assertEquals(2, result.size());
             
             result = dao.getList(collection, mid, end, batchSize);
-            Assert.assertEquals(2, result.size());
             for (ObservationResponse os : result)
             {
                 log.info("found: " + os);
                 Assert.assertNotNull(os.observationState);
                 Assert.assertNotNull(os.observation);
             }
+            Assert.assertEquals(2, result.size());
             
             try
             {
@@ -470,7 +467,6 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    @Test
     public void testGetDeleteNonExistentObservation()
     {
         try
@@ -482,7 +478,7 @@ public abstract class AbstractObservationDAOTest
             UUID notFound = dao.getID(uri);
             Assert.assertNull(uri.toString(), notFound);
             
-            UUID uuid = genID();
+            UUID uuid = UUID.randomUUID();
             ObservationURI nuri = dao.getURI(uuid);
             Assert.assertNull(uuid.toString(), nuri);
             Observation nobs = dao.get(uuid);
@@ -504,6 +500,7 @@ public abstract class AbstractObservationDAOTest
         try
         {
             Observation orig = getTestObservation(false, 5, false, true);
+            UUID externalID = orig.getID();
             
             // EXISTS
             //txnManager.startTransaction();
@@ -517,7 +514,7 @@ public abstract class AbstractObservationDAOTest
             
             // this is so we can detect incorrect timestamp round trips
             // caused by assigning something other than what was stored
-            Thread.sleep(2*TIME_TOLERANCE);
+            Thread.sleep(2 * TIME_TOLERANCE);
             
             // EXISTS
             //txnManager.startTransaction();
@@ -541,8 +538,18 @@ public abstract class AbstractObservationDAOTest
             
             // EXISTS
             //txnManager.startTransaction();
-            Assert.assertFalse(dao.exists(orig.getURI()));
+            Assert.assertFalse("exists", dao.exists(orig.getURI()));
             //txnManager.commitTransaction();
+            
+            log.info("check deletion track: " + orig.getID());
+            
+            DeletedEntity de = ded.get(DeletedObservation.class, orig.getID());
+            Assert.assertNotNull("deletion tracker", de);
+            Assert.assertEquals("deleted.id", orig.getID(), de.getID());
+            Assert.assertNotNull("deleted.lastModified", de.getLastModified());
+            
+            DeletedObservation doe = (DeletedObservation) de;
+            Assert.assertEquals("deleted.uri", orig.getURI(), doe.getURI());
             
             Assert.assertFalse("open transaction", txnManager.isOpen());
         }
@@ -550,6 +557,79 @@ public abstract class AbstractObservationDAOTest
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+     @Test
+    public void testNonOriginPut()
+    {
+        try
+        {
+            dao.setOrigin(false);
+            Observation orig = getTestObservation(false, 5, false, true);
+            UUID externalID = orig.getID();
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertFalse(dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+
+            // PUT
+            //txnManager.startTransaction();
+            dao.put(orig);
+            //txnManager.commitTransaction();
+            
+            // this is so we can detect incorrect timestamp round trips
+            // caused by assigning something other than what was stored
+            Thread.sleep(2 * TIME_TOLERANCE);
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertTrue(dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+
+            // GET by URI
+            Observation retrieved = dao.get(orig.getURI());
+            Assert.assertNotNull("found by URI", retrieved);
+            testEqual(orig, retrieved);
+
+            // GET by ID
+            retrieved = dao.get(orig.getID());
+            Assert.assertNotNull("found by ID", retrieved);
+            testEqual(orig, retrieved);
+            
+            // non-origin: make sure UUID did not change
+            Assert.assertEquals("non-origin UUID", externalID, retrieved.getID());
+            
+            // DELETE by ID
+            //txnManager.startTransaction();
+            dao.delete(orig.getID());
+            //txnManager.commitTransaction();
+            
+            // EXISTS
+            //txnManager.startTransaction();
+            Assert.assertFalse("exists", dao.exists(orig.getURI()));
+            //txnManager.commitTransaction();
+            
+            log.info("check deletion track: " + orig.getID());
+            
+            DeletedEntity de = ded.get(DeletedObservation.class, orig.getID());
+            Assert.assertNotNull("deletion tracker", de);
+            Assert.assertEquals("deleted.id", orig.getID(), de.getID());
+            Assert.assertNotNull("deleted.lastModified", de.getLastModified());
+            
+            DeletedObservation doe = (DeletedObservation) de;
+            Assert.assertEquals("deleted.uri", orig.getURI(), doe.getURI());
+            
+            Assert.assertFalse("open transaction", txnManager.isOpen());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        finally {
+            dao.setOrigin(true);
         }
     }
 
@@ -1207,6 +1287,12 @@ public abstract class AbstractObservationDAOTest
         String cn = expected.getClass().getSimpleName();
         
         Assert.assertEquals(cn+".ID", expected.getID(), actual.getID());
+    }
+    
+    private void testEntityChecksums(CaomEntity expected, CaomEntity actual)
+    {
+        log.debug("testEqual: " + expected + " == " + actual);
+        String cn = expected.getClass().getSimpleName();
         
         // read from database should always have checksums
         Assert.assertNotNull(cn+".metaChecksum", actual.getMetaChecksum());
@@ -1242,6 +1328,7 @@ public abstract class AbstractObservationDAOTest
     
     private void testEqual(Observation expected, Observation actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals("algorithm.name", expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
 
@@ -1313,7 +1400,7 @@ public abstract class AbstractObservationDAOTest
         while ( e.hasNext() || a.hasNext() )
             testEqual(e.next(), a.next());
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
 
     private void testEqual(String name, Collection<String> expected, Collection<String> actual)
@@ -1323,6 +1410,7 @@ public abstract class AbstractObservationDAOTest
     
     private void testEqual(Plane expected, Plane actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getProductID(), actual.getProductID());
         Assert.assertEquals(expected.creatorID, actual.creatorID);
         Assert.assertEquals(expected.calibrationLevel, actual.calibrationLevel);
@@ -1477,11 +1565,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     
     private void testEqual(Artifact expected, Artifact actual)
     {
+        testEntity(expected, actual);
         Assert.assertEquals(expected.getURI(), actual.getURI());
         Assert.assertEquals(expected.contentLength, actual.contentLength);
         Assert.assertEquals(expected.contentType, actual.contentType);
@@ -1500,11 +1589,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     private void testEqual(Part expected, Part actual)
     {
-        log.debug("num Chunks: " + expected.getChunks().size() + " == " + actual.getChunks().size());
+        testEntity(expected, actual);
+        Assert.assertEquals("part.name", expected.getName(), actual.getName());
         Assert.assertEquals("number of chunks", expected.getChunks().size(), actual.getChunks().size());
         Iterator<Chunk> ea = expected.getChunks().iterator();
         Iterator<Chunk> aa = actual.getChunks().iterator();
@@ -1515,10 +1605,12 @@ public abstract class AbstractObservationDAOTest
             testEqual(ex, ac);
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
     private void testEqual(Chunk expected, Chunk actual)
     {
+        testEntity(expected, actual);
+        
         Assert.assertEquals("productType", expected.productType, actual.productType);
         Assert.assertEquals("naxis", expected.naxis, actual.naxis);
         Assert.assertEquals("positionAxis1", expected.positionAxis1, actual.positionAxis1);
@@ -1600,7 +1692,7 @@ public abstract class AbstractObservationDAOTest
             }
         }
         
-        testEntity(expected, actual);
+        testEntityChecksums(expected, actual);
     }
 
     private void testEqual(String s, CoordAxis1D expected, CoordAxis1D actual)

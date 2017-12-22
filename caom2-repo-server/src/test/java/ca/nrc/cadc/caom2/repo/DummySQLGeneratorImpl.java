@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityPut;
 import ca.nrc.cadc.caom2.persistence.EntityDelete;
 import ca.nrc.cadc.caom2.persistence.EntityPut;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -99,6 +100,11 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
         throw new UnsupportedOperationException();
     }
     
+    @Override
+    public UUID generateID(UUID id) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public String getSelectSQL(ObservationURI ouri, int i) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
@@ -194,6 +200,11 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> type, boolean bln) {
+        throw new UnsupportedOperationException();
+    }
+    
     @Override
     public String literal(Object o) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
