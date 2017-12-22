@@ -69,6 +69,19 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.repo.client.transform.TransformDeletionState;
+import ca.nrc.cadc.caom2.repo.client.transform.TransformObservationState;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -91,19 +104,6 @@ import java.util.concurrent.Future;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.repo.client.transform.TransformDeletionState;
-import ca.nrc.cadc.caom2.repo.client.transform.TransformObservationState;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 
 public class RepoClient {
 
@@ -163,6 +163,8 @@ public class RepoClient {
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         initDel();
 
+        final List<DeletedObservation> ret = new ArrayList<>();
+
         // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
 
         // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
@@ -170,7 +172,8 @@ public class RepoClient {
          * UUID id = null; String col = null; String observationID = null; Date lastModified = null; DeletedObservation de = new DeletedObservation(id, new
          * ObservationURI(col, observationID)); CaomUtil.assignLastModified(de, lastModified, "lastModified"); ret.add(de);
          */
-        return readDeletedEntityList(new TransformDeletionState(df, '\t', '\n'), collection, start, end, maxrec);
+
+        return ret;
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {

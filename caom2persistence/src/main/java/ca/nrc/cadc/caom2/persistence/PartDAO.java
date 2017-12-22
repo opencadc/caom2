@@ -114,7 +114,7 @@ class PartDAO extends AbstractCaomEntityDAO<Part> {
                 for (ChunkSkeleton s : cs.chunks) {
                     Chunk c = Util.findChunk(p.getChunks(), s.id);
                     if (c == null) {
-                        log.debug("put caused delete: " + c);
+                        log.debug("put caused delete chunk: " + c);
                         chunkDAO.delete(s, jdbc);
                     }
                 }

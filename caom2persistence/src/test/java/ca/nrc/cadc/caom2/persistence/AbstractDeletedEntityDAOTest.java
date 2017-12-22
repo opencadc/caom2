@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.persistence;
 
@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
 import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
+import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
 import java.lang.reflect.Constructor;
 import java.text.DateFormat;
@@ -92,36 +93,31 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public abstract class AbstractDeletedEntityDAOTest
-{
+public abstract class AbstractDeletedEntityDAOTest {
+
     protected static Logger log;
 
     DeletedEntityDAO dao;
-    Class[] entityClasses = 
-    { 
-        DeletedObservation.class,
-        DeletedObservationMetaReadAccess.class,
-        DeletedPlaneMetaReadAccess.class,
-        DeletedPlaneDataReadAccess.class
-    };
+    Class[] entityClasses
+            = {
+                DeletedObservationMetaReadAccess.class,
+                DeletedPlaneMetaReadAccess.class,
+                DeletedPlaneDataReadAccess.class
+            };
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
     public AbstractDeletedEntityDAOTest(Class genClass, String server, String database, String schema)
-        throws Exception
-    {
-        try
-        {
-            Map<String,Object> config = new TreeMap<String,Object>();
+            throws Exception {
+        try {
+            Map<String, Object> config = new TreeMap<String, Object>();
             config.put("server", server);
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
             this.dao = new DeletedEntityDAO();
             dao.setConfig(config);
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             // make sure it gets fully dumped
             log.error("setup DataSource failed", ex);
             throw ex;
@@ -130,13 +126,11 @@ public abstract class AbstractDeletedEntityDAOTest
 
     @Before
     public void setup()
-        throws Exception
-    {
+            throws Exception {
         log.debug("clearing old tables...");
         SQLGenerator gen = dao.getSQLGenerator();
         DataSource ds = dao.getDataSource();
-        for (Class c : entityClasses)
-        {
+        for (Class c : entityClasses) {
             String s = gen.getTable(c);
 
             String sql = "delete from " + s;
@@ -147,11 +141,73 @@ public abstract class AbstractDeletedEntityDAOTest
     }
 
     @Test
-    public void testGetListDeletedObservation()
-    {
-        try
-        {
+    public void testGetListDeletedReadAccess() {
+        try {
 
+            UUID id1 = new UUID(0L, 100L);
+            UUID id2 = new UUID(0L, 200L);
+            UUID id3 = new UUID(0L, 300L);
+            UUID id4 = new UUID(0L, 400L);
+            UUID id5 = new UUID(0L, 500L);
+
+            for (Class c : entityClasses) {
+                log.info("creating test content: " + c.getSimpleName());
+
+                Constructor<DeletedEntity> ctor = c.getConstructor(UUID.class);
+                DeletedEntity o1 = ctor.newInstance(id1);
+                DeletedEntity o2 = ctor.newInstance(id2);
+                DeletedEntity o3 = ctor.newInstance(id3);
+                DeletedEntity o4 = ctor.newInstance(id4);
+                DeletedEntity o5 = ctor.newInstance(id5);
+
+                log.info("put: \n"
+                    + o1 + "\n"
+                    + o2 + "\n"
+                    + o3 + "\n"
+                    + o4 + "\n"
+                    + o5 + "\n"
+                );
+                
+                dao.put(o1);
+                Thread.sleep(10L);
+                dao.put(o2);
+                Thread.sleep(10L);
+                dao.put(o3);
+                Thread.sleep(10L);
+                dao.put(o4);
+                Thread.sleep(10L);
+                dao.put(o5);
+
+                Date start = new Date(o1.getLastModified().getTime() - 100L); // past
+                Date end = null;
+                Integer batchSize = new Integer(3);
+                List<DeletedEntity> dels;
+
+                // get first batch
+                dels = dao.getList(c, start, end, batchSize);
+                Assert.assertNotNull(c.getSimpleName(), dels);
+                Assert.assertEquals(c.getSimpleName(), 3, dels.size());
+                Assert.assertEquals(c.getSimpleName(), o1.getID(), dels.get(0).getID());
+                Assert.assertEquals(c.getSimpleName(), o2.getID(), dels.get(1).getID());
+                Assert.assertEquals(c.getSimpleName(), o3.getID(), dels.get(2).getID());
+
+                // get next batch
+                dels = dao.getList(c, o3.getLastModified(), end, batchSize);
+                Assert.assertNotNull(c.getSimpleName(), dels);
+                Assert.assertEquals(c.getSimpleName(), 3, dels.size()); // o3 gets picked up by the >=
+                Assert.assertEquals(c.getSimpleName(), o3.getID(), dels.get(0).getID());
+                Assert.assertEquals(c.getSimpleName(), o4.getID(), dels.get(1).getID());
+                Assert.assertEquals(c.getSimpleName(), o5.getID(), dels.get(2).getID());
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGetListDeletedObservation() {
+        try {
             UUID id1 = new UUID(0L, 100L);
             UUID id2 = new UUID(0L, 200L);
             UUID id3 = new UUID(0L, 300L);
@@ -164,71 +220,60 @@ public abstract class AbstractDeletedEntityDAOTest
             Date d4 = new Date(d3.getTime() + 10L);
             Date d5 = new Date(d4.getTime() + 10L);
 
-            Class c = entityClasses[0];
-            log.debug("creating test content: " + c.getSimpleName());
-            
-            Constructor<DeletedEntity> ctor = c.getConstructor(UUID.class, Date.class);
-            DeletedEntity o1 = ctor.newInstance(id1, d1);
-            DeletedEntity o2 = ctor.newInstance(id2, d2);
-            DeletedEntity o3 = ctor.newInstance(id3, d3);
-            DeletedEntity o4 = ctor.newInstance(id4, d4);
-            DeletedEntity o5 = ctor.newInstance(id5, d5);
+            ObservationURI u1 = new ObservationURI("FOO", "bar1");
+            ObservationURI u2 = new ObservationURI("FOO", "bar2");
+            ObservationURI u3 = new ObservationURI("FOO", "bar3");
+            ObservationURI u4 = new ObservationURI("FOO", "bar4");
+            ObservationURI u5 = new ObservationURI("FOO", "bar5");
 
-            // manually insert list since it is normally maintained by triggers
-            DataSource ds = dao.getDataSource();
-            String s = dao.getSQLGenerator().getTable(c);
+            DeletedObservation o1 = new DeletedObservation(id1, u1);
+            DeletedObservation o2 = new DeletedObservation(id2, u2);
+            DeletedObservation o3 = new DeletedObservation(id3, u3);
+            DeletedObservation o4 = new DeletedObservation(id4, u4);
+            DeletedObservation o5 = new DeletedObservation(id5, u5);
 
-            String sql = "insert into " + s + " (id,lastModified) values ( " 
-                    + dao.gen.literal(o1.id) + ", '" + df.format(o1.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
+            log.info("put: \n"
+                + o1 + "\n"
+                + o2 + "\n"
+                + o3 + "\n"
+                + o4 + "\n"
+                + o5 + "\n"
+            );
             
-            sql = "insert into " + s + " (id,lastModified) values ( " 
-                    + dao.gen.literal(o2.id) + ", '" + df.format(o2.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " 
-                    + dao.gen.literal(o3.id) + ", '" + df.format(o3.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " 
-                    + dao.gen.literal(o4.id) + ", '" + df.format(o4.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-            
-            sql = "insert into " + s + " (id,lastModified) values ( " 
-                    + dao.gen.literal(o5.id) + ", '" + df.format(o5.lastModified) + "')";
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
+            dao.put(o1);
+            Thread.sleep(10L);
+            dao.put(o2);
+            Thread.sleep(10L);
+            dao.put(o3);
+            Thread.sleep(10L);
+            dao.put(o4);
+            Thread.sleep(10L);
+            dao.put(o5);
 
-            Date start = new Date(o1.lastModified.getTime() - 100L); // past
+            Date start = new Date(o1.getLastModified().getTime() - 100L); // past
             Date end = null;
             Integer batchSize = new Integer(3);
             List<DeletedEntity> dels;
-
-
+            
             // get first batch
-            dels = dao.getList(c, start, end, batchSize);
+            dels = dao.getList(DeletedObservation.class, start, end, batchSize);
             Assert.assertNotNull(dels);
             Assert.assertEquals(3, dels.size());
-            Assert.assertEquals(o1.id, dels.get(0).id);
-            Assert.assertEquals(o2.id, dels.get(1).id);
-            Assert.assertEquals(o3.id, dels.get(2).id);
+            Assert.assertEquals(o1.getID(), dels.get(0).getID());
+            Assert.assertEquals(o2.getID(), dels.get(1).getID());
+            Assert.assertEquals(o3.getID(), dels.get(2).getID());
 
             // get next batch
-            dels = dao.getList(c, o3.lastModified, end, batchSize);
+            dels = dao.getList(DeletedObservation.class, o3.getLastModified(), end, batchSize);
             Assert.assertNotNull(dels);
             Assert.assertEquals(3, dels.size()); // o3 gets picked up by the >=
-            Assert.assertEquals(o3.id, dels.get(0).id);
-            Assert.assertEquals(o4.id, dels.get(1).id);
-            Assert.assertEquals(o5.id, dels.get(2).id);
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertEquals(o3.getID(), dels.get(0).getID());
+            Assert.assertEquals(o4.getID(), dels.get(1).getID());
+            Assert.assertEquals(o5.getID(), dels.get(2).getID());
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
 }
