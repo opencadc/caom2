@@ -1,77 +1,78 @@
 /*
-************************************************************************
-*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
-**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
-*
-*  (c) 2017.                            (c) 2017.
-*  Government of Canada                 Gouvernement du Canada
-*  National Research Council            Conseil national de recherches
-*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-*  All rights reserved                  Tous droits réservés
-*
-*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
-*  expressed, implied, or               énoncée, implicite ou légale,
-*  statutory, of any kind with          de quelque nature que ce
-*  respect to the software,             soit, concernant le logiciel,
-*  including without limitation         y compris sans restriction
-*  any warranty of merchantability      toute garantie de valeur
-*  or fitness for a particular          marchande ou de pertinence
-*  purpose. NRC shall not be            pour un usage particulier.
-*  liable in any event for any          Le CNRC ne pourra en aucun cas
-*  damages, whether direct or           être tenu responsable de tout
-*  indirect, special or general,        dommage, direct ou indirect,
-*  consequential or incidental,         particulier ou général,
-*  arising from the use of the          accessoire ou fortuit, résultant
-*  software.  Neither the name          de l'utilisation du logiciel. Ni
-*  of the National Research             le nom du Conseil National de
-*  Council of Canada nor the            Recherches du Canada ni les noms
-*  names of its contributors may        de ses  participants ne peuvent
-*  be used to endorse or promote        être utilisés pour approuver ou
-*  products derived from this           promouvoir les produits dérivés
-*  software without specific prior      de ce logiciel sans autorisation
-*  written permission.                  préalable et particulière
-*                                       par écrit.
-*
-*  This file is part of the             Ce fichier fait partie du projet
-*  OpenCADC project.                    OpenCADC.
-*
-*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
-*  you can redistribute it and/or       vous pouvez le redistribuer ou le
-*  modify it under the terms of         modifier suivant les termes de
-*  the GNU Affero General Public        la “GNU Affero General Public
-*  License as published by the          License” telle que publiée
-*  Free Software Foundation,            par la Free Software Foundation
-*  either version 3 of the              : soit la version 3 de cette
-*  License, or (at your option)         licence, soit (à votre gré)
-*  any later version.                   toute version ultérieure.
-*
-*  OpenCADC is distributed in the       OpenCADC est distribué
-*  hope that it will be useful,         dans l’espoir qu’il vous
-*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
-*  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
-*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
-*  General Public License for           Générale Publique GNU Affero
-*  more details.                        pour plus de détails.
-*
-*  You should have received             Vous devriez avoir reçu une
-*  a copy of the GNU Affero             copie de la Licence Générale
-*  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
-*
-*  $Revision: 5 $
-*
-************************************************************************
-*/
+ ************************************************************************
+ *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+ **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ *
+ *  (c) 2017.                            (c) 2017.
+ *  Government of Canada                 Gouvernement du Canada
+ *  National Research Council            Conseil national de recherches
+ *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ *  All rights reserved                  Tous droits réservés
+ *
+ *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+ *  expressed, implied, or               énoncée, implicite ou légale,
+ *  statutory, of any kind with          de quelque nature que ce
+ *  respect to the software,             soit, concernant le logiciel,
+ *  including without limitation         y compris sans restriction
+ *  any warranty of merchantability      toute garantie de valeur
+ *  or fitness for a particular          marchande ou de pertinence
+ *  purpose. NRC shall not be            pour un usage particulier.
+ *  liable in any event for any          Le CNRC ne pourra en aucun cas
+ *  damages, whether direct or           être tenu responsable de tout
+ *  indirect, special or general,        dommage, direct ou indirect,
+ *  consequential or incidental,         particulier ou général,
+ *  arising from the use of the          accessoire ou fortuit, résultant
+ *  software.  Neither the name          de l'utilisation du logiciel. Ni
+ *  of the National Research             le nom du Conseil National de
+ *  Council of Canada nor the            Recherches du Canada ni les noms
+ *  names of its contributors may        de ses  participants ne peuvent
+ *  be used to endorse or promote        être utilisés pour approuver ou
+ *  products derived from this           promouvoir les produits dérivés
+ *  software without specific prior      de ce logiciel sans autorisation
+ *  written permission.                  préalable et particulière
+ *                                       par écrit.
+ *
+ *  This file is part of the             Ce fichier fait partie du projet
+ *  OpenCADC project.                    OpenCADC.
+ *
+ *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+ *  you can redistribute it and/or       vous pouvez le redistribuer ou le
+ *  modify it under the terms of         modifier suivant les termes de
+ *  the GNU Affero General Public        la “GNU Affero General Public
+ *  License as published by the          License” telle que publiée
+ *  Free Software Foundation,            par la Free Software Foundation
+ *  either version 3 of the              : soit la version 3 de cette
+ *  License, or (at your option)         licence, soit (à votre gré)
+ *  any later version.                   toute version ultérieure.
+ *
+ *  OpenCADC is distributed in the       OpenCADC est distribué
+ *  hope that it will be useful,         dans l’espoir qu’il vous
+ *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+ *  without even the implied             GARANTIE : sans même la garantie
+ *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+ *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+ *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+ *  General Public License for           Générale Publique GNU Affero
+ *  more details.                        pour plus de détails.
+ *
+ *  You should have received             Vous devriez avoir reçu une
+ *  a copy of the GNU Affero             copie de la Licence Générale
+ *  General Public License along         Publique GNU Affero avec
+ *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+ *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+ *                                       <http://www.gnu.org/licenses/>.
+ *
+ *  $Revision: 5 $
+ *
+ ************************************************************************
+ */
 
 package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
@@ -82,7 +83,9 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -90,38 +93,50 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 
 public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
+    private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 7 * 24;
+
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String source;
+    private int batchSize;
     private int threads;
     private Date startDate = null;
     private Date stopDate;
+    private int retryAfterHours;
+    private DateFormat df;
 
-    public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize) {
+    public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads,
+                                 int batchSize, Integer retryAfterHours) {
         this.artifactStore = artifactStore;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2], batchSize);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
 
         this.threads = threads;
+        this.batchSize = batchSize;
         this.stopDate = new Date();
+        if (retryAfterHours == null) {
+            retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
+        } else {
+            this.retryAfterHours = retryAfterHours;
+        }
+        
+        df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
     @Override
     public Integer run() throws Exception {
 
-        // TODO: Add stopDate to this skip query
         log.debug("Querying for skip records between " + startDate + " and " + stopDate);
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate);
+        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate,
+            stopDate, batchSize);
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         Integer workCount = artifacts.size();
@@ -133,7 +148,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         }
         // set the start date so that the next batch resumes after our last record
         if (workCount > 0) {
-            startDate = artifacts.get(workCount - 1).lastModified;
+            startDate = artifacts.get(workCount - 1).getLastModified();
         }
 
         try {
@@ -162,6 +177,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             endMessage.append(",");
             endMessage.append("\"time\":\"").append(end).append("\"");
             endMessage.append(",");
+            endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
+            endMessage.append(",");
             endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
             endMessage.append(",");
             endMessage.append("\"bytes\":\"").append(totalBytes).append("\"");
@@ -181,9 +198,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper {
 
-        HarvestSkipURI skip;
-        ArtifactStore artifactStore;
-        HarvestSkipURIDAO harvestSkipURIDAO;
+        final HarvestSkipURI skip;
+        final ArtifactStore artifactStore;
+        final HarvestSkipURIDAO harvestSkipURIDAO;
         boolean uploadSuccess = true;
         String uploadErrorMessage;
         long bytesTransferred;
@@ -277,18 +294,28 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             } finally {
                 // Update the skip table
                 try {
-                    if (result.success) {
-                        result.bytesTransferred = bytesTransferred;
-                        harvestSkipURIDAO.delete(skip);
-                    } else {
-                        skip.errorMessage = result.message;
-                        harvestSkipURIDAO.put(skip);
+                    synchronized (harvestSkipURIDAO) {
+                        if (result.success) {
+                            result.bytesTransferred = bytesTransferred;
+                            harvestSkipURIDAO.delete(skip);
+                        } else {
+                            skip.errorMessage = result.message;
+                            Date tryAfter = getTryAfter();
+                            skip.setTryAfter(tryAfter);
+                            harvestSkipURIDAO.put(skip);
+                        }
                     }
                 } catch (Throwable t) {
                     log.error("Failed to update or delete from skip table", t);
                 }
                 logEnd(result);
             }
+        }
+
+        private Date getTryAfter() {
+            Calendar c = Calendar.getInstance();
+            c.add(Calendar.HOUR, retryAfterHours);
+            return c.getTime();
         }
 
         @Override
@@ -305,9 +332,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 log.debug("[" + threadName + "] Failed to upload " + artifactURI, t);
                 uploadErrorMessage = "Upload error: " + t.getMessage();
             } finally {
-                if (byteCounter != null) {
-                    bytesTransferred = byteCounter.getByteCount();
-                }
+                bytesTransferred = byteCounter.getByteCount();
             }
         }
     }
@@ -328,6 +353,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
         startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }
@@ -346,6 +373,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             startMessage.append(",");
             startMessage.append("\"message\":\"").append(result.message).append("\"");
         }
+        startMessage.append(",");
+        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
     }

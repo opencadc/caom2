@@ -114,7 +114,7 @@ class PlaneDAO extends AbstractCaomEntityDAO<Plane> {
                 for (ArtifactSkeleton as : cs.artifacts) {
                     Artifact a = Util.findArtifact(p.getArtifacts(), as.id);
                     if (a == null) {
-                        log.debug("put caused delete: " + a);
+                        log.debug("put caused delete artifact: " + a);
                         artifactDAO.delete(as, jdbc);
                     }
                 }

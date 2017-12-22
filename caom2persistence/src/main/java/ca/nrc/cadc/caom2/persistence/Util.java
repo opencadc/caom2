@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
@@ -82,6 +83,7 @@ import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.HexUtil;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -137,6 +139,20 @@ public class Util extends CaomUtil {
         return sql;
     }
 
+    public static void assignDeletedLastModified(DeletedEntity ce, Date d, String fieldName) {
+        try {
+            Field f = DeletedEntity.class.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            f.set(ce, d);
+            // log.debug("assignLastModified: " + d.getTime() + " -> " +
+            // ce.getClass().getSimpleName() + "." + fieldName);
+        } catch (NoSuchFieldException fex) {
+            throw new RuntimeException("BUG", fex);
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException("BUG", bug);
+        }
+    }
+    
     public static String escapeChar(String s, char p) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {

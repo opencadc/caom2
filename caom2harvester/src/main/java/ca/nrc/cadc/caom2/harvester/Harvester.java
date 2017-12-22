@@ -108,7 +108,7 @@ public abstract class Harvester implements Runnable {
 
     protected HarvestResource src;
     protected HarvestResource dest;
-    protected HarvestStateDAO harvestState;
+    protected HarvestStateDAO harvestStateDAO;
 
     protected Harvester() {
     }
@@ -162,7 +162,7 @@ public abstract class Harvester implements Runnable {
         this.cname = c.getSimpleName();
 
         log.debug("creating HarvestState tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
-        this.harvestState = new PostgresqlHarvestStateDAO(ds, dest.getDatabase(), dest.getSchema());
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(ds, dest.getDatabase(), dest.getSchema());
 
         log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
 

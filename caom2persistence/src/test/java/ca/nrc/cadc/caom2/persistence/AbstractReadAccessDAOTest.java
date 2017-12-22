@@ -80,6 +80,9 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Date;
@@ -117,16 +120,22 @@ public abstract class AbstractReadAccessDAOTest
         try
         {
             Map<String,Object> config = new TreeMap<String,Object>();
-            config.put("server", server);
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig(server, database);
+            DBUtil.createJNDIDataSource("jdbc/testcaom2", cc);
+            //config.put("server", server);
             config.put("database", database);
+            config.put("jndiDataSourceName", "jdbc/testcaom2");
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+
             this.dao = new ReadAccessDAO();
             dao.setConfig(config);
-            this.txnManager = new DatabaseTransactionManager(dao.getDataSource());
             
             this.obsDAO = new ObservationDAO();
             obsDAO.setConfig(config);
+            
+            this.txnManager = new DatabaseTransactionManager(obsDAO.getDataSource());
         }
         catch(Exception ex)
         {
@@ -158,12 +167,14 @@ public abstract class AbstractReadAccessDAOTest
             String s = gen.getTable(c);
 
             String sql = "delete from " + s;
-            log.debug("setup: " + sql);
+            log.info("setup: " + sql);
+            log.info("dataSource: " + ds);
+            log.info("dataSource.connection: " + ds.getConnection());
             ds.getConnection().createStatement().execute(sql);
             if (deletionTrack)
             {
                 sql = sql.replace(cn, "Deleted"+cn);
-                log.debug("setup: " + sql);
+                log.info("setup: " + sql);
                 ds.getConnection().createStatement().execute(sql);
             }
         }
@@ -234,11 +245,8 @@ public abstract class AbstractReadAccessDAOTest
     @Test
     public void testPutGetDelete()
     {
-        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
         Chunk ch = new Chunk();
@@ -250,16 +258,21 @@ public abstract class AbstractReadAccessDAOTest
             
         try
         {
-            // cleanup previous test run
-            obsDAO.delete(assetID);
+            //obsDAO.getTransactionManager().startTransaction();
             
             obsDAO.put(obs);
+            UUID obsID = obs.getID();
+            UUID planeID = obs.getPlanes().iterator().next().getID();
             
             ReadAccess expected;
             
             URI groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-777");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
@@ -268,20 +281,24 @@ public abstract class AbstractReadAccessDAOTest
             groupID =  new URI("ivo://cadc.nrc.ca/gms?FOO-999");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 expected = (ReadAccess) ctor.newInstance(assetID, groupID);
                 doPutGetDelete(expected);
             }
             
+            obsDAO.delete(obs.getID());
+            
+            //obsDAO.getTransactionManager().commitTransaction();
         }
         catch(Exception unexpected)
         {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-        }
-        finally
-        {
-            //obsDAO.delete(obs.getID());
+            //obsDAO.getTransactionManager().rollbackTransaction();
         }
     }
     
@@ -290,23 +307,21 @@ public abstract class AbstractReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
-        
-        UUID assetID = genID();
-        
-        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
         obs.getPlanes().add(pl);
-        
         
         try
         {
-            // cleanup previous test run
-            obsDAO.delete(obs.getID());
             obsDAO.put(obs);
+            UUID obsID = obs.getID();
+            UUID planeID = obs.getPlanes().iterator().next().getID();
             
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 URI groupID =  URI.create("ivo://cadc.nrc.ca/gms?FOO666");
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, groupID);
@@ -348,13 +363,11 @@ public abstract class AbstractReadAccessDAOTest
     {
         // random ID is OK since we are testing observation only
         Observation obs = new SimpleObservation("FOO", "bar-"+UUID.randomUUID());
-        UUID assetID = obs.getID();
         
         try
         {
-            obsDAO.delete(obs.getID());
-            
             obsDAO.put(obs);
+            UUID assetID = obs.getID();
             
             ReadAccess ra;
             URI groupID;

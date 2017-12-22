@@ -78,13 +78,10 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -97,6 +94,7 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
+    private static final String MODE_ARG = "mode";
 
     public static void main(String[] args) {
         try {
@@ -170,12 +168,24 @@ public class Main {
                 log.info("authentication using: " + meth);
             }
 
+            Mode mode = Mode.getDefault();
+            if (am.isSet(MODE_ARG)) {
+                final String modeValue = am.getValue(MODE_ARG);
+                try {
+                    mode = Mode.valueOf(modeValue.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.error(String.format("Unrecognized mode value '%s'.", modeValue));
+                    usage();
+                    System.exit(-1);
+                }
+            }
+
             int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
             if (am.isSet("batchsize")) {
                 try {
                     batchSize = Integer.parseInt(am.getValue("batchsize"));
-                    if (batchSize < 1 || batchSize > 10000) {
-                        log.error("value for --batchsize must be between 1 and 10000");
+                    if (batchSize < 1 || batchSize > 100000) {
+                        log.error("value for --batchsize must be between 1 and 100000");
                         usage();
                         System.exit(-1);
                     }
@@ -220,7 +230,7 @@ public class Main {
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             String[] dbInfo = dbParam.split("[.]");
-            Map<String, Object> daoConfig = new HashMap<String, Object>(2);
+            Map<String, Object> daoConfig = new HashMap<>(2);
             daoConfig.put("server", dbInfo[0]);
             daoConfig.put("database", dbInfo[1]);
             daoConfig.put("schema", dbInfo[2]);
@@ -228,15 +238,25 @@ public class Main {
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(daoConfig);
 
-            String collection = am.getValue("collection");
+            Integer retryAfterHours = null;
+            if (am.isSet("retryAfter")) {
+                try {
+                    retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                } catch (NumberFormatException e) {
+                    log.error("Illegal value for --retryAfter: " + am.getValue("retryAfter"));
+                    usage();
+                    System.exit(-1);
+                }
+            }
 
+            String collection = am.getValue("collection");
             boolean dryrun = am.isSet("dryrun");
             boolean full = am.isSet("full");
             PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
                     observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
 
             PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
-                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize);
+                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize, retryAfterHours);
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -247,7 +267,7 @@ public class Main {
                     log.info("-- STARTING LOOP #" + loopNum + " --");
                 }
 
-                if (!stopHarvest) {
+                if (!stopHarvest && mode.isHarvestMode()) {
                     if (subject != null) {
                         stopHarvest = Subject.doAs(subject, harvester) == 0;
                     } else {
@@ -255,7 +275,7 @@ public class Main {
                     }
                 }
 
-                if (!stopDownload && !dryrun) {
+                if (!stopDownload && mode.isDownloadMode() && !dryrun) {
                     if (subject != null) {
                         stopDownload = Subject.doAs(subject, downloader) == 0;
                     } else {
@@ -303,14 +323,33 @@ public class Main {
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
+        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), ");
+        sb.append("          just harvest to the database, or just initiate downloads.");
         sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
+        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
         sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());
+    }
+
+    public enum Mode {
+        HARVEST, DOWNLOAD, DUAL;
+
+        static Mode getDefault() {
+            return DUAL;
+        }
+
+        boolean isDownloadMode() {
+            return (this == DOWNLOAD) || (this == DUAL);
+        }
+
+        boolean isHarvestMode() {
+            return (this == HARVEST) || (this == DUAL);
+        }
     }
 }
