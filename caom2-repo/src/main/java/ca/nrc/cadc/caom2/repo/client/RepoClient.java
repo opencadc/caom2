@@ -104,7 +104,6 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
-
 public class RepoClient {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
@@ -117,18 +116,29 @@ public class RepoClient {
     private URL baseServiceURL = null;
 
     private int nthreads = 1;
-    private Comparator<ObservationState> maxLasModifiedComparator = new Comparator<ObservationState>() {
+    private Comparator<ObservationState> maxLasModifiedComparatorForState = new Comparator<ObservationState>() {
         @Override
         public int compare(ObservationState o1, ObservationState o2) {
             return o1.maxLastModified.compareTo(o2.maxLastModified);
+        }
+    };
+    private Comparator<ObservationResponse> maxLasModifiedComparatorForResponse = new Comparator<ObservationResponse>() {
+        @Override
+        public int compare(ObservationResponse o1, ObservationResponse o2) {
+            if (o1 == null || o2 == null || o1.observationState == null || o2.observationState == null || o1.observationState.maxLastModified == null
+                    || o2.observationState.maxLastModified == null)
+                throw new NullPointerException();
+            return o1.observationState.maxLastModified.compareTo(o2.observationState.maxLastModified);
         }
     };
 
     /**
      * Create new CAOM RepoClient.
      *
-     * @param resourceID the service identifier
-     * @param nthreads   number of threads to use when getting list of observations
+     * @param resourceID
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
      */
     public RepoClient(URI resourceID, int nthreads) {
         this.nthreads = nthreads;
@@ -194,17 +204,12 @@ public class RepoClient {
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
                 /*
-                if (responseCode == 302) // redirected url
-                {
-                    url = get.getRedirectURL();
-                    log.debug("REDIRECTED URL: " + url);
-                    bos = new ByteArrayOutputStream();
-                    get = new HttpDownload(url, bos);
-                    responseCode = get.getResponseCode();
-                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
-
-                }
-                */
+                 * if (responseCode == 302) // redirected url { url = get.getRedirectURL(); log.debug("REDIRECTED URL: " + url); bos = new
+                 * ByteArrayOutputStream(); get = new HttpDownload(url, bos); responseCode = get.getResponseCode();
+                 * log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+                 *
+                 * }
+                 */
 
                 if (get.getThrowable() != null) {
                     if (get.getThrowable() instanceof AccessControlException) {
@@ -261,7 +266,7 @@ public class RepoClient {
     }
 
     public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-        throws InterruptedException, ExecutionException {
+            throws InterruptedException, ExecutionException {
         init();
 
         // startDate = null;
@@ -326,6 +331,51 @@ public class RepoClient {
         return wt.getObservation();
     }
 
+    public List<ObservationResponse> get(List<ObservationURI> listURI) throws Exception {
+        init();
+        if (listURI == null) {
+            throw new IllegalArgumentException("list of uri cannot be null");
+        }
+        //****************
+        List<ObservationResponse> list = new ArrayList<>();
+        // Create tasks for each file
+        List<Callable<ObservationResponse>> tasks = new ArrayList<>();
+
+        Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
+        for (ObservationURI uri : listURI) {
+            ObservationState os = new ObservationState(uri);
+            tasks.add(new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm()));
+        }
+        ExecutorService taskExecutor = null;
+        try {
+            // Run tasks in a fixed thread pool
+            taskExecutor = Executors.newFixedThreadPool(nthreads);
+            List<Future<ObservationResponse>> futures;
+
+            futures = taskExecutor.invokeAll(tasks);
+
+            for (Future<ObservationResponse> f : futures) {
+                ObservationResponse res = null;
+                res = f.get();
+
+                if (f.isDone()) {
+                    list.add(res);
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: " + e.getCause().toString());
+            throw e;
+        } finally {
+            if (taskExecutor != null) {
+                taskExecutor.shutdown();
+            }
+        }
+        Collections.sort(list, maxLasModifiedComparatorForResponse);
+
+        //****************
+        return list;
+    }
+
     public ObservationResponse get(String collection, URI uri, Date start) {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
@@ -358,9 +408,9 @@ public class RepoClient {
     }
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(final ByteArrayOutputStream bos, DateFormat sdf, char separator,
-                                                                                            char endOfLine)
+            char endOfLine)
 
-        throws ParseException, IOException, URISyntaxException {
+            throws ParseException, IOException, URISyntaxException {
         init();
 
         List<ObservationState> list = new ArrayList<>();
@@ -449,7 +499,7 @@ public class RepoClient {
                 readingId = false;
             }
         }
-        Collections.sort(list, maxLasModifiedComparator);
+        Collections.sort(list, maxLasModifiedComparatorForState);
         return list;
 
     }
