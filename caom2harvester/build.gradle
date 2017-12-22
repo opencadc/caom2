@@ -16,7 +16,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.9'
+version = '2.3.10'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 
@@ -26,12 +26,12 @@ dependencies {
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
     compile 'org.opencadc:cadc-util:[1.0,)'
-    compile 'org.opencadc:caom2:[2.3.7,)'
+    compile 'org.opencadc:caom2:[2.3.8,)'
     compile 'org.opencadc:caom2-compute:[2.3.6,)'
-    compile 'org.opencadc:caom2persistence:[2.3.9,)'
+    compile 'org.opencadc:caom2persistence:[2.3.12,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
     compile 'org.opencadc:caom2-repo:[1.0,)'
-    compile 'org.opencadc:caom2-persist:[2.3.1,)'
+    compile 'org.opencadc:caom2-persist:[2.3.2,)'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'

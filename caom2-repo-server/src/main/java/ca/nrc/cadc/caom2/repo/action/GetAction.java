@@ -73,20 +73,16 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -98,11 +94,7 @@ public class GetAction extends RepoAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
 
-    protected DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-
-    public static final int MAX_OBS_LIST_SIZE = 100000;
 
     public GetAction() {
     }
@@ -115,45 +107,8 @@ public class GetAction extends RepoAction {
             doGetObservation(uri);
             return;
         } else if (getCollection() != null) {
-            // maxRec == null means list all
-            String maxRecString = syncInput.getParameter("maxrec");
-            String orderString = syncInput.getParameter("order");
-            boolean isAscending = true;
-            Integer maxRec = MAX_OBS_LIST_SIZE;
-            if (maxRecString != null) {
-                int m = Integer.valueOf(maxRecString);
-                if (m < maxRec) {
-                    maxRec = m;
-                }
-            }
-
-            if (orderString != null) {
-                if (orderString.equals("desc")) {
-                    isAscending = false;
-                } else if (!orderString.equals("asc")) {
-                    throw new IllegalArgumentException("wrong order value");
-                }
-            }
-
-            try {
-                // start date is optional
-                Date start = null;
-                String startString = syncInput.getParameter("start");
-                if (startString != null) {
-                    start = df.parse(startString);
-                }
-
-                // end date is optional
-                Date end = null;
-                String endString = syncInput.getParameter("end");
-                if (endString != null) {
-                    end = df.parse(endString);
-                }
-
-                doList(maxRec, start, end, isAscending);
-            } catch (ParseException e) {
-                throw new IllegalArgumentException("wrong date format", e);
-            }
+            InputParams ip = getInputParams();
+            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
         } else {
             // Responds to requests where no collection is provided.
             // Returns list of all collections.
@@ -210,8 +165,9 @@ public class GetAction extends RepoAction {
     }
 
     protected long writeObservationList(List<ObservationState> states) throws IOException {
-        // write in tsv format
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
+        
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
@@ -234,36 +190,4 @@ public class GetAction extends RepoAction {
         writer.flush();
         return bc.getByteCount();
     }
-
-    /**
-     * Get list of collection names from repo configuration.
-     * 
-     * @throws Exception
-     *             Errors encountered while getting the list of collection names
-     */
-    protected void doGetCollectionList() throws Exception {
-        CaomRepoConfig curConfig = getConfig();
-        Iterator<String> collectionListIterator = curConfig.collectionIterator();
-
-        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
-        CsvWriter writer = new CsvWriter(out, '\t');
-
-        while (collectionListIterator.hasNext()) {
-            String collectionName = collectionListIterator.next();
-
-            // Write out a single column as one entry per row
-            if (!collectionName.isEmpty()) {
-                writer.write(collectionName);
-                writer.endRecord();
-            }
-        }
-
-        writer.flush();
-        logInfo.setBytes(bc.getByteCount());
-        log.debug("DONE");
-    }
-
 }

@@ -83,11 +83,9 @@ import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.UUID;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -165,11 +163,8 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
     @Test
     public void testExtendedUpdate()
     {
-        UUID assetID = genID();
         Observation obs = new SimpleObservation("FOO", "bar-" + UUID.randomUUID());
-        Util.assignID(obs, assetID);
         Plane pl = new Plane("bar1");
-        Util.assignID(pl, assetID);
 
         Artifact ar = new Artifact(URI.create("ad:FOO/bar1.fits"), ProductType.SCIENCE, ReleaseType.DATA);
         Part pp = new Part(0);
@@ -178,19 +173,22 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
         ar.getParts().add(pp);
         pl.getArtifacts().add(ar);
         obs.getPlanes().add(pl);
-
+        
         try
         {
             JdbcTemplate jdbc = new JdbcTemplate(dao.getDataSource());
 
-            // cleanup previous test run
-            obsDAO.delete(assetID);
-
             obsDAO.put(obs);
+            UUID obsID = obs.getID();
+            UUID planeID = obs.getPlanes().iterator().next().getID();
 
             URI group1 =  new URI("ivo://cadc.nrc.ca/gms?FOO-333");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected = (ReadAccess) ctor.newInstance(assetID, group1);
                 dao.put(expected);
@@ -212,6 +210,10 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             URI group2 =  new URI("ivo://cadc.nrc.ca/gms?FOO-444");
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess expected1 = (ReadAccess) ctor.newInstance(assetID, group1);
                 ReadAccess expected2 = (ReadAccess) ctor.newInstance(assetID, group2);
@@ -236,6 +238,10 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
             // test removal
             for (Class c : entityClasses)
             {
+                UUID assetID = planeID;
+                if (ObservationMetaReadAccess.class.equals(c)) {
+                    assetID = obsID;
+                }
                 Constructor ctor = c.getConstructor(UUID.class, URI.class);
                 ReadAccess cur = dao.get(c, assetID, group1);
                 Assert.assertNotNull("found group1 tuple", cur);

@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
-
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -83,9 +82,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -101,21 +98,19 @@ public class HarvestSkipURIDAO {
 
     private static final String[] COLUMNS
             = {
-                "source", "cname", "skipID", "errorMessage",
+                "source", "cname", "skipID", "tryAfter", "errorMessage", 
                 "lastModified", "id"
             };
 
-    private String tableName;
-    private Integer batchSize;
-    private JdbcTemplate jdbc;
-    private RowMapper extractor;
+    private final String tableName;
+    private final JdbcTemplate jdbc;
+    private final RowMapper extractor;
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
-    public HarvestSkipURIDAO(DataSource dataSource, String database, String schema, Integer batchSize) {
+    public HarvestSkipURIDAO(DataSource dataSource, String database, String schema) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.tableName = database + "." + schema + ".HarvestSkipURI";
-        this.batchSize = batchSize;
         this.extractor = new HarvestSkipMapper();
     }
 
@@ -129,9 +124,9 @@ public class HarvestSkipURIDAO {
         return (HarvestSkipURI) result.get(0);
     }
 
-    public List<HarvestSkipURI> get(String source, String cname, Date start, Date end) {
+    public List<HarvestSkipURI> get(String source, String cname, Date start, Date end, Integer batchSize) {
         SelectStatementCreator sel = new SelectStatementCreator();
-        sel.setValues(source, cname, null, batchSize, start, end);
+        sel.setValues(source, cname, null, start, end, batchSize);
         List result = jdbc.query(sel, extractor);
         List<HarvestSkipURI> ret = new ArrayList<HarvestSkipURI>(result.size());
         for (Object o : result) {
@@ -142,7 +137,7 @@ public class HarvestSkipURIDAO {
 
     public void put(HarvestSkipURI skip) {
         boolean update = true;
-        if (skip.id == null) {
+        if (skip.getID() == null) {
             update = false;
             skip.id = UUID.randomUUID();
         }
@@ -158,7 +153,17 @@ public class HarvestSkipURIDAO {
         }
 
         // TODO: this is non-portable postgresql-specific (relies on casting string UUID)
-        String sql = "DELETE FROM " + tableName + " WHERE id = '" + skip.id + "'";
+        String sql = "DELETE FROM " + tableName + " WHERE id = '" + skip.getID() + "'";
+        jdbc.update(sql);
+    }
+
+    public void delete(String source, String cname) {
+        if (source == null || cname == null) {
+            throw new IllegalArgumentException("source and cname are required");
+        }
+
+        // TODO: re-implement with PreparedStatement
+        String sql = "DELETE FROM " + tableName + " WHERE source = '" + source + "' and cname = '" + cname + "'";
         jdbc.update(sql);
     }
 
@@ -174,7 +179,7 @@ public class HarvestSkipURIDAO {
         public SelectStatementCreator() {
         }
 
-        public void setValues(String source, String cname, URI skipID, Integer batchSize, Date start, Date end) {
+        public void setValues(String source, String cname, URI skipID, Date start, Date end, Integer batchSize) {
             this.source = source;
             this.cname = cname;
             this.batchSize = batchSize;
@@ -191,13 +196,13 @@ public class HarvestSkipURIDAO {
                 sb.append(" AND skipID = ?");
             } else {
                 if (start != null) {
-                    sb.append(" AND lastModified >= ?");
+                    sb.append(" AND tryAfter >= ?");
                 }
                 if (end != null) {
-                    sb.append(" AND lastModified <= ?");
+                    sb.append(" AND tryAfter <= ?");
                 }
             }
-            sb.append(" ORDER BY lastModified ASC");
+            sb.append(" ORDER BY tryAfter ASC");
 
             if (batchSize != null && batchSize > 0) {
                 sb.append(" LIMIT ").append(batchSize.toString());
@@ -257,9 +262,10 @@ public class HarvestSkipURIDAO {
         private void loadValues(PreparedStatement ps)
                 throws SQLException {
             int col = 1;
-            ps.setString(col++, skip.source);
-            ps.setString(col++, skip.cname);
-            ps.setString(col++, skip.skipID.toASCIIString());
+            ps.setString(col++, skip.getSource());
+            ps.setString(col++, skip.getName());
+            ps.setString(col++, skip.getSkipID().toASCIIString());
+            ps.setTimestamp(col++, new Timestamp(skip.getTryAfter().getTime()), utcCalendar);
             String es = skip.errorMessage;
             if (es != null && es.length() > 1024) {
                 es = es.substring(0, 1024);
@@ -274,12 +280,16 @@ public class HarvestSkipURIDAO {
     private class HarvestSkipMapper implements RowMapper {
 
         public Object mapRow(ResultSet rs, int i) throws SQLException {
-            HarvestSkipURI ret = new HarvestSkipURI();
+            
             int col = 1;
-            ret.source = rs.getString(col++);
-            ret.cname = rs.getString(col++);
-            ret.skipID = Util.getURI(rs, col++);
+            String source = rs.getString(col++);
+            String name = rs.getString(col++);
+            URI skipID = Util.getURI(rs, col++);
+            Date retryAfter = Util.getDate(rs, col++, utcCalendar);
+            
+            HarvestSkipURI ret = new HarvestSkipURI(source, name, skipID, retryAfter);
             ret.errorMessage = rs.getString(col++);
+            
             ret.lastModified = Util.getDate(rs, col++, utcCalendar);
             ret.id = Util.getUUID(rs, col++);
             return ret;

@@ -352,17 +352,14 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         observation.getPlanes().add(plane);
 
         putObservation(observation, subject1, 200, "OK", null);
+        
+        Observation po = getObservation(observation.getURI().getURI().toASCIIString(), subject1, 200, null, null);
+        Plane pp = po.getPlanes().iterator().next();
+        pp.dataProductType = DataProductType.CUBE;
+        postObservation(po, subject1, 200, "OK", null);
 
-        // modify the plane since that also tweaks the Observation.maxLastModified
-        plane.dataProductType = DataProductType.CUBE;
-
-        // overwrite the observation with a post
-        postObservation(observation, subject1, 200, "OK", null);
-
-        String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
         // cleanup (ok to fail)
-        deleteObservation(uri, subject1, null, null);
+        deleteObservation(po.getURI().getURI().toASCIIString(), subject1, null, null);
     }
 
     @Test
@@ -537,9 +534,8 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
         putObservation(observation, subject1, 200, "OK", null);
 
-        // modify the plane since that also tweaks the Observation.maxLastModified
-        plane.dataProductType = DataProductType.CUBE;
-        return observation;
+        return (SimpleObservation) getObservation(observation.getURI().getURI().toASCIIString(), 
+                subject1, 200, null, null);
     }
 
     private File convertToFile(SimpleObservation observation) throws IOException {
