@@ -127,8 +127,9 @@ public class RepoClient {
         @Override
         public int compare(ObservationResponse o1, ObservationResponse o2) {
             if (o1 == null || o2 == null || o1.observationState == null || o2.observationState == null || o1.observationState.maxLastModified == null
-                    || o2.observationState.maxLastModified == null)
+                    || o2.observationState.maxLastModified == null) {
                 throw new NullPointerException();
+            }
             return o1.observationState.maxLastModified.compareTo(o2.observationState.maxLastModified);
         }
     };
