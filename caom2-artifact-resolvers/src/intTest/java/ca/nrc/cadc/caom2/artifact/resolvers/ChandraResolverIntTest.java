@@ -75,6 +75,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -87,7 +88,7 @@ public class ChandraResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "chandra:not_currently_defined";
+    String VALID_URI = "chandra:0";
 
     ChandraResolver chandraResolver = new ChandraResolver();
 
@@ -97,22 +98,16 @@ public class ChandraResolverIntTest {
     @Test
     public void testValidSiteUrl() throws Exception {
         try {
-            URI mastUri = new URI(VALID_URI);
-            URL url = chandraResolver.toURL(mastUri);
+            URI uri = new URI(VALID_URI);
+            URL url = chandraResolver.toURL(uri);
 
             log.debug("opening connection to: " + url.toString());
 
-            OutputStream out = new ByteArrayOutputStream();
-            HttpDownload head = new HttpDownload(url, out);
-            head.setHeadOnly(true);
-            head.run();
-            // This should fail until the VALID_URI is defined
-            // Commenting this out so file can be a placeholder
+            URLConnection connection = url.openConnection();
 
-//            Assert.assertEquals(200, head.getResponseCode());
-            log.info("response code: " + head.getResponseCode());
-        } catch (UnsupportedOperationException expected) {
-            log.info("caught expected: " + expected);
+            Assert.assertNotEquals(null, connection);
+            log.debug("connection to url " + url.getHost() + " successful.");
+
         } catch (Exception unexpected) {
             log.error("Unexpected exception", unexpected);
             Assert.fail("Unexpected exception: " + unexpected);
