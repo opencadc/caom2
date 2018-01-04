@@ -70,27 +70,91 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.net.URI;
-
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * @author hjeeves
  */
 public class ChandraResolverTest {
+    private static final Logger log = Logger.getLogger(ChandraResolverTest.class);
+
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
+    String SCHEME = "chandra";
+    String VALID_PATH_1 = "FOO";
+    String VALID_PATH_2 = "FOO/bar";
+
+    //    chandra:<directory path> -> ftp://cda.cfa.harvard.edu/pub/byobsid/<directory path>
+    String PROTOCOL_STR = "ftp";
+    String BASE_ARTIFACT_URL = "cda.cfa.harvard.edu";
+    String BASE_PATH = "/pub/byobsid/";
+
+    // There are no tests that will validate the content of the
+    // path other than empty.
+    String INVALID_URI_BAD_SCHEME = "gemini:FOO/Bar";
+
+    ChandraResolver chandraResolver = new ChandraResolver();
+
     @Test
-    public void toURL() throws Exception {
+    public void testGetScheme() {
+        Assert.assertTrue(SCHEME.equals(chandraResolver.getScheme()));
+    }
+
+    @Test
+    public void testValidURI() {
         try {
-            new ChandraResolver().toURL(URI.create("chandra:doesnt/matter"));
-            org.junit.Assert.fail("Should throw UnsupportedOperationException.");
-        } catch (UnsupportedOperationException e) {
-            // Good!
+            List<String> validPaths = new ArrayList<String>();
+            validPaths.add(VALID_PATH_1);
+            validPaths.add(VALID_PATH_2);
+
+            for (String path : validPaths) {
+                URI uri = new URI(SCHEME + ":" + path);
+                URL url = chandraResolver.toURL(uri);
+
+                Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
+                Assert.assertEquals(BASE_PATH + path, url.getPath());
+                Assert.assertEquals(PROTOCOL_STR, url.getProtocol());
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testInvalidURIBadScheme() {
+        try {
+            URI uri = new URI(INVALID_URI_BAD_SCHEME);
+            URL url = chandraResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidNullURI() {
+        try {
+            URL url = chandraResolver.toURL(null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }

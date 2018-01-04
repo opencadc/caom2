@@ -41,7 +41,6 @@ import org.apache.log4j.Logger;
  */
 public class XmmResolver implements StorageResolver {
     public static final String SCHEME = "xmm";
-    private static final Logger log = Logger.getLogger(XmmResolver.class);
     private static final String BASE_ARTIFACT_URL = "http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?";
 
     public XmmResolver() {
