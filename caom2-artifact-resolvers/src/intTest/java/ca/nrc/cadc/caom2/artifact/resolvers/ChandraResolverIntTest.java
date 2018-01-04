@@ -88,8 +88,11 @@ public class ChandraResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "chandra:0";
+    // "ftp://cda.cfa.harvard.edu/pub/byobsid/" is the base URL at time of writing.
+    // upper level folders are numeric, 0..10 (or higher.) Using '0' as it's
+    // least likely to change and allows for a valid URI to test with
 
+    String VALID_URI = "chandra:0";
     ChandraResolver chandraResolver = new ChandraResolver();
 
     public ChandraResolverIntTest() {
@@ -104,7 +107,6 @@ public class ChandraResolverIntTest {
             log.debug("opening connection to: " + url.toString());
 
             URLConnection connection = url.openConnection();
-
             Assert.assertNotEquals(null, connection);
             log.debug("connection to url " + url.getHost() + " successful.");
 
