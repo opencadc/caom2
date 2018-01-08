@@ -400,6 +400,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,unit,da
 ( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, 	'char', '128*', NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, 	'char', '128*',NULL, 1,1,1 ),
 
+( 'caom2.SIAv1', 'position_bounds', 	'boundary of the image', 				NULL, 'deg', 	'double', '*', 'polygon', 1,1,1 ),
+
 ( 'caom2.SIAv1', 'position_center_ra', 	'RA of central coordinates', 				'POS_EQ_RA_MAIN', 'deg', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'position_center_dec', 'DEC of central coordinates', 				'POS_EQ_DEC_MAIN', 'deg', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'position_naxes', 	'number of axes', 					'VOX:Image_Naxes', NULL, 	'int', NULL, NULL, 1,1,1 ),
