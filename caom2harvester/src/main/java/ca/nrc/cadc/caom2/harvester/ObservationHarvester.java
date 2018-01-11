@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -100,7 +100,7 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.BadSqlGrammarException;
-
+        
 /**
  *
  * @author pdowler
@@ -383,9 +383,9 @@ public class ObservationHarvester extends Harvester {
 
                             // try to avoid DataIntegrityViolationException
                             // due to missed deletion of an observation
-                            if (srcObservationDAO != null) { // need uuid -> URI query in src
-                                UUID curID = destObservationDAO.getID(o.getURI());
-                                if (curID != null && !curID.equals(o.getID())) {
+                            UUID curID = destObservationDAO.getID(o.getURI());
+                            if (curID != null && !curID.equals(o.getID())) {
+                                if (srcObservationDAO != null) {
                                     ObservationURI oldSrc = srcObservationDAO.getURI(curID);
                                     if (oldSrc == null) {
                                         // missed harvesting a deletion
@@ -396,6 +396,10 @@ public class ObservationHarvester extends Harvester {
                                     // exception because source
                                     // is not enforcing
                                     // unique ID and URI
+                                } else {
+                                    // missed harvesting a deletion: trust src service
+                                    log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
+                                    destObservationDAO.delete(curID);
                                 }
                             }
                             
