@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -159,6 +160,8 @@ public interface SQLGenerator {
     String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
 
     String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth);
+    
+    String getSelectArtifactSQL(URI artifactURI);
 
     ResultSetExtractor getObservationExtractor();
 

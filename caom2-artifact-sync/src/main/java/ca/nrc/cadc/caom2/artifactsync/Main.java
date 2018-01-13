@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -225,6 +226,7 @@ public class Main {
                 System.exit(-1);
             }
 
+            boolean verify = !am.isSet("noverify");
 
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
@@ -237,6 +239,9 @@ public class Main {
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(daoConfig);
+            ArtifactDAO artifactDAO = new ArtifactDAO();
+            artifactDAO.setConfig(daoConfig);
+            
 
             Integer retryAfterHours = null;
             if (am.isSet("retryAfter")) {
@@ -256,7 +261,8 @@ public class Main {
                     observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
 
             PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
-                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize, retryAfterHours);
+                    artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
+                    retryAfterHours, verify);
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -329,6 +335,7 @@ public class Main {
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
+        sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");

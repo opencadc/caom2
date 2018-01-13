@@ -75,11 +75,19 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 
 /**
  *
@@ -99,6 +107,24 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
      * order (getList) only.
      */
     public ArtifactDAO() {
+    }
+    
+    /** 
+     * Create DAO to participate in transactions with another DAO.
+     * @param copyConfig 
+     */
+    public ArtifactDAO(AbstractCaomEntityDAO copyConfig) {
+        this.origin = copyConfig.origin;
+        this.dataSource = copyConfig.dataSource;
+        this.txnManager = copyConfig.txnManager;
+        this.gen = copyConfig.gen;
+        this.forceUpdate = copyConfig.forceUpdate;
+        this.readOnly = copyConfig.readOnly;
+        try {
+            this.digest = MessageDigest.getInstance(copyConfig.digest.getAlgorithm());
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException("BUG: failed to copy MessageDigest config", ex);
+        }
     }
 
     // package access for use by ObservationDAO only
@@ -150,6 +176,21 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
             long dt = System.currentTimeMillis() - t;
             log.debug("PUT: " + a.getID() + " " + dt + "ms");
         }
+    }
+    
+    public Artifact get(URI artifactURI) {
+        if (artifactURI == null) {
+            throw new IllegalArgumentException("arg cannot be null");
+        }
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        String sql = gen.getSelectArtifactSQL(artifactURI);
+        log.debug("sql: " + sql);
+        // No DB constraint for artifact URI to be unique
+        List<Artifact> artifacts = jdbc.query(sql, gen.getArtifactMapper());
+        if (artifacts != null && artifacts.size() > 0) {
+            return artifacts.get(0);
+        }
+        return null;
     }
 
     @Override
