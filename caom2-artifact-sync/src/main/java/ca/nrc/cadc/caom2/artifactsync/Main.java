@@ -242,7 +242,6 @@ public class Main {
             ArtifactDAO artifactDAO = new ArtifactDAO();
             artifactDAO.setConfig(daoConfig);
             
-
             Integer retryAfterHours = null;
             if (am.isSet("retryAfter")) {
                 try {
@@ -255,10 +254,9 @@ public class Main {
             }
 
             String collection = am.getValue("collection");
-            boolean dryrun = am.isSet("dryrun");
             boolean full = am.isSet("full");
             PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
-                    observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
+                    observationDAO, dbInfo, artifactStore, collection, full, batchSize);
 
             PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
                     artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
@@ -281,7 +279,7 @@ public class Main {
                     }
                 }
 
-                if (!stopDownload && mode.isDownloadMode() && !dryrun) {
+                if (!stopDownload && mode.isDownloadMode()) {
                     if (subject != null) {
                         stopDownload = Subject.doAs(subject, downloader) == 0;
                     } else {
@@ -326,12 +324,11 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
+        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default) | ");
+        sb.append("\n            just harvest to the database | or just initiate downloads.");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
-        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), ");
-        sb.append("          just harvest to the database, or just initiate downloads.");
-        sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");

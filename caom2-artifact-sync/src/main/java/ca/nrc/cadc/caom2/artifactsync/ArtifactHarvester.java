@@ -103,7 +103,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String collection; // Will be used in the future
     private boolean full;
-    private boolean dryrun;
     private int batchSize;
     private String source;
     private Date startDate;
@@ -112,13 +111,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     private DateFormat df;
 
     public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
-                             ArtifactStore artifactStore, String collection, boolean dryrun, boolean full, int
+                             ArtifactStore artifactStore, String collection, boolean full, int
                                  batchSize) {
 
         this.observationDAO = observationDAO;
         this.artifactStore = artifactStore;
         this.collection = collection;
-        this.dryrun = dryrun;
         this.full = full;
         this.batchSize = batchSize;
 
@@ -141,7 +139,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         long downloadCount = 0;
         int num = 0;
         int processedCount = 0;
-        long start = System.currentTimeMillis();
+        Date start = new Date();
 
         try {
             // Delete harvest skip URI records when in full mode
@@ -167,11 +165,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
                 try {
                     
-                    if (!dryrun) {
-                        observationDAO.getTransactionManager().startTransaction();
-                    }
-
+                    observationDAO.getTransactionManager().startTransaction();
                     Observation observation = observationDAO.get(observationState.getURI());
+                    
                     if (observation == null) {
                         log.debug("Observation no longer exists: " + observationState.getURI());
                     } else {
@@ -197,57 +193,56 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                                     String message = null;
                                     try {
                                         processedCount++;
-        
-                                        boolean exists = artifactStore.contains(artifact.getURI(), artifact
-                                            .contentChecksum);
-                                        log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
-                                            .contentChecksum + " exists: " + exists);
-                                        if (!exists) {
-        
-                                            // see if there's already an entry
-                                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact
-                                                .getURI());
-                                            if (skip == null) {
-                                                downloadCount++;
-                                                if (!dryrun) {
-                                                    // set the message to be an empty string
-                                                    skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
-                                                    harvestSkipURIDAO.put(skip);
-                                                    added = true;
-                                                } else {
-                                                    added = true;
-                                                }
+                                        
+                                        // see if there's already an entry
+                                        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact
+                                            .getURI());
+                                        
+                                        if (skip == null) {
+                                            if (downloadDate.after(start)) {
+                                                // proprietary--download in the future
+                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
                                             } else {
-                                                message = "Artifact already exists in skip table.";
+                                                boolean correctCopy = artifactStore.contains(artifact.getURI(), artifact
+                                                    .contentChecksum);
+                                                log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
+                                                    .contentChecksum + " correct copy: " + correctCopy);
+                                                if (!correctCopy) {
+                                                    skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                                }
                                             }
+                                            if (skip != null) {
+                                                harvestSkipURIDAO.put(skip);
+                                                added = true;
+                                            }
+                                        } else {
+                                            message = "Artifact already exists in skip table.";
                                         }
-        
                                     } catch (Throwable t) {
                                         success = false;
                                         message = "Failed to determine if artifact " + artifact.getURI() + " exists: " +
                                             t.getMessage();
                                         log.error(message, t);
-                                        if (!dryrun) {
-                                            log.debug("Adding artifact to skip table: " + artifact.getURI());
-                                            HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
-                                            harvestSkipURIDAO.put(skip);
-                                            added = true;
-                                        }
+                                        log.debug("Adding artifact to skip table: " + artifact.getURI());
+                                        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                        harvestSkipURIDAO.put(skip);
+                                        added = true;
                                     } finally {
                                         state.curLastModified = artifact.getLastModified();
                                         logEnd(artifact, success, added, message);
+                                        if (added) {
+                                            downloadCount++;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    if (!dryrun) {
-                        harvestStateDAO.put(state);
-                        log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
-                        
-                        observationDAO.getTransactionManager().commitTransaction();
-                    }
+                    harvestStateDAO.put(state);
+                    log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                    
+                    observationDAO.getTransactionManager().commitTransaction();
                     
                 } catch (Throwable t) {
                     observationDAO.getTransactionManager().rollbackTransaction();
@@ -263,7 +258,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             batchMessage.append(",");
             batchMessage.append("\"added\":\"").append(downloadCount).append("\"");
             batchMessage.append(",");
-            batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start).append("\"");
+            batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start.getTime()).append("\"");
             batchMessage.append(",");
             batchMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
             batchMessage.append("}");
