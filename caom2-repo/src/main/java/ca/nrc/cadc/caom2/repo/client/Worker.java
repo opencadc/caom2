@@ -82,6 +82,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.Callable;
+
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
@@ -133,8 +134,9 @@ public class Worker implements Callable<ObservationResponse> {
             wr.observation = obsReader.read(bos.toString());
         } catch (Exception e) {
             String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            wr.error = new IllegalStateException(e.getMessage());
         }
+
         return wr;
     }
 
@@ -164,7 +166,7 @@ public class Worker implements Callable<ObservationResponse> {
             wr.observation = obsReader.read(bos.toString());
         } catch (ObservationParsingException e) {
             String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException("Unable to create Observation object for id " + oid + ": " + e.getMessage());
+            wr.error = new IllegalStateException(e.getMessage());
         }
         return wr;
     }
