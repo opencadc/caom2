@@ -114,6 +114,8 @@ public class GeminiResolverTest {
             URI uri = new URI(uriStr);
             URL url = geminiResolver.toURL(uri);
 
+            log.info("toURL returned: " + url.toString());
+            Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE1);
             Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
             Assert.assertEquals(BASE_URL, url.getHost());
 
@@ -122,6 +124,8 @@ public class GeminiResolverTest {
             uri = new URI(uriStr);
             url = geminiResolver.toURL(uri);
 
+            log.info("toURL returned: " + url.toString());
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE2);
             Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
             Assert.assertEquals(BASE_URL, url.getHost());
 

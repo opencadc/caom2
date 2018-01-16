@@ -98,6 +98,7 @@ public class ChandraResolverTest {
     String BASE_ARTIFACT_URL = "cda.cfa.harvard.edu";
     String BASE_PATH = "/pub/byobsid/";
 
+
     // There are no tests that will validate the content of the
     // path other than empty.
     String INVALID_URI_BAD_SCHEME = "gemini:FOO/Bar";
@@ -120,6 +121,8 @@ public class ChandraResolverTest {
                 URI uri = new URI(SCHEME + ":" + path);
                 URL url = chandraResolver.toURL(uri);
 
+                log.info("toURL returned: " + url.toString());
+                Assert.assertTrue(url.toString().equals( PROTOCOL_STR + "://" + BASE_ARTIFACT_URL + BASE_PATH + uri.getSchemeSpecificPart()));
                 Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
                 Assert.assertEquals(BASE_PATH + path, url.getPath());
                 Assert.assertEquals(PROTOCOL_STR, url.getProtocol());

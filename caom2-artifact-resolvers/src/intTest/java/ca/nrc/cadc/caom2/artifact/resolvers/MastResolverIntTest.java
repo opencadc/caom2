@@ -105,12 +105,17 @@ public class MastResolverIntTest {
             URI mastUri = new URI(VALID_URI);
             URL url = mastResolver.toURL(mastUri);
 
-            log.debug("opening connection to: " + url.toString());
+            log.info("opening connection to: " + url.toString());
 
             OutputStream out = new ByteArrayOutputStream();
             HttpDownload head = new HttpDownload(url, out);
             head.setHeadOnly(true);
             head.run();
+            log.debug(head.getThrowable());
+            log.debug(out.toString());
+            // This call has been known to return a 400 on occasion, so this could fail.
+            // It seems to be something on their side, because with curl a URL will return 200
+            // for a HEAD call, and this call will return a 400.
             Assert.assertEquals(200, head.getResponseCode());
             log.info("response code: " + head.getResponseCode());
         } catch (Exception unexpected) {

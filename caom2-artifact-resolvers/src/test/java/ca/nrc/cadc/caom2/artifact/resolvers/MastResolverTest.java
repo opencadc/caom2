@@ -94,6 +94,7 @@ public class MastResolverTest {
     String VALID_URI = "mast:FOO";
     String VALID_URI2 = "mast:FOO/bar";
     String PROTOCOL_STR = "https";
+    String MAST_BASE_URL = "http://mastpartners.stsci.edu/portal/Download/file/";
 
     // There are no tests that will validate the content of the
     // path other than empty.
@@ -102,7 +103,6 @@ public class MastResolverTest {
     MastResolver mastResolver = new MastResolver();
 
     public MastResolverTest() {
-
     }
 
     @Test
@@ -121,8 +121,11 @@ public class MastResolverTest {
 
                 URI uri = new URI(uriStr);
                 URL url = mastResolver.toURL(uri);
+                String schemeSpecificPart = uri.getSchemeSpecificPart();
 
-                Assert.assertTrue(url.getPath().endsWith(uri.getSchemeSpecificPart()));
+                log.info("toURL returned: " + url.toString());
+                Assert.assertTrue(url.toString().equals( MAST_BASE_URL + schemeSpecificPart));
+                Assert.assertTrue(url.getPath().endsWith(schemeSpecificPart));
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
