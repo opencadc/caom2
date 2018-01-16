@@ -84,6 +84,8 @@ import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
 import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -198,6 +200,25 @@ public class BaseSQLGeneratorTest
                 for (int t=i; t<5; t++)
                     Assert.assertFalse(tables[t], sql.contains(tables[t]));
             }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSelectArtifactSQL()
+    {
+        try
+        {
+            
+            URI uri = new URI("cadc:artifactid");
+            String sql = gen.getSelectArtifactSQL(uri);
+            Assert.assertNotNull(sql);
+            log.debug("SQL [" + sql.length() + "] " + sql);
+            Assert.assertTrue(sql.contains(uri.toString()));
         }
         catch(Exception unexpected)
         {

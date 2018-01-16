@@ -69,9 +69,11 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
@@ -104,23 +106,27 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
+    private ArtifactDAO artifactDAO;
     private String source;
     private int batchSize;
     private int threads;
+    private boolean verify;
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
 
-    public DownloadArtifactFiles(DataSource dataSource, String[] dbInfo, ArtifactStore artifactStore, int threads,
-                                 int batchSize, Integer retryAfterHours) {
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads,
+                                 int batchSize, Integer retryAfterHours, boolean verify) {
         this.artifactStore = artifactStore;
 
+        this.artifactDAO = artifactDAO;
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
-
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        
         this.threads = threads;
         this.batchSize = batchSize;
+        this.verify = verify;
         this.stopDate = new Date();
         if (retryAfterHours == null) {
             retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
@@ -220,8 +226,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             logStart(skip);
 
             URI artifactURI = skip.getSkipID();
+            Artifact artifact = artifactDAO.get(artifactURI);
+            
             MastResolver resolver = new MastResolver();
-
             URL url = resolver.toURL(artifactURI);
 
             ArtifactDownloadResult result = new ArtifactDownloadResult(artifactURI);
@@ -248,6 +255,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     log.debug("MAST content MD5: " + md5String);
                     if (md5String != null) {
                         sourceChecksum = URI.create("MD5:" + md5String);
+                        if (!sourceChecksum.equals(artifact.contentChecksum)) {
+                            result.message = "Remote checksum doesn't match artifact checksum";
+                            return result;
+                        }
                     }
 
                     long contentLength = head.getContentLength();
@@ -257,9 +268,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     }
                 }
 
-
                 // check again to be sure the destination doesn't already have it
-                if (sourceChecksum != null && artifactStore.contains(artifactURI, sourceChecksum)) {
+                if (artifactStore.contains(artifactURI, artifact.contentChecksum)) {
                     result.message = "ArtifactStore already has correct copy";
                     result.success = true;
                     return result;
@@ -284,7 +294,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     result.message = sb.toString();
                 } else {
                     if (uploadSuccess) {
-                        result.success = true;
+                        if (verify && !artifactStore.contains(artifactURI,artifact.contentChecksum)) {
+                            result.message = "Post download verification failure";
+                        } else {
+                            result.success = true;
+                        }
                     } else {
                         result.message = uploadErrorMessage;
                     }

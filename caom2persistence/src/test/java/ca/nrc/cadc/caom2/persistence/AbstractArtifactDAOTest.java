@@ -242,4 +242,44 @@ public abstract class AbstractArtifactDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testGetByURI()
+    {
+        try
+        {
+            // test null param
+            try
+            {
+                URI uri = null;
+                dao.get(uri);
+                Assert.fail("expected an exception");
+            }
+            catch (IllegalArgumentException e)
+            {
+                // expected
+            }
+            
+            // test not found
+            URI uri = URI.create("cadc:notfound");
+            Assert.assertNull("expected null artifact", dao.get(uri));
+            
+            // test found
+            uri = URI.create("cadc:STUFF/thing");
+            Artifact a = new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA);
+            Plane p = new Plane("baz");
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.getPlanes().add(p);
+            p.getArtifacts().add(a);
+            obsDAO.put(o);
+            Artifact a2 = dao.get(uri);
+            Assert.assertNotNull("expected non-null artifact", a2);
+            Assert.assertEquals("expected equal artifacts", a, a2);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
