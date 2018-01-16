@@ -683,11 +683,6 @@ public class ObservationHarvester extends Harvester {
         return ret;
     }
 
-    /*
-     * private List<SkippedWrapperURI<ObservationState>> wrapState(List<ObservationState> obsList) { List<SkippedWrapperURI<ObservationState>> ret = new
-     * ArrayList<SkippedWrapperURI<ObservationState>>(obsList.size()); for (ObservationState o : obsList) { ret.add(new SkippedWrapperURI<ObservationState>(o,
-     * null)); } return ret; }
-     */
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
         List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
