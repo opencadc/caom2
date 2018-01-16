@@ -121,7 +121,7 @@ public class ChandraResolverTest {
                 URI uri = new URI(SCHEME + ":" + path);
                 URL url = chandraResolver.toURL(uri);
 
-                log.info("toURL returned: " + url.toString());
+                log.debug("toURL returned: " + url.toString());
                 Assert.assertTrue(url.toString().equals( PROTOCOL_STR + "://" + BASE_ARTIFACT_URL + BASE_PATH + uri.getSchemeSpecificPart()));
                 Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
                 Assert.assertEquals(BASE_PATH + path, url.getPath());

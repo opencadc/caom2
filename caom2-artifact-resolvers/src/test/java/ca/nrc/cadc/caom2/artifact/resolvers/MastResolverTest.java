@@ -123,7 +123,7 @@ public class MastResolverTest {
                 URL url = mastResolver.toURL(uri);
                 String schemeSpecificPart = uri.getSchemeSpecificPart();
 
-                log.info("toURL returned: " + url.toString());
+                log.debug("toURL returned: " + url.toString());
                 Assert.assertTrue(url.toString().equals( MAST_BASE_URL + schemeSpecificPart));
                 Assert.assertTrue(url.getPath().endsWith(schemeSpecificPart));
             }

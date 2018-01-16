@@ -128,7 +128,7 @@ public class SmokaResolverTest {
             String uriStr = smokaResolver.getScheme() + ":" + FILE_URI + "/" + VALID_FILE1;
             URI uri = new URI(uriStr);
             URL url = smokaResolver.toURL(uri);
-            log.info("toURL returned: " + url.toString());
+            log.debug("toURL returned: " + url.toString());
 
             Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_URL + FILE_URL_PATH + "?" + FILE_URL_QUERY + VALID_FILE2);
             Assert.assertEquals(FILE_URL_PATH, url.getPath());
@@ -139,7 +139,7 @@ public class SmokaResolverTest {
             uriStr = smokaResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
             uri = new URI(uriStr);
             url = smokaResolver.toURL(uri);
-            log.info("toURL returned: " + url.toString());
+            log.debug("toURL returned: " + url.toString());
             // http://smoka.nao.ac.jp/qlis/ImagePNG?grayscale=linear&mosaic=true&frameid=SUPE01318470
 
             Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);

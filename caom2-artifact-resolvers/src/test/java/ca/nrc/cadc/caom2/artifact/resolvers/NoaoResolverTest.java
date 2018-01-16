@@ -125,7 +125,7 @@ public class NoaoResolverTest {
                 URL url = noaoResolver.toURL(uri);
 
                 // NOAO uses '?' to POST scheme specific part of the URI to the server
-                log.info("toURL returned: " + url.toString());
+                log.debug("toURL returned: " + url.toString());
 
                 Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_ARTIFACT_URL + ":7003/?" + URL_QUERY + uri.getSchemeSpecificPart() );
                 Assert.assertEquals(URL_QUERY + uri.getSchemeSpecificPart(), url.getQuery());
