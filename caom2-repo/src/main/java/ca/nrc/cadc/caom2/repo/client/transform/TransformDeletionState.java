@@ -1,5 +1,9 @@
 package ca.nrc.cadc.caom2.repo.client.transform;
 
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.date.DateUtil;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -11,9 +15,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.date.DateUtil;
 
 public class TransformDeletionState extends Transformer {
 
@@ -99,7 +100,8 @@ public class TransformDeletionState extends Transformer {
 
                 if (observationID != null && collection != null && date != null) {
                     UUID uuid = UUID.fromString(observationID);
-                    DeletedObservation de = new DeletedObservation(uuid, date);
+                    ObservationURI uri = new ObservationURI(collection, observationID);
+                    DeletedObservation de = new DeletedObservation(uuid, uri);
                     //CaomUtil.assignLastModified(de, date, "lastModified");
                     list.add(de);
 

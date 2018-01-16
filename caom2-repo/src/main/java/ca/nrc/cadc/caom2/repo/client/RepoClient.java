@@ -471,7 +471,7 @@ public class RepoClient {
             }
 
             if (accList.size() > 0) {
-                start = accList.get(accList.size() - 1).lastModified;
+                start = accList.get(accList.size() - 1).getLastModified();
             }
 
             recCounter = accList.size();
