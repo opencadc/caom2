@@ -107,43 +107,13 @@ public class Worker implements Callable<ObservationResponse> {
     }
 
     public ObservationResponse getObservation() {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String surl = baseHTTPURL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
-        final URL url;
-        try {
-            url = new URL(surl);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Unable to create URL object for " + surl);
-        }
-        HttpDownload get = new HttpDownload(url, bos);
-
-        if (subject != null) {
-            Subject.doAs(subject, new RunnableAction(get));
-
-        } else {
-            get.run();
-        }
-
-        // TODO: need to check get.getResponseCode() and get.getThrowable() for any failure to get the document
-        // specifically: 404 if the observation does not/no longer exists is important to distinguish and handle
-        ObservationReader obsReader = new ObservationReader();
-        ObservationResponse wr = new ObservationResponse(state);
-
-        try {
-            // log.info("********************* bos:" + bos.toString());
-            wr.observation = obsReader.read(bos.toString());
-        } catch (Exception e) {
-            String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException(e.getMessage());
-        }
-
-        return wr;
+        return getObservation(state.getURI().getURI());
     }
 
     public ObservationResponse getObservation(URI uri) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         String surl = baseHTTPURL + File.separator + state.getURI().getURI().getSchemeSpecificPart();
-        log.info("URL: " + surl);
+        log.debug("URL: " + surl);
         URL url = null;
         try {
             url = new URL(surl);
@@ -154,19 +124,20 @@ public class Worker implements Callable<ObservationResponse> {
 
         if (subject != null) {
             Subject.doAs(subject, new RunnableAction(get));
-
         } else {
             get.run();
         }
 
-        ObservationReader obsReader = new ObservationReader();
         ObservationResponse wr = new ObservationResponse(state);
-
-        try {
-            wr.observation = obsReader.read(bos.toString());
-        } catch (ObservationParsingException e) {
-            String oid = state.getURI().getObservationID();
-            wr.error = new IllegalStateException(e.getMessage());
+        if (get.getThrowable() != null) {
+            wr.error = new RuntimeException("failed to get observation", get.getThrowable());
+        } else {
+            try {
+                ObservationReader obsReader = new ObservationReader();
+                wr.observation = obsReader.read(bos.toString());
+            } catch (Exception e) {
+                wr.error = e;
+            }
         }
         return wr;
     }
