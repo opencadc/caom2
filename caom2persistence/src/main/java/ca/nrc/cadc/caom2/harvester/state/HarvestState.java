@@ -89,6 +89,10 @@ public class HarvestState {
     Date lastModified;
     UUID id;
 
+    public Date getLastModified() {
+        return lastModified;
+    }
+
     public String toString() {
         return "HarvestState[" + source + "," + cname + ": " + curLastModified + "," + curID + "]";
     }

@@ -251,14 +251,25 @@ public class ObservationHarvester extends Harvester {
                 startDate = null;
             } else if (!skipped) {
                 log.debug("recalculate startDate");
+                // normally start batch from last successful put state
                 startDate = state.curLastModified;
-            }
-            log.debug("startDate " + startDate);
-            // else: skipped: keep startDate across multiple batches since we
-            // don't persist harvest
-            // state
+                if (state.curLastModified != null) {
+                    Date prevDiscoveryQuery = state.getLastModified();
+                    Date lastObservationSeen = state.curLastModified;
+                    long fiveMinMS = 5 * 60000L;
+                    if (prevDiscoveryQuery != null && lastObservationSeen != null) {
+                        if ((prevDiscoveryQuery.getTime() - lastObservationSeen.getTime()) < fiveMinMS) {
+                            // do overlapping harvest in case there are some new observations inserted
+                            // with timestamp slightly older than lastObservationSeen
+                            startDate = new Date(lastObservationSeen.getTime() - fiveMinMS);
+                            log.info("start harvest overlap: " + format(state.curLastModified) + " -> " + format(startDate));
+                        }
+                    }
+                }
+            } // else: skipped: keep startDate across multiple batches since we don't persist harvest state
             firstIteration = false;
 
+            log.debug("startDate " + startDate);
             log.debug("skipped: " + (skipped));
 
             Date end = maxDate;
@@ -267,55 +278,18 @@ public class ObservationHarvester extends Harvester {
 
             if (skipped) {
                 entityList = getSkipped(startDate);
-                //entityListState = getSkippedState(startDate);
             } else {
-                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L);
-                if (end == null) {
-                    end = fiveMinAgo;
-                } else {
-                    log.debug("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
-                    if (end.getTime() > fiveMinAgo.getTime()) {
-                        end = fiveMinAgo;
-                    }
-                }
-
                 log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
                 List<ObservationResponse> obsList = null;
-                //List<ObservationState> stateList = null;
                 if (srcObservationDAO != null) {
                     obsList = srcObservationDAO.getList(src.getCollection(), startDate, end, batchSize + 1);
                 } else {
                     obsList = srcObservationService.getList(src.getCollection(), startDate, end, batchSize + 1);
                 }
                 entityList = wrap(obsList);
-                //entityListState = wrapState(stateList);
             }
 
-            if (entityList.size() >= expectedNum) {
-                try {
-                    detectLoop(entityList);
-                } catch (RuntimeException rex) {
-                    if (!skipped) {
-                        Integer tmpBatchSize = (int) (1.5 * batchSize);
-                        log.info("(loop) temporary harvest window: " + format(startDate) + " :: " + format(end) + " [" + tmpBatchSize + "]");
-
-                        List<ObservationResponse> obsList = null;
-                        //List<ObservationState> stateList = null;
-                        if (srcObservationDAO != null) {
-                            obsList = srcObservationDAO.getList(src.getCollection(), startDate, end, tmpBatchSize);
-                        } else {
-                            obsList = srcObservationService.getList(src.getCollection(), startDate, end, tmpBatchSize);
-                        }
-
-                        entityList = wrap(obsList);
-                        detectLoop(entityList);
-                    } else {
-                        throw rex;
-                    }
-                }
-            }
-
-            // avoid re-processing the last successful one stored in HarvestState
+            // avoid re-processing the last successful one stored in HarvestState (normal case because query: >= startDate)
             if (!entityList.isEmpty() && !skipped) {
                 ListIterator<SkippedWrapperURI<ObservationResponse>> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().entity.observation;
@@ -324,7 +298,6 @@ public class ObservationHarvester extends Harvester {
                     log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
                     if (curBatchLeader.getID().equals(state.curID)
                             && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
-                        //entityListState.remove(0);
                         iter.remove();
                         expectedNum--;
                     }
@@ -334,7 +307,6 @@ public class ObservationHarvester extends Harvester {
 
             ret.found = entityList.size();
             log.debug("found: " + entityList.size());
-            //log.debug("found os: " + entityListState.size());
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -367,9 +339,11 @@ public class ObservationHarvester extends Harvester {
                         String treeSize = computeTreeSize(o);
                         log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
                     } else if (hs != null) {
-                        log.info("error put: " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
-
+                        log.info("put (retry error): " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
+                    } else {
+                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(ow.entity.observationState.maxLastModified));
                     }
+                    
                     if (!dryrun) {
                         if (skipped) {
                             startDate = hs.getLastModified();
