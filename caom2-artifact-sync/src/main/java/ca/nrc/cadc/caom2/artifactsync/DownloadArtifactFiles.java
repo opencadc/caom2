@@ -154,15 +154,18 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         }
         // set the start date so that the next batch resumes after our last record
         if (workCount > 0) {
-            startDate = artifacts.get(workCount - 1).getLastModified();
+            startDate = artifacts.get(workCount - 1).getTryAfter();
         }
+        
+        long successes = 0;
+        long totalElapsedTime = 0;
+        long totalBytes = 0;
 
+        List<Future<ArtifactDownloadResult>> results = null;
+        final long start = System.currentTimeMillis();
+        
         try {
-            final long start = System.currentTimeMillis();
-            List<Future<ArtifactDownloadResult>> results = executor.invokeAll(tasks);
-            long successes = 0;
-            long totalElapsedTime = 0;
-            long totalBytes = 0;
+            results = executor.invokeAll(tasks);
             for (Future<ArtifactDownloadResult> f : results) {
                 ArtifactDownloadResult result = f.get();
                 if (result.success) {
@@ -171,8 +174,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     totalBytes += result.bytesTransferred;
                 }
             }
-            final long end = System.currentTimeMillis() - start;
 
+        } catch (InterruptedException e) {
+            log.info("Thread pool interupted", e);
+        } catch (ExecutionException e) {
+            log.error("Thread execution error", e);
+        } finally {
+            final long end = System.currentTimeMillis() - start;
             StringBuilder endMessage = new StringBuilder();
             endMessage.append("ENDBATCH: {");
             endMessage.append("\"total\":\"").append(results.size()).append("\"");
@@ -192,11 +200,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             endMessage.append("\"threads\":\"").append(threads).append("\"");
             endMessage.append("}");
             log.info(endMessage.toString());
-
-        } catch (InterruptedException e) {
-            log.info("Thread pool interupted", e);
-        } catch (ExecutionException e) {
-            log.error("Thread execution error", e);
         }
 
         return workCount;
