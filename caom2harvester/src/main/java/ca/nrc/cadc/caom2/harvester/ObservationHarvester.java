@@ -516,24 +516,15 @@ public class ObservationHarvester extends Harvester {
                                 skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
                             log.debug("skip == " + skip);
-                            Date tryAfter = new Date(); // TODO: could implement retry delaying/ordering/priority here
+                            Date tryAfter = ow.entity.observationState.maxLastModified;
+                            if (o != null) {
+                                tryAfter = o.getMaxLastModified();
+                            }
                             if (skip == null) {
                                 if (o != null) {
                                     skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), tryAfter, skipMsg);
                                 } else {
                                     skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
-                                }
-                            } else {
-                                log.debug("skipMsg == " + skipMsg);
-                                log.debug("skip.errorMessage == " + skip.errorMessage);
-
-                                if (skipMsg != null && !skipMsg.equals(skip.errorMessage)) {
-                                    skip.errorMessage = skipMsg; // possible
-                                    // update
-                                } else {
-                                    log.debug("no change in status: " + hs);
-                                    putSkip = false; // avoid timestamp
-                                    // update
                                 }
                             }
 
