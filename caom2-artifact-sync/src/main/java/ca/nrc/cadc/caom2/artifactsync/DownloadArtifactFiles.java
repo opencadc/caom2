@@ -257,7 +257,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (md5String != null) {
                         URI sourceChecksum = URI.create("MD5:" + md5String);
                         if (!sourceChecksum.equals(artifact.contentChecksum)) {
-
+                            result.message = "Remote checksum doesn't match artifact checksum";
+                            return result;
                         }
                     }
 

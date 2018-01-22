@@ -223,8 +223,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         }
                                     } catch (Throwable t) {
                                         success = false;
-                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: " +
-                                            t.getMessage();
+                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: "
+                                            + t.getMessage();
                                         log.error(message, t);
                                         log.debug("Adding artifact to skip table: " + artifact.getURI());
                                         HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);

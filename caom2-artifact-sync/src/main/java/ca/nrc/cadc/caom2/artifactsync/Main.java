@@ -228,8 +228,6 @@ public class Main {
                 System.exit(-1);
             }
 
-            boolean verify = !am.isSet("noverify");
-
             exitValue = 2;
 
             String[] dbInfo = dbParam.split("[.]");
@@ -253,6 +251,8 @@ public class Main {
                     System.exit(-1);
                 }
             }
+            
+            boolean verify = !am.isSet("noverify");
 
             String collection = am.getValue("collection");
             boolean full = am.isSet("full");
