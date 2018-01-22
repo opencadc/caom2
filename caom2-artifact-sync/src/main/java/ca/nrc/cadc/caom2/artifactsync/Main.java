@@ -80,7 +80,9 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
@@ -228,8 +230,7 @@ public class Main {
 
             boolean verify = !am.isSet("noverify");
 
-            exitValue = 2; // in case we get killed
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+            exitValue = 2;
 
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<>(2);
@@ -255,12 +256,16 @@ public class Main {
 
             String collection = am.getValue("collection");
             boolean full = am.isSet("full");
-            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
+            
+            ArtifactHarvester harvester = new ArtifactHarvester(
                     observationDAO, dbInfo, artifactStore, collection, full, batchSize);
 
-            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
+            DownloadArtifactFiles downloader = new DownloadArtifactFiles(
                     artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
                     retryAfterHours, verify);
+            
+            List<ShutdownListener> listeners = Arrays.asList((ShutdownListener) harvester, (ShutdownListener) downloader);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -305,12 +310,19 @@ public class Main {
     }
 
     private static class ShutdownHook implements Runnable {
+        
+        List<ShutdownListener> listeners;
 
-        ShutdownHook() {
+        ShutdownHook(List<ShutdownListener> listeners) {
+            this.listeners = listeners;
         }
 
         @Override
         public void run() {
+            for (ShutdownListener listener : listeners) {
+                listener.shutdown();
+            }
+
             if (exitValue != 0) {
                 log.error("terminating with exit status " + exitValue);
             }

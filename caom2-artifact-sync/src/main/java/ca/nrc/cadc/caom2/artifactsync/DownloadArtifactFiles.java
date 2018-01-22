@@ -78,6 +78,8 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.util.FileMetadata;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,10 +97,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
-public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer> {
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>, ShutdownListener {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
@@ -115,6 +119,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
+    
+    ExecutorService executor = null;
+    List<Future<ArtifactDownloadResult>>  results;
+    long start;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads,
                                  int batchSize, Integer retryAfterHours, boolean verify) {
@@ -143,7 +151,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         log.debug("Querying for skip records between " + startDate + " and " + stopDate);
         List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate,
             stopDate, batchSize);
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        executor = Executors.newFixedThreadPool(threads);
 
         Integer workCount = artifacts.size();
         List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
@@ -157,15 +165,20 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             startDate = artifacts.get(workCount - 1).getTryAfter();
         }
         
+        // reset each batch
         long successes = 0;
         long totalElapsedTime = 0;
         long totalBytes = 0;
-
-        List<Future<ArtifactDownloadResult>> results = null;
-        final long start = System.currentTimeMillis();
+        results = new ArrayList<Future<ArtifactDownloadResult>>();
+        start = System.currentTimeMillis();
         
         try {
-            results = executor.invokeAll(tasks);
+            // submit the results asynchronously
+            for (Callable<ArtifactDownloadResult> task : tasks) {
+                results.add(executor.submit(task));
+            }
+            
+            // wait for them to complete by calling f.get()
             for (Future<ArtifactDownloadResult> f : results) {
                 ArtifactDownloadResult result = f.get();
                 if (result.success) {
@@ -180,26 +193,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         } catch (ExecutionException e) {
             log.error("Thread execution error", e);
         } finally {
-            final long end = System.currentTimeMillis() - start;
-            StringBuilder endMessage = new StringBuilder();
-            endMessage.append("ENDBATCH: {");
-            endMessage.append("\"total\":\"").append(results.size()).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"successCount\":\"").append(successes).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"failureCount\":\"").append(results.size() - successes).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"time\":\"").append(end).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"bytes\":\"").append(totalBytes).append("\"");
-            endMessage.append(",");
-            endMessage.append("\"threads\":\"").append(threads).append("\"");
-            endMessage.append("}");
-            log.info(endMessage.toString());
+            logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
         }
 
         return workCount;
@@ -214,8 +208,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         String uploadErrorMessage;
         long bytesTransferred;
 
-        URI sourceChecksum;
-        Long sourceLength;
+        FileMetadata metadata;
 
         ArtifactDownloader(HarvestSkipURI skip, ArtifactStore artifactStore, HarvestSkipURIDAO harvestSkipURIDAO) {
             this.skip = skip;
@@ -236,6 +229,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
             ArtifactDownloadResult result = new ArtifactDownloadResult(artifactURI);
             result.success = false;
+            
+            FileMetadata metadata = new FileMetadata();
+            metadata.setContentType(artifact.contentType);
+            metadata.setMd5Sum(artifact.contentChecksum.getSchemeSpecificPart());
+            metadata.setContentLength(artifact.contentLength);
 
             try {
                 // get the md5 and contentLength of the artifact
@@ -257,17 +255,18 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     String md5String = head.getContentMD5();
                     log.debug("MAST content MD5: " + md5String);
                     if (md5String != null) {
-                        sourceChecksum = URI.create("MD5:" + md5String);
+                        URI sourceChecksum = URI.create("MD5:" + md5String);
                         if (!sourceChecksum.equals(artifact.contentChecksum)) {
-                            result.message = "Remote checksum doesn't match artifact checksum";
-                            return result;
+
                         }
                     }
 
                     long contentLength = head.getContentLength();
-                    sourceLength = null;
                     if (contentLength >= 0) {
-                        sourceLength = new Long(contentLength);
+                        if (contentLength != artifact.contentLength) {
+                            result.message = "Remote content length doesn't match artifact content length";
+                            return result;
+                        }
                     }
                 }
 
@@ -342,7 +341,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             ByteCountInputStream byteCounter = new ByteCountInputStream(inputStream);
             try {
                 log.debug("[" + threadName + "] Starting upload of " + artifactURI);
-                artifactStore.store(artifactURI, sourceChecksum, sourceLength, byteCounter);
+                artifactStore.store(artifactURI, byteCounter, metadata);
                 log.debug("[" + threadName + "] Completed upload of " + artifactURI);
             } catch (Throwable t) {
                 uploadSuccess = false;
@@ -394,6 +393,87 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         startMessage.append("}");
         log.info(startMessage.toString());
+    }
+    
+    private void logBatchEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
+        final long end = System.currentTimeMillis() - start;
+        StringBuilder endMessage = new StringBuilder();
+        endMessage.append("ENDBATCH: {");
+        endMessage.append("\"total\":\"").append(total).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"successCount\":\"").append(successes).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"failureCount\":\"").append(total - successes).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"time\":\"").append(end).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"downloadTime\":\"").append(totalElapsedTime).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"bytes\":\"").append(totalBytes).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"threads\":\"").append(threads).append("\"");
+        endMessage.append("}");
+        log.info(endMessage.toString());
+    }
+
+    @Override
+    public void shutdown() {
+        if (executor != null) {
+            log.info("Shutting down downloader.");
+            List<Runnable> incomplete = executor.shutdownNow();
+            
+            if (results == null) {
+                StringBuilder endMessage = new StringBuilder();
+                endMessage.append("ENDBATCH: {");
+                endMessage.append("\"total\":\"0\"");
+                endMessage.append(",");
+                endMessage.append("\"successCount\":\"0\"");
+                endMessage.append(",");
+                endMessage.append("\"failureCount\":\"0\"");
+                endMessage.append(",");
+                endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
+                endMessage.append(",");
+                endMessage.append("\"threads\":\"").append(threads).append("\"");
+                endMessage.append("}");
+                log.info(endMessage.toString());
+            } else {
+
+                long total = 0;
+                long successes = 0;
+                long totalElapsedTime = 0;
+                long totalBytes = 0;
+                
+                // wait for them to complete by calling f.get()
+                for (Future<ArtifactDownloadResult> f : results) {
+                    if (f.isDone()) {
+                        try {
+                            ArtifactDownloadResult result = f.get();
+                            total++;
+                            if (result.success) {
+                                successes++;
+                                totalElapsedTime += result.elapsedTimeMillis;
+                                totalBytes += result.bytesTransferred;
+                            }
+                        } catch (ExecutionException | InterruptedException e) {
+                            log.info("Failed to get result of completed job", e);
+                        }
+                    }
+                }
+                
+                logBatchEnd(total, successes, totalElapsedTime, totalBytes);
+            }
+            
+            try {
+                executor.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                log.info("Shutdown interruped");
+            }
+            if (incomplete != null) {
+                log.info("Incomplete downloads: " + incomplete.size());
+            }
+        }
     }
 
 }

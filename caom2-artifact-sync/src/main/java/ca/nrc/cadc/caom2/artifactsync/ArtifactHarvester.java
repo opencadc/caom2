@@ -87,7 +87,7 @@ import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
 
-public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
+public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, ShutdownListener {
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
@@ -106,6 +106,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     private Date stopDate;
     private boolean firstRun;
     private DateFormat df;
+    
+    // reset each run
+    long downloadCount = 0;
+    int processedCount = 0;
+    Date start = new Date();
 
     public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
                              ArtifactStore artifactStore, String collection, boolean full, int
@@ -133,10 +138,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     @Override
     public Integer run() throws Exception {
 
-        long downloadCount = 0;
+        downloadCount = 0;
+        processedCount = 0;
+        start = new Date();
+        
         int num = 0;
-        int processedCount = 0;
-        Date start = new Date();
 
         try {
             // Delete harvest skip URI records when in full mode
@@ -249,17 +255,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
             return num;
         } finally {
-            StringBuilder batchMessage = new StringBuilder();
-            batchMessage.append("ENDBATCH: {");
-            batchMessage.append("\"total\":\"").append(processedCount).append("\"");
-            batchMessage.append(",");
-            batchMessage.append("\"added\":\"").append(downloadCount).append("\"");
-            batchMessage.append(",");
-            batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start.getTime()).append("\"");
-            batchMessage.append(",");
-            batchMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
-            batchMessage.append("}");
-            log.info(batchMessage.toString());
+            logBatchEnd();
         }
 
     }
@@ -291,5 +287,24 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
         startMessage.append("}");
         log.info(startMessage.toString());
     }
+    
+    private void logBatchEnd() {
+        StringBuilder batchMessage = new StringBuilder();
+        batchMessage.append("ENDBATCH: {");
+        batchMessage.append("\"total\":\"").append(processedCount).append("\"");
+        batchMessage.append(",");
+        batchMessage.append("\"added\":\"").append(downloadCount).append("\"");
+        batchMessage.append(",");
+        batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - start.getTime()).append("\"");
+        batchMessage.append(",");
+        batchMessage.append("\"date\":\"").append(df.format(start)).append("\"");
+        batchMessage.append("}");
+        log.info(batchMessage.toString());
+    }
 
+    @Override
+    public void shutdown() {
+        logBatchEnd();
+    }
+    
 }
