@@ -324,12 +324,11 @@ public class ObservationHarvester extends Harvester {
                 HarvestSkipURI hs = ow.skip;
                 iter1.remove(); // allow garbage collection during loop
 
-                String lastMsg = null;
                 String skipMsg = null;
 
                 if (!dryrun) {
                     if (destObservationDAO.getTransactionManager().isOpen()) {
-                        throw new RuntimeException("BUG: found open trasnaction at start of next observation");
+                        throw new RuntimeException("BUG: found open transaction at start of next observation");
                     }
                     log.debug("starting transaction");
                     destObservationDAO.getTransactionManager().startTransaction();
@@ -432,7 +431,7 @@ public class ObservationHarvester extends Harvester {
                                 state.curLastModified = ow.entity.observationState.maxLastModified;
                                 state.curID = null; //unknown
                             }
-                            throw new IllegalArgumentException("invalid input", ow.entity.error);
+                            throw new HarvestReadException(ow.entity.error);
                         }
 
                         log.debug("committing transaction");
@@ -442,7 +441,7 @@ public class ObservationHarvester extends Harvester {
                     ok = true;
                     ret.ingested++;
                 } catch (Throwable oops) {
-                    lastMsg = oops.getMessage();
+                    skipMsg = null;
                     String str = oops.toString();
                     if (oops instanceof IllegalStateException) {
                         if (oops.getMessage().contains("XML failed schema validation")) {
@@ -452,13 +451,19 @@ public class ObservationHarvester extends Harvester {
                             log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
                             ret.handled++;
                         }
+                    } else if (oops instanceof HarvestReadException) {
+                        Throwable cause = oops.getCause();
+                        log.error("CONTENT PROBLEM - failed to read: " + ow.entity.observationState.getURI() + " - " + cause);
+                        ret.handled++;
+                        // unwrap
+                        oops = cause;
                     } else if (oops instanceof IllegalArgumentException) {
-                        log.error("CONTENT PROBLEM - validation failure: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                        log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
                         if (oops.getCause() != null) {
                             log.error("cause: " + oops.getCause());
                         }
                         ret.handled++;
-                    } else if (oops instanceof ChecksumError) {
+                    } else if (oops instanceof MismatchedChecksumException) {
                         log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
                         ret.handled++;
                     } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
@@ -487,35 +492,28 @@ public class ObservationHarvester extends Harvester {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                         ret.abort = true;
                     } else if (str.contains("spherepoly_from_array")) {
-                        log.error("UNDETECTED illegal polygon: " + o.getURI());
+                        log.error("CONTENT PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                        oops = new IllegalArgumentException("invalid polygon (spoly): " + oops.getMessage(), oops);
                         ret.handled++;
                     } else {
                         log.error("unexpected exception", oops);
                     }
+                    // message for HarvestSkipURI record
+                    skipMsg = oops.getMessage();
                 } finally {
                     if (!ok && !dryrun) {
-                        if (o != null) {
-                            log.warn("failed to insert " + o + ": " + lastMsg);
-                            skipMsg = o + ": " + lastMsg;
-                        } else {
-                            log.warn("failed to insert " + ow.entity.observationState.getURI().getURI() + ": " + lastMsg);
-                            skipMsg = ow.entity.observationState.getURI().getURI() + ": " + lastMsg;
-                        }
-                        lastMsg = null;
                         destObservationDAO.getTransactionManager().rollbackTransaction();
                         log.warn("rollback: OK");
                         timeTransaction += System.currentTimeMillis() - t;
 
                         try {
                             log.debug("starting HarvestSkipURI transaction");
-                            boolean putSkip = true;
                             HarvestSkipURI skip = null;
                             if (o != null) {
                                 skip = harvestSkipDAO.get(source, cname, o.getURI().getURI());
                             } else {
                                 skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
-                            log.debug("skip == " + skip);
                             Date tryAfter = ow.entity.observationState.maxLastModified;
                             if (o != null) {
                                 tryAfter = o.getMaxLastModified();
@@ -526,8 +524,12 @@ public class ObservationHarvester extends Harvester {
                                 } else {
                                     skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
                                 }
+                            } else {
+                                skip.errorMessage = skipMsg;
+                                skip.setTryAfter(tryAfter);
                             }
 
+                            log.debug("starting HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().startTransaction();
 
                             if (!skipped) {
@@ -536,17 +538,15 @@ public class ObservationHarvester extends Harvester {
                             }
 
                             // track the fail
-                            if (putSkip) {
-                                log.info("put: " + skip);
-                                harvestSkipDAO.put(skip);
-                            }
+                            log.info("put: " + skip);
+                            harvestSkipDAO.put(skip);
 
                             // delete previous version of observation (if any)
                             destObservationDAO.delete(ow.entity.observationState.getURI());
 
                             log.debug("committing HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
-                            log.debug("commit HarvestSkipURI: OK");
+                            log.warn("commit HarvestSkipURI: OK");
                         } catch (Throwable oops) {
                             log.warn("failed to insert HarvestSkipURI", oops);
                             destObservationDAO.getTransactionManager().rollbackTransaction();
@@ -575,7 +575,14 @@ public class ObservationHarvester extends Harvester {
         return ret;
     }
 
-    private void validateChecksum(Observation o) throws ChecksumError {
+    private static class HarvestReadException extends Exception {
+
+        public HarvestReadException(Exception cause) {
+            super(cause);
+        }
+    }
+    
+    private void validateChecksum(Observation o) throws MismatchedChecksumException {
         if (o.getAccMetaChecksum() == null) {
             return; // no check
         }
@@ -584,7 +591,7 @@ public class ObservationHarvester extends Harvester {
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
-                throw new ChecksumError(("checksum mismatch: " + o.getAccMetaChecksum() + " != " + calculatedChecksum));
+                throw new MismatchedChecksumException("Observation.accMetaChecksum mismatch");
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");

@@ -201,8 +201,8 @@ public class HarvestSkipURIDAO {
                 if (end != null) {
                     sb.append(" AND tryAfter <= ?");
                 }
+                sb.append(" ORDER BY tryAfter ASC");
             }
-            sb.append(" ORDER BY tryAfter ASC");
 
             if (batchSize != null && batchSize > 0) {
                 sb.append(" LIMIT ").append(batchSize.toString());

@@ -136,7 +136,7 @@ public class Worker implements Callable<ObservationResponse> {
                 ObservationReader obsReader = new ObservationReader();
                 wr.observation = obsReader.read(bos.toString());
             } catch (Exception e) {
-                wr.error = e;
+                wr.error = new IllegalArgumentException("failed to read observation document: " + e.getMessage(), e);
             }
         }
         return wr;
