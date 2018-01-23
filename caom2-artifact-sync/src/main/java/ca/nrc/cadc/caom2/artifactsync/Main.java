@@ -210,8 +210,8 @@ public class Main {
             if (am.isSet("threads")) {
                 try {
                     nthreads = Integer.parseInt(am.getValue("threads"));
-                    if (nthreads < 1 || nthreads > 25) {
-                        log.error("value for --threads must be between 1 and 25");
+                    if (nthreads < 1 || nthreads > 250) {
+                        log.error("value for --threads must be between 1 and 250");
                         usage();
                         System.exit(-1);
                     }
