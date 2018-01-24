@@ -99,9 +99,9 @@ public class TapSchemaDAOImpl extends TapSchemaDAO
     {
         List<FunctionDesc> ret = super.getFunctionDescs();
 
-        ret.add(new FunctionDesc("LOWER", TapDataType.FUNCTION_ARG));
         ret.add(new FunctionDesc("isDownloadable", TapDataType.FUNCTION_ARG));
         ret.add(new FunctionDesc("RANGE_S2D", new TapDataType("double", "4", "range")));
+        ret.add(new FunctionDesc("NOW", TapDataType.TIMESTAMP));
         
         return ret;
     }

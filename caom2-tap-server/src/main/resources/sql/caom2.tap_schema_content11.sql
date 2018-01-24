@@ -426,6 +426,18 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,unit,da
 ( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL,                     'char', '21*', 'timestamp', 0,1,0 )
 ;
 
+insert into tap_schema.tables11 (schema_name,table_name,table_type,description) values
+('caom2', 'caom2.HarvestSkipURI', 'table', 'list of observations that failed to be harvested');
+
+insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
+( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
+( 'caom2.HarvestSkipURI', 'cname', 'entity (class name)', 'char', '*', NULL, 1,1,1),
+( 'caom2.HarvestSkipURI', 'skipID', 'URI of skipped entity instance', 'char', '*', 'uuid', 1,1,1),
+( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '*', 'timestamp', 1,1,1),
+( 'caom2.HarvestSkipURI', 'errorMessage', 'reason for harvest failure', 'char', '*', NULL, 1,0,1),
+( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '*', 'timestamp', 1,0,1);
+
+
 -- backwards compatible: fill "size" column with values from arraysize set above
 -- where arraysize is a possibly variable-length 1-dimensional value
 update tap_schema.columns11 SET "size" = replace(arraysize::varchar,'*','')::int 

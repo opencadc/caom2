@@ -125,14 +125,16 @@ public class CaomSelectListConverter extends SelectNavigator
                         else
                         {
                             ExpressionList elist = f.getParameters();
-                            Iterator i = elist.getExpressions().iterator();
-                            while ( i.hasNext() )
-                            {
-                                Expression arg = (Expression) i.next();
-                                if (arg instanceof Column)
+                            if (elist != null && elist.getExpressions() != null && !elist.getExpressions().isEmpty()) {
+                                Iterator i = elist.getExpressions().iterator();
+                                while ( i.hasNext() )
                                 {
-                                    Column c = (Column) arg;
-                                    fixColumn(c, tabs);
+                                    Expression arg = (Expression) i.next();
+                                    if (arg instanceof Column)
+                                    {
+                                        Column c = (Column) arg;
+                                        fixColumn(c, tabs);
+                                    }
                                 }
                             }
                         }
