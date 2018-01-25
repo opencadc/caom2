@@ -194,6 +194,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             log.error("Thread execution error", e);
         } finally {
             logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdownNow();
+            }
         }
 
         return workCount;
