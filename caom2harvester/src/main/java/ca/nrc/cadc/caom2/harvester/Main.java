@@ -211,6 +211,35 @@ public class Main {
                 src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
             }
 
+            URI basePublisherID = null;
+            String bpidStr = am.getValue("basePublisherID");
+            if (bpidStr != null) {
+                try {
+                    if (!bpidStr.endsWith("/")) {
+                        bpidStr += "/";
+                    }
+                    basePublisherID = new URI(bpidStr);
+                    if ("ivo".equals(basePublisherID.getScheme())
+                            && basePublisherID.getAuthority() != null
+                            && basePublisherID.getAuthority().length() > 0) {
+                        log.info("basePublisherID: " + basePublisherID
+                            + "publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
+                    } else {
+                        log.error("invalid basePublisherID: " + bpidStr + " expected: ivo://<authority> or ivo://<authority>/<path>");
+                        usage();
+                        System.exit(1);
+                    }
+                } catch (URISyntaxException ex) {
+                    log.error("invalid basePublisherID: " + bpidStr + " reason: " + ex);
+                    usage();
+                    System.exit(1);
+                }
+            } else {
+                log.warn("missing required argument: --basePublisherID");
+                usage();
+                System.exit(1);
+            }
+            
             Integer batchSize = null;
             Integer batchFactor = null;
             String sbatch = am.getValue("batchSize");
@@ -259,12 +288,12 @@ public class Main {
                     System.exit(1);
                 }
             }
-
+            
             Runnable action = null;
             if (!validate) {
 
                 try {
-                    action = new CaomHarvester(dryrun, noChecksum, compute, src, dest, batchSize, batchFactor, full, skip, maxDate, nthreads);
+                    action = new CaomHarvester(dryrun, noChecksum, compute, src, dest, basePublisherID, batchSize, batchFactor, full, skip, maxDate, nthreads);
                 } catch (IOException ioex) {
 
                     log.error("failed to init: " + ioex.getMessage());
@@ -319,6 +348,8 @@ public class Main {
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
         sb.append("\n         --destination=<server.database.schema> : persist output directly to a databsee server");
+        sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
+        sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
         sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema>");
         sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");

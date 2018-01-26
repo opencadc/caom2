@@ -125,13 +125,15 @@ public class ObservationHarvester extends Harvester {
     private boolean doCollisionCheck = false;
     private boolean computePlaneMetadata = false;
     private boolean nochecksum = false;
+    private URI basePublisherID;
 
     HarvestSkipURIDAO harvestSkipDAO = null;
 
-    public ObservationHarvester(HarvestResource src, HarvestResource dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum, int nthreads)
+    public ObservationHarvester(HarvestResource src, HarvestResource dest, URI basePublisherID, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum, int nthreads)
             throws IOException, URISyntaxException {
         super(Observation.class, src, dest, batchSize, full, dryrun);
         this.nochecksum = nochecksum;
+        this.basePublisherID = basePublisherID;
         init(nthreads);
     }
 
@@ -166,6 +168,7 @@ public class ObservationHarvester extends Harvester {
 
         // for now, dest is always a database
         Map<String, Object> config2 = getConfigDAO(dest);
+        config2.put("basePublisherID", basePublisherID.toASCIIString());
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
         destObservationDAO.setOrigin(false); // copy as-is

@@ -80,6 +80,7 @@ import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -204,9 +205,11 @@ public class CaomRepoConfig {
         private String database;
         private String schema;
         private String obsTableName;
+        private Boolean publicRead;
         private GroupURI readOnlyGroup;
         private GroupURI readWriteGroup;
 
+        private URI basePublisherID;
         private boolean computeMetadata;
         private boolean computeMetadataValidation;
         private boolean proposalGroup;
@@ -229,12 +232,18 @@ public class CaomRepoConfig {
         @Override
         public String toString() {
             return "RepoConfig.Item[" + collection + "," + dataSourceName + "," + database + ","
-                    + schema + "," + obsTableName + "," + readOnlyGroup + "," + readWriteGroup + ","
-                    + sqlGenerator.getSimpleName() + "," + computeMetadata + ","
-                    + computeMetadataValidation + "," + proposalGroup + "," + operatorGroup + ","
-                    + staffGroup + "]";
+                    + schema + "," + obsTableName + "," 
+                    + publicRead + "," + readOnlyGroup + "," + readWriteGroup + ","
+                    + sqlGenerator.getSimpleName() + "," 
+                    + basePublisherID + ","
+                    + computeMetadata + "," + computeMetadataValidation + "," 
+                    + proposalGroup + "," + operatorGroup + "," + staffGroup + "]";
         }
 
+        public URI getBasePublisherID() {
+            return basePublisherID;
+        }
+        
         public Class getSqlGenerator() {
             return sqlGenerator;
         }
@@ -275,6 +284,10 @@ public class CaomRepoConfig {
             return database;
         }
 
+        public boolean getPublicRead() {
+            return publicRead; // unbox
+        }
+        
         public GroupURI getReadOnlyGroup() {
             return readOnlyGroup;
         }
@@ -352,26 +365,26 @@ public class CaomRepoConfig {
             boolean proposalGroup = false;
             String operatorGroup = null;
             String staffGroup = null;
+            boolean publicRead = false;
+            URI basePublisherID = null;
             for (int i = 7; i < parts.length; i++) {
                 String option = parts[i]; // key=value pair
                 log.debug(collection + " options: " + option);
                 String[] kv = option.split("=");
-                if ("computeMetadata".equals(kv[0])) {
-                    computeMetadata = Boolean.parseBoolean(kv[1]);
+                if ("publicRead".equals(kv[0])) {
+                    publicRead = safeParseBoolean(kv[1]);
+                } else if ("computeMetadata".equals(kv[0])) {
+                    computeMetadata = safeParseBoolean(kv[1]);
                 } else if ("computeMetadataValidation".equals(kv[0])) {
-                    computeMetadataValidation = Boolean.parseBoolean(kv[1]);
+                    computeMetadataValidation = safeParseBoolean(kv[1]);
                 } else if ("proposalGroup".equals(kv[0])) {
-                    if (kv[1].equalsIgnoreCase("true") 
-                        || kv[1].equalsIgnoreCase("false")) {
-                        proposalGroup = Boolean.parseBoolean(kv[1]);
-                    } else {
-                        throw new IllegalArgumentException(
-                                "proposalGroup=" + kv[1] + ", instead of true|false");
-                    }
+                    proposalGroup = safeParseBoolean(kv[1]);
                 } else if ("operatorGroup".equals(kv[0])) {
                     operatorGroup = kv[1];
                 } else if ("staffGroup".equals(kv[0])) {
                     staffGroup = kv[1];
+                } else if ("basePublisherID".equals(kv[0])) {
+                    basePublisherID = new URI(kv[1]);
                 }
                 // else: ignore
             }
@@ -387,9 +400,19 @@ public class CaomRepoConfig {
             
             GroupURI ro = new GroupURI(roGroup);
             GroupURI rw = new GroupURI(rwGroup);
+            
+            if (basePublisherID == null) {
+                throw new IllegalArgumentException("missing required param: basePublisherID");
+            }
+            if (!"ivo".equals(basePublisherID.getScheme())
+                    || basePublisherID.getAuthority() == null) {
+                throw new IllegalArgumentException("invalid basePublisherID: " + basePublisherID + ", expected ivo://<authority>[/<path>]");
+            }
 
             CaomRepoConfig.Item rci = new CaomRepoConfig.Item(sqlGen, collection, dsName, database,
                     schema, obsTable, ro, rw);
+            rci.publicRead = publicRead;
+            rci.basePublisherID = basePublisherID;
             rci.computeMetadata = computeMetadata;
             rci.computeMetadataValidation = computeMetadataValidation;            
             rci.operatorGroup = operatorGroup == null ? null : new GroupURI(operatorGroup);
@@ -403,4 +426,14 @@ public class CaomRepoConfig {
         }
     }
 
+    private static boolean safeParseBoolean(String val) {
+        if (val.equalsIgnoreCase("true")) {
+            return true;
+        }
+        if (val.equalsIgnoreCase("false")) {
+            return false;
+        }
+
+        throw new IllegalArgumentException("invalid boolean value: " + val);
+    }
 }

@@ -82,6 +82,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import javax.sql.DataSource;
@@ -148,6 +149,7 @@ public class CaomHarvester implements Runnable {
      * source server,database,schema
      * @param dest
      * destination server,database,schema
+     * @param basePublisherID base to use in generating Plane publisherID values in destination database
      * @param batchSize
      * number of observations per batch (~memory consumption)
      * @param batchFactor
@@ -165,7 +167,7 @@ public class CaomHarvester implements Runnable {
      * URISyntaxException
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute,
-            HarvestResource src, HarvestResource dest,
+            HarvestResource src, HarvestResource dest, URI basePublisherID,
             int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate, int nthreads)
             throws IOException, URISyntaxException {
         Integer entityBatchSize = batchSize * batchFactor;
@@ -175,7 +177,7 @@ public class CaomHarvester implements Runnable {
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
 
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun, nochecksum, nthreads);
+        this.obsHarvester = new ObservationHarvester(src, dest, basePublisherID, batchSize, full, dryrun, nochecksum, nthreads);
         obsHarvester.setSkipped(skip);
         obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);

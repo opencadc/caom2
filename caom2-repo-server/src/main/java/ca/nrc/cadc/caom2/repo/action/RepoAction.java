@@ -281,6 +281,7 @@ public abstract class RepoAction extends RestAction {
             props.put("jndiDataSourceName", i.getDataSourceName());
             props.put("database", i.getDatabase());
             props.put("schema", i.getSchema());
+            props.put("basePublisherID", i.getBasePublisherID().toASCIIString());
             props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
             return props;
         }
@@ -306,26 +307,10 @@ public abstract class RepoAction extends RestAction {
 
     protected DeletedEntityDAO getDeletedDAO() throws IOException {
         if (deletedDAO == null) {
-            this.deletedDAO = getDeletedDAO(getCollection());
+            this.deletedDAO = new DeletedEntityDAO();
+            deletedDAO.setConfig(getDAOConfig(collection));
         }
         return deletedDAO;
-    }
-    
-    // create DAO
-    private DeletedEntityDAO getDeletedDAO(String collection) throws IOException {
-        CaomRepoConfig.Item i = getCollectionConfig(collection);
-        if (i != null) {
-            Map<String, Object> props = new HashMap<String, Object>();
-            props.put("jndiDataSourceName", i.getDataSourceName());
-            props.put("database", i.getDatabase());
-            props.put("schema", i.getSchema());
-            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
-            DeletedEntityDAO ret = new DeletedEntityDAO();
-            ret.setConfig(props);
-
-            return ret;
-        }
-        throw new IllegalArgumentException("unknown collection: " + collection);
     }
     
     // read the input stream (POST and PUT) and extract the observation from the XML
