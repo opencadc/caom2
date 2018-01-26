@@ -96,6 +96,12 @@ public class DummySQLGeneratorImpl implements SQLGenerator {
     }
 
     @Override
+    public void setBasePublisherID(String string) {
+        
+    }
+
+    
+    @Override
     public String getCurrentTimeSQL() {
         throw new UnsupportedOperationException();
     }

@@ -115,6 +115,7 @@ public abstract class AbstractDeletedEntityDAOTest {
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+            config.put("basePublisherID", "ivo://opencadc.org/");
             this.dao = new DeletedEntityDAO();
             dao.setConfig(config);
         } catch (Exception ex) {

@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.caom2.harvester;
 
-public class ChecksumError extends Exception {
+public class MismatchedChecksumException extends Exception {
 
-    public ChecksumError(String string) {
+    public MismatchedChecksumException(String string) {
         super(string);
     }
 

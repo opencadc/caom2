@@ -216,6 +216,7 @@ public abstract class AbstractObservationDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+            config.put("basePublisherID", "ivo://opencadc.org/");
             this.dao = new ObservationDAO();
             dao.setConfig(config);
             this.txnManager = dao.getTransactionManager();

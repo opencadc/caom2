@@ -128,6 +128,7 @@ public abstract class AbstractReadAccessDAOTest
             config.put("jndiDataSourceName", "jdbc/testcaom2");
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+            config.put("basePublisherID", "ivo://opencadc.org/");
 
             this.dao = new ReadAccessDAO();
             dao.setConfig(config);
