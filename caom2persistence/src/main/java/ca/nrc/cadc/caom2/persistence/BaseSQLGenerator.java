@@ -736,6 +736,26 @@ public class BaseSQLGenerator implements SQLGenerator {
         return sb.toString();
     }
     
+    @Override
+    public String getSelectArtifactSQL(URI artifactURI) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        String[] cols = columnMap.get(Artifact.class);
+        for (int c = 0; c < cols.length; c++) {
+            if (c > 0) {
+                sb.append(",");
+            }
+            sb.append(cols[c]);
+        }
+        sb.append(" FROM ");
+        sb.append(getTable(Artifact.class));
+        sb.append(" WHERE ");
+        sb.append("uri='");
+        sb.append(artifactURI.toString());
+        sb.append("'");
+        return sb.toString();
+    }
+    
     // select Observation(s) with maxLastmodified in [minLastModified,maxLastModified]
     @Override
     public String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth) {

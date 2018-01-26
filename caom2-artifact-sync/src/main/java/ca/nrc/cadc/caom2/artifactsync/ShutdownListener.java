@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2017.                            (c) 2017.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,128 +67,13 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.persistence;
+package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.DeletedEntity;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.access.ReadAccess;
-import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import java.net.URI;
-import java.util.Date;
-import java.util.UUID;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
+public interface ShutdownListener {
 
-/**
- *
- * @author pdowler
- */
-public interface SQLGenerator {
-
-    static final int MIN_DEPTH = 1;
-    static final int MAX_DEPTH = 5;
+    /**
+     * Called when the system is shutdown.
+     */
+    public void shutdown();
     
-    /**
-     * Get SQL to select the current date+time from the server.
-     * @return 
-     */
-    String getCurrentTimeSQL();
-
-    /** 
-     * Generate a new CaomEntity ID from the argument ID. This is a surrogate 
-     * primary key used in database tables joins, updates, and deletes. This method
-     * allows an implementation to use a portion of the argument UUID for backwards
-     * compatibility (e.g. if internal storage is smaller 64-bits used in CAOM-2.0).
-     * 
-     * @return 
-     */
-    UUID generateID(UUID id);
-    
-    /**
-     * Get SQL to select an Observation from a URI.
-     *
-     * @param uri
-     * @param depth
-     * @return
-     */
-    String getSelectSQL(ObservationURI uri, int depth);
-
-    /**
-     * Get SQL to select an Observation or ObseravtionSkeleton from a URI.
-     *
-     * @param uri
-     * @param depth
-     * @param skeleton
-     * @return
-     */
-    String getSelectSQL(ObservationURI uri, int depth, boolean skeleton);
-
-    /**
-     * Get SQL to select an Observation or ObservationSkeleton from the internal
-     * ID.
-     *
-     * @param id
-     * @param depth
-     * @param skeleton
-     * @return
-     */
-    String getSelectSQL(UUID id, int depth, boolean skeleton);
-
-    /**
-     *
-     * @param c
-     * @param id
-     * @return
-     */
-    String getSelectSQL(Class c, UUID id);
-
-    /**
-     *
-     * @param c
-     * @param assetID
-     * @param groupID
-     * @return
-     */
-    String getSelectSQL(Class<? extends ReadAccess> c, UUID assetID, URI groupID);
-
-    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
-
-    String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection);
-
-    String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize);
-
-    String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth);
-    
-    String getSelectArtifactSQL(URI artifactURI);
-
-    ResultSetExtractor getObservationExtractor();
-
-    RowMapper getObservationStateMapper();
-
-    RowMapper getArtifactMapper();
-
-    Class<? extends Skeleton> getSkeletonClass(Class c);
-
-    ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> c);
-
-    RowMapper getReadAccessMapper(Class<? extends ReadAccess> c);
-
-    RowMapper getDeletedEntityMapper(Class<? extends DeletedEntity> c);
-
-    RowMapper getTimestampRowMapper();
-
-    EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate);
-    
-    DeletedEntityPut getDeletedEntityPut(Class<? extends DeletedEntity> c, boolean isUpdate);
-
-    EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey);
-
-    //String getDeleteSQL(Class c, UUID id, boolean primaryKey);
-    String literal(Object o);
-
-    String getTable(Class c);
-
-    String getPrimaryKeyColumn(Class c);
 }
