@@ -371,6 +371,9 @@ public class CaomRepoConfig {
                 String option = parts[i]; // key=value pair
                 log.debug(collection + " options: " + option);
                 String[] kv = option.split("=");
+                if (kv.length != 2) {
+                    throw new IllegalArgumentException("invalid key=value pair: " + option);
+                }
                 if ("publicRead".equals(kv[0])) {
                     publicRead = safeParseBoolean(kv[1]);
                 } else if ("computeMetadata".equals(kv[0])) {

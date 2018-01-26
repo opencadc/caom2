@@ -305,6 +305,39 @@ public class CaomRepoConfigTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testInvalidOption() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org foo");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.fail("expected IllegalArgumentException but found: " + it);
+        } catch (IllegalArgumentException expected) {
+            log.info("testInvalidBasePublisherID: caught " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
+        try {
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org foo=bar=42");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.fail("expected IllegalArgumentException but found: " + it);
+        } catch (IllegalArgumentException expected) {
+            log.info("testInvalidBasePublisherID: caught " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testProposalGroupNotBoolean() {
