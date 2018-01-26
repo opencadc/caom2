@@ -98,9 +98,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class BaseSQLGeneratorTest
+public class SQLGeneratorTest
 {
-    private static final Logger log = Logger.getLogger(BaseSQLGeneratorTest.class);
+    private static final Logger log = Logger.getLogger(SQLGeneratorTest.class);
 
     static
     {
@@ -148,8 +148,8 @@ public class BaseSQLGeneratorTest
         DeletedPlaneDataReadAccess.class
     };
 
-    BaseSQLGenerator gen = new DummyBaseSQLGenerator();
-    private class DummyBaseSQLGenerator extends BaseSQLGenerator
+    SQLGenerator gen = new DummyBaseSQLGenerator();
+    private class DummyBaseSQLGenerator extends SQLGenerator
     {
 
         public DummyBaseSQLGenerator()
@@ -215,10 +215,10 @@ public class BaseSQLGeneratorTest
         {
             
             URI uri = new URI("cadc:artifactid");
-            String sql = gen.getSelectArtifactSQL(uri);
+            String sql = gen.getSelectArtifactSQL();
             Assert.assertNotNull(sql);
             log.debug("SQL [" + sql.length() + "] " + sql);
-            Assert.assertTrue(sql.contains(uri.toString()));
+            Assert.assertFalse("SQL INJECTION", sql.contains(uri.toString()));
         }
         catch(Exception unexpected)
         {

@@ -93,7 +93,7 @@ public class SybaseSQLGeneratorTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    BaseSQLGenerator gen = new SybaseSQLGenerator("cadctest", "");
+    SQLGenerator gen = new SybaseSQLGenerator("cadctest", "");
 
     //@Test
     public void testTemplate()

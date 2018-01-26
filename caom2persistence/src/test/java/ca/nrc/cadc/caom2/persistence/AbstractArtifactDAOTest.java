@@ -261,7 +261,8 @@ public abstract class AbstractArtifactDAOTest
             }
             
             // test not found
-            URI uri = URI.create("cadc:notfound");
+             // single tick to verify that library correctly handles untrusted input via PreparedStatement
+            URI uri = URI.create("cadc:not'found");
             Assert.assertNull("expected null artifact", dao.get(uri));
             
             // test found

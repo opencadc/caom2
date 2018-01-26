@@ -75,26 +75,19 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 
 /**
  *
  * @author pdowler
- * @deprecated this class will become private again
  */
-@Deprecated
 public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
 
     private static final Logger log = Logger.getLogger(ArtifactDAO.class);
@@ -183,10 +176,10 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
             throw new IllegalArgumentException("arg cannot be null");
         }
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-        String sql = gen.getSelectArtifactSQL(artifactURI);
-        log.debug("sql: " + sql);
+        SQLGenerator.ArtifactGet getter = new SQLGenerator.ArtifactGet(gen);
+        getter.setURI(artifactURI);
         // No DB constraint for artifact URI to be unique
-        List<Artifact> artifacts = jdbc.query(sql, gen.getArtifactMapper());
+        List<Artifact> artifacts = jdbc.query(getter, gen.getArtifactMapper());
         if (artifacts != null && artifacts.size() > 0) {
             return artifacts.get(0);
         }
