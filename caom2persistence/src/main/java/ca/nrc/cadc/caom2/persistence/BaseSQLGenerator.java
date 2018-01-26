@@ -222,11 +222,9 @@ public class BaseSQLGenerator implements SQLGenerator {
 
     /**
      * IVOA authority for computing Plane publisherID when persistOptimisations
-     * is true. TODO: Provide a mechanism to set the publisher authority or
-     * support a plugin that generated a publisherID URI using site-specific
-     * format.
+     * is true.
      */
-    protected String publisherAuthority = "cadc.nrc.ca";
+    protected String basePublisherID;
 
     protected int numComputedObservationColumns;
     protected int numComputedPlaneColumns;
@@ -263,6 +261,14 @@ public class BaseSQLGenerator implements SQLGenerator {
         this.schema = schema;
     }
 
+    public void setBasePublisherID(String basePublisherID) {
+        
+        if (basePublisherID != null && !basePublisherID.endsWith("/")) {
+            basePublisherID = basePublisherID + "/";
+        }
+        this.basePublisherID = basePublisherID;
+    }
+    
     /**
      * Subclasses must call this after configuring various settings.
      * Configurable flags and their default values:
@@ -1541,7 +1547,10 @@ public class BaseSQLGenerator implements SQLGenerator {
             }
 
             if (persistOptimisations) {
-                URI resourceID = URI.create("ivo://" + publisherAuthority + "/" + obs.getCollection());
+                if (basePublisherID == null) {
+                    throw new IllegalStateException("basePublisherID is null");
+                }
+                URI resourceID = URI.create(basePublisherID + obs.getCollection());
                 PublisherID publisherID = new PublisherID(resourceID, obs.getObservationID(), plane.getProductID());
 
                 PlaneURI planeURI = new PlaneURI(obs.getURI(), plane.getProductID());

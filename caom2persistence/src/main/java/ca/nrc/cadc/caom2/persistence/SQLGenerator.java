@@ -90,6 +90,12 @@ public interface SQLGenerator {
     static final int MAX_DEPTH = 5;
     
     /**
+     * Set base URI for generating PublisherID values for Plane(s).
+     * @param basePublisherID 
+     */
+    void setBasePublisherID(String basePublisherID);
+    
+    /**
      * Get SQL to select the current date+time from the server.
      * @return 
      */

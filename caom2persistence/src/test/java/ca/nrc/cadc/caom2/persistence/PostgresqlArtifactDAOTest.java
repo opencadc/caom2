@@ -94,7 +94,7 @@ public class PostgresqlArtifactDAOTest extends AbstractArtifactDAOTest
     public PostgresqlArtifactDAOTest()
     {
         super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
-
+        
         InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
     }
