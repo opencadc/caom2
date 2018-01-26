@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.FileMetadata;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -112,12 +113,10 @@ public interface ArtifactStore {
      *
      * @param artifactURI
      *            The artifact identifier.
-     * @param checksum
-     *            The checksum of the artifact (can be null).
-     * @param contentLength
-     *            The size of the artifact in bytes (can be null).
      * @param data
      *            The artifact data.
+     * @param metadata
+     *            Artifact metadata, including md5sum, contentLength and contentType
      *
      * @throws UnsupportedOperationException
      *             If the artifact uri cannot be resolved.
@@ -134,7 +133,7 @@ public interface ArtifactStore {
      * @throws RuntimeException
      *             If an unrecovarable error occurs.
      */
-    public void store(URI artifactURI, URI checksum, Long contentLength, InputStream data)
+    public void store(URI artifactURI, InputStream data, FileMetadata metadata)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
 }

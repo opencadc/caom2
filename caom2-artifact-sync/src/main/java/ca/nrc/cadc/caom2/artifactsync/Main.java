@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -79,7 +80,9 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
@@ -207,8 +210,8 @@ public class Main {
             if (am.isSet("threads")) {
                 try {
                     nthreads = Integer.parseInt(am.getValue("threads"));
-                    if (nthreads < 1 || nthreads > 25) {
-                        log.error("value for --threads must be between 1 and 25");
+                    if (nthreads < 1 || nthreads > 250) {
+                        log.error("value for --threads must be between 1 and 250");
                         usage();
                         System.exit(-1);
                     }
@@ -225,9 +228,7 @@ public class Main {
                 System.exit(-1);
             }
 
-
-            exitValue = 2; // in case we get killed
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+            exitValue = 2;
 
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<>(2);
@@ -237,7 +238,9 @@ public class Main {
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(daoConfig);
-
+            ArtifactDAO artifactDAO = new ArtifactDAO();
+            artifactDAO.setConfig(daoConfig);
+            
             Integer retryAfterHours = null;
             if (am.isSet("retryAfter")) {
                 try {
@@ -248,15 +251,21 @@ public class Main {
                     System.exit(-1);
                 }
             }
+            
+            boolean verify = !am.isSet("noverify");
 
             String collection = am.getValue("collection");
-            boolean dryrun = am.isSet("dryrun");
             boolean full = am.isSet("full");
-            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(
-                    observationDAO, dbInfo, artifactStore, collection, dryrun, full, batchSize);
+            
+            ArtifactHarvester harvester = new ArtifactHarvester(
+                    observationDAO, dbInfo, artifactStore, collection, full, batchSize);
 
-            PrivilegedExceptionAction<Integer> downloader = new DownloadArtifactFiles(
-                    observationDAO.getDataSource(), dbInfo, artifactStore, nthreads, batchSize, retryAfterHours);
+            DownloadArtifactFiles downloader = new DownloadArtifactFiles(
+                    artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
+                    retryAfterHours, verify);
+            
+            List<ShutdownListener> listeners = Arrays.asList((ShutdownListener) harvester, (ShutdownListener) downloader);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
 
             int loopNum = 1;
             boolean loop = am.isSet("continue");
@@ -275,7 +284,7 @@ public class Main {
                     }
                 }
 
-                if (!stopDownload && mode.isDownloadMode() && !dryrun) {
+                if (!stopDownload && mode.isDownloadMode()) {
                     if (subject != null) {
                         stopDownload = Subject.doAs(subject, downloader) == 0;
                     } else {
@@ -301,12 +310,19 @@ public class Main {
     }
 
     private static class ShutdownHook implements Runnable {
+        
+        List<ShutdownListener> listeners;
 
-        ShutdownHook() {
+        ShutdownHook(List<ShutdownListener> listeners) {
+            this.listeners = listeners;
         }
 
         @Override
         public void run() {
+            for (ShutdownListener listener : listeners) {
+                listener.shutdown();
+            }
+
             if (exitValue != 0) {
                 log.error("terminating with exit status " + exitValue);
             }
@@ -320,15 +336,15 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
+        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default) | ");
+        sb.append("\n            just harvest to the database | or just initiate downloads.");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
-        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default), ");
-        sb.append("          just harvest to the database, or just initiate downloads.");
-        sb.append("\n     --dryrun : check for work but don't do anything");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
+        sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
