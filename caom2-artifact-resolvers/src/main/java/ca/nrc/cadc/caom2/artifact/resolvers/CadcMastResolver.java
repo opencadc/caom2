@@ -110,10 +110,9 @@ public class CadcMastResolver implements StorageResolver {
             RegistryClient rc = new RegistryClient();
             Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
             Capability dataCap = caps.findCapability(Standards.DATA_10);
-            URI securityMethod = Standards.getSecurityMethod(authMethod);
-            Interface ifc = dataCap.findInterface(securityMethod);
+            Interface ifc = dataCap.findInterface(authMethod);
             if (ifc == null) {
-                throw new IllegalArgumentException("No interface for security method " + securityMethod);
+                throw new IllegalArgumentException("No interface for auth method " + authMethod);
             }
             String baseDataURL = ifc.getAccessURL().getURL().toString();
             URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
