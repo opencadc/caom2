@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2;
-
 
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -81,75 +80,65 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class PublisherIDTest 
-{
+public class PublisherIDTest {
+
     private static final Logger log = Logger.getLogger(PublisherIDTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
-    
-    public static final URI IVO_RESOURCE_ID = URI.create("ivo://opencadc.org/FOO");
-    
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
 
-        }
-        catch(Exception unexpected)
-        {
+    public static final URI IVO_RESOURCE_ID = URI.create("ivo://opencadc.org/FOO");
+    public static final URI IVO_RESOURCE_ID_EXT = URI.create("ivo://opencadc.org/FOO/BAR");
+
+    //@Test
+    public void testTemplate() {
+        try {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testConstructorInvalidURI()
-    {
-        try
-        {
-            try
-            {
+    public void testConstructorInvalidURI() {
+        try {
+            try {
                 URI u = URI.create("caom:stuff/nonsense");
                 PublisherID uri = new PublisherID(u);
                 Assert.fail("expected IllegalArgumentException for caom observation URI");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-            
-            try
-            {
+
+            try {
                 URI u = URI.create("caom:stuff/nonsense/prod");
                 PublisherID uri = new PublisherID(u);
                 Assert.fail("expected IllegalArgumentException for caom plane URI");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-            
-            try
-            {
+
+            try {
                 URI u = URI.create("foo:stuff/nonsense?foo/bar");
                 PublisherID uri = new PublisherID(u);
                 Assert.fail("expected IllegalArgumentException for invalid resourceID");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testConstructorValid()
-    {
-        try
-        {
+    public void testConstructorValid() {
+        try {
             PublisherID uri = new PublisherID(IVO_RESOURCE_ID, "obs1", "prod1");
             log.debug("created: " + uri);
-            
+
             Assert.assertEquals(IVO_RESOURCE_ID, uri.getResourceID());
             Assert.assertEquals(IVO_RESOURCE_ID + "?obs1/prod1", uri.getURI().toASCIIString());
 
@@ -159,86 +148,112 @@ public class PublisherIDTest
 
             Assert.assertEquals(IVO_RESOURCE_ID, uri.getResourceID());
             Assert.assertEquals(IVO_RESOURCE_ID + "?obs1/prod1", uri.getURI().toASCIIString());
-            
-            // test various null values
-            try
-            {
-                uri = new PublisherID(null);
-                Assert.fail("expected IllegalArgumentException for uri=null");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
 
-            try
-            {
-                uri = new PublisherID(null, "obs1", "prod1");
-                Assert.fail("expected IllegalArgumentException for resourceID=null");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-
-            try
-            {
-                uri = new PublisherID(null, null, "prod1");
-                Assert.fail("expected IllegalArgumentException for observationID=null");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-            
-            try
-            {
-                uri = new PublisherID(IVO_RESOURCE_ID, "obs1", null);
-                Assert.fail("expected IllegalArgumentException for productID=null");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-
-            try
-            {
-                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?obs1");
-                uri = new PublisherID(u);
-                Assert.fail("expected IllegalArgumentException for missing id component");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-
-            try
-            {
-                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo/bar/baz");
-                uri = new PublisherID(u);
-                Assert.fail("expected IllegalArgumentException for extra id component");
-            }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testEquals()
-    {
-        try
-        {
+    public void testConstructorValidExt() {
+        try {
+            PublisherID uri = new PublisherID(IVO_RESOURCE_ID_EXT, "obs1", "prod1");
+            log.debug("created: " + uri);
+
+            Assert.assertEquals(IVO_RESOURCE_ID_EXT, uri.getResourceID());
+            Assert.assertEquals(IVO_RESOURCE_ID_EXT + "?obs1/prod1", uri.getURI().toASCIIString());
+
+            // Second constructor.
+            uri = new PublisherID(URI.create(IVO_RESOURCE_ID_EXT + "?obs1/prod1"));
+            log.debug("created: " + uri);
+
+            Assert.assertEquals(IVO_RESOURCE_ID_EXT, uri.getResourceID());
+            Assert.assertEquals(IVO_RESOURCE_ID_EXT + "?obs1/prod1", uri.getURI().toASCIIString());
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testConstructorNulls() {
+        try {
+            PublisherID uri;
+            // test various null values
+            try {
+                uri = new PublisherID(null);
+                Assert.fail("expected IllegalArgumentException for uri=null");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+
+            try {
+                uri = new PublisherID(null, "obs1", "prod1");
+                Assert.fail("expected IllegalArgumentException for resourceID=null");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+
+            try {
+                uri = new PublisherID(IVO_RESOURCE_ID, null, "prod1");
+                Assert.fail("expected IllegalArgumentException for observationID=null");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+
+            try {
+                uri = new PublisherID(IVO_RESOURCE_ID, "obs1", null);
+                Assert.fail("expected IllegalArgumentException for productID=null");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+
+            try {
+                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?obs1");
+                uri = new PublisherID(u);
+                Assert.fail("expected IllegalArgumentException for missing id component");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+
+            try {
+                URI u = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo/bar/baz");
+                uri = new PublisherID(u);
+                Assert.fail("expected IllegalArgumentException for extra id component");
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testEquals() {
+        try {
             URI u1 = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo/bar");
             URI u2 = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo/bar");
             URI u3 = new URI(IVO_RESOURCE_ID.toASCIIString() + "?foo/baz");
-            
+
             PublisherID pu1 = new PublisherID(u1);
             PublisherID pu2 = new PublisherID(u2);
             PublisherID pu3 = new PublisherID(u3);
-            
-            Assert.assertTrue( pu1.equals(pu1) );
+
+            Assert.assertTrue(pu1.equals(pu1));
 
             log.debug("equals: " + pu1 + " == " + pu2);
-            Assert.assertTrue( pu1.equals(pu2) );
-            
+            Assert.assertTrue(pu1.equals(pu2));
+
             log.debug("equals: " + pu1 + " != " + pu3);
-            Assert.assertFalse( pu1.equals(pu3) );
-            
-            Assert.assertFalse( pu1.equals(null) );
-            
-            Assert.assertFalse( pu1.equals(new Integer(1)) ); // a different class
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertFalse(pu1.equals(pu3));
+
+            Assert.assertFalse(pu1.equals(null));
+
+            Assert.assertFalse(pu1.equals(new Integer(1))); // a different class
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
