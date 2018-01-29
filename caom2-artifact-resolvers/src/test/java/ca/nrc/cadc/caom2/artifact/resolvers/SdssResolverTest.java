@@ -69,15 +69,24 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 
 public class SdssResolverTest {
+
+    public SdssResolverTest() {
+    }
 
     @Test
     public void getScheme() {

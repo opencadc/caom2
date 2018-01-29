@@ -121,8 +121,11 @@ public class XmmResolverTest {
             for (String uriStr : validURIs) {
                 URI uri = new URI(uriStr);
                 URL url = xmmResolver.toURL(uri);
+                log.debug("toURL returned: " + url.toString());
 
                 // XMM uses '?' to POST scheme specific part of the URI to the server
+                //  example url: http://nxsa.esac.esa.int/nxsa-sl/servlet/data-action-aio?FOO
+                Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_ARTIFACT_URL + BASE_PATH + "?" + uri.getSchemeSpecificPart() );
                 Assert.assertEquals(uri.getSchemeSpecificPart(), url.getQuery());
                 Assert.assertEquals(BASE_ARTIFACT_URL, url.getHost());
                 Assert.assertEquals(BASE_PATH, url.getPath());
