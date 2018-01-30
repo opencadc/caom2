@@ -83,6 +83,9 @@ import ca.nrc.cadc.caom2ops.mapper.ChunkMapper;
 import ca.nrc.cadc.caom2ops.mapper.ObservationMapper;
 import ca.nrc.cadc.caom2ops.mapper.PartMapper;
 import ca.nrc.cadc.caom2ops.mapper.PlaneMapper;
+import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
+import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableField;
@@ -90,9 +93,6 @@ import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
-import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
-import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
-import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
@@ -260,7 +260,7 @@ public class CaomTapQuery
         
 
         RegistryClient reg = new RegistryClient();
-        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_SYNC_11, queryAuthMethod);
+        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod, Standards.INTERFACE_UWS_SYNC);
             
         log.debug("post: " + uri + " " + tapURL);
         HttpPost httpPost = new HttpPost(tapURL, getQueryParameters(VOTABLE_FORMAT, adql), false);

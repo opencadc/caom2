@@ -65,12 +65,13 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
+import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
 import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import java.sql.ResultSet;
@@ -81,35 +82,43 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class IntervalFormat  extends AbstractResultSetFormat
-{
+public class IntervalFormat extends AbstractResultSetFormat {
+
     private static final Logger log = Logger.getLogger(IntervalFormat.class);
 
     private DoubleIntervalFormat fmt = new DoubleIntervalFormat();
-    
+    private DoubleIntervalArrayFormat afmt = new DoubleIntervalArrayFormat();
+    private boolean intervalArray;
+
+    public IntervalFormat(boolean intervalArray) {
+        this.intervalArray = intervalArray;
+    }
+
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
-        throws SQLException
-    {
+            throws SQLException {
         return resultSet.getString(columnIndex);
     }
 
     @Override
-    public String format(Object object)
-    {
-        if (object == null)
+    public String format(Object object) {
+        if (object == null) {
             return "";
-        if (object instanceof String)
-        {
+        }
+        if (object instanceof String) {
             String s = (String) object;
             log.debug("in: " + s);
             PgInterval pgi = new PgInterval();
-            DoubleInterval i = pgi.getInterval(s);
-            return fmt.format(i);
+            if (intervalArray) {
+                DoubleInterval[] i = pgi.getIntervalArray(s);
+                return afmt.format(i);
+            } else {
+                DoubleInterval i = pgi.getInterval(s);
+                return fmt.format(i);
+            }
         }
         // this might help debugging more than a throw
         return object.toString();
     }
-    
-    
+
 }

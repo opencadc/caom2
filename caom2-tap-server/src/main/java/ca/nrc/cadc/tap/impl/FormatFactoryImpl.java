@@ -145,7 +145,7 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     public Format<Object> getIntervalFormat(TapSelectItem columnDesc)
     {
         log.debug("getIntervalFormat: " + job.getID() + " " + columnDesc);
-        return new IntervalFormat();
+        return new IntervalFormat(columnDesc.getDatatype().isVarSize());
     }
     
     @Override
