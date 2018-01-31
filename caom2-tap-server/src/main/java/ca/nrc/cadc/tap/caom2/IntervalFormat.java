@@ -113,8 +113,22 @@ public class IntervalFormat extends AbstractResultSetFormat {
                 DoubleInterval[] i = pgi.getIntervalArray(s);
                 return afmt.format(i);
             } else {
-                DoubleInterval i = pgi.getInterval(s);
-                return fmt.format(i);
+                try {
+                    DoubleInterval i = pgi.getInterval(s);
+                    return fmt.format(i);
+                } catch (RuntimeException ex) {
+                    String msg = ex.getMessage();
+                    if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
+                        // work-around for some values that are interval[] in the 
+                        // caom2 energy_bounds and time_bounds columns
+                        DoubleInterval[] i = pgi.getIntervalArray(s);
+                        Double lb = i[0].getLower();
+                        Double ub = i[i.length - 1].getUpper();
+                        DoubleInterval val = new DoubleInterval(lb, ub);
+                        return fmt.format(val);
+                    }
+                    throw ex;
+                }
             }
         }
         // this might help debugging more than a throw
