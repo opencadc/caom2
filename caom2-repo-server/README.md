@@ -1,4 +1,14 @@
-The CaomRepoConfig.properties file is an example that works for development; it goes in $HOME/config (TBD).
+
+The CaomRepoConfig.properties file provides a simple example that could be used for testing. For real deployment, this library will look for a file named <service name>.properties in ${user.home}/config of the user running the application server (e.g. tomcat). The <service name> is the first path element in URLs and typically matches the name of the deployed war file. For example, The CADC deploys this service as caom2repo.war so the config file is called ${user.home}/config/caom2repo.properties. Note that this config file is read from the filesystem for each request so changes are "immediately live".
+
+The CaomRepoConfig.properties file uses the following format:
+
+```
+collection = <datasource name> <database> <schema> <obs table> <read-only group> <read-write group> <SQL generator class> basePublisherID=<ivo uri> [<key1=value1 key2=value2 ...>]
+```
+
+Each entry in the properties file configures a collection. Except for basePublisherID (mandatory), key=value pairs are optional. The computeMetadata option enables computation and persistence of <<computed>> metadata (generally, Plane metadata aggregated from the artifacts). The computeMetadataValidation options enables extra validation by performing the metadata computations, but the values are not persisted.
+
 
 **How to create groups/tuples**
 
@@ -12,19 +22,19 @@ A staff group is associated with a collection, and is added as an admin to the p
 
 **Configuring groups/tuples**
 
-The CaomRepoConfig.properties file uses the following format:
+The optional key=value pairs can be used to specify an abitratry operator group, an arbitrary staff group and a flag to enable proposal groups to be checked/created and granted access to observations. If created, proposal groups have URIs of the form 
 
 ```
-collection = <datasource name> <database> <schema> <obs table> <read-only group> <read-write group> <SQL generator class> [<key1=value1 key2=value2 ...>]
+<GMS service URI>?<collection>-<Observation.proposal.id>
 ```
 
-Each entry in the properties file configures a collection. The key=value pairs are optional. The key=value pairs can be used to specify an abitratry operator group, an arbitrary staff group and a proposal group, in addition to computeMetadata and computeMetadataValidation. For example:
+Where <GMS service URI> is extracted from the staff group (the satff group isn assigned admin permission on the proposal group so both groups must exist in the same GMS service). For example:
 
 ```
-TEST = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=true staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
+TEST = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl basePublisherID=ivo://cadc.nrc.ca proposalGroup=true staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
 ```
 
-configures the 'TEST' collection with a proposal group and a staff group.
+configures the 'TEST' collection with a staff group and enables proposal group creation.
 
 ```
 TEST1 = jdbc/caom2repo caom2test dbo caom2_Observation ivo://cadc.nrc.ca/gms?caom2TestGroupRead ivo://cadc.nrc.ca/gms?caom2TestGroupWrite ca.nrc.cadc.caom2.repo.PostgreSQLGeneratorImpl proposalGroup=false operatorGroup=ivo://cadc.nrc.ca/gms?CADC staffGroup=ivo://cadc.nrc.ca/gms?JCMT-Staff
