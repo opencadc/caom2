@@ -355,6 +355,10 @@ public abstract class RepoAction extends RestAction {
         if (i == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
+        
+        if (i.getPublicRead()) {
+            return;
+        }
 
         try {
             if (CredUtil.checkCredentials()) {
