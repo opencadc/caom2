@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2;
 
-
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import org.apache.log4j.Logger;
 
