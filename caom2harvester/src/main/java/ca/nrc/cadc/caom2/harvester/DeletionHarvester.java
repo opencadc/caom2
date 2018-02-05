@@ -240,7 +240,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
         }
     }
 
-    Object prevBatchLeader = null;
+    private Date startDate;
+    private boolean firstIteration = true;
 
     /**
      * Does the work
@@ -273,6 +274,28 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 start = null;
             }
             Date end = null;
+            
+            if (full && firstIteration) {
+                startDate = null;
+            } else {
+                log.debug("recalculate startDate");
+                // normally start batch from last successful put state
+                startDate = state.curLastModified;
+                if (state.curLastModified != null) {
+                    Date prevDiscoveryQuery = state.getLastModified();
+                    Date lastObservationSeen = state.curLastModified;
+                    long fiveMinMS = 5 * 60000L;
+                    if (prevDiscoveryQuery != null && lastObservationSeen != null) {
+                        if ((prevDiscoveryQuery.getTime() - lastObservationSeen.getTime()) < fiveMinMS) {
+                            // do overlapping harvest in case there are some new observations inserted
+                            // with timestamp slightly older than lastObservationSeen
+                            startDate = new Date(lastObservationSeen.getTime() - fiveMinMS);
+                            log.info("start harvest overlap: " + format(state.curLastModified) + " -> " + format(startDate));
+                        }
+                    }
+                }
+            } // else: skipped: keep startDate across multiple batches since we don't persist harvest state
+            firstIteration = false;
 
             // lastModified is maintained in the DB so we do not need this
             // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
@@ -294,11 +317,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
             while (iter.hasNext()) {
                 DeletedObservation de = iter.next();
                 iter.remove(); // allow garbage collection asap
-
-                if (de.getID().equals(state.curID)) {
-                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.getID() + " -- was end of last batch");
-                    break;
-                }
 
                 if (!dryrun) {
                     txnManager.startTransaction();
