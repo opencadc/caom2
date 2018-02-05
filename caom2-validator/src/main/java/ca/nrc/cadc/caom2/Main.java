@@ -123,6 +123,11 @@ public final class Main {
             }
             
             List<Runnable> validators = new ArrayList<>();
+            
+            if (am.isSet("core")) {
+                validators.add(new CoreValidator(obs));
+            }
+            
             if (am.isSet("checksum")) {
                 int depth = 5;
                 if (am.isSet("depth")) {
@@ -162,6 +167,7 @@ public final class Main {
         sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] <validation options> <observation xml file> [<output file>}");
         sb.append(lineSep).append("       <validation options> is one or more of:");
         sb.append(lineSep).append("");
+        sb.append(lineSep).append("       --core : data model validation not enforced by XML schema");
         sb.append(lineSep).append("       --checksum [--acc] [--depth=1..5] : recompute and compare metaChecksum values");
         sb.append(lineSep).append("       --wcs : enable WCS validation");
         sb.append(lineSep).append("");

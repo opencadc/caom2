@@ -146,8 +146,75 @@ public class PolygonTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
     @Test
-    public void testInvalidPolygon()
+    public void testInvalidLongitude()
+    {
+        try
+        {
+            List<Point> pts = new ArrayList<Point>();
+            pts.add(new Point(360.0, 2.0));
+            pts.add(new Point(359.0, 4.0));
+            pts.add(new Point(361.0, 3.0));
+            
+            // CW is ok for MultiPolygon
+            MultiPolygon mp = new MultiPolygon();
+            mp.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            mp.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            mp.getVertices().add(Vertex.CLOSE);
+            
+            Polygon p = new Polygon(pts, mp);
+            p.validate();
+            Assert.fail("expected IllegalPolygonException, created: " + p);
+        }
+        catch(IllegalPolygonException expected)
+        {
+            log.info("caught expected: " + expected);
+            Assert.assertTrue(expected.getMessage().startsWith("invalid Polygon: longitude "));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidLatitude()
+    {
+        try
+        {
+            List<Point> pts = new ArrayList<Point>();
+            pts.add(new Point(2.0, 89.0));
+            pts.add(new Point(1.0, 91.0));
+            pts.add(new Point(3.0, 90.0));
+            
+            // CW is ok for MultiPolygon
+            MultiPolygon mp = new MultiPolygon();
+            mp.getVertices().add(new Vertex(2.0, 2.0, SegmentType.MOVE));
+            mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
+            mp.getVertices().add(new Vertex(1.0, 4.0, SegmentType.LINE));
+            mp.getVertices().add(Vertex.CLOSE);
+            
+            Polygon p = new Polygon(pts, mp);
+            p.validate();
+            Assert.fail("expected IllegalPolygonException, created: " + p);
+        }
+        catch(IllegalPolygonException expected)
+        {
+            log.info("caught expected: " + expected);
+            Assert.assertTrue(expected.getMessage().startsWith("invalid Polygon: latitude "));
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidPolygonCW()
     {
         try
         {
@@ -164,6 +231,7 @@ public class PolygonTest
             mp.getVertices().add(Vertex.CLOSE);
             
             Polygon p = new Polygon(pts, mp);
+            p.validate();
             Assert.fail("expected IllegalPolygonException, created: " + p);
         }
         catch(IllegalPolygonException expected)
@@ -178,7 +246,7 @@ public class PolygonTest
     }
     
     @Test
-    public void testValidateSegments()
+    public void testInvalidPolygonSegmentIntersect()
     {
         try
         {
@@ -211,7 +279,7 @@ public class PolygonTest
             catch(IllegalPolygonException expected)
             {
                 log.info("testValidateSegments: butterfly " + expected);
-                Assert.assertTrue(expected.getMessage().contains("intersects"));
+                Assert.assertTrue(expected.getMessage().startsWith("invalid Polygon: segment intersect "));
             }
             
             poly.getPoints().clear();
@@ -228,7 +296,7 @@ public class PolygonTest
             catch(IllegalPolygonException expected)
             {
                 log.info("testValidateSegments: small loop " + expected);
-                Assert.assertTrue(expected.getMessage().contains("intersects"));
+                Assert.assertTrue(expected.getMessage().contains("invalid Polygon: segment intersect "));
             }
         }
         catch(Exception unexpected)

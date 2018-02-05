@@ -100,7 +100,6 @@ public class Polygon implements Shape {
         CaomValidator.assertNotNull(Polygon.class, "samples", samples);
         this.points.addAll(points);
         this.samples = samples;
-        validate();
     }
 
     /**
@@ -109,13 +108,14 @@ public class Polygon implements Shape {
      * also validates the samples.
      */
     public final void validate() {
+        validatePoints();
         validateSegments();
         initProps();
         // DALI polygons are always CCW 
         // unsupported: if we detect CW here it is equivalent to the region 
         // outside with area = 4*pi - area and larger than half the sphere
         if (!ccw) {
-            throw new IllegalPolygonException("polygon too large or has clockwise winding direction");
+            throw new IllegalPolygonException("invalid Polygon: clockwise winding direction");
         }
 
         samples.validate();
@@ -168,11 +168,6 @@ public class Polygon implements Shape {
     }
 
     private void initProps() {
-        if (points.size() < 3) {
-            throw new IllegalPolygonException(
-                    "polygon has " + points.size() + " points: minimum 3");
-        }
-
         MultiPolygon mp = new MultiPolygon();
         SegmentType t = SegmentType.MOVE;
         for (Point p : points) {
@@ -188,6 +183,28 @@ public class Polygon implements Shape {
         this.ccw = mp.getCCW();
     }
 
+    private void validatePoints() {
+        if (points.size() < 3) {
+            throw new IllegalPolygonException(
+                    "polygon has " + points.size() + " points: minimum 3");
+        }
+        StringBuilder msg = new StringBuilder("invalid Polygon: ");
+        for (Point p : points) {
+            boolean flong = p.cval1 < 0.0 || p.cval1 > 360.0;
+            boolean flat = p.cval2 < -90.0 || p.cval2 > 90.0;
+            if (flong && flat) {
+                msg.append("longitude,latitude not in [0,360],[-90,90]: ").append(p.cval1).append(",").append(p.cval2);
+            } else if (flong) {
+                msg.append("longitude not in [0,360]: ").append(p.cval1);
+            } else if (flat) {
+                msg.append("latitude not in [-90,90]: ").append(p.cval2);
+            }
+            if (flong || flat) {
+                throw new IllegalPolygonException(msg.toString());
+            }
+        }
+    }
+    
     private void validateSegments() {
         MultiPolygon mp = new MultiPolygon();
         SegmentType t = SegmentType.MOVE;
