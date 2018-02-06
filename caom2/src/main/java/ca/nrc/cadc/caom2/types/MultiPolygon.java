@@ -101,7 +101,6 @@ public class MultiPolygon implements Serializable {
     public MultiPolygon(List<Vertex> vertices) {
         CaomValidator.assertNotNull(MultiPolygon.class, "vertices", vertices);
         this.vertices.addAll(vertices);
-        validate();
     }
 
     public final void validate() {
@@ -544,7 +543,7 @@ public class MultiPolygon implements Serializable {
                     if (intersects(s1, s2)) {
                         Segment r1 = origSegments.get(i);
                         Segment r2 = origSegments.get(j);
-                        throw new IllegalPolygonException("invalid MultiPolygon: " + r1 + " intersects " + r2);
+                        throw new IllegalPolygonException("invalid Polygon: segment intersect " + r1 + " vs " + r2);
                     }
                 }
             }

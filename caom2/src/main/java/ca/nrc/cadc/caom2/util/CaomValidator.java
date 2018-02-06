@@ -69,11 +69,8 @@
 
 package ca.nrc.cadc.caom2.util;
 
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.Polygon;
 import java.util.Set;
 
@@ -173,7 +170,7 @@ public final class CaomValidator {
                     caller.getSimpleName() + ": " + name + " must be > 0.0");
         }
     }
-
+    
     private static void validateKeywords(String name, Set<String> vals) {
         for (String s : vals) {
             assertValidKeyword(CaomValidator.class, name, s);
@@ -204,8 +201,9 @@ public final class CaomValidator {
         }
     }
 
-    // restrict Observation.intent and Artiafct.productType combinations
+    // restrict Observation.intent and Artifact.productType combinations
     // NOTE: no longer used in validate(Observation)
+    /*
     private static void validateIntent(Observation obs) {
         if (obs.intent == null) {
             return;
@@ -226,6 +224,7 @@ public final class CaomValidator {
             }
         }
     }
+    */
 
     private static void validatePlanes(Observation obs) {
         for (Plane p : obs.getPlanes()) {
