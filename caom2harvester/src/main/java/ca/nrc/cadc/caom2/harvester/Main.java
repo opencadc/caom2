@@ -222,8 +222,8 @@ public class Main {
                     if ("ivo".equals(basePublisherID.getScheme())
                             && basePublisherID.getAuthority() != null
                             && basePublisherID.getAuthority().length() > 0) {
-                        log.info("basePublisherID: " + basePublisherID
-                            + "publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
+                        log.info("basePublisherID: " + basePublisherID);
+                        log.debug("publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
                     } else {
                         log.error("invalid basePublisherID: " + bpidStr + " expected: ivo://<authority> or ivo://<authority>/<path>");
                         usage();
