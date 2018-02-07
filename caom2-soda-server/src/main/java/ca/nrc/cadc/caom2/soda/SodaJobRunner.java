@@ -590,6 +590,7 @@ public class SodaJobRunner implements JobRunner
                 }
                 mp.getVertices().add(Vertex.CLOSE);
                 Polygon poly = new Polygon(points, mp);
+                poly.validate();
                 posCut.add(new Cutout<Shape>(PARAM_POLY, s, poly));
             }
             catch(IndexOutOfBoundsException ex)
