@@ -193,6 +193,7 @@ public final class PolygonUtil {
                 }
             }
             Polygon ret = new Polygon(pts, poly);
+            ret.validate();
             return ret;
         }
 
@@ -239,6 +240,7 @@ public final class PolygonUtil {
             }
         }
         Polygon ret = new Polygon(pts, poly);
+        ret.validate();
         return ret;
     }
 
