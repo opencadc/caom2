@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Primary descriptive state of an observation.
@@ -82,6 +83,7 @@ import java.util.Date;
 public class ObservationState {
     private final ObservationURI uri;
 
+    public UUID id;
     public Date maxLastModified;
     public URI accMetaChecksum;
 
@@ -92,6 +94,18 @@ public class ObservationState {
 
     public ObservationURI getURI() {
         return uri;
+    }
+
+    public UUID getID() {
+        return id;
+    }
+
+    public Date getMaxLastModified() {
+        return maxLastModified;
+    }
+
+    public URI getAccMetaChecksum() {
+        return accMetaChecksum;
     }
 
     @Override

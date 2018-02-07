@@ -100,28 +100,20 @@ public class CaomValidator implements Runnable {
      * @param dryrun
      * true if no changed in the data base are applied during the process
      * @param nochecksum
-     * @param compute
+     * disable metaChecksum validation
      * @param src
      * source server,database,schema
      * @param dest
      * destination server,database,schema
      * @param batchSize
      * number of observations per batch (~memory consumption)
-     * @param batchFactor
-     * multiplier for batchSize when harvesting single-table entities
-     * @param full
-     * full harvest of all source entities
-     * @param skip
-     * flag that indicates if shipped observations should be dealt
-     * @param maxDate
-     * latest date to be using during harvester
+     * 
      * @throws java.io.IOException
      * IOException
      * @throws URISyntaxException
      * URISyntaxException
      */
-    public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, HarvestResource src, HarvestResource dest,
-            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+    public CaomValidator(boolean dryrun, boolean nochecksum, HarvestResource src, HarvestResource dest, int batchSize)
             throws IOException, URISyntaxException {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -130,10 +122,17 @@ public class CaomValidator implements Runnable {
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
 
-        this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun, nochecksum);
-        obsValidator.setMaxDate(maxDate);
+        this.obsValidator = new ObservationValidator(src, dest, batchSize, dryrun, nochecksum);
     }
 
+    public void setMinDate(Date d) {
+        obsValidator.setMinDate(d);
+    }
+    
+    public void setMaxDate(Date d) {
+        obsValidator.setMaxDate(d);
+    }
+    
     @Override
     public void run() {
         boolean init = false;

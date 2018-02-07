@@ -282,7 +282,7 @@ public abstract class AbstractObservationDAOTest
             
             Observation obs = new SimpleObservation(collection, "bar1");
             dao.put(obs);
-            Observation o = dao.getShallow(obs.getID());
+            ObservationState o = dao.getState(obs.getID());
             Assert.assertNotNull(o);
             log.info("created: " + o);
             Date start = new Date(o.getMaxLastModified().getTime() - 2*TIME_TOLERANCE); // before 1
@@ -290,7 +290,7 @@ public abstract class AbstractObservationDAOTest
             
             obs = new SimpleObservation(collection, "bar2");
             dao.put(obs);
-            o = dao.getShallow(obs.getID());
+            o = dao.getState(obs.getID());
             Assert.assertNotNull(o);
             log.info("created: " + o);
             Date mid = new Date(o.getMaxLastModified().getTime() + 2*TIME_TOLERANCE); // after 2
@@ -304,7 +304,7 @@ public abstract class AbstractObservationDAOTest
             
             obs = new SimpleObservation(collection, "bar4");
             dao.put(obs);
-            o = dao.getShallow(obs.getID());
+            o = dao.getState(obs.getID());
             Assert.assertNotNull(o);
             log.info("created: " + o);
             Date end = new Date(o.getMaxLastModified().getTime() + 2*TIME_TOLERANCE); // after 4

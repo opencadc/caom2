@@ -222,8 +222,8 @@ public class Main {
                     if ("ivo".equals(basePublisherID.getScheme())
                             && basePublisherID.getAuthority() != null
                             && basePublisherID.getAuthority().length() > 0) {
-                        log.info("basePublisherID: " + basePublisherID
-                            + "publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
+                        log.info("basePublisherID: " + basePublisherID);
+                        log.debug("publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
                     } else {
                         log.error("invalid basePublisherID: " + bpidStr + " expected: ivo://<authority> or ivo://<authority>/<path>");
                         usage();
@@ -276,6 +276,18 @@ public class Main {
                 log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
             }
 
+            Date minDate = null;
+            String minDateStr = am.getValue("minDate");
+            if (minDateStr != null && minDateStr.trim().length() > 0) {
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                try {
+                    minDate = df.parse(minDateStr);
+                } catch (ParseException ex) {
+                    log.error("invalid minDate: " + minDateStr + " reason: " + ex);
+                    usage();
+                    System.exit(1);
+                }
+            }
             Date maxDate = null;
             String maxDateStr = am.getValue("maxDate");
             if (maxDateStr != null && maxDateStr.trim().length() > 0) {
@@ -293,7 +305,10 @@ public class Main {
             if (!validate) {
 
                 try {
-                    action = new CaomHarvester(dryrun, noChecksum, compute, src, dest, basePublisherID, batchSize, batchFactor, full, skip, maxDate, nthreads);
+                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, compute, src, dest, basePublisherID, batchSize, batchFactor, full, skip, nthreads);
+                    ch.setMinDate(minDate);
+                    ch.setMaxDate(maxDate);
+                    action = ch;
                 } catch (IOException ioex) {
 
                     log.error("failed to init: " + ioex.getMessage());
@@ -304,7 +319,11 @@ public class Main {
             } else {
 
                 try {
-                    action = new CaomValidator(dryrun, noChecksum, compute, src, dest, batchSize, batchFactor, full, skip, maxDate);
+                    CaomValidator cv = new CaomValidator(dryrun, noChecksum, src, dest, batchSize);
+                    // [min,max] timestamps not supported by validator (only full)
+                    //cv.setMinDate(minDate);
+                    //cv.setMaxDate(maxDate);
+                    action = cv;
                 } catch (IOException ioex) {
 
                     log.error("failed to init: " + ioex.getMessage());
@@ -366,6 +385,7 @@ public class Main {
         sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
 
         sb.append("\n\nOptional modifiers:");
+        sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ");
         sb.append(DEFAULT_BATCH_SIZE).append(")");

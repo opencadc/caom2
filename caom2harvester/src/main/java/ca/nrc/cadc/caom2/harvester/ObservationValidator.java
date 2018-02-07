@@ -106,20 +106,15 @@ public class ObservationValidator extends Harvester {
     private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
 
-    private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
     private boolean nochecksum = false;
 
     public ObservationValidator(HarvestResource src, HarvestResource dest, Integer batchSize,
-            boolean full, boolean dryrun, boolean nochecksum)
+            boolean dryrun, boolean nochecksum)
             throws IOException, URISyntaxException {
-        super(Observation.class, src, dest, batchSize, full, dryrun);
+        super(Observation.class, src, dest, batchSize, false, dryrun);
         this.nochecksum = nochecksum;
         init();
-    }
-
-    public void setMaxDate(Date maxDate) {
-        this.maxDate = maxDate;
     }
 
     private void init() throws IOException, URISyntaxException {
@@ -164,10 +159,6 @@ public class ObservationValidator extends Harvester {
         }
     }
 
-    private Date startDate;
-
-    private Date curLastModified = null;
-
     private Progress doit() {
         Progress ret = new Progress();
 
@@ -180,26 +171,8 @@ public class ObservationValidator extends Harvester {
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-            log.debug("**************** state = " + curLastModified + " source = " + source + " )");
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
-
-            startDate = curLastModified;
-
-            Date end = maxDate;
-            Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
-            // minutes
-            // ago;
-            if (end == null) {
-                end = fiveMinAgo;
-            } else {
-                log.debug("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
-                if (end.getTime() > fiveMinAgo.getTime()) {
-                    end = fiveMinAgo;
-                }
-            }
-
-            log.info("harvest window: " + format(startDate) + " :: " + format(end));
 
             List<ObservationState> tmpSrcState = null;
             List<ObservationState> tmpDstState = null;

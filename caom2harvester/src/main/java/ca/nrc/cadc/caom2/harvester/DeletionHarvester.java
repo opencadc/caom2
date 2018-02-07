@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.harvester;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -240,7 +241,9 @@ public class DeletionHarvester extends Harvester implements Runnable {
         }
     }
 
-    Object prevBatchLeader = null;
+    private Date startDate;
+    private Date endDate;
+    private boolean firstIteration = true;
 
     /**
      * Does the work
@@ -267,21 +270,28 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 state = harvestStateDAO.get(source, cname);
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
-
-            Date start = state.curLastModified;
-            if (full) {
-                start = null;
+            
+            startDate = state.curLastModified;
+            if (firstIteration) {
+                if (super.minDate != null) { // override state
+                    startDate = super.minDate;
+                }
+                endDate = super.maxDate;
+                // harvest up to a little in the past because the head of the sequence may be volatile
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                if (endDate == null) {
+                    endDate = new Date(fiveMinAgo);
+                } else {
+                    endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
+                }
             }
-            Date end = null;
+            firstIteration = false;
 
-            // lastModified is maintained in the DB so we do not need this
-            // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
-            // minutes ago
-            List<DeletedObservation> entityList = null;
-            if (deletedDAO != null) {
-                entityList = deletedDAO.getList(src.getCollection(), start, end, batchSize);
-            } //else {
-            //    entityList = repoClient.getDeleted(src.getCollection(), start, end, batchSize);
+            List<DeletedObservation> entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
+            //if (deletedDAO != null) {
+            //    entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
+            //} else {
+            //    entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
             //}
 
             if (entityList.size() == expectedNum) {
@@ -295,23 +305,30 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 DeletedObservation de = iter.next();
                 iter.remove(); // allow garbage collection asap
 
-                if (de.getID().equals(state.curID)) {
-                    log.info("skip: " + de.getClass().getSimpleName() + " " + de.getID() + " -- was end of last batch");
-                    break;
-                }
-
                 if (!dryrun) {
                     txnManager.startTransaction();
                 }
                 boolean ok = false;
                 try {
-                    log.info("put: " + de.getClass().getSimpleName() + " " + de.getID() + " " + format(de.getLastModified()));
+                    
                     if (!dryrun) {
                         state.curLastModified = de.getLastModified();
                         state.curID = de.getID();
-
-                        // perform the actual deletion
-                        obsDAO.delete(de.getID());
+                        
+                        ObservationState cur = obsDAO.getState(de.getID());
+                        if (cur != null) {
+                            Date lastUpdate = cur.getMaxLastModified();
+                            Date deleted = de.getLastModified();
+                        
+                            if (deleted.after(lastUpdate)) {
+                                log.info("delete: " + de.getClass().getSimpleName() 
+                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                                obsDAO.delete(de.getID());
+                            } else {
+                                log.info("skip out-of-date delete: " + de.getClass().getSimpleName() 
+                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                            }
+                        }
 
                         // track progress
                         harvestStateDAO.put(state);
