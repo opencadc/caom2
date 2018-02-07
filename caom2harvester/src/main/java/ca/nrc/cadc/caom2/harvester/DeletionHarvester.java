@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.harvester;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -241,6 +242,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
     }
 
     private Date startDate;
+    private Date endDate;
     private boolean firstIteration = true;
 
     /**
@@ -268,43 +270,28 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 state = harvestStateDAO.get(source, cname);
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
-
-            Date start = state.curLastModified;
-            if (full) {
-                start = null;
-            }
-            Date end = null;
             
-            if (full && firstIteration) {
-                startDate = null;
-            } else {
-                log.debug("recalculate startDate");
-                // normally start batch from last successful put state
-                startDate = state.curLastModified;
-                if (state.curLastModified != null) {
-                    Date prevDiscoveryQuery = state.getLastModified();
-                    Date lastObservationSeen = state.curLastModified;
-                    long fiveMinMS = 5 * 60000L;
-                    if (prevDiscoveryQuery != null && lastObservationSeen != null) {
-                        if ((prevDiscoveryQuery.getTime() - lastObservationSeen.getTime()) < fiveMinMS) {
-                            // do overlapping harvest in case there are some new observations inserted
-                            // with timestamp slightly older than lastObservationSeen
-                            startDate = new Date(lastObservationSeen.getTime() - fiveMinMS);
-                            log.info("start harvest overlap: " + format(state.curLastModified) + " -> " + format(startDate));
-                        }
-                    }
+            startDate = state.curLastModified;
+            if (firstIteration) {
+                if (super.minDate != null) { // override state
+                    startDate = super.minDate;
                 }
-            } // else: skipped: keep startDate across multiple batches since we don't persist harvest state
+                endDate = super.maxDate;
+                // harvest up to a little in the past because the head of the sequence may be volatile
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                if (endDate == null) {
+                    endDate = new Date(fiveMinAgo);
+                } else {
+                    endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
+                }
+            }
             firstIteration = false;
 
-            // lastModified is maintained in the DB so we do not need this
-            // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
-            // minutes ago
-            List<DeletedObservation> entityList = null;
-            if (deletedDAO != null) {
-                entityList = deletedDAO.getList(src.getCollection(), start, end, batchSize);
-            } //else {
-            //    entityList = repoClient.getDeleted(src.getCollection(), start, end, batchSize);
+            List<DeletedObservation> entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
+            //if (deletedDAO != null) {
+            //    entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
+            //} else {
+            //    entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
             //}
 
             if (entityList.size() == expectedNum) {
@@ -323,13 +310,24 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 }
                 boolean ok = false;
                 try {
-                    log.info("put: " + de.getClass().getSimpleName() + " " + de.getID() + " " + format(de.getLastModified()));
+                    
                     if (!dryrun) {
                         state.curLastModified = de.getLastModified();
                         state.curID = de.getID();
-
-                        // perform the actual deletion
-                        obsDAO.delete(de.getID());
+                        
+                        ObservationState cur = obsDAO.getState(de.getURI());
+                        Date deleted = de.getLastModified();
+                        Date lastUpdate = cur.getMaxLastModified();
+                        
+                        if (deleted.after(lastUpdate)) {
+                            log.info("delete: " + de.getClass().getSimpleName() 
+                                + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                            // perform the actual deletion
+                            obsDAO.delete(de.getID());
+                        } else {
+                            log.info("out-of-date delete: " + de.getClass().getSimpleName() 
+                                + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                        }
 
                         // track progress
                         harvestStateDAO.put(state);

@@ -118,10 +118,6 @@ public class ObservationValidator extends Harvester {
         init();
     }
 
-    public void setMaxDate(Date maxDate) {
-        this.maxDate = maxDate;
-    }
-
     private void init() throws IOException, URISyntaxException {
         if (src.getResourceID() != null) {
             // 1 thread since we only use the ObservationState listing
@@ -164,10 +160,6 @@ public class ObservationValidator extends Harvester {
         }
     }
 
-    private Date startDate;
-
-    private Date curLastModified = null;
-
     private Progress doit() {
         Progress ret = new Progress();
 
@@ -180,26 +172,8 @@ public class ObservationValidator extends Harvester {
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-            log.debug("**************** state = " + curLastModified + " source = " + source + " )");
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
-
-            startDate = curLastModified;
-
-            Date end = maxDate;
-            Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
-            // minutes
-            // ago;
-            if (end == null) {
-                end = fiveMinAgo;
-            } else {
-                log.debug("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
-                if (end.getTime() > fiveMinAgo.getTime()) {
-                    end = fiveMinAgo;
-                }
-            }
-
-            log.info("harvest window: " + format(startDate) + " :: " + format(end));
 
             List<ObservationState> tmpSrcState = null;
             List<ObservationState> tmpDstState = null;

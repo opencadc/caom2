@@ -94,46 +94,17 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class CaomHarvester implements Runnable {
-
-    /**
-     * log
-     */
     private static Logger log = Logger.getLogger(CaomHarvester.class);
-    /**
-     * initdb
-     */
+
     private InitDatabase initdb;
-    /**
-     * obsHarvester
-     */
+
     private ObservationHarvester obsHarvester;
-    /**
-     * obsDeleter
-     */
     private DeletionHarvester obsDeleter;
-    /**
-     * observationMetaHarvester
-     */
     private ReadAccessHarvester observationMetaHarvester;
-    /**
-     * planeDataHarvester
-     */
     private ReadAccessHarvester planeDataHarvester;
-    /**
-     * planeMetaHarvester
-     */
     private ReadAccessHarvester planeMetaHarvester;
-    /**
-     * observationMetaDeleter
-     */
     private ReadAccessDeletionHarvester observationMetaDeleter;
-    /**
-     * planeDataDeleter
-     */
     private ReadAccessDeletionHarvester planeDataDeleter;
-    /**
-     * planeDataDeleter
-     */
     private ReadAccessDeletionHarvester planeMetaDeleter;
 
     /**
@@ -168,7 +139,7 @@ public class CaomHarvester implements Runnable {
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute,
             HarvestResource src, HarvestResource dest, URI basePublisherID,
-            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate, int nthreads)
+            int batchSize, int batchFactor, boolean full, boolean skip, int nthreads)
             throws IOException, URISyntaxException {
         Integer entityBatchSize = batchSize * batchFactor;
 
@@ -179,7 +150,6 @@ public class CaomHarvester implements Runnable {
 
         this.obsHarvester = new ObservationHarvester(src, dest, basePublisherID, batchSize, full, dryrun, nochecksum, nthreads);
         obsHarvester.setSkipped(skip);
-        obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);
 
         boolean extendedFeatures = src.getDatabaseServer() != null;
@@ -207,6 +177,40 @@ public class CaomHarvester implements Runnable {
         }
         log.info("     source: " + src.getIdentifier());
         log.info("destination: " + dest.getIdentifier());
+    }
+    
+    public void setMinDate(Date d) {
+        obsHarvester.setMinDate(d);
+        if (obsDeleter != null) {
+            obsDeleter.setMinDate(d);
+        }
+        if (observationMetaHarvester != null) {
+            observationMetaHarvester.setMinDate(d);
+            planeMetaHarvester.setMinDate(d);
+            planeDataHarvester.setMinDate(d);
+        }
+        if (observationMetaDeleter != null) {
+            observationMetaDeleter.setMinDate(d);
+            planeMetaDeleter.setMinDate(d);
+            planeDataDeleter.setMinDate(d);
+        }
+    }
+    
+    public void setMaxDate(Date d) {
+        obsHarvester.setMaxDate(d);
+        if (obsDeleter != null) {
+            obsDeleter.setMaxDate(d);
+        }
+        if (observationMetaHarvester != null) {
+            observationMetaHarvester.setMaxDate(d);
+            planeMetaHarvester.setMaxDate(d);
+            planeDataHarvester.setMaxDate(d);
+        }
+        if (observationMetaDeleter != null) {
+            observationMetaDeleter.setMaxDate(d);
+            planeMetaDeleter.setMaxDate(d);
+            planeDataDeleter.setMaxDate(d);
+        }
     }
 
     /**

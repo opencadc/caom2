@@ -121,7 +121,7 @@ public class CaomValidator implements Runnable {
      * URISyntaxException
      */
     public CaomValidator(boolean dryrun, boolean nochecksum, boolean compute, HarvestResource src, HarvestResource dest,
-            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate)
+            int batchSize, int batchFactor, boolean full, boolean skip)
             throws IOException, URISyntaxException {
         // Integer entityBatchSize = batchSize * batchFactor;
 
@@ -131,9 +131,16 @@ public class CaomValidator implements Runnable {
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
 
         this.obsValidator = new ObservationValidator(src, dest, batchSize, full, dryrun, nochecksum);
-        obsValidator.setMaxDate(maxDate);
     }
 
+    public void setMinDate(Date d) {
+        obsValidator.setMinDate(d);
+    }
+    
+    public void setMaxDate(Date d) {
+        obsValidator.setMaxDate(d);
+    }
+    
     @Override
     public void run() {
         boolean init = false;

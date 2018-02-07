@@ -106,6 +106,9 @@ public abstract class Harvester implements Runnable {
     protected Integer batchSize;
     protected boolean full;
 
+    protected Date minDate;
+    protected Date maxDate;
+    
     protected HarvestResource src;
     protected HarvestResource dest;
     protected HarvestStateDAO harvestStateDAO;
@@ -122,6 +125,14 @@ public abstract class Harvester implements Runnable {
         this.dryrun = dryrun;
     }
 
+    public void setMinDate(Date d) {
+        this.minDate = d;
+    }
+    
+    public void setMaxDate(Date d) {
+        this.maxDate = d;
+    }
+    
     protected Map<String, Object> getConfigDAO(HarvestResource desc) throws IOException {
         if (desc.getDatabaseServer() == null) {
             throw new RuntimeException("BUG: getConfigDAO called with ObservationResource[service]");

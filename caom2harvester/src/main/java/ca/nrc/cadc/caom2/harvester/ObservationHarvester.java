@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.harvester;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
@@ -118,7 +119,6 @@ public class ObservationHarvester extends Harvester {
     private ObservationDAO destObservationDAO;
 
     private boolean skipped;
-    private Date maxDate;
     private boolean doCollisionCheck = false;
     private boolean computePlaneMetadata = false;
     private boolean nochecksum = false;
@@ -137,10 +137,6 @@ public class ObservationHarvester extends Harvester {
 
     public void setSkipped(boolean skipped) {
         this.skipped = skipped;
-    }
-
-    public void setMaxDate(Date maxDate) {
-        this.maxDate = maxDate;
     }
 
     public void setDoCollisionCheck(boolean doCollisionCheck) {
@@ -224,6 +220,7 @@ public class ObservationHarvester extends Harvester {
     }
 
     private Date startDate;
+    private Date endDate;
     private boolean firstIteration = true;
 
     private Progress doit() {
@@ -241,55 +238,46 @@ public class ObservationHarvester extends Harvester {
         try {
             System.gc(); // hint
             t = System.currentTimeMillis();
-
+            
             HarvestState state = null;
-
             if (!skipped) {
                 state = harvestStateDAO.get(source, Observation.class.getSimpleName());
+                startDate = state.curLastModified;
                 log.debug("state " + state);
             }
 
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
-
-            if (full && firstIteration) {
-                startDate = null;
-            } else if (!skipped) {
-                log.debug("recalculate startDate");
-                // normally start batch from last successful put state
-                startDate = state.curLastModified;
-                if (state.curLastModified != null) {
-                    Date prevDiscoveryQuery = state.getLastModified();
-                    Date lastObservationSeen = state.curLastModified;
-                    long fiveMinMS = 5 * 60000L;
-                    if (prevDiscoveryQuery != null && lastObservationSeen != null) {
-                        if ((prevDiscoveryQuery.getTime() - lastObservationSeen.getTime()) < fiveMinMS) {
-                            // do overlapping harvest in case there are some new observations inserted
-                            // with timestamp slightly older than lastObservationSeen
-                            startDate = new Date(lastObservationSeen.getTime() - fiveMinMS);
-                            log.info("start harvest overlap: " + format(state.curLastModified) + " -> " + format(startDate));
-                        }
+            
+            if (firstIteration) {
+                if (full) {
+                    startDate = null;
+                } else if (super.minDate != null) {
+                    startDate = super.minDate;
+                }
+                endDate = super.maxDate;
+                if (!skipped) {
+                    // harvest up to a little in the past because the head of the sequence may be volatile
+                    long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                    if (endDate == null) {
+                        endDate = new Date(fiveMinAgo);
+                    } else {
+                        endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
                     }
                 }
-            } // else: skipped: keep startDate across multiple batches since we don't persist harvest state
+            }
             firstIteration = false;
 
-            log.debug("startDate " + startDate);
-            log.debug("skipped: " + (skipped));
-
-            Date end = maxDate;
-            List<SkippedWrapperURI<ObservationResponse>> entityList = null;
-            //List<SkippedWrapperURI<ObservationState>> entityListState = null;
-
+            List<SkippedWrapperURI<ObservationResponse>> entityList;
             if (skipped) {
                 entityList = getSkipped(startDate);
             } else {
-                log.info("harvest window: " + format(startDate) + " :: " + format(end) + " [" + batchSize + "]");
-                List<ObservationResponse> obsList = null;
+                log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+                List<ObservationResponse> obsList;
                 if (srcObservationDAO != null) {
-                    obsList = srcObservationDAO.getList(src.getCollection(), startDate, end, batchSize + 1);
+                    obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
                 } else {
-                    obsList = srcObservationService.getList(src.getCollection(), startDate, end, batchSize + 1);
+                    obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize + 1);
                 }
                 entityList = wrap(obsList);
             }
@@ -357,35 +345,13 @@ public class ObservationHarvester extends Harvester {
                                 state.curID = o.getID();
                             }
 
-                            // try to avoid DataIntegrityViolationException
-                            // due to missed deletion of an observation
-                            UUID curID = destObservationDAO.getID(o.getURI());
-                            if (curID != null && !curID.equals(o.getID())) {
-                                if (srcObservationDAO != null) {
-                                    ObservationURI oldSrc = srcObservationDAO.getURI(curID);
-                                    if (oldSrc == null) {
-                                        // missed harvesting a deletion
-                                        log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
-                                        destObservationDAO.delete(curID);
-                                    }
-                                    // else: the put below with throw a valid
-                                    // exception because source
-                                    // is not enforcing
-                                    // unique ID and URI
-                                } else {
-                                    // missed harvesting a deletion: trust src service
-                                    log.info("delete: " + o.getClass().getSimpleName() + " " + format(curID) + " (ObservationURI conflict avoided)");
-                                    destObservationDAO.delete(curID);
-                                }
-                            }
-
-                            if (doCollisionCheck) {
-                                Observation cc = destObservationDAO.getShallow(o.getID());
-                                log.debug("collision check: " + o.getURI() + " " + format(o.getMaxLastModified()) + " vs " + format(cc.getMaxLastModified()));
-                                if (!cc.getMaxLastModified().equals(o.getMaxLastModified())) {
-                                    throw new IllegalStateException(
-                                            "detected harvesting collision: " + o.getURI() + " maxLastModified: " + format(o.getMaxLastModified()));
-                                }
+                            // try to avoid DataIntegrityViolationException due to missed deletion followed by insert with new UUID
+                            ObservationState cur = destObservationDAO.getState(o.getURI());
+                            if (cur != null && !cur.getID().equals(o.getID())) {
+                                // missed harvesting a deletion: trust source
+                                log.info("delete: " + o.getClass().getSimpleName() 
+                                        + " " + cur.getURI() + " " + cur.getID() + " (ObservationURI conflict avoided)");
+                                destObservationDAO.delete(cur.getID());
                             }
 
                             CaomValidator.validate(o);
