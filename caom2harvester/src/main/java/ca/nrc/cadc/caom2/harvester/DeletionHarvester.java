@@ -315,18 +315,19 @@ public class DeletionHarvester extends Harvester implements Runnable {
                         state.curLastModified = de.getLastModified();
                         state.curID = de.getID();
                         
-                        ObservationState cur = obsDAO.getState(de.getURI());
-                        Date deleted = de.getLastModified();
-                        Date lastUpdate = cur.getMaxLastModified();
+                        ObservationState cur = obsDAO.getState(de.getID());
+                        if (cur != null) {
+                            Date lastUpdate = cur.getMaxLastModified();
+                            Date deleted = de.getLastModified();
                         
-                        if (deleted.after(lastUpdate)) {
-                            log.info("delete: " + de.getClass().getSimpleName() 
-                                + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
-                            // perform the actual deletion
-                            obsDAO.delete(de.getID());
-                        } else {
-                            log.info("out-of-date delete: " + de.getClass().getSimpleName() 
-                                + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                            if (deleted.after(lastUpdate)) {
+                                log.info("delete: " + de.getClass().getSimpleName() 
+                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                                obsDAO.delete(de.getID());
+                            } else {
+                                log.info("skip out-of-date delete: " + de.getClass().getSimpleName() 
+                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                            }
                         }
 
                         // track progress
