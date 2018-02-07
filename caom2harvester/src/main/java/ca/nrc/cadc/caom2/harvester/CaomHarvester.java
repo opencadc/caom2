@@ -129,8 +129,6 @@ public class CaomHarvester implements Runnable {
      * full harvest of all source entities
      * @param skip
      * flag that indicates if shipped observations should be dealt
-     * @param maxDate
-     * latest date to be using during harvester
      * @param nthreads max threads when harvesting from a service
      * @throws java.io.IOException
      * IOException

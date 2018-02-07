@@ -106,14 +106,13 @@ public class ObservationValidator extends Harvester {
     private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
 
-    private Date maxDate;
     HarvestSkipURIDAO harvestSkip = null;
     private boolean nochecksum = false;
 
     public ObservationValidator(HarvestResource src, HarvestResource dest, Integer batchSize,
-            boolean full, boolean dryrun, boolean nochecksum)
+            boolean dryrun, boolean nochecksum)
             throws IOException, URISyntaxException {
-        super(Observation.class, src, dest, batchSize, full, dryrun);
+        super(Observation.class, src, dest, batchSize, false, dryrun);
         this.nochecksum = nochecksum;
         init();
     }

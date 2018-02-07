@@ -319,7 +319,7 @@ public class Main {
             } else {
 
                 try {
-                    CaomValidator cv = new CaomValidator(dryrun, noChecksum, compute, src, dest, batchSize, batchFactor, full, skip);
+                    CaomValidator cv = new CaomValidator(dryrun, noChecksum, src, dest, batchSize);
                     // [min,max] timestamps not supported by validator (only full)
                     //cv.setMinDate(minDate);
                     //cv.setMaxDate(maxDate);
