@@ -541,7 +541,7 @@ public class SodaJobRunner implements JobRunner
         List<Cutout<Shape>> posCut = new ArrayList<>();
         for (String s : posList)
         {
-            s = s.trim();
+            s = s.trim().toLowerCase();
             if (s.startsWith("circle"))
             {
                 s = s.substring(7); // remove keyword
