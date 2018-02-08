@@ -102,8 +102,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'members', 'members of a composite observation (space-separated list of Observation URIs)', 'caom2:Observation.members', NULL, NULL, 'char','*','clob', 0,0,0 , 80),
 
 ( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '21*','timestamp', 1,0,0 , 100),
-( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 101),
-( 'caom2.Observation', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Observation.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 102)
+( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this observation', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '21*','timestamp', 1,0,0 , 101),
+( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 102),
+( 'caom2.Observation', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Observation.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 103)
 ;
 
 -- Plane
