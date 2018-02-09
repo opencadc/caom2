@@ -51,59 +51,59 @@ create index Plane_time_ib2
 ;
 
 create index Plane_polar_is
-    on <schema>.Plane (polarization_states)
+    on <schema>.Plane (polarization_states COLLATE "C")
 ;
 
 -- case-sensitive
 create index i_collection_instrument
-    on <schema>.Observation (collection, instrument_name)
+    on <schema>.Observation (collection COLLATE "C", instrument_name COLLATE "C")
 ;
 
 -- hardware config: telescope,instrument
 create index i_telescope_instrument
-    on <schema>.Observation (telescope_name, instrument_name)
+    on <schema>.Observation (telescope_name COLLATE "C", instrument_name COLLATE "C")
 ;
 
 -- astronomical result search: emBand,dataProductType,calibrationLevel
 create index Plane_i_emBand_dataProductType
-    on <schema>.Plane (energy_emBand,dataProductType)
+    on <schema>.Plane (energy_emBand COLLATE "C", dataProductType COLLATE "C")
 ;
 
 -- aka filter 
 create index i_bandpassName
-    on <schema>.Plane (energy_bandpassName)
+    on <schema>.Plane (energy_bandpassName COLLATE "C")
 ;
 
 create index i_provenance_runid
-    on <schema>.Plane (provenance_runID)
+    on <schema>.Plane (provenance_runID COLLATE "C")
 ;
 
 -- case-insensitive
 
 create index Observation_i_observationID_lower
-    on <schema>.Observation ( lower(observationID) )
+    on <schema>.Observation ( lower(observationID)  COLLATE "C")
 ;
 
 create index Observation_i_targ_lower
-    on <schema>.Observation ( (lower(target_name)) )
+    on <schema>.Observation ( (lower(target_name))  COLLATE "C")
 ;
 
 create index Observation_i_proposal_id_lower
-    on <schema>.Observation ( lower(proposal_id) )
+    on <schema>.Observation ( lower(proposal_id)  COLLATE "C")
 ;
 
 -- support both case-insensitive and LIKE via special operator
 
 create index Observation_i_observationID_lower_pattern
-    on <schema>.Observation ( lower(observationID)  varchar_pattern_ops )
+    on <schema>.Observation ( lower(observationID) COLLATE "C" )
 ;
 
 create index Observation_i_targ_lower_pattern
-    on <schema>.Observation ( (lower(target_name))  varchar_pattern_ops )
+    on <schema>.Observation ( (lower(target_name))  COLLATE "C" )
 ;
 
 create index Observation_i_proposal_id_lower_pattern
-    on <schema>.Observation ( lower(proposal_id)  varchar_pattern_ops )
+    on <schema>.Observation ( lower(proposal_id)  COLLATE "C" )
 ;
 
 create index Plane_i_dataRelease
@@ -112,7 +112,7 @@ create index Plane_i_dataRelease
 
 -- support for SODA service and file authorization queries 
 create index Artifact_i_uri
-    on <schema>.Artifact ( uri )
+    on <schema>.Artifact ( uri  COLLATE "C" )
 ;
 
 --create index Observation_i_tel_kw
