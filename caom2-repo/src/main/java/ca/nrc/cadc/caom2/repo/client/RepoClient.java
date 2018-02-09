@@ -361,7 +361,7 @@ public class RepoClient {
         return wt.getObservation();
     }
 
-    public List<ObservationResponse> get(List<ObservationURI> listURI) throws Exception {
+    public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException {
         init();
         if (listURI == null) {
             throw new IllegalArgumentException("list of uri cannot be null");
@@ -371,9 +371,15 @@ public class RepoClient {
         // Create tasks for each file
         List<Callable<ObservationResponse>> tasks = new ArrayList<>();
 
+        // want to put the result list back in same order as the input list; 
+        // maxLasModifiedComparatorForResponse sorts by state.maxLastModified
+        // so fake it with date values that increase
+        Date now = new Date();
+        long i = 0;
         Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
         for (ObservationURI uri : listURI) {
             ObservationState os = new ObservationState(uri);
+            os.maxLastModified = new Date(now.getTime() + i++);
             tasks.add(new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm()));
         }
         ExecutorService taskExecutor = null;

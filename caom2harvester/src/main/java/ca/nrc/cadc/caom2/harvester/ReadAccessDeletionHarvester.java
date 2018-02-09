@@ -311,6 +311,9 @@ public class ReadAccessDeletionHarvester extends Harvester implements Runnable {
     }
 
     Object prevBatchLeader = null;
+    private Date startDate;
+    private Date endDate;
+    private boolean firstIteration = true;
 
     /**
      * Does the work
@@ -338,16 +341,23 @@ public class ReadAccessDeletionHarvester extends Harvester implements Runnable {
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
 
-            Date start = state.curLastModified;
-            if (full) {
-                start = null;
+            startDate = state.curLastModified;
+            if (firstIteration) {
+                if (super.minDate != null) { // override state
+                    startDate = super.minDate;
+                }
+                endDate = super.maxDate;
+                // harvest up to a little in the past because the head of the sequence may be volatile
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                if (endDate == null) {
+                    endDate = new Date(fiveMinAgo);
+                } else {
+                    endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
+                }
             }
-            Date end = null;
+            firstIteration = false;
 
-            // lastModified is maintained in the DB so we do not need this
-            // end = new Date(System.currentTimeMillis() - 5*60000L); // 5
-            // minutes ago
-            List<DeletedEntity> entityList = deletedDAO.getList(entityClass, start, end, batchSize);
+            List<DeletedEntity> entityList = deletedDAO.getList(entityClass, startDate, endDate, batchSize);
 
             if (entityList.size() == expectedNum) {
                 detectLoop(entityList);

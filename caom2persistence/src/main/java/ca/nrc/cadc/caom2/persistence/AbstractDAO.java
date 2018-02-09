@@ -137,6 +137,7 @@ public class AbstractDAO {
         ret.put("schema", String.class);
         ret.put("forceUpdate", Boolean.class);
         ret.put(SQLGenerator.class.getName(), Class.class);
+        ret.put("basePublisherID", String.class);
         return ret;
     }
 
@@ -176,6 +177,8 @@ public class AbstractDAO {
         try {
             Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
             this.gen = (SQLGenerator) ctor.newInstance(database, schema);
+            String basePublisherID = (String) config.get("basePublisherID");
+            gen.setBasePublisherID(basePublisherID);
         } catch (Exception ex) {
             throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
         }

@@ -312,7 +312,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
 
     private String getAssetCountSQL(Class ac, ReadAccess expected)
     {
-        BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
+        SQLGenerator gen = (SQLGenerator) dao.getSQLGenerator();
         String assetTable = gen.getTable(ac);
         String kCol = gen.getPrimaryKeyColumn(ac);
         if (PlaneMetaReadAccess.class.equals(expected.getClass())
@@ -334,7 +334,7 @@ public class PostgresqlReadAccessDAOTest extends AbstractReadAccessDAOTest
 
     private String getGroupVectorSQL(Class ac, ReadAccess expected)
     {
-        BaseSQLGenerator gen = (BaseSQLGenerator) dao.getSQLGenerator();
+        SQLGenerator gen = (SQLGenerator) dao.getSQLGenerator();
         String assetTable = gen.getTable(ac);
         String kCol = gen.getPrimaryKeyColumn(ac);
         if (PlaneMetaReadAccess.class.equals(expected.getClass())
