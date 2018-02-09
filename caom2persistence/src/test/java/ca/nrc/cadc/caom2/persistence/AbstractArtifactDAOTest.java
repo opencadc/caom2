@@ -122,6 +122,7 @@ public abstract class AbstractArtifactDAOTest
             config.put("database", database);
             config.put("schema", schema);
             config.put(SQLGenerator.class.getName(), genClass);
+            config.put("basePublisherID", "ivo://opencadc.org/");
             this.obsDAO = new ObservationDAO();
             obsDAO.setConfig(config);
             this.dao = new ArtifactDAO();
@@ -188,16 +189,15 @@ public abstract class AbstractArtifactDAOTest
             Observation o = new SimpleObservation("FOO", "bar");
             o.getPlanes().add(p);
 
-            Date t1 = new Date();
             Thread.sleep(10);
             p.getArtifacts().add(a1);
             obsDAO.put(o);
+            final Date t1 = new Date(a1.getLastModified().getTime() - 20L);
 
-            Thread.sleep(10);
-            Date t2 = new Date();
-            Thread.sleep(10);
+            Thread.sleep(20);
             p.getArtifacts().add(a2);
             obsDAO.put(o);
+            final Date t2 = new Date(a2.getLastModified().getTime() - 10L);
 
             Thread.sleep(10);
             p.getArtifacts().add(a3);
@@ -235,6 +235,47 @@ public abstract class AbstractArtifactDAOTest
             Assert.assertNotNull(artifacts);
             Assert.assertEquals(1, artifacts.size());
             Assert.assertEquals(a1.getURI(), artifacts.get(0).getURI());
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testGetByURI()
+    {
+        try
+        {
+            // test null param
+            try
+            {
+                URI uri = null;
+                dao.get(uri);
+                Assert.fail("expected an exception");
+            }
+            catch (IllegalArgumentException e)
+            {
+                // expected
+            }
+            
+            // test not found
+             // single tick to verify that library correctly handles untrusted input via PreparedStatement
+            URI uri = URI.create("cadc:not'found");
+            Assert.assertNull("expected null artifact", dao.get(uri));
+            
+            // test found
+            uri = URI.create("cadc:STUFF/thing");
+            Artifact a = new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA);
+            Plane p = new Plane("baz");
+            Observation o = new SimpleObservation("FOO", "bar");
+            o.getPlanes().add(p);
+            p.getArtifacts().add(a);
+            obsDAO.put(o);
+            Artifact a2 = dao.get(uri);
+            Assert.assertNotNull("expected non-null artifact", a2);
+            Assert.assertEquals("expected equal artifacts", a, a2);
         }
         catch(Exception unexpected)
         {

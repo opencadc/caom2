@@ -112,27 +112,27 @@ public class CaomRepoConfigTest {
             Properties props = new Properties();
             props.setProperty("space",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
                 + "proposalGroup=true operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
             props.setProperty("group-frag",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
                 + "proposalGroup=false operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
             props.setProperty("spaces",
                 "dsname  database  schema  caom2obs  ivo://cadc.nrc.ca/gms?group1  ivo://cadc.nrc.ca/gms?group2  "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl  "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
                 + "proposalGroup=false  operatorGroup="  +  OPERATOR_GROUP);
             props.setProperty("tabs",
                 "dsname\tdatabase\tschema\tcaom2obs\tivo://cadc.nrc.ca/gms?group1\tivo://cadc.nrc.ca/gms?group2\t"
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl\t"
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl\tbasePublisherID=ivo://opencadc.org\t"
                 + "proposalGroup=true\tstaffGroup=" + STAFF_GROUP);
             props.setProperty("mix",
                 "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t basePublisherID=ivo://opencadc.org \t "
                 + "proposalGroup=true\t operatorGroup=" + OPERATOR_GROUP + "\t staffGroup=" + STAFF_GROUP);
             props.setProperty("def-impl", 
                 "dsname \t database\t schema \tcaom2obs \t ivo://cadc.nrc.ca/gms?group1 \t ivo://cadc.nrc.ca/gms?group2 \t "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t ");
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl \t basePublisherID=ivo://opencadc.org ");
             
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("space", props);
             Assert.assertNotNull(it);
@@ -230,22 +230,109 @@ public class CaomRepoConfigTest {
     }
 
     @Test
-    public void testKeyValueSeparator() {
+    public void testPublicRead() {
         try {
             Properties props = new Properties();
-            props.setProperty("comma-separator",
-                    "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
-                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
-                    + "proposalGroup=true,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org ");
+            props.setProperty("space2",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org publicRead=false");
+            props.setProperty("space3",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org publicRead=true");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("space1", it.getCollection());
+            Assert.assertFalse(it.getPublicRead());
 
-            CaomRepoConfig.Item it = CaomRepoConfig.getItem("comma-separator", props);
-            Assert.fail("expected IllegalArgumentException to have been thrown");
-        } catch (IllegalArgumentException ex) {
-            if (ex.getMessage().contains("proposalGroup")) {
-                log.debug("caught expected: " + ex);
-            } else {
-                Assert.fail("unexpected exception: " + ex);
-            }
+            it = CaomRepoConfig.getItem("space2", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("space2", it.getCollection());
+            Assert.assertFalse(it.getPublicRead());
+
+            it = CaomRepoConfig.getItem("space3", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("space3", it.getCollection());
+            Assert.assertTrue(it.getPublicRead());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testBasePublisherID() {
+        try {
+            String expected = "ivo://opencadc.org";
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=" + expected);
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("space1", it.getCollection());
+            Assert.assertEquals(expected, it.getBasePublisherID().toASCIIString());
+            
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidBasePublisherID() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=foo:bar");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.fail("expected IllegalArgumentException but found: " + it);
+        } catch (IllegalArgumentException expected) {
+            log.info("testInvalidBasePublisherID: caught " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInvalidOption() {
+        try {
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org foo");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.fail("expected IllegalArgumentException but found: " + it);
+        } catch (IllegalArgumentException expected) {
+            log.info("testInvalidBasePublisherID: caught " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
+        try {
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org foo=bar=42");
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.fail("expected IllegalArgumentException but found: " + it);
+        } catch (IllegalArgumentException expected) {
+            log.info("testInvalidBasePublisherID: caught " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -258,17 +345,13 @@ public class CaomRepoConfigTest {
             Properties props = new Properties();
             props.setProperty("proposal-group-not-boolean",
                     "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
-                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
-                    + "proposalGroup=groupURI,operatorGroup=" + OPERATOR_GROUP + ",staffGroup=" + STAFF_GROUP);
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
+                    + "proposalGroup=groupURI");
 
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("proposal-group-not-boolean", props);
             Assert.fail("expected IllegalArgumentException to have been thrown");
         } catch (IllegalArgumentException ex) {
-            if (ex.getMessage().contains("proposalGroup")) {
-                log.debug("caught expected: " + ex);
-            } else {
-                Assert.fail("unexpected exception: " + ex);
-            }
+            log.debug("caught expected: " + ex);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -282,7 +365,7 @@ public class CaomRepoConfigTest {
             Properties props = new Properties();
             props.setProperty("missing-staffGroup",
                     "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
-                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
                     + "proposalGroup=true operatorGroup=" + OPERATOR_GROUP);
 
             CaomRepoConfig.Item it = CaomRepoConfig.getItem("missing-staffGroup", props);
@@ -324,19 +407,19 @@ public class CaomRepoConfigTest {
             Properties props = new Properties();
             props.setProperty("invalid-syntax-queries",
                 "dsname database schema caom2obs ivo:gms?group1?group1 ivo://cadc.nrc.ca/gms?group2 true true true "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org ");
             props.setProperty("invalid-syntax-frags",
                 "dsname database schema caom2obs ivo:gms#group1#group1 ivo://cadc.nrc.ca/gms#group2 false true false "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org ");
             props.setProperty("no-name",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms ivo://cadc.nrc.ca/gms?group2 true false false "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org");
             props.setProperty("wrong-scheme",
                 "dsname database schema caom2obs gms://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 false false "
-                + "true ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl");
+                + "true ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org");
             props.setProperty("no-sql-impl",
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 false false false "
-                + "ca.nrc.cadc.caom2.repo.NoImpl");
+                + "ca.nrc.cadc.caom2.repo.NoImpl basePublisherID=ivo://opencadc.org ");
 
             try {
                 CaomRepoConfig.Item i1 = CaomRepoConfig.getItem("invalid-syntax-queries", props);

@@ -78,7 +78,7 @@ import java.util.UUID;
  *
  * @author pdowler
  */
-public class SybaseSQLGenerator extends BaseSQLGenerator {
+public class SybaseSQLGenerator extends SQLGenerator {
 
     public SybaseSQLGenerator(String database, String schema) {
         super(database, schema);

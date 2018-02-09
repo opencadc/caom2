@@ -126,10 +126,6 @@ public class ReadAccessHarvester extends Harvester {
         init();
     }
 
-    public void setMaxDate(Date maxDate) {
-        this.maxDate = maxDate;
-    }
-
     public void setSkipped(boolean skipped) {
         this.skipped = skipped;
     }
@@ -220,6 +216,8 @@ public class ReadAccessHarvester extends Harvester {
     }
 
     private Date startDate;
+    private Date endDate;
+    private boolean firstIteration = true;
 
     /**
      * Does the harvester work
@@ -242,33 +240,30 @@ public class ReadAccessHarvester extends Harvester {
                 log.info("last harvest: " + format(state.curLastModified));
             }
 
-            if (full) {
-                startDate = null;
-            } else if (!skipped) {
-                startDate = state.curLastModified;
+            if (firstIteration) {
+                if (full) {
+                    startDate = null;
+                } else if (super.minDate != null) {
+                    startDate = super.minDate;
+                }
+                endDate = super.maxDate;
+                if (!skipped) {
+                    // harvest up to a little in the past because the head of the sequence may be volatile
+                    long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                    if (endDate == null) {
+                        endDate = new Date(fiveMinAgo);
+                    } else {
+                        endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
+                    }
+                }
             }
-            // else: skipped: keep startDate across multiple batches since we
-            // don't persist harvest
-            // state
-
-            Date end = maxDate;
+            firstIteration = false;
+            
             List<SkippedWrapper<ReadAccess>> entityList = null;
             if (skipped) {
                 entityList = getSkipped(startDate);
             } else {
-                Date fiveMinAgo = new Date(System.currentTimeMillis() - 5 * 60000L); // 5
-                // minutes
-                // ago;
-                if (end == null) {
-                    end = fiveMinAgo;
-                } else {
-                    log.info("harvest limit: min( " + format(fiveMinAgo) + " " + format(end) + " )");
-                    if (end.getTime() > fiveMinAgo.getTime()) {
-                        end = fiveMinAgo;
-                    }
-                }
-
-                List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, end, batchSize);
+                List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, endDate, batchSize);
                 entityList = wrap(tmp);
             }
 

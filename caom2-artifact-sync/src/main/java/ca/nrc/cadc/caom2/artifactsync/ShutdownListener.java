@@ -67,17 +67,13 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.artifactsync;
 
-public class ChecksumError extends Exception {
-
-    public ChecksumError(String string) {
-        super(string);
-    }
+public interface ShutdownListener {
 
     /**
-     *
+     * Called when the system is shutdown.
      */
-    private static final long serialVersionUID = 1L;
-
+    public void shutdown();
+    
 }

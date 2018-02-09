@@ -134,6 +134,32 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         this.deletedDAO = new DeletedEntityDAO(gen, forceUpdate, readOnly);
     }
 
+    public ObservationState getState(UUID id) {
+        return getState(null, id);
+    }
+    
+    public ObservationState getState(ObservationURI uri) {
+        return getState(uri, null);
+    }
+    
+    private ObservationState getState(ObservationURI uri, UUID id) {
+        Observation o = get(uri, id, 1);
+        if (o != null) {
+            ObservationState ret = new ObservationState(o.getURI());
+            ret.accMetaChecksum = o.getAccMetaChecksum();
+            ret.maxLastModified = o.getMaxLastModified();
+            ret.id = o.getID();
+            return ret;
+        }
+        return null;
+    }
+    
+    /**
+     * @param uri
+     * @return
+     * @deprecated use getState and check for not-null return
+     */
+    @Deprecated
     public boolean exists(ObservationURI uri) {
         Observation observation = get(uri, null, 1);
         return observation != null;
@@ -225,15 +251,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // pdd: for harvester to get just the observation object and check timestamps
-    public Observation getShallow(UUID id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id cannot be null");
-        }
-        return get(null, id, 1);
-    }
-
-    // pdd: for harvester to get state  and (observation or error) reading single observations from db
+    /**
+     * Get a list of observations from the specified collection and timestamp range.
+     * 
+     * @param collection
+     * @param minLastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @return 
+     */
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
         long t = System.currentTimeMillis();
 

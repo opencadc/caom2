@@ -93,6 +93,8 @@ import java.security.AccessControlException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -117,6 +119,22 @@ public class RepoClient {
     private URL baseDeletionURL = null;
 
     private int nthreads = 1;
+    private Comparator<ObservationState> maxLasModifiedComparatorForState = new Comparator<ObservationState>() {
+        @Override
+        public int compare(ObservationState o1, ObservationState o2) {
+            return o1.maxLastModified.compareTo(o2.maxLastModified);
+        }
+    };
+    private Comparator<ObservationResponse> maxLasModifiedComparatorForResponse = new Comparator<ObservationResponse>() {
+        @Override
+        public int compare(ObservationResponse o1, ObservationResponse o2) {
+            if (o1 == null || o2 == null || o1.observationState == null || o2.observationState == null || o1.observationState.maxLastModified == null
+                    || o2.observationState.maxLastModified == null) {
+                throw new NullPointerException();
+            }
+            return o1.observationState.maxLastModified.compareTo(o2.observationState.maxLastModified);
+        }
+    };
 
     /**
      * Create new CAOM RepoClient.
@@ -250,6 +268,57 @@ public class RepoClient {
         return wt.getObservation();
     }
 
+    public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException {
+        init();
+        if (listURI == null) {
+            throw new IllegalArgumentException("list of uri cannot be null");
+        }
+        //****************
+        List<ObservationResponse> list = new ArrayList<>();
+        // Create tasks for each file
+        List<Callable<ObservationResponse>> tasks = new ArrayList<>();
+
+        // want to put the result list back in same order as the input list;
+        // maxLasModifiedComparatorForResponse sorts by state.maxLastModified
+        // so fake it with date values that increase
+        Date now = new Date();
+        long i = 0;
+        Subject subjectForWorkerThread = AuthenticationUtil.getCurrentSubject();
+        for (ObservationURI uri : listURI) {
+            ObservationState os = new ObservationState(uri);
+            os.maxLastModified = new Date(now.getTime() + i++);
+            tasks.add(new Worker(os, subjectForWorkerThread, baseServiceURL.toExternalForm()));
+        }
+        ExecutorService taskExecutor = null;
+        try {
+            // Run tasks in a fixed thread pool
+            taskExecutor = Executors.newFixedThreadPool(nthreads);
+            List<Future<ObservationResponse>> futures;
+
+            futures = taskExecutor.invokeAll(tasks);
+
+            for (Future<ObservationResponse> f : futures) {
+                ObservationResponse res = null;
+                res = f.get();
+
+                if (f.isDone()) {
+                    list.add(res);
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: " + e.getCause().toString());
+            throw e;
+        } finally {
+            if (taskExecutor != null) {
+                taskExecutor.shutdown();
+            }
+        }
+        Collections.sort(list, maxLasModifiedComparatorForResponse);
+
+        //****************
+        return list;
+    }
+
     public ObservationResponse get(String collection, URI uri, Date start) {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
@@ -323,8 +392,8 @@ public class RepoClient {
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
 
-                if (responseCode == 302) // redirected url
-                {
+                if (responseCode == 302) {
+                    // redirected url
                     url = get.getRedirectURL();
                     log.debug("REDIRECTED URL: " + url);
                     bos = new ByteArrayOutputStream();
@@ -389,6 +458,7 @@ public class RepoClient {
         return partialList;
 
     }
+
     public List<DeletedObservation> readDeletedEntityList(TransformDeletionState transformer, String collection, Date start, Date end, Integer maxrec) {
         init();
 
@@ -431,8 +501,8 @@ public class RepoClient {
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
 
-                if (responseCode == 302) // redirected url
-                {
+                if (responseCode == 302) {
+                    // redirected url
                     url = get.getRedirectURL();
                     log.debug("REDIRECTED URL: " + url);
                     bos = new ByteArrayOutputStream();
@@ -495,6 +565,5 @@ public class RepoClient {
             }
         }
         return partialList;
-
     }
 }

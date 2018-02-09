@@ -82,6 +82,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import javax.sql.DataSource;
@@ -93,46 +94,17 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class CaomHarvester implements Runnable {
-
-    /**
-     * log
-     */
     private static Logger log = Logger.getLogger(CaomHarvester.class);
-    /**
-     * initdb
-     */
+
     private InitDatabase initdb;
-    /**
-     * obsHarvester
-     */
+
     private ObservationHarvester obsHarvester;
-    /**
-     * obsDeleter
-     */
     private DeletionHarvester obsDeleter;
-    /**
-     * observationMetaHarvester
-     */
     private ReadAccessHarvester observationMetaHarvester;
-    /**
-     * planeDataHarvester
-     */
     private ReadAccessHarvester planeDataHarvester;
-    /**
-     * planeMetaHarvester
-     */
     private ReadAccessHarvester planeMetaHarvester;
-    /**
-     * observationMetaDeleter
-     */
     private ReadAccessDeletionHarvester observationMetaDeleter;
-    /**
-     * planeDataDeleter
-     */
     private ReadAccessDeletionHarvester planeDataDeleter;
-    /**
-     * planeDataDeleter
-     */
     private ReadAccessDeletionHarvester planeMetaDeleter;
 
     /**
@@ -148,6 +120,7 @@ public class CaomHarvester implements Runnable {
      * source server,database,schema
      * @param dest
      * destination server,database,schema
+     * @param basePublisherID base to use in generating Plane publisherID values in destination database
      * @param batchSize
      * number of observations per batch (~memory consumption)
      * @param batchFactor
@@ -156,8 +129,6 @@ public class CaomHarvester implements Runnable {
      * full harvest of all source entities
      * @param skip
      * flag that indicates if shipped observations should be dealt
-     * @param maxDate
-     * latest date to be using during harvester
      * @param nthreads max threads when harvesting from a service
      * @throws java.io.IOException
      * IOException
@@ -165,8 +136,8 @@ public class CaomHarvester implements Runnable {
      * URISyntaxException
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute,
-            HarvestResource src, HarvestResource dest,
-            int batchSize, int batchFactor, boolean full, boolean skip, Date maxDate, int nthreads)
+            HarvestResource src, HarvestResource dest, URI basePublisherID,
+            int batchSize, int batchFactor, boolean full, boolean skip, int nthreads)
             throws IOException, URISyntaxException {
         Integer entityBatchSize = batchSize * batchFactor;
 
@@ -175,9 +146,8 @@ public class CaomHarvester implements Runnable {
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
 
-        this.obsHarvester = new ObservationHarvester(src, dest, batchSize, full, dryrun, nochecksum, nthreads);
+        this.obsHarvester = new ObservationHarvester(src, dest, basePublisherID, batchSize, full, dryrun, nochecksum, nthreads);
         obsHarvester.setSkipped(skip);
-        obsHarvester.setMaxDate(maxDate);
         obsHarvester.setComputePlaneMetadata(compute);
 
         boolean extendedFeatures = src.getDatabaseServer() != null;
@@ -205,6 +175,40 @@ public class CaomHarvester implements Runnable {
         }
         log.info("     source: " + src.getIdentifier());
         log.info("destination: " + dest.getIdentifier());
+    }
+    
+    public void setMinDate(Date d) {
+        obsHarvester.setMinDate(d);
+        if (obsDeleter != null) {
+            obsDeleter.setMinDate(d);
+        }
+        if (observationMetaHarvester != null) {
+            observationMetaHarvester.setMinDate(d);
+            planeMetaHarvester.setMinDate(d);
+            planeDataHarvester.setMinDate(d);
+        }
+        if (observationMetaDeleter != null) {
+            observationMetaDeleter.setMinDate(d);
+            planeMetaDeleter.setMinDate(d);
+            planeDataDeleter.setMinDate(d);
+        }
+    }
+    
+    public void setMaxDate(Date d) {
+        obsHarvester.setMaxDate(d);
+        if (obsDeleter != null) {
+            obsDeleter.setMaxDate(d);
+        }
+        if (observationMetaHarvester != null) {
+            observationMetaHarvester.setMaxDate(d);
+            planeMetaHarvester.setMaxDate(d);
+            planeDataHarvester.setMaxDate(d);
+        }
+        if (observationMetaDeleter != null) {
+            observationMetaDeleter.setMaxDate(d);
+            planeMetaDeleter.setMaxDate(d);
+            planeDataDeleter.setMaxDate(d);
+        }
     }
 
     /**

@@ -97,7 +97,7 @@ import org.postgresql.util.PGobject;
  *
  * @author pdowler
  */
-public class PostgreSQLGenerator extends BaseSQLGenerator {
+public class PostgreSQLGenerator extends SQLGenerator {
 
     private static final Logger log = Logger.getLogger(PostgreSQLGenerator.class);
     
