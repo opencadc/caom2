@@ -199,6 +199,7 @@ public class RepoClient {
     }
 
     public List<DeletedObservation> getDeletionList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
+        initDel();
         return readDeletedEntityList(new TransformDeletionState(df, '\t', '\n'), collection, start, end, maxrec);
     }
 
