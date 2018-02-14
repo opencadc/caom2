@@ -294,7 +294,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             if (deletedDAO != null) {
                 entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
             } else {
-                entityList = repoClient.getDeletionList(src.getCollection(), startDate, endDate, batchSize);
+                entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
             }
 
             if (entityList.size() == expectedNum) {

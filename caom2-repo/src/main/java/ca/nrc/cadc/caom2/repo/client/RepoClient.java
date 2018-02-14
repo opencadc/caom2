@@ -180,9 +180,7 @@ public class RepoClient {
 
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         initDel();
-
-        final List<DeletedObservation> ret = new ArrayList<>();
-
+        return readDeletedEntityList(new TransformDeletionState(df, '\t', '\n'), collection, start, end, maxrec);
         // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
 
         // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
@@ -190,17 +188,10 @@ public class RepoClient {
          * UUID id = null; String col = null; String observationID = null; Date lastModified = null; DeletedObservation de = new DeletedObservation(id, new
          * ObservationURI(col, observationID)); CaomUtil.assignLastModified(de, lastModified, "lastModified"); ret.add(de);
          */
-
-        return ret;
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
         return readObservationStateList(new TransformObservationState(df, '\t', '\n'), collection, start, end, maxrec);
-    }
-
-    public List<DeletedObservation> getDeletionList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
-        initDel();
-        return readDeletedEntityList(new TransformDeletionState(df, '\t', '\n'), collection, start, end, maxrec);
     }
 
     public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
@@ -351,7 +342,7 @@ public class RepoClient {
         }
     }
 
-    public List<ObservationState> readObservationStateList(TransformObservationState transformer, String collection, Date start, Date end, Integer maxrec) {
+    private List<ObservationState> readObservationStateList(TransformObservationState transformer, String collection, Date start, Date end, Integer maxrec) {
         init();
 
         List<ObservationState> accList = new ArrayList<>();
@@ -460,8 +451,7 @@ public class RepoClient {
 
     }
 
-    public List<DeletedObservation> readDeletedEntityList(TransformDeletionState transformer, String collection, Date start, Date end, Integer maxrec) {
-        init();
+    private List<DeletedObservation> readDeletedEntityList(TransformDeletionState transformer, String collection, Date start, Date end, Integer maxrec) {
 
         List<DeletedObservation> accList = new ArrayList<>();
         List<DeletedObservation> partialList = null;
@@ -476,7 +466,7 @@ public class RepoClient {
         // of the
         // authentication stuff)
         boolean go = true;
-        String surlCommon = baseServiceURL.toExternalForm() + File.separator + collection;
+        String surlCommon = baseDeletionURL.toExternalForm() + File.separator + collection;
 
         while (go) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();

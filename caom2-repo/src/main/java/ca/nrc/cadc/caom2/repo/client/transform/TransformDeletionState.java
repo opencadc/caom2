@@ -98,9 +98,9 @@ public class TransformDeletionState extends Transformer {
 
                 aux = "";
 
-                if (observationID != null && collection != null && date != null) {
+                if (id != null && observationID != null && collection != null && date != null) {
                     UUID uuid = UUID.fromString(observationID);
-                    ObservationURI uri = new ObservationURI(collection, observationID);
+                    ObservationURI uri = new ObservationURI(collection, id);
                     DeletedObservation de = new DeletedObservation(uuid, uri);
                     //CaomUtil.assignLastModified(de, date, "lastModified");
                     list.add(de);
