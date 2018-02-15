@@ -179,6 +179,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 results.add(executor.submit(task));
             }
             
+            // let pool know no new tasks can be added
+            executor.shutdown();
+            
             // wait for them to complete by calling f.get()
             for (Future<ArtifactDownloadResult> f : results) {
                 try {
@@ -201,6 +204,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             log.info("Thread pool error", e);
         } finally {
             if (executor != null && !executor.isShutdown()) {
+                log.warn("Manually shutting down thread pool");
                 executor.shutdownNow();
             }
             executor = null;
