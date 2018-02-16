@@ -2,6 +2,7 @@ package ca.nrc.cadc.caom2.repo.client.transform;
 
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,6 @@ public class TransformDeletionState extends Transformer {
     public List<DeletedObservation> transformDeletedEntity(ByteArrayOutputStream bos) throws ParseException, IOException, URISyntaxException {
         // <Observation.id> <Observation.collection> <Observation.observationID> <timestamp>
         List<DeletedObservation> list = new ArrayList<>();
-        log.debug("********* " + bos.toString());
 
         String id = null;
         String observationID = null;
@@ -87,10 +87,8 @@ public class TransformDeletionState extends Transformer {
                     continue;
                 }
 
-                if (date == null) {
-                    sdate = aux;
-                    date = DateUtil.flexToDate(sdate, getDateFormat());
-                }
+                sdate = aux;
+                date = DateUtil.flexToDate(sdate, getDateFormat());
 
                 // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
 
@@ -102,10 +100,8 @@ public class TransformDeletionState extends Transformer {
                     UUID uuid = UUID.fromString(observationID);
                     ObservationURI uri = new ObservationURI(collection, id);
                     DeletedObservation de = new DeletedObservation(uuid, uri);
-                    //CaomUtil.assignLastModified(de, date, "lastModified");
+                    Util.assignDeletedLastModified(de, date, "lastModified");
                     list.add(de);
-
-                    log.debug("found: " + de);
                 }
                 readingCollection = false;
                 readingId = false;

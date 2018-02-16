@@ -253,7 +253,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
      *
      * @return progress status
      */
-    @SuppressWarnings("unchecked")
     private Progress doit() {
         log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
@@ -307,6 +306,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             while (iter.hasNext()) {
                 DeletedObservation de = iter.next();
                 iter.remove(); // allow garbage collection asap
+                System.out.println("Observation read from deletion end-point: " + de.getID() + " date = " + de.getLastModified());
 
                 if (!dryrun) {
                     txnManager.startTransaction();
@@ -320,17 +320,22 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
                         ObservationState cur = obsDAO.getState(de.getID());
                         if (cur != null) {
+                            System.out.println("Observation: " + de.getID() + " found in DB");
                             Date lastUpdate = cur.getMaxLastModified();
                             Date deleted = de.getLastModified();
-
+                            System.out.println("to be deleted: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + "deleted date "
+                                    + format(de.getLastModified()) + " modified date " + format(cur.getMaxLastModified()));
                             if (deleted.after(lastUpdate)) {
-                                log.info(
-                                        "delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                                System.out.println("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
+                                log.info("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
                                 obsDAO.delete(de.getID());
                             } else {
                                 log.info("skip out-of-date delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + " "
                                         + format(de.getLastModified()));
+                                System.out.println("skip out-of-date delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
                             }
+                        } else {
+                            System.out.println("Observation: " + de.getID() + " not found in DB");
                         }
 
                         // track progress

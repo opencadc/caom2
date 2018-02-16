@@ -539,11 +539,16 @@ public class RepoClient {
             if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec) {
                 rec = maxrec - recCounter;
             }
+
+            int i = 0;
+            for (DeletedObservation de : accList) {
+                log.debug("accList.get( " + i++ + ") = " + de.getLastModified());
+            }
+            log.debug("accList.size() = " + accList.size());
             log.debug("dynamic batch (rec): " + rec);
-            log.debug("counter (recCounter): " + recCounter);
             log.debug("maxrec: " + maxrec);
-            // log.debug("start: " + start.toString());
-            // log.debug("end: " + end.toString());
+            log.debug("start: " + start);
+            log.debug("end: " + end);
 
             if (partialList != null) {
                 log.debug("partialList.size(): " + partialList.size());
