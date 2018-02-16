@@ -257,7 +257,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             MastResolver resolver = new MastResolver();
             URL url = resolver.toURL(artifactURI);
 
-            FileMetadata metadata = new FileMetadata();
+            metadata = new FileMetadata();
             metadata.setContentType(artifact.contentType);
             metadata.setMd5Sum(artifact.contentChecksum.getSchemeSpecificPart());
             metadata.setContentLength(artifact.contentLength);
