@@ -69,16 +69,15 @@ create unique index i_observationURI on <schema>.Observation (observationURI)
 create unique index i_observationURI2 on <schema>.Observation (collection, observationID)
 ;
 
--- harvesting index for recompute mode of caom2harvester
+-- harvesting index
 create index i_maxLastModified on <schema>.Observation (maxLastModified)
 ;
 
 -- member join support
--- not currently used/tested
 create table <schema>.Observation_members
 (
     compositeID uuid not null references <schema>.Observation (obsID),
-    simpleID uuid not null references <schema>.Observation (obsID)
+    simpleID varchar(512) not null
 )
 ;
 

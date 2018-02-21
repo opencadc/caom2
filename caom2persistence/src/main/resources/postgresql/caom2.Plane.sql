@@ -102,13 +102,6 @@ create index i_obsID on <schema>.Plane (obsID)
 cluster i_obsID on <schema>.Plane
 ;
 
-create table <schema>.Plane_inputs
-(
-    outputID uuid not null references <schema>.Plane (planeID),
-    inputID uuid not null references <schema>.Plane (planeID)
-)
-;
-
 create unique index i_planeURI on <schema>.Plane(planeURI)
 ;
 
@@ -116,6 +109,14 @@ create unique index i_publisherID on <schema>.Plane(publisherID)
 ;
 
 create unique index i_creatorID on <schema>.Plane(creatorID)
+;
+
+-- join table
+create table <schema>.Plane_inputs
+(
+    outputID uuid not null references <schema>.Plane (planeID),
+    inputID varchar(512) not null
+)
 ;
 
 create unique index i_output2input on <schema>.Plane_inputs (outputID,inputID)

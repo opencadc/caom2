@@ -91,8 +91,8 @@ public class InitDatabase {
 
     // caom2persistence 2.3.12 modifies DeletedObservation table
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.3.12";
-    public static final String PREV_MODEL_VERSION = "2.3.5";
+    public static final String MODEL_VERSION = "2.3.15";
+    public static final String PREV_MODEL_VERSION = "2.3.12";
 
     static String[] CREATE_SQL = new String[]{
         "caom2.ModelVersion.sql",
@@ -109,11 +109,15 @@ public class InitDatabase {
         "caom2.extra_indices.sql",
         "caom2.ObsCore.sql",
         "caom2.ObsCore-x.sql",
-        "caom2.SIAv1.sql"
+        "caom2.SIAv1.sql",
+        "caom2.permissions.sql"
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.3.12.sql"
+        "caom2.upgrade-2.3.15.sql",
+        "caom2.ObsCore.sql",
+        "caom2.ObsCore-x.sql",
+        "caom2.permissions.sql"
     };
 
     private final DataSource dataSource;

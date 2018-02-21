@@ -4,6 +4,7 @@ create or replace view <schema>.ObsFile
     uri,
     content_type,
     content_length,
+    content_checksum,
     last_modified,
 
 -- foreign key in CAOM
@@ -19,6 +20,7 @@ AS SELECT
     a.uri,
     a.contentType,
     a.contentLength,
+    a.contentChecksum,
     a.lastModified,
 
 -- foreign key in CAOM
