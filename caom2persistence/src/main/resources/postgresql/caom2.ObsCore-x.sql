@@ -1,4 +1,5 @@
 
+drop view if exists <schema>.ObsFile;
 create or replace view <schema>.ObsFile
 (
     uri,
@@ -33,6 +34,7 @@ AS SELECT
 FROM <schema>.Artifact AS a
 ;
 
+drop view if exists <schema>.ObsPart;
 create or replace view <schema>.ObsPart
 (
     name,

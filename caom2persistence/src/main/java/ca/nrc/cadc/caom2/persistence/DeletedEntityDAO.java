@@ -116,11 +116,13 @@ public class DeletedEntityDAO extends AbstractDAO {
         long t = System.currentTimeMillis();
 
         try {
+            DeletedEntity cur = get(de.getClass(), de.getID(), jdbc);
+            boolean update = (cur != null);
             if (de.getLastModified() == null) {
                 // if not null, the entity was harvested so keep original timestamp
                 Util.assignDeletedLastModified(de, new Date(), "lastModified");
             }
-            DeletedEntityPut op = gen.getDeletedEntityPut(de.getClass(), false); // insert only
+            DeletedEntityPut op = gen.getDeletedEntityPut(de.getClass(), update);
             op.setValue(de);
             op.execute(jdbc);
         } finally {
@@ -136,13 +138,17 @@ public class DeletedEntityDAO extends AbstractDAO {
     }
     
     DeletedEntity get(Class<? extends DeletedEntity> c, UUID id) {
+        return get(c, id, new JdbcTemplate(dataSource));
+    }
+    
+    DeletedEntity get(Class<? extends DeletedEntity> c, UUID id, JdbcTemplate jdbc) {
         checkInit();
         
         log.debug("GET: " + id);
         long t = System.currentTimeMillis();
 
         try {
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            //JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
             String sql = gen.getSelectSQL(c, id);
             log.debug("GET SQL: " + sql);

@@ -174,7 +174,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                1, 7, 9, 3, 4, 4, 2, 2, 3, 6, 8, 27, 1, 2, 1, 2
+                1, 7, 9, 3, 4, 4, 2, 2, 3, 6, 8, 24, 2, 4, 1, 2
             };
             Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
 
@@ -200,7 +200,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                16, 1, 3, 2
+                35, 2, 4, 2
             };
             Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
 
@@ -209,7 +209,9 @@ public class InitDatabaseTest
                 String fname = InitDatabase.UPGRADE_SQL[i];
                 log.info("process file: " + fname);
                 List<String> statements = InitDatabase.parseDDL(fname, schema);
-                Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
+                
+                // the actual number of statements changes with every upgrade so not useful to detect correctness
+                //Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
             }
         }
         catch(Exception unexpected)

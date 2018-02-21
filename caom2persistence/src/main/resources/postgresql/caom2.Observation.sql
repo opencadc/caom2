@@ -63,10 +63,10 @@ create table <schema>.Observation
 )
 ;
 
-create unique index i_observationURI on <schema>.Observation (observationURI)
+create unique index i_observationURI on <schema>.Observation (observationURI COLLATE "C")
 ;
 
-create unique index i_observationURI2 on <schema>.Observation (collection, observationID)
+create unique index i_observationURI2 on <schema>.Observation (collection COLLATE "C", observationID COLLATE "C")
 ;
 
 -- harvesting index
@@ -81,8 +81,8 @@ create table <schema>.Observation_members
 )
 ;
 
-create unique index i_composite2simple on <schema>.Observation_members (compositeID,simpleID)
+create unique index i_composite2simple on <schema>.Observation_members (compositeID, simpleID COLLATE "C")
 ;
 
-create unique index i_simple2composite on <schema>.Observation_members (simpleID,compositeID)
+create unique index i_simple2composite on <schema>.Observation_members (simpleID COLLATE "C", compositeID)
 ;
