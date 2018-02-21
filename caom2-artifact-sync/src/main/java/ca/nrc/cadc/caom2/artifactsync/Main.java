@@ -141,6 +141,10 @@ public class Main {
                     Log4jInit.setLevel(asPackage, Level.WARN);
                 }
             }
+            
+            if (am.isSet("profile")) {
+                Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
+            }
 
             log.debug("Artifact store class: " + asClassName);
 
@@ -345,6 +349,7 @@ public class Main {
         sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
         sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
+        sb.append("\n     --profile : Profile task execution");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
         sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
