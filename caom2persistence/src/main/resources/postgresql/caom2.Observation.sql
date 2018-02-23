@@ -63,10 +63,10 @@ create table <schema>.Observation
 )
 ;
 
-create unique index i_observationURI on <schema>.Observation (observationURI COLLATE "C")
+create unique index i_observationURI on <schema>.Observation (observationURI)
 ;
 
-create unique index i_observationURI2 on <schema>.Observation (collection COLLATE "C", observationID COLLATE "C")
+create unique index i_observationURI2 on <schema>.Observation (collection, observationID)
 ;
 
 -- harvesting index
@@ -74,15 +74,15 @@ create index i_maxLastModified on <schema>.Observation (maxLastModified)
 ;
 
 -- member join support
-create table <schema>.Observation_members
+create table <schema>.ObservationMember
 (
     compositeID uuid not null references <schema>.Observation (obsID),
     simpleID varchar(512) not null
 )
 ;
 
-create unique index i_composite2simple on <schema>.Observation_members (compositeID, simpleID COLLATE "C")
+create unique index i_composite2simple on <schema>.ObservationMember (compositeID,simpleID)
 ;
 
-create unique index i_simple2composite on <schema>.Observation_members (simpleID COLLATE "C", compositeID)
+create unique index i_simple2composite on <schema>.ObservationMember (simpleID,compositeID)
 ;

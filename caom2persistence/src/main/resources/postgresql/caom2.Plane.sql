@@ -102,27 +102,27 @@ create index i_obsID on <schema>.Plane (obsID)
 cluster i_obsID on <schema>.Plane
 ;
 
-create unique index i_planeURI on <schema>.Plane(planeURI COLLATE "C")
+create unique index i_planeURI on <schema>.Plane(planeURI)
 ;
 
-create unique index i_publisherID on <schema>.Plane(publisherID COLLATE "C")
+create unique index i_publisherID on <schema>.Plane(publisherID)
 ;
 
-create unique index i_creatorID on <schema>.Plane(creatorID COLLATE "C")
+create unique index i_creatorID on <schema>.Plane(creatorID)
     where creatorID is not null
 ;
 
 -- join table
-create table <schema>.Plane_inputs
+create table <schema>.ProvenanceInput
 (
     outputID uuid not null references <schema>.Plane (planeID),
     inputID varchar(512) not null
 )
 ;
 
-create unique index i_output2input on <schema>.Plane_inputs (outputID, inputID COLLATE "C")
+create unique index i_output2input on <schema>.ProvenanceInput (outputID,inputID)
 ;
 
-create unique index i_input2output on <schema>.Plane_inputs (inputID COLLATE "C", outputID)
+create unique index i_input2output on <schema>.ProvenanceInput (inputID, outputID)
 ;
 

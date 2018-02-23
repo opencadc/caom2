@@ -44,3 +44,20 @@ create clustered index observation2plane on caom2_Plane (obsID)
 
 create index lastModified on caom2_Plane (lastModified)
 ;
+
+
+-- reference/join table for provanence 
+-- not currently used/tested
+create table caom2_ProvenanceInput
+(
+    outputID bigint not null references caom2_Plane (planeID),
+    inputID varchar(512) not null
+)
+lock datarows
+;
+
+create unique index i_output2input on <schema>.ProvenanceInput (outputID,inputID)
+;
+
+create unique index i_input2output on <schema>.ProvenanceInput (inputID,outputID)
+;
