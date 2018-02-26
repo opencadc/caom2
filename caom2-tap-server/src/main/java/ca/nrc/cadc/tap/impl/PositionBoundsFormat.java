@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,119 +62,103 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.impl;
 
-import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.tap.TapSelectItem;
-import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
-import ca.nrc.cadc.tap.caom2.IntervalFormat;
-import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.stc.CoordPair;
+import ca.nrc.cadc.stc.Flavor;
+import ca.nrc.cadc.stc.Frame;
+import ca.nrc.cadc.stc.ReferencePosition;
+import ca.nrc.cadc.stc.STC;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
-import ca.nrc.cadc.tap.writer.format.SCircleFormat;
-import ca.nrc.cadc.tap.writer.format.SPointFormat;
-import ca.nrc.cadc.tap.writer.format.SPointFormat10;
-import ca.nrc.cadc.tap.writer.format.SPolyFormat;
-import ca.nrc.cadc.tap.writer.format.SPolyFormat10;
-import org.apache.log4j.Logger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * Formatter for the polymorphic position_bounds_points column.
  *
- *
+ * @author pdowler
  */
-public class FormatFactoryImpl extends DefaultFormatFactory
-{
-    private static Logger log = Logger.getLogger(FormatFactoryImpl.class);
+public class PositionBoundsFormat extends AbstractResultSetFormat {
 
-    public FormatFactoryImpl()
-    {
-        super();
+    private DoubleArrayFormat daf = new DoubleArrayFormat();
+
+    /**
+     * Takes a ResultSet and column index of the position_bounds_points
+     * and returns a polymorphic STC-S String.
+     *
+     * @param resultSet containing the position_bounds_points column.
+     * @param columnIndex index of the column in the ResultSet.
+     * @return STC Polygon
+     * @throws SQLException if there is an error accessing the ResultSet.
+     */
+    @Override
+    public Object extract(ResultSet resultSet, int columnIndex)
+            throws SQLException {
+        Object o = daf.extract(resultSet, columnIndex);
+        return getRegion(o);
     }
 
-    
+    /**
+     * Takes a String representation of the spoly
+     * and returns a STC-S Polygon String.
+     *
+     * @param object to format.
+     * @return STC-S Polygon String of the spoly.
+     * @throws IllegalArgumentException if the object is not a String, or if
+     * the String cannot be parsed.
+     */
     @Override
-    public Format<Object> getFormat(TapSelectItem d)
-    {
-        Format<Object> ret = super.getFormat(d);
-        log.debug("fomatter: " + d + " " + ret.getClass().getName());
-        return ret;
-    }
-
-    @Override
-    public Format<Object> getPointFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPointFormat: " + columnDesc);
-        return new SPointFormat();
-    }
-
-    @Override
-    public Format<Object> getCircleFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getCircleFormat: " + columnDesc);
-        return new SCircleFormat();
-    }
-
-    @Override
-    protected Format<Object> getPolygonFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPolygonFormat: " + columnDesc);
-        //if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds"))
-        //    return new DoubleArrayFormat(); // see CaomSelectListConverter
-        return new SPolyFormat();
-    }
-
-    @Override
-    protected Format<Object> getPositionFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPositionFormat: " + columnDesc);
-        return new SPointFormat10();
-    }
-    
-    @Override
-    public Format<Object> getRegionFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getRegionFormat: " + columnDesc);
-        if (columnDesc.utype != null && columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
-            return new PositionBoundsFormat();
+    public String format(Object object) {
+        if (object == null) {
+            return "";
         }
-        return new SPolyFormat10();
+        return STC.format((ca.nrc.cadc.stc.Region) object);
     }
 
-    @Override
-    public Format<Object> getIntervalFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getIntervalFormat: " + job.getID() + " " + columnDesc);
-        return new IntervalFormat(columnDesc.getDatatype().isVarSize());
-    }
-    
-    @Override
-    public Format<Object> getClobFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
+    ca.nrc.cadc.stc.Region getRegion(Object object) {
+        if (object == null) {
+            return null;
+        }
+
+        if (object instanceof java.sql.Array) {
+            try {
+                java.sql.Array array = (java.sql.Array) object;
+                object = array.getArray();
+            } catch (SQLException e) {
+                throw new IllegalArgumentException("Error accessing array data for " + object.getClass().getCanonicalName(), e);
+            }
+        }
+
+        if (object instanceof Double[]) {
+            Double[] arr = (Double[]) object;
+            double[] tmp = new double[arr.length];
+            for (int i = 0; i < arr.length; i++) {
+                tmp[i] = arr[i]; // unbox
+            }
+            object = tmp;
+        }
+
+        if (object instanceof double[]) {
+            double[] coords = (double[]) object;
+            if (coords.length == 3) {
+                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, 
+                    coords[0], coords[1], coords[2]);
+            } else {
+                List<CoordPair> coordPairs = new ArrayList<CoordPair>();
+                for (int i = 0; i < coords.length; i += 2) {
+                    coordPairs.add(new CoordPair(coords[i], coords[i + 1]));
+                }
+                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, coordPairs);
+            }
+        }
         
-        // function with CLOB argument
-        if (columnDesc != null)
-        {
-            // caom2.Artifact, caom2.SIAv1
-            if ( "caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
-                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName) )
-            {
-                if ( "accessURL".equalsIgnoreCase(columnDesc.getColumnName()))
-                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
-            }
-            
-            // ivoa.ObsCore
-            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName))
-            {
-                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName()))
-                    return new DataLinkURLFormat(job.getID());
-            }
-        }
-
-        return super.getClobFormat(columnDesc);
+        throw new IllegalArgumentException(object.getClass().getCanonicalName() + " not supported.");
     }
 }

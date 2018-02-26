@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.compute.CutoutUtil;
 import ca.nrc.cadc.caom2.compute.EnergyUtil;
 import ca.nrc.cadc.caom2.compute.PolarizationUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
@@ -194,7 +195,7 @@ public class ArtifactProcessor
                 dl.errorMessage = "FataLFault: failed to generate download URL: " + ex.toString();
             }
 
-            if (!downloadOnly)
+            if (!downloadOnly && canCutout(a))
             {
                 try
                 {
@@ -235,6 +236,20 @@ public class ArtifactProcessor
         public String bandMin, bandMax;
         public String timeMin, timeMax;
         public List<PolarizationState> pol;
+    }
+    
+    private boolean canCutout(Artifact a) {
+        if (!CutoutUtil.canCutout(a)) {
+            return false; // insufficient metadata
+        }
+        
+        // current SODA implementation at CADC can only handle 
+        if (!"application/fits".equals(a.contentType)
+                && !"image/fits".equals(a.contentType)) {
+            return false; // file type not supported by SODA
+        }
+        
+        return true;
     }
     
     private ArtifactBounds generateBounds(Artifact a)
