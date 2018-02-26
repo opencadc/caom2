@@ -28,7 +28,7 @@ dependencies {
     compile 'org.opencadc:cadc-vos:1.+'
     compile 'org.opencadc:cadc-uws-server:1.+'
     compile 'org.opencadc:caom2:[2.3.4,3.0)'
-    compile 'org.opencadc:caom2-compute:[2.3.9,3.0)'
+    compile 'org.opencadc:caom2-compute:[2.3.10,3.0)'
     compile 'org.opencadc:caom2-tap:[1.6.1,)'
 
     testCompile 'junit:junit:[4.0,5.0)'
