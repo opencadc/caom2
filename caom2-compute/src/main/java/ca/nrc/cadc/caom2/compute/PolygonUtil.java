@@ -437,7 +437,7 @@ public final class PolygonUtil {
             boolean improve = true;
             while (improve) { // improving
                 smoothSimpleColinearSegments(p, 0.05); // ~3 deg ~ 0.05 rad
-                smoothSimpleAdjacentVertices(p, 1.0e-2); // 1% of size
+                smoothSimpleAdjacentVertices(p, 1.0e-3); // 0.1% of size
                 smoothSimpleColinearSegments(p, 0.05); // ~3 deg ~ 0.05 rad
                 int cur = p.getVertices().size();
 

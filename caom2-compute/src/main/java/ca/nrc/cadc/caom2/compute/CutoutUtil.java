@@ -108,7 +108,18 @@ public final class CutoutUtil {
     private CutoutUtil() {
     }
 
-    // convex is for spatial cutout with a circle only
+    /**
+     * Compute a cfitsio-style cutout string in pixel coordinates for the specified 
+     * artifact and bounds.
+     * 
+     * @param a
+     * @param shape
+     * @param energyInter
+     * @param timeInter
+     * @param polarStates
+     * @return
+     * @throws NoSuchKeywordException 
+     */
     public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates)
         throws NoSuchKeywordException {
         if (a == null) {
@@ -294,6 +305,52 @@ public final class CutoutUtil {
         return ret;
     }
 
+    /**
+     * Check if any child part has enough metadata to support cutout.
+     * 
+     * @param a
+     * @return 
+     */
+    public static boolean canCutout(Artifact a) {
+        for (Part p : a.getParts()) {
+            if (canCutout(p)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check if any child chunk has enough metadata to support cutout.
+     * 
+     * @param p
+     * @return 
+     */
+    public static boolean canCutout(Part p) {
+        for (Chunk c : p.getChunks()) {
+            if (canCutout(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check if the specified chunk has enough metadata to support cutout.
+     * 
+     * @param c
+     * @return 
+     */
+    public static boolean canCutout(Chunk c) {
+
+        boolean posCutout = canPositionCutout(c);
+        boolean energyCutout = canEnergyCutout(c);
+        boolean timeCutout = canTimeCutout(c);
+        boolean polCutout = canPolarizationCutout(c);
+
+        return posCutout || energyCutout || timeCutout || polCutout;
+    }
+    
     private static String toString(long[] cut) {
         if (cut == null) {
             return null;
@@ -308,7 +365,7 @@ public final class CutoutUtil {
         return sb.toString();
     }
 
-    private static long[] getObservableCutout(ObservableAxis o) {
+    static long[] getObservableCutout(ObservableAxis o) {
 
         long o1 = o.getDependent().getBin();
         long o2 = o.getDependent().getBin();
@@ -369,15 +426,7 @@ public final class CutoutUtil {
         return sb;
     }
 
-    static boolean canCutout(Chunk c) {
-
-        boolean posCutout = canPositionCutout(c);
-        boolean energyCutout = canEnergyCutout(c);
-        boolean timeCutout = canTimeCutout(c);
-        boolean polCutout = canPolarizationCutout(c);
-
-        return posCutout || energyCutout || timeCutout || polCutout;
-    }
+    
 
     // check if spatial cutout is possible (currently function only)
     protected static boolean canPositionCutout(Chunk c) {
@@ -596,34 +645,6 @@ public final class CutoutUtil {
         return new long[] {x1, x2, y1, y2}; // an actual cutout
     }
 
-
-    //    public void SpatialWCS convertPolyCoordsys(PositionUtil.CoordSys csys, SpatialWCS wcs, MultiPolygon poly)
-    //    {
-    //        // npoly is in ICRS
-    //        if (PositionUtil.CoordSys.GAL.equals(csys.getName()) ||
-    //                PositionUtil.CoordSys.FK4.equals(csys.getName()))
-    //        {
-    //            // convert npoly to native coordsys, in place since we created a new npoly above
-    //            log.debug("converting poly to " + csys);
-    //            for (Vertex v : poly.getVertices())
-    //            {
-    //                if ( !SegmentType.CLOSE.equals(v.getType()) )
-    //                {
-    //                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
-    //
-    //                    // convert poly coords to native WCS coordsys
-    //                    if (PositionUtil.CoordSys.GAL.equals(csys.getName()))
-    //                        pp = wcscon.fk52gal(pp);
-    //                    else if (PositionUtil.CoordSys.FK4.equals(csys.getName()))
-    //                        pp = wcscon.fk524(pp);
-    //                    v.cval1 = pp.coordX;
-    //                    v.cval2 = pp.coordY;
-    //                }
-    //            }
-    //        }
-    //    }
-
-
     /**
      * Compute a pixel cutout for the specified bounds. The bounds are assumed to be
      * barycentric wavelength in meters.
@@ -633,7 +654,7 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    public static long[] getEnergyBounds(SpectralWCS wcs, Interval bounds)
+    static long[] getEnergyBounds(SpectralWCS wcs, Interval bounds)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
             // convert wcs to energy axis interval
@@ -746,14 +767,5 @@ public final class CutoutUtil {
         }
         // an actual cutout
         return new long[] {x1, x2};
-    }
-
-    public boolean validate(Chunk c) {
-        boolean isValid = true;
-
-        // Provide WCS validation.
-
-
-        return isValid;
     }
 }
