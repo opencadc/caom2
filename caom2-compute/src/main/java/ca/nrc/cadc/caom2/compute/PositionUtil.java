@@ -142,8 +142,11 @@ public final class PositionUtil {
         throws NoSuchKeywordException {
         List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
         for (Artifact a : artifacts) {
+            log.debug("generatePolygons: " + a.getURI());
             for (Part p : a.getParts()) {
+                log.debug("generatePolygons: " + a.getURI() + " " + p.getName());
                 for (Chunk c : p.getChunks()) {
+                    log.debug("generatePolygons: " + a.getURI() + " " + p.getName() + " " + c.getID());
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         log.debug("generatePolygons: " + a.getURI() + " "
                             + a.getProductType() + " " + p.productType + " " + c.productType);
@@ -163,6 +166,9 @@ public final class PositionUtil {
                                 polys.add(poly);
                             }
                         }
+                    } else {
+                        log.debug("generatePolygons SKIP: " + a.getURI() + " "
+                            + a.getProductType() + " " + p.productType + " " + c.productType);
                     }
                 }
             }
