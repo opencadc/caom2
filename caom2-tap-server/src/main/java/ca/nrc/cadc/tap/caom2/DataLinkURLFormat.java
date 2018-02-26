@@ -89,9 +89,7 @@ public class DataLinkURLFormat  implements Format<Object>
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
     private String jobID;
-    private URL baseURL;
-
-    private static final URI DATALINK_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/caom2ops");
+    private static final String DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI = "ivo://cadc.nrc.ca/caom2ops";
 
     private DataLinkURLFormat() { }
 
@@ -100,20 +98,6 @@ public class DataLinkURLFormat  implements Format<Object>
         if (jobID == null)
             throw new IllegalArgumentException("null jobID");
         this.jobID = jobID;
-
-        try
-        {
-            Subject s = AuthenticationUtil.getCurrentSubject();
-            AuthMethod cur = AuthenticationUtil.getAuthMethod(s);
-            RegistryClient rc = new RegistryClient();
-            // TODO: should know the request protocol from the job, but don't have
-            // access to the job... for now AuthMethod is unambiguous
-            this.baseURL = rc.getServiceURL(DATALINK_RESOURCE_IDENTIFIER_URI, Standards.DATALINK_LINKS_10, cur);
-        }
-        catch(Exception ex)
-        {
-            log.error("BUG", ex);
-        }
     }
 
     @Override
@@ -131,12 +115,23 @@ public class DataLinkURLFormat  implements Format<Object>
         String s = (String) o;
         try
         {
+            int i = s.indexOf('?');
+            String rid = DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI;
+            if (i > 0) {
+                rid = s.substring(0,i);
+            } // else: default for unresolvable caom planeURI of the form caom:blah/blah/blah
+            URI resourceID = URI.create(rid);
+            RegistryClient rc = new RegistryClient();
+            Subject caller = AuthenticationUtil.getCurrentSubject();
+            AuthMethod cur = AuthenticationUtil.getAuthMethod(caller);
+            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, cur);
             StringBuilder sb = new StringBuilder();
             sb.append(baseURL.toExternalForm());
             sb.append("?");
-            if (jobID != null)
-                sb.append("runid=").append( NetUtil.encode(jobID) ).append("&");
-            sb.append("ID=").append( NetUtil.encode(s));
+            if (jobID != null) {
+                sb.append("runid=").append(NetUtil.encode(jobID)).append("&");
+            }
+            sb.append("ID=").append(NetUtil.encode(s));
             return sb.toString();
         }
         catch(Exception ex)

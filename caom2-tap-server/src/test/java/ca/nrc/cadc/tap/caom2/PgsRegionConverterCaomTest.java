@@ -109,7 +109,7 @@ public class PgsRegionConverterCaomTest
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
         TAP_SCHEMA = TestUtil.loadTapSchema();
     }
 

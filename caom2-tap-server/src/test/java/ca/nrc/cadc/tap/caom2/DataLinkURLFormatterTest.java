@@ -128,8 +128,8 @@ public class DataLinkURLFormatterTest
         
         try
         {
-        	Subject s = new Subject();
-        	s.getPublicCredentials().add(AuthMethod.ANON);
+            Subject s = new Subject();
+            s.getPublicCredentials().add(AuthMethod.ANON);
             String surl = Subject.doAs(s, new FormatAction(URI));
             log.debug("datalink URL: " + surl);
             Assert.assertNotNull(surl);

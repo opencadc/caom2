@@ -139,14 +139,13 @@ public class CaomSelectListConverterTest
         }
     }
     
-    // feature disabled because position_bounds_points is polymorphic
-    //@Test
-    public final void testPositonBoundsNoAlias()
+    @Test
+    public final void testObsCoreRegionNoAlias()
     {
         String[] queries = new String[] 
         { 
-            "select foo,position_bounds from caom2.Plane", 
-            "select foo,position_bounds,bar from caom2.Plane" 
+            "select foo,s_region from caom2.ObsCore", 
+            "select foo,s_region,bar from caom2.ObsCore" 
         };
         try
         {
@@ -156,32 +155,35 @@ public class CaomSelectListConverterTest
                 String query = queries[t];
                 List<Parameter> params = new ArrayList<Parameter>();
                 params.add(new Parameter("QUERY", query));
-                log.info("testPositonBoundsNoAlias, before: " + query);
+                log.info("testObsCoreRegionNoAlias, before: " + query);
                 TapQuery tq = new TestQuery();
                 TestUtil.job.getParameterList().addAll(params);
                 tq.setJob(TestUtil.job);
                 String sql = tq.getSQL();
-                log.info("testPositonBoundsNoAlias, after: " + sql);
+                log.info("testObsCoreRegionNoAlias, after: " + sql);
 
-                assertTrue("testPositonBoundsNoAlias: !position_bounds", !sql.contains("position_bounds "));
-                assertTrue("testPositonBoundsNoAlias: position_bounds_points", sql.contains("position_bounds_points"));
+                assertTrue("testObsCoreRegionNoAlias: !s_region", !sql.contains("s_region "));
+                assertTrue("testObsCoreRegionNoAlias: position_bounds_points", sql.contains("position_bounds_points"));
             }
         }
-        catch (Throwable t)
+        catch (Exception t)
         {
-            log.error("testPositonBoundsNoAlias", t);
+            log.error("testObsCoreRegionNoAlias", t);
             fail();
+        }
+        finally
+        {
+            TestUtil.job.getParameterList().clear();
         }
     }
 
-    // feature disabled because position_bounds_points is polymorphic
-    //@Test
-    public final void testPositonBoundsWithAlias()
+    @Test
+    public final void testObsCoreRegionWithAlias()
     {
         String[] queries = new String[] 
         { 
-            "select a.foo,a.position_bounds from caom2.Plane as a",
-            "select a.foo,a.position_bounds,a.bar from caom2.Artifact as a" 
+            "select a.foo,a.s_region from caom2.ObsCore as a",
+            "select a.foo,a.s_region,a.bar from caom2.ObsCore as a" 
         };
         try
         {
@@ -191,20 +193,20 @@ public class CaomSelectListConverterTest
                 String query = queries[t];
                 List<Parameter> params = new ArrayList<Parameter>();
                 params.add(new Parameter("QUERY", query));
-                log.info("testPositonBoundsWithAlias, before: " + query);
+                log.info("testObsCoreRegionWithAlias, before: " + query);
                 TapQuery tq = new TestQuery();
                 TestUtil.job.getParameterList().addAll(params);
                 tq.setJob(TestUtil.job);
                 String sql = tq.getSQL();
-                log.info("testPositonBoundsWithAlias, after: " + sql);
+                log.info("testObsCoreRegionWithAlias, after: " + sql);
 
-                assertTrue("testPositonBoundsWithAlias: !position_bounds", !sql.contains("position_bounds "));
-                assertTrue("testPositonBoundsWithAlias: position_bounds_points", sql.contains("position_bounds_points"));
+                assertTrue("testObsCoreRegionWithAlias: !s_region", !sql.contains("s_region "));
+                assertTrue("testObsCoreRegionWithAlias: position_bounds_points", sql.contains("position_bounds_points"));
             }
         }
-        catch (Throwable t)
+        catch (Exception t)
         {
-            log.error("testFoundWithAlias", t);
+            log.error("testObsCoreRegionWithAlias", t);
             fail();
         }
         finally

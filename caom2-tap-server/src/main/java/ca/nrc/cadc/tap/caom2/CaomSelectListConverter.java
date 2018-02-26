@@ -154,7 +154,7 @@ public class CaomSelectListConverter extends SelectNavigator
         Table t = c.getTable();
         if ( !isUploadedTable(t, tabs))
         {
-            if (isCAOM2(c, tabs)) // support for computed CLOB columns in tap_schema
+            if (isCAOM2(c, tabs))
             {
                 // caom2.Artifact, caom2.SIAv1
                 if (c.getColumnName().equalsIgnoreCase("accessURL"))
@@ -167,9 +167,9 @@ public class CaomSelectListConverter extends SelectNavigator
                 //if (c.getColumnName().equalsIgnoreCase("position_bounds"))
                 //    c.setColumnName("position_bounds_points");
                 
-                // caom2.ObsCore: access_url column in the view contains planeURI values
-                //if (c.getColumnName().equalsIgnoreCase("s_region"))
-                //    c.setColumnName("position_bounds_points");
+                // ivoa.ObsCore has STC-S output so we can select the exact polymorphic column
+                if (c.getColumnName().equalsIgnoreCase("s_region"))
+                    c.setColumnName("position_bounds_points");
             }
             
         }
@@ -182,6 +182,7 @@ public class CaomSelectListConverter extends SelectNavigator
         Table t = c.getTable();
         for (Table t2 : tabs)
         {
+            log.debug("isCAOM2: " + c + " vs " + t2);
             if ( t2.getSchemaName().equalsIgnoreCase("caom2"))
             {
                 caom2 = true;
