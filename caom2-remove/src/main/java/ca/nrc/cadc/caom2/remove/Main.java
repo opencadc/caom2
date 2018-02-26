@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,6 +71,8 @@ package ca.nrc.cadc.caom2.remove;
 
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.Console;
+import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -82,9 +84,6 @@ import org.apache.log4j.Logger;
 public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
-
-    private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
-    private static final Integer DEFAULT_BATCH_FACTOR = new Integer(2500);
     private static int exitValue = 0;
 
     public static void main(String[] args) {
@@ -94,11 +93,11 @@ public class Main {
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.remove", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
-                Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
+//                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
+//                Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else {
-                Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
+                Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+//                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
             }
 
             if (am.isSet("h") || am.isSet("help")) {
@@ -118,63 +117,77 @@ public class Main {
             String database = am.getValue("database");
             boolean nodest = (database == null || database.trim().length() == 0);
             if (nodest) {
-                log.warn("missing required argument: --database");
+                log.warn("missing required argument: --database=<server.database.schema>");
                 usage();
                 System.exit(1);
             }
             String[] destDS = database.split("[.]");
             if (destDS.length != 3) {
-                log.warn("malformed --database value, found " + database + " expected: server.database.schema");
+                log.warn("malformed --database value, found " + database + " expected: <server.database.schema>");
                 usage();
                 System.exit(1);
             }
 
+            String source = am.getValue("source");
+            boolean nosource = (source == null || source.trim().length() == 0);
+            if (nosource) {
+                log.warn("missing required argument: --source=<server.database.schema> | <resource ID>");
+                usage();
+                System.exit(1);
+            }
 
-            Integer batchSize = null;
-            Integer batchFactor = null;
-            String sbatch = am.getValue("batchSize");
-            String sfactor = am.getValue("batchFactor");
-
-            if (sbatch != null && sbatch.trim().length() > 0) {
-                try {
-                    batchSize = new Integer(sbatch);
-                } catch (NumberFormatException nex) {
+            try {
+                // Try make it a uri first
+                URI resourceURI = new URI(source);
+                String scheme = resourceURI.getScheme();
+                if (!scheme.equals("ivo")) {
+                    // must have a scheme, and it must be 'ivo'
+                    log.warn("malformed --source value. Found scheme '" + scheme + "', expected: 'ivo'");
+                        usage();
+                        System.exit(1);
+                }
+            } catch (Exception e){
+                String[] sourceDS = source.split("[.]");
+                if (sourceDS.length != 3) {
+                    log.warn("malformed --source value, found '" + source + "', expected: <server.database.schema>");
                     usage();
-                    log.error("value for --batchSize must be an integer, found: " + sbatch);
                     System.exit(1);
                 }
             }
-            if (sfactor != null && sfactor.trim().length() > 0) {
-                try {
-                    batchFactor = new Integer(sfactor);
-                } catch (NumberFormatException nex) {
-                    usage();
-                    log.error("value for --batchSize must be an integer, found: " + sbatch);
-                    System.exit(1);
-                }
+            // Assert: at this point the source has been validated to be either a resource ID starting with ivo:
+            // or a server + database + scheme combination where the collection can be found.
+
+            Console console = System.console();
+            if (console == null) {
+                System.out.println("No console: can not continue non-interactive mode! Quitting.\n");
+                System.exit(1);
             }
 
-            if (batchSize == null) {
-                log.debug("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
-                batchSize = DEFAULT_BATCH_SIZE;
+            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
+            String userAnswer = console.readLine();
+
+            if (!userAnswer.equals(collection)) {
+                System.out.print("Collection name does not match. Quitting.\n");
+
+            } else {
+
+                System.out.print("Continuing to remove " + collection + "...\n");
+
+                Runnable action = null;
+                // TODO: body of deletion will go here
+
+                exitValue = 2; // in case we get killed
+                Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
             }
-            if (batchFactor == null && batchSize != null) {
-                log.debug("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
-                batchFactor = DEFAULT_BATCH_FACTOR;
-            }
-
-
-            Runnable action = null;
-
-            exitValue = 2; // in case we get killed
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
             exitValue = 0; // finished cleanly
         } catch (Throwable t) {
             log.error("uncaught exception", t);
+            System.out.print("Done, with errors.\n");
             exitValue = -1;
             System.exit(exitValue);
         } finally {
+            System.out.print("Done.\n");
             System.exit(exitValue);
         }
     }
