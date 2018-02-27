@@ -1,6 +1,6 @@
 
 -- to modify this file with a specific <schema>, try:
--- cat caom2.upgrade-indices-manual.sql | sed 's/<schema>/caom2/g' > doit.sql
+-- cat caom2.upgrade-indices-manual-2.3.15.sql | sed 's/<schema>/caom2/g' > doit.sql
 
 -- add new pattern matching indices and recreate some indices as partial
 
