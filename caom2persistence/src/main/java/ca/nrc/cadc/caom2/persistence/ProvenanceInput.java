@@ -67,13 +67,13 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-
 import ca.nrc.cadc.caom2.PlaneURI;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Internal class to assist persisting Plane.provenance.inputs values.
+ * 
  * @author pdowler
  */
 class ProvenanceInput {

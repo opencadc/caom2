@@ -67,13 +67,13 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-
 import ca.nrc.cadc.caom2.ObservationURI;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Internal class to assist persisting CompositeObservation.members values.
+ * 
  * @author pdowler
  */
 class ObservationMember {
