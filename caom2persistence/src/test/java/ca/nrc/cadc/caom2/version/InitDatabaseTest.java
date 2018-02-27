@@ -174,7 +174,7 @@ public class InitDatabaseTest
         {
             int[] numStatementsPerFile = new int[]
             {
-                1, 7, 9, 3, 4, 4, 2, 2, 3, 6, 8, 24, 2, 4, 1, 2
+                1, 7, 9, 4, 4, 4, 2, 2, 3, 6, 8, 32, 2, 4, 1, 2
             };
             Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
 

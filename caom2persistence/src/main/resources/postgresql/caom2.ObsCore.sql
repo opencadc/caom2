@@ -1,5 +1,5 @@
 
-drop view <schema>.ObsCore;
+drop view if exists <schema>.ObsCore;
 
 create view <schema>.ObsCore
 (

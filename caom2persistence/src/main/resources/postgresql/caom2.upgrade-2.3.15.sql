@@ -14,26 +14,26 @@ alter table <schema>.DeletedPlaneDataReadAccess ADD PRIMARY KEY USING INDEX Dele
 
 -- recreate join tables to support loose coupling to target
 drop table if exists <schema>.Observation_members;
-create table <schema>.Observation_members
+create table <schema>.ObservationMember
 (
     compositeID uuid not null references <schema>.Observation (obsID),
     simpleID varchar(512) not null
 )
 ;
-create unique index i_composite2simple on <schema>.Observation_members (compositeID, simpleID COLLATE "C")
+create unique index i_composite2simple on <schema>.ObservationMember (compositeID,simpleID)
 ;
-create unique index i_simple2composite on <schema>.Observation_members (simpleID COLLATE "C", compositeID)
+create unique index i_simple2composite on <schema>.ObservationMember (simpleID,compositeID)
 ;
 
 drop table if exists <schema>.Plane_inputs;
-create table <schema>.Plane_inputs
+create table <schema>.ProvenanceInput
 (
     outputID uuid not null references <schema>.Plane (planeID),
     inputID varchar(512) not null
 )
 ;
-create unique index i_output2input on <schema>.Plane_inputs (outputID, inputID COLLATE "C")
+create unique index i_output2input on <schema>.ProvenanceInput (outputID,inputID)
 ;
-create unique index i_input2output on <schema>.Plane_inputs (inputID COLLATE "C", outputID)
+create unique index i_input2output on <schema>.ProvenanceInput (inputID,outputID)
 ;
 
