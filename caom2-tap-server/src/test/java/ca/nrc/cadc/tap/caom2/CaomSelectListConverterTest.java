@@ -139,7 +139,8 @@ public class CaomSelectListConverterTest
         }
     }
     
-    @Test
+    // tests for CaomSelectListConverter.fixCiolumn(s_region)
+    //@Test
     public final void testObsCoreRegionNoAlias()
     {
         String[] queries = new String[] 
@@ -177,7 +178,8 @@ public class CaomSelectListConverterTest
         }
     }
 
-    @Test
+    // tests for CaomSelectListConverter.fixCiolumn(s_region)
+    //@Test
     public final void testObsCoreRegionWithAlias()
     {
         String[] queries = new String[] 
