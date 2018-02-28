@@ -125,7 +125,11 @@ public class CaomRegionConverter extends PgsphereRegionConverter
             else if (left instanceof DoubleValue)
             {
                 DoubleValue dv = (DoubleValue) left;
-                Point2D p = new Point2D(dv, new DoubleValue("0.0"));
+                //Point2D p = new Point2D(dv, new DoubleValue("0.0"));
+                double d = dv.getValue();
+                double d1 = Double.longBitsToDouble(Double.doubleToLongBits(d) - 1L);
+                double d2 = Double.longBitsToDouble(Double.doubleToLongBits(d) + 1L);
+                Interval p = new Interval(new DoubleValue(Double.toString(d1)), new DoubleValue(Double.toString(d2)));
                 return super.handleContains(p, right);
             }
             else
@@ -145,6 +149,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter
       if (e instanceof Column)
       {
           Column c = (Column) e;
+          // TODO: resolve column in tap_schema and then trigger off xtype==interval
           if (c.getColumnName().equals("energy_bounds") || c.getColumnName().equals("energy_bounds_samples")
                   || c.getColumnName().equals("time_bounds") || c.getColumnName().equals("time_bounds_samples"))
               return Interval.class;
