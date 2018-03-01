@@ -156,6 +156,15 @@ public abstract class HarvestStateDAO {
         jdbc.update(put);
     }
 
+    public void delete(HarvestState state) {
+        if (state.id == null) {
+            throw new IllegalArgumentException("cannot delete " + state + " (never persisted)");
+        }
+        DeleteStatementCreator del = new DeleteStatementCreator();
+        del.setValue(state);
+        jdbc.update(del);
+    }
+    
     protected abstract void setUUID(PreparedStatement ps, int col, UUID val)
             throws SQLException;
 
@@ -241,6 +250,36 @@ public abstract class HarvestStateDAO {
             ps.setTimestamp(col++, new Timestamp(state.lastModified.getTime()), utcCalendar);
             sb.append(state.lastModified).append(",");
             setUUID(ps, col++, state.id);
+            sb.append(state.id).append("");
+            log.debug(sb.toString());
+        }
+    }
+    
+    private class DeleteStatementCreator implements PreparedStatementCreator {
+
+        private HarvestState state;
+
+        DeleteStatementCreator() {
+        }
+
+        public void setValue(HarvestState state) {
+            this.state = state;
+        }
+
+        @Override
+        public PreparedStatement createPreparedStatement(Connection conn)
+                throws SQLException {
+            String sql = SqlUtil.getDeleteSQL(COLUMNS, tableName);
+            PreparedStatement prep = conn.prepareStatement(sql);
+            log.debug(sql);
+            loadValues(prep);
+            return prep;
+        }
+
+        private void loadValues(PreparedStatement ps)
+                throws SQLException {
+            StringBuilder sb = new StringBuilder("values: ");
+            setUUID(ps, 1, state.id);
             sb.append(state.id).append("");
             log.debug(sb.toString());
         }

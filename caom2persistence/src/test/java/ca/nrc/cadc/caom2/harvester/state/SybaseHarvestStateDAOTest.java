@@ -152,6 +152,7 @@ public class SybaseHarvestStateDAOTest
             Assert.assertEquals("testGet", s.source);
             Assert.assertEquals(Integer.class.getName(), s.cname);
             Assert.assertNull(s.curLastModified);
+            Assert.assertNull(s.id); // not actually stored in DB
         }
         catch(Exception unexpected)
         {
@@ -160,6 +161,51 @@ public class SybaseHarvestStateDAOTest
         }
     }
 
+    @Test
+    public void testPutGetDelete()
+    {
+        try
+        {
+            HarvestStateDAO dao = new SybaseHarvestStateDAO(dataSource, database, schema);
+            HarvestState s = dao.get("testGet", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertEquals("testGet", s.source);
+            Assert.assertEquals(Integer.class.getName(), s.cname);
+            Assert.assertNull(s.curLastModified);
+            Assert.assertNull(s.id); // not actually stored in DB
+            
+            s.curLastModified = new Date();
+            s.curID = UUID.randomUUID();
+            dao.put(s);
+            HarvestState actual = dao.get("testGet", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertEquals(s.source, actual.source);
+            Assert.assertEquals(s.cname, actual.cname);
+            Assert.assertEquals(s.curID, actual.curID);
+            Assert.assertEquals(s.curLastModified.getTime(), actual.curLastModified.getTime(), 3L);
+            Assert.assertNotNull(s.id); // persisted
+            
+            try {
+                dao.delete(s);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected: " + expected);
+            }
+        
+            dao.delete(actual);
+            s = dao.get("testGet", Integer.class.getName());
+            Assert.assertNotNull(s);
+            Assert.assertEquals("testGet", s.source);
+            Assert.assertEquals(Integer.class.getName(), s.cname);
+            Assert.assertNull(s.curLastModified);
+            Assert.assertNull(s.id); // no longer stored in DB
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
     @Test
     public void testInsertID()
     {
