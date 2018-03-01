@@ -168,8 +168,9 @@ public class CaomSelectListConverter extends SelectNavigator
                 //    c.setColumnName("position_bounds_points");
                 
                 // ivoa.ObsCore has STC-S output so we can select the exact polymorphic column
-                if (c.getColumnName().equalsIgnoreCase("s_region"))
-                    c.setColumnName("position_bounds_points");
+                // this variant has to match the one in FormatFactoryImpl.getRegionFormat()
+                //if (c.getColumnName().equalsIgnoreCase("s_region"))
+                //    c.setColumnName("position_bounds_points");
             }
             
         }

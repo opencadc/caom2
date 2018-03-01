@@ -461,19 +461,27 @@ public class CaomRegionConverterTest
     public void testIntervalContains()
     {
         log.debug("testIntervalContains START");
+        //_expected = "select * from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
         _expected = "select * from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select * from caom2.Plane where CONTAINS(1.0, energy_bounds) = 1";
         run();
         log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        String tmp = prepareToCompare(_sql);
+        Assert.assertTrue(tmp.contains("polygon(box(point("));
+        Assert.assertTrue(tmp.contains(" && energy_bounds"));
         
+        //_expected = "select * from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
         _expected = "select * from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select * from caom2.Plane where CONTAINS(1.0, time_bounds) = 1";
         run();
         log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        tmp = prepareToCompare(_sql);
+        Assert.assertTrue(tmp.contains("polygon(box(point("));
+        Assert.assertTrue(tmp.contains(" && time_bounds"));
     }
     
     @Test
@@ -485,14 +493,20 @@ public class CaomRegionConverterTest
         _query = "select * from caom2.Plane where CONTAINS(1.0, energy_bounds) = 0";
         run();
         log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        String tmp = prepareToCompare(_sql);
+        Assert.assertTrue(tmp.contains("polygon(box(point("));
+        Assert.assertTrue(tmp.contains(" !&& energy_bounds"));
         
         _expected = "select * from caom2.Plane where point(1.0, 0.0) !<@ time_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select * from caom2.Plane where CONTAINS(1.0, time_bounds) = 0";
         run();
         log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        tmp = prepareToCompare(_sql);
+        Assert.assertTrue(tmp.contains("polygon(box(point("));
+        Assert.assertTrue(tmp.contains(" !&& time_bounds"));
     }
     
     @Test
