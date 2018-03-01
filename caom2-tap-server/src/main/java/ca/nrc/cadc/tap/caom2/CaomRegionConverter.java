@@ -130,7 +130,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                 double d1 = Double.longBitsToDouble(Double.doubleToLongBits(d) - 1L);
                 double d2 = Double.longBitsToDouble(Double.doubleToLongBits(d) + 1L);
                 Interval p = new Interval(new DoubleValue(Double.toString(d1)), new DoubleValue(Double.toString(d2)));
-                return super.handleContains(p, right);
+                //return super.handleContains(p, right);
+                return super.handleIntersects(p, right);
             }
             else
                 throw new IllegalArgumentException("invalid argument type for contains: " + left.getClass().getSimpleName());

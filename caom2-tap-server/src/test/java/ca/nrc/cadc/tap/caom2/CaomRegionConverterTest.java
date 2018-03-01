@@ -470,7 +470,7 @@ public class CaomRegionConverterTest
         //Assert.assertEquals(_expected, prepareToCompare(_sql));
         String tmp = prepareToCompare(_sql);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" <@ energy_bounds"));
+        Assert.assertTrue(tmp.contains(" && energy_bounds"));
         
         //_expected = "select * from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
         _expected = "select * from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
@@ -481,7 +481,7 @@ public class CaomRegionConverterTest
         //Assert.assertEquals(_expected, prepareToCompare(_sql));
         tmp = prepareToCompare(_sql);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" <@ time_bounds"));
+        Assert.assertTrue(tmp.contains(" && time_bounds"));
     }
     
     @Test
@@ -496,7 +496,7 @@ public class CaomRegionConverterTest
         //Assert.assertEquals(_expected, prepareToCompare(_sql));
         String tmp = prepareToCompare(_sql);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" !<@ energy_bounds"));
+        Assert.assertTrue(tmp.contains(" !&& energy_bounds"));
         
         _expected = "select * from caom2.Plane where point(1.0, 0.0) !<@ time_bounds";
         _expected = prepareToCompare(_expected);
@@ -506,7 +506,7 @@ public class CaomRegionConverterTest
         //Assert.assertEquals(_expected, prepareToCompare(_sql));
         tmp = prepareToCompare(_sql);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" !<@ time_bounds"));
+        Assert.assertTrue(tmp.contains(" !&& time_bounds"));
     }
     
     @Test
