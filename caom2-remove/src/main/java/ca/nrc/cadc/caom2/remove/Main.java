@@ -197,7 +197,7 @@ public class Main {
                 Runnable action = null;
 
                 try {
-                    ObservationRemover cv = new ObservationRemover(target, src,null, batchSize, false, false, dryrun);
+                    ObservationRemover cv = new ObservationRemover(target, src,null, batchSize);
                     // [min,max] timestamps not supported by validator (only full)
                     //cv.setMinDate(minDate);
                     //cv.setMaxDate(maxDate);
