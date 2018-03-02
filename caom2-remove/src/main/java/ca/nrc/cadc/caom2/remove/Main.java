@@ -69,10 +69,14 @@
 
 package ca.nrc.cadc.caom2.remove;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.Console;
+import java.io.IOException;
 import java.net.URI;
+import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -93,11 +97,8 @@ public class Main {
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.remove", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
-//                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
-//                Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-//                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
             }
 
             if (am.isSet("h") || am.isSet("help")) {
@@ -136,58 +137,96 @@ public class Main {
                 System.exit(1);
             }
 
+
+
+            String[] sourceDS = null;
+
+            HarvestResource target = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
+            HarvestResource src = null;
+
+            URI resourceURI = null;
             try {
                 // Try make it a uri first
-                URI resourceURI = new URI(source);
+                resourceURI = new URI(source);
                 String scheme = resourceURI.getScheme();
                 if (!scheme.equals("ivo")) {
                     // must have a scheme, and it must be 'ivo'
                     log.warn("malformed --source value. Found scheme '" + scheme + "', expected: 'ivo'");
                         usage();
                         System.exit(1);
+                } else {
+                    src = new HarvestResource(resourceURI, collection);
                 }
             } catch (Exception e){
-                String[] sourceDS = source.split("[.]");
+                sourceDS = source.split("[.]");
                 if (sourceDS.length != 3) {
                     log.warn("malformed --source value, found '" + source + "', expected: <server.database.schema>");
                     usage();
                     System.exit(1);
+                } else {
+                    src = new HarvestResource(sourceDS[0],sourceDS[1],sourceDS[2], collection, false);
                 }
             }
+
+            // collection and database are easy to parse out:
+
             // Assert: at this point the source has been validated to be either a resource ID starting with ivo:
             // or a server + database + scheme combination where the collection can be found.
 
-            Console console = System.console();
-            if (console == null) {
-                System.out.println("No console: can not continue non-interactive mode! Quitting.\n");
-                System.exit(1);
-            }
+//            Console console = System.console();
+//            if (console == null) {
+//                log.error("No console: can not continue non-interactive mode! Quitting.\n");
+//                System.exit(1);
+//            }
+//
+//            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
+//            String userAnswer = console.readLine();
+//
+//
+//
+//            if (!userAnswer.equals(collection)) {
+//                log.error("Collection name does not match. Quitting.\n");
+//
+//            } else {
 
-            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
-            String userAnswer = console.readLine();
+                log.info("Continuing to remove " + collection + "...\n");
 
-            if (!userAnswer.equals(collection)) {
-                System.out.print("Collection name does not match. Quitting.\n");
-
-            } else {
-
-                System.out.print("Continuing to remove " + collection + "...\n");
+                boolean dryrun = true;
+                int batchSize = 100000;
 
                 Runnable action = null;
-                // TODO: body of deletion will go here
+
+                try {
+                    ObservationRemover cv = new ObservationRemover(target, src,null, batchSize, false, false, dryrun);
+                    // [min,max] timestamps not supported by validator (only full)
+                    //cv.setMinDate(minDate);
+                    //cv.setMaxDate(maxDate);
+                    action = cv;
+                } catch (IOException ioex) {
+
+                    log.error("failed to init: " + ioex.getMessage());
+                    exitValue = -1;
+                    System.exit(exitValue);
+                }
 
                 exitValue = 2; // in case we get killed
                 Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-            }
+                // setup optional authentication for harvesting from a web service
+                Subject subject = AuthenticationUtil.getAnonSubject();
+
+                if (subject != null) {
+                    Subject.doAs(subject, new RunnableAction(action));
+                }
+
 
             exitValue = 0; // finished cleanly
         } catch (Throwable t) {
             log.error("uncaught exception", t);
-            System.out.print("Done, with errors.\n");
+            log.error("Done, with errors.");
             exitValue = -1;
             System.exit(exitValue);
         } finally {
-            System.out.print("Done.\n");
+            log.info("Done.");
             System.exit(exitValue);
         }
     }
