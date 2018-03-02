@@ -31,3 +31,8 @@ create index i_planeID on <schema>.Artifact (planeID)
 -- tag the clustering index
 cluster i_planeID on <schema>.Artifact
 ;
+
+create index Artifact_i_uri
+    on <schema>.Artifact (uri)
+;
+

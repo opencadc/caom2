@@ -200,7 +200,7 @@ public abstract class AbstractObservationDAOTest
 
     Class[] ENTITY_CLASSES =
     {
-        Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
+        ObservationMember.class, ProvenanceInput.class, Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
     protected AbstractObservationDAOTest(Class genClass, String server, String database, String schema, 
@@ -748,7 +748,7 @@ public abstract class AbstractObservationDAOTest
             for (int i=minDepth; i<=maxDepth; i++)
             {
                 log.info("testUpdateSimpleObservation: full=" + full + ", depth=" + i);
-                Observation orig = getTestObservation(full, i, true, true);
+                Observation orig = getTestObservation(full, i, false, true);
 
                 //txnManager.startTransaction();
                 dao.put(orig);

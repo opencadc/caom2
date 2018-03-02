@@ -63,10 +63,9 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.version;
-
 
 import ca.nrc.cadc.caom2.persistence.UtilTest;
 import ca.nrc.cadc.db.ConnectionConfig;
@@ -84,19 +83,17 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class InitDatabaseTest
-{
+public class InitDatabaseTest {
+
     private static final Logger log = Logger.getLogger(InitDatabaseTest.class);
 
     static String schema = "caom2";
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
-        if (testSchema != null)
-        {
+        if (testSchema != null) {
             schema = testSchema;
         }
     }
@@ -104,18 +101,14 @@ public class InitDatabaseTest
     private DataSource dataSource;
     private String database;
 
-    public InitDatabaseTest()
-    {
-        try
-        {
+    public InitDatabaseTest() {
+        try {
             database = "cadctest";
 
             DBConfig dbrc = new DBConfig();
             ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
             dataSource = DBUtil.getDataSource(cc);
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             log.error("failed to init DataSource", ex);
         }
     }
@@ -123,97 +116,94 @@ public class InitDatabaseTest
     // NOTE: tests are currently commented out because the other Postgresql*Test(s)
     // all use InitDatabase.doInit and one of them will have done this anyway; this
     // test will have some value if/when the TODOs are implemented.
-
     @Test
-    public void testNewInstall()
-    {
-        try
-        {
+    public void testNewInstall() {
+        try {
             // TODO: nuke all tables and re-create
             // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
 
             // TODO: verify that tables were created with test queries
-
             // TODO: verify that init is idempotent
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testUpgradeInstall()
-    {
-        try
-        {
+    public void testUpgradeInstall() {
+        try {
             // TODO: create previous version  of tables and upgrade... sounds complicated
             // for now: create || upgrade || idempotent
             InitDatabase init = new InitDatabase(dataSource, database, schema);
             init.doInit();
 
             // TODO: verify that tables were created with test queries
-
             // TODO: verify that init is idempotent
-
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testParseCreateDDL()
-    {
-        try
-        {
-            int[] numStatementsPerFile = new int[]
-            {
-                1, 7, 9, 3, 4, 4, 2, 2, 3, 6, 8, 27, 1, 2, 1
-            };
-            Assert.assertEquals("BUG: testParseCreateDDL setup", numStatementsPerFile.length, InitDatabase.CREATE_SQL.length);
-
-            for (int i = 0; i<numStatementsPerFile.length; i++)
-            {
-                String fname = InitDatabase.CREATE_SQL[i];
+    public void testParseCreateDDL() {
+        try {
+            for (String fname : InitDatabase.CREATE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = InitDatabase.parseDDL(fname, schema);
-                Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
+                Assert.assertNotNull(statements);
+                Assert.assertFalse(statements.isEmpty());
+                for (String s : statements) {
+                    String[] tokens = s.split(" ");
+                    String cmd = tokens[0];
+                    String type = tokens[1];
+                    String next = tokens[2];
+                    if ("create".equalsIgnoreCase(cmd)) {
+                        if ("table".equalsIgnoreCase(type) || "view".equalsIgnoreCase(type) 
+                                || "index".equalsIgnoreCase(type) || 
+                                ("unique".equalsIgnoreCase(type) && "index".equalsIgnoreCase(next))) {
+                            // OK
+                        } else {
+                            Assert.fail("[create] unexpected type: " + s);
+                        }
+                    } else if ("drop".equalsIgnoreCase(cmd)) {
+                        if ("view".equalsIgnoreCase(type)) {
+                            // OK
+                        } else {
+                            Assert.fail("[drop] dangerous drop: " + s);
+                        }
+                    } else if ("cluster".equalsIgnoreCase(cmd)) {
+                        // OK
+                    } else if ("grant".equalsIgnoreCase(cmd)) {
+                        if ("select".equalsIgnoreCase(type) || "usage".equalsIgnoreCase(type)) {
+                            // OK
+                        } else {
+                            Assert.fail("[grant] unexpected type: " + s);
+                        }
+                    } else {
+                        Assert.fail("unexpected command: " + cmd + " [" + s + "]");
+                    }
+                }
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testParseUpgradeDDL()
-    {
-        try
-        {
-            int[] numStatementsPerFile = new int[]
-            {
-                6
-            };
-            Assert.assertEquals("BUG: testParseUpgradeDDL setup", numStatementsPerFile.length, InitDatabase.UPGRADE_SQL.length);
-
-            for (int i = 0; i<numStatementsPerFile.length; i++)
-            {
-                String fname = InitDatabase.UPGRADE_SQL[i];
+    public void testParseUpgradeDDL() {
+        try {
+            for (String fname : InitDatabase.UPGRADE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = InitDatabase.parseDDL(fname, schema);
-                Assert.assertEquals(fname + " statements", numStatementsPerFile[i], statements.size());
+                Assert.assertNotNull(statements);
+                Assert.assertFalse(statements.isEmpty());
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

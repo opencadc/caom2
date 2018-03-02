@@ -135,4 +135,16 @@ public class SqlUtil {
 
         return sb.toString();
     }
+    
+    static String getDeleteSQL(String[] cols, String tableName) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("DELETE FROM ");
+        sb.append(tableName);
+        sb.append(" WHERE ");
+        sb.append(cols[cols.length - 1]); // PK
+        sb.append(" = ?");
+
+        return sb.toString();
+    }
 }
