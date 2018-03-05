@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.remove;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
@@ -220,7 +221,7 @@ public class ObservationRemover implements Runnable {
                 PostgresqlHarvestStateDAO harvestStateDAO = new PostgresqlHarvestStateDAO(destObservationDAO.getDataSource(),target.getDatabase(), target.getSchema());
                 HarvestSkipURIDAO harvestSkipURIDAO = new HarvestSkipURIDAO(destObservationDAO.getDataSource(), target.getDatabase(), target.getSchema());
 
-                HarvestState hState = harvestStateDAO.get(src.getIdentifier(),Observation.class.getSimpleName());
+                HarvestState hState = harvestStateDAO.get(src.getIdentifier(), Observation.class.getSimpleName());
                 // Check that the record returned has a last modified date.
                 // harvestStateDAO.get will create an empty HarvestState record using the identifier and cname passed in.
                 // in this case, getLastModified is null
@@ -308,8 +309,15 @@ public class ObservationRemover implements Runnable {
                     }
 
                     if (operationComplete) {
-                        // Delete the HarvestState Record, when the DAO class is completed
-                        // hState.delete();
+                        // Delete the HarvestState Observation Record for this source
+                        harvestStateDAO.delete(hState);
+
+                        hState = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
+
+                        if (hState != null) {
+                            // Delete the HarvestState Deleted Observation Record for this source
+                            harvestStateDAO.delete(hState);
+                        }
                     }
                 }
 
