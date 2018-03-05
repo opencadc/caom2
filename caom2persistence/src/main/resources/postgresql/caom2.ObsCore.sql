@@ -1,5 +1,7 @@
 
-create or replace view <schema>.ObsCore
+drop view if exists <schema>.ObsCore;
+
+create view <schema>.ObsCore
 (
     dataproduct_type,
     calib_level,
@@ -52,7 +54,10 @@ create or replace view <schema>.ObsCore
 -- custom columns
     lastModified,
 
--- hidden columns (not in tap_schema) for CAOM access control
+-- hidden columns (not in tap_schema)
+    position_bounds_points,
+
+-- for CAOM access control
     dataRelease,
     planeID,
     metaRelease, metaReadAccessGroups
@@ -64,11 +69,11 @@ AS SELECT
     o.telescope_name,
     o.instrument_name,
     o.observationID,
-    p.planeURI,
+    p.publisherID,
     p.dataRelease,
 
 -- access
-    p.planeURI,
+    p.publisherID,
     CAST('application/x-votable+xml;content=datalink' AS varchar),
     CAST(NULL AS bigint),
 
@@ -112,8 +117,10 @@ AS SELECT
 
 -- custom columns
     o.maxLastModified,
-    p.dataRelease,
 
+-- hidden columns    
+    p.position_bounds_points,
+    p.dataRelease,
     p.planeID,
     p.metaRelease, p.metaReadAccessGroups
 

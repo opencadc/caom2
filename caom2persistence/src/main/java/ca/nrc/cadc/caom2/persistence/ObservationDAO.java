@@ -557,15 +557,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             // delete children of planes
             for (PlaneSkeleton p : o.planes) {
                 planeDAO.deleteChildren(p, jdbc);
+                
+                // delete planes by PK so we also clean up provenance join table
+                EntityDelete op = gen.getEntityDelete(Plane.class, true);
+                op.setID(p.id);
+                op.execute(jdbc);
             }
-
-            // delete planes by FK
-            EntityDelete op = gen.getEntityDelete(Plane.class, false);
-            op.setID(o.id);
-            op.execute(jdbc);
-            //String sql = gen.getDeleteSQL(Plane.class, o.id, false);
-            //log.debug("delete: " + sql);
-            //jdbc.update(sql);
         } else {
             log.debug("no children: " + o.id);
         }

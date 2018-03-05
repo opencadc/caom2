@@ -1,5 +1,6 @@
 
-create or replace view <schema>.SIAv1
+drop view if exists <schema>.SIAv1;
+create view <schema>.SIAv1
 (
     collection, publisherDID, instrument_name,
 

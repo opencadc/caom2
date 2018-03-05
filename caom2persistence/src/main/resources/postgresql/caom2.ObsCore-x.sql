@@ -1,9 +1,11 @@
 
-create or replace view <schema>.ObsFile
+drop view if exists <schema>.ObsFile;
+create view <schema>.ObsFile
 (
     uri,
     content_type,
     content_length,
+    content_checksum,
     last_modified,
 
 -- foreign key in CAOM
@@ -19,6 +21,7 @@ AS SELECT
     a.uri,
     a.contentType,
     a.contentLength,
+    a.contentChecksum,
     a.lastModified,
 
 -- foreign key in CAOM
@@ -31,7 +34,8 @@ AS SELECT
 FROM <schema>.Artifact AS a
 ;
 
-create or replace view <schema>.ObsPart
+drop view if exists <schema>.ObsPart;
+create view <schema>.ObsPart
 (
     name,
     naxis,

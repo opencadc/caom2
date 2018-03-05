@@ -206,6 +206,10 @@ public class SQLGenerator {
             = {
                 ObservationState.class
             };
+    protected static final Class[] JOIN_CLASSES
+            = {
+                ObservationMember.class, ProvenanceInput.class
+            };
 
     static final String SIMPLE_TYPE = "S";
     static final String COMPOSITE_TYPE = "C";
@@ -312,6 +316,15 @@ public class SQLGenerator {
             }
             aliasMap.put(c, c.getSimpleName());
         }
+        for (Class c : JOIN_CLASSES) {
+            String s = c.getSimpleName();
+            if (fakeSchemaTablePrefix != null) {
+                tableMap.put(c, fakeSchemaTablePrefix + s);
+            } else {
+                tableMap.put(c, s);
+            }
+            aliasMap.put(c, c.getSimpleName());
+        }
 
         // IMPORTANT:
         // - the primary key column is LAST in the list of columns so that
@@ -319,7 +332,7 @@ public class SQLGenerator {
         // - the foreign key column is FIRST so the ResultSetExtractor can tell when
         //   it hits a null object
         // - the typeCode column is first so the right subclass of observation can be created
-        String[] obsColumns = new String[]{
+        String[] obsColumns = new String[] {
             "typeCode",
             "collection", "observationID", "algorithm_name",
             "type", "intent", "sequenceNumber", "metaRelease",
@@ -346,8 +359,13 @@ public class SQLGenerator {
             obsColumns = addExtraColumns(obsColumns, extraCols);
         }
         columnMap.put(Observation.class, obsColumns);
+        
+        String[] obsMembersColumns = new String[] {
+            "compositeID", "simpleID"
+        };
+        columnMap.put(ObservationMember.class, obsMembersColumns);
 
-        String[] planeColumns = new String[]{
+        String[] planeColumns = new String[] {
             "obsID",
             "productID",
             "creatorID",
@@ -399,6 +417,11 @@ public class SQLGenerator {
             planeColumns = addExtraColumns(planeColumns, extraCols);
         }
         columnMap.put(Plane.class, planeColumns);
+        
+        String[] provInputColumns = new String[] {
+            "outputID", "inputID"
+        };
+        columnMap.put(ProvenanceInput.class, provInputColumns);
 
         String[] artifactColumns = new String[]{
             "planeID", "obsID",
@@ -1174,11 +1197,23 @@ public class SQLGenerator {
 
         
         public void execute(JdbcTemplate jdbc) {
-            // delete by PK
+            if (persistOptimisations) {
+                // delete join table by FK
+                if (Observation.class.equals(clz)) {
+                    String sql = getDeleteSQL(ObservationMember.class, id, false); // delete by FK aka first column
+                    log.debug("delete: " + sql);
+                    jdbc.update(sql);
+                } else if (Plane.class.equals(clz)) {
+                    String sql = getDeleteSQL(ProvenanceInput.class, id, false); // delete by FK aka first column
+                    log.debug("delete: " + sql);
+                    jdbc.update(sql);
+                }
+            }
+            
+            // delete entity by FK or PK
             String sql = getDeleteSQL(clz, id, byPK);
             log.debug("delete: " + sql);
             jdbc.update(sql);
-
         }
 
         public void setID(UUID id) {
@@ -1269,36 +1304,77 @@ public class SQLGenerator {
 
         boolean update;
         Observation obs;
+        
+        boolean insertMembers = false;
+        boolean deleteMembers = false;
+        ObservationMember member;
 
         ObservationPut(boolean update) {
             this.update = update;
         }
 
-        
+        // three-step execute:
+        // 1. insert/update observation
+        // composite only:
+        // 2. delete previous ObservationMember join tuples
+        // 3. insert current ObservationMember join tuples
+        @Override
         public void execute(JdbcTemplate jdbc) {
             jdbc.update(this);
+            
+            if (!persistOptimisations) {
+                return;
+            }
+            
+            if (obs instanceof CompositeObservation) {
+                deleteMembers = true;
+                jdbc.update(this);
+                deleteMembers = false;
+                
+                insertMembers = true;
+                CompositeObservation co = (CompositeObservation) obs;
+                for (ObservationURI uri : co.getMembers()) {
+                    setValue(new ObservationMember(co.getID(), uri));
+                    jdbc.update(this);
+                }
+                insertMembers = false;
+            }
         }
 
-        
+        @Override
         public void setValue(Observation obs, List<CaomEntity> unused) {
             this.obs = obs;
         }
 
+        private void setValue(ObservationMember member) {
+            this.member = member;
+        }
         
+        @Override
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
             String sql = null;
-            if (update) {
+            if (deleteMembers) {
+                sql = getDeleteSQL(ObservationMember.class, obs.getID(), false); // delete by FK aka first column
+            } else if (insertMembers) {
+                sql = getInsertSQL(ObservationMember.class);
+            } else if (update) {
                 sql = getUpdateSQL(Observation.class);
             } else {
                 sql = getInsertSQL(Observation.class);
             }
             PreparedStatement prep = conn.prepareStatement(sql);
             log.debug(sql);
-            loadValues(prep);
+            if (deleteMembers) {
+                // no values
+            } else if (insertMembers) {
+                loadValuesMember(prep);
+            } else {
+                loadValuesObservation(prep);
+            }
             return prep;
         }
 
-        private void loadValues(PreparedStatement ps)
+        private void loadValuesObservation(PreparedStatement ps)
                 throws SQLException {
             if (obs == null) {
                 throw new IllegalStateException("null observation");
@@ -1422,7 +1498,7 @@ public class SQLGenerator {
             }
 
             if (persistOptimisations) {
-                safeSetString(sb, ps, col++, obs.getURI().getURI().toString());
+                safeSetURI(sb, ps, col++, obs.getURI().getURI());
             }
 
             safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
@@ -1441,6 +1517,22 @@ public class SQLGenerator {
                 log.debug(sb.toString());
             }
         }
+        
+        private void loadValuesMember(PreparedStatement ps)
+                throws SQLException {
+            if (obs == null) {
+                throw new IllegalStateException("null observation");
+            }
+
+            StringBuilder sb = null;
+            if (log.isDebugEnabled()) {
+                sb = new StringBuilder();
+            }
+
+            int col = 1;
+            safeSetUUID(sb, ps, col++, member.getCompositeID());
+            safeSetURI(sb, ps, col++, member.getSimpleID().getURI());
+        }
     }
 
     private class PlanePut implements EntityPut<Plane>, PreparedStatementCreator {
@@ -1449,7 +1541,11 @@ public class SQLGenerator {
         private Plane plane;
         private List<CaomEntity> parents;
 
-        private int putCount = 0;
+        private boolean deleteInputs = false;
+        private boolean insertInputs = false;
+        private ProvenanceInput input;
+
+        private boolean doOpt = false;
         private Class childClass = null;
 
         PlanePut(boolean update) {
@@ -1464,8 +1560,22 @@ public class SQLGenerator {
                 return;
             }
 
-            putCount++;
-
+            deleteInputs = true;
+            jdbc.update(this);
+            deleteInputs = false;
+            
+            if (plane.provenance != null) {
+                insertInputs = true;
+                for (PlaneURI uri : plane.provenance.getInputs()) {
+                    input = new ProvenanceInput(plane.getID(), uri);
+                    jdbc.update(this);
+                }
+                input = null;
+                insertInputs = false;
+            }
+            
+            doOpt = true;
+            
             childClass = Artifact.class;
             jdbc.update(this);
 
@@ -1485,21 +1595,30 @@ public class SQLGenerator {
         
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
             String sql = null;
-            if (putCount == 0) {
+            if (deleteInputs) {
+                sql = getDeleteSQL(ProvenanceInput.class, plane.getID(), false); // delete by FK
+            } else if (insertInputs) {
+                sql = getInsertSQL(ProvenanceInput.class);
+            } else if (doOpt) {
+                sql = getUpdateChildOptimisationSQL(childClass);
+            } else {
                 if (update) {
                     sql = getUpdateSQL(Plane.class);
                 } else {
                     sql = getInsertSQL(Plane.class);
                 }
-            } else {
-                sql = getUpdateChildOptimisationSQL(childClass);
-            }
+            } 
+
             PreparedStatement prep = conn.prepareStatement(sql);
             log.debug(sql);
-            if (putCount == 0) {
-                loadValues(prep);
-            } else {
+            if (deleteInputs) {
+                // no values to set
+            } else if (insertInputs) {
+                loadValuesInput(prep);
+            } else if (doOpt) {
                 loadValuesForOpt(prep);
+            } else {
+                loadValues(prep);
             }
             return prep;
         }
@@ -1728,6 +1847,25 @@ public class SQLGenerator {
             }
         }
 
+        private void loadValuesInput(PreparedStatement ps)
+                throws SQLException {
+            StringBuilder sb = null;
+            if (log.isDebugEnabled()) {
+                sb = new StringBuilder();
+            }
+
+            int col = 1;
+            if (useLongForUUID) {
+                safeSetLongUUID(sb, ps, col++, input.getOutputID());
+            } else {
+                safeSetUUID(sb, ps, col++, input.getOutputID());
+            }
+            safeSetURI(sb, ps, col++, input.getInputID().getURI());
+            if (sb != null) {
+                log.debug(sb.toString());
+            }
+        }
+        
         private void loadValuesForOpt(PreparedStatement ps)
                 throws SQLException {
             StringBuilder sb = null;
