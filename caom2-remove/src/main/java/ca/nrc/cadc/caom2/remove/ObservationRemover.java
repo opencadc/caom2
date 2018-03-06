@@ -314,7 +314,7 @@ public class ObservationRemover implements Runnable {
 
                         hState = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
 
-                        if (hState != null) {
+                        if (hState.getLastModified() != null) {
                             // Delete the HarvestState Deleted Observation Record for this source
                             harvestStateDAO.delete(hState);
                         }
