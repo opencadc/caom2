@@ -371,6 +371,10 @@ public final class TimeUtil {
 
         double a = r.getStart().val;
         double b = r.getEnd().val;
+        if (b <= a) {
+            throw new IllegalArgumentException(
+                    "Range: end <= start for " + b + "," + a);
+        }
         
         if (wcs.mjdref != null) {
             a += wcs.mjdref.doubleValue();
@@ -391,6 +395,9 @@ public final class TimeUtil {
         double p2 = func.getNaxis().doubleValue() + 0.5;
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
+        if (func.getDelta() == 0.0) {
+            throw new IllegalArgumentException("delta is 0.0");
+        }
 
         if (wcs.mjdref != null) {
             a += wcs.mjdref.doubleValue();

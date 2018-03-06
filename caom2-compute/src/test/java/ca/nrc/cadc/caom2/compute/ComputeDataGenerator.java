@@ -129,12 +129,39 @@ public class ComputeDataGenerator {
 
     TemporalWCS mkBadTemporalWCSCunit() {
 
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+        RefCoord c1 = new RefCoord(px, sx);
+        RefCoord c2 = new RefCoord(0, 0);
+        
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
         TemporalWCS wcs = new TemporalWCS(axis);
+        wcs.getAxis().range = new CoordRange1D(c1, c2);
         return wcs;
 
     }
 
+    TemporalWCS mkBadTemporalWCSFunction() {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
+        TemporalWCS wcs = new TemporalWCS(axis);
+        wcs.exposure = 300.0;
+        wcs.resolution = 0.1;
+
+        // delta == 0.0 is bad
+        RefCoord c1 = new RefCoord(0.5, 2000.0);
+        wcs.getAxis().function = new CoordFunction1D((long) 100.0, 0.0, c1);
+
+        return wcs;
+
+    }
+    
     TemporalWCS mkBadTemporalWCSRange() {
         double px = 0.5;
         double sx = 54321.0;
