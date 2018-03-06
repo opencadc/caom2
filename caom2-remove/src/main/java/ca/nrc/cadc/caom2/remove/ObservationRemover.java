@@ -69,65 +69,37 @@
 
 package ca.nrc.cadc.caom2.remove;
 
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
-import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.repo.client.RepoClient;
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
-import ca.nrc.cadc.net.TransientException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.jdbc.BadSqlGrammarException;
 
 /**
- *
- * @author pdowler
+ * Remove observations and related harvest state records for designated collection
+ * @author jeevesh
  */
 public class ObservationRemover implements Runnable {
 
     private static Logger log = Logger.getLogger(ObservationRemover.class);
 
-    private boolean service = false;
-
     private ObservationDAO destObservationDAO;
-
-    private boolean nochecksum = false;
-    private URI basePublisherID;
-    private int nthreads = 1;
 
     // These used to exist in a base class that handled
     // database connections. Brought in here because there was no other harvester-type classes needed.
@@ -138,9 +110,8 @@ public class ObservationRemover implements Runnable {
 
     HarvestSkipURIDAO harvestSkipDAO = null;
 
-    public ObservationRemover(HarvestResource target, HarvestResource src, URI basePublisherID, Integer batchSize)
+    public ObservationRemover(HarvestResource target, HarvestResource src, Integer batchSize)
         throws IOException, URISyntaxException {
-        this.basePublisherID = basePublisherID;
         this.target = target;
         this.src = src;
         this.batchSize = batchSize;
@@ -153,7 +124,6 @@ public class ObservationRemover implements Runnable {
         destObservationDAO.setConfig(config2);
         destObservationDAO.setOrigin(false); // copy as-is
     }
-
 
     @Override
     public void run() {
@@ -186,7 +156,6 @@ public class ObservationRemover implements Runnable {
         int found = 0;
         int ingested = 0;
         int failed = 0;
-        int handled = 0;
 
         @Override
         public String toString() {
@@ -218,15 +187,19 @@ public class ObservationRemover implements Runnable {
                 // get HarvestStateDAO record to see if this collection has actually been harvested to this destination database
                 // If it has, continue. If not, say so and stop.
 
-                PostgresqlHarvestStateDAO harvestStateDAO = new PostgresqlHarvestStateDAO(destObservationDAO.getDataSource(),target.getDatabase(), target.getSchema());
-                HarvestSkipURIDAO harvestSkipURIDAO = new HarvestSkipURIDAO(destObservationDAO.getDataSource(), target.getDatabase(), target.getSchema());
+                PostgresqlHarvestStateDAO harvestStateDAO = new PostgresqlHarvestStateDAO(
+                                                                    destObservationDAO.getDataSource(),
+                                                                    target.getDatabase(), target.getSchema());
+                HarvestSkipURIDAO harvestSkipURIDAO = new HarvestSkipURIDAO(
+                                                                    destObservationDAO.getDataSource(),
+                                                                    target.getDatabase(), target.getSchema());
 
-                HarvestState hState = harvestStateDAO.get(src.getIdentifier(), Observation.class.getSimpleName());
+                HarvestState harvestStateRec = harvestStateDAO.get(src.getIdentifier(), Observation.class.getSimpleName());
                 // Check that the record returned has a last modified date.
                 // harvestStateDAO.get will create an empty HarvestState record using the identifier and cname passed in.
                 // in this case, getLastModified is null
 
-                if (hState.getLastModified() != null) {
+                if (harvestStateRec.getLastModified() != null) {
                     try {
                         obsList = destObservationDAO.getObservationList(target.getCollection(), null, null, batchSize + 1);
                         ret.found = obsList.size();
@@ -273,19 +246,18 @@ public class ObservationRemover implements Runnable {
                         long harvestSkipDelTime = System.currentTimeMillis();
 
                         countDeleted = 0;
-                        if (skipCount != 0 ) {
+                        if (skipCount != 0) {
                             log.info("Attempting to remove " + skipCount + " harvest skip records...");
                             try {
-                                    for (HarvestSkipURI harvestSkip : harvestSkipList) {
-                                        log.info("Removed " + harvestSkip.getName());
-                                        harvestSkipURIDAO.delete(harvestSkip);
-                                        // Needs to be in a report of some sort: where should this go?
-                                        log.info("removed harvest skip dao uri: " + harvestSkip.toString());
-                                        countDeleted++;
-                                    }
-
+                                for (HarvestSkipURI harvestSkip : harvestSkipList) {
+                                    log.info("Removed " + harvestSkip.getName());
+                                    harvestSkipURIDAO.delete(harvestSkip);
+                                    log.info("removed harvest skip dao uri: " + harvestSkip.toString());
+                                    countDeleted++;
+                                }
                             } catch (Exception e) {
-                                // what to do here?
+                                log.error("Failed removing harvest skip records. Quitting...");
+                                ret.abort = true;
                             } finally {
                                 if (skipCount == countDeleted) {
                                     log.info("Sucessfully removed all " + skipCount + " harvest skip records for collection");
@@ -295,9 +267,9 @@ public class ObservationRemover implements Runnable {
                                 }
                                 long dt = System.currentTimeMillis() - harvestSkipDelTime;
 
-                                long seconds = (dt/1000)%60;
-                                long minutes = ((dt - seconds)/1000)/60;
-                                log.info("time to delete observations: " + minutes + " min, " + seconds + " sec : " + harvestSkipDelTime + "ms");
+                                long seconds = (dt / 1000) % 60;
+                                long minutes = ((dt - seconds) / 1000) / 60;
+                                log.info("Time to delete observations: " + minutes + " min, " + seconds + " sec : " + harvestSkipDelTime + "ms");
                             }
                         } else {
                             log.info("No harvest skip records found for " + target.getCollection() + ". Continuing...");
@@ -309,18 +281,18 @@ public class ObservationRemover implements Runnable {
                     }
 
                     if (operationComplete) {
+                        log.info("Deleting harvest state records");
                         // Delete the HarvestState Observation Record for this source
-                        harvestStateDAO.delete(hState);
+                        harvestStateDAO.delete(harvestStateRec);
 
-                        hState = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
+                        harvestStateRec = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
 
-                        if (hState.getLastModified() != null) {
+                        if (harvestStateRec.getLastModified() != null) {
                             // Delete the HarvestState Deleted Observation Record for this source
-                            harvestStateDAO.delete(hState);
+                            harvestStateDAO.delete(harvestStateRec);
                         }
                     }
                 }
-
             }
 
         } catch (Exception e) {
@@ -342,7 +314,6 @@ public class ObservationRemover implements Runnable {
 
         Map<String, Object> ret = new HashMap<String, Object>();
 
-        // HACK: detect RDBMS backend from JDBC driver
         DBConfig dbrc = new DBConfig();
         ConnectionConfig cc = dbrc.getConnectionConfig(desc.getDatabaseServer(), desc.getDatabase());
         String driver = cc.getDriver();

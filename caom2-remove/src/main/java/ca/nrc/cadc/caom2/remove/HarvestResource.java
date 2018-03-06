@@ -74,8 +74,7 @@ import org.apache.log4j.Logger;
 /**
  * Encapsulate the information about a source or destination for harvesting
  * instances.
- *
- *  * This package is a direct copy from caom2db/caom2harvester. It's possible in future
+ * This package is a direct copy from caom2db/caom2harvester. It's possible in future
  * that it could be extracted into it's own library, but with the small size it's hard
  * to justify it being it's own library. For now, taking a copy and pointing back so if
  * any changes need to happen here they can be propagated.

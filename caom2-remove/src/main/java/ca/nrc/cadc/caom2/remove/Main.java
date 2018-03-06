@@ -81,7 +81,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-collection-delete tool.
+ * Command line entry point for running the caom2-remove tool.
  *
  * @author jeevesh
  */
@@ -137,8 +137,6 @@ public class Main {
                 System.exit(1);
             }
 
-
-
             String[] sourceDS = null;
 
             HarvestResource target = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
@@ -152,12 +150,12 @@ public class Main {
                 if (!scheme.equals("ivo")) {
                     // must have a scheme, and it must be 'ivo'
                     log.warn("malformed --source value. Found scheme '" + scheme + "', expected: 'ivo'");
-                        usage();
-                        System.exit(1);
+                    usage();
+                    System.exit(1);
                 } else {
                     src = new HarvestResource(resourceURI, collection);
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 sourceDS = source.split("[.]");
                 if (sourceDS.length != 3) {
                     log.warn("malformed --source value, found '" + source + "', expected: <server.database.schema>");
@@ -168,39 +166,30 @@ public class Main {
                 }
             }
 
-            // collection and database are easy to parse out:
-
             // Assert: at this point the source has been validated to be either a resource ID starting with ivo:
             // or a server + database + scheme combination where the collection can be found.
 
-//            Console console = System.console();
-//            if (console == null) {
-//                log.error("No console: can not continue non-interactive mode! Quitting.\n");
-//                System.exit(1);
-//            }
-//
-//            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
-//            String userAnswer = console.readLine();
-//
-//
-//
-//            if (!userAnswer.equals(collection)) {
-//                log.error("Collection name does not match. Quitting.\n");
-//
-//            } else {
+            Console console = System.console();
+            if (console == null) {
+                log.error("No console: can not continue non-interactive mode! Quitting.\n");
+                System.exit(1);
+            }
 
+            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
+            String userAnswer = console.readLine();
+
+
+            if (!userAnswer.equals(collection)) {
+                log.error("Collection name does not match. Quitting.\n");
+
+            } else {
                 log.info("Continuing to remove " + collection + "...\n");
 
-                boolean dryrun = true;
                 int batchSize = 100000;
-
                 Runnable action = null;
 
                 try {
-                    ObservationRemover cv = new ObservationRemover(target, src,null, batchSize);
-                    // [min,max] timestamps not supported by validator (only full)
-                    //cv.setMinDate(minDate);
-                    //cv.setMaxDate(maxDate);
+                    ObservationRemover cv = new ObservationRemover(target, src, batchSize);
                     action = cv;
                 } catch (IOException ioex) {
 
@@ -218,8 +207,8 @@ public class Main {
                     Subject.doAs(subject, new RunnableAction(action));
                 }
 
-
-            exitValue = 0; // finished cleanly
+                exitValue = 0; // finished cleanly
+            }
         } catch (Throwable t) {
             log.error("uncaught exception", t);
             log.error("Done, with errors.");
@@ -250,7 +239,7 @@ public class Main {
         sb.append("\n\nusage: caom2-remove [-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to remove (e.g. IRIS)");
         sb.append("\n         --database=<server.database.schema> : collection location");
-        sb.append("\n         --source=<server.database.schema> | <resource ID> :  (e.g. ivo://cadc.nrc.ca/caom2repo)" );
+        sb.append("\n         --source=<server.database.schema> | <resource ID> :  (e.g. ivo://cadc.nrc.ca/caom2repo)");
         log.warn(sb.toString());
     }
 }
