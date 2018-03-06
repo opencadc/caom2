@@ -164,12 +164,8 @@ public class Main {
             }
 
             // setup optional authentication for harvesting from a web service
-            Subject subject = null;
-            if (am.isSet("netrc")) {
-                subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            } else if (am.isSet("cert")) {
-                subject = CertCmdArgUtil.initSubject(am);
-            }
+            Subject subject = createSubject(am);
+
             if (subject != null) {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
@@ -301,6 +297,10 @@ public class Main {
                 }
 
                 loopNum++;
+                
+                // re-initialize the subject
+                subject = createSubject(am);
+                
             } while (loop && !stopHarvest && !stopDownload); // continue if work was done
 
             exitValue = 0; // finished cleanly
@@ -310,7 +310,18 @@ public class Main {
             System.exit(exitValue);
         } finally {
             System.exit(exitValue);
+        }        
+
+    }
+    
+    private static Subject createSubject(ArgumentMap am) {
+        Subject subject = null;
+        if (am.isSet("netrc")) {
+            subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+        } else if (am.isSet("cert")) {
+            subject = CertCmdArgUtil.initSubject(am);
         }
+        return subject;
     }
 
     private static class ShutdownHook implements Runnable {

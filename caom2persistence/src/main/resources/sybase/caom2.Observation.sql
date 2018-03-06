@@ -73,16 +73,16 @@ create index maxLastModified on caom2_Observation (maxLastModified)
 
 -- reference/join table for composites 
 -- not currently used/tested
-create table caom2_Observation_members
+create table caom2_ObservationMember
 (
     compositeID bigint not null references caom2_Observation (obsID),
-    simpleID bigint not null references caom2_Observation (obsID)
+    simpleID varchar(512) not null
 )
 lock datarows
 ;
 
-create unique clustered index composite2simple on caom2_Observation_members (compositeID,simpleID)
+create unique clustered index composite2simple on caom2_ObservationMember (compositeID,simpleID)
 ;
 
-create unique nonclustered index simple2composite on caom2_Observation_members (simpleID,compositeID)
+create unique nonclustered index simple2composite on caom2_ObservationMember (simpleID,compositeID)
 ;
