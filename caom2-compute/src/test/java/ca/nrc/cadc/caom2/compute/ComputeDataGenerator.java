@@ -131,10 +131,8 @@ public class ComputeDataGenerator {
 
         double px = 0.5;
         double sx = 54321.0;
-        double nx = 200.0;
-        double ds = 0.01;
-        RefCoord c1 = new RefCoord(px, sx);
-        RefCoord c2 = new RefCoord(0, 0);
+        RefCoord c1 = new RefCoord(0.5, 54321.0);
+        RefCoord c2 = new RefCoord(100.5, 54321.5);
         
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
         TemporalWCS wcs = new TemporalWCS(axis);
@@ -144,11 +142,6 @@ public class ComputeDataGenerator {
     }
 
     TemporalWCS mkBadTemporalWCSFunction() {
-        double px = 0.5;
-        double sx = 54321.0;
-        double nx = 200.0;
-        double ds = 0.01;
-
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
         wcs.exposure = 300.0;
@@ -170,8 +163,6 @@ public class ComputeDataGenerator {
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "d"));
         TemporalWCS wcs = new TemporalWCS(axis);
-        wcs.exposure = 300.0;
-        wcs.resolution = 0.1;
 
         // divide into 2 samples with a gap between
         RefCoord c1 = new RefCoord(px, sx);
