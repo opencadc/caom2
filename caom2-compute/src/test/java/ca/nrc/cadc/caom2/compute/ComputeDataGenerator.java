@@ -128,9 +128,6 @@ public class ComputeDataGenerator {
     }
 
     TemporalWCS mkBadTemporalWCSCunit() {
-
-        double px = 0.5;
-        double sx = 54321.0;
         RefCoord c1 = new RefCoord(0.5, 54321.0);
         RefCoord c2 = new RefCoord(100.5, 54321.5);
         
