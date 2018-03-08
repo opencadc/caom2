@@ -169,23 +169,23 @@ public class Main {
             // Assert: at this point the source has been validated to be either a resource ID starting with ivo:
             // or a server + database + scheme combination where the collection can be found.
 
-            Console console = System.console();
-            if (console == null) {
-                log.error("No console: can not continue non-interactive mode! Quitting.\n");
-                System.exit(1);
-            }
+//            Console console = System.console();
+//            if (console == null) {
+//                log.error("No console: can not continue non-interactive mode! Quitting.\n");
+//                System.exit(1);
+//            }
+//
+//            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
+//            String userAnswer = console.readLine();
 
-            System.out.print("\nAre you sure you want to remove this collection? Action can't be undone.\nRe-enter collection name to continue: ");
-            String userAnswer = console.readLine();
 
-
-            if (!userAnswer.equals(collection)) {
-                log.error("Collection name does not match. Quitting.\n");
-
-            } else {
+//            if (!userAnswer.equals(collection)) {
+//                log.error("Collection name does not match. Quitting.\n");
+//
+//            } else {
                 log.info("Continuing to remove " + collection + "...\n");
 
-                int batchSize = 100000;
+                int batchSize = 100;
                 Runnable action = null;
 
                 try {
@@ -208,7 +208,7 @@ public class Main {
                 }
 
                 exitValue = 0; // finished cleanly
-            }
+//            }
         } catch (Throwable t) {
             log.error("uncaught exception", t);
             log.error("Done, with errors.");
