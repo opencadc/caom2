@@ -65,7 +65,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'type', 'type of data collected (e.g. FITS OBSTYPE header)', 'caom2:Observation.type', NULL, NULL, 'char', '32*', NULL, 1,0,1 , 6),
 ( 'caom2.Observation', 'intent', 'intended purpose of data (one of: science, calibration)', 'caom2:Observation.intent', NULL, NULL, 'char', '32*', NULL, 0,0,1 , 7),
 ( 'caom2.Observation', 'sequenceNumber', 'sequence number assigned by the observatory', 'caom2:Observation.sequenceNumber', NULL, NULL, 'int', NULL, NULL, 0,0,0 , NULL),
-( 'caom2.Observation', 'metaRelease', 'date the metadata for an observation is public (UTC)', 'caom2:Observation.metaRelease', NULL, NULL, 'char', '21*','timestamp', 0,0,8 , 9),
+( 'caom2.Observation', 'metaRelease', 'date the metadata for an observation is public (UTC)', 'caom2:Observation.metaRelease', NULL, NULL, 'char', '23*','timestamp', 0,0,8 , 9),
 
 ( 'caom2.Observation', 'proposal_id', 'collection-specific unique proposal identifier', 'caom2:Observation.proposal.id', NULL, NULL, 'char', '128*',NULL, 0,1,0 , 20),
 ( 'caom2.Observation', 'proposal_pi', 'proposal principal investigator', 'caom2:Observation.proposal.pi', NULL, NULL, 'char', '128*',NULL, 0,0,0 , 21),
@@ -101,8 +101,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Observation', 'members', 'members of a composite observation (space-separated list of Observation URIs)', 'caom2:Observation.members', NULL, NULL, 'char','*','clob', 0,0,0 , 80),
 
-( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '21*','timestamp', 1,0,0 , 100),
-( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this observation', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '21*','timestamp', 1,0,0 , 101),
+( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 100),
+( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this observation', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 101),
 ( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 102),
 ( 'caom2.Observation', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Observation.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 103)
 ;
@@ -117,8 +117,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
 
 ( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '32*', NULL, 1,1,1 , NULL),
-( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '21*', 'timestamp', 0,1,0 , 4),
-( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '21*', 'timestamp', 0,1,0 , 5),
+( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 4),
+( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
 
 ( 'caom2.Plane', 'dataProductType', 'IVOA ObsCore data product type', 	'caom2:Plane.dataProductType', NULL, NULL, 'char', '128*', NULL, 1,0,1 , 10),
 ( 'caom2.Plane', 'calibrationLevel', 'IVOA ObsCore calibration level (0,1,2,3,...)', 'caom2:Plane.calibrationLevel', NULL, NULL, 'int', NULL, NULL, 1,0,1 , 11),
@@ -129,7 +129,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'provenance_producer', 'responsible entity (e.g. person)', 'caom2:Plane.provenance.producer', NULL, NULL, 'char', '128*', NULL, 0,0,0, 23),
 ( 'caom2.Plane', 'provenance_project', 'responsible entity (e.g. person)', 'caom2:Plane.provenance.project', NULL, NULL, 'char', '256*', NULL, 0,0,0, 24),
 ( 'caom2.Plane', 'provenance_runID', 'responsible entity (e.g. person)', 'caom2:Plane.provenance.runID', NULL, NULL, 'char', '64*', NULL, 0,1,0, 25),
-( 'caom2.Plane', 'provenance_lastExecuted', 'date this process was last executed', 'caom2:Plane.provenance.lastExecuted', NULL, NULL, 'char', '21*', 'timestamp', 0,0,0 , 26),
+( 'caom2.Plane', 'provenance_lastExecuted', 'date this process was last executed', 'caom2:Plane.provenance.lastExecuted', NULL, NULL, 'char', '23*', 'timestamp', 0,0,0 , 26),
 ( 'caom2.Plane', 'provenance_keywords', 'provenance keywords (separated by |)', 'caom2:Plane.provenance.keywords', NULL, NULL, 'char', '*', NULL, 0,0,0 , 27),
 ( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Plane.provenance.inputs', NULL, NULL, 'char','*','clob', 0,0,0 , 28),
 
@@ -182,7 +182,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 90),
 ( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 91),
 
-( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '21*','timestamp', 1,1,0 , 100),
+( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 100),
 ( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 101),
 ( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 102)
 ;
@@ -201,7 +201,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'char', NULL,'clob', 0,0,0, 9),
 
-( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '21*', 'timestamp', 1,1,0, 10),
+( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 10),
 ( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 11),
 ( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 12)
 ;
@@ -214,7 +214,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Part', 'name',          'name of this part', 'caom2:Part.name', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 3),
 ( 'caom2.Part', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Part.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 4),
 
-( 'caom2.Part', 'lastModified',  'timestamp of last modification of this row', 'caom2:Part.lastModified', NULL, NULL, 'char', '21*', 'timestamp', 1,1,0 , 10),
+( 'caom2.Part', 'lastModified',  'timestamp of last modification of this row', 'caom2:Part.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 10),
 ( 'caom2.Part', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Part.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 11),
 ( 'caom2.Part', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Part.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 12)
 ;
@@ -331,7 +331,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'observable_dependent_axis_cunit', 'dependent observable axis coordinate unit', 'caom2:Chunk.observable.dependent.axis.cunit', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 157),
 ( 'caom2.Chunk', 'observable_dependent_bin', 'dependent observable pixel value', 'caom2:Chunk.observable.dependent.bin', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 158),
 
-( 'caom2.Chunk', 'lastModified',  'timestamp of last modification of this row', 'caom2:Chunk.lastModified', NULL, NULL, 'char', '21*', 'timestamp', 1,1,0 , 200),
+( 'caom2.Chunk', 'lastModified',  'timestamp of last modification of this row', 'caom2:Chunk.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 200),
 ( 'caom2.Chunk', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Chunk.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 201),
 ( 'caom2.Chunk', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Chunk.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 202)
 ;
@@ -423,8 +423,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,unit,da
 ( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, 'char', '128*', NULL, 1,0,1 ),
 ( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, 'char', '*', 'clob', 1,0,1 ),
 
-( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL,                     'char', '21*', 'timestamp', 0,1,0 ),
-( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL,                     'char', '21*', 'timestamp', 0,1,0 )
+( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 ),
+( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 )
 ;
 
 insert into tap_schema.tables11 (schema_name,table_name,table_type,description) values
@@ -434,9 +434,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,datatype,ar
 ( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
 ( 'caom2.HarvestSkipURI', 'cname', 'entity (class name)', 'char', '*', NULL, 1,1,1),
 ( 'caom2.HarvestSkipURI', 'skipID', 'URI of skipped entity instance', 'char', '*', 'uuid', 1,1,1),
-( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '*', 'timestamp', 1,1,1),
+( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '23*', 'timestamp', 1,1,1),
 ( 'caom2.HarvestSkipURI', 'errorMessage', 'reason for harvest failure', 'char', '*', NULL, 1,0,1),
-( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '*', 'timestamp', 1,0,1);
+( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '23*', 'timestamp', 1,0,1);
 
 
 -- backwards compatible: fill "size" column with values from arraysize set above
