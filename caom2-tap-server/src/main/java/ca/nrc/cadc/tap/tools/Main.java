@@ -75,7 +75,7 @@ import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.tap.impl.AdqlQueryImpl;
+import ca.nrc.cadc.tap.impl.CaomAdqlQuery;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.tap.schema.TapSchemaDAOImpl;
@@ -218,7 +218,7 @@ public class Main implements Runnable
             
         long t2 = System.currentTimeMillis();
         
-        AdqlQueryImpl validator = new AdqlQueryImpl();
+        CaomAdqlQuery validator = new CaomAdqlQuery();
         validator.setJob(job);
         validator.setMaxRowCount(maxrec);
         validator.setTapSchema(ts);

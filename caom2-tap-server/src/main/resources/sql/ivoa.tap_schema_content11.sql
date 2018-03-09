@@ -61,7 +61,7 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
     'calibration level (0,1,2,3)', 'meta.code;obs.calib', NULL, 'int',NULL,NULL, 1,0,1,7 ),
 
 ( 'ivoa.ObsCore', 'obs_release_date', 'obscore:Curation.releaseDate',
-    'timestamp of date the data becomes publicly available', 'time.release', NULL, 'char','21*','timestamp', 0,0,1,8 ),
+    'timestamp of date the data becomes publicly available', 'time.release', NULL, 'char','23*','timestamp', 0,0,1,8 ),
 
 ( 'ivoa.ObsCore', 'target_name', 'obscore:Target.Name',
     'name of intended target', 'meta.id;src', NULL, 'char', '32*',NULL, 1,0,1,9 ),
@@ -121,14 +121,14 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
 ( 'ivoa.ObsCore', 'core_id', NULL, 'primary key', NULL, NULL, 'char','36','uuid', 0,1,0,33 ),
 
 ( 'ivoa.ObsCore', 'lastModified', NULL,
-    'timestamp of last modification of the metadata', NULL, NULL, 'char','21*','timestamp', 0,1,0,34 )
+    'timestamp of last modification of the metadata', NULL, NULL, 'char','23*','timestamp', 0,1,0,34 )
 ;
 
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
 ( 'ivoa.ObsFile', 'uri', 'URI for this file', 'caom2:Artifact.uri', NULL, NULL, 'char','128*',NULL, 1,1,1,1 ),
 ( 'ivoa.ObsFile', 'content_type', 'format of the data file', 'caom2:Artifact:contentType', 'meta.id;class', NULL, 'char','128*',NULL, 1,0,1,2 ),
 ( 'ivoa.ObsFile', 'content_length', 'size of the download', 'caom2:Artifact:contentLength', 'phys.size;meta.file', 'byte', 'long',NULL,NULL, 1,0,1,3 ),
-( 'ivoa.ObsFile', 'last_modified', 'timestamp of last modification of the metadata', 'caom2:Artifact.lastModified', NULL, NULL, 'char','21*','timestamp', 0,1,0,4 ),
+( 'ivoa.ObsFile', 'last_modified', 'timestamp of last modification of the metadata', 'caom2:Artifact.lastModified', NULL, NULL, 'char','23*','timestamp', 0,1,0,4 ),
 ( 'ivoa.ObsFile', 'core_id', 'foreign key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0,5 ),
 ( 'ivoa.ObsFile', 'file_id', 'primary key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0,6 )
 ;
@@ -207,7 +207,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'ivoa.ObsPart', 'p_cdelt', 'delta-value on polarization axis', 'caom2:Chunk.polarization.axis.function.delta', NULL, NULL, 'double',NULL,NULL, 1,0,0,117 ),
 
 -- index start at 200
-( 'ivoa.ObsPart', 'last_modified', 'timestamp of last modification of the metadata', 'caom2:Part.lastModified', NULL, NULL, 'char', '21*','timestamp', 0,0,0,200 ),
+( 'ivoa.ObsPart', 'last_modified', 'timestamp of last modification of the metadata', 'caom2:Part.lastModified', NULL, NULL, 'char', '23*','timestamp', 0,0,0,200 ),
 ( 'ivoa.ObsPart', 'file_id', 'foreign key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0,201 ),
 ( 'ivoa.ObsPart', 'part_id', 'primary key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0,202 )
 ;
