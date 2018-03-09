@@ -81,12 +81,8 @@ import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBConfig;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,8 +125,8 @@ public class ObservationRemover implements Runnable {
         HarvestStateDAO harvestStateDAO = new PostgresqlHarvestStateDAO(
             destObservationDAO.getDataSource(),
             target.getDatabase(), target.getSchema());
-
         HarvestState harvestStateRec = harvestStateDAO.get(src.getIdentifier(), Observation.class.getSimpleName());
+        
         // Check that the record returned has a last modified date.
         // harvestStateDAO.get will create an empty HarvestState record using the identifier and cname passed in.
         // in this case, getLastModified is null
@@ -138,6 +134,7 @@ public class ObservationRemover implements Runnable {
             log.warn("Could not find harvest state records. Quitting...");
             return;
         }
+
         int total = 0;
         boolean go = true;
         log.info("Removing observations...");
@@ -146,58 +143,55 @@ public class ObservationRemover implements Runnable {
             observationProgress = deleteObservations();
 
             if (observationProgress.found > 0) {
-                log.info("********** finished batch: " + observationProgress.toString() + " **********");
+                log.info("finished batch: " + observationProgress.toString());
             }
 
             if (observationProgress.abort) {
                 log.error("batch aborted");
             }
+
             total += observationProgress.found;
-            go = (observationProgress.found > 0 && !observationProgress.abort && !observationProgress.done);
+            go = (observationProgress.found > 0 && !observationProgress.abort);
         }
 
+        log.info("Removed " + total + " observations");
         if (observationProgress.abort) {
             log.warn("Problem removing observations. Quitting...");
             return;
         }
 
-        log.info("Removed " + total + " observations");
-        total = 0;
-
         Progress skipURIProgress = new Progress();
+        total = 0;
         go = true;
         log.info("Removing harvesetSkipURI records...");
         while (go) {
             skipURIProgress = deleteHarvestSkipURI();
 
             if (skipURIProgress.found > 0) {
-                log.info("********** finished batch: " + skipURIProgress.toString() + " **********");
+                log.info("finished batch: " + skipURIProgress.toString());
             }
 
             if (skipURIProgress.abort) {
                 log.error("batch aborted");
             }
+
             total += skipURIProgress.found;
-            go = (skipURIProgress.found > 0 && !skipURIProgress.abort && !skipURIProgress.done);
+            go = (skipURIProgress.found > 0 && !skipURIProgress.abort);
         }
 
+        log.info("Removed " + total + " harvest skip URI records");
         if (skipURIProgress.abort) {
             log.warn("Problem removing skip records. Quitting...");
             return;
         }
 
-        // Remove harvest state records if everything worked
-        if (skipURIProgress.done && observationProgress.done) {
-            log.info("Removed " + total + " harvest skip URI records");
-            log.info("Deleting harvest state records");
+        log.info("Deleting harvest state records");
+        harvestStateDAO.delete(harvestStateRec);
+        harvestStateRec = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
+        if (harvestStateRec.getLastModified() != null) {
             harvestStateDAO.delete(harvestStateRec);
-
-            harvestStateRec = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
-
-            if (harvestStateRec.getLastModified() != null) {
-                harvestStateDAO.delete(harvestStateRec);
-            }
         }
+
     }
 
     private static class Progress {
@@ -215,27 +209,20 @@ public class ObservationRemover implements Runnable {
 
     private Progress deleteObservations() {
         Progress ret = new Progress();
-        int expectedNum = Integer.MAX_VALUE;
-        if (batchSize != null) {
-            expectedNum = batchSize.intValue();
-        }
+
         List<ObservationState> obsList;
         if (destObservationDAO != null) {
             try {
                 obsList = destObservationDAO.getObservationList(target.getCollection(), null, null, batchSize);
                 ret.found = obsList.size();
 
-                if (obsList.size() != 0) {
-                    for (ObservationState obsState : obsList) {
-                        ObservationURI obsURI = obsState.getURI();
-                        destObservationDAO.delete(obsURI);
-                        log.info("removed: observation: " + obsURI.toString());
-                        ret.removed++;
-                    }
+                for (ObservationState obsState : obsList) {
+                    ObservationURI obsURI = obsState.getURI();
+                    destObservationDAO.delete(obsURI);
+                    log.info("removed: observation: " + obsURI.toString());
+                    ret.removed++;
                 }
-                if (ret.found < expectedNum) {
-                    ret.done = true;
-                }
+
             } catch (Exception e) {
                 ret.abort = true;
             }
@@ -251,11 +238,6 @@ public class ObservationRemover implements Runnable {
 
         if (destObservationDAO != null) {
             try {
-                int expectedNum = Integer.MAX_VALUE;
-                if (batchSize != null) {
-                    expectedNum = batchSize.intValue();
-                }
-
                 List<HarvestSkipURI> harvestSkipList;
 
                 HarvestSkipURIDAO harvestSkipURIDAO = new HarvestSkipURIDAO(
@@ -265,18 +247,13 @@ public class ObservationRemover implements Runnable {
                 harvestSkipList = harvestSkipURIDAO.get(src.getIdentifier(),Observation.class.getSimpleName(), null, null, batchSize);
                 int skipCount = harvestSkipList.size();
                 ret.found = skipCount;
-                if (skipCount != 0) {
 
-                    for (HarvestSkipURI harvestSkip : harvestSkipList) {
-                        log.info("removed: skip record: " + harvestSkip.getSkipID());
-                        harvestSkipURIDAO.delete(harvestSkip);
-                        ret.removed++;
-                    }
+                for (HarvestSkipURI harvestSkip : harvestSkipList) {
+                    log.info("removed: skip record: " + harvestSkip.getSkipID());
+                    harvestSkipURIDAO.delete(harvestSkip);
+                    ret.removed++;
                 }
 
-                if (ret.found < expectedNum) {
-                    ret.done = true;
-                }
             } catch (Exception e) {
                 log.error("Could not get list of harvest skip records for this collection");
                 ret.abort = true;
@@ -285,7 +262,6 @@ public class ObservationRemover implements Runnable {
             log.error("Problem with data source. Quitting....");
             ret.abort = true;
         }
-
         return ret;
     }
 
