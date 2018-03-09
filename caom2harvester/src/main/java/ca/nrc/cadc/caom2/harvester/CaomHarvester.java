@@ -153,12 +153,18 @@ public class CaomHarvester implements Runnable {
         boolean extendedFeatures = src.getDatabaseServer() != null;
         if (extendedFeatures) {
             if (src.getHarvestAC()) {
+                // set same default endDate so ReadAccess harvest doesn't try to get ahead of observation harvest
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                Date defaultEndDate = new Date(fiveMinAgo);
                 this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 observationMetaHarvester.setSkipped(skip);
+                observationMetaHarvester.setMaxDate(defaultEndDate);
                 this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 planeDataHarvester.setSkipped(skip);
+                planeDataHarvester.setMaxDate(defaultEndDate);
                 this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 planeMetaHarvester.setSkipped(skip);
+                planeMetaHarvester.setMaxDate(defaultEndDate);
             }
 
             // deletions in incremental mode only
@@ -246,7 +252,6 @@ public class CaomHarvester implements Runnable {
             }
             observationMetaDeleter.setInitHarvestState(initDel);
             observationMetaDeleter.run();
-            log.info("init: " + observationMetaDeleter.cname);
         }
         if (planeDataDeleter != null) {
             boolean initDel = init;
@@ -257,7 +262,6 @@ public class CaomHarvester implements Runnable {
             }
             planeDataDeleter.setInitHarvestState(initDel);
             planeDataDeleter.run();
-            log.info("init: " + planeDataDeleter.cname);
         }
         if (planeMetaDeleter != null) {
             boolean initDel = init;
@@ -268,7 +272,6 @@ public class CaomHarvester implements Runnable {
             }
             planeMetaDeleter.setInitHarvestState(initDel);
             planeMetaDeleter.run();
-            log.info("init: " + planeMetaDeleter.cname);
         }
 
         // delete observations before harvest to avoid observationURI conflicts
