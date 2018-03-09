@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7.3'
+    id 'checkstyle'
+    id 'application'
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+}
+
+sourceCompatibility = 1.7
+
+group = 'org.opencadc'
+
+mainClassName = 'ca.nrc.cadc.caom2.remove.Main'
+
+version = '1.0.0'
+
+dependencies {
+    compile 'log4j:log4j:1.2.+'
+    compile 'org.jdom:jdom2:2.+'
+    compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
+
+    compile 'org.opencadc:caom2persistence:[2.3.15,)'
+
+    runtime 'net.sourceforge.jtds:jtds:1.+'
+    runtime 'org.postgresql:postgresql:9.4.1209.jre7'
+    
+    testCompile 'junit:junit:4.+'
+}
+
+apply from: '../opencadc.gradle'
