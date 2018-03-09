@@ -122,7 +122,6 @@ public class ObservationRemover implements Runnable {
 
     @Override
     public void run() {
-        log.info("START");
         Progress observationProgress = new Progress();
 
         // Get HarvestStateDAO record to see if this collection has actually been harvested to this destination database
@@ -137,70 +136,68 @@ public class ObservationRemover implements Runnable {
         // in this case, getLastModified is null
         if (harvestStateRec.getLastModified() == null) {
             log.warn("Could not find harvest state records. Quitting...");
-        } else {
-            int total = 0;
-            boolean go = true;
-            log.info("Removing observations...");
+            return;
+        }
+        int total = 0;
+        boolean go = true;
+        log.info("Removing observations...");
 
-            while (go) {
-                observationProgress = deleteObservations();
+        while (go) {
+            observationProgress = deleteObservations();
 
-                if (observationProgress.found > 0) {
-                    log.info("********** finished batch: " + observationProgress.toString() + " **********");
-                }
-
-                if (observationProgress.abort) {
-                    log.error("batch aborted");
-                }
-                total += observationProgress.found;
-                go = (observationProgress.found > 0 && !observationProgress.abort && !observationProgress.done);
-
-                if (batchSize != null && observationProgress.found < batchSize.intValue() / 2) {
-                    go = false;
-                }
+            if (observationProgress.found > 0) {
+                log.info("********** finished batch: " + observationProgress.toString() + " **********");
             }
+
             if (observationProgress.abort) {
-                log.warn("Problem removing observations. Quitting...");
-            } else {
-                log.info("Removed " + total + " observations");
-                total = 0;
-
-                Progress skipURIProgress = new Progress();
-                go = true;
-                log.info("Removing harvesetSkipURI records...");
-                while (go) {
-                    skipURIProgress = deleteHarvestSkipURI();
-
-                    if (skipURIProgress.found > 0) {
-                        log.info("********** finished batch: " + skipURIProgress.toString() + " **********");
-                    }
-
-                    if (skipURIProgress.abort) {
-                        log.error("batch aborted");
-                    }
-                    total += skipURIProgress.found;
-                    go = (skipURIProgress.found > 0 && !skipURIProgress.abort && !skipURIProgress.done);
-                    if (batchSize != null && skipURIProgress.found < batchSize.intValue() / 2) {
-                        go = false;
-                    }
-                }
-
-                // Remove harvest state records if everything worked
-                if (skipURIProgress.done && observationProgress.done) {
-                    log.info("Removed " + total + " harvest skip URI records");
-                    log.info("Deleting harvest state records");
-                    harvestStateDAO.delete(harvestStateRec);
-
-                    harvestStateRec = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
-
-                    if (harvestStateRec.getLastModified() != null) {
-                        harvestStateDAO.delete(harvestStateRec);
-                    }
-                }
+                log.error("batch aborted");
             }
+            total += observationProgress.found;
+            go = (observationProgress.found > 0 && !observationProgress.abort && !observationProgress.done);
         }
 
-        log.info("DONE");
+        if (observationProgress.abort) {
+            log.warn("Problem removing observations. Quitting...");
+            return;
+        }
+
+        log.info("Removed " + total + " observations");
+        total = 0;
+
+        Progress skipURIProgress = new Progress();
+        go = true;
+        log.info("Removing harvesetSkipURI records...");
+        while (go) {
+            skipURIProgress = deleteHarvestSkipURI();
+
+            if (skipURIProgress.found > 0) {
+                log.info("********** finished batch: " + skipURIProgress.toString() + " **********");
+            }
+
+            if (skipURIProgress.abort) {
+                log.error("batch aborted");
+            }
+            total += skipURIProgress.found;
+            go = (skipURIProgress.found > 0 && !skipURIProgress.abort && !skipURIProgress.done);
+        }
+
+        if (skipURIProgress.abort) {
+            log.warn("Problem removing skip records. Quitting...");
+            return;
+        }
+
+        // Remove harvest state records if everything worked
+        if (skipURIProgress.done && observationProgress.done) {
+            log.info("Removed " + total + " harvest skip URI records");
+            log.info("Deleting harvest state records");
+            harvestStateDAO.delete(harvestStateRec);
+
+            harvestStateRec = harvestStateDAO.get(src.getIdentifier(), DeletedObservation.class.getSimpleName());
+
+            if (harvestStateRec.getLastModified() != null) {
+                harvestStateDAO.delete(harvestStateRec);
+            }
+        }
     }
 
     private static class Progress {
