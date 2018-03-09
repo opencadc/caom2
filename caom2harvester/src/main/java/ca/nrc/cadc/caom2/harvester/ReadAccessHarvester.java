@@ -237,6 +237,7 @@ public class ReadAccessHarvester extends Harvester {
             HarvestState state = null;
             if (!skipped) {
                 state = harvestStateDAO.get(source, cname);
+                startDate = state.curLastModified;
                 log.info("last harvest: " + format(state.curLastModified));
             }
 
@@ -263,6 +264,7 @@ public class ReadAccessHarvester extends Harvester {
             if (skipped) {
                 entityList = getSkipped(startDate);
             } else {
+                log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
                 List<ReadAccess> tmp = srcAccessDAO.getList(entityClass, startDate, endDate, batchSize);
                 entityList = wrap(tmp);
             }
