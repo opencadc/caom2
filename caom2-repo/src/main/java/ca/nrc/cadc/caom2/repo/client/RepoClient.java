@@ -75,8 +75,8 @@ import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.repo.client.transform.TransformDeletionState;
-import ca.nrc.cadc.caom2.repo.client.transform.TransformObservationState;
+import ca.nrc.cadc.caom2.repo.client.transform.DeletionListReader;
+import ca.nrc.cadc.caom2.repo.client.transform.ObservationStateListReader;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
@@ -180,7 +180,7 @@ public class RepoClient {
 
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         initDel();
-        return readDeletedEntityList(new TransformDeletionState(df, '\t', '\n'), collection, start, end, maxrec);
+        return readDeletedEntityList(new DeletionListReader(df, '\t', '\n'), collection, start, end, maxrec);
         // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
 
         // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
@@ -191,7 +191,7 @@ public class RepoClient {
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
-        return readObservationStateList(new TransformObservationState(df, '\t', '\n'), collection, start, end, maxrec);
+        return readObservationStateList(new ObservationStateListReader(df, '\t', '\n'), collection, start, end, maxrec);
     }
 
     public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
@@ -342,7 +342,7 @@ public class RepoClient {
         }
     }
 
-    private List<ObservationState> readObservationStateList(TransformObservationState transformer, String collection, Date start, Date end, Integer maxrec) {
+    private List<ObservationState> readObservationStateList(ObservationStateListReader transformer, String collection, Date start, Date end, Integer maxrec) {
         init();
 
         List<ObservationState> accList = new ArrayList<>();
@@ -384,16 +384,17 @@ public class RepoClient {
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
 
-                if (responseCode == 302) {
-                    // redirected url
-                    url = get.getRedirectURL();
-                    log.debug("REDIRECTED URL: " + url);
-                    bos = new ByteArrayOutputStream();
-                    get = new HttpDownload(url, bos);
-                    responseCode = get.getResponseCode();
-                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
-
-                }
+                //                if (responseCode == 302) {
+                //                    // redirected url
+                //                    url = get.getRedirectURL();
+                //                    log.debug("REDIRECTED URL: " + url);
+                //                    bos = new ByteArrayOutputStream();
+                //                    get = new HttpDownload(url, bos);
+                //                    get.run();
+                //                    responseCode = get.getResponseCode();
+                //                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+                //
+                //                }
 
                 if (get.getThrowable() != null) {
                     if (get.getThrowable() instanceof AccessControlException) {
@@ -407,7 +408,7 @@ public class RepoClient {
 
             try {
                 // log.debug("RESPONSE = '" + bos.toString() + "'");
-                partialList = transformer.transformObservationState(bos);
+                partialList = transformer.read(bos);
                 //partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);
@@ -451,7 +452,7 @@ public class RepoClient {
 
     }
 
-    private List<DeletedObservation> readDeletedEntityList(TransformDeletionState transformer, String collection, Date start, Date end, Integer maxrec) {
+    private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String collection, Date start, Date end, Integer maxrec) {
 
         List<DeletedObservation> accList = new ArrayList<>();
         List<DeletedObservation> partialList = null;
@@ -515,7 +516,7 @@ public class RepoClient {
 
             try {
                 // log.debug("RESPONSE = '" + bos.toString() + "'");
-                partialList = transformer.transformDeletedEntity(bos);
+                partialList = transformer.read(bos);
                 //partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);

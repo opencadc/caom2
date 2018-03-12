@@ -81,7 +81,6 @@ import ca.nrc.cadc.caom2.repo.client.RepoClient;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -262,6 +261,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             expectedNum = batchSize.intValue();
         }
 
+        boolean correct = true;
         try {
             HarvestState state = harvestStateDAO.get(source, cname);
             log.info("last harvest: " + format(state.curLastModified));
@@ -289,11 +289,18 @@ public class DeletionHarvester extends Harvester implements Runnable {
             }
             firstIteration = false;
 
-            List<DeletedObservation> entityList = new ArrayList<DeletedObservation>();
+            List<DeletedObservation> entityList = null;
+            String source = null;
             if (deletedDAO != null) {
+                source = "deletedDAO";
                 entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
             } else {
+                source = "repoClient";
                 entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
+            }
+
+            if (entityList == null) {
+                throw new RuntimeException("Error gathering deleted observations from " + source);
             }
 
             if (entityList.size() == expectedNum) {
@@ -374,8 +381,13 @@ public class DeletionHarvester extends Harvester implements Runnable {
                     harvestStateDAO.put(state);
                 }
             }
+        } catch (Throwable t) {
+            log.error("unexpected exception", t);
+            correct = false;
         } finally {
-            log.debug("DONE");
+            if (correct) {
+                log.debug("DONE");
+            }
         }
         return ret;
     }

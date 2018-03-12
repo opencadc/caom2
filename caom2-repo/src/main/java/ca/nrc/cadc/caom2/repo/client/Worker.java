@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.repo.client;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpDownload;
 
@@ -87,6 +86,12 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
+/**
+ * Class devoted to get all information from an observation based of its ObservationState
+ *
+ * @author jduran
+ *
+ */
 public class Worker implements Callable<ObservationResponse> {
 
     private static final Logger log = Logger.getLogger(Worker.class);

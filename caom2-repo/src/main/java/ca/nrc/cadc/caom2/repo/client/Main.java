@@ -78,6 +78,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
+ * Main class for the RepoClient. Used internally to do isolated tests
+ *
  * @author pdowler
  */
 public class Main {
