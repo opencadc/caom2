@@ -166,9 +166,9 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
             rc.putObservation(obs, subject1, 200, "OK", null);
             obs = rc.getObservation(obs.getURI().getURI().toASCIIString(), subject1, 200, null, null);
             Assert.assertNotNull("test setup", obs);
-            final Date inserted = obs.getMaxLastModified();
+            Date inserted = obs.getMaxLastModified();
             Date clientInserted = new Date();
-            long dt = inserted.getTime() - clientInserted.getTime();
+            final long dt = inserted.getTime() - clientInserted.getTime();
             log.info("testListDeletedSuccess inserted: " + obs.getURI() + " " + df.format(obs.getMaxLastModified()));
             
             rc.deleteObservation(obs.getURI().getURI().toASCIIString(), subject1, null, null);
