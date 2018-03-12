@@ -470,7 +470,7 @@ public class ObservationHarvester extends Harvester {
                 } finally {
                     if (!ok && !dryrun) {
                         destObservationDAO.getTransactionManager().rollbackTransaction();
-                        log.warn("rollback: OK");
+                        log.debug("rollback: OK");
                         timeTransaction += System.currentTimeMillis() - t;
 
                         try {
@@ -517,7 +517,7 @@ public class ObservationHarvester extends Harvester {
                         } catch (Throwable oops) {
                             log.warn("failed to insert HarvestSkipURI", oops);
                             destObservationDAO.getTransactionManager().rollbackTransaction();
-                            log.warn("rollback HarvestSkipURI: OK");
+                            log.debug("rollback HarvestSkipURI: OK");
                             ret.abort = true;
                         }
                         ret.failed++;
