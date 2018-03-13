@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
@@ -111,6 +112,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.Subject;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -255,9 +259,10 @@ public class CaomTapQuery
     {
         // obtain credentials fropm CDP if the user is authorized
         AuthMethod queryAuthMethod = AuthMethod.ANON;
-        if ( CredUtil.checkCredentials() )
-            queryAuthMethod = AuthMethod.CERT;
-        
+        if ( CredUtil.checkCredentials() ) {
+            Subject s = AuthenticationUtil.getCurrentSubject();
+            queryAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        }
 
         RegistryClient reg = new RegistryClient();
         URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod, Standards.INTERFACE_UWS_SYNC);
