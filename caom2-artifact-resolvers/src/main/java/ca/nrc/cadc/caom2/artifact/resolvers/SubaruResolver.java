@@ -40,8 +40,8 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class SmokaResolver implements StorageResolver {
-    private static final Logger log = Logger.getLogger(SmokaResolver.class);
+public class SubaruResolver implements StorageResolver {
+    private static final Logger log = Logger.getLogger(SubaruResolver.class);
     private static final String SCHEME = "subaru";
     private static final String DATA_URI = "data";
     private static final String PREVIEW_URI = "preview";
@@ -51,7 +51,7 @@ public class SmokaResolver implements StorageResolver {
     private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp/qlis/ImagePNG";
     private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
 
-    public SmokaResolver() {
+    public SubaruResolver() {
     }
 
     /**
