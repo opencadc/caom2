@@ -71,12 +71,18 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.date.DateUtil;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -119,8 +125,20 @@ public class DeletedEntityDAO extends AbstractDAO {
             DeletedEntity cur = get(de.getClass(), de.getID(), jdbc);
             boolean update = (cur != null);
             if (de.getLastModified() == null) {
+                String tsSQL = gen.getCurrentTimeSQL();
+                log.debug("PUT: " + tsSQL);
+
+                // make call to server before startTransaction
+                Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
+                    @Override
+                    public Object mapRow(ResultSet rs, int i) throws SQLException {
+                        return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.LOCAL));
+                    }
+                });
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                log.debug("current time: " + df.format(now));
                 // if not null, the entity was harvested so keep original timestamp
-                Util.assignDeletedLastModified(de, new Date(), "lastModified");
+                Util.assignDeletedLastModified(de, now, "lastModified");
             }
             DeletedEntityPut op = gen.getDeletedEntityPut(de.getClass(), update);
             op.setValue(de);
