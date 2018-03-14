@@ -92,7 +92,7 @@ public class SmokaResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE_URI = "subaru:file/SUPE01318470";
+    String VALID_DATA_URI = "subaru:data/2017-01-01/SUPE01318470";
     String VALID_PREVIEW_URI = "subaru:preview/SUPE01318470";
 
     SmokaResolver resolver = new SmokaResolver();
@@ -106,7 +106,7 @@ public class SmokaResolverIntTest {
 
         try {
             List<URI> uriList = new ArrayList<URI>();
-            uriList.add(new URI(VALID_FILE_URI));
+            uriList.add(new URI(VALID_DATA_URI));
             uriList.add(new URI(VALID_PREVIEW_URI));
 
             for (URI uri : uriList) {
