@@ -107,6 +107,12 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
+/**
+ * Class in charge of reading the caom2 metadata end points
+ * 
+ * @author jduran
+ *
+ */
 public class RepoClient {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
