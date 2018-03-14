@@ -121,9 +121,9 @@ public abstract class AbstractListReader {
         return endOfLine;
     }
 
-    abstract public List read(ByteArrayOutputStream bos) throws ParseException, IOException, URISyntaxException;
+    public abstract List read(ByteArrayOutputStream bos) throws ParseException, IOException, URISyntaxException;
 
-    abstract public List read(String in);
+    public abstract List read(String in);
 
-    abstract public List read(Reader in);
+    public abstract List read(Reader in);
 }
