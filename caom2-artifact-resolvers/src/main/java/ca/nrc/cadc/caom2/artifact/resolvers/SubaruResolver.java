@@ -43,7 +43,7 @@ import org.apache.log4j.Logger;
 public class SubaruResolver implements StorageResolver {
     private static final Logger log = Logger.getLogger(SubaruResolver.class);
     private static final String SCHEME = "subaru";
-    private static final String DATA_URI = "data";
+    private static final String RAW_DATA_URI = "raw";
     private static final String PREVIEW_URI = "preview";
 
     private static final String BASE_DATA_URL = "http://www.canfar.net/maq/subaru?frameinfo=";
@@ -87,10 +87,10 @@ public class SubaruResolver implements StorageResolver {
 
         String sb = "";
         String requestType = path[0];
-        if (path.length == 2 && requestType.equals("preview")) {
+        if (path.length == 2 && requestType.equals(PREVIEW_URI)) {
             // Returns a web page reference
             sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + path[1];
-        } else if (path.length == 3 && requestType.equals("data")) {
+        } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:data/YYYY-MM-dd/<FRAMEID>
             // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=FRAMEID%20YYYY-MM-dd
             sb = BASE_DATA_URL + path[2] + "%20" + path[1];

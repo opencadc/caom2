@@ -92,7 +92,7 @@ public class SubaruResolverTest {
     String VALID_FILE2 = "SUPE01318470";
 
     String SCHEME = "subaru";
-    String DATA_URI = "data";
+    String RAW_DATA_URI = "raw";
     String PREVIEW_URI = "preview";
 
     String PROTOCOL_STR = "http://";
@@ -121,7 +121,7 @@ public class SubaruResolverTest {
     @Test
     public void testValidURI() {
         try {
-            String uriStr = subaruResolver.getScheme() + ":" + DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
+            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
             URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
