@@ -269,6 +269,7 @@ public class CaomWCSValidatorTest {
             try {
                 time = dataGenerator.mkBadTemporalWCSCunit();
                 CaomWCSValidator.validateTemporalWCS("test", time);
+                Assert.fail("Expected an exception, but none was thrown: " + time.toString());
             } catch (IllegalArgumentException iae) {
                 log.info(EXPECTED_EXCEPTION + " bad cunit.");
             }
@@ -276,8 +277,17 @@ public class CaomWCSValidatorTest {
             try {
                 time = dataGenerator.mkBadTemporalWCSRange();
                 CaomWCSValidator.validateTemporalWCS("test", time);
+                Assert.fail("Expected an exception, but none was thrown: " + time.toString());
             } catch (IllegalArgumentException iae) {
                 log.info(EXPECTED_EXCEPTION + " bad range.");
+            }
+            
+            try {
+                time = dataGenerator.mkBadTemporalWCSFunction();
+                CaomWCSValidator.validateTemporalWCS("test", time);
+                Assert.fail("Expected an exception, but none was thrown: " + time.toString());
+            } catch (IllegalArgumentException iae) {
+                log.info(EXPECTED_EXCEPTION + " bad function.");
             }
         } catch (Exception unexpected) {
             log.info(UNEXPECTED_EXCEPTION + " validating TemporalWCS: " + time.toString(), unexpected);
