@@ -421,6 +421,8 @@ public class Ingest implements Runnable
 
             setContentLength(artifact, ingestFile);
             setContentType(artifact, ingestFile);
+            setContentChecksum(artifact, ingestFile);
+            
 
             // If FITS file, get details about parts and chunks
             // TODO: we may have to combine this with the read loop to avoid excessive
@@ -790,6 +792,15 @@ public class Ingest implements Runnable
         log.debug("Artifact.contentType = " + artifact.contentType);
     }
     
+    protected void setContentChecksum(Artifact artifact, IngestableFile file)
+    {
+        if (file.getContentMD5() != null)
+        {
+            URI u = URI.create("md5:" + file.getContentMD5());
+            artifact.contentChecksum = u;
+            log.debug("Artifact.contentChecksum = " + artifact.contentChecksum);
+        }
+    }
     protected void readHeaders(Fits fits, List<Header> headers)
         throws FitsException
     {

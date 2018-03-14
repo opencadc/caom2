@@ -116,6 +116,7 @@ public class IngestableFile
     private String tmpDirPath;
     private String contentType;
     private String contentEncoding;
+    private String contentMD5;
     private long contentLength = -1;
     private boolean uriIsFile;
 
@@ -274,6 +275,7 @@ public class IngestableFile
         this.contentType = download.getContentType();
         this.contentLength = download.getContentLength();
         this.contentEncoding = download.getContentEncoding();
+        this.contentMD5 = download.getContentMD5();
         if (this.contentLength == -1) // URL did not provide length, use local file
             this.contentLength = this.file.length();
         
@@ -310,6 +312,10 @@ public class IngestableFile
     public String getContentEncoding()
     {
         return contentEncoding;
+    }
+
+    public String getContentMD5() {
+        return contentMD5;
     }
 
     protected HttpDownload doDownload(URL url, String op, boolean headOnly)
