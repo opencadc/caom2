@@ -67,13 +67,19 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
+import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.net.URI;
+import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
+ * Main class for the RepoClient. Used internally to do isolated tests
+ *
  * @author pdowler
  */
 public class Main {
@@ -101,19 +107,24 @@ public class Main {
                 usage();
                 System.exit(0);
             }
+            //            Subject subject = AuthenticationUtil.getAnonSubject();
+            //            if (am.isSet("netrc")) {
+            //                subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+            //            } else if (am.isSet("cert")) {
+            //                subject = CertCmdArgUtil.initSubject(am);
+            //            }
+            //            AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            //            log.info("authentication using: " + meth);
+            //
+            //            log.info("AuthenticationUtil.getCurrentSubject(): " + AuthenticationUtil.getCurrentSubject());
 
-            // TODO: implement useful command-line fatures here: 
+            RepoClient rc = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 1);
 
-            // setup
-            // am.getValue("resourceID")
-            // am.getValue("collection")
+            List<DeletedObservation> list = rc.getDeleted("HSTHLA", null, null, 100);
 
-            // get list
-            // am.isSet("list")
-            // am.getValue("maxrec")
-
-            // get a single observation
-            // am.getValue("observationID")
+            //            for (DeletedObservation deleted : list) {
+            //                log.info(deleted.getURI().getObservationID());
+            //            }
         } catch (Throwable uncaught) {
             log.error("uncaught exception", uncaught);
             System.exit(-1);

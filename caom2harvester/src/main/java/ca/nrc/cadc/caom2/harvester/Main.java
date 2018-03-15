@@ -77,13 +77,16 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+
 import javax.security.auth.Subject;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -219,9 +222,7 @@ public class Main {
                         bpidStr += "/";
                     }
                     basePublisherID = new URI(bpidStr);
-                    if ("ivo".equals(basePublisherID.getScheme())
-                            && basePublisherID.getAuthority() != null
-                            && basePublisherID.getAuthority().length() > 0) {
+                    if ("ivo".equals(basePublisherID.getScheme()) && basePublisherID.getAuthority() != null && basePublisherID.getAuthority().length() > 0) {
                         log.info("basePublisherID: " + basePublisherID);
                         log.debug("publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
                     } else {
@@ -239,7 +240,7 @@ public class Main {
                 usage();
                 System.exit(1);
             }
-            
+
             Integer batchSize = null;
             Integer batchFactor = null;
             String sbatch = am.getValue("batchSize");
@@ -300,7 +301,7 @@ public class Main {
                     System.exit(1);
                 }
             }
-            
+
             Runnable action = null;
             if (!validate) {
 

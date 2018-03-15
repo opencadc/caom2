@@ -78,12 +78,14 @@ import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -97,7 +99,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
     private DeletedEntityDAO deletedDAO;
     private RepoClient repoClient;
-    
+
     private ObservationDAO obsDAO;
     private TransactionManager txnManager;
 
@@ -108,24 +110,24 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * Constructor.
      *
      * @param src
-     * source server.database.schema
+     *            source server.database.schema
      * @param dest
-     * destination server.database.schema
+     *            destination server.database.schema
      * @param entityClass
-     * the class specifying what should be deleted
+     *            the class specifying what should be deleted
      * @param batchSize
-     * ignored, always full list
+     *            ignored, always full list
      * @param dryrun
-     * true if no changed in the data base are applied during the process
+     *            true if no changed in the data base are applied during the process
      * @throws IOException
-     * IOException
+     *             IOException
      * @throws URISyntaxException
-     * URISyntaxException
+     *             URISyntaxException
      * @throws NumberFormatException
-     * NumberFormatException
+     *             NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest,
-            Integer batchSize, boolean dryrun) throws IOException, NumberFormatException, URISyntaxException {
+    public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean dryrun)
+            throws IOException, NumberFormatException, URISyntaxException {
         super(entityClass, src, dest, batchSize, false, dryrun);
     }
 
@@ -133,7 +135,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * Initialise harvest state with the current date.
      *
      * @param initHarvestState
-     * value for this attribute
+     *            value for this attribute
      */
     public void setInitHarvestState(boolean initHarvestState) {
         this.initHarvestState = initHarvestState;
@@ -146,15 +148,15 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * initialize of the harvester
      *
      * @param uri
-     * uri to be used
+     *            uri to be used
      * @param collection
-     * collection to work on
+     *            collection to work on
      * @param threads
-     * number of threads to be used
+     *            number of threads to be used
      * @throws IOException
-     * IOException
+     *             IOException
      * @throws URISyntaxException
-     * URISyntaxException
+     *             URISyntaxException
      */
     private void init() throws IOException, URISyntaxException {
         // source
@@ -165,14 +167,14 @@ public class DeletionHarvester extends Harvester implements Runnable {
         } else {
             this.repoClient = new RepoClient(src.getResourceID(), 1);
         }
-        
+
         // destination
         Map<String, Object> config2 = getConfigDAO(dest);
         this.obsDAO = new ObservationDAO();
         obsDAO.setConfig(config2);
         this.txnManager = obsDAO.getTransactionManager();
         initHarvestState(obsDAO.getDataSource(), entityClass);
-        
+
     }
 
     /**
@@ -250,7 +252,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
      *
      * @return progress status
      */
-    @SuppressWarnings("unchecked")
     private Progress doit() {
         log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
@@ -260,6 +261,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             expectedNum = batchSize.intValue();
         }
 
+        boolean correct = true;
         try {
             HarvestState state = harvestStateDAO.get(source, cname);
             log.info("last harvest: " + format(state.curLastModified));
@@ -270,7 +272,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 state = harvestStateDAO.get(source, cname);
                 log.info("harvest state initialised to: " + df.format(state.curLastModified));
             }
-            
+
             startDate = state.curLastModified;
             if (firstIteration) {
                 if (super.minDate != null) { // override state
@@ -287,12 +289,19 @@ public class DeletionHarvester extends Harvester implements Runnable {
             }
             firstIteration = false;
 
-            List<DeletedObservation> entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
-            //if (deletedDAO != null) {
-            //    entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
-            //} else {
-            //    entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
-            //}
+            List<DeletedObservation> entityList = null;
+            String source = null;
+            if (deletedDAO != null) {
+                source = "deletedDAO";
+                entityList = deletedDAO.getList(src.getCollection(), startDate, endDate, batchSize);
+            } else {
+                source = "repoClient";
+                entityList = repoClient.getDeleted(src.getCollection(), startDate, endDate, batchSize);
+            }
+
+            if (entityList == null) {
+                throw new RuntimeException("Error gathering deleted observations from " + source);
+            }
 
             if (entityList.size() == expectedNum) {
                 detectLoop(entityList);
@@ -304,30 +313,34 @@ public class DeletionHarvester extends Harvester implements Runnable {
             while (iter.hasNext()) {
                 DeletedObservation de = iter.next();
                 iter.remove(); // allow garbage collection asap
+                log.debug("Observation read from deletion end-point: " + de.getID() + " date = " + de.getLastModified());
 
                 if (!dryrun) {
                     txnManager.startTransaction();
                 }
                 boolean ok = false;
                 try {
-                    
+
                     if (!dryrun) {
                         state.curLastModified = de.getLastModified();
                         state.curID = de.getID();
-                        
+
                         ObservationState cur = obsDAO.getState(de.getID());
                         if (cur != null) {
+                            log.debug("Observation: " + de.getID() + " found in DB");
                             Date lastUpdate = cur.getMaxLastModified();
                             Date deleted = de.getLastModified();
-                        
+                            log.debug("to be deleted: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + "deleted date "
+                                    + format(de.getLastModified()) + " modified date " + format(cur.getMaxLastModified()));
                             if (deleted.after(lastUpdate)) {
-                                log.info("delete: " + de.getClass().getSimpleName() 
-                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                                log.debug("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
                                 obsDAO.delete(de.getID());
                             } else {
-                                log.info("skip out-of-date delete: " + de.getClass().getSimpleName() 
-                                    + " " + de.getURI() + " " + de.getID() + " " + format(de.getLastModified()));
+                                log.info("skip out-of-date delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + " "
+                                        + format(de.getLastModified()));
                             }
+                        } else {
+                            log.debug("Observation: " + de.getID() + " not found in DB");
                         }
 
                         // track progress
@@ -368,8 +381,13 @@ public class DeletionHarvester extends Harvester implements Runnable {
                     harvestStateDAO.put(state);
                 }
             }
+        } catch (Throwable t) {
+            log.error("unexpected exception", t);
+            correct = false;
         } finally {
-            log.debug("DONE");
+            if (correct) {
+                log.debug("DONE");
+            }
         }
         return ret;
     }
@@ -378,7 +396,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * detects loops
      *
      * @param entityList
-     * list of entities to detect loops with
+     *            list of entities to detect loops with
      */
     private void detectLoop(List<DeletedObservation> entityList) {
         if (entityList.size() < 2) {
@@ -387,9 +405,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
         DeletedEntity start = entityList.get(0);
         DeletedEntity end = entityList.get(entityList.size() - 1);
         if (start.getLastModified().equals(end.getLastModified())) {
-            throw new RuntimeException("detected infinite harvesting loop: "
-                    + entityClass.getSimpleName() + " at "
-                    + format(start.getLastModified()));
+            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + format(start.getLastModified()));
         }
 
     }
