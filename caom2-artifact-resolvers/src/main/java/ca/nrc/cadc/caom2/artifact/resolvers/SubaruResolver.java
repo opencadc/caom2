@@ -92,8 +92,8 @@ public class SubaruResolver implements StorageResolver {
             sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + path[1];
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:data/YYYY-MM-dd/<FRAMEID>
-            // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=FRAMEID%20YYYY-MM-dd
-            sb = BASE_DATA_URL + path[2] + "%20" + path[1];
+            // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=YYYY-MM-dd%20FRAMEID
+            sb = BASE_DATA_URL +  path[1] + "%20" + path[2];
         } else {
             throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
         }

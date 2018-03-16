@@ -126,9 +126,9 @@ public class SubaruResolverTest {
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY + VALID_FILE1 + "%20" + VALID_DATE1);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY + VALID_DATE1 + "%20" + VALID_FILE1);
             Assert.assertEquals(DATA_URL_PATH, url.getPath());
-            Assert.assertEquals(DATA_URL_QUERY + VALID_FILE1 + "%20" + VALID_DATE1, url.getQuery());
+            Assert.assertEquals(DATA_URL_QUERY + VALID_DATE1 + "%20" + VALID_FILE1, url.getQuery());
             Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
             uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
