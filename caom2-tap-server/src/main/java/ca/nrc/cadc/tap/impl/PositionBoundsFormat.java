@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,84 +62,103 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.tap.caom2;
+package ca.nrc.cadc.tap.impl;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.URI;
-import java.net.URL;
-import javax.security.auth.Subject;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.stc.CoordPair;
+import ca.nrc.cadc.stc.Flavor;
+import ca.nrc.cadc.stc.Frame;
+import ca.nrc.cadc.stc.ReferencePosition;
+import ca.nrc.cadc.stc.STC;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * Formatter for the polymorphic position_bounds_points column.
  *
  * @author pdowler
  */
-public class DataLinkURLFormat  implements Format<Object>
-{
-    private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
+public class PositionBoundsFormat extends AbstractResultSetFormat {
 
-    private String jobID;
-    private static final String DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI = "ivo://cadc.nrc.ca/caom2ops";
+    private DoubleArrayFormat daf = new DoubleArrayFormat();
 
-    private DataLinkURLFormat() { }
-
-    public DataLinkURLFormat(String jobID)
-    {
-        if (jobID == null)
-            throw new IllegalArgumentException("null jobID");
-        this.jobID = jobID;
+    /**
+     * Takes a ResultSet and column index of the position_bounds_points
+     * and returns a polymorphic STC-S String.
+     *
+     * @param resultSet containing the position_bounds_points column.
+     * @param columnIndex index of the column in the ResultSet.
+     * @return STC Polygon
+     * @throws SQLException if there is an error accessing the ResultSet.
+     */
+    @Override
+    public Object extract(ResultSet resultSet, int columnIndex)
+            throws SQLException {
+        Object o = daf.extract(resultSet, columnIndex);
+        return getRegion(o);
     }
 
+    /**
+     * Takes a String representation of the spoly
+     * and returns a STC-S Polygon String.
+     *
+     * @param object to format.
+     * @return STC-S Polygon String of the spoly.
+     * @throws IllegalArgumentException if the object is not a String, or if
+     * the String cannot be parsed.
+     */
     @Override
-    public Object parse(String s)
-    {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
-    }
-
-    @Override
-    public String format(Object o)
-    {
-        if (o == null)
+    public String format(Object object) {
+        if (object == null) {
             return "";
-
-        String s = (String) o;
-        try
-        {
-            int i = s.indexOf('?');
-            String rid = DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI;
-            if (i > 0) {
-                rid = s.substring(0,i);
-            } // else: default for unresolvable caom planeURI of the form caom:blah/blah/blah
-            URI resourceID = URI.create(rid);
-            RegistryClient rc = new RegistryClient();
-            Subject caller = AuthenticationUtil.getCurrentSubject();
-            AuthMethod cur = AuthenticationUtil.getAuthMethod(caller);
-            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, cur);
-            StringBuilder sb = new StringBuilder();
-            sb.append(baseURL.toExternalForm());
-            sb.append("?");
-            if (jobID != null) {
-                sb.append("runid=").append(NetUtil.encode(jobID)).append("&");
-            }
-            sb.append("ID=").append(NetUtil.encode(s));
-            return sb.toString();
         }
-        catch(Exception ex)
-        {
-            log.error("BUG", ex);
-        }
-        return "";
+        return STC.format((ca.nrc.cadc.stc.Region) object);
     }
 
+    ca.nrc.cadc.stc.Region getRegion(Object object) {
+        if (object == null) {
+            return null;
+        }
 
+        if (object instanceof java.sql.Array) {
+            try {
+                java.sql.Array array = (java.sql.Array) object;
+                object = array.getArray();
+            } catch (SQLException e) {
+                throw new IllegalArgumentException("Error accessing array data for " + object.getClass().getCanonicalName(), e);
+            }
+        }
+
+        if (object instanceof Double[]) {
+            Double[] arr = (Double[]) object;
+            double[] tmp = new double[arr.length];
+            for (int i = 0; i < arr.length; i++) {
+                tmp[i] = arr[i]; // unbox
+            }
+            object = tmp;
+        }
+
+        if (object instanceof double[]) {
+            double[] coords = (double[]) object;
+            if (coords.length == 3) {
+                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, 
+                    coords[0], coords[1], coords[2]);
+            } else {
+                List<CoordPair> coordPairs = new ArrayList<CoordPair>();
+                for (int i = 0; i < coords.length; i += 2) {
+                    coordPairs.add(new CoordPair(coords[i], coords[i + 1]));
+                }
+                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, coordPairs);
+            }
+        }
+        
+        throw new IllegalArgumentException(object.getClass().getCanonicalName() + " not supported.");
+    }
 }

@@ -67,79 +67,107 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.tap.caom2;
+package ca.nrc.cadc.tap.impl;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.URI;
-import java.net.URL;
-import javax.security.auth.Subject;
+import ca.nrc.cadc.tap.AdqlQuery;
+import ca.nrc.cadc.tap.caom2.CaomReadAccessConverter;
+import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
+import ca.nrc.cadc.tap.caom2.CaomSelectListConverter;
+import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
+import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
+import ca.nrc.cadc.tap.parser.PgsphereDeParser;
+import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
+import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
+import ca.nrc.cadc.tap.parser.converter.TopConverter;
+import ca.nrc.cadc.tap.parser.converter.postgresql.PgFunctionNameConverter;
+import ca.nrc.cadc.tap.parser.extractor.FunctionExpressionExtractor;
+import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
+import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
+import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
+import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
+import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * AdqlQuery implementation for PostgreSQL + pg_sphere + CAOM-2.
+ * 
  * @author pdowler
  */
-public class DataLinkURLFormat  implements Format<Object>
+public class CaomAdqlQuery extends AdqlQuery
 {
-    private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
-
-    private String jobID;
-    private static final String DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI = "ivo://cadc.nrc.ca/caom2ops";
-
-    private DataLinkURLFormat() { }
-
-    public DataLinkURLFormat(String jobID)
-    {
-        if (jobID == null)
-            throw new IllegalArgumentException("null jobID");
-        this.jobID = jobID;
+    private static Logger log = Logger.getLogger(CaomAdqlQuery.class);
+    
+    private final boolean enableMetaReadAccessConverter;
+    
+    /**
+     * Standard ADQL processor for a CAOM-2.x TAP service. By default, the 
+     * CaomReadAccessConverter is enabled. Sub-classes may disable it via
+     * an alternate constructor.
+     */
+    public CaomAdqlQuery() { 
+        this(true);
     }
-
+    
+    protected CaomAdqlQuery(boolean enableMetaReadAccessConverter) {
+        this.enableMetaReadAccessConverter = enableMetaReadAccessConverter;
+    }
+    
     @Override
-    public Object parse(String s)
+    protected void init()
     {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
-    }
+        super.init();
 
+        // convert TOP -> LIMIT
+        super.navigatorList.add(new TopConverter(
+                new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
+
+        // convert ADQL geometry function calls to alternate form
+        super.navigatorList.add(new CaomRegionConverter());
+        
+        // convert functions to PG-specific names
+        navigatorList.add(new FunctionExpressionExtractor(
+            new PgFunctionNameConverter(), new ReferenceNavigator(), new FromItemNavigator()));
+
+        // after CaomRegionConverter: triggering off the same column names and converting some uses
+        TableNameConverter tnc = new TableNameConverter(true);
+        tnc.put("ivoa.ObsCore", "caom2.ObsCore");
+        tnc.put("ivoa.ObsFile", "caom2.ObsFile");
+        tnc.put("ivoa.ObsPart", "caom2.ObsPart");
+        // TAP-1.1 version of tap_schema
+        tnc.put("tap_schema.schemas", "tap_schema.schemas11");
+        tnc.put("tap_schema.tables", "tap_schema.tables11");
+        tnc.put("tap_schema.columns", "tap_schema.columns11");
+        tnc.put("tap_schema.keys", "tap_schema.keys11");
+        tnc.put("tap_schema.key_columns", "tap_schema.key_columns11");
+        TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
+        super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
+
+        if (enableMetaReadAccessConverter) {
+            // enforce access control policy in queries - must be after TableNameConverter
+            super.navigatorList.add(new CaomReadAccessConverter());
+        }
+
+        // convert use of the isDownloadable function
+        super.navigatorList.add(new IsDownloadableConverter());
+        
+        // change caom2.Artifact.accessURL to caom2.Artifact.uri
+        super.navigatorList.add(new CaomSelectListConverter());
+        
+        //for (Object o : navigatorList)
+        //    log.debug("navigator: " + o.getClass().getName());
+    }
+    
     @Override
-    public String format(Object o)
+    protected BaseExpressionDeParser getExpressionDeparser(SelectDeParser dep, StringBuffer sb)
     {
-        if (o == null)
-            return "";
-
-        String s = (String) o;
-        try
-        {
-            int i = s.indexOf('?');
-            String rid = DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI;
-            if (i > 0) {
-                rid = s.substring(0,i);
-            } // else: default for unresolvable caom planeURI of the form caom:blah/blah/blah
-            URI resourceID = URI.create(rid);
-            RegistryClient rc = new RegistryClient();
-            Subject caller = AuthenticationUtil.getCurrentSubject();
-            AuthMethod cur = AuthenticationUtil.getAuthMethod(caller);
-            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, cur);
-            StringBuilder sb = new StringBuilder();
-            sb.append(baseURL.toExternalForm());
-            sb.append("?");
-            if (jobID != null) {
-                sb.append("runid=").append(NetUtil.encode(jobID)).append("&");
-            }
-            sb.append("ID=").append(NetUtil.encode(s));
-            return sb.toString();
-        }
-        catch(Exception ex)
-        {
-            log.error("BUG", ex);
-        }
-        return "";
+        return new PgsphereDeParser(dep, sb);
     }
-
-
+    
+    @Override
+    public String getSQL()
+    {
+        String sql = super.getSQL();
+        log.debug("SQL:\n" + sql); 
+        return sql;
+    }
 }
