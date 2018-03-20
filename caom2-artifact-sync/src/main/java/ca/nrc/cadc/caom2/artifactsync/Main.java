@@ -358,7 +358,7 @@ public class Main {
         sb.append("\n     --full : do a full harvest");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
-        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
+        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
         sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
         sb.append("\n     --profile : Profile task execution");
         sb.append("\n\nAuthentication:");
