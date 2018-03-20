@@ -184,16 +184,14 @@ public class PackageRunner implements JobRunner
             }
             log.debug(job.getID() + ": QUEUED -> EXECUTING [OK]");
             
-            // obtain credentials fropm CDP if the user is authorized
-            String tapProto = "http";
+            // obtain credentials from CDP if the user is authorized
             AccessControlContext accessControlContext = AccessController.getContext();
             Subject subject = Subject.getSubject(accessControlContext);
             AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
             AuthMethod proxyAuthMethod = authMethod;
             if ( CredUtil.checkCredentials() )
             {
-                tapProto = "https";
-                proxyAuthMethod = AuthMethod.CERT;
+                proxyAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             }
             
             String runID = job.getID();
