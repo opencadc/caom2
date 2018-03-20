@@ -244,7 +244,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             try {
 
                 URI artifactURI = skip.getSkipID();
-                Artifact artifact = artifactDAO.get(artifactURI);
+                final Artifact artifact = artifactDAO.get(artifactURI);
                 profiler.checkpoint("artifactDAO.get");
                 
                 result = new ArtifactDownloadResult(artifactURI);
@@ -259,7 +259,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
                 
                 MastResolver resolver = new MastResolver();
-                URL url = resolver.toURL(artifactURI);
+                final URL url = resolver.toURL(artifactURI);
     
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
