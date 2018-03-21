@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -126,16 +127,16 @@ public class SubaruResolverTest {
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY + VALID_DATE1 + "%20" + VALID_FILE1);
+            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_FILE1);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +  encodedValue);
             Assert.assertEquals(DATA_URL_PATH, url.getPath());
-            Assert.assertEquals(DATA_URL_QUERY + VALID_DATE1 + "%20" + VALID_FILE1, url.getQuery());
+            Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
             Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
             uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
             uri = new URI(uriStr);
             url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
-            // http://smoka.nao.ac.jp/qlis/ImagePNG?grayscale=linear&mosaic=true&frameid=SUPE01318470
 
             Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);
             Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());

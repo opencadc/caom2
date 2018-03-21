@@ -29,6 +29,7 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -93,7 +94,7 @@ public class SubaruResolver implements StorageResolver {
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:data/YYYY-MM-dd/<FRAMEID>
             // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=YYYY-MM-dd%20FRAMEID
-            sb = BASE_DATA_URL +  path[1] + "%20" + path[2];
+            sb = BASE_DATA_URL +  NetUtil.encode(path[1] + "/" + path[2]);
         } else {
             throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
         }
