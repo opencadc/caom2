@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,16 +75,20 @@ import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.repo.client.transform.AbstractListReader;
 import ca.nrc.cadc.caom2.repo.client.transform.DeletionListReader;
 import ca.nrc.cadc.caom2.repo.client.transform.ObservationStateListReader;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -116,7 +120,7 @@ import org.apache.log4j.Logger;
 public class RepoClient {
 
     private static final Logger log = Logger.getLogger(RepoClient.class);
-    private static final Integer MAX_NUMBER = 3000;
+    private static final Integer DEFAULT_BATCH_SIZE = 50000;
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     private RegistryClient rc;
@@ -186,7 +190,7 @@ public class RepoClient {
 
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         initDel();
-        return readDeletedEntityList(new DeletionListReader(df, '\t', '\n'), collection, start, end, maxrec);
+        return readDeletedEntityList(new DeletionListReader(), collection, start, end, maxrec);
         // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
 
         // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
@@ -197,7 +201,7 @@ public class RepoClient {
     }
 
     public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
-        return readObservationStateList(new ObservationStateListReader(df, '\t', '\n'), collection, start, end, maxrec);
+        return readObservationStateList(new ObservationStateListReader(), collection, start, end, maxrec);
     }
 
     public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
@@ -352,13 +356,12 @@ public class RepoClient {
         init();
 
         List<ObservationState> accList = new ArrayList<>();
-        List<ObservationState> partialList = null;
-        boolean tooBigRequest = maxrec == null || maxrec > MAX_NUMBER;
+        boolean tooBigRequest = maxrec == null || maxrec > DEFAULT_BATCH_SIZE;
 
         Integer rec = maxrec;
         Integer recCounter;
         if (tooBigRequest) {
-            rec = MAX_NUMBER;
+            rec = DEFAULT_BATCH_SIZE;
         }
         // Use HttpDownload to make the http GET calls (because it handles a lot
         // of the
@@ -372,7 +375,7 @@ public class RepoClient {
                 go = false;// only one go
             }
             String surl = surlCommon;
-            surl = surl + "?maxRec=" + (rec + 1);
+            surl = surl + "?maxrec=" + (rec + 1);
             if (start != null) {
                 surl = surl + "&start=" + df.format(start);
             }
@@ -414,60 +417,83 @@ public class RepoClient {
 
             try {
                 // log.debug("RESPONSE = '" + bos.toString() + "'");
-                partialList = transformer.read(bos);
-                //partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
+                List<ObservationState> partialList = transformer.read(new ByteArrayInputStream(bos.toByteArray()));
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);
                 }
 
                 if (partialList != null) {
                     accList.addAll(partialList);
-                    log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+                    log.warn("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
                 }
 
                 bos.close();
+                
+                if (accList.size() > 0) {
+                    start = accList.get(accList.size() - 1).maxLastModified;
+                }
+
+                recCounter = accList.size();
+                if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec) {
+                    rec = maxrec - recCounter;
+                }
+                log.debug("dynamic batch (rec): " + rec);
+                log.debug("counter (recCounter): " + recCounter);
+                log.debug("maxrec: " + maxrec);
+                // log.debug("start: " + start.toString());
+                // log.debug("end: " + end.toString());
+
+                if (partialList != null) {
+                    log.debug("partialList.size(): " + partialList.size());
+
+                    if (partialList.size() < rec || (end != null && start != null && start.equals(end))) {
+                        log.debug("************** go false");
+
+                        go = false;
+                    }
+                }
             } catch (ParseException | URISyntaxException | IOException e) {
                 throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
             }
+        }
+        return accList;
 
-            if (accList.size() > 0) {
-                start = accList.get(accList.size() - 1).maxLastModified;
-            }
+    }
+    
+    // pdowler: was going to use this so the HttpDownload would pass the InputStream directly to the reader
+    // but will take additional refactoring
+    private class StreamingListReader<T> implements InputStreamWrapper {
+        
+        AbstractListReader<T> reader;
+        List<T> result;
+        Exception fail;
 
-            recCounter = accList.size();
-            if (maxrec != null && maxrec - recCounter > 0 && maxrec - recCounter < rec) {
-                rec = maxrec - recCounter;
-            }
-            log.debug("dynamic batch (rec): " + rec);
-            log.debug("counter (recCounter): " + recCounter);
-            log.debug("maxrec: " + maxrec);
-            // log.debug("start: " + start.toString());
-            // log.debug("end: " + end.toString());
-
-            if (partialList != null) {
-                log.debug("partialList.size(): " + partialList.size());
-
-                if (partialList.size() < rec || (end != null && start != null && start.equals(end))) {
-                    log.debug("************** go false");
-
-                    go = false;
-                }
+        public StreamingListReader(AbstractListReader<T> reader) {
+            this.reader = reader;
+        }
+        
+        @Override
+        public void read(InputStream in) throws IOException {
+            try {
+                this.result = reader.read(in);
+            } catch (ParseException ex) {
+                this.fail = ex;
+            } catch (URISyntaxException ex) {
+                this.fail = ex;
             }
         }
-        return partialList;
-
     }
 
     private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String collection, Date start, Date end, Integer maxrec) {
 
         List<DeletedObservation> accList = new ArrayList<>();
         List<DeletedObservation> partialList = null;
-        boolean tooBigRequest = maxrec == null || maxrec > MAX_NUMBER;
+        boolean tooBigRequest = maxrec == null || maxrec > DEFAULT_BATCH_SIZE;
 
         Integer rec = maxrec;
         Integer recCounter;
         if (tooBigRequest) {
-            rec = MAX_NUMBER;
+            rec = DEFAULT_BATCH_SIZE;
         }
         // Use HttpDownload to make the http GET calls (because it handles a lot
         // of the
@@ -522,7 +548,7 @@ public class RepoClient {
 
             try {
                 // log.debug("RESPONSE = '" + bos.toString() + "'");
-                partialList = transformer.read(bos);
+                partialList = transformer.read(new ByteArrayInputStream(bos.toByteArray()));
                 //partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);

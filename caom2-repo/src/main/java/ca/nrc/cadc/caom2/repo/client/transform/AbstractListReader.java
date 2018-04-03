@@ -70,10 +70,12 @@
 package ca.nrc.cadc.caom2.repo.client.transform;
 
 import ca.nrc.cadc.caom2.ObservationState;
-
-import java.io.ByteArrayOutputStream;
+import ca.nrc.cadc.date.DateUtil;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -86,12 +88,10 @@ import java.util.List;
  * @author jduran
  *
  */
-public abstract class AbstractListReader {
+public abstract class AbstractListReader<T> {
 
-    private DateFormat dateFormat = null;
-    private char separator = '0';
-    private char endOfLine = '0';
-
+    protected final DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+    
     private Comparator<ObservationState> maxLasModifiedComparator = new Comparator<ObservationState>() {
         @Override
         public int compare(ObservationState o1, ObservationState o2) {
@@ -99,31 +99,19 @@ public abstract class AbstractListReader {
         }
     };
 
-    public AbstractListReader(DateFormat dateFormat, char separator, char endOfLine) {
-        this.dateFormat = dateFormat;
-        this.separator = separator;
-        this.endOfLine = endOfLine;
-    }
-
-    public Comparator<ObservationState> getComparator() {
+    private Comparator<ObservationState> getComparator() {
         return maxLasModifiedComparator;
     }
 
-    public DateFormat getDateFormat() {
-        return dateFormat;
+    public List<T> read(InputStream in) throws ParseException, IOException, URISyntaxException {
+        InputStreamReader ir = new InputStreamReader(in);
+        return read(ir);
     }
 
-    public char getSeparator() {
-        return separator;
+    public List<T> read(String in) throws ParseException, IOException, URISyntaxException {
+        StringReader sr = new StringReader(in);
+        return read(sr);
     }
 
-    public char getEndOfLine() {
-        return endOfLine;
-    }
-
-    public abstract List read(ByteArrayOutputStream bos) throws ParseException, IOException, URISyntaxException;
-
-    public abstract List read(String in);
-
-    public abstract List read(Reader in);
+    public abstract List<T> read(Reader in) throws ParseException, IOException, URISyntaxException;
 }
