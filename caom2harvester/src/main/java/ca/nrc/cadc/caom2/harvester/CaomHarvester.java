@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -81,14 +81,11 @@ import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
-
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -153,6 +150,11 @@ public class CaomHarvester implements Runnable {
         obsHarvester.setSkipped(skip);
         obsHarvester.setComputePlaneMetadata(compute);
 
+        // deletions in incremental mode only        
+        if (!full && !skip) {
+            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
+        }
+
         boolean extendedFeatures = src.getDatabaseServer() != null;
         if (extendedFeatures) {
             if (src.getHarvestAC()) {
@@ -172,21 +174,14 @@ public class CaomHarvester implements Runnable {
 
             // deletions in incremental mode only
             if (!full && !skip) {
-                // TODO: once the RepoClient supports deletion harvesting this can be moved out of "extendedFeatures"
-                this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
-
                 if (src.getHarvestAC()) {
                     this.observationMetaDeleter = new ReadAccessDeletionHarvester(DeletedObservationMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
                     this.planeMetaDeleter = new ReadAccessDeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
                     this.planeDataDeleter = new ReadAccessDeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
                 }
-
             }
         }
 
-        if (!full && !skip) {
-            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
-        }
         log.info("     source: " + src.getIdentifier());
         log.info("destination: " + dest.getIdentifier());
     }
