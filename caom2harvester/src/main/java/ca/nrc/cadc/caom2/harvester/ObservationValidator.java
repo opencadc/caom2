@@ -174,10 +174,8 @@ public class ObservationValidator extends Harvester {
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
-            List<ObservationState> tmpSrcState = null;
-            List<ObservationState> tmpDstState = null;
-
             log.info("getObservationList: " + src.getIdentifier());
+            List<ObservationState> tmpSrcState = null;
             if (srcObservationDAO != null) {
                 tmpSrcState = srcObservationDAO.getObservationList(src.getCollection(), null, null, null);
             } else if (srcObservationService != null) {
@@ -193,7 +191,7 @@ public class ObservationValidator extends Harvester {
             log.info("source set: " + srcState.size());
             
             log.info("getObservationList: " + dest.getIdentifier());
-            tmpDstState = destObservationDAO.getObservationList(dest.getCollection(), null, null, null);
+            List<ObservationState> tmpDstState = destObservationDAO.getObservationList(dest.getCollection(), null, null, null);
             log.info("found: " + tmpDstState.size());
             
             Set<ObservationState> dstState = new TreeSet<>(compStateUri);
