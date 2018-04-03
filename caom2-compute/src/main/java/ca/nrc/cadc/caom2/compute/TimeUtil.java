@@ -395,7 +395,7 @@ public final class TimeUtil {
         double p2 = func.getNaxis().doubleValue() + 0.5;
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
-        if (func.getDelta() == 0.0) {
+        if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
             throw new IllegalArgumentException("delta is 0.0");
         }
 

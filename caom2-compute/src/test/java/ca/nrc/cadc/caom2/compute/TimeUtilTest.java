@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -103,7 +104,7 @@ public class TimeUtilTest {
     }
 
 
-    ////@Test
+    //@Test
     public void testTemplate() {
         try {
             // TODO
@@ -241,6 +242,36 @@ public class TimeUtilTest {
         }
     }
 
+    @Test
+    public void testComputeFunctionDeltaZero() {
+        try {
+            CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
+            TemporalWCS wcs = new TemporalWCS(axis);
+            wcs.timesys = "UTC";
+            wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
+            SubInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Assert.fail("expected IllegalArgumentException, got: " + i);
+        } catch (IllegalArgumentException expected) {
+            log.info("caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
+        try {
+            CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
+            TemporalWCS wcs = new TemporalWCS(axis);
+            wcs.timesys = "UTC";
+            // delata==0 allowed for single bin
+            wcs.getAxis().function = new CoordFunction1D(1L, 0.0, new RefCoord(0.5, 54321.0));
+            SubInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+        
+    }
+    
     @Test
     public void testComputeFromMultipleFunction() {
         try {
