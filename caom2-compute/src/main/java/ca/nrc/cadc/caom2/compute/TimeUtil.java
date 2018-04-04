@@ -369,11 +369,20 @@ public final class TimeUtil {
         // units, like days, hours, minutes, seconds, and smaller since they are offsets
         // from mjdref
 
+        double pa = r.getStart().pix;
+        double pb = r.getEnd().pix;
+        double np = pb - pa;
+        if (np < 1.0) {
+            throw new IllegalArgumentException("CoordRange1D: end.pix < start.pix for " + pb + "," + pa);
+        }
         double a = r.getStart().val;
         double b = r.getEnd().val;
-        if (b <= a) {
-            throw new IllegalArgumentException(
-                    "Range: end <= start for " + b + "," + a);
+        // np >= 2 looks kind of sloppy but pixel values are floating point and we are trying to
+        // detect single- vs multi-pixel axis
+        if (np >= 2.0 && b <= a) {
+            throw new IllegalArgumentException("CoordRange1D: end <= start for " + b + "," + a);
+        } else if (b < a) {
+            throw new IllegalArgumentException("CoordRange1D: end < start for " + b + "," + a);
         }
         
         if (wcs.mjdref != null) {
