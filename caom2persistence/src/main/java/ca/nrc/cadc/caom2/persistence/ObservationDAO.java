@@ -229,12 +229,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // pdd: temporary hack for use in harvester retring skipped found in above getList impl
+    // pdd: temporary hack for use in harvester retrying skipped
     public ObservationResponse getAlt(ObservationURI uri) {
         long t = System.currentTimeMillis();
 
         try {
-            ObservationState s = new ObservationState(uri);
+            ObservationState s = getState(uri);
             ObservationResponse ret = new ObservationResponse(s);
             try {
                 ret.observation = get(s.getURI());

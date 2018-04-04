@@ -107,18 +107,16 @@ public class Main {
             ArgumentMap am = new ArgumentMap(args);
 
             if (am.isSet("d") || am.isSet("debug")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
                 //Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
-                Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.INFO);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
+                //Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
-                Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
-
             }
 
             if (am.isSet("h") || am.isSet("help")) {
