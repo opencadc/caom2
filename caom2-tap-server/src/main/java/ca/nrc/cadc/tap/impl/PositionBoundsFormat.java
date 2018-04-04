@@ -148,14 +148,13 @@ public class PositionBoundsFormat extends AbstractResultSetFormat {
         if (object instanceof double[]) {
             double[] coords = (double[]) object;
             if (coords.length == 3) {
-                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, 
-                    coords[0], coords[1], coords[2]);
+                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, null, null, coords[0], coords[1], coords[2]);
             } else {
                 List<CoordPair> coordPairs = new ArrayList<CoordPair>();
                 for (int i = 0; i < coords.length; i += 2) {
                     coordPairs.add(new CoordPair(coords[i], coords[i + 1]));
                 }
-                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, ReferencePosition.UNKNOWNREFPOS, Flavor.SPHERICAL2, coordPairs);
+                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, null, null, coordPairs);
             }
         }
         

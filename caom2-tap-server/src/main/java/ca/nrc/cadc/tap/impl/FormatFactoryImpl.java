@@ -139,9 +139,9 @@ public class FormatFactoryImpl extends DefaultFormatFactory
     {
         log.debug("getRegionFormat: " + columnDesc);
         // this variant has to match the one in CaomSelectListConverter.fixColumn(s_region)
-        //if (columnDesc.utype != null && columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
-        //    return new PositionBoundsFormat();
-        //}
+        if (columnDesc.utype != null && columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
+            return new PositionBoundsFormat();
+        }
         return new SPolyFormat10();
     }
 
