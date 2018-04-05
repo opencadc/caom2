@@ -78,14 +78,12 @@ import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -234,12 +232,13 @@ public class DeletionHarvester extends Harvester implements Runnable {
         boolean done = false;
         boolean abort = false;
         int found = 0;
-        int ingested = 0;
+        int deleted = 0;
+        int skipped = 0;
         int failed = 0;
 
         @Override
         public String toString() {
-            return found + " ingested: " + ingested + " failed: " + failed;
+            return found + " deleted: " + deleted + " skipped: " + skipped + " failed: " + failed;
         }
     }
 
@@ -333,11 +332,13 @@ public class DeletionHarvester extends Harvester implements Runnable {
                             log.debug("to be deleted: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + "deleted date "
                                     + format(de.getLastModified()) + " modified date " + format(cur.getMaxLastModified()));
                             if (deleted.after(lastUpdate)) {
-                                log.debug("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
+                                log.info("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID());
                                 obsDAO.delete(de.getID());
+                                ret.deleted++;
                             } else {
                                 log.info("skip out-of-date delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " " + de.getID() + " "
                                         + format(de.getLastModified()));
+                                ret.skipped++;
                             }
                         } else {
                             log.debug("Observation: " + de.getID() + " not found in DB");
@@ -351,7 +352,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                         log.debug("commit: OK");
                     }
                     ok = true;
-                    ret.ingested++;
+                    
                 } catch (Throwable t) {
                     log.error("unexpected exception", t);
                 } finally {

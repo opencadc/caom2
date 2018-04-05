@@ -424,7 +424,7 @@ public class RepoClient {
 
                 if (partialList != null) {
                     accList.addAll(partialList);
-                    log.warn("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
+                    log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
                 }
 
                 bos.close();

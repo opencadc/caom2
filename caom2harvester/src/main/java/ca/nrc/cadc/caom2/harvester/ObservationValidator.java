@@ -150,12 +150,13 @@ public class ObservationValidator extends Harvester {
     private static class Progress {
 
         int found = 0;
-        int validated = 0;
-        int failed = 0;
+        int mismatch = 0;
+        int known = 0;
+        int added = 0;
 
         @Override
         public String toString() {
-            return found + " validated: " + validated + " failed: " + failed;
+            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added;
         }
     }
 
@@ -229,8 +230,10 @@ public class ObservationValidator extends Harvester {
                                 Date tryAfter = o.getObs().maxLastModified;
                                 if (skip == null) {
                                     skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
+                                    ret.added++;
                                 } else {
                                     putSkip = false; // avoid lastModified update for no change
+                                    ret.known++;
                                 }
 
                                 if (destObservationDAO.getTransactionManager().isOpen()) {
@@ -251,14 +254,13 @@ public class ObservationValidator extends Harvester {
                                 destObservationDAO.getTransactionManager().rollbackTransaction();
                                 log.warn("rollback HarvestSkipURI: OK");
                             }
-                            ret.failed++;
                         }
 
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
                     }
-                    ret.validated++;
+                    ret.mismatch++;
                 } catch (Throwable oops) {
                     String str = oops.toString();
                     if (oops instanceof Error) {
@@ -313,7 +315,7 @@ public class ObservationValidator extends Harvester {
             ObservationState os = iterSrc.next();
             if (!dstState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed harvest");
-                log.info("************************ adding missed harvest: " + ose.getObs().getURI());
+                log.debug("************************ adding missed harvest: " + ose.getObs().getURI());
                 listErroneous.add(ose);
             } else {
                 listCorrect.add(os);
@@ -323,7 +325,7 @@ public class ObservationValidator extends Harvester {
             ObservationState os = iterDst.next();
             if (!srcState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed deletion");
-                log.info("************************ adding missed deletion: " + os.getURI());
+                log.debug("************************ adding missed deletion: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);
                 }

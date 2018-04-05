@@ -106,19 +106,22 @@ public class DeletionListReader extends AbstractListReader<DeletedObservation> {
         String line = reader.readLine();
         while (line != null) {
             try {
-                // <Observation.id> <Observation.collection> <Observation.observationID> <deletion timestamp>
-                String[] tokens = line.split("\\s+"); // ICD says tabs but be generous and split of any whitespace
-                String sid = tokens[0];
-                UUID uuid = UUID.fromString(sid);
-                String collection = tokens[1];
-                String observationID = tokens[2];
-                ObservationURI uri = new ObservationURI(collection, observationID);
-                DeletedObservation dd = new DeletedObservation(uuid, uri);
-                // 
-                if (tokens.length > 3 && tokens[3].length() > 0) {
-                    dd.lastModified = DateUtil.flexToDate(tokens[3], dateFormat);
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    // <Observation.id> <Observation.collection> <Observation.observationID> <deletion timestamp>
+                    String[] tokens = line.split("\\s+"); // ICD says tabs but be generous and split of any whitespace
+                    String sid = tokens[0];
+                    UUID uuid = UUID.fromString(sid);
+                    String collection = tokens[1];
+                    String observationID = tokens[2];
+                    ObservationURI uri = new ObservationURI(collection, observationID);
+                    DeletedObservation dd = new DeletedObservation(uuid, uri);
+                    // 
+                    if (tokens.length > 3 && tokens[3].length() > 0) {
+                        dd.lastModified = DateUtil.flexToDate(tokens[3], dateFormat);
+                    }
+                    ret.add(dd);
                 }
-                ret.add(dd);
                 
                 line = reader.readLine();
             } finally {
