@@ -72,126 +72,74 @@ package ca.nrc.cadc.caom2.repo.client.transform;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  * It reads the output from the main harvesting end point in ascii and transform it into a list of objects
  *
- * @author jduran
+ * @author jduran, pdowler
  *
  */
-public class ObservationStateListReader extends AbstractListReader {
-
-    public ObservationStateListReader(DateFormat dateFormat, char separator, char endOfLine) {
-        super(dateFormat, separator, endOfLine);
+public class ObservationStateListReader extends AbstractListReader<ObservationState> {
+    private static final Logger log = Logger.getLogger(ObservationStateListReader.class);
+    
+    public ObservationStateListReader() {
+        super();
     }
 
+    /**
+     * Read and parse content into ObservationState(s).
+     * 
+     * @param in
+     * @return list of ObservationState
+     * @throws IOException failed to read
+     * @throws IllegalArgumentException invalid mandatory content (collection observationID)
+     * @throws ParseException invalid maxlastModified timestamp
+     * @throws URISyntaxException invalid accMetaChecksum URI
+     */
     @Override
-    public List read(ByteArrayOutputStream bos) throws ParseException, IOException, URISyntaxException {
-        // <Observation.collection> <Observation.observationID> <Observation.maxLastModified> <Observation.accMetaChecksum>  (version 2.3+)
-        List<ObservationState> list = new ArrayList<>();
-
-        String id = null;
-        String sdate;
-        Date date = null;
-        String collection = null;
-        String md5;
-        String aux = "";
-
-        boolean readingDate = false;
-        boolean readingCollection = true;
-        boolean readingId = false;
-
-        for (int i = 0; i < bos.toString().length(); i++) {
-            char c = bos.toString().charAt(i);
-
-            if (c != ' ' && c != getSeparator() && c != getEndOfLine()) {
-                aux += c;
-            } else if (c == getSeparator()) {
-                if (readingCollection) {
-                    collection = aux;
-                    // log.debug("*************** collection: " + collection);
-                    readingCollection = false;
-                    readingId = true;
-                    readingDate = false;
-                    aux = "";
-                } else if (readingId) {
-                    id = aux;
-                    // log.debug("*************** id: " + id);
-                    readingCollection = false;
-                    readingId = false;
-                    readingDate = true;
-                    aux = "";
-                } else if (readingDate) {
-                    sdate = aux;
-                    // log.debug("*************** sdate: " + sdate);
-                    date = DateUtil.flexToDate(sdate, getDateFormat());
-
-                    readingCollection = false;
-                    readingId = false;
-                    readingDate = false;
-                    aux = "";
+    public List<ObservationState> read(Reader in) throws IOException, ParseException, URISyntaxException {
+        final List<ObservationState> ret = new ArrayList<>(1000);
+        LineNumberReader reader = new LineNumberReader(in, 16384);
+        String line = reader.readLine();
+        while (line != null) {
+            try {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    // <Observation.collection> <Observation.observationID> <Observation.maxLastModified> <Observation.accMetaChecksum>
+                    String[] tokens = line.split("[ \t]"); // ICD says tabs but be generous and split of any whitespace
+                    String collection = tokens[0];
+                    String observationID = tokens[1];
+                    ObservationURI uri = new ObservationURI(collection, observationID);
+                    ObservationState os = new ObservationState(uri);
+                    // 
+                    if (tokens.length > 2 && tokens[2].length() > 0) {
+                        os.maxLastModified = DateUtil.flexToDate(tokens[2], dateFormat);
+                    }
+                    if (tokens.length > 3 && tokens[3].length() > 0) {
+                        os.accMetaChecksum = new URI(tokens[3]);
+                    }
+                    ret.add(os);
                 }
 
-            } else if (c == ' ') {
-                if (readingDate) {
-                    sdate = aux;
-                    // log.debug("*************** sdate: " + sdate);
-                    date = DateUtil.flexToDate(sdate, getDateFormat());
-
-                    readingCollection = false;
-                    readingId = false;
-                    readingDate = false;
-                    aux = "";
+                line = reader.readLine();
+            } catch (Exception ex) {
+                log.error("read failure on line " + reader.getLineNumber(), ex);
+                throw ex;
+            } finally {
+                if (reader.getLineNumber() % 100 == 0) {
+                    log.debug("read: line " + reader.getLineNumber());
                 }
-            } else if (c == getEndOfLine()) {
-                if (id == null || collection == null) {
-                    continue;
-                }
-
-                ObservationState os = new ObservationState(new ObservationURI(collection, id));
-
-                if (date == null) {
-                    sdate = aux;
-                    date = DateUtil.flexToDate(sdate, getDateFormat());
-                }
-
-                os.maxLastModified = date;
-
-                md5 = aux;
-                aux = "";
-                // log.debug("*************** md5: " + md5);
-                if (!md5.equals("")) {
-                    os.accMetaChecksum = new URI(md5);
-                }
-
-                list.add(os);
-                readingCollection = true;
-                readingId = false;
             }
         }
-        Collections.sort(list, getComparator());
-        return list;
-    }
-
-    @Override
-    public List read(String in) {
-        return null;
-    }
-
-    @Override
-    public List read(Reader in) {
-        return null;
+        return ret;
     }
 }

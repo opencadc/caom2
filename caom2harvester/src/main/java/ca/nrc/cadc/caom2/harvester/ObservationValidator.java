@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -150,12 +150,13 @@ public class ObservationValidator extends Harvester {
     private static class Progress {
 
         int found = 0;
-        int validated = 0;
-        int failed = 0;
+        int mismatch = 0;
+        int known = 0;
+        int added = 0;
 
         @Override
         public String toString() {
-            return found + " validated: " + validated + " failed: " + failed;
+            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added;
         }
     }
 
@@ -174,11 +175,8 @@ public class ObservationValidator extends Harvester {
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
+            log.info("getObservationList: " + src.getIdentifier());
             List<ObservationState> tmpSrcState = null;
-            List<ObservationState> tmpDstState = null;
-
-            tmpDstState = destObservationDAO.getObservationList(src.getCollection(), null, null, null);
-
             if (srcObservationDAO != null) {
                 tmpSrcState = srcObservationDAO.getObservationList(src.getCollection(), null, null, null);
             } else if (srcObservationService != null) {
@@ -186,17 +184,25 @@ public class ObservationValidator extends Harvester {
             } else {
                 throw new RuntimeException("BUG: both srcObservationDAO and srcObservationService are null");
             }
-
+            log.info("found: " + tmpSrcState.size());
+            
             Set<ObservationState> srcState = new TreeSet<>(compStateUri);
             srcState.addAll(tmpSrcState);
-            tmpSrcState.clear();
+            tmpSrcState = null; // GC
+            log.info("source set: " + srcState.size());
+            
+            log.info("getObservationList: " + dest.getIdentifier());
+            List<ObservationState> tmpDstState = destObservationDAO.getObservationList(dest.getCollection(), null, null, null);
+            log.info("found: " + tmpDstState.size());
+            
             Set<ObservationState> dstState = new TreeSet<>(compStateUri);
             dstState.addAll(tmpDstState);
-            tmpDstState.clear();
+            tmpDstState = null; // GC
+            log.info("destination set: " + dstState.size());
 
             Set<ObservationStateError> errlist = calculateErroneousObservationStates(srcState, dstState);
 
-            log.debug("************************** errlist.size() = " + errlist.size());
+            log.info("discrepancies found: " + errlist.size());
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -204,7 +210,6 @@ public class ObservationValidator extends Harvester {
             List<SkippedWrapperURI<ObservationStateError>> entityListSrc = wrap(errlist);
 
             ret.found = srcState.size();
-            log.info("found: " + srcState.size());
 
             ListIterator<SkippedWrapperURI<ObservationStateError>> iter = entityListSrc.listIterator();
             while (iter.hasNext()) {
@@ -215,24 +220,20 @@ public class ObservationValidator extends Harvester {
                 String skipMsg = null;
 
                 try {
-                    // o could be null in skip mode cleanup
                     if (!dryrun) {
                         if (o != null) {
-                            skipMsg = o.toString();// + ": " + o.getError();
+                            skipMsg = o.toString();
                             try {
                                 log.debug("starting HarvestSkipURI transaction");
                                 boolean putSkip = true;
                                 HarvestSkipURI skip = harvestSkip.get(source, cname, o.getObs().getURI().getURI());
-                                Date tryAfter = new Date(); // TODO: could implement retry delaying/ordering/priority here
+                                Date tryAfter = o.getObs().maxLastModified;
                                 if (skip == null) {
                                     skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
-                                } else if (skipMsg != null && !skipMsg.equals(skip.errorMessage)) {
-                                    skip.setTryAfter(tryAfter);
-                                    skip.errorMessage = skipMsg; // possible
-                                    // update
+                                    ret.added++;
                                 } else {
                                     putSkip = false; // avoid lastModified update for no change
-                                    // update
+                                    ret.known++;
                                 }
 
                                 if (destObservationDAO.getTransactionManager().isOpen()) {
@@ -245,21 +246,21 @@ public class ObservationValidator extends Harvester {
                                 if (putSkip) {
                                     log.info("put: " + skip);
                                     harvestSkip.put(skip);
+                                } else {
+                                    log.info("known: " + skip);
                                 }
-
                             } catch (Throwable oops) {
                                 log.warn("failed to insert HarvestSkipURI", oops);
                                 destObservationDAO.getTransactionManager().rollbackTransaction();
                                 log.warn("rollback HarvestSkipURI: OK");
                             }
-                            ret.failed++;
                         }
 
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
                     }
-                    ret.validated++;
+                    ret.mismatch++;
                 } catch (Throwable oops) {
                     String str = oops.toString();
                     if (oops instanceof Error) {
@@ -314,7 +315,7 @@ public class ObservationValidator extends Harvester {
             ObservationState os = iterSrc.next();
             if (!dstState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed harvest");
-                log.info("************************ adding missed harvest: " + ose.getObs().getURI());
+                log.debug("************************ adding missed harvest: " + ose.getObs().getURI());
                 listErroneous.add(ose);
             } else {
                 listCorrect.add(os);
@@ -324,11 +325,14 @@ public class ObservationValidator extends Harvester {
             ObservationState os = iterDst.next();
             if (!srcState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed deletion");
-                log.info("************************ adding missed deletion: " + os.getURI());
+                log.debug("************************ adding missed deletion: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);
                 }
-            } else if (!nochecksum && !listCorrect.contains(os)) {
+            } 
+        }
+        /*
+          else if (!nochecksum && !listCorrect.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "computation or serialization bug");
                 log.info("************************ adding computation or serialization bug: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
@@ -336,6 +340,7 @@ public class ObservationValidator extends Harvester {
                 }
             }
         }
+        */
 
         return listErroneous;
     }

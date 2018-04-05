@@ -390,6 +390,10 @@ public class ObservationHarvester extends Harvester {
                                 harvestSkipDAO.delete(hs);
                             }
                         } else if (skipped && ow.entity == null) {
+                            // observation was simply missing from source == missed deletion
+                            ObservationURI uri = new ObservationURI(hs.getSkipID());
+                            log.info("delete: " + uri);
+                            destObservationDAO.delete(uri);
                             log.info("delete: " + hs + " " + format(hs.getLastModified()));
                             harvestSkipDAO.delete(hs);
                         } else if (ow.entity.error != null) {
@@ -509,11 +513,12 @@ public class ObservationHarvester extends Harvester {
                             harvestSkipDAO.put(skip);
 
                             // delete previous version of observation (if any)
+                            log.info("delete: " + ow.entity.observationState.getURI());
                             destObservationDAO.delete(ow.entity.observationState.getURI());
 
                             log.debug("committing HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
-                            log.warn("commit HarvestSkipURI: OK");
+                            log.debug("commit HarvestSkipURI: OK");
                         } catch (Throwable oops) {
                             log.warn("failed to insert HarvestSkipURI", oops);
                             destObservationDAO.getTransactionManager().rollbackTransaction();
