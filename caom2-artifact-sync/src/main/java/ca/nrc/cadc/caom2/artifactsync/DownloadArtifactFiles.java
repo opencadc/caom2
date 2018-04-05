@@ -332,7 +332,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (uploadSuccess) {
                         if (verify) {
                             if (!artifactStore.contains(artifactURI,artifact.contentChecksum)) {
-                                result.message = "Post download verification failure";
+                                String msgDetail = "Artifact with checksum [" + artifact.contentChecksum + "] not in storage.";
+                                result.message = "Post download verification failure: " + msgDetail;
                             } else {
                                 result.success = true;
                             }
