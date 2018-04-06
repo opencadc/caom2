@@ -29,6 +29,7 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -40,27 +41,18 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class SmokaResolver implements StorageResolver {
+public class SubaruResolver implements StorageResolver {
+    private static final Logger log = Logger.getLogger(SubaruResolver.class);
     private static final String SCHEME = "subaru";
-    private static final String FILE_URI = "file";
+    private static final String RAW_DATA_URI = "raw";
     private static final String PREVIEW_URI = "preview";
-    private static final String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
-        + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
-        + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
-        + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
-        + "&multiselect_0=SUP&multiselect_0=HSC&obs_mod=IMAG&obs_mod=SPEC&obs_mod=IPOL&multiselect_1=IMAG&multiselect_1=SPEC"
-        + "&multiselect_1=IPOL&multiselect_1=IMAG&multiselect_1=SPEC&multiselect_1=IPOL&data_typ=OBJECT&multiselect_2=OBJECT"
-        + "&multiselect_2=OBJECT&bandwidth_type=FILTER&band=&dispcol=FRAMEID&dispcol=DATE_OBS&dispcol=FITS_SIZE&dispcol=OBS_MODE"
-        + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
-        + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
-        + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
-    private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
-    private static final Logger log = Logger.getLogger(SmokaResolver.class);
-    private static final String BASE_URL = "http://smoka.nao.ac.jp";
-    private static final String PREVIEW_BASE_URL = BASE_URL + "/qlis/ImagePNG";
-    private static final String FILE_BASE_URL = BASE_URL + "/fssearch";
 
-    public SmokaResolver() {
+    private static final String BASE_DATA_URL = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/maq/subaru?frameinfo=";
+
+    private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp/qlis/ImagePNG";
+    private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+
+    public SubaruResolver() {
     }
 
     /**
@@ -88,22 +80,24 @@ public class SmokaResolver implements StorageResolver {
     private URL createURLFromPath(URI uri) {
         URL newUrl = null;
         String[] path = uri.getSchemeSpecificPart().split("/");
-        if (path.length != 2) {
-            throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
+        // data uri has 3 parts, preview has 2
+
+        if (path.length < 2 || path.length > 3) {
+            throw new IllegalArgumentException("Malformed URI. Expected 2 or 3 path components, found " + path.length);
         }
 
-        String requestType = path[0];
-        String fileName = path[1];
         String sb = "";
-
-        if (requestType.equals(FILE_URI)) {
-            // Returns a quick search-style URL for SMOKA Search page
-            sb = FILE_BASE_URL + "?" + FILE_URL_QUERY + fileName;
-        } else if (requestType.equals(PREVIEW_URI)) {
+        String requestType = path[0];
+        if (path.length == 2 && requestType.equals(PREVIEW_URI)) {
             // Returns a web page reference
-            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + fileName;
+            // expected URI input is subaru:preview/<FRAMEID>
+            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + path[1];
+        } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
+            // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
+            // expected URL output is http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
+            sb = BASE_DATA_URL +  NetUtil.encode(path[1] + "/" + path[2]);
         } else {
-            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
+            throw new IllegalArgumentException("Invalid URI: " + requestType);
         }
 
         try {
