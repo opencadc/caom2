@@ -137,6 +137,7 @@ public class ObservationRemover implements Runnable {
 
         int total = 0;
         boolean go = true;
+        log.info("Using batchSize: " + batchSize);
         log.info("Removing observations...");
 
         while (go) {

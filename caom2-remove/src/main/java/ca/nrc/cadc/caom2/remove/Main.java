@@ -140,7 +140,7 @@ public class Main {
             }
 
             // Optional arguments
-            String batchSizeParam = am.getValue("batchsize");
+            String batchSizeParam = am.getValue("batchSize");
             boolean nobatchsize = (batchSizeParam == null || batchSizeParam.trim().length() == 0);
             if (nobatchsize) {
                 batchSize = DEFAULT_BATCH_SIZE;
@@ -251,7 +251,7 @@ public class Main {
         sb.append("\n         --database=<server.database.schema> : collection location");
         sb.append("\n         --source=<server.database.schema> | <resource ID> :  (e.g. ivo://cadc.nrc.ca/caom2repo)");
         sb.append("\n\nOptional parameters:");
-        sb.append("\n         --batchsize=<integer> :  default = 10000");
+        sb.append("\n         --batchSize=<integer> :  default = 10000");
         log.warn(sb.toString());
     }
 }
