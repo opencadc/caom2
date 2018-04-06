@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -80,72 +81,67 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class SmokaResolverTest {
-    private static final Logger log = Logger.getLogger(SmokaResolverTest.class);
+public class SubaruResolverTest {
+    private static final Logger log = Logger.getLogger(SubaruResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     String VALID_FILE1 = "SUPE01318470";
+    String VALID_DATE1 = "2017-09-09";
     String VALID_FILE2 = "SUPE01318470";
-    String BASE_URL = "smoka.nao.ac.jp";
 
-    // Copied from SmokaResolver for use in testing
-    String FILE_URI = "file";
+    String SCHEME = "subaru";
+    String RAW_DATA_URI = "raw";
     String PREVIEW_URI = "preview";
-    String FILE_URL_QUERY = "object=&resolver=SIMBAD&coordsys=Equatorial&equinox=J2000&fieldofview=auto"
-        + "&RadOrRec=radius&longitudeC=&latitudeC=&radius=10.0&longitudeF=&latitudeF=&longitudeT=&latitudeT"
-        + "=&date_obs=&exptime=&observer=&prop_id=&frameid=&dataset=&asciitable=Table"
-        + "&frameorshot=Frame&action=Search&instruments=SUP&instruments=HSC&multiselect_0=SUP&multiselect_0=HSC"
-        + "&multiselect_0=SUP&multiselect_0=HSC&obs_mod=IMAG&obs_mod=SPEC&obs_mod=IPOL&multiselect_1=IMAG&multiselect_1=SPEC"
-        + "&multiselect_1=IPOL&multiselect_1=IMAG&multiselect_1=SPEC&multiselect_1=IPOL&data_typ=OBJECT&multiselect_2=OBJECT"
-        + "&multiselect_2=OBJECT&bandwidth_type=FILTER&band=&dispcol=FRAMEID&dispcol=DATE_OBS&dispcol=FITS_SIZE&dispcol=OBS_MODE"
-        + "&dispcol=DATA_TYPE&dispcol=OBJECT&dispcol=FILTER&dispcol=WVLEN&dispcol=DISPERSER&dispcol=RA2000&dispcol=DEC2000"
-        + "&dispcol=UT_START&dispcol=EXPTIME&dispcol=OBSERVER&dispcol=EXP_ID&orderby=FRAMEID&diff=100&output_equinox=J2000&from=0"
-        + "&exp_id="; //&exp_id=SUPE01318470 or similar for last entry here.
-    String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
-    String FILE_URL_PATH = "/fssearch";
-    String PREVIEW_URL_PATH = "/qlis/ImagePNG";
+
     String PROTOCOL_STR = "http://";
 
-    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
+    String BASE_PREVIEW_URL = "smoka.nao.ac.jp";
+    String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+    String PREVIEW_URL_PATH = "/qlis/ImagePNG";
+
+    String BASE_DATA_URL = "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca";
+    String DATA_URL_PATH = "/maq/subaru";
+    String DATA_URL_QUERY= "frameinfo=";
+
+    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview')
     String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
 
-    SmokaResolver smokaResolver = new SmokaResolver();
+    SubaruResolver subaruResolver = new SubaruResolver();
 
-    public SmokaResolverTest() {
+    public SubaruResolverTest() {
     }
 
     @Test
     public void testGetSchema() {
-        Assert.assertTrue(smokaResolver.getScheme().equals(smokaResolver.getScheme()));
+        Assert.assertTrue(subaruResolver.getScheme().equals(subaruResolver.getScheme()));
     }
 
     @Test
     public void testValidURI() {
         try {
-            String uriStr = smokaResolver.getScheme() + ":" + FILE_URI + "/" + VALID_FILE1;
+            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
             URI uri = new URI(uriStr);
-            URL url = smokaResolver.toURL(uri);
+            URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_URL + FILE_URL_PATH + "?" + FILE_URL_QUERY + VALID_FILE2);
-            Assert.assertEquals(FILE_URL_PATH, url.getPath());
-            Assert.assertEquals(FILE_URL_QUERY + VALID_FILE1, url.getQuery());
-            Assert.assertEquals(BASE_URL, url.getHost());
+            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_FILE1);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +  encodedValue);
+            Assert.assertEquals(DATA_URL_PATH, url.getPath());
+            Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
+            Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
-
-            uriStr = smokaResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
+            uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
             uri = new URI(uriStr);
-            url = smokaResolver.toURL(uri);
+            url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
-            // http://smoka.nao.ac.jp/qlis/ImagePNG?grayscale=linear&mosaic=true&frameid=SUPE01318470
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);
             Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
             Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
-            Assert.assertEquals(BASE_URL, url.getHost());
+            Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -157,7 +153,7 @@ public class SmokaResolverTest {
     public void testInvalidURIBadScheme() {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = smokaResolver.toURL(uri);
+            URL url = subaruResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -170,7 +166,7 @@ public class SmokaResolverTest {
     @Test
     public void testInvalidNullURI() {
         try {
-            URL url = smokaResolver.toURL(null);
+            URL url = subaruResolver.toURL(null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
@@ -185,7 +181,7 @@ public class SmokaResolverTest {
         try {
             String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
             URI uri = new URI(uriStr);
-            URL url = smokaResolver.toURL(uri);
+            URL url = subaruResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);

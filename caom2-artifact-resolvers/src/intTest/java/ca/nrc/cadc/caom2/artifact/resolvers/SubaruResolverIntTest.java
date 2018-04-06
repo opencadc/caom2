@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -85,19 +85,19 @@ import org.junit.Test;
 /**
  * @author hjeeves
  */
-public class SmokaResolverIntTest {
-    private static final Logger log = Logger.getLogger(SmokaResolverIntTest.class);
+public class SubaruResolverIntTest {
+    private static final Logger log = Logger.getLogger(SubaruResolverIntTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE_URI = "subaru:file/SUPE01318470";
+    String VALID_DATA_URI = "subaru:data/2017-01-01/SUPE01318470";
     String VALID_PREVIEW_URI = "subaru:preview/SUPE01318470";
 
-    SmokaResolver resolver = new SmokaResolver();
+    SubaruResolver resolver = new SubaruResolver();
 
-    public SmokaResolverIntTest() {
+    public SubaruResolverIntTest() {
     }
 
     @Test
@@ -106,7 +106,7 @@ public class SmokaResolverIntTest {
 
         try {
             List<URI> uriList = new ArrayList<URI>();
-            uriList.add(new URI(VALID_FILE_URI));
+            uriList.add(new URI(VALID_DATA_URI));
             uriList.add(new URI(VALID_PREVIEW_URI));
 
             for (URI uri : uriList) {
