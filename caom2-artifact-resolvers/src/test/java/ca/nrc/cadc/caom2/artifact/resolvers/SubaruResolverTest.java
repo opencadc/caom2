@@ -102,7 +102,7 @@ public class SubaruResolverTest {
     String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
     String PREVIEW_URL_PATH = "/qlis/ImagePNG";
 
-    String BASE_DATA_URL = "www.canfar.net";
+    String BASE_DATA_URL = "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca";
     String DATA_URL_PATH = "/maq/subaru";
     String DATA_URL_QUERY= "frameinfo=";
 
