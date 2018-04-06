@@ -89,6 +89,8 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
+    private static int DEFAULT_BATCH_SIZE = 10000;
+    private static int batchSize;
 
     public static void main(String[] args) {
         try {
@@ -135,6 +137,15 @@ public class Main {
                 log.warn("missing required argument: --source=<server.database.schema> | <resource ID>");
                 usage();
                 System.exit(1);
+            }
+
+            // Optional arguments
+            String batchSizeParam = am.getValue("batchsize");
+            boolean nobatchsize = (batchSizeParam == null || batchSizeParam.trim().length() == 0);
+            if (nobatchsize) {
+                batchSize = DEFAULT_BATCH_SIZE;
+            } else {
+                batchSize = Integer.parseInt(batchSizeParam);
             }
 
             String[] sourceDS = null;
@@ -185,7 +196,6 @@ public class Main {
             } else {
                 log.info("Continuing to remove " + collection + "...\n");
 
-                int batchSize = 100;
                 Runnable action = null;
 
                 try {
@@ -240,6 +250,8 @@ public class Main {
         sb.append("\n         --collection=<name> : name of collection to remove (e.g. IRIS)");
         sb.append("\n         --database=<server.database.schema> : collection location");
         sb.append("\n         --source=<server.database.schema> | <resource ID> :  (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n\nOptional parameters:");
+        sb.append("\n         --batchsize=<integer> :  default = 10000");
         log.warn(sb.toString());
     }
 }
