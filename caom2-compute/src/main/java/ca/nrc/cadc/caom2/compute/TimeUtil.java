@@ -369,11 +369,12 @@ public final class TimeUtil {
         // units, like days, hours, minutes, seconds, and smaller since they are offsets
         // from mjdref
 
+        double np = Math.abs(r.getStart().pix - r.getEnd().pix);
         double a = r.getStart().val;
         double b = r.getEnd().val;
-        if (b <= a) {
-            throw new IllegalArgumentException(
-                    "Range: end <= start for " + b + "," + a);
+        double delta = Math.abs(b - a);
+        if (delta == 0.0 && np > 1.0) {
+            throw new IllegalArgumentException("invalid CoordRange1D: found " + np + " + pixels and delta = 0.0 in [" + a + "," + b + "]");
         }
         
         if (wcs.mjdref != null) {
@@ -391,14 +392,14 @@ public final class TimeUtil {
         // units, like days, hours, minutes, seconds, and smaller since they are offsets
         // from mjdref
 
+        if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
+            throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
+        }
+        
         double p1 = 0.5;
         double p2 = func.getNaxis().doubleValue() + 0.5;
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
-        if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
-            throw new IllegalArgumentException("delta is 0.0");
-        }
-
         if (wcs.mjdref != null) {
             a += wcs.mjdref.doubleValue();
             b += wcs.mjdref.doubleValue();
