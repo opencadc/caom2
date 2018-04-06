@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,7 +78,7 @@ import java.util.UUID;
 public class DeletedEntity {
     public Class entityClass;
     private final UUID id;
-    private Date lastModified;
+    public Date lastModified;
 
     DeletedEntity(Class entityClass, UUID id) {
         this.entityClass = entityClass;
@@ -89,6 +89,12 @@ public class DeletedEntity {
         return id;
     }
 
+    /**
+     * 
+     * @return
+     * @deprecated field is public
+     */
+    @Deprecated
     public Date getLastModified() {
         return lastModified;
     }

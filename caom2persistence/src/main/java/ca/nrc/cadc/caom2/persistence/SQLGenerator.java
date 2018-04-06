@@ -3334,7 +3334,7 @@ public class SQLGenerator {
 
             Observation o = null;
             if (SIMPLE_TYPE.equals(typeCode)) {
-                o = new SimpleObservation(collection, observationID);
+                o = new SimpleObservation(collection, observationID, algorithm);
             } else if (COMPOSITE_TYPE.equals(typeCode)) {
                 o = new CompositeObservation(collection, observationID, algorithm);
             }
