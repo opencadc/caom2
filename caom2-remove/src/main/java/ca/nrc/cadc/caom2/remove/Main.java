@@ -145,7 +145,13 @@ public class Main {
             if (nobatchsize) {
                 batchSize = DEFAULT_BATCH_SIZE;
             } else {
-                batchSize = Integer.parseInt(batchSizeParam);
+                try {
+                    batchSize = Integer.parseInt(batchSizeParam);
+                } catch (NumberFormatException nfe) {
+                    log.error("invalid batch size: " + batchSizeParam);
+                    usage();
+                    System.exit(1);
+                }
             }
 
             String[] sourceDS = null;
