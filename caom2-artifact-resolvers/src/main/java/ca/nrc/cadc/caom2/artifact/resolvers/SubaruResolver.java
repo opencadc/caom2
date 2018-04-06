@@ -90,13 +90,14 @@ public class SubaruResolver implements StorageResolver {
         String requestType = path[0];
         if (path.length == 2 && requestType.equals(PREVIEW_URI)) {
             // Returns a web page reference
+            // expected URI input is subaru:preview/<FRAMEID>
             sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + path[1];
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
-            // expected URI input is subaru:data/YYYY-MM-dd/<FRAMEID>
-            // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=YYYY-MM-dd%20FRAMEID
+            // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
+            // expected URL output is http://www.canfar.net/maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
             sb = BASE_DATA_URL +  NetUtil.encode(path[1] + "/" + path[2]);
         } else {
-            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
+            throw new IllegalArgumentException("Invalid URI: " + requestType);
         }
 
         try {
