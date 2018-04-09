@@ -94,8 +94,8 @@ public class SubaruResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String VALID_DATA_URI = "subaru:raw/2017-01-01/SUPE01318470";
-    private static final String VALID_PREVIEW_URI = "subaru:preview/SUPE01318470";
+    private static final String VALID_DATA_URI = "subaru:raw/2017-01-01/SUPA01318470";
+    private static final String VALID_PREVIEW_URI = "subaru:preview/SUPA01318470";
 
     public SubaruResolverIntTest() {
     }
@@ -104,19 +104,19 @@ public class SubaruResolverIntTest {
     public void testValidSiteUrl() {
         log.info("starting testValidSiteUrl");
 
-        SubaruResolver resolver = new SubaruResolver();
+        final SubaruResolver resolver = new SubaruResolver();
 
         try {
-            List<URI> uriList = new ArrayList<>();
+            final List<URI> uriList = new ArrayList<>();
             uriList.add(new URI(VALID_DATA_URI));
             uriList.add(new URI(VALID_PREVIEW_URI));
 
-            for (URI uri : uriList) {
-                URL url = resolver.toURL(uri);
+            for (final URI uri : uriList) {
+                final URL url = resolver.toURL(uri);
 
                 log.debug("opening connection to: " + url.toString());
                 OutputStream out = new ByteArrayOutputStream();
-                HttpDownload head = new HttpDownload(url, out);
+                final HttpDownload head = new HttpDownload(url, out);
                 head.setHeadOnly(true);
                 head.run();
                 Assert.assertEquals(String.format("Unexpected error while downloading from %s", url.toExternalForm()),
