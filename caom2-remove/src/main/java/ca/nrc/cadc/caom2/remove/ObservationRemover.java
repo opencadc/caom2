@@ -126,7 +126,7 @@ public class ObservationRemover implements Runnable {
             destObservationDAO.getDataSource(),
             target.getDatabase(), target.getSchema());
         HarvestState harvestStateRec = harvestStateDAO.get(src.getIdentifier(), Observation.class.getSimpleName());
-        
+
         // Check that the record returned has a last modified date.
         // harvestStateDAO.get will create an empty HarvestState record using the identifier and cname passed in.
         // in this case, getLastModified is null
@@ -137,6 +137,7 @@ public class ObservationRemover implements Runnable {
 
         int total = 0;
         boolean go = true;
+        log.info("Using batchSize: " + batchSize);
         log.info("Removing observations...");
 
         while (go) {
