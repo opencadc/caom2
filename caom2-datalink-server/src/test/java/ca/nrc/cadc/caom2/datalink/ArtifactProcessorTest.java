@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,10 +70,10 @@
 package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.util.ArrayList;
@@ -93,15 +93,17 @@ public class ArtifactProcessorTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
     }
 
-    static String PLANE_URI = "caom:FOO/bar/baz";
-    static String BASE_ARTIFACT_URI = "ad:FOO/bar_baz_";
+    static String PLANE_URI = "ivo://cadc.nrc.ca/IRIS?bar/baz";
+    static String BASE_ARTIFACT_URI = "ad:IRIS/bar_baz_";
     static String RUNID = "abc123";
     
-    static URI SODA_ID = URI.create("ivo://example.net/soda");
+    static URI SODA_ID = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
+    ServiceConfig conf = new ServiceConfig();
+    
     public ArtifactProcessorTest() { }
 
     //@Test
@@ -125,7 +127,7 @@ public class ArtifactProcessorTest
         try
         {
             URI uri = new URI(PLANE_URI);
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
 
             ArtifactQueryResult artifacts = new ArtifactQueryResult();
             List<DataLink> links = ap.process(uri, artifacts);
@@ -142,24 +144,24 @@ public class ArtifactProcessorTest
     @Test
     public void testWithRUNID()
     {
-        log.debug("testNoFilter START");
+        log.debug("testWithRUNID START");
         try
         {
             URI uri = new URI(PLANE_URI);
             
             ArtifactQueryResult artifacts = new ArtifactQueryResult();
-            artifacts.getArtifacts().addAll(getTestArtifacts(2, 1, 1));
-            Assert.assertEquals("test setup", 2, artifacts.getArtifacts().size());
+            artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
+            Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
 
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
-            Assert.assertEquals("num links", 2, links.size());
+            Assert.assertEquals("num links", 1, links.size());
 
             for (DataLink dl : links)
             {
-                log.debug("testNoFilter: " + dl);
+                log.info("testWithRUNID: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.url);
@@ -187,18 +189,18 @@ public class ArtifactProcessorTest
             URI uri = new URI(PLANE_URI);
 
             ArtifactQueryResult artifacts = new ArtifactQueryResult();
-            artifacts.getArtifacts().addAll(getTestArtifacts(2, 1, 1));
-            Assert.assertEquals("test setup", 2, artifacts.getArtifacts().size());
+            artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
+            Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
             
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, null);
+            ArtifactProcessor ap = new ArtifactProcessor(conf, null);
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
-            Assert.assertEquals("num links", 2, links.size());
+            Assert.assertEquals("num links", 1, links.size());
 
             for (DataLink dl : links)
             {
-                log.debug("testNoRUNID: " + dl);
+                log.info("testNoRUNID: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.url);
@@ -212,28 +214,65 @@ public class ArtifactProcessorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testPackageLink()
+    {
+        log.debug("testPackageLink START");
+        try
+        {
+            URI uri = new URI(PLANE_URI);
+
+            ArtifactQueryResult artifacts = new ArtifactQueryResult();
+            artifacts.getArtifacts().addAll(getTestArtifacts(3, 2));
+            Assert.assertEquals("test setup", 5, artifacts.getArtifacts().size());
+            
+            ArtifactProcessor ap = new ArtifactProcessor(conf, null);
+
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertEquals("num links", 6, links.size());
+
+            boolean foundPkg = false;
+            for (DataLink dl : links)
+            {
+                log.info("testPackageLink: " + dl);
+                Assert.assertNotNull(dl);
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
+                Assert.assertNotNull(dl.url);
+                String query = dl.url.getQuery();
+                if (DataLink.Term.PKG.equals(dl.getSemantics())) {
+                    Assert.assertNotNull(query);
+                    foundPkg = true;
+                }
+            }
+            Assert.assertTrue("found package link", foundPkg);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     
 
-    private List<Artifact> getTestArtifacts(int num, int depth, int productTypeLevel)
+    private List<Artifact> getTestArtifacts(int numA, int numP)
         throws Exception
     {
         List<Artifact> ret = new ArrayList<>();
-        for (int i=0; i<num; i++)
-        {
+        for (int i=0; i < numA; i++) {
             Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i), ProductType.SCIENCE, ReleaseType.DATA);
             ret.add(a);
-            if (depth > 1)
-            {
-                for (int j=0; j<num; j++)
-                {
-                    Part p = new Part(new Integer(j));
-                    if (productTypeLevel == 2)
-                        p.productType = ProductType.SCIENCE;
-                    a.getParts().add(p);
-                }
-            }
         }
+
+        if (numP > 0) {
+            ret.add(new Artifact(new URI(BASE_ARTIFACT_URI + numA + 1), ProductType.PREVIEW, ReleaseType.DATA));
+        }
+        if (numP == 2) {
+            ret.add(new Artifact(new URI(BASE_ARTIFACT_URI + numA + 2), ProductType.THUMBNAIL, ReleaseType.DATA));
+        }
+
         return ret;
     }
 }
