@@ -80,6 +80,7 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -257,14 +258,21 @@ public class Main {
             String collection = am.getValue("collection");
             boolean full = am.isSet("full");
             
-            ArtifactHarvester harvester = new ArtifactHarvester(
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            ArtifactHarvester harvester = null;
+            DownloadArtifactFiles downloader = null;
+            if (mode.isHarvestMode()) {
+                harvester = new ArtifactHarvester(
                     observationDAO, dbInfo, artifactStore, collection, full, batchSize);
-
-            DownloadArtifactFiles downloader = new DownloadArtifactFiles(
+                listeners.add(harvester);
+            }
+            if (mode.isDownloadMode()) {
+                downloader = new DownloadArtifactFiles(
                     artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
                     retryAfterHours, verify);
+                listeners.add(downloader);
+            }
             
-            List<ShutdownListener> listeners = Arrays.asList((ShutdownListener) harvester, (ShutdownListener) downloader);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
 
             int loopNum = 1;
