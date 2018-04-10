@@ -80,6 +80,7 @@ import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -257,14 +258,21 @@ public class Main {
             String collection = am.getValue("collection");
             boolean full = am.isSet("full");
             
-            ArtifactHarvester harvester = new ArtifactHarvester(
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            ArtifactHarvester harvester = null;
+            DownloadArtifactFiles downloader = null;
+            if (mode.isHarvestMode()) {
+                harvester = new ArtifactHarvester(
                     observationDAO, dbInfo, artifactStore, collection, full, batchSize);
-
-            DownloadArtifactFiles downloader = new DownloadArtifactFiles(
+                listeners.add(harvester);
+            }
+            if (mode.isDownloadMode()) {
+                downloader = new DownloadArtifactFiles(
                     artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
                     retryAfterHours, verify);
+                listeners.add(downloader);
+            }
             
-            List<ShutdownListener> listeners = Arrays.asList((ShutdownListener) harvester, (ShutdownListener) downloader);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
 
             int loopNum = 1;
@@ -358,7 +366,7 @@ public class Main {
         sb.append("\n     --full : do a full harvest");
         sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
-        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 168)");
+        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
         sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
         sb.append("\n     --profile : Profile task execution");
         sb.append("\n\nAuthentication:");
