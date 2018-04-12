@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.SubInterval;
@@ -85,33 +86,50 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-
+import org.apache.log4j.Logger;
 
 /**
  * Created by jeevesh
  */
 public class CaomWCSValidator {
-
+    private static final Logger log = Logger.getLogger(CaomWCSValidator.class);
+    
     private static final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS: ";
     private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS: ";
     private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS: ";
     private static final String POLARIZATION_WCS_VALIDATION_ERROR = "Invalid PolarizationWCS: ";
 
+    // temporary hack to limit validation in order to grandfather in some old metadata
+    private static boolean filterByProductType = false;
+    
+    static {
+        filterByProductType = "true".equals(System.getProperty(CaomWCSValidator.class.getName() + ".filterByProductType"));
+    }
+    
+    private static boolean typeFilter(ProductType t) {
+        if (!filterByProductType) {
+            return true;
+        }
+        return t == null || ProductType.SCIENCE.equals(t) || ProductType.CALIBRATION.equals(t);
+    }
+    
     /**
      * Validate all WCS types included in the Chunks belonging to the given Artifact.
      *
      * @param a
      * @throws IllegalArgumentException
      */
-    public static void validate(Artifact a)
+    public static void validate(Artifact a) 
         throws IllegalArgumentException {
-        if (a != null) {
+        if (a != null && typeFilter(a.getProductType())) {
             for (Part p : a.getParts()) {
-                if (p != null) {
+                if (p != null && typeFilter(p.productType)) {
                     for (Chunk c : p.getChunks()) {
-                        String context = a.getURI().toASCIIString() 
-                                + "[" + p.getName() + "]:" + c.getID().toString() + " ";
-                        validateChunk(context, c);
+                        if (typeFilter(c.productType)) {
+                            String context = a.getURI().toASCIIString() 
+                                    + "[" + p.getName() + "]:" + c.getID().toString() + " ";
+                            validateChunk(context, c);
+                        }
                     }
                 }
             }
@@ -139,10 +157,11 @@ public class CaomWCSValidator {
             try {
                 // Convert to polygon using native coordinate system
                 MultiPolygon nextMP = PositionUtil.toPolygon(position);
-
+                log.debug("poly: " + nextMP);
+                
                 if (position.getAxis().function != null) {
                     Point center = nextMP.getCenter();
-
+                    log.debug("center: " + center);
                     WCSWrapper map = new WCSWrapper(position, 1, 2);
                     Transform transform = new Transform(map);
 
@@ -150,6 +169,7 @@ public class CaomWCSValidator {
                     coords[0] = center.cval1;
                     coords[1] = center.cval2;
                     Transform.Result tr = transform.sky2pix(coords);
+                    log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
             } catch (NoSuchKeywordException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);

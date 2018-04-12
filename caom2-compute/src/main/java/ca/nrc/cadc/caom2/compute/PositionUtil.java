@@ -441,7 +441,7 @@ public final class PositionUtil {
                 poly.getVertices().add(rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
                 poly.getVertices().add(rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
                 poly.getVertices().add(rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(0.0, 0.0, SegmentType.CLOSE)));
+                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
             } else if (bounds instanceof CoordPolygon2D) {
                 CoordPolygon2D cp = (CoordPolygon2D) bounds;
                 Iterator<ValueCoord2D> i = cp.getVertices().iterator();
@@ -528,8 +528,13 @@ public final class PositionUtil {
         return nativePolygon;
     }
 
-
-    private static Vertex rangeReduce(Vertex v) {
+    /**
+     * Modify argument vertex so that coordinates are in [0,360] and [-90,90].
+     * 
+     * @param v
+     * @return the same vertex for convenience
+     */
+    public static Vertex rangeReduce(Vertex v) {
         if (v.cval2 > 90.0) {
             v.cval1 += 180.0;
             v.cval2 = 180.0 - v.cval2;
@@ -621,12 +626,13 @@ public final class PositionUtil {
             if (!SegmentType.CLOSE.equals(v.getType())) {
                 coords[0] = v.cval1;
                 coords[1] = v.cval2;
+                log.debug("transform: " + v);
                 Transform.Result tr = transform.pix2sky(coords);
-                //log.debug("wcslib: " + coords[0] + "," + coords[1]
-                //        + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                log.debug("wcslib: " + coords[0] + "," + coords[1]
+                        + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 v.cval1 = tr.coordinates[0];
                 v.cval2 = tr.coordinates[1];
-                //truncatePrecision(v);
+                rangeReduce(v);
             }
         }
         return vertices;

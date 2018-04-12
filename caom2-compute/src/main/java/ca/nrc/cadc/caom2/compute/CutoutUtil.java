@@ -509,10 +509,10 @@ public final class CutoutUtil {
         double dy = c.getRadius();
         double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
         MultiPolygon poly = new MultiPolygon();
-        poly.getVertices().add(new Vertex(x - dx, y - dy, SegmentType.MOVE));
-        poly.getVertices().add(new Vertex(x + dx, y - dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x + dx, y + dy, SegmentType.LINE));
-        poly.getVertices().add(new Vertex(x - dx, y + dy, SegmentType.LINE));
+        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x - dx, y - dy, SegmentType.MOVE)));
+        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
+        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
+        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
         poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
         return getPositionBounds(wcs, poly);
     }
@@ -549,12 +549,12 @@ public final class CutoutUtil {
         Transform transform = new Transform(map);
 
         // convert wcs/footprint to sky coords
-        log.debug("computing poly INTERSECT footprint");
+        log.debug("computing footprint from wcs");
         MultiPolygon foot = PositionUtil.toICRSPolygon(wcs);
-
-        log.debug("input poly: " + poly);
         log.debug("wcs poly: " + foot);
+        log.debug("input poly: " + poly);
 
+        log.debug("computing poly INTERSECT footprint");
         MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
         if (npoly == null) {
             log.debug("poly INTERSECT footprint == null");
