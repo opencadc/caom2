@@ -50,9 +50,11 @@
 *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
 *  PURPOSE.  See the GNU Affero         PARTICULIER. 
 -->
-<vo-dml:model xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema">
+<vo-dml:model xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema">
     <name>caom2</name>
     <description>a general purpose data model for use as the core data model of an astronomical data centre</description>
+    <identifier/>
+    <uri/>
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
     <version>2.2</version>
