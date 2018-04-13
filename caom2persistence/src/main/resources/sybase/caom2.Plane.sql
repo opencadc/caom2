@@ -56,8 +56,8 @@ create table caom2_ProvenanceInput
 lock datarows
 ;
 
-create unique index i_output2input on <schema>.ProvenanceInput (outputID,inputID)
+create unique index i_output2input on caom2_ProvenanceInput (outputID,inputID)
 ;
 
-create unique index i_input2output on <schema>.ProvenanceInput (inputID,outputID)
+create unique index i_input2output on caom2_ProvenanceInput (inputID,outputID)
 ;
