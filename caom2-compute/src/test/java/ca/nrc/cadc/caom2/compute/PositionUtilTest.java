@@ -78,6 +78,7 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -215,8 +216,9 @@ public class PositionUtilTest {
             Coord2D start = new Coord2D(new RefCoord(0.5, 10), new RefCoord(0.5, 20));
             Coord2D end = new Coord2D(new RefCoord(512.5, 11), new RefCoord(512.5, 21));
             axis.range = new CoordRange2D(start, end);
-
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordRangeToPolygon: " + v);
             }
@@ -229,7 +231,7 @@ public class PositionUtilTest {
         }
     }
 
-    @Test
+    //@Test
     public void testCoordCircleToPolygon() {
         try {
             Axis axis1 = new Axis("RA---TAN", "deg");
@@ -239,8 +241,9 @@ public class PositionUtilTest {
             wcs.equinox = null;
             ValueCoord2D cen = new ValueCoord2D(2.0, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
 
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordCircleToPolygon: " + v);
             }
@@ -254,7 +257,7 @@ public class PositionUtilTest {
             cen = new ValueCoord2D(0.0, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
 
-            poly = PositionUtil.toPolygon(wcs);
+            poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordCircleToPolygon: " + v);
             }
@@ -269,7 +272,7 @@ public class PositionUtilTest {
             cen = new ValueCoord2D(30.0, 89.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
             try {
-                poly = PositionUtil.toPolygon(wcs);
+                poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
                 Assert.fail("expected UnsupportedOperationException, got: " + poly);
             } catch (UnsupportedOperationException expected) {
                 log.debug("caught expected exception: " + expected);
@@ -295,7 +298,9 @@ public class PositionUtilTest {
             cp.getVertices().add(new ValueCoord2D(11, 21));
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordPolygonToPolygon: " + v);
             }
@@ -323,7 +328,9 @@ public class PositionUtilTest {
             cp.getVertices().add(new ValueCoord2D(11, 21));
             cp.getVertices().add(new ValueCoord2D(10, 20));
             axis.bounds = cp;
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         } catch (IllegalPolygonException expected) {
             log.debug("caught expected: " + expected);
@@ -346,7 +353,8 @@ public class PositionUtilTest {
             cp.getVertices().add(new ValueCoord2D(11, 20));
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         } catch (IllegalPolygonException expected) {
             log.debug("caught expected: " + expected);
@@ -367,7 +375,9 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
@@ -403,6 +413,32 @@ public class PositionUtilTest {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+        
+        try {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            wcs.equinox = null;
+            Dimension2D dim = new Dimension2D(1024, 1024);
+            Coord2D ref = new Coord2D(new RefCoord(512, 370), new RefCoord(512, 20)); // requires range reduction
+            axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            for (Vertex v : poly.getVertices()) {
+                log.debug("testFunctionToPolygon: " + v);
+            }
+            Assert.assertNotNull(poly);
+            Assert.assertEquals(5, poly.getVertices().size());
+            for (Vertex v : poly.getVertices()) {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
+                    Assert.assertTrue("range reduction: " + v.cval1, 9.0 < v.cval1 && v.cval1 < 11.0);
+                }
+            }
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 
 
@@ -417,7 +453,9 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
-            MultiPolygon poly = PositionUtil.toPolygon(wcs);
+            PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
+            
+            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
 
             Assert.fail("expected WCSLibRuntimeException");
         } catch (WCSLibRuntimeException expected) {

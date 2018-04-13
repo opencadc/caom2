@@ -157,9 +157,8 @@ public final class PositionUtil {
                                 log.debug("[generatePolygons] wcs: " + poly);
                             } catch (IllegalPolygonException ipe) {
                                 // augment the error message
-                                log.debug("[generatePolygons] wcs: " + poly);
-                                throw new IllegalPolygonException("area too large, assuming invalid WCS: "
-                                    + a.getURI() + "[" + p.getName() + "] " + poly.getArea());
+                                String msg = ipe.getMessage() + " in " + a.getURI() + "[" + p.getName() + "]";
+                                throw new IllegalPolygonException(msg, ipe);
                             }
 
                             if (poly != null) {
@@ -188,9 +187,6 @@ public final class PositionUtil {
         MultiPolygon mp = MultiPolygon.compose(polys);
         Polygon poly = PolygonUtil.getOuterHull(mp);
         log.debug("[computeBounds] done: " + poly);
-        if (poly.getArea() > MAX_SANE_AREA) {
-            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + poly.getArea());
-        }
         return poly;
     }
 
@@ -415,12 +411,8 @@ public final class PositionUtil {
         return null;
     }
 
-    public static MultiPolygon toPolygon(SpatialWCS wcs)
+    static MultiPolygon toPolygon(SpatialWCS wcs, boolean swappedAxes)
         throws NoSuchKeywordException {
-        CoordSys coordsys = inferCoordSys(wcs);
-        //if (!coordsys.supported) {
-        //    return null;
-        //}
 
         CoordRange2D range = wcs.getAxis().range;
         CoordBounds2D bounds = wcs.getAxis().bounds;
@@ -428,21 +420,7 @@ public final class PositionUtil {
 
         MultiPolygon poly = new MultiPolygon();
         if (bounds != null) {
-            if (bounds instanceof CoordCircle2D) {
-                CoordCircle2D cc = (CoordCircle2D) bounds;
-                if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) { // near a pole
-                    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole (" + cc + ")");
-                }
-                double x = cc.getCenter().coord1;
-                double y = cc.getCenter().coord2;
-                double dy = cc.getRadius();
-                double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-                poly.getVertices().add(rangeReduce(new Vertex(x - dx, y - dy, SegmentType.MOVE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
-                poly.getVertices().add(rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            } else if (bounds instanceof CoordPolygon2D) {
+            if (bounds instanceof CoordPolygon2D) {
                 CoordPolygon2D cp = (CoordPolygon2D) bounds;
                 Iterator<ValueCoord2D> i = cp.getVertices().iterator();
                 while (i.hasNext()) {
@@ -484,21 +462,15 @@ public final class PositionUtil {
         }
 
         log.debug("[wcs.toPolygon] native " + poly);
-        //toICRS(coordsys, poly.getVertices());
-        //
-        //Point c = poly.getCenter();
-        //if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2))
-        //{
-        //    throw new IllegalPolygonException("computed polygon has invalid center: " + c);
-        //}
-        //
-        //if (poly != null && poly.getArea() > MAX_SANE_AREA)
-        //{
-        //    throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
-        //            + poly.getArea());
-        //}
-        //
-        //log.debug("[wcs.toPolygon] icrs " + poly);
+        for (Vertex v : poly.getVertices()) {
+            if (swappedAxes) {
+                double tmp = v.cval1;
+                v.cval1 = v.cval2;
+                v.cval2 = tmp;
+            }
+            rangeReduce(v);
+        }
+        log.debug("[wcs.toPolygon] normalised " + poly);
         return poly;
     }
 
@@ -510,22 +482,25 @@ public final class PositionUtil {
             return null;
         }
 
-        MultiPolygon nativePolygon = toPolygon(wcs);
+        MultiPolygon poly = toPolygon(wcs, coordsys.swappedAxes);
 
-        toICRS(coordsys, nativePolygon.getVertices());
+        toICRS(coordsys, poly.getVertices());
 
-        Point c = nativePolygon.getCenter();
+        Point c = poly.getCenter();
         if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2)) {
             throw new IllegalPolygonException("computed polygon has invalid center: " + c);
         }
 
-        if (nativePolygon != null && nativePolygon.getArea() > MAX_SANE_AREA) {
-            throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
-                + nativePolygon.getArea());
+        if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
+            // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
+            if (poly != null && poly.getArea() > MAX_SANE_AREA) {
+                throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
+                    + poly.getArea());
+            }
         }
 
-        log.debug("[wcs.toIRCSPolygon] icrs " + nativePolygon);
-        return nativePolygon;
+        log.debug("[wcs.toIRCSPolygon] icrs " + poly);
+        return poly;
     }
 
     /**
@@ -614,7 +589,7 @@ public final class PositionUtil {
         return ret;
     }
 
-    static List<Vertex> getVerticesWcsLib(SpatialWCS wcs, List<Vertex> vertices)
+    private static List<Vertex> getVerticesWcsLib(SpatialWCS wcs, List<Vertex> vertices)
         throws NoSuchKeywordException {
         double[] coords = new double[2];
 
@@ -626,19 +601,17 @@ public final class PositionUtil {
             if (!SegmentType.CLOSE.equals(v.getType())) {
                 coords[0] = v.cval1;
                 coords[1] = v.cval2;
-                log.debug("transform: " + v);
+                //log.debug("transform: " + v);
                 Transform.Result tr = transform.pix2sky(coords);
-                log.debug("wcslib: " + coords[0] + "," + coords[1]
-                        + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                //log.debug("wcslib: " + coords[0] + "," + coords[1] + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 v.cval1 = tr.coordinates[0];
                 v.cval2 = tr.coordinates[1];
-                rangeReduce(v);
             }
         }
         return vertices;
     }
 
-    static void toICRS(CoordSys cs, List<Vertex> vertices) {
+    public static void toICRS(CoordSys cs, List<Vertex> vertices) {
         Point2D p;
         if (CoordSys.GAL.equals(cs.name)) {
             for (int i = 0; i < vertices.size(); i++) {
@@ -660,15 +633,6 @@ public final class PositionUtil {
             }
         } else if (!CoordSys.ICRS.equals(cs.name) && !CoordSys.FK5.equals(cs.name)) {
             throw new IllegalArgumentException("unexpected coordsys: " + cs.name);
-        }
-
-        if (cs.swappedAxes) {
-            for (int i = 0; i < vertices.size(); i++) {
-                Vertex v = (Vertex) vertices.get(i);
-                double tmp = v.cval1;
-                v.cval1 = v.cval2;
-                v.cval2 = tmp;
-            }
         }
     }
 

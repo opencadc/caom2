@@ -156,7 +156,8 @@ public class CaomWCSValidator {
         if (position != null) {
             try {
                 // Convert to polygon using native coordinate system
-                MultiPolygon nextMP = PositionUtil.toPolygon(position);
+                PositionUtil.CoordSys csys = PositionUtil.inferCoordSys(position);
+                MultiPolygon nextMP = PositionUtil.toPolygon(position, csys.swappedAxes);
                 log.debug("poly: " + nextMP);
                 
                 if (position.getAxis().function != null) {
@@ -168,6 +169,11 @@ public class CaomWCSValidator {
                     double[] coords = new double[2];
                     coords[0] = center.cval1;
                     coords[1] = center.cval2;
+                    if (csys.swappedAxes) {
+                        // the polygon and center and in lat,long but input sky coordinates have to be standard long,lat
+                        coords[0] = center.cval2;
+                        coords[1] = center.cval1;
+                    }
                     Transform.Result tr = transform.sky2pix(coords);
                     log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
