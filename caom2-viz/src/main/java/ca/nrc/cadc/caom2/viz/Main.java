@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.viz;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -106,14 +107,17 @@ public class Main {
             Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", lvl);
 
-            String fname = am.getValue("in");
+            
             String productID = am.getValue("productID");
             boolean recomp = am.isSet("r");
             boolean headless = am.isSet("headless");
-            if (fname == null) {
+            
+            List<String> files = am.getPositionalArgs();
+            if (files.size() != 1) {
                 usage();
                 System.exit(1);
-            }
+            } 
+            String fname = files.get(0);
             File f = new File(fname);
 
             if (headless) {
@@ -130,8 +134,7 @@ public class Main {
 
     private static void usage() {
         System.out.println("usage: caom2-viz [-h|--help] (to see this message)");
-        System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug]");
-        System.out.println("                 --in=<caom observation xml file>");
+        System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug] [--productID=<...>] <caom observation xml file>");
         System.out.println("                 [--productID=<caom plane productID>] (to view just that plane)");
     }
 }

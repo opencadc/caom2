@@ -260,7 +260,7 @@ public class VizUnion {
                     for (Chunk c : p.getChunks()) {
                         if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                             if (c.position != null) {
-                                MultiPolygon poly = PositionUtil.toPolygon(c.position);
+                                MultiPolygon poly = PositionUtil.toICRSPolygon(c.position);
                                 if (poly != null) {
                                     comps.add(poly);
                                 }
