@@ -163,17 +163,12 @@ public class CaomWCSValidator {
                 if (position.getAxis().function != null) {
                     Point center = nextMP.getCenter();
                     log.debug("center: " + center);
-                    WCSWrapper map = new WCSWrapper(position, 1, 2);
-                    Transform transform = new Transform(map);
-
                     double[] coords = new double[2];
                     coords[0] = center.cval1;
                     coords[1] = center.cval2;
-                    if (csys.swappedAxes) {
-                        // the polygon and center and in lat,long but input sky coordinates have to be standard long,lat
-                        coords[0] = center.cval2;
-                        coords[1] = center.cval1;
-                    }
+                    
+                    WCSWrapper map = new WCSWrapper(position, 1, 2);
+                    Transform transform = new Transform(map);
                     Transform.Result tr = transform.sky2pix(coords);
                     log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
