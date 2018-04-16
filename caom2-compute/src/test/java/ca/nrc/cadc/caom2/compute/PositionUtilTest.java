@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -231,7 +232,7 @@ public class PositionUtilTest {
         }
     }
 
-    //@Test
+    @Test
     public void testCoordCircleToPolygon() {
         try {
             Axis axis1 = new Axis("RA---TAN", "deg");
@@ -253,8 +254,8 @@ public class PositionUtilTest {
             double area = 1.0; // bounding box 
             Assert.assertEquals("area", area, poly.getArea(), 0.01);
 
-            // make sure it works when overlapping meridian
-            cen = new ValueCoord2D(0.0, 3.0);
+            // circle overlapping meridian
+            cen = new ValueCoord2D(0.1, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
 
             poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
@@ -265,18 +266,20 @@ public class PositionUtilTest {
             Assert.assertEquals(5, poly.getVertices().size());
             //double expected = Math.PI*0.25; // triangulated
             area = 1.0; // bounding box 
-            Assert.assertEquals("area", area, poly.getArea(), 0.01);
+            Assert.assertEquals("area at meridian", area, poly.getArea(), 0.01);
+            Point pcen = poly.getCenter();
+            Assert.assertEquals("center at pole", 0.1, pcen.cval1, 0.01);
+            Assert.assertEquals("center at pole", 3.0, pcen.cval2, 0.01);
 
 
             // circle at the pole
             cen = new ValueCoord2D(30.0, 89.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
-            try {
-                poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
-                Assert.fail("expected UnsupportedOperationException, got: " + poly);
-            } catch (UnsupportedOperationException expected) {
-                log.debug("caught expected exception: " + expected);
-            }
+            poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            Assert.assertEquals("area at pole", area, poly.getArea(), 0.01);
+            pcen = poly.getCenter();
+            Assert.assertEquals("center at pole", 30.0, pcen.cval1, 0.01);
+            Assert.assertEquals("center at pole", 89.0, pcen.cval2, 0.01);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

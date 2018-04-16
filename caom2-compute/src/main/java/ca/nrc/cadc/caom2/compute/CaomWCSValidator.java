@@ -78,11 +78,13 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
+import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
@@ -157,11 +159,13 @@ public class CaomWCSValidator {
             try {
                 // Convert to polygon using native coordinate system
                 PositionUtil.CoordSys csys = PositionUtil.inferCoordSys(position);
-                MultiPolygon nextMP = PositionUtil.toPolygon(position, csys.swappedAxes);
-                log.debug("poly: " + nextMP);
+                Point center = null;
+                MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
+                if (mp != null) {
+                    center = mp.getCenter();
+                }
                 
-                if (position.getAxis().function != null) {
-                    Point center = nextMP.getCenter();
+                if (center != null && position.getAxis().function != null) {
                     log.debug("center: " + center);
                     double[] coords = new double[2];
                     coords[0] = center.cval1;
