@@ -72,6 +72,8 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.types.CartesianTransform;
+import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -175,6 +177,7 @@ public final class PositionUtil {
         return polys;
     }
 
+    // TODO: change return type to Shape; if we find CoordCircle2D in the SpatialWCS we should return a Circle
     public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException {
         // since we compute the union, just blindly use all the polygons
@@ -418,62 +421,113 @@ public final class PositionUtil {
         CoordBounds2D bounds = wcs.getAxis().bounds;
         CoordFunction2D function = wcs.getAxis().function;
 
-        MultiPolygon poly = new MultiPolygon();
+        MultiPolygon poly = null;
         if (bounds != null) {
             if (bounds instanceof CoordPolygon2D) {
                 CoordPolygon2D cp = (CoordPolygon2D) bounds;
-                Iterator<ValueCoord2D> i = cp.getVertices().iterator();
-                while (i.hasNext()) {
-                    ValueCoord2D coord = i.next();
-                    if (poly.getVertices().isEmpty()) {
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
-                    } else {
-                        poly.getVertices().add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
-                    }
-                }
-                poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-                poly.validate();
+                poly = toPolygon(wcs, cp);
+            } else if (bounds instanceof CoordCircle2D) {
+                CoordCircle2D cc = (CoordCircle2D) bounds;
+                poly = toPolygon(wcs, cc);
             } else {
                 throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
             }
         } else if (function != null) {
-            double x1 = 0.5;
-            double x2 = function.getDimension().naxis1 + 0.5;
-            double y1 = 0.5;
-            double y2 = function.getDimension().naxis2 + 0.5;
-            List<Vertex> pixCoords = new ArrayList<Vertex>();
-            pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
-            pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
-            pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
-            pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
-            List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
-            poly.getVertices().addAll(skyCoords);
+            poly = toPolygon(wcs, function);
         } else if (range != null) {
-            double x1 = range.getStart().getCoord1().val;
-            double x2 = range.getEnd().getCoord1().val;
-            double y1 = range.getStart().getCoord2().val;
-            double y2 = range.getEnd().getCoord2().val;
-            poly.getVertices().add(new Vertex(x1, y1, SegmentType.MOVE));
-            poly.getVertices().add(new Vertex(x2, y1, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x2, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(x1, y2, SegmentType.LINE));
-            poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+            poly = toPolygon(wcs, range);
         }
-
-        log.debug("[wcs.toPolygon] native " + poly);
-        for (Vertex v : poly.getVertices()) {
-            if (swappedAxes) {
-                double tmp = v.cval1;
-                v.cval1 = v.cval2;
-                v.cval2 = tmp;
+        if (poly != null) {
+            log.debug("[wcs.toPolygon] native " + poly);
+            for (Vertex v : poly.getVertices()) {
+                if (swappedAxes) {
+                    double tmp = v.cval1;
+                    v.cval1 = v.cval2;
+                    v.cval2 = tmp;
+                }
+                rangeReduce(v);
             }
-            rangeReduce(v);
+            poly.validate();
         }
-        log.debug("[wcs.toPolygon] normalised " + poly);
+        
+        log.debug("[toPolygon] normalised " + poly);
         return poly;
     }
-
+    
+    static MultiPolygon toPolygon(SpatialWCS wcs, CoordRange2D cr)
+        throws NoSuchKeywordException {
+        
+        double x1 = cr.getStart().getCoord1().val;
+        double x2 = cr.getEnd().getCoord1().val;
+        double y1 = cr.getStart().getCoord2().val;
+        double y2 = cr.getEnd().getCoord2().val;
+        List<Vertex> skyCoords = new ArrayList<Vertex>();
+        skyCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
+        skyCoords.add(new Vertex(x2, y1, SegmentType.LINE));
+        skyCoords.add(new Vertex(x2, y2, SegmentType.LINE));
+        skyCoords.add(new Vertex(x1, y2, SegmentType.LINE));
+        skyCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        return new MultiPolygon(skyCoords);
+    }
+    
+    static MultiPolygon toPolygon(SpatialWCS wcs, CoordPolygon2D cp)
+        throws NoSuchKeywordException {
+        List<Vertex> skyCoords = new ArrayList<Vertex>();
+        Iterator<ValueCoord2D> i = cp.getVertices().iterator();
+        while (i.hasNext()) {
+            ValueCoord2D coord = i.next();
+            if (skyCoords.isEmpty()) {
+                skyCoords.add(new Vertex(coord.coord1, coord.coord2, SegmentType.MOVE));
+            } else {
+                skyCoords.add(new Vertex(coord.coord1, coord.coord2, SegmentType.LINE));
+            }
+        }
+        skyCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        return new MultiPolygon(skyCoords);
+    }
+    
+    // change this to toCircle(SpatialWCS wcs, CoordCircle2D cc), remove use from toPolygon(),
+    // and use directly in computeBounds
+    static MultiPolygon toPolygon(SpatialWCS wcs, CoordCircle2D cc)
+        throws NoSuchKeywordException {
+        Circle circ = new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
+        CartesianTransform trans = CartesianTransform.getTransform(circ);
+        List<Vertex> skyCoords = new ArrayList<Vertex>();
+        
+        //if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) { // near a pole
+        //    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole (" + cc + ")");
+        //}
+        Point tcen = trans.transform(circ.getCenter());
+        double x = tcen.cval1;
+        double y = tcen.cval2;
+        double dy = circ.getRadius();
+        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
+        skyCoords.add(rangeReduce(new Vertex(x - dx, y - dy, SegmentType.MOVE)));
+        skyCoords.add(rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
+        skyCoords.add(rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
+        skyCoords.add(rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
+        skyCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        MultiPolygon tmp = new MultiPolygon(skyCoords);
+        
+        CartesianTransform inv = trans.getInverseTransform();
+        return inv.transform(tmp);
+    }
+    
+    static MultiPolygon toPolygon(SpatialWCS wcs, CoordFunction2D function)
+        throws NoSuchKeywordException {
+        double x1 = 0.5;
+        double x2 = function.getDimension().naxis1 + 0.5;
+        double y1 = 0.5;
+        double y2 = function.getDimension().naxis2 + 0.5;
+        List<Vertex> pixCoords = new ArrayList<Vertex>();
+        pixCoords.add(new Vertex(x1, y1, SegmentType.MOVE));
+        pixCoords.add(new Vertex(x2, y1, SegmentType.LINE));
+        pixCoords.add(new Vertex(x2, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(x1, y2, SegmentType.LINE));
+        pixCoords.add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        List<Vertex> skyCoords = getVerticesWcsLib(wcs, pixCoords);
+        return new MultiPolygon(skyCoords);
+    }
 
     public static MultiPolygon toICRSPolygon(SpatialWCS wcs)
         throws NoSuchKeywordException {
