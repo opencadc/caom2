@@ -390,6 +390,7 @@ public class ObservationReaderWriterTest
             log.debug("invalid XML: " + invalid);
             ObservationReader r = new ObservationReader();
             Observation obs2 = r.read(invalid);
+            Assert.fail("expected ObservationParsingException");
         }
         catch(ObservationParsingException expected)
         {
@@ -417,6 +418,7 @@ public class ObservationReaderWriterTest
             log.debug("invalid XML: " + invalid);
             ObservationReader r = new ObservationReader();
             Observation obs2 = r.read(invalid);
+            Assert.fail("expected ObservationParsingException");
         }
         catch(ObservationParsingException expected)
         {

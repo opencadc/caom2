@@ -74,7 +74,9 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.compute.Util;
@@ -138,8 +140,32 @@ public class VizUnion {
 
     private void doit(Plane plane)
         throws Exception {
-        DisplayPane dp = new DisplayPane(forceRecompute);
-        dp.setPlane(plane);
+        Polygon bounds = null;
+        ProductType ptype = Util.choseProductType(plane.getArtifacts());
+        if (plane.position != null && plane.position.bounds != null && !forceRecompute) {
+            // use polygon from input file
+            bounds = (Polygon) plane.position.bounds;
+        } else {
+            try {
+                log.info("recomputing union... " + ptype);
+                bounds = PositionUtil.computeBounds(plane.getArtifacts(), ptype);
+                log.info("recomputing union... DONE");
+            } catch (Exception ipe) {
+                log.warn("computeShape failed", ipe);
+            }
+        }
+        if (bounds == null) {
+            log.error("could not compute union: " + plane.getProductID());
+            return;
+        } else {
+            log.info("bounds: " + bounds);
+            log.info("center: " + bounds.getCenter());
+            log.info("area: " + bounds.getArea());
+        }
+            
+        DisplayPane dp = new DisplayPane();
+        
+        dp.setPlane(plane, bounds);
         JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getProductID());
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.getContentPane().add(dp);
@@ -150,53 +176,27 @@ public class VizUnion {
 
     static class DisplayPane extends JPanel {
         private DrawArea viewer;
-        private boolean recomp;
 
-        public DisplayPane(boolean recomp) {
+        public DisplayPane() {
             super(new BorderLayout());
             JLabel status = new JLabel("");
             this.viewer = new DrawArea(status, "", false);
             this.add(viewer, BorderLayout.CENTER);
             this.add(status, BorderLayout.SOUTH);
             this.setPreferredSize(new Dimension(800, 800));
-
-            this.recomp = recomp;
         }
 
 
-        public void setPlane(Plane plane)
+        public void setPlane(Plane plane, Polygon bounds)
             throws Exception {
-            Polygon bounds = null;
-            ProductType ptype = Util.choseProductType(plane.getArtifacts());
-            if (plane.position != null && plane.position.bounds != null && !recomp) {
-                // use polygon from input file
-                bounds = (Polygon) plane.position.bounds;
-            } else {
-                try {
-                    log.info("recomputing union... " + ptype);
-                    bounds = PositionUtil.computeBounds(plane.getArtifacts(), ptype);
-                    log.info("recomputing union... DONE");
-                } catch (Exception ipe) {
-                    log.warn("computeShape failed", ipe);
-                }
-            }
-
-            if (bounds == null) {
-                log.error("could not compute union...");
-                System.exit(1);
-            } else {
-                log.info("bounds: " + bounds);
-                log.info("center: " + bounds.getCenter());
-                log.info("area: " + bounds.getArea());
-            }
-
+            
             viewer.clear();
-
+            
+            ProductType ptype = Util.choseProductType(plane.getArtifacts());
+            
             CartesianTransform trans = CartesianTransform.getTransform(bounds.getSamples());
             setArtifacts(plane.getArtifacts(), trans, ptype);
 
-
-            boolean doHull = true;
             MultiPolygon hull = new MultiPolygon();
             SegmentType t = SegmentType.MOVE;
             for (Point p : bounds.getPoints()) {
@@ -260,7 +260,7 @@ public class VizUnion {
                     for (Chunk c : p.getChunks()) {
                         if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                             if (c.position != null) {
-                                MultiPolygon poly = PositionUtil.toPolygon(c.position);
+                                MultiPolygon poly = PositionUtil.toICRSPolygon(c.position);
                                 if (poly != null) {
                                     comps.add(poly);
                                 }

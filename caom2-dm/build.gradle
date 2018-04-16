@@ -46,7 +46,7 @@ xslt {
 }
 
 dependencies {
-    testCompile 'org.opencadc:cadc-vodml:[1.0.1,)'
+    testCompile 'org.opencadc:cadc-vodml:[1.0.4,)'
 
     testCompile 'junit:junit:4.+' 
 }

@@ -70,7 +70,13 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.wcs.Axis;
+import ca.nrc.cadc.caom2.wcs.Coord2D;
+import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
+import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
+import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
@@ -330,5 +336,27 @@ public class CaomWCSValidatorTest {
         }
     }
 
-
+    //@Test
+    public void testHPX2()
+    {
+        try
+        {
+            // values from a JCMT scuba2 healpix product
+            Axis axis1 = new Axis("RA---HPX", "deg");
+            Axis axis2 = new Axis("DEC--HPX", "deg");
+            CoordAxis2D a2d = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(a2d);
+            wcs.coordsys = "ICRS";
+            wcs.getAxis().function = new CoordFunction2D(
+                    new Dimension2D(66120, 1), new Coord2D(new RefCoord(-46659.5, 0.0), new RefCoord(2820.5, 0.0)),
+                    -6.86645537834E-4, -6.86645537833E-4, -6.86645537834E-4, 6.86645537833E-4);
+            
+            CaomWCSValidator.validateSpatialWCS("testHPX2", wcs);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
