@@ -160,17 +160,8 @@ public class CaomWCSValidator {
                 // Convert to polygon using native coordinate system
                 PositionUtil.CoordSys csys = PositionUtil.inferCoordSys(position);
                 Point center = null;
-                if (position.getAxis().bounds != null) {
-                    if (position.getAxis().bounds instanceof CoordCircle2D) {
-                        CoordCircle2D cc = (CoordCircle2D) position.getAxis().bounds;
-                        ValueCoord2D vc = cc.getCenter();
-                        center = new Point(vc.coord1, vc.coord2);
-                    } else {
-                        MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
-                        center = mp.getCenter();
-                    }
-                } else if (position.getAxis().function != null) {
-                    MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
+                MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
+                if (mp != null) {
                     center = mp.getCenter();
                 }
                 
