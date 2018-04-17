@@ -72,6 +72,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.net.MalformedURLException;
@@ -83,7 +84,7 @@ import org.apache.log4j.Logger;
 /**
  * @author pdowler
  */
-public class VOSpaceResolver implements StorageResolver {
+public class VOSpaceResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "vos";
     public static final String CUTOUT_VIEW = "ivo://cadc.nrc.ca/vospace/view#cutout";
     public static final String PROTOCOL_HTTP_GET = "ivo://ivoa.net/vospace/core#httpget";

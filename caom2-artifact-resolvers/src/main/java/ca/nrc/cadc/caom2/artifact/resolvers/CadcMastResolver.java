@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Interface;
@@ -89,7 +90,7 @@ import org.apache.log4j.Logger;
  *
  * @author yeunga
  */
-public class CadcMastResolver implements StorageResolver {
+public class CadcMastResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(CadcMastResolver.class);
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
