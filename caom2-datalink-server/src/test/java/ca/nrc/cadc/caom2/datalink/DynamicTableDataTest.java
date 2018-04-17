@@ -72,9 +72,11 @@ package ca.nrc.cadc.caom2.datalink;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
@@ -101,8 +103,10 @@ public class DynamicTableDataTest
     
     static String RUNID = "abc123";
 
-    static URI SODA_ID = URI.create("ivo://example.net/soda");
-
+    static URI SODA_ID = URI.create("ivo://cadc.nrc.ca/caom2ops");
+    
+    ServiceConfig conf = new ServiceConfig();
+    
     public DynamicTableDataTest() { }
 
     //@Test
@@ -127,8 +131,8 @@ public class DynamicTableDataTest
         {
             Job job = new Job();
             
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 0);
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
             
@@ -154,8 +158,8 @@ public class DynamicTableDataTest
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 0);
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -182,17 +186,13 @@ public class DynamicTableDataTest
         try
         {
             Job job = new Job();
-            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 1);
+            job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
-            // 2x1 results
-            Assert.assertTrue( iter.hasNext() );
-            Assert.assertNotNull(iter.next());
-
+            // 1 results
             Assert.assertTrue( iter.hasNext() );
             Assert.assertNotNull(iter.next());
 
@@ -212,10 +212,10 @@ public class DynamicTableDataTest
         try
         {
             Job job = new Job();
-            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
-            job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor(SODA_ID, RUNID);
-            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://unused.url.com/tap"), 2);
+            job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
             Iterator<List<Object>> iter = dtd.iterator();
 
@@ -226,9 +226,45 @@ public class DynamicTableDataTest
             Assert.assertTrue( iter.hasNext() );
             Assert.assertNotNull(iter.next());
 
+            Assert.assertFalse( iter.hasNext() );
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testNestedIteration()
+    {
+        log.debug("testNestedIteration - START");
+        try
+        {
+            Job job = new Job();
+            job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
+            job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
+            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 2);
+            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
+            Iterator<List<Object>> iter = dtd.iterator();
+
+            // 2 ID x2 artifacts + 1 pkg each = 6
             Assert.assertTrue( iter.hasNext() );
             Assert.assertNotNull(iter.next());
 
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+            
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+            
+            Assert.assertTrue( iter.hasNext() );
+            Assert.assertNotNull(iter.next());
+            
             Assert.assertTrue( iter.hasNext() );
             Assert.assertNotNull(iter.next());
             
@@ -251,7 +287,7 @@ public class DynamicTableDataTest
         }
 
         @Override
-        public ArtifactQueryResult performQuery(PlaneURI planeURI, boolean artifactOnly)
+        public ArtifactQueryResult performQuery(PublisherID id, boolean artifactOnly)
         {
             ArtifactQueryResult ret = new ArtifactQueryResult();
             try
@@ -259,7 +295,31 @@ public class DynamicTableDataTest
                 for (int i=0; i<num; i++)
                 {
                     Artifact a = new Artifact(
-                        URI.create("ad:FOO/" + planeURI.getParent().getObservationID() + "_" + planeURI.getProductID() + "_" + i),
+                        URI.create("ad:IRIS/bar_baz_" + i),
+                        ProductType.SCIENCE, ReleaseType.DATA);
+                    a.contentLength = 123L;
+                    a.contentType = "text/plain";
+                    ret.getArtifacts().add(a);
+                }
+            }
+            catch(Exception ex)
+            {
+                throw new RuntimeException("test setup failed", ex);
+            }
+            log.debug("TestCaomTapQuery.getArtifacts: " + ret.getArtifacts().size());
+            return  ret;
+        }
+        
+        @Override
+        public ArtifactQueryResult performQuery(PlaneURI id, boolean artifactOnly)
+        {
+            ArtifactQueryResult ret = new ArtifactQueryResult();
+            try
+            {
+                for (int i=0; i<num; i++)
+                {
+                    Artifact a = new Artifact(
+                        URI.create("ad:IRIS/bar_baz_" + i),
                         ProductType.SCIENCE, ReleaseType.DATA);
                     a.contentLength = 123L;
                     a.contentType = "text/plain";
