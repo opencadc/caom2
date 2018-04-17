@@ -447,7 +447,7 @@ public class ArtifactProcessor
     /**
      * Find the package service associated with a publisherID.
      * 
-     * @param publisherID
+     * @param id
      * @return base package service url for current auth method or null if no such service
      */
     protected URL getBasePackageURL(URI id) {
