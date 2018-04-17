@@ -69,6 +69,7 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -101,6 +102,11 @@ public class VOSpaceResolverTest {
     @Test
     public void testGetScheme() {
         Assert.assertTrue(VOSpaceResolver.SCHEME.equals(vosResolver.getScheme()));
+    }
+    
+    @Test 
+    public void testTraceable() {
+        Assert.assertTrue(vosResolver instanceof Traceable);
     }
 
     @Test

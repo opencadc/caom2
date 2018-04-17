@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.net.MalformedURLException;
@@ -86,7 +87,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class AdResolver implements StorageResolver {
+public class AdResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "ad";
     private static final Logger log = Logger.getLogger(AdResolver.class);
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
