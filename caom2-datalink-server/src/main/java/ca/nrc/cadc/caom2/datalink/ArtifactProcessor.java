@@ -242,7 +242,7 @@ public class ArtifactProcessor
                 }
             }
         }
-        log.warn("numFiles: " + numFiles);
+        log.debug("numFiles: " + numFiles);
         if (numFiles > 1) {
             
             URL pkg = getBasePackageURL(uri);
