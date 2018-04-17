@@ -204,6 +204,7 @@ public class PackageRunner implements JobRunner
             
             CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
             artifactResolver.setAuthMethod(proxyAuthMethod); // override auth method for proxied calls
+            artifactResolver.setRunID(runID);
             
             for (String suri : idList)
             {

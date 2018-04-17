@@ -93,7 +93,7 @@ public class ArtifactProcessorTest
 
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
 
     static String PLANE_URI = "ivo://cadc.nrc.ca/IRIS?bar/baz";

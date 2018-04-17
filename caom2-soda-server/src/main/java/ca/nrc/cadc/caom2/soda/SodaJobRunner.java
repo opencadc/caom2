@@ -289,9 +289,10 @@ public class SodaJobRunner implements JobRunner
             String runID = job.getRunID();
             if (runID == null)
                 runID = job.getID();
-
+            
             CaomTapQuery query = new CaomTapQuery(tapURI, runID);
             CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
+            artifactResolver.setRunID(runID);
             List<Result> jobResults = new ArrayList<>();
             int serialNum = 1;
             for (URI id : ids)
@@ -330,25 +331,8 @@ public class SodaJobRunner implements JobRunner
                                     {
 
                                         URL url = artifactResolver.getURL(a.getURI(), cutout);
-                                        int num = 0;
-                                        if (url.getQuery() != null)
-                                            num = 1;
-                                        StringBuilder sb = new StringBuilder(url.toExternalForm());
-
-                                        if (runID != null)
-                                        {
-                                            if (num == 0)
-                                                sb.append("?");
-                                            else
-                                                sb.append("&");
-                                            sb.append("runid=").append(runID);
-                                            num++;
-                                        }
-
-                                        String ret = sb.toString();
-                                        log.debug("cutout URL: " + ret);
-                                        URI loc = new URI(ret);
-                                        jobResults.add(new Result(RESULT_OK+"-"+serialNum++, loc));
+                                        log.debug("cutout URL: " + url.toExternalForm());
+                                        jobResults.add(new Result(RESULT_OK+"-"+serialNum++, url.toURI()));
                                     }
                                     else
                                     {

@@ -140,6 +140,7 @@ public class ArtifactProcessor
         this.runID = runID;
         this.registryClient = new RegistryClient();
         this.artifactResolver = new CaomArtifactResolver();
+        artifactResolver.setRunID(runID);
     }
 
     /**
@@ -244,7 +245,7 @@ public class ArtifactProcessor
         log.warn("numFiles: " + numFiles);
         if (numFiles > 1) {
             
-            URL pkg = getPackageResourceID(uri);
+            URL pkg = getBasePackageURL(uri);
             if (pkg != null) {
                 DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
                 try {
@@ -359,9 +360,18 @@ public class ArtifactProcessor
             log.warn("failed to generate accessURL for: " + serviceID + " + " + standardID + " + " + authMethod);
 
         ServiceParameter sp;
-        sp = new ServiceParameter("ID", "char", "*", "");
-        sp.setValueRef(artifactURI.toASCIIString(), null);
+        String val = artifactURI.toASCIIString();
+        String arraysize = Integer.toString(val.length());
+        sp = new ServiceParameter("ID", "char", arraysize, "");
+        sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
+        
+        if (StringUtil.hasText(runID)) {
+            arraysize = Integer.toString(runID.length());
+            sp = new ServiceParameter("RUNID", "char", arraysize, "");
+            sp.setValueRef(runID, null);
+            sd.getInputParams().add(sp);
+        }
         
         if (ab.poly != null)
         {
@@ -431,15 +441,6 @@ public class ArtifactProcessor
     {
         URL url = artifactResolver.getURL(a.getURI());
 
-        if ( StringUtil.hasText(runID) )
-        {
-            String appendQS = "?runid=";
-            String qs = url.getQuery();
-            if (qs != null && qs.length() > 0)
-                appendQS = "&runid=";
-            String surl = url.toExternalForm() + appendQS + runID;
-            return new URL(surl);
-        }
         return url;
     }
     
@@ -447,9 +448,9 @@ public class ArtifactProcessor
      * Find the package service associated with a publisherID.
      * 
      * @param publisherID
-     * @return 
+     * @return base package service url for current auth method or null if no such service
      */
-    protected URL getPackageResourceID(URI id) {
+    protected URL getBasePackageURL(URI id) {
         Subject caller = AuthenticationUtil.getCurrentSubject();
         AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null) {
@@ -464,13 +465,17 @@ public class ArtifactProcessor
         // resolvable
         PublisherID pubID = new PublisherID(id);
         URI resourceID = pubID.getResourceID();
-        return registryClient.getServiceURL(resourceID, Standards.PKG_10, authMethod);
+        URL ret = registryClient.getServiceURL(resourceID, Standards.PKG_10, authMethod);
+        return ret;
     }
     
     private URL getPackageURL(URL pkg, URI uri) throws MalformedURLException {
         StringBuilder sb = new StringBuilder();
         sb.append(pkg.toExternalForm());
         sb.append("?ID=").append(NetUtil.encode(uri.toASCIIString()));
+        if (StringUtil.hasLength(runID)) {
+            sb.append("&RUNID=").append(NetUtil.encode(runID));
+        }
         return new URL(sb.toString());
     }
 }
