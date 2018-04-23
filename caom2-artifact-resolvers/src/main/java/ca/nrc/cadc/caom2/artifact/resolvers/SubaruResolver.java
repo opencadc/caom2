@@ -2,7 +2,7 @@
  ************************************************************************
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  *
- * (c) 2017.                            (c) 2017.
+ * (c) 2018.                            (c) 2018.
  * National Research Council            Conseil national de recherches
  * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
  * All rights reserved                  Tous droits reserves
@@ -31,9 +31,11 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -72,36 +74,45 @@ public class SubaruResolver implements StorageResolver {
     /**
      * Validate path portion of URI for structure and create URL if possible
      *
-     * @param uri
-     * @return URL
+     * @param uri       The URI of the given artifact.
+     * @return URL      The converted URL.
      * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
      *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
      */
-    private URL createURLFromPath(URI uri) {
-        URL newUrl = null;
-        String[] path = uri.getSchemeSpecificPart().split("/");
+    private URL createURLFromPath(final URI uri) {
+        final String[] path = uri.getSchemeSpecificPart().split("/");
         // data uri has 3 parts, preview has 2
 
         if (path.length < 2 || path.length > 3) {
             throw new IllegalArgumentException("Malformed URI. Expected 2 or 3 path components, found " + path.length);
         }
 
-        String sb = "";
-        String requestType = path[0];
-        if (path.length == 2 && requestType.equals(PREVIEW_URI)) {
+        final String sb;
+        final String requestType = path[0];
+
+        // Changes here to the Preview URI are just to prevent an IllegalArgument for Preview URIs that do not conform
+        // to the old values.
+        //
+        // Will be fixed properly in Story 2287.
+        //
+        // jenkinsd 2018.04.23
+        //
+        if (requestType.equals(PREVIEW_URI)) {
             // Returns a web page reference
             // expected URI input is subaru:preview/<FRAMEID>
-            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY + path[1];
+            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY
+                + ((path.length == 3) ? NetUtil.encode(path[2] + " " + path[1]) : path[1]);
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
-            // expected URL output is http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
-            sb = BASE_DATA_URL +  NetUtil.encode(path[1] + "/" + path[2]);
+            // expected URL output is http://www.cadc-ccda.hia-iha.nrc-cnrc.gc
+            // .ca/maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
+            sb = BASE_DATA_URL + NetUtil.encode(path[1] + "/" + path[2]);
         } else {
             throw new IllegalArgumentException("Invalid URI: " + requestType);
         }
 
         try {
-            newUrl = new URL(sb);
+            final URL newUrl = new URL(sb);
             log.debug(uri + " --> " + newUrl);
             return newUrl;
         } catch (MalformedURLException ex) {

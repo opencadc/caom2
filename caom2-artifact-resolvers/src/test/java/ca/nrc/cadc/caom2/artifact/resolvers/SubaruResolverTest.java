@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -116,11 +116,11 @@ public class SubaruResolverTest {
 
     @Test
     public void testGetSchema() {
-        Assert.assertTrue(subaruResolver.getScheme().equals(subaruResolver.getScheme()));
+        Assert.assertEquals(subaruResolver.getScheme(), subaruResolver.getScheme());
     }
 
     @Test
-    public void testValidURI() {
+    public void testValidURI() throws Exception {
         try {
             String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
             URI uri = new URI(uriStr);
@@ -145,12 +145,12 @@ public class SubaruResolverTest {
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            throw unexpected;
         }
     }
 
     @Test
-    public void testInvalidURIBadScheme() {
+    public void testInvalidURIBadScheme() throws Exception {
         try {
             URI uri = new URI(INVALID_URI_BAD_SCHEME);
             URL url = subaruResolver.toURL(uri);
@@ -159,7 +159,30 @@ public class SubaruResolverTest {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            throw unexpected;
+        }
+    }
+
+    @Test
+    public void testValidPreviewURI() {
+        try {
+            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_FILE2;
+
+            final URI uri = URI.create(uriStr);
+            final URL url = subaruResolver.toURL(uri);
+
+            log.debug("toURL returned: " + url.toString());
+
+            String encodedValue = NetUtil.encode(VALID_FILE2 + " " + VALID_DATE1);
+
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" +
+                PREVIEW_URL_QUERY + encodedValue);
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(PREVIEW_URL_QUERY + encodedValue, url.getQuery());
+            Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
+            throw e;
         }
     }
 
@@ -172,12 +195,12 @@ public class SubaruResolverTest {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            throw unexpected;
         }
     }
 
     @Test
-    public void testInvalidUriType() {
+    public void testInvalidUriType() throws Exception {
         try {
             String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
             URI uri = new URI(uriStr);
@@ -187,7 +210,7 @@ public class SubaruResolverTest {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            throw unexpected;
         }
     }
 
