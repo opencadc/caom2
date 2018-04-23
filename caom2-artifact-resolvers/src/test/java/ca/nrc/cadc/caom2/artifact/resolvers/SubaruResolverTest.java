@@ -71,10 +71,8 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.net.URI;
 import java.net.URL;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -106,7 +104,7 @@ public class SubaruResolverTest {
 
     String BASE_DATA_URL = "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca";
     String DATA_URL_PATH = "/maq/subaru";
-    String DATA_URL_QUERY = "frameinfo=";
+    String DATA_URL_QUERY= "frameinfo=";
 
     // Invalid checks the scheme and the request type (needs to be 'file' or 'preview')
     String INVALID_URI_BAD_SCHEME = "pokey:little/puppy";
@@ -118,50 +116,37 @@ public class SubaruResolverTest {
 
     @Test
     public void testGetSchema() {
-        Assert.assertTrue(subaruResolver.getScheme().equals(subaruResolver.getScheme()));
+        Assert.assertEquals(subaruResolver.getScheme(), subaruResolver.getScheme());
     }
 
     @Test
-    public void testValidURI() {
-        String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
-        URI uri = URI.create(uriStr);
-        URL url = subaruResolver.toURL(uri);
-        log.debug("toURL returned: " + url.toString());
+    public void testValidURI() throws Exception {
+        try {
+            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
+            URI uri = new URI(uriStr);
+            URL url = subaruResolver.toURL(uri);
+            log.debug("toURL returned: " + url.toString());
 
-        String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_FILE1);
-        Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +
-            encodedValue);
-        Assert.assertEquals(DATA_URL_PATH, url.getPath());
-        Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
-        Assert.assertEquals(BASE_DATA_URL, url.getHost());
+            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_FILE1);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +  encodedValue);
+            Assert.assertEquals(DATA_URL_PATH, url.getPath());
+            Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
+            Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
-        uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
-        uri = URI.create(uriStr);
-        url = subaruResolver.toURL(uri);
-        log.debug("toURL returned: " + url.toString());
+            uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
+            uri = new URI(uriStr);
+            url = subaruResolver.toURL(uri);
+            log.debug("toURL returned: " + url.toString());
 
-        Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" +
-            PREVIEW_URL_QUERY + VALID_FILE2);
-        Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
-        Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
-        Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
-    }
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
+            Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
 
-    @Test
-    public void testValidPreviewURI() {
-        final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_FILE2;
-        final URI uri = URI.create(uriStr);
-        final URL url = subaruResolver.toURL(uri);
-
-        log.debug("toURL returned: " + url.toString());
-
-        String encodedValue = NetUtil.encode(VALID_FILE2 + " " + VALID_DATE1);
-
-        Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" +
-            PREVIEW_URL_QUERY + encodedValue);
-        Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
-        Assert.assertEquals(PREVIEW_URL_QUERY + encodedValue, url.getQuery());
-        Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
+        }
     }
 
     @Test
@@ -172,6 +157,32 @@ public class SubaruResolverTest {
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
+        }
+    }
+
+    @Test
+    public void testValidPreviewURI() {
+        try {
+            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_FILE2;
+
+            final URI uri = URI.create(uriStr);
+            final URL url = subaruResolver.toURL(uri);
+
+            log.debug("toURL returned: " + url.toString());
+
+            String encodedValue = NetUtil.encode(VALID_FILE2 + " " + VALID_DATE1);
+
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" +
+                PREVIEW_URL_QUERY + encodedValue);
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(PREVIEW_URL_QUERY + encodedValue, url.getQuery());
+            Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
+            throw e;
         }
     }
 
@@ -182,18 +193,24 @@ public class SubaruResolverTest {
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
         }
     }
 
     @Test
-    public void testInvalidUriType() {
+    public void testInvalidUriType() throws Exception {
         try {
             String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
-            URI uri = URI.create(uriStr);
+            URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
         }
     }
 
