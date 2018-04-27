@@ -79,6 +79,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -97,6 +98,7 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.HexUtil;
 
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.date.DateUtil;
 
 /**
  * Class that compares artifacts in the caom2 metadata with the artifacts
@@ -169,6 +171,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         long notInLogical = 0;
         long notInPhysical = 0;
         
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+        
         ArtifactMetadata nextLogical = null;
         
         for (ArtifactMetadata nextPhysical : physicalArtifacts) {
@@ -187,7 +191,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                              "artifactURI", nextLogical.artifactURI,
                              "storageID", nextLogical.storageID,
                              "caomContentLength", nextLogical.contentLength,
-                             "storageContentLength", nextPhysical.contentLength},
+                             "storageContentLength", nextPhysical.contentLength,
+                             "caomCollection", nextLogical.collection,
+                             "caomLastModified", df.format(nextLogical.lastModified),
+                             "ingestDate", df.format(nextPhysical.lastModified)},
                             false);
                     } else if (nextLogical.contentType == null ||
                             !nextLogical.contentType.equals(nextPhysical.contentType)) {
@@ -198,7 +205,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                              "artifactURI", nextLogical.artifactURI,
                              "storageID", nextLogical.storageID,
                              "caomContentType", nextLogical.contentType,
-                             "storageContentType", nextPhysical.contentType},
+                             "storageContentType", nextPhysical.contentType,
+                             "caomCollection", nextLogical.collection,
+                             "caomLastModified", df.format(nextLogical.lastModified),
+                             "ingestDate", df.format(nextPhysical.lastModified)},
                             false);
                     } else {
                         correct++;
@@ -213,7 +223,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                          "caomChecksum", nextLogical.checksum,
                          "caomSize", nextLogical.contentLength,
                          "storageChecksum", nextPhysical.checksum,
-                         "storageSize", nextPhysical.contentLength},
+                         "storageSize", nextPhysical.contentLength,
+                         "caomCollection", nextLogical.collection,
+                         "caomLastModified", df.format(nextLogical.lastModified),
+                         "ingestDate", df.format(nextPhysical.lastModified)},
                         false);
                 }
             } else {
@@ -221,7 +234,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                 logJSON(new String[]
                     {"logType", "detail",
                      "anomaly", "notInCAOM",
-                     "storageID", nextPhysical.storageID},
+                     "storageID", nextPhysical.storageID,
+                     "ingestDate", df.format(nextPhysical.lastModified)},
                     false);
             }
         }
@@ -233,7 +247,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                     {"logType", "detail",
                      "anomaly", "notInStorage",
                      "artifactURI", next.artifactURI,
-                     "storageID", next.storageID},
+                     "storageID", next.storageID,
+                     "caomCollection", next.collection,
+                     "caomLastModified", df.format(next.lastModified)},
                     false);
             }
         }
@@ -282,8 +298,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         if ("MAST".equals(archive)) {
             likeClause = "mast:";
         }
-        String adql = "select distinct(uri), contentChecksum, contentLength, contentType " +
-                "from caom2.Artifact where uri like '" + likeClause + "%'";
+        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.collection " +
+                "from caom2.Artifact a, caom2.Plane p, caom2.Observation o where a.uri like '" + likeClause + "%' and " +
+                "a.planeID = p.planeID and p.obsID = o.obsID";
+        
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();
         TreeSet<ArtifactMetadata> result = query(caomTapURL, adql, true);
@@ -296,7 +314,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         // TODO: this should now use the ArtifactStore list() method to
         // get the list of artifacts in storage
         
-        String adql = "select fileName, contentMD5, fileSize, contentType " +
+        String adql = "select fileName, ingestDate, contentMD5, fileSize, contentType " +
                 "from archive_files where archiveName='" + archive + "'";
         log.debug("physical query: " + adql);
         long start = System.currentTimeMillis();
@@ -366,6 +384,7 @@ class ResultReader implements InputStreamWrapper {
         String[] parts;
         ArtifactMetadata am = null;
         boolean firstLine = true;
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
         while ((line = reader.readLine()) != null) {
             if (firstLine) {
                 // first line is a header
@@ -383,18 +402,24 @@ class ResultReader implements InputStreamWrapper {
                         } else {
                             am.storageID = parts[0];
                         }
-                        if (parts.length > 1) {
+                        
+                        am.lastModified = DateUtil.flexToDate(parts[1], df);
+                        
+                        if (parts.length > 2) {
                             if (logical) {
-                                am.checksum = getADChecksum(parts[1]);
+                                am.checksum = getADChecksum(parts[2]);
                             } else {
-                                am.checksum = parts[1];
+                                am.checksum = parts[2];
                             }
                         }
-                        if (parts.length > 2) {
-                            am.contentLength = parts[2];
-                        }
                         if (parts.length > 3) {
-                            am.contentType = parts[3];
+                            am.contentLength = parts[3];
+                        }
+                        if (parts.length > 4) {
+                            am.contentType = parts[4];
+                        }
+                        if (parts.length > 5) {
+                            am.collection = parts[5];
                         }
                         artifacts.add(am);
                     }
