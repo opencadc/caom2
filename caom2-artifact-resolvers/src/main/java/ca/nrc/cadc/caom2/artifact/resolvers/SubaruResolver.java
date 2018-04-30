@@ -39,9 +39,8 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a GEMINI URI into a URL.
+ * This class can convert a SUBARU URI into a URL.
  *
- * @author jeevesh
  */
 public class SubaruResolver implements StorageResolver {
     private static final Logger log = Logger.getLogger(SubaruResolver.class);
@@ -51,8 +50,16 @@ public class SubaruResolver implements StorageResolver {
 
     private static final String BASE_DATA_URL = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/maq/subaru?frameinfo=";
 
-    private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp/qlis/ImagePNG";
+    // Suprime-Cam
+    private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp";
+    private static final String PREVIEW_URL_PATH = "/qlis/ImagePNG";
     private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
+
+    // HSC (Hyper Suprime-Cam)
+    // Suprime-Cam
+    //    http://smoka.nao.ac.jp/shot/HSC/2015-01-17/HSCA018210.png
+    private static final String HSC_PREVIEW_URL_PATH = "/shot/HSC/";
+
 
     public SubaruResolver() {
     }
@@ -81,8 +88,7 @@ public class SubaruResolver implements StorageResolver {
      */
     private URL createURLFromPath(final URI uri) {
         final String[] path = uri.getSchemeSpecificPart().split("/");
-        // data uri has 3 parts, preview has 2
-
+        // data uri has 3 parts, preview can have 2 (pre-HSC format) or 3
         if (path.length < 2 || path.length > 3) {
             throw new IllegalArgumentException("Malformed URI. Expected 2 or 3 path components, found " + path.length);
         }
@@ -96,12 +102,35 @@ public class SubaruResolver implements StorageResolver {
         // Will be fixed properly in Story 2287.
         //
         // jenkinsd 2018.04.23
-        //
+        // TODO: remove this comment when 2287 work is done
+
         if (requestType.equals(PREVIEW_URI)) {
+            String frameid = "";
+            // TODO: when support for 2-part URI is removed, this
+            // code can be simplified.
+            if (path.length == 3) {
+                frameid = path[2];
+            } else {
+                frameid = path[1];
+            }
+
             // Returns a web page reference
-            // expected URI input is subaru:preview/<FRAMEID>
-            sb = PREVIEW_BASE_URL + "?" + PREVIEW_URL_QUERY
-                + ((path.length == 3) ? NetUtil.encode(path[2] + " " + path[1]) : path[1]);
+            // expected URI input is subaru:preview/<FRAMEID> or subaru:/preview/<date>/<FRAMEID>
+
+            // URIs for HSC and Suprime-cam resolve to different URLs
+            // First three characters of FRAMEID are checked, looking for 'HSC'
+            if (frameid.matches("HSC\\w*")) {
+                sb = PREVIEW_BASE_URL + HSC_PREVIEW_URL_PATH + path[1] + "/" + frameid + ".png";
+            } else {
+                // assume is Suprime-cam
+                // To support older preview URI formats, the length of URI is checked
+                // TODO: when support for 2-part preview URI is removed, this
+                // check should be removed.
+                sb = PREVIEW_BASE_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY
+                    + ((path.length == 3) ? NetUtil.encode(path[2] + " " + path[1]) : path[1]);
+            }
+
+
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
             // expected URL output is http://www.cadc-ccda.hia-iha.nrc-cnrc.gc
