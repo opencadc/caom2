@@ -96,13 +96,15 @@ public class SubaruResolverIntTest {
 
     private static final String VALID_DATA_URI = "subaru:raw/2017-01-01/SUPA01318470";
     private static final String VALID_PREVIEW_URI = "subaru:preview/SUPA01318470";
+    // from s2287:     http://smoka.nao.ac.jp/shot/HSC/2015-01-17/HSCA018210.png
+    private static final String VALID_HSC_PREVIEW_URI = "subaru:preview/2015-01-17/HSCA018210";
 
     public SubaruResolverIntTest() {
     }
 
     @Test
     public void testValidSiteUrl() {
-        log.info("starting testValidSiteUrl");
+        log.debug("starting testValidSiteUrl");
 
         final SubaruResolver resolver = new SubaruResolver();
 
@@ -110,6 +112,7 @@ public class SubaruResolverIntTest {
             final List<URI> uriList = new ArrayList<>();
             uriList.add(new URI(VALID_DATA_URI));
             uriList.add(new URI(VALID_PREVIEW_URI));
+            uriList.add(new URI(VALID_HSC_PREVIEW_URI));
 
             for (final URI uri : uriList) {
                 final URL url = resolver.toURL(uri);
@@ -121,7 +124,7 @@ public class SubaruResolverIntTest {
                 head.run();
                 Assert.assertEquals(String.format("Unexpected error while downloading from %s", url.toExternalForm()),
                                     200, head.getResponseCode());
-                log.info("response code: " + head.getResponseCode());
+                log.debug("response code: " + head.getResponseCode());
             }
 
         } catch (Exception unexpected) {

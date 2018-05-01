@@ -85,12 +85,14 @@ public class SubaruResolverTest {
     private static final Logger log = Logger.getLogger(SubaruResolverTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
-    String VALID_FILE1 = "SUPE01318470";
+    String VALID_SUP_FRAMEID = "SUPE01318470";
     String VALID_DATE1 = "2017-09-09";
-    String VALID_FILE2 = "SUPE01318470";
+    String VALID_SUP_FRAMEID2 = "SUPE01318470";
+    String VALID_DATE2 = "2016-06-02";
+    String VALID_HSC_FRAMEID = "HSCA06989000";
 
     String SCHEME = "subaru";
     String RAW_DATA_URI = "raw";
@@ -101,6 +103,7 @@ public class SubaruResolverTest {
     String BASE_PREVIEW_URL = "smoka.nao.ac.jp";
     String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
     String PREVIEW_URL_PATH = "/qlis/ImagePNG";
+    String HSC_PREVIEW_URL_PATH = "/shot/HSC";
 
     String BASE_DATA_URL = "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca";
     String DATA_URL_PATH = "/maq/subaru";
@@ -120,32 +123,46 @@ public class SubaruResolverTest {
     }
 
     @Test
-    public void testValidURI() throws Exception {
+    public void testValidRawURI() throws Exception {
         try {
-            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_FILE1;
+            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_SUP_FRAMEID;
             URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_FILE1);
+            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_SUP_FRAMEID);
             Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +  encodedValue);
             Assert.assertEquals(DATA_URL_PATH, url.getPath());
             Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
             Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
-            uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_FILE2;
-            uri = new URI(uriStr);
-            url = subaruResolver.toURL(uri);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            throw unexpected;
+        }
+    }
+
+
+    @Test
+    public void testValidHSCPreviewURI() throws Exception {
+        log.debug("START - testValidHSCPreviewURI");
+        try {
+            String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE2 + "/" + VALID_HSC_FRAMEID;
+            URI uri = new URI(uriStr);
+            log.debug("HSC URI: " + uriStr);
+            URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_FILE2);
-            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
-            Assert.assertEquals(PREVIEW_URL_QUERY + VALID_FILE2, url.getQuery());
+            String encodedValue =VALID_DATE2 + "/" + VALID_HSC_FRAMEID + ".png";
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + HSC_PREVIEW_URL_PATH + "/" +  encodedValue);
+            Assert.assertEquals(HSC_PREVIEW_URL_PATH + "/" + encodedValue, url.getPath());
             Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             throw unexpected;
+        } finally {
+            log.debug("END - testValidHSCPreviewURI");
         }
     }
 
@@ -164,27 +181,50 @@ public class SubaruResolverTest {
     }
 
     @Test
-    public void testValidPreviewURI() {
+    public void testValidSUPPreviewURI() {
         try {
-            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_FILE2;
-
+            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_SUP_FRAMEID2;
             final URI uri = URI.create(uriStr);
             final URL url = subaruResolver.toURL(uri);
 
             log.debug("toURL returned: " + url.toString());
 
-            String encodedValue = NetUtil.encode(VALID_FILE2 + " " + VALID_DATE1);
+            String encodedValue = NetUtil.encode(VALID_SUP_FRAMEID2 + " " + VALID_DATE1);
 
             Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" +
                 PREVIEW_URL_QUERY + encodedValue);
             Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
             Assert.assertEquals(PREVIEW_URL_QUERY + encodedValue, url.getQuery());
             Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
+
         } catch (Exception e) {
             log.error("unexpected exception", e);
             throw e;
         }
     }
+
+    @Test
+    public void testValidPreHSCPreviewURI() {
+        try {
+            // TODO: this is the original Suprime-Cam preview format that will eventually
+            // be phased out. When it is, this test can be removed - April 30, 2018.
+            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_SUP_FRAMEID2;
+            final URI uri = URI.create(uriStr);
+            final URL url = subaruResolver.toURL(uri);
+
+            log.debug("toURL returned: " + url.toString());
+
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_SUP_FRAMEID2);
+            Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
+            Assert.assertEquals(PREVIEW_URL_QUERY + VALID_SUP_FRAMEID2, url.getQuery());
+            Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
+
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
+            throw e;
+        }
+    }
+
 
     @Test
     public void testInvalidNullURI() {
@@ -202,7 +242,7 @@ public class SubaruResolverTest {
     @Test
     public void testInvalidUriType() throws Exception {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
+            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_SUP_FRAMEID;
             URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
