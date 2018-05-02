@@ -97,7 +97,7 @@ public class SubaruResolverIntTest {
     private static final String VALID_DATA_URI = "subaru:raw/2017-01-01/SUPA01318470";
     private static final String VALID_PREVIEW_URI = "subaru:preview/SUPA01318470";
     // from s2287:     http://smoka.nao.ac.jp/shot/HSC/2015-01-17/HSCA018210.png
-    private static final String VALID_HSC_PREVIEW_URI = "subaru:preview/2015-01-17/HSCA018210";
+    private static final String VALID_HSC_PREVIEW_URI = "subaru:preview/2015-01-17/HSCA018210XX";
 
     public SubaruResolverIntTest() {
     }

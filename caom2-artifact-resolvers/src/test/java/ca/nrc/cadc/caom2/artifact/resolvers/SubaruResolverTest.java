@@ -92,7 +92,8 @@ public class SubaruResolverTest {
     String VALID_DATE1 = "2017-09-09";
     String VALID_SUP_FRAMEID2 = "SUPE01318470";
     String VALID_DATE2 = "2016-06-02";
-    String VALID_HSC_FRAMEID = "HSCA06989000";
+    String VALID_HSC_FRAMEID = "HSCA069890XX";
+    String EXPECTED_HSC_FILENAME = "HSCA069890.png";
 
     String SCHEME = "subaru";
     String RAW_DATA_URI = "raw";
@@ -153,9 +154,9 @@ public class SubaruResolverTest {
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            String encodedValue =VALID_DATE2 + "/" + VALID_HSC_FRAMEID + ".png";
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + HSC_PREVIEW_URL_PATH + "/" +  encodedValue);
-            Assert.assertEquals(HSC_PREVIEW_URL_PATH + "/" + encodedValue, url.getPath());
+            String fileSpecificPart = VALID_DATE2 + "/" + EXPECTED_HSC_FILENAME;
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + HSC_PREVIEW_URL_PATH + "/" +  fileSpecificPart);
+            Assert.assertEquals(HSC_PREVIEW_URL_PATH + "/" + fileSpecificPart, url.getPath());
             Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
 
         } catch (Exception unexpected) {

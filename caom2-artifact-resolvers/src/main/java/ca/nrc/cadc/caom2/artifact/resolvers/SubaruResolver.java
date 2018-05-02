@@ -36,6 +36,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 /**
@@ -93,21 +95,12 @@ public class SubaruResolver implements StorageResolver {
             throw new IllegalArgumentException("Malformed URI. Expected 2 or 3 path components, found " + path.length);
         }
 
-        final String sb;
+        String sb = "";
         final String requestType = path[0];
-
-        // Changes here to the Preview URI are just to prevent an IllegalArgument for Preview URIs that do not conform
-        // to the old values.
-        //
-        // Will be fixed properly in Story 2287.
-        //
-        // jenkinsd 2018.04.23
-        // TODO: remove this comment when 2287 work is done
 
         if (requestType.equals(PREVIEW_URI)) {
             String frameid = "";
-            // TODO: when support for 2-part URI is removed, this
-            // code can be simplified.
+            // TODO: when support for 2-part URI is removed, this code can be simplified.
             if (path.length == 3) {
                 frameid = path[2];
             } else {
@@ -115,14 +108,17 @@ public class SubaruResolver implements StorageResolver {
             }
 
             // Returns a web page reference
-            // expected URI input is subaru:preview/<FRAMEID> or subaru:/preview/<date>/<FRAMEID>
+            // expected URI: subaru:preview/<FRAMEID> or subaru:/preview/<date>/<FRAMEID>
 
             // URIs for HSC and Suprime-cam resolve to different URLs
             // First three characters of FRAMEID are checked, looking for 'HSC'
             if (frameid.matches("HSC\\w*")) {
-                sb = PREVIEW_BASE_URL + HSC_PREVIEW_URL_PATH + path[1] + "/" + frameid + ".png";
+                // Last 2 characters of frameid in this case is not used in the URL
+                // Chop and go.
+                sb = PREVIEW_BASE_URL + HSC_PREVIEW_URL_PATH + path[1] + "/"
+                    + frameid.substring(0,frameid.length() - 2) + ".png";
             } else {
-                // assume is Suprime-cam
+                // Assume is Suprime-cam
                 // To support older preview URI formats, the length of URI is checked
                 // TODO: when support for 2-part preview URI is removed, this
                 // check should be removed.
