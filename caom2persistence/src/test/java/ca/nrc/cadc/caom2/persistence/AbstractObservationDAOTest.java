@@ -1978,9 +1978,9 @@ public abstract class AbstractObservationDAOTest
         if (depth <= 4)
             return p;
 
-        p.getChunks().add(getPosFunctionChunk());
+        p.getChunks().add(getPosFunctionChunk(full));
         p.getChunks().add(getEmptyChunk());
-        p.getChunks().add(getObservableChunk());
+        p.getChunks().add(getObservableChunk(full));
 
         return p;
     }
@@ -1993,16 +1993,18 @@ public abstract class AbstractObservationDAOTest
         if (depth <= 4)
             return p;
 
-        p.getChunks().add(getPosRangeChunk());
-        p.getChunks().add(getSpecChunk());
-        p.getChunks().add(getPolarChunk());
+        p.getChunks().add(getPosRangeChunk(full));
+        p.getChunks().add(getSpecChunk(full));
+        p.getChunks().add(getPolarChunk(full));
 
         return p;
     }
 
-    private Chunk getPosFunctionChunk()
+    private Chunk getPosFunctionChunk(boolean full)
     {
         Chunk c = new Chunk();
+        if (full)
+            c.productType = ProductType.SCIENCE;
         c.positionAxis1 = new Integer(1);
         c.positionAxis2 = new Integer(2);
         c.position = new SpatialWCS(new CoordAxis2D(new Axis("RA---TAN", "deg"), new Axis("DEC--TAN", "deg")));
@@ -2043,9 +2045,11 @@ public abstract class AbstractObservationDAOTest
         return t;
     }
 
-    private Chunk getPosRangeChunk()
+    private Chunk getPosRangeChunk(boolean full)
     {
         Chunk c = new Chunk();
+        if (full)
+            c.productType = ProductType.SCIENCE;
         c.positionAxis1 = new Integer(1);
         c.positionAxis2 = new Integer(2);
         c.position = new SpatialWCS(new CoordAxis2D(new Axis("RA", "deg"), new Axis("DEC", "deg")));
@@ -2060,9 +2064,11 @@ public abstract class AbstractObservationDAOTest
         return c;
     }
 
-    private Chunk getSpecChunk()
+    private Chunk getSpecChunk(boolean full)
     {
         Chunk c = new Chunk();
+        if (full)
+            c.productType = ProductType.SCIENCE;
         c.energyAxis = new Integer(1);
         c.energy = new SpectralWCS(new CoordAxis1D(new Axis("WAVE", "m")), "TOPOCENT");
 
@@ -2084,9 +2090,11 @@ public abstract class AbstractObservationDAOTest
         
         return c;
     }
-    private Chunk getPolarChunk()
+    private Chunk getPolarChunk(boolean full)
     {
         Chunk c = new Chunk();
+        if (full)
+            c.productType = ProductType.SCIENCE;
         c.polarizationAxis = new Integer(1);
         c.polarization = new PolarizationWCS(new CoordAxis1D(new Axis("STOKES", null)));
         c.polarization.getAxis().function = new CoordFunction1D(3L, 1.0, new RefCoord(1.0, 1.0)); // I Q U
@@ -2099,9 +2107,11 @@ public abstract class AbstractObservationDAOTest
 
         return c;
     }
-    private Chunk getObservableChunk()
+    private Chunk getObservableChunk(boolean full)
     {
         Chunk c = new Chunk();
+        if (full)
+            c.productType = ProductType.SCIENCE;
         c.observableAxis = new Integer(1);
         c.observable = new ObservableAxis(new Slice(new Axis("flux", "J"),new Long(3L)));
         c.observable.independent = new Slice(new Axis("WAV", "um"),new Long(4L));
