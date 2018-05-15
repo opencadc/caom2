@@ -323,7 +323,6 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkReadPermission(String collection) throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
-        initState();
         if (!readable) {
             if (!writable) {
                 throw new IllegalStateException(STATE_OFFLINE_MSG);
@@ -385,7 +384,6 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
-        initState();
         if (!writable) {
             if (readable) {
                 throw new IllegalStateException(STATE_READ_ONLY_MSG);
