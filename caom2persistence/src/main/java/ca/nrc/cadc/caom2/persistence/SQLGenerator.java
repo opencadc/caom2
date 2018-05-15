@@ -460,7 +460,7 @@ public class SQLGenerator {
 
         String[] chunkColumns = new String[]{
             "partID", "artifactID", "planeID", "obsID",
-            "naxis",
+            "productType", "naxis",
             "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "observableAxis",
             "position_axis_axis1_ctype",
             "position_axis_axis1_cunit",
@@ -2127,6 +2127,11 @@ public class SQLGenerator {
                 safeSetUUID(sb, ps, col++, obs.getID());
             }
 
+            if (chunk.productType != null) {
+                safeSetString(sb, ps, col++, chunk.productType.getValue());
+            } else {
+                safeSetString(sb, ps, col++, null);
+            }
             safeSetInteger(sb, ps, col++, chunk.naxis);
             safeSetInteger(sb, ps, col++, chunk.positionAxis1);
             safeSetInteger(sb, ps, col++, chunk.positionAxis2);
@@ -3886,6 +3891,10 @@ public class SQLGenerator {
 
             Chunk c = new Chunk();
 
+            String pt = rs.getString(col++);
+            if (pt != null) {
+                c.productType = ProductType.toValue(pt);
+            }
             c.naxis = Util.getInteger(rs, col++);
             c.positionAxis1 = Util.getInteger(rs, col++);
             c.positionAxis2 = Util.getInteger(rs, col++);
