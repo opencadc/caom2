@@ -19,11 +19,12 @@ script:
   - cd caom2-validator; gradle --info build || exit -1; cd ..
   
   # checkstyle and html tasks
-#      cd caom2-dm; gradle --info build initHTML xslt || exit -1; cd ..;
   - if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
+      cd caom2-dm; gradle --info build initHTML xslt || exit -1; cd ..;
       for i in caom2 caom2-compute caom2-viz caom2-artifact-resolvers caom2-validator; do
          cd $i;
          gradle checkstyleMain || break -1;
          cd ..;
       done
     fi
+        
