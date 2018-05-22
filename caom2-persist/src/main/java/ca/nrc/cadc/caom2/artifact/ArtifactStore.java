@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package ca.nrc.cadc.caom2.artifact;
 
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
@@ -75,6 +75,7 @@ import ca.nrc.cadc.util.FileMetadata;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
+import java.util.List;
 
 /**
  * An interface to a CAOM2 artifact storage system.
@@ -135,5 +136,17 @@ public interface ArtifactStore {
      */
     public void store(URI artifactURI, InputStream data, FileMetadata metadata)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+    
+    /**
+     * Get the list of all artifacts in a certain archive.
+     * 
+     * @param archive The archive on which to search for files.
+     * @return A list of archive metadata objects
+     * @throws TransientException
+     * @throws UnsupportedOperationException
+     * @throws AccessControlException
+     */
+    public List<ArtifactMetadata> list(String archive)
+            throws TransientException, UnsupportedOperationException, AccessControlException;
 
 }
