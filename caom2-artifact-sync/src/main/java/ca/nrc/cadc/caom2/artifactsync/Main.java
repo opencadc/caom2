@@ -294,46 +294,50 @@ public class Main {
             	
                 validator = new ArtifactValidator(tapResourceID, archive, reportOnly, artifactStore);
                 listeners.add(validator);
-            }           
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                Subject.doAs(subject, validator);
+                exitValue = 0; // finished cleanly
+            }  else {
+	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+	
+	            int loopNum = 1;
+	            boolean loop = am.isSet("continue");
+	            boolean stopHarvest = false;
+	            boolean stopDownload = false;
+	            do {
+	                if (loop) {
+	                    log.info("-- STARTING LOOP #" + loopNum + " --");
+	                }
+	
+	                if (!stopHarvest && mode.isHarvestMode()) {
+	                    if (subject != null) {
+	                        stopHarvest = Subject.doAs(subject, harvester) == 0;
+	                    } else {
+	                        stopHarvest = harvester.run() == 0;
+	                    }
+	                }
+	
+	                if (!stopDownload && mode.isDownloadMode()) {
+	                    if (subject != null) {
+	                        stopDownload = Subject.doAs(subject, downloader) == 0;
+	                    } else {
+	                        stopDownload = downloader.run() == 0;
+	                    }
+	                }
+	
+	                if (loop) {
+	                    log.info("-- ENDING LOOP #" + loopNum + " --");
+	                }
+	
+	                loopNum++;
+	                
+	                // re-initialize the subject
+	                subject = createSubject(am);
+	                
+	            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
 
-            int loopNum = 1;
-            boolean loop = am.isSet("continue");
-            boolean stopHarvest = false;
-            boolean stopDownload = false;
-            do {
-                if (loop) {
-                    log.info("-- STARTING LOOP #" + loopNum + " --");
-                }
-
-                if (!stopHarvest && mode.isHarvestMode()) {
-                    if (subject != null) {
-                        stopHarvest = Subject.doAs(subject, harvester) == 0;
-                    } else {
-                        stopHarvest = harvester.run() == 0;
-                    }
-                }
-
-                if (!stopDownload && mode.isDownloadMode()) {
-                    if (subject != null) {
-                        stopDownload = Subject.doAs(subject, downloader) == 0;
-                    } else {
-                        stopDownload = downloader.run() == 0;
-                    }
-                }
-
-                if (loop) {
-                    log.info("-- ENDING LOOP #" + loopNum + " --");
-                }
-
-                loopNum++;
-                
-                // re-initialize the subject
-                subject = createSubject(am);
-                
-            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
-
-            exitValue = 0; // finished cleanly
+	            exitValue = 0; // finished cleanly
+            }
         } catch (Throwable t) {
             log.error("uncaught exception", t);
             exitValue = -1;
