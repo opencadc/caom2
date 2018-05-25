@@ -80,9 +80,9 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import java.security.PrivilegedExceptionAction;
+
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,6 +261,7 @@ public class Main {
             
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             ArtifactHarvester harvester = null;
+            ArtifactValidator validator = null;
             DownloadArtifactFiles downloader = null;
             if (mode.isHarvestMode()) {
                 harvester = new ArtifactHarvester(
@@ -273,7 +274,27 @@ public class Main {
                     retryAfterHours, verify);
                 listeners.add(downloader);
             }
-            
+            if (mode.isValidateMode()) {
+                if (!am.isSet("archive")) {
+                    log.error("Missing required parameter 'archive'");
+                    usage();
+                    System.exit(-1);
+                }
+                String archive = am.getValue("archive");
+                
+                if (!am.isSet("tap")) {
+                    log.error("Missing required parameter 'tap'");
+                    usage();
+                    System.exit(-1);
+                }
+                String tap = am.getValue("tap");
+                URI tapResourceID = URI.create(tap);
+                
+                boolean reportOnly = am.isSet("reportOnly");
+            	
+                validator = new ArtifactValidator(tapResourceID, archive, reportOnly, artifactStore);
+                listeners.add(validator);
+            }           
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
 
             int loopNum = 1;
@@ -360,7 +381,10 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
-        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default) | ");
+        sb.append("\n     --archive=<archive> (required by validate mode)");
+        sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
+        sb.append("\n     --reportOnly (prints validation summary only, does not update artifact skip uri table)");
+        sb.append("\n     --mode=[dual | harvest | download | validate] : Operate in both harvest and download mode (Default) | ");
         sb.append("\n            just harvest to the database | or just initiate downloads.");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
@@ -379,7 +403,7 @@ public class Main {
     }
 
     public enum Mode {
-        HARVEST, DOWNLOAD, DUAL;
+        HARVEST, DOWNLOAD, DUAL, VALIDATE;
 
         static Mode getDefault() {
             return DUAL;
@@ -391,6 +415,10 @@ public class Main {
 
         boolean isHarvestMode() {
             return (this == HARVEST) || (this == DUAL);
+        }
+        
+        boolean isValidateMode() {
+            return (this == VALIDATE);
         }
     }
 }
