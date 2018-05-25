@@ -75,7 +75,7 @@ import ca.nrc.cadc.util.FileMetadata;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
-import java.util.List;
+import java.util.Set;
 
 /**
  * An interface to a CAOM2 artifact storage system.
@@ -146,7 +146,7 @@ public interface ArtifactStore {
      * @throws UnsupportedOperationException
      * @throws AccessControlException
      */
-    public List<ArtifactMetadata> list(String archive)
+    public Set<ArtifactMetadata> list(String archive)
             throws TransientException, UnsupportedOperationException, AccessControlException;
 
 }
