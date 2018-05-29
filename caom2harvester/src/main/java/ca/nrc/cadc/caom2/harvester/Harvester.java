@@ -188,5 +188,4 @@ public abstract class Harvester implements Runnable {
         }
         return df.format(d);
     }
-
 }
