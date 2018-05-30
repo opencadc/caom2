@@ -275,12 +275,14 @@ public class Main {
                 listeners.add(downloader);
             }
             if (mode.isValidateMode()) {
-                if (!am.isSet("archive")) {
-                    log.error("Missing required parameter 'archive'");
+                if (subject == null) {
+                    log.error("Anonymous execution not supported.  Please use --netrc or --cert");
                     usage();
                     System.exit(-1);
+                } else {
+                    AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+                    log.debug("authentication using: " + meth);
                 }
-                String archive = am.getValue("archive");
                 
                 if (!am.isSet("tap")) {
                     log.error("Missing required parameter 'tap'");
@@ -292,7 +294,7 @@ public class Main {
                 
                 boolean reportOnly = am.isSet("reportOnly");
             	
-                validator = new ArtifactValidator(tapResourceID, archive, reportOnly, artifactStore);
+                validator = new ArtifactValidator(tapResourceID, collection, reportOnly, artifactStore);
                 listeners.add(validator);
 	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 Subject.doAs(subject, validator);
@@ -385,7 +387,6 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
-        sb.append("\n     --archive=<archive> (required by validate mode)");
         sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
         sb.append("\n     --reportOnly (prints validation summary only, does not update artifact skip uri table)");
         sb.append("\n     --mode=[dual | harvest | download | validate] : Operate in both harvest and download mode (Default) | ");

@@ -148,5 +148,14 @@ public interface ArtifactStore {
      */
     public Set<ArtifactMetadata> list(String archive)
             throws TransientException, UnsupportedOperationException, AccessControlException;
+    
+    /**
+     * Convert an artifact URI to a storage ID.
+     * 
+     * @param artifactURI The artifact URI to be converted.
+     * @return A string representing the storage ID
+     * @throws IllegalArgumentException If an aspect of the artifact uri is incorrect.
+     */
+    public String toStorageID(String artifactURI) throws IllegalArgumentException;
 
 }

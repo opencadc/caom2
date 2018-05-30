@@ -77,7 +77,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
@@ -96,7 +95,6 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.HexUtil;
 
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
@@ -112,10 +110,9 @@ import ca.nrc.cadc.date.DateUtil;
 public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
     private URL caomTapURL;
-    private URL adTapURL;
     
     private URI caomTapResourceID;
-    private String archive;
+    private String collection;
     private boolean summaryMode;
     private ArtifactStore artifactStore;
     
@@ -123,9 +120,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
     
-    public ArtifactValidator(URI caomTapResourceID, String archive, boolean summaryMode, ArtifactStore artifactStore) {
+    public ArtifactValidator(URI caomTapResourceID, String collection, boolean summaryMode, ArtifactStore artifactStore) {
         this.caomTapResourceID = caomTapResourceID;
-        this.archive = archive;
+        this.collection = collection;
         this.summaryMode = summaryMode;
         this.artifactStore = artifactStore;
     }
@@ -135,7 +132,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         URI adResourceID = URI.create("ivo://cadc.nrc.ca/ad");
         AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
         caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
-        adTapURL = regClient.getServiceURL(adResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
     }
 
     @Override
@@ -143,7 +139,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         
         this.initURLs();
         long start = System.currentTimeMillis();
-        log.info("Starting validation for archive " + archive);
+        log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
@@ -260,7 +256,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         
         logJSON(new String[] {
             "logType", "summary",
-            "archive", archive,
+            "collection", collection,
             "totalInCAOM", Long.toString(logicalCount),
             "totalInStorage", Long.toString(physicalCount),
             "totalCorrect", Long.toString(correct),
@@ -298,13 +294,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     }
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        String likeClause = "ad:" + archive + "/";
-        if ("MAST".equals(archive)) {
-            likeClause = "mast:";
-        }
-        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.collection " +
-                "from caom2.Artifact a, caom2.Plane p, caom2.Observation o where a.uri like '" + likeClause + "%' and " +
-                "a.planeID = p.planeID and p.obsID = o.obsID";
+        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType " +
+                "from caom2.Artifact a " +
+        		"join caom2.Plane p on a.planeID = p.planeID " +
+                "join caom2.Observation o on p.obsID = o.obsID " +
+        		"where o.collection='" + this.collection.toUpperCase() + "'";
         
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();
@@ -314,7 +308,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     }
     
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
-    	return new TreeSet<ArtifactMetadata>(this.artifactStore.list(this.archive));
+    	TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
+    	metadata.addAll(artifactStore.list(this.collection));
+    	return metadata;
     }
     
     private TreeSet<ArtifactMetadata> query(URL baseURL, String adql, boolean logical) throws Exception {
@@ -322,7 +318,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         queryString.append("LANG=ADQL&RESPONSEFORMAT=tsv&QUERY=");
         queryString.append(URLEncoder.encode(adql, "UTF-8"));
         URL url = new URL(baseURL.toString() + "?" + queryString.toString());
-        ResultReader resultReader = new ResultReader(archive, logical);
+        ResultReader resultReader = new ResultReader(this.artifactStore, logical);
         HttpDownload get = new HttpDownload(url, resultReader);
         try {
             get.run();
@@ -337,6 +333,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 throw new RuntimeException(get.getThrowable());
             }
         }
+        
         return resultReader.artifacts;
     }
     
@@ -359,16 +356,13 @@ class ResultReader implements InputStreamWrapper {
     
     TreeSet<ArtifactMetadata> artifacts;
     private boolean logical;
-    private String archive;
-    MessageDigest md;
+    private ArtifactStore artifactStore;
     
-    public ResultReader(String archive, boolean logical) throws NoSuchAlgorithmException {
+    public ResultReader(ArtifactStore artifactStore, boolean logical) 
+    		throws NoSuchAlgorithmException {
         artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
         this.logical = logical;
-        this.archive = archive;
-        if ("MAST".equals(archive)) {
-            md = MessageDigest.getInstance("SHA-512"); 
-        }
+        this.artifactStore = artifactStore;
     }
 
     @Override
@@ -392,7 +386,7 @@ class ResultReader implements InputStreamWrapper {
                         am = new ArtifactMetadata();
                         if (logical) {
                             am.artifactURI = parts[0];
-                            am.storageID = getADID(am.artifactURI);
+                            am.storageID = this.artifactStore.toStorageID(am.artifactURI);
                         } else {
                             am.storageID = parts[0];
                         }
@@ -401,7 +395,7 @@ class ResultReader implements InputStreamWrapper {
                         
                         if (parts.length > 2) {
                             if (logical) {
-                                am.checksum = getADChecksum(parts[2]);
+                                am.checksum = getStorageChecksum(parts[2]);
                             } else {
                                 am.checksum = parts[2];
                             }
@@ -426,18 +420,7 @@ class ResultReader implements InputStreamWrapper {
         log.debug("Finished reading " + (logical ? "logical" : "physical") + " artifacts.");
     }
     
-    private String getADID(String artifactURI) throws Exception {
-        int colon = artifactURI.indexOf(":");
-        String schemeSpecificPart = artifactURI.substring(colon + 1, artifactURI.length());
-        if ("MAST".equals(archive)) {
-            byte[] sha512 = md.digest(schemeSpecificPart.getBytes());
-            return HexUtil.toHex(sha512);
-        }
-        int slash = schemeSpecificPart.indexOf("/");
-        return schemeSpecificPart.substring(slash + 1, schemeSpecificPart.length());
-    }
-    
-    private String getADChecksum(String checksum) throws Exception {
+    private String getStorageChecksum(String checksum) throws Exception {
         int colon = checksum.indexOf(":");
         return checksum.substring(colon + 1, checksum.length());
     }
