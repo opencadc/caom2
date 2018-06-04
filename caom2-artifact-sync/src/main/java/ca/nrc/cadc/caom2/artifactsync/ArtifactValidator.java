@@ -253,6 +253,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
         }
         
+        // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         notInPhysical += logicalArtifacts.size();
         if (!summaryMode) {
             for (ArtifactMetadata next : logicalArtifacts) {
@@ -264,23 +265,16 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                      "caomCollection", next.collection,
                      "caomLastModified", df.format(next.lastModified)},
                     false);
-            }
-        }
-       
-        // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
-        if (!this.summaryMode) {
-	        Iterator<ArtifactMetadata> iter = logicalArtifacts.iterator();
-	        while (iter.hasNext()) {
-	        	ArtifactMetadata meta = iter.next();
-	        	Date releaseDate = meta.releaseDate;
-        		// see if there's already an entry
-	        	URI artifactURI = new URI(meta.artifactURI);
+                
+                // add to HavestSkipURI table if there is not already a row in the table
+	        	Date releaseDate = next.releaseDate;
+	        	URI artifactURI = new URI(next.artifactURI);
                 HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
 	        	if (skip == null && releaseDate != null) {
 	        		skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
 	        		harvestSkipURIDAO.put(skip);
 	        	}
-	        }
+            }
         }
         
         logJSON(new String[] {
