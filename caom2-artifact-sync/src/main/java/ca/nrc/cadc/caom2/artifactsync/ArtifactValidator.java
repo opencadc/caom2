@@ -401,7 +401,6 @@ class ResultReader implements InputStreamWrapper {
         ArtifactMetadata am = null;
         boolean firstLine = true;
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
-        DateFormat rodf = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, null);
         while ((line = reader.readLine()) != null) {
             if (firstLine) {
                 // first line is a header
@@ -436,7 +435,7 @@ class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.releaseDate = DateUtil.flexToDate(parts[5], rodf);
+                            am.releaseDate = DateUtil.flexToDate(parts[5], df);
                         }
                         artifacts.add(am);
                     }
