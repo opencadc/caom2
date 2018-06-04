@@ -100,6 +100,7 @@ import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -267,13 +268,13 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     false);
                 
                 // add to HavestSkipURI table if there is not already a row in the table
-	        	Date releaseDate = next.releaseDate;
-	        	URI artifactURI = new URI(next.artifactURI);
+                Date releaseDate = next.releaseDate;
+                URI artifactURI = new URI(next.artifactURI);
                 HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
-	        	if (skip == null && releaseDate != null) {
-	        		skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
-	        		harvestSkipURIDAO.put(skip);
-	        	}
+                if (skip == null && releaseDate != null) {
+                	skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                	harvestSkipURIDAO.put(skip);
+                }
             }
         }
         
@@ -318,14 +319,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
         String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
-        		"(CASE WHEN a.releaseType='data' THEN p.dataRelease " +
-        		"      WHEN a.releaseType='meta' THEN p.metaRelease " +
+        		"(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
+        		"      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +
         		"      ELSE NULL " +
         		"END) as releaseDate " +
                 "from caom2.Artifact a " +
         		"join caom2.Plane p on a.planeID = p.planeID " +
                 "join caom2.Observation o on p.obsID = o.obsID " +
-        		"where o.collection='" + this.collection.toUpperCase() + "'";
+        		"where o.collection='" + this.collection + "'";
         
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();

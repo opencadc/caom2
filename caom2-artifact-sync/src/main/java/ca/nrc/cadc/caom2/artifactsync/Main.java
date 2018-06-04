@@ -390,8 +390,9 @@ public class Main {
         sb.append("\n     --collection=<collection> (currently ignored)");
         sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
         sb.append("\n     --reportOnly (prints validation summary only, does not update artifact skip uri table)");
-        sb.append("\n     --mode=[dual | harvest | download | validate] : Operate in both harvest and download mode (Default) | ");
-        sb.append("\n            just harvest to the database | or just initiate downloads.");
+        sb.append("\n     --mode=[dual | harvest | download | validate] : The mode in which to run this tool.");
+        sb.append("\n            'dual' is the combination of harvest and download modes.");
+        sb.append("\n            (Default) | just harvest to the database | or just initiate downloads | or validate.");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
