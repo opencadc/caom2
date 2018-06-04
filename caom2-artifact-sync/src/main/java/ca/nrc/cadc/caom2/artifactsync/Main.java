@@ -294,7 +294,8 @@ public class Main {
                 
                 boolean reportOnly = am.isSet("reportOnly");
             	
-                validator = new ArtifactValidator(tapResourceID, collection, reportOnly, artifactStore);
+                validator = new ArtifactValidator(artifactDAO.getDataSource(), dbInfo, tapResourceID, 
+                		collection, reportOnly, artifactStore);
                 listeners.add(validator);
 	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 Subject.doAs(subject, validator);

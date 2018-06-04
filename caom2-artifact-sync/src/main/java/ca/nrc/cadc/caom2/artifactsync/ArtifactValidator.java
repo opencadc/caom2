@@ -80,12 +80,16 @@ import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
@@ -95,9 +99,11 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.date.DateUtil;
 
 /**
@@ -109,22 +115,29 @@ import ca.nrc.cadc.date.DateUtil;
  */
 public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
+    public static final String STATE_CLASS = Artifact.class.getSimpleName();
+
     private URL caomTapURL;
     
     private URI caomTapResourceID;
     private String collection;
     private boolean summaryMode;
     private ArtifactStore artifactStore;
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String source;
     
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
     
-    public ArtifactValidator(URI caomTapResourceID, String collection, boolean summaryMode, ArtifactStore artifactStore) {
+    public ArtifactValidator(DataSource dataSource, String[] dbInfo, URI caomTapResourceID, 
+    		String collection, boolean summaryMode, ArtifactStore artifactStore) {
         this.caomTapResourceID = caomTapResourceID;
         this.collection = collection;
         this.summaryMode = summaryMode;
         this.artifactStore = artifactStore;
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
     
     private void initURLs() {
@@ -253,6 +266,22 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     false);
             }
         }
+       
+        // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
+        if (!this.summaryMode) {
+	        Iterator<ArtifactMetadata> iter = logicalArtifacts.iterator();
+	        while (iter.hasNext()) {
+	        	ArtifactMetadata meta = iter.next();
+	        	Date releaseDate = meta.releaseDate;
+        		// see if there's already an entry
+	        	URI artifactURI = new URI(meta.artifactURI);
+                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+	        	if (skip == null && releaseDate != null) {
+	        		skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+	        		harvestSkipURIDAO.put(skip);
+	        	}
+	        }
+        }
         
         logJSON(new String[] {
             "logType", "summary",
@@ -294,7 +323,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     }
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType " +
+        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
+        		"(CASE WHEN a.releaseType='data' THEN p.dataRelease " +
+        		"      WHEN a.releaseType='meta' THEN p.metaRelease " +
+        		"      ELSE NULL " +
+        		"END) as releaseDate " +
                 "from caom2.Artifact a " +
         		"join caom2.Plane p on a.planeID = p.planeID " +
                 "join caom2.Observation o on p.obsID = o.obsID " +
@@ -373,6 +406,7 @@ class ResultReader implements InputStreamWrapper {
         ArtifactMetadata am = null;
         boolean firstLine = true;
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+        DateFormat rodf = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, null);
         while ((line = reader.readLine()) != null) {
             if (firstLine) {
                 // first line is a header
@@ -407,7 +441,7 @@ class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.collection = parts[5];
+                            am.releaseDate = DateUtil.flexToDate(parts[5], rodf);
                         }
                         artifacts.add(am);
                     }
