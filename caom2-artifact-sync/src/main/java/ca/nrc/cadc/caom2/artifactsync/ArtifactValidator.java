@@ -68,7 +68,7 @@
 */
 
 
-package ca.nrc.cadc.caom2.artifactvalidate;
+package ca.nrc.cadc.caom2.artifactsync;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -77,15 +77,19 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
@@ -95,9 +99,12 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.HexUtil;
-
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.date.DateUtil;
 
 /**
@@ -107,23 +114,31 @@ import ca.nrc.cadc.date.DateUtil;
  * @author majorb
  *
  */
-public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
+public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
+    public static final String STATE_CLASS = Artifact.class.getSimpleName();
+
     private URL caomTapURL;
-    private URL adTapURL;
     
     private URI caomTapResourceID;
-    private String archive;
+    private String collection;
     private boolean summaryMode;
+    private ArtifactStore artifactStore;
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String source;
     
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
     
-    public ArtifactValidator(URI caomTapResourceID, String archive, boolean summaryMode) {
+    public ArtifactValidator(DataSource dataSource, String[] dbInfo, URI caomTapResourceID, 
+    		String collection, boolean summaryMode, ArtifactStore artifactStore) {
         this.caomTapResourceID = caomTapResourceID;
-        this.archive = archive;
+        this.collection = collection;
         this.summaryMode = summaryMode;
+        this.artifactStore = artifactStore;
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
     
     private void initURLs() {
@@ -131,7 +146,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         URI adResourceID = URI.create("ivo://cadc.nrc.ca/ad");
         AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
         caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
-        adTapURL = regClient.getServiceURL(adResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
     }
 
     @Override
@@ -139,7 +153,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         
         this.initURLs();
         long start = System.currentTimeMillis();
-        log.info("Starting validation for archive " + archive);
+        log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
@@ -240,6 +254,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
             }
         }
         
+        // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         notInPhysical += logicalArtifacts.size();
         if (!summaryMode) {
             for (ArtifactMetadata next : logicalArtifacts) {
@@ -251,12 +266,21 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                      "caomCollection", next.collection,
                      "caomLastModified", df.format(next.lastModified)},
                     false);
+                
+                // add to HavestSkipURI table if there is not already a row in the table
+                Date releaseDate = next.releaseDate;
+                URI artifactURI = new URI(next.artifactURI);
+                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+                if (skip == null && releaseDate != null) {
+                	skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                	harvestSkipURIDAO.put(skip);
+                }
             }
         }
         
         logJSON(new String[] {
             "logType", "summary",
-            "archive", archive,
+            "collection", collection,
             "totalInCAOM", Long.toString(logicalCount),
             "totalInStorage", Long.toString(physicalCount),
             "totalCorrect", Long.toString(correct),
@@ -294,13 +318,15 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
     }
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        String likeClause = "ad:" + archive + "/";
-        if ("MAST".equals(archive)) {
-            likeClause = "mast:";
-        }
-        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.collection " +
-                "from caom2.Artifact a, caom2.Plane p, caom2.Observation o where a.uri like '" + likeClause + "%' and " +
-                "a.planeID = p.planeID and p.obsID = o.obsID";
+        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
+        		"(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
+        		"      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +
+        		"      ELSE NULL " +
+        		"END) as releaseDate " +
+                "from caom2.Artifact a " +
+        		"join caom2.Plane p on a.planeID = p.planeID " +
+                "join caom2.Observation o on p.obsID = o.obsID " +
+        		"where o.collection='" + this.collection + "'";
         
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();
@@ -310,17 +336,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
     }
     
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
-        
-        // TODO: this should now use the ArtifactStore list() method to
-        // get the list of artifacts in storage
-        
-        String adql = "select fileName, ingestDate, contentMD5, fileSize, contentType " +
-                "from archive_files where archiveName='" + archive + "'";
-        log.debug("physical query: " + adql);
-        long start = System.currentTimeMillis();
-        TreeSet<ArtifactMetadata> result = query(adTapURL, adql, false);
-        log.debug("Finished physical query in " + (System.currentTimeMillis() - start) + " ms");
-        return result;
+    	TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
+    	metadata.addAll(artifactStore.list(this.collection));
+    	return metadata;
     }
     
     private TreeSet<ArtifactMetadata> query(URL baseURL, String adql, boolean logical) throws Exception {
@@ -328,7 +346,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
         queryString.append("LANG=ADQL&RESPONSEFORMAT=tsv&QUERY=");
         queryString.append(URLEncoder.encode(adql, "UTF-8"));
         URL url = new URL(baseURL.toString() + "?" + queryString.toString());
-        ResultReader resultReader = new ResultReader(archive, logical);
+        ResultReader resultReader = new ResultReader(this.artifactStore, logical);
         HttpDownload get = new HttpDownload(url, resultReader);
         try {
             get.run();
@@ -343,6 +361,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object> {
                 throw new RuntimeException(get.getThrowable());
             }
         }
+        
         return resultReader.artifacts;
     }
     
@@ -365,16 +384,13 @@ class ResultReader implements InputStreamWrapper {
     
     TreeSet<ArtifactMetadata> artifacts;
     private boolean logical;
-    private String archive;
-    MessageDigest md;
+    private ArtifactStore artifactStore;
     
-    public ResultReader(String archive, boolean logical) throws Exception {
+    public ResultReader(ArtifactStore artifactStore, boolean logical) 
+    		throws NoSuchAlgorithmException {
         artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
         this.logical = logical;
-        this.archive = archive;
-        if ("MAST".equals(archive)) {
-            md = MessageDigest.getInstance("SHA-512"); 
-        }
+        this.artifactStore = artifactStore;
     }
 
     @Override
@@ -398,7 +414,7 @@ class ResultReader implements InputStreamWrapper {
                         am = new ArtifactMetadata();
                         if (logical) {
                             am.artifactURI = parts[0];
-                            am.storageID = getADID(am.artifactURI);
+                            am.storageID = this.artifactStore.toStorageID(am.artifactURI);
                         } else {
                             am.storageID = parts[0];
                         }
@@ -407,7 +423,7 @@ class ResultReader implements InputStreamWrapper {
                         
                         if (parts.length > 2) {
                             if (logical) {
-                                am.checksum = getADChecksum(parts[2]);
+                                am.checksum = getStorageChecksum(parts[2]);
                             } else {
                                 am.checksum = parts[2];
                             }
@@ -419,7 +435,7 @@ class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.collection = parts[5];
+                            am.releaseDate = DateUtil.flexToDate(parts[5], df);
                         }
                         artifacts.add(am);
                     }
@@ -432,18 +448,7 @@ class ResultReader implements InputStreamWrapper {
         log.debug("Finished reading " + (logical ? "logical" : "physical") + " artifacts.");
     }
     
-    private String getADID(String artifactURI) throws Exception {
-        int colon = artifactURI.indexOf(":");
-        String schemeSpecificPart = artifactURI.substring(colon + 1, artifactURI.length());
-        if ("MAST".equals(archive)) {
-            byte[] sha512 = md.digest(schemeSpecificPart.getBytes());
-            return HexUtil.toHex(sha512);
-        }
-        int slash = schemeSpecificPart.indexOf("/");
-        return schemeSpecificPart.substring(slash + 1, schemeSpecificPart.length());
-    }
-    
-    private String getADChecksum(String checksum) throws Exception {
+    private String getStorageChecksum(String checksum) throws Exception {
         int colon = checksum.indexOf(":");
         return checksum.substring(colon + 1, checksum.length());
     }

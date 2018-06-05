@@ -80,9 +80,9 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import java.security.PrivilegedExceptionAction;
+
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,6 +261,7 @@ public class Main {
             
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             ArtifactHarvester harvester = null;
+            ArtifactValidator validator = null;
             DownloadArtifactFiles downloader = null;
             if (mode.isHarvestMode()) {
                 harvester = new ArtifactHarvester(
@@ -273,46 +274,73 @@ public class Main {
                     retryAfterHours, verify);
                 listeners.add(downloader);
             }
-            
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
-
-            int loopNum = 1;
-            boolean loop = am.isSet("continue");
-            boolean stopHarvest = false;
-            boolean stopDownload = false;
-            do {
-                if (loop) {
-                    log.info("-- STARTING LOOP #" + loopNum + " --");
+            if (mode.isValidateMode()) {
+                if (subject == null) {
+                    log.error("Anonymous execution not supported.  Please use --netrc or --cert");
+                    usage();
+                    System.exit(-1);
+                } else {
+                    AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+                    log.debug("authentication using: " + meth);
                 }
-
-                if (!stopHarvest && mode.isHarvestMode()) {
-                    if (subject != null) {
-                        stopHarvest = Subject.doAs(subject, harvester) == 0;
-                    } else {
-                        stopHarvest = harvester.run() == 0;
-                    }
-                }
-
-                if (!stopDownload && mode.isDownloadMode()) {
-                    if (subject != null) {
-                        stopDownload = Subject.doAs(subject, downloader) == 0;
-                    } else {
-                        stopDownload = downloader.run() == 0;
-                    }
-                }
-
-                if (loop) {
-                    log.info("-- ENDING LOOP #" + loopNum + " --");
-                }
-
-                loopNum++;
                 
-                // re-initialize the subject
-                subject = createSubject(am);
+                if (!am.isSet("tap")) {
+                    log.error("Missing required parameter 'tap'");
+                    usage();
+                    System.exit(-1);
+                }
+                String tap = am.getValue("tap");
+                URI tapResourceID = URI.create(tap);
                 
-            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
+                boolean reportOnly = am.isSet("reportOnly");
+            	
+                validator = new ArtifactValidator(artifactDAO.getDataSource(), dbInfo, tapResourceID, 
+                		collection, reportOnly, artifactStore);
+                listeners.add(validator);
+	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                Subject.doAs(subject, validator);
+                exitValue = 0; // finished cleanly
+            }  else {
+	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+	
+	            int loopNum = 1;
+	            boolean loop = am.isSet("continue");
+	            boolean stopHarvest = false;
+	            boolean stopDownload = false;
+	            do {
+	                if (loop) {
+	                    log.info("-- STARTING LOOP #" + loopNum + " --");
+	                }
+	
+	                if (!stopHarvest && mode.isHarvestMode()) {
+	                    if (subject != null) {
+	                        stopHarvest = Subject.doAs(subject, harvester) == 0;
+	                    } else {
+	                        stopHarvest = harvester.run() == 0;
+	                    }
+	                }
+	
+	                if (!stopDownload && mode.isDownloadMode()) {
+	                    if (subject != null) {
+	                        stopDownload = Subject.doAs(subject, downloader) == 0;
+	                    } else {
+	                        stopDownload = downloader.run() == 0;
+	                    }
+	                }
+	
+	                if (loop) {
+	                    log.info("-- ENDING LOOP #" + loopNum + " --");
+	                }
+	
+	                loopNum++;
+	                
+	                // re-initialize the subject
+	                subject = createSubject(am);
+	                
+	            } while (loop && !stopHarvest && !stopDownload); // continue if work was done
 
-            exitValue = 0; // finished cleanly
+	            exitValue = 0; // finished cleanly
+            }
         } catch (Throwable t) {
             log.error("uncaught exception", t);
             exitValue = -1;
@@ -360,8 +388,11 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
-        sb.append("\n     --mode=[dual | harvest | download] : Operate in both harvest and download mode (Default) | ");
-        sb.append("\n            just harvest to the database | or just initiate downloads.");
+        sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
+        sb.append("\n     --reportOnly (prints validation summary only, does not update artifact skip uri table)");
+        sb.append("\n     --mode=[dual | harvest | download | validate] : The mode in which to run this tool.");
+        sb.append("\n            'dual' is the combination of harvest and download modes.");
+        sb.append("\n            (Default) | just harvest to the database | or just initiate downloads | or validate.");
         sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
         sb.append("\n     --full : do a full harvest");
@@ -379,7 +410,7 @@ public class Main {
     }
 
     public enum Mode {
-        HARVEST, DOWNLOAD, DUAL;
+        HARVEST, DOWNLOAD, DUAL, VALIDATE;
 
         static Mode getDefault() {
             return DUAL;
@@ -391,6 +422,10 @@ public class Main {
 
         boolean isHarvestMode() {
             return (this == HARVEST) || (this == DUAL);
+        }
+        
+        boolean isValidateMode() {
+            return (this == VALIDATE);
         }
     }
 }

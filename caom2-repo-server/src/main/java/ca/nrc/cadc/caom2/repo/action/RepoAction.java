@@ -115,14 +115,7 @@ import org.apache.log4j.Logger;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
-    public static final String MODE_KEY = RepoAction.class.getName() + ".state";
-    public static final String OFFLINE = "Offline";
-    public static final String OFFLINE_MSG = "System is offline for maintainence";
-    public static final String READ_ONLY = "ReadOnly";
-    public static final String READ_ONLY_MSG = "System is in read-only mode for maintainence";
-    public static final String READ_WRITE = "ReadWrite";
-    private boolean readable = true;
-    private boolean writable = true;
+    
 
     public static final String ERROR_MIMETYPE = "text/plain";
 
@@ -144,23 +137,12 @@ public abstract class RepoAction extends RestAction {
     protected RepoAction() {
     }
 
-    // this method will only downgrade the state to !readable and !writable
-    // and will never restore them to true - that is intentional
-    private void initState() {
-        String key = RepoAction.MODE_KEY;
-        String val = System.getProperty(key);
-        if (OFFLINE.equals(val)) {
-            readable = false;
-            writable = false;
-        } else if (READ_ONLY.equals(val)) {
-            writable = false;
-        }
-    }
-
     private void initTarget() {
         if (collection == null) {
             String path = syncInput.getPath();
             if (path != null) {
+                // override RestAction default path logging
+                logInfo.setPath(syncInput.getComponentPath() + "/" + path);
                 String[] parts = path.split("/");
                 this.collection = parts[0];
                 if (parts.length > 1) {
@@ -343,12 +325,11 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkReadPermission(String collection) throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
-        initState();
         if (!readable) {
             if (!writable) {
-                throw new IllegalStateException(OFFLINE_MSG);
+                throw new IllegalStateException(STATE_OFFLINE_MSG);
             }
-            throw new IllegalStateException(READ_ONLY_MSG);
+            throw new IllegalStateException(STATE_READ_ONLY_MSG);
         }
 
         CaomRepoConfig.Item i = getCollectionConfig(collection);
@@ -405,12 +386,11 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
-        initState();
         if (!writable) {
             if (readable) {
-                throw new IllegalStateException(READ_ONLY_MSG);
+                throw new IllegalStateException(STATE_READ_ONLY_MSG);
             }
-            throw new IllegalStateException(OFFLINE_MSG);
+            throw new IllegalStateException(STATE_OFFLINE_MSG);
         }
 
         CaomRepoConfig.Item i = getCollectionConfig(uri.getCollection());
