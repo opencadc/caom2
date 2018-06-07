@@ -76,9 +76,6 @@ import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.tap.BasicUploadManager;
 import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoint;
 import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoly;
-import ca.nrc.cadc.tap.upload.datatype.DatabaseDataType;
-import ca.nrc.cadc.tap.upload.datatype.PostgreSQLDataType;
-import java.sql.Connection;
 import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 
@@ -97,14 +94,6 @@ public class UploadManagerImpl extends BasicUploadManager
     {
         super(MAX_UPLOAD_ROWS);
     }
-
-    @Override
-    protected DatabaseDataType getDatabaseDataType(Connection cnctn) 
-        throws SQLException
-    {
-        return new PostgreSQLDataType();
-    }
-
     
     // convert TAP-1.0 (STC-S) geometry values
     
