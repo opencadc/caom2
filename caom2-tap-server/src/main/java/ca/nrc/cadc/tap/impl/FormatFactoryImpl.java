@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.impl;
 
@@ -73,8 +73,7 @@ import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.tap.TapSelectItem;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
-import ca.nrc.cadc.tap.writer.format.DefaultFormatFactory;
-import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
+import ca.nrc.cadc.tap.writer.format.PostgreSQLFormatFactory;
 import ca.nrc.cadc.tap.writer.format.SCircleFormat;
 import ca.nrc.cadc.tap.writer.format.SPointFormat;
 import ca.nrc.cadc.tap.writer.format.SPointFormat10;
@@ -86,93 +85,54 @@ import org.apache.log4j.Logger;
  *
  *
  */
-public class FormatFactoryImpl extends DefaultFormatFactory
-{
+public class FormatFactoryImpl extends PostgreSQLFormatFactory {
+
     private static Logger log = Logger.getLogger(FormatFactoryImpl.class);
 
-    public FormatFactoryImpl()
-    {
+    public FormatFactoryImpl() {
         super();
     }
 
-    
     @Override
-    public Format<Object> getFormat(TapSelectItem d)
-    {
+    public Format<Object> getFormat(TapSelectItem d) {
         Format<Object> ret = super.getFormat(d);
         log.debug("fomatter: " + d + " " + ret.getClass().getName());
         return ret;
     }
 
     @Override
-    public Format<Object> getPointFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPointFormat: " + columnDesc);
-        return new SPointFormat();
-    }
-
-    @Override
-    public Format<Object> getCircleFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getCircleFormat: " + columnDesc);
-        return new SCircleFormat();
-    }
-
-    @Override
-    protected Format<Object> getPolygonFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPolygonFormat: " + columnDesc);
-        //if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds"))
-        //    return new DoubleArrayFormat(); // see CaomSelectListConverter
-        return new SPolyFormat();
-    }
-
-    @Override
-    protected Format<Object> getPositionFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getPositionFormat: " + columnDesc);
-        return new SPointFormat10();
-    }
-    
-    @Override
-    public Format<Object> getRegionFormat(TapSelectItem columnDesc)
-    {
+    public Format<Object> getRegionFormat(TapSelectItem columnDesc) {
         log.debug("getRegionFormat: " + columnDesc);
         // this variant has to match the one in CaomSelectListConverter.fixColumn(s_region)
         if (columnDesc.utype != null && columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
             return new PositionBoundsFormat();
         }
-        return new SPolyFormat10();
+        return super.getRegionFormat(columnDesc);
     }
 
     @Override
-    public Format<Object> getIntervalFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getIntervalFormat: " + job.getID() + " " + columnDesc);
+    public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
         return new IntervalFormat(columnDesc.getDatatype().isVarSize());
     }
-    
+
     @Override
-    public Format<Object> getClobFormat(TapSelectItem columnDesc)
-    {
-        log.debug("getClobFormat: " + job.getID() + " " + columnDesc);
-        
+    public Format<Object> getClobFormat(TapSelectItem columnDesc) {
+
         // function with CLOB argument
-        if (columnDesc != null)
-        {
+        if (columnDesc != null) {
             // caom2.Artifact, caom2.SIAv1
-            if ( "caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
-                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName) )
-            {
-                if ( "accessURL".equalsIgnoreCase(columnDesc.getColumnName()))
+            if ("caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
+                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName)) {
+                if ("accessURL".equalsIgnoreCase(columnDesc.getColumnName())) {
                     return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
+                }
             }
-            
+
             // ivoa.ObsCore
-            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName))
-            {
-                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName()))
+            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName)) {
+                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName())) {
                     return new DataLinkURLFormat(job.getID());
+                }
             }
         }
 
