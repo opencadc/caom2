@@ -123,6 +123,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URI caomTapResourceID;
     private String collection;
     private boolean summaryMode;
+    private boolean reportOnly;
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String source;
@@ -132,10 +133,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
     
     public ArtifactValidator(DataSource dataSource, String[] dbInfo, URI caomTapResourceID, 
-    		String collection, boolean summaryMode, ArtifactStore artifactStore) {
+    		String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
         this.caomTapResourceID = caomTapResourceID;
         this.collection = collection;
         this.summaryMode = summaryMode;
+        this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
@@ -184,6 +186,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffChecksum = 0;
         long notInLogical = 0;
         long notInPhysical = 0;
+        long skipURICount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
         
@@ -256,8 +259,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         notInPhysical += logicalArtifacts.size();
-        if (!summaryMode) {
-            for (ArtifactMetadata next : logicalArtifacts) {
+        for (ArtifactMetadata next : logicalArtifacts) {
+            if (!summaryMode) {
                 logJSON(new String[]
                     {"logType", "detail",
                      "anomaly", "notInStorage",
@@ -266,31 +269,52 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                      "caomCollection", next.collection,
                      "caomLastModified", df.format(next.lastModified)},
                     false);
+            }
                 
-                // add to HavestSkipURI table if there is not already a row in the table
-                Date releaseDate = next.releaseDate;
-                URI artifactURI = new URI(next.artifactURI);
-                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
-                if (skip == null && releaseDate != null) {
-                	skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
-                	harvestSkipURIDAO.put(skip);
+            // add to HavestSkipURI table if there is not already a row in the table
+            Date releaseDate = next.releaseDate;
+            URI artifactURI = new URI(next.artifactURI);
+            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+            if (skip == null && releaseDate != null) {
+                skipURICount++;
+                if (!reportOnly) {
+                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                    harvestSkipURIDAO.put(skip);
                 }
             }
         }
-        
-        logJSON(new String[] {
-            "logType", "summary",
-            "collection", collection,
-            "totalInCAOM", Long.toString(logicalCount),
-            "totalInStorage", Long.toString(physicalCount),
-            "totalCorrect", Long.toString(correct),
-            "totalDiffChecksum", Long.toString(diffChecksum),
-            "totalDiffLength", Long.toString(diffLength),
-            "totalDiffType", Long.toString(diffType),
-            "totalNotInCAOM", Long.toString(notInLogical),
-            "totalNotInStorage", Long.toString(notInPhysical),
-            "time", Long.toString(System.currentTimeMillis() - start)
-        }, true);
+
+        if (reportOnly) {
+            logJSON(new String[] {
+                "logType", "summary",
+                "collection", collection,
+                "totalInCAOM", Long.toString(logicalCount),
+                "totalInStorage", Long.toString(physicalCount),
+                "totalCorrect", Long.toString(correct),
+                "totalDiffChecksum", Long.toString(diffChecksum),
+                "totalDiffLength", Long.toString(diffLength),
+                "totalDiffType", Long.toString(diffType),
+                "totalNotInCAOM", Long.toString(notInLogical),
+                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalPotentialSkipURICount", Long.toString(skipURICount),
+                "time", Long.toString(System.currentTimeMillis() - start)
+            }, true);
+        } else {
+            logJSON(new String[] {
+                "logType", "summary",
+                "collection", collection,
+                "totalInCAOM", Long.toString(logicalCount),
+                "totalInStorage", Long.toString(physicalCount),
+                "totalCorrect", Long.toString(correct),
+                "totalDiffChecksum", Long.toString(diffChecksum),
+                "totalDiffLength", Long.toString(diffLength),
+                "totalDiffType", Long.toString(diffType),
+                "totalNotInCAOM", Long.toString(notInLogical),
+                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalSkipURICount", Long.toString(skipURICount),
+                "time", Long.toString(System.currentTimeMillis() - start)
+            }, true);
+        }
         
         return null;
     }
