@@ -141,8 +141,6 @@ public abstract class RepoAction extends RestAction {
         if (collection == null) {
             String path = syncInput.getPath();
             if (path != null) {
-                // override RestAction default path logging
-                logInfo.setPath(syncInput.getComponentPath() + "/" + path);
                 String[] parts = path.split("/");
                 this.collection = parts[0];
                 if (parts.length > 1) {
