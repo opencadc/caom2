@@ -229,7 +229,7 @@ public class Main {
                 usage();
                 System.exit(-1);
             }
-
+            
             exitValue = 2;
 
             String[] dbInfo = dbParam.split("[.]");
@@ -292,10 +292,10 @@ public class Main {
                 String tap = am.getValue("tap");
                 URI tapResourceID = URI.create(tap);
                 
+                boolean summary = am.isSet("summary");
                 boolean reportOnly = am.isSet("reportOnly");
-            	
                 validator = new ArtifactValidator(artifactDAO.getDataSource(), dbInfo, tapResourceID, 
-                		collection, reportOnly, artifactStore);
+                		collection, summary, reportOnly, artifactStore);
                 listeners.add(validator);
 	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 Subject.doAs(subject, validator);
@@ -389,6 +389,7 @@ public class Main {
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
         sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
+        sb.append("\n     --summary (prints validation summary only)");
         sb.append("\n     --reportOnly (prints validation summary only, does not update artifact skip uri table)");
         sb.append("\n     --mode=[dual | harvest | download | validate] : The mode in which to run this tool.");
         sb.append("\n            'dual' is the combination of harvest and download modes.");
