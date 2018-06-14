@@ -419,7 +419,8 @@ class ResultReader implements InputStreamWrapper {
                             am.storageID = parts[0];
                         }
                         
-                        am.lastModified = DateUtil.flexToDate(parts[1], df);
+                        // read lastModified
+                        am.lastModified = df.parse(parts[1]);
                         
                         if (parts.length > 2) {
                             if (logical) {
@@ -435,7 +436,7 @@ class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.releaseDate = DateUtil.flexToDate(parts[5], df);
+                            am.releaseDate = df.parse(parts[5]);
                         }
                         artifacts.add(am);
                     }
