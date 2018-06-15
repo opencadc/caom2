@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
@@ -202,6 +203,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     if (nextLogical.contentLength == null || 
                             !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                         diffLength++;
+                        if (this.checkAddToSkipTable(nextLogical)) {
+                            skipURICount++;
+                        }
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffLength",
@@ -216,6 +220,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     } else if (nextLogical.contentType == null ||
                             !nextLogical.contentType.equals(nextPhysical.contentType)) {
                         diffType++;
+                        if (this.checkAddToSkipTable(nextLogical)) {
+                            skipURICount++;
+                        }
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffType",
@@ -232,6 +239,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     }
                 } else {
                     diffChecksum++;
+                    if (this.checkAddToSkipTable(nextLogical)) {
+                        skipURICount++;
+                    }
                     logJSON(new String[]
                         {"logType", "detail",
                          "anomaly", "diffChecksum",
@@ -272,51 +282,46 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
                 
             // add to HavestSkipURI table if there is not already a row in the table
-            Date releaseDate = next.releaseDate;
-            URI artifactURI = new URI(next.artifactURI);
-            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
-            if (skip == null && releaseDate != null) {
+            if (this.checkAddToSkipTable(next)) {
                 skipURICount++;
-                if (!reportOnly) {
-                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
-                    harvestSkipURIDAO.put(skip);
-                }
             }
         }
 
+        String skipURILabel = "totalNewSkipURI";
         if (reportOnly) {
-            logJSON(new String[] {
-                "logType", "summary",
-                "collection", collection,
-                "totalInCAOM", Long.toString(logicalCount),
-                "totalInStorage", Long.toString(physicalCount),
-                "totalCorrect", Long.toString(correct),
-                "totalDiffChecksum", Long.toString(diffChecksum),
-                "totalDiffLength", Long.toString(diffLength),
-                "totalDiffType", Long.toString(diffType),
-                "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
-                "totalPotentialSkipURICount", Long.toString(skipURICount),
-                "time", Long.toString(System.currentTimeMillis() - start)
-            }, true);
-        } else {
-            logJSON(new String[] {
-                "logType", "summary",
-                "collection", collection,
-                "totalInCAOM", Long.toString(logicalCount),
-                "totalInStorage", Long.toString(physicalCount),
-                "totalCorrect", Long.toString(correct),
-                "totalDiffChecksum", Long.toString(diffChecksum),
-                "totalDiffLength", Long.toString(diffLength),
-                "totalDiffType", Long.toString(diffType),
-                "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
-                "totalSkipURICount", Long.toString(skipURICount),
-                "time", Long.toString(System.currentTimeMillis() - start)
-            }, true);
+            skipURILabel = "totalPotentialNewSkipURI";
         }
+        logJSON(new String[] {
+            "logType", "summary",
+            "collection", collection,
+            "totalInCAOM", Long.toString(logicalCount),
+            "totalInStorage", Long.toString(physicalCount),
+            "totalCorrect", Long.toString(correct),
+            "totalDiffChecksum", Long.toString(diffChecksum),
+            "totalDiffLength", Long.toString(diffLength),
+            "totalDiffType", Long.toString(diffType),
+            "totalNotInCAOM", Long.toString(notInLogical),
+            "totalNotInStorage", Long.toString(notInPhysical),
+            skipURILabel, Long.toString(skipURICount),
+            "time", Long.toString(System.currentTimeMillis() - start)
+        }, true);
         
         return null;
+    }
+    
+    private boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        Date releaseDate = artifact.releaseDate;
+        URI artifactURI = new URI(artifact.artifactURI);
+        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+        if (skip == null && releaseDate != null) {
+            if (!reportOnly) {
+                skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                harvestSkipURIDAO.put(skip);
+            }
+            return true;
+        }
+        return false;
     }
     
     private void logJSON(String[] data, boolean summaryInfo) {
