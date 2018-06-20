@@ -99,7 +99,6 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
-    private static final String MODE_ARG = "mode";
 
     public static void main(String[] args) {
         try {
@@ -172,109 +171,102 @@ public class Main {
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
-
-            Mode mode = Mode.getDefault();
-            if (am.isSet(MODE_ARG)) {
-                final String modeValue = am.getValue(MODE_ARG);
-                try {
-                    mode = Mode.valueOf(modeValue.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    log.error(String.format("Unrecognized mode value '%s'.", modeValue));
-                    usage();
-                    System.exit(-1);
-                }
-            }
-
-            int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
-            if (am.isSet("batchsize")) {
-                try {
-                    batchSize = Integer.parseInt(am.getValue("batchsize"));
-                    if (batchSize < 1 || batchSize > 100000) {
-                        log.error("value for --batchsize must be between 1 and 100000");
-                        usage();
-                        System.exit(-1);
-                    }
-                } catch (NumberFormatException nfe) {
-                    log.error("Illegal value for --batchsize: " + am.getValue("batchsize"));
-                    usage();
-                    System.exit(-1);
-                }
-            }
-
-            String dbParam = am.getValue("database");
-            if (dbParam == null) {
-                log.error("Must specify database information.");
-                usage();
-                System.exit(-1);
-            }
-
-            int nthreads = 1;
-            if (am.isSet("threads")) {
-                try {
-                    nthreads = Integer.parseInt(am.getValue("threads"));
-                    if (nthreads < 1 || nthreads > 250) {
-                        log.error("value for --threads must be between 1 and 250");
-                        usage();
-                        System.exit(-1);
-                    }
-                } catch (NumberFormatException nfe) {
-                    log.error("Illegal value for --threads: " + am.getValue("threads"));
-                    usage();
-                    System.exit(-1);
-                }
-            }
-
-            if (!am.isSet("collection")) {
-                log.error("Missing required parameter 'collection'");
-                usage();
-                System.exit(-1);
-            }
             
             exitValue = 2;
-
-            String[] dbInfo = dbParam.split("[.]");
-            Map<String, Object> daoConfig = new HashMap<>(2);
-            daoConfig.put("server", dbInfo[0]);
-            daoConfig.put("database", dbInfo[1]);
-            daoConfig.put("schema", dbInfo[2]);
-            daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-            ObservationDAO observationDAO = new ObservationDAO();
-            observationDAO.setConfig(daoConfig);
-            ArtifactDAO artifactDAO = new ArtifactDAO();
-            artifactDAO.setConfig(daoConfig);
-            
-            Integer retryAfterHours = null;
-            if (am.isSet("retryAfter")) {
-                try {
-                    retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
-                } catch (NumberFormatException e) {
-                    log.error("Illegal value for --retryAfter: " + am.getValue("retryAfter"));
-                    usage();
-                    System.exit(-1);
-                }
-            }
-            
-            boolean verify = !am.isSet("noverify");
-
-            String collection = am.getValue("collection");
-            boolean full = am.isSet("full");
             
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             ArtifactHarvester harvester = null;
             ArtifactValidator validator = null;
             DownloadArtifactFiles downloader = null;
-            if (mode.isHarvestMode()) {
-                harvester = new ArtifactHarvester(
-                    observationDAO, dbInfo, artifactStore, collection, full, batchSize);
-                listeners.add(harvester);
+            if (am.isSet("harvest") || am.isSet("download")) {
+                int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
+                if (am.isSet("batchsize")) {
+                    try {
+                        batchSize = Integer.parseInt(am.getValue("batchsize"));
+                        if (batchSize < 1 || batchSize > 100000) {
+                            log.error("value for --batchsize must be between 1 and 100000");
+                            usage();
+                            System.exit(-1);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        log.error("Illegal value for --batchsize: " + am.getValue("batchsize"));
+                        usage();
+                        System.exit(-1);
+                    }
+                }
+
+                String dbParam = am.getValue("database");
+                if (dbParam == null) {
+                    log.error("Must specify database information.");
+                    usage();
+                    System.exit(-1);
+                }
+                
+                String[] dbInfo = dbParam.split("[.]");
+                Map<String, Object> daoConfig = new HashMap<>(2);
+                daoConfig.put("server", dbInfo[0]);
+                daoConfig.put("database", dbInfo[1]);
+                daoConfig.put("schema", dbInfo[2]);
+                daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+
+                if (am.isSet("harvest")) {
+	                ObservationDAO observationDAO = new ObservationDAO();
+	                observationDAO.setConfig(daoConfig);
+
+	                if (!am.isSet("collection")) {
+	                    log.error("Missing required parameter 'collection'");
+	                    usage();
+	                    System.exit(-1);
+	                }
+	                
+	                String collection = am.getValue("collection");
+	                
+	                harvester = new ArtifactHarvester(
+	                    observationDAO, dbInfo, artifactStore, collection, batchSize);
+	                listeners.add(harvester);
+	            }
+	            
+                if (am.isSet("download")) {
+	                ArtifactDAO artifactDAO = new ArtifactDAO();
+	                artifactDAO.setConfig(daoConfig);
+	                
+	                Integer retryAfterHours = null;
+	                if (am.isSet("retryAfter")) {
+	                    try {
+	                        retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+	                    } catch (NumberFormatException e) {
+	                        log.error("Illegal value for --retryAfter: " + am.getValue("retryAfter"));
+	                        usage();
+	                        System.exit(-1);
+	                    }
+	                }
+	                
+	                boolean verify = !am.isSet("noverify");
+
+	                int nthreads = 1;
+	                if (am.isSet("threads")) {
+	                    try {
+	                        nthreads = Integer.parseInt(am.getValue("threads"));
+	                        if (nthreads < 1 || nthreads > 250) {
+	                            log.error("value for --threads must be between 1 and 250");
+	                            usage();
+	                            System.exit(-1);
+	                        }
+	                    } catch (NumberFormatException nfe) {
+	                        log.error("Illegal value for --threads: " + am.getValue("threads"));
+	                        usage();
+	                        System.exit(-1);
+	                    }
+	                }
+
+	                downloader = new DownloadArtifactFiles(
+	                    artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
+	                    retryAfterHours, verify);
+	                listeners.add(downloader);
+	            }
             }
-            if (mode.isDownloadMode()) {
-                downloader = new DownloadArtifactFiles(
-                    artifactDAO, dbInfo, artifactStore, nthreads, batchSize,
-                    retryAfterHours, verify);
-                listeners.add(downloader);
-            }
-            if (mode.isValidateMode()) {
+            
+            if (am.isSet("validate")) {
                 if (subject == null) {
                     log.error("Anonymous execution not supported.  Please use --netrc or --cert");
                     usage();
@@ -283,19 +275,54 @@ public class Main {
                     AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                     log.debug("authentication using: " + meth);
                 }
-                
-                if (!am.isSet("tap")) {
-                    log.error("Missing required parameter 'tap'");
+
+                if (!am.isSet("collection")) {
+                    log.error("Missing required parameter 'collection'");
                     usage();
                     System.exit(-1);
                 }
-                String tap = am.getValue("tap");
-                URI tapResourceID = URI.create(tap);
+                
+                String collection = am.getValue("collection");
                 
                 boolean summary = am.isSet("summary");
                 boolean reportOnly = am.isSet("reportOnly");
-                validator = new ArtifactValidator(artifactDAO.getDataSource(), dbInfo, tapResourceID, 
-                		collection, summary, reportOnly, artifactStore);
+
+                String dbParam = am.getValue("database");
+                if (dbParam == null) {
+                    log.error("Must specify database information.");
+                    usage();
+                    System.exit(-1);
+                }
+                
+                if (!am.isSet("source")) {
+                    log.error("Missing required parameter 'source'");
+                    usage();
+                    System.exit(-1);
+                }
+                String source = am.getValue("source");
+                if (source == null) {
+                    log.error("Must specify source information.");
+                    usage();
+                    System.exit(-1);
+                } else if (source.contains("ivo:")) {
+                	// TAP Resource ID
+                    URI tapResourceID = URI.create(source);
+                    validator = new TapBasedValidator(tapResourceID, collection, summary, reportOnly, artifactStore);
+                } else {
+                	// database <server.database.schema>
+                    String[] dbInfo = dbParam.split("[.]");
+                    Map<String, Object> daoConfig = new HashMap<>(2);
+                    daoConfig.put("server", dbInfo[0]);
+                    daoConfig.put("database", dbInfo[1]);
+                    daoConfig.put("schema", dbInfo[2]);
+                    daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+	                ObservationDAO observationDAO = new ObservationDAO();
+	                observationDAO.setConfig(daoConfig);
+                    
+                    validator = new DbBasedValidator(observationDAO.getDataSource(), dbInfo, observationDAO, 
+                    		collection, summary, reportOnly, artifactStore);
+                }
+                
                 listeners.add(validator);
 	            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 Subject.doAs(subject, validator);
@@ -312,7 +339,7 @@ public class Main {
 	                    log.info("-- STARTING LOOP #" + loopNum + " --");
 	                }
 	
-	                if (!stopHarvest && mode.isHarvestMode()) {
+	                if (!stopHarvest && am.isSet("harvest")) {
 	                    if (subject != null) {
 	                        stopHarvest = Subject.doAs(subject, harvester) == 0;
 	                    } else {
@@ -320,7 +347,7 @@ public class Main {
 	                    }
 	                }
 	
-	                if (!stopDownload && mode.isDownloadMode()) {
+	                if (!stopDownload && am.isSet("download")) {
 	                    if (subject != null) {
 	                        stopDownload = Subject.doAs(subject, downloader) == 0;
 	                    } else {
@@ -384,49 +411,39 @@ public class Main {
 
     private static void usage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2-artifact-sync [-v|--verbose|-d|--debug] [-h|--help] ...");
-        sb.append("\n     --artifactStore=<fully qualified class name>");
-        sb.append("\n     --database=<server.database.schema>");
-        sb.append("\n     --collection=<collection> (currently ignored)");
-        sb.append("\n     --tap=<tapResourceID> (required by validate mode)");
-        sb.append("\n     --summary (prints validation summary only)");
-        sb.append("\n     --reportOnly (In validation mode, does not update artifact skip uri table)");
-        sb.append("\n     --mode=[dual | harvest | download | validate] : The mode in which to run this tool.");
-        sb.append("\n            'dual' is the combination of harvest and download modes.");
-        sb.append("\n            (Default) | just harvest to the database | or just initiate downloads | or validate.");
-        sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
-        sb.append("\n\nOptional:");
-        sb.append("\n     --full : do a full harvest");
-        sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
-        sb.append("\n     --continue : repeat the batches until no work left");
-        sb.append("\n     --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
-        sb.append("\n     --noverify : Do not confirm by MD5 sum after download");
-        sb.append("\n     --profile : Profile task execution");
-        sb.append("\n\nAuthentication:");
-        sb.append("\n     [--netrc|--cert=<pem file>]");
-        sb.append("\n     --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n     --cert=<pem file> : read client certificate from PEM file");
+        sb.append("\n\nusage: caom2-artifact-sync <mode> [mode-args] --artifactStore=<fully qualified class name>");
+        sb.append("\n    where <mode> can be one of:");
+        sb.append("\n        --harvest: Incrementally harvest artifacts");
+        sb.append("\n            [mode-args]:");
+        sb.append("\n                --database=<server.database.schema>");
+        sb.append("\n                --batchsize=<integer> Max observations to check (default: 1000)");
+        sb.append("\n                --continue : Repeat batches until no work left");
+        sb.append("\n                --collection=<collection> : The collection to harvest");
+        sb.append("\n        --download: Download artifacts");
+        sb.append("\n            [mode-args]:");
+        sb.append("\n                --database=<server.database.schema>");
+        sb.append("\n                --threads=<integer> : Number of download threads (default: 1)>");
+        sb.append("\n                --batchsize=<integer> Max observations to check (default: 1000)");
+        sb.append("\n                --continue : Repeat batches until no work left");
+        sb.append("\n                --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
+        sb.append("\n                --noverify : Do not confirm by MD5 sum after download");
+        sb.append("\n        --validate: Discover missing artifacts");
+        sb.append("\n            [mode-args]:");
+        sb.append("\n                --source=<server.database.schema | TAP resource ID>");
+        sb.append("\n                    (If source is TAP resourceID, reportOnly is always true)");
+        sb.append("\n                --reportOnly : Do not create harvest skip records");
+        sb.append("\n                --summary : Show only summary validation information");
+        sb.append("\n                --collection=<collection> : The collection to validate");
+        sb.append("\n\n    optional general args:");
+        sb.append("\n\n        -v | --verbose");
+        sb.append("\n\n        -d | --debug");
+        sb.append("\n\n        -h | --help");
+        sb.append("\n        --profile : Profile task execution");
+        sb.append("\n\n    authentication:");
+        sb.append("\n        [--netrc|--cert=<pem file>]");
+        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());
-    }
-
-    public enum Mode {
-        HARVEST, DOWNLOAD, DUAL, VALIDATE;
-
-        static Mode getDefault() {
-            return DUAL;
-        }
-
-        boolean isDownloadMode() {
-            return (this == DOWNLOAD) || (this == DUAL);
-        }
-
-        boolean isHarvestMode() {
-            return (this == HARVEST) || (this == DUAL);
-        }
-        
-        boolean isValidateMode() {
-            return (this == VALIDATE);
-        }
     }
 }
