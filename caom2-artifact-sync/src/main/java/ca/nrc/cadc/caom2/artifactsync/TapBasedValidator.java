@@ -107,7 +107,6 @@ public class TapBasedValidator extends ArtifactValidator {
     		String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
     	super(collection, summaryMode, reportOnly, artifactStore);
         this.caomTapResourceID = caomTapResourceID;
-
     }
     
     protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {

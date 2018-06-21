@@ -286,13 +286,6 @@ public class Main {
                 
                 boolean summary = am.isSet("summary");
                 boolean reportOnly = am.isSet("reportOnly");
-
-                String dbParam = am.getValue("database");
-                if (dbParam == null) {
-                    log.error("Must specify database information.");
-                    usage();
-                    System.exit(-1);
-                }
                 
                 if (!am.isSet("source")) {
                     log.error("Missing required parameter 'source'");
@@ -300,27 +293,37 @@ public class Main {
                     System.exit(-1);
                 }
                 String source = am.getValue("source");
-                if (source == null) {
+                if (source.length() == 0) {
                     log.error("Must specify source information.");
                     usage();
                     System.exit(-1);
+                } else if (source.equalsIgnoreCase("true")) {
+                    log.error("Must specify source information with source=");
+                    usage();
+                    System.exit(-1);	
                 } else if (source.contains("ivo:")) {
-                	// TAP Resource ID
+                    // source points to a TAP Resource ID
                     URI tapResourceID = URI.create(source);
                     validator = new TapBasedValidator(tapResourceID, collection, summary, reportOnly, artifactStore);
                 } else {
-                	// database <server.database.schema>
-                    String[] dbInfo = dbParam.split("[.]");
-                    Map<String, Object> daoConfig = new HashMap<>(2);
-                    daoConfig.put("server", dbInfo[0]);
-                    daoConfig.put("database", dbInfo[1]);
-                    daoConfig.put("schema", dbInfo[2]);
-                    daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-	                ObservationDAO observationDAO = new ObservationDAO();
-	                observationDAO.setConfig(daoConfig);
-                    
-                    validator = new DbBasedValidator(observationDAO.getDataSource(), dbInfo, observationDAO, 
-                    		collection, summary, reportOnly, artifactStore);
+                	// source points to a database <server.database.schema>
+                    String[] dbInfo = source.split("[.]");
+                    if (dbInfo.length == 3) {
+	                    Map<String, Object> daoConfig = new HashMap<>(2);
+	                    daoConfig.put("server", dbInfo[0]);
+	                    daoConfig.put("database", dbInfo[1]);
+	                    daoConfig.put("schema", dbInfo[2]);
+	                    daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+		                ObservationDAO observationDAO = new ObservationDAO();
+		                observationDAO.setConfig(daoConfig);
+	                    
+	                    validator = new DbBasedValidator(observationDAO.getDataSource(), dbInfo, observationDAO, 
+	                    		collection, summary, reportOnly, artifactStore);
+                    } else {
+                        log.error("Source must either be a TAP resource ID or <server.database.schema>.");
+                        usage();
+                        System.exit(-1);
+                    }
                 }
                 
                 listeners.add(validator);
