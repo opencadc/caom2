@@ -264,6 +264,10 @@ public class Main {
 	                    retryAfterHours, verify);
 	                listeners.add(downloader);
 	            }
+            } else if (!am.isSet("validate")) {
+                log.error("Missing a valid mode: harvest, download, validate");
+                usage();
+                System.exit(-1);
             }
             
             if (am.isSet("validate")) {
