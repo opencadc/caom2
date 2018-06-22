@@ -109,6 +109,10 @@ public class TapBasedValidator extends ArtifactValidator {
         this.caomTapResourceID = caomTapResourceID;
     }
     
+    protected boolean supportSkipURITable() {
+    	return false;
+    }
+    
     protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
         // this validator does not support adding entries to the HarvestSkipURI table
         return false;

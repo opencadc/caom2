@@ -116,6 +116,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
     
     abstract boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException;
     abstract TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception;
+    abstract boolean supportSkipURITable();
     
     public ArtifactValidator(String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
         this.collection = collection;
@@ -147,6 +148,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         log.debug("Queryies are complete");
         executor.shutdownNow();
         
+        boolean supportSkipURITable = this.supportSkipURITable();
         TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
         TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
         long logicalCount = logicalArtifacts.size();
@@ -160,6 +162,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         long notInLogical = 0;
         long notInPhysical = 0;
         long skipURICount = 0;
+        long inSkipURICount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
         
@@ -175,8 +178,12 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                     if (nextLogical.contentLength == null || 
                             !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                         diffLength++;
-                        if (this.checkAddToSkipTable(nextLogical)) {
-                            skipURICount++;
+                        if (supportSkipURITable) {
+                        	if (this.checkAddToSkipTable(nextLogical)) {
+                        		skipURICount++;
+                        	} else {
+                        		inSkipURICount++;
+                        	}
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -192,8 +199,12 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                     } else if (nextLogical.contentType == null ||
                             !nextLogical.contentType.equals(nextPhysical.contentType)) {
                         diffType++;
-                        if (this.checkAddToSkipTable(nextLogical)) {
-                            skipURICount++;
+                        if (supportSkipURITable) {
+                        	if (this.checkAddToSkipTable(nextLogical)) {
+                        		skipURICount++;
+                        	} else {
+                        		inSkipURICount++;
+                        	}
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -211,8 +222,12 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                     }
                 } else {
                     diffChecksum++;
-                    if (this.checkAddToSkipTable(nextLogical)) {
-                        skipURICount++;
+                    if (supportSkipURITable) {
+                    	if (this.checkAddToSkipTable(nextLogical)) {
+                    		skipURICount++;
+                    	} else {
+                    		inSkipURICount++;
+                    	}
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -254,8 +269,12 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
             }
                 
             // add to HavestSkipURI table if there is not already a row in the table
-            if (this.checkAddToSkipTable(next)) {
-                skipURICount++;
+            if (supportSkipURITable) {
+            	if (this.checkAddToSkipTable(nextLogical)) {
+            		skipURICount++;
+            	} else {
+            		inSkipURICount++;
+            	}
             }
         }
 
@@ -263,6 +282,14 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         if (reportOnly) {
             skipURILabel = "totalPotentialNewSkipURI";
         }
+        
+        String skipURIValue = "Not Applicable";
+        String inSkipURIValue = "Not Applicable";
+        if (supportSkipURITable) {
+        	skipURIValue = Long.toString(skipURICount);
+        	inSkipURIValue = Long.toString(inSkipURICount);
+        }
+        
         logJSON(new String[] {
             "logType", "summary",
             "collection", collection,
@@ -274,7 +301,8 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
             "totalDiffType", Long.toString(diffType),
             "totalNotInCAOM", Long.toString(notInLogical),
             "totalNotInStorage", Long.toString(notInPhysical),
-            skipURILabel, Long.toString(skipURICount),
+            "totalAlreadyInSkipURI", inSkipURIValue,
+            skipURILabel, skipURIValue,
             "time", Long.toString(System.currentTimeMillis() - start)
         }, true);
         
@@ -302,7 +330,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
             log.info(sb.toString());
         }
     }
-    
+
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
     	TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
     	metadata.addAll(artifactStore.list(this.collection));

@@ -115,6 +115,10 @@ public class DbBasedValidator extends ArtifactValidator {
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
 
+    protected boolean supportSkipURITable() {
+    	return true;
+    }
+    
     protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
         // add to HavestSkipURI table if there is not already a row in the table
         Date releaseDate = artifact.releaseDate;
