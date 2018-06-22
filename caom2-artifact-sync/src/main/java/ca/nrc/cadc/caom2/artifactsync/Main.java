@@ -287,7 +287,16 @@ public class Main {
                 }
                 
                 String collection = am.getValue("collection");
-                
+                if (collection.length() == 0) {
+                    log.error("Must specify collection.");
+                    usage();
+                    System.exit(-1);
+                } else if (collection.equalsIgnoreCase("true")) {
+                    log.error("Must specify collection with collection=");
+                    usage();
+                    System.exit(-1);	
+                }
+               
                 boolean summary = am.isSet("summary");
                 boolean reportOnly = am.isSet("reportOnly");
                 
@@ -298,11 +307,11 @@ public class Main {
                 }
                 String source = am.getValue("source");
                 if (source.length() == 0) {
-                    log.error("Must specify source information.");
+                    log.error("Must specify source.");
                     usage();
                     System.exit(-1);
                 } else if (source.equalsIgnoreCase("true")) {
-                    log.error("Must specify source information with source=");
+                    log.error("Must specify source with source=");
                     usage();
                     System.exit(-1);	
                 } else if (source.contains("ivo:")) {
