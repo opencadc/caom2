@@ -427,7 +427,7 @@ public class Main {
 
     private static void usage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2-artifact-sync <mode> [mode-args] --artifactStore=<fully qualified class name>");
+        sb.append("\n\nusage: artifact-sync <mode> [mode-args] --artifactStore=<fully qualified class name>");
         sb.append("\n\n    where <mode> can be one of:");
         sb.append("\n\n        --harvest: Incrementally harvest artifacts");
         sb.append("\n            [mode-args]:");
