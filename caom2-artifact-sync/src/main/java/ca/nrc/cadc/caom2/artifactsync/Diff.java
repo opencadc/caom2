@@ -69,7 +69,10 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+
+import java.net.URI;
 
 import org.apache.log4j.Logger;
 
@@ -78,39 +81,73 @@ import org.apache.log4j.Logger;
  *
  * @author majorb, yeunga
  */
-public class Main {
+public class Diff extends ValidateOrDiff {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static int exitValue = 0;
-	private static Caom2ArtifactSync command = null;
+    private static Logger log = Logger.getLogger(Diff.class);
+    
+    public Diff(ArgumentMap am) {
+    	super(am);
 
-    public static void main(String[] args) {
-        try {         	
-            ArgumentMap am = new ArgumentMap(args);
-            if (am.isSet("discover")) {
-            	command = new Discover(am);
-            } else if (am.isSet("download")) {
-            	command = new Download(am);
-            } else if (am.isSet("validate")) {
-            	command = new Validate(am);
-            } else if (am.isSet("diff")) {
-            	command = new Diff(am);
+    	if (!this.done) {
+        	// parent has not discovered any show stopper errors
+            if (!am.isSet("source")) {
+                String msg = "Missing required parameter 'source'";
+	            this.printErrorUsage(msg);
             } else {
-            	if (!am.isSet("h") && !am.isSet("help")) {
-            		String msg = "Missing a valid mode: discover, download, validate, diff.";
-            		command = new Caom2ArtifactSync(am);
-            		command.printErrorUsage(msg);
-                    System.exit(-1);
-            	}
+            	this.parseSourceParam(am);
             }
-
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            exitValue = -1;
-            System.exit(exitValue);
-        } finally {
-            System.exit(command.getExitValue());
-        }        
+    	}
     }
+
+    public void printUsage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nusage: ").append(this.appName).append(" [mode-args]");
+        sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --source=<server.database.schema | TAP resource ID | URL>");
+        sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
+        sb.append("\n\n    optional general args:");
+        sb.append("\n        -v | --verbose");
+        sb.append("\n        -d | --debug");
+        sb.append("\n        -h | --help");
+        sb.append("\n        --profile : Profile task execution");
+        sb.append("\n\n    authentication:");
+        sb.append("\n        [--netrc|--cert=<pem file>]");
+        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
+
+        log.warn(sb.toString());    
+        this.done = true;
+    }
+    
+    private void parseSourceParam(ArgumentMap am) {
+        String source = am.getValue("source");
+        if (source.length() == 0) {
+            String msg = "Must specify source." ;
+            this.printErrorUsage(msg);
+        } else if (source.equalsIgnoreCase("true")) {
+            String msg = "Must specify source with source=";
+            this.printErrorUsage(msg);
+        } else if (source.contains("ivo:")) {
+            // source points to a TAP Resource ID
+            URI tapResourceID = URI.create(source);
+            validator = new TapBasedValidator(tapResourceID, collection, true, artifactStore);
+	    } else if (source.contains("http:")) {
+	    	// TODO: use getServiceURL() to support source=URL
+            String msg = "source=URL is currently not supported." ;
+            this.printErrorUsage(msg);
+	    	/*
+	        // source points to an URL
+	        URI tapResourceID = URI.create(source);
+	        //validator = new TapBasedValidator(tapResourceID, collection, true, true, artifactStore);
+	         */
+	    } else {
+	    	// source points to a database
+	    	this.parseDbParam(am, "source");
+            ObservationDAO observationDAO = new ObservationDAO();
+            observationDAO.setConfig(this.daoConfig);
+            
+            this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+            	this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
+	    }
+	}
 }

@@ -69,7 +69,9 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
 
 import org.apache.log4j.Logger;
 
@@ -78,39 +80,77 @@ import org.apache.log4j.Logger;
  *
  * @author majorb, yeunga
  */
-public class Main {
+public abstract class DiscoverOrDownload extends Caom2ArtifactSync {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static int exitValue = 0;
-	private static Caom2ArtifactSync command = null;
+    private static Logger log = Logger.getLogger(DiscoverOrDownload.class);
+    protected ArtifactHarvester harvester = null;
+    protected String collection = null;
+    
+    public DiscoverOrDownload(ArgumentMap am) {
+    	super(am);
 
-    public static void main(String[] args) {
-        try {         	
-            ArgumentMap am = new ArgumentMap(args);
-            if (am.isSet("discover")) {
-            	command = new Discover(am);
-            } else if (am.isSet("download")) {
-            	command = new Download(am);
-            } else if (am.isSet("validate")) {
-            	command = new Validate(am);
-            } else if (am.isSet("diff")) {
-            	command = new Diff(am);
-            } else {
-            	if (!am.isSet("h") && !am.isSet("help")) {
-            		String msg = "Missing a valid mode: discover, download, validate, diff.";
-            		command = new Caom2ArtifactSync(am);
-            		command.printErrorUsage(msg);
-                    System.exit(-1);
-            	}
-            }
+        if (am.isSet("h") || am.isSet("help")) {
+            this.printUsage();;
+            this.setExitValue(0);
+        } else {
+            log.debug("Artifact store class: " + asClassName);
 
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            exitValue = -1;
-            System.exit(exitValue);
-        } finally {
-            System.exit(command.getExitValue());
-        }        
+	        if (StringUtil.hasText(this.errorMsg)) {
+	            printErrorUsage(this.errorMsg);
+	        } else if (StringUtil.hasText(this.exceptionMsg)) {
+	            this.logException(this.exceptionMsg, this.asException);
+	        } else if (!this.done) {
+                int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
+                if (am.isSet("batchsize")) {
+                    try {
+                        batchSize = Integer.parseInt(am.getValue("batchsize"));
+                        if (batchSize < 1 || batchSize > 100000) {
+                            String msg = "value for --batchsize must be between 1 and 100000";
+                            printErrorUsage(msg);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        String msg = "Illegal value for --batchsize: " + am.getValue("batchsize");
+                        printErrorUsage(msg);
+                    }
+                }
+
+                if (!done) {
+                    this.parseDbParam(am, "database");
+                    ObservationDAO observationDAO = new ObservationDAO();
+                    observationDAO.setConfig(this.daoConfig);
+
+                }
+	        	// parent has not discovered any show stopper errors
+	        	if (this.subject == null) {
+		            String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
+		            this.printErrorUsage(msg);
+	        	} else if (!am.isSet("collection")) {
+		            String msg = "Missing required parameter 'collection'";
+		            this.printErrorUsage(msg);
+	        	} else {
+	        		this.collection = am.getValue("collection");
+	                if (collection.length() == 0) {
+	                    String msg = "Must specify collection.";
+	    	            this.printErrorUsage(msg);
+	                } else if (collection.equalsIgnoreCase("true")) {
+	                    String msg = "Must specify collection with collection=";
+	    	            this.printErrorUsage(msg);
+	                }
+	        	}
+	        }
+        }
+    }
+    
+    public void execute() throws Exception {
+    	/*
+    	if (!this.done) {
+    		this.setExitValue(2);
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            listeners.add(validator);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+            Subject.doAs(this.subject, this.validator);
+            this.setExitValue(0); // finished cleanly
+    	}
+    	*/
     }
 }

@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
@@ -89,12 +90,13 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.date.DateUtil;
 
 /**
  * Class that compares artifacts in the caom2 metadata with the artifacts
  * in storage (via ArtifactStore).
  * 
- * @author majorb
+ * @author majorb, yeunga
  *
  */
 public class DbBasedValidator extends ArtifactValidator {
@@ -106,10 +108,10 @@ public class DbBasedValidator extends ArtifactValidator {
     private String source;
         
     private static final Logger log = Logger.getLogger(DbBasedValidator.class);
-    
+
     public DbBasedValidator(DataSource dataSource, String[] dbInfo, ObservationDAO observationDAO, 
-    		String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, summaryMode, reportOnly, artifactStore);
+    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
+    	super(collection, reportOnly, artifactStore);
         this.observationDAO = observationDAO;
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
@@ -128,6 +130,17 @@ public class DbBasedValidator extends ArtifactValidator {
             if (!this.reportOnly) {
                 skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
                 harvestSkipURIDAO.put(skip);
+                
+        		// validate 
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+                logJSON(new String[]
+                    {"logType", "detail",
+                     "action", "addedToSkipTable",
+                     "artifactURI", artifact.artifactURI,
+                     "storageID", artifact.storageID,
+                     "caomCollection", artifact.collection,
+                     "caomLastModified", df.format(artifact.lastModified)},
+                    true);
             }
             return true;
         }

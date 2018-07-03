@@ -107,9 +107,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
     protected ArtifactStore artifactStore;
     protected String collection;
     protected boolean reportOnly;
-    
-    private boolean summaryMode;
-    
+        
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
@@ -118,9 +116,8 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
     abstract TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception;
     abstract boolean supportSkipURITable();
     
-    public ArtifactValidator(String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
+    public ArtifactValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
         this.collection = collection;
-        this.summaryMode = summaryMode;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
     }
@@ -257,16 +254,14 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         notInPhysical += logicalArtifacts.size();
         for (ArtifactMetadata next : logicalArtifacts) {
-            if (!summaryMode) {
-                logJSON(new String[]
-                    {"logType", "detail",
-                     "anomaly", "notInStorage",
-                     "artifactURI", next.artifactURI,
-                     "storageID", next.storageID,
-                     "caomCollection", next.collection,
-                     "caomLastModified", df.format(next.lastModified)},
-                    false);
-            }
+            logJSON(new String[]
+                {"logType", "detail",
+                 "anomaly", "notInStorage",
+                 "artifactURI", next.artifactURI,
+                 "storageID", next.storageID,
+                 "caomCollection", next.collection,
+                 "caomLastModified", df.format(next.lastModified)},
+                false);
                 
             // add to HavestSkipURI table if there is not already a row in the table
             if (supportSkipURITable) {
@@ -278,34 +273,40 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
             }
         }
 
-        String skipURILabel = "totalNewSkipURI";
-        if (reportOnly) {
-            skipURILabel = "totalPotentialNewSkipURI";
-        }
-        
-        String skipURIValue = "Not Applicable";
-        String inSkipURIValue = "Not Applicable";
-        if (supportSkipURITable) {
-        	skipURIValue = Long.toString(skipURICount);
-        	inSkipURIValue = Long.toString(inSkipURICount);
-        }
-        
-        logJSON(new String[] {
-            "logType", "summary",
-            "collection", collection,
-            "totalInCAOM", Long.toString(logicalCount),
-            "totalInStorage", Long.toString(physicalCount),
-            "totalCorrect", Long.toString(correct),
-            "totalDiffChecksum", Long.toString(diffChecksum),
-            "totalDiffLength", Long.toString(diffLength),
-            "totalDiffType", Long.toString(diffType),
-            "totalNotInCAOM", Long.toString(notInLogical),
-            "totalNotInStorage", Long.toString(notInPhysical),
-            "totalAlreadyInSkipURI", inSkipURIValue,
-            skipURILabel, skipURIValue,
-            "time", Long.toString(System.currentTimeMillis() - start)
-        }, true);
-        
+    	if (reportOnly) {
+    		// diff
+            logJSON(new String[] {
+                    "logType", "summary",
+                    "collection", collection,
+                    "totalInCAOM", Long.toString(logicalCount),
+                    "totalInStorage", Long.toString(physicalCount),
+                    "totalCorrect", Long.toString(correct),
+                    "totalDiffChecksum", Long.toString(diffChecksum),
+                    "totalDiffLength", Long.toString(diffLength),
+                    "totalDiffType", Long.toString(diffType),
+                    "totalNotInCAOM", Long.toString(notInLogical),
+                    "totalNotInStorage", Long.toString(notInPhysical),
+                    "time", Long.toString(System.currentTimeMillis() - start)
+                }, true);
+    	} else {
+    		// validate
+            logJSON(new String[] {
+                    "logType", "summary",
+                    "collection", collection,
+                    "totalInCAOM", Long.toString(logicalCount),
+                    "totalInStorage", Long.toString(physicalCount),
+                    "totalCorrect", Long.toString(correct),
+                    "totalDiffChecksum", Long.toString(diffChecksum),
+                    "totalDiffLength", Long.toString(diffLength),
+                    "totalDiffType", Long.toString(diffType),
+                    "totalNotInCAOM", Long.toString(notInLogical),
+                    "totalNotInStorage", Long.toString(notInPhysical),
+                    "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
+    		        "totalNewSkipURI", Long.toString(skipURICount),
+                    "time", Long.toString(System.currentTimeMillis() - start)
+                }, true);
+    	}
+    
         return null;
     }
     
@@ -326,8 +327,8 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         }
         sb.setLength(sb.length() - 1);
         sb.append("}");
-        if (summaryInfo || !summaryMode) {
-            log.info(sb.toString());
+        if (summaryInfo || reportOnly) {
+            System.out.println(sb.toString());
         }
     }
 

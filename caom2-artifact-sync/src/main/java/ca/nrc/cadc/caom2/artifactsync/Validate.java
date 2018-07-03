@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
 
 import org.apache.log4j.Logger;
@@ -78,39 +79,46 @@ import org.apache.log4j.Logger;
  *
  * @author majorb, yeunga
  */
-public class Main {
+public class Validate extends ValidateOrDiff {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static int exitValue = 0;
-	private static Caom2ArtifactSync command = null;
-
-    public static void main(String[] args) {
-        try {         	
-            ArgumentMap am = new ArgumentMap(args);
-            if (am.isSet("discover")) {
-            	command = new Discover(am);
-            } else if (am.isSet("download")) {
-            	command = new Download(am);
-            } else if (am.isSet("validate")) {
-            	command = new Validate(am);
-            } else if (am.isSet("diff")) {
-            	command = new Diff(am);
+    private static Logger log = Logger.getLogger(Validate.class);
+    
+    public Validate(ArgumentMap am) {
+    	super(am);
+    	
+    	if (!this.done) {
+        	// parent has not discovered any show stopper errors
+            if (!am.isSet("database")) {
+                String msg = "Missing required parameter 'database'";
+	            this.printErrorUsage(msg);
             } else {
-            	if (!am.isSet("h") && !am.isSet("help")) {
-            		String msg = "Missing a valid mode: discover, download, validate, diff.";
-            		command = new Caom2ArtifactSync(am);
-            		command.printErrorUsage(msg);
-                    System.exit(-1);
-            	}
+                this.parseDbParam(am, "database");
+                ObservationDAO observationDAO = new ObservationDAO();
+                observationDAO.setConfig(this.daoConfig);
+                
+                this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+                	this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
             }
+    	}
+    }
 
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            exitValue = -1;
-            System.exit(exitValue);
-        } finally {
-            System.exit(command.getExitValue());
-        }        
+    public void printUsage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nusage: ").append(this.appName).append(" [mode-args]");
+        sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --database=<server.database.schema>");
+        sb.append("\n        --collection=<collection> : The collection to validate");
+        sb.append("\n\n    optional general args:");
+        sb.append("\n        -v | --verbose");
+        sb.append("\n        -d | --debug");
+        sb.append("\n        -h | --help");
+        sb.append("\n        --profile : Profile task execution");
+        sb.append("\n\n    authentication:");
+        sb.append("\n        [--netrc|--cert=<pem file>]");
+        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
+
+        log.warn(sb.toString());    
+        this.done = true;
     }
 }

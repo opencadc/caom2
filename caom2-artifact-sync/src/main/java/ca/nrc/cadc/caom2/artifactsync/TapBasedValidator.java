@@ -92,7 +92,7 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
  * Class that compares artifacts in the caom2 metadata with the artifacts
  * in storage (via ArtifactStore).
  * 
- * @author majorb
+ * @author majorb, yeunga
  *
  */
 public class TapBasedValidator extends ArtifactValidator {
@@ -104,8 +104,8 @@ public class TapBasedValidator extends ArtifactValidator {
     private static final Logger log = Logger.getLogger(TapBasedValidator.class);
     
     public TapBasedValidator(URI caomTapResourceID, 
-    		String collection, boolean summaryMode, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, summaryMode, reportOnly, artifactStore);
+    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
+    	super(collection, reportOnly, artifactStore);
         this.caomTapResourceID = caomTapResourceID;
     }
     

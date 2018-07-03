@@ -78,39 +78,15 @@ import org.apache.log4j.Logger;
  *
  * @author majorb, yeunga
  */
-public class Main {
+public class Discover extends Caom2ArtifactSync {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static int exitValue = 0;
-	private static Caom2ArtifactSync command = null;
-
-    public static void main(String[] args) {
-        try {         	
-            ArgumentMap am = new ArgumentMap(args);
-            if (am.isSet("discover")) {
-            	command = new Discover(am);
-            } else if (am.isSet("download")) {
-            	command = new Download(am);
-            } else if (am.isSet("validate")) {
-            	command = new Validate(am);
-            } else if (am.isSet("diff")) {
-            	command = new Diff(am);
-            } else {
-            	if (!am.isSet("h") && !am.isSet("help")) {
-            		String msg = "Missing a valid mode: discover, download, validate, diff.";
-            		command = new Caom2ArtifactSync(am);
-            		command.printErrorUsage(msg);
-                    System.exit(-1);
-            	}
-            }
-
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            exitValue = -1;
-            System.exit(exitValue);
-        } finally {
-            System.exit(command.getExitValue());
-        }        
+    private static Logger log = Logger.getLogger(Discover.class);
+    
+    public Discover(ArgumentMap am) {
+    	super(am);
+    }
+    
+    public void execute() throws Exception {
+    	
     }
 }
