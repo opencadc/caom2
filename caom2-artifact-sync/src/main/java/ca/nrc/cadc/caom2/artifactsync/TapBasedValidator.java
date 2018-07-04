@@ -110,14 +110,14 @@ public abstract class TapBasedValidator extends ArtifactValidator {
     
     protected TreeSet<ArtifactMetadata> getLogicalMetadata(URL caomTapURL) throws Exception {
         String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
-        		"(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
-        		"      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +
-        		"      ELSE NULL " +
-        		"END) as releaseDate " +
+                "(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
+                "      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +
+                "      ELSE NULL " +
+                "END) as releaseDate " +
                 "from caom2.Artifact a " +
-        		"join caom2.Plane p on a.planeID = p.planeID " +
+                "join caom2.Plane p on a.planeID = p.planeID " +
                 "join caom2.Observation o on p.obsID = o.obsID " +
-        		"where o.collection='" + this.collection + "'";
+                "where o.collection='" + this.collection + "'";
         
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();

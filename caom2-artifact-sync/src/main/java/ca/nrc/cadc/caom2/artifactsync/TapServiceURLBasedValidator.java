@@ -94,8 +94,8 @@ public class TapServiceURLBasedValidator extends TapBasedValidator {
     private static final Logger log = Logger.getLogger(TapServiceURLBasedValidator.class);
     
     public TapServiceURLBasedValidator(URL caomTapURL, 
-    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, reportOnly, artifactStore);
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        super(collection, reportOnly, artifactStore);
         this.caomTapURL = caomTapURL;
     }
     

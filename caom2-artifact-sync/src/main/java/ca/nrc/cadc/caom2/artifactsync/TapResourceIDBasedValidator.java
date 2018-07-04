@@ -99,8 +99,8 @@ public class TapResourceIDBasedValidator extends TapBasedValidator {
     private static final Logger log = Logger.getLogger(TapResourceIDBasedValidator.class);
     
     public TapResourceIDBasedValidator(URI caomTapResourceID, 
-    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, reportOnly, artifactStore);
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        super(collection, reportOnly, artifactStore);
         this.caomTapResourceID = caomTapResourceID;
     }
     

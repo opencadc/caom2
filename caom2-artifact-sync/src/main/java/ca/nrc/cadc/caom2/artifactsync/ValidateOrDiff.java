@@ -90,30 +90,30 @@ public abstract class ValidateOrDiff extends Caom2ArtifactSync {
     protected String collection = null;
     
     public ValidateOrDiff(ArgumentMap am) {
-    	super(am);
+        super(am);
 
-	    if (!this.done) {
-	    	// parent has not discovered any show stopper
-	    	if (this.subject == null) {
-	            String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
-	            this.printErrorUsage(msg);
-	    	} else if (!am.isSet("collection")) {
-	            String msg = "Missing required parameter 'collection'";
-	            this.printErrorUsage(msg);
-	    	} else {
-	    		this.collection = this.parseCollection(am);
-	    	}
-	    }
+        if (!this.done) {
+            // parent has not discovered any show stopper
+            if (this.subject == null) {
+                String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
+                this.printErrorUsage(msg);
+            } else if (!am.isSet("collection")) {
+                String msg = "Missing required parameter 'collection'";
+                this.printErrorUsage(msg);
+            } else {
+                this.collection = this.parseCollection(am);
+            }
+        }
     }
     
     public void execute() throws Exception {
-    	if (!this.done) {
-    		this.setExitValue(2);
+        if (!this.done) {
+            this.setExitValue(2);
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             listeners.add(validator);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
             Subject.doAs(this.subject, validator);
             this.setExitValue(0); // finished cleanly
-    	}
+        }
     }
 }

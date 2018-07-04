@@ -109,15 +109,15 @@ public class DbBasedValidator extends ArtifactValidator {
     private static final Logger log = Logger.getLogger(DbBasedValidator.class);
 
     public DbBasedValidator(DataSource dataSource, String[] dbInfo, ObservationDAO observationDAO, 
-    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, reportOnly, artifactStore);
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        super(collection, reportOnly, artifactStore);
         this.observationDAO = observationDAO;
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
 
     protected boolean supportSkipURITable() {
-    	return true;
+        return true;
     }
     
     protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
@@ -130,14 +130,14 @@ public class DbBasedValidator extends ArtifactValidator {
                 skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
                 harvestSkipURIDAO.put(skip);
                 
-        		// validate 
+                // validate 
                 DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
                 logJSON(new String[]
                     {"logType", "detail",
                      "action", "addedToSkipTable",
                      "artifactURI", artifact.artifactURI,
-                     "storageID", artifact.storageID,
                      "caomCollection", artifact.collection,
+                     "caomChecksum", artifact.checksum,
                      "caomLastModified", df.format(artifact.lastModified)},
                     true);
             }
@@ -157,27 +157,27 @@ public class DbBasedValidator extends ArtifactValidator {
     private TreeSet<ArtifactMetadata> getMetadata(List<Observation> observations) throws Exception {
         TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());;
         for (Observation obs : observations) {
-        	for (Plane plane : obs.getPlanes()) {
-        		for (Artifact artifact : plane.getArtifacts()) {
-        			ArtifactMetadata metadata = new ArtifactMetadata(); 
-        			metadata.artifactURI = artifact.getURI().toASCIIString();
-        			metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
-        			metadata.contentLength = Long.toString(artifact.contentLength);
-        			metadata.contentType = artifact.contentType;
-        			metadata.collection = this.collection;
-        			metadata.lastModified = artifact.getLastModified();
-        			metadata.storageID = this.artifactStore.toStorageID(artifact.getURI().toASCIIString());
-        			ReleaseType type = artifact.getReleaseType();
-        			if (ReleaseType.DATA.equals(type)) {
-        				metadata.releaseDate = plane.dataRelease;
-        			} else if (ReleaseType.META.equals(type)) {
-        				metadata.releaseDate = plane.metaRelease;
-        			} else {
-        				metadata.releaseDate = null;
-        			}
-        			artifacts.add(metadata);
-        		}
-        	}
+            for (Plane plane : obs.getPlanes()) {
+                for (Artifact artifact : plane.getArtifacts()) {
+                    ArtifactMetadata metadata = new ArtifactMetadata(); 
+                    metadata.artifactURI = artifact.getURI().toASCIIString();
+                    metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
+                    metadata.contentLength = Long.toString(artifact.contentLength);
+                    metadata.contentType = artifact.contentType;
+                    metadata.collection = this.collection;
+                    metadata.lastModified = artifact.getLastModified();
+                    metadata.storageID = this.artifactStore.toStorageID(artifact.getURI().toASCIIString());
+                    ReleaseType type = artifact.getReleaseType();
+                    if (ReleaseType.DATA.equals(type)) {
+                        metadata.releaseDate = plane.dataRelease;
+                    } else if (ReleaseType.META.equals(type)) {
+                        metadata.releaseDate = plane.metaRelease;
+                    } else {
+                        metadata.releaseDate = null;
+                    }
+                    artifacts.add(metadata);
+                }
+            }
         }
         
         return artifacts;

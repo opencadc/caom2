@@ -97,7 +97,7 @@ import org.apache.log4j.Logger;
 public class Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Caom2ArtifactSync.class);
-    
+
     private String asClassName;
     private Exception asException;
     private String exceptionMsg;
@@ -113,27 +113,27 @@ public class Caom2ArtifactSync {
     public boolean done = false;
 
     public void execute() throws Exception {
-    	if (!done) {
-    		// not a help command and required parameters (e.g. ArtifactStore) are provided
-    		String msg = "Missing a valid mode: discover, download, validate, diff.";
-    		this.printErrorUsage(msg);
-    	}
+        if (!done) {
+            // not a help command and required parameters (e.g. ArtifactStore) are provided
+            String msg = "Missing a valid mode: discover, download, validate, diff.";
+            this.printErrorUsage(msg);
+        }
     }
     
     public Caom2ArtifactSync(ArgumentMap am) {
-     	init(am);
-     	
+        init(am);
+
         if (am.isSet("h") || am.isSet("help")) {
             this.printUsage();;
             this.setExitValue(0);
         } else {
             log.debug("Artifact store class: " + asClassName);
 
-	        if (StringUtil.hasText(errorMsg)) {
-	            printErrorUsage(errorMsg);
-	        } else if (StringUtil.hasText(exceptionMsg)) {
-	            this.logException(exceptionMsg, asException);
-	        }
+            if (StringUtil.hasText(errorMsg)) {
+                printErrorUsage(errorMsg);
+            } else if (StringUtil.hasText(exceptionMsg)) {
+                this.logException(exceptionMsg, asException);
+            }
         }
     }
     
@@ -161,13 +161,13 @@ public class Caom2ArtifactSync {
     }
     
     public void printErrorUsage(String msg) {
-    	log.error(msg);
-    	this.printUsage();
-    	this.setExitValue(-1);
+        log.error(msg);
+        this.printUsage();
+        this.setExitValue(-1);
     }
     
     public int getExitValue() {
-    	return exitValue;
+        return exitValue;
     }
 
     protected class ShutdownHook implements Runnable {
@@ -190,13 +190,13 @@ public class Caom2ArtifactSync {
     }
     
     protected void setExitValue(int value) {
-    	this.exitValue = value;
+        this.exitValue = value;
     }
     
     protected void logException(String msg, Exception ex) {
-    	log.error(msg, ex);
-    	this.setExitValue(-1);
-    	this.done = true;
+        log.error(msg, ex);
+        this.setExitValue(-1);
+        this.done = true;
     }
 
     protected void parseDbParam(ArgumentMap am, String source) {
@@ -208,10 +208,10 @@ public class Caom2ArtifactSync {
             String msg = "Must specify source with database=";
             this.printErrorUsage(msg);
         } else {
-        	// database=<server.database.schema>
+            // database=<server.database.schema>
             String [] tempDbInfo = database.split("[.]");
             if (tempDbInfo.length == 3) {
-            	this.dbInfo = tempDbInfo;
+                this.dbInfo = tempDbInfo;
                 this.daoConfig = new HashMap<>(2);
                 this.daoConfig.put("server", dbInfo[0]);
                 this.daoConfig.put("database", dbInfo[1]);
@@ -219,13 +219,13 @@ public class Caom2ArtifactSync {
                 this.daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             } else {
                 String msg = "database must be <server.database.schema>.";
-	            this.printErrorUsage(msg);
+                this.printErrorUsage(msg);
             }
         }
     }
     
     protected String parseCollection(ArgumentMap am) {
-		String collection = am.getValue("collection");
+        String collection = am.getValue("collection");
         if (!StringUtil.hasText(collection)) {
             String msg = "Must specify collection.";
             this.printErrorUsage(msg);
@@ -249,19 +249,19 @@ public class Caom2ArtifactSync {
     }
     
     private void init(ArgumentMap am) {
-     	initAppName();
+        initAppName();
         setLogLevel(am);
-    	loadArtifactStore(am);
+        loadArtifactStore(am);
         setLogLevel(am);
-    	this.createSubject(am);
+        this.createSubject(am);
     }
     
     private void initAppName() {
-    	// A custom application name can be passed in via this environment variable
-     	String importedName = System.getProperty("ca.nrc.cadc.caom2.artifactsync.Main.name");
-     	if (StringUtil.hasText(importedName)) {
-     		this.applicationName = importedName;
-     	} 
+        // A custom application name can be passed in via this environment variable
+        String importedName = System.getProperty("ca.nrc.cadc.caom2.artifactsync.Main.name");
+        if (StringUtil.hasText(importedName)) {
+            this.applicationName = importedName;
+        } 
     }
     
     private static void setLogLevel(ArgumentMap am) {

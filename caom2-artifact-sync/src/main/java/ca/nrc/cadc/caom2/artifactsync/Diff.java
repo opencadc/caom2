@@ -89,13 +89,13 @@ public class Diff extends ValidateOrDiff {
     private static Logger log = Logger.getLogger(Diff.class);
     
     public Diff(ArgumentMap am) {
-    	super(am);
+        super(am);
 
-    	if (!this.done) {
-        	// parent has not discovered any show stopper
+        if (!this.done) {
+            // parent has not discovered any show stopper
             if (!am.isSet("source")) {
                 String msg = "Missing required parameter 'source'";
-	            this.printErrorUsage(msg);
+                this.printErrorUsage(msg);
             } else {
             	this.parseSourceParam(am);
             }
@@ -134,23 +134,23 @@ public class Diff extends ValidateOrDiff {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
             this.validator = new TapResourceIDBasedValidator(tapResourceID, collection, true, artifactStore);
-	    } else if (source.contains("http:")) {
-	    	URL tapServiceURL;
-			try {
-				tapServiceURL = new URL(source);
-	            this.validator = new TapServiceURLBasedValidator(tapServiceURL, collection, true, artifactStore);
-			} catch (MalformedURLException e) {
-	            String msg = "Must specify source." ;
-	            this.logException(msg, e);
-			}
-	    } else {
-	    	// source points to a database
-	    	this.parseDbParam(am, "source");
+        } else if (source.contains("http:")) {
+            URL tapServiceURL;
+            try {
+                tapServiceURL = new URL(source);
+                this.validator = new TapServiceURLBasedValidator(tapServiceURL, collection, true, artifactStore);
+            } catch (MalformedURLException e) {
+                String msg = "Must specify source." ;
+                this.logException(msg, e);
+            }
+        } else {
+            // source points to a database
+            this.parseDbParam(am, "source");
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(this.daoConfig);
             
             this.validator = new DbBasedValidator(observationDAO.getDataSource(),
             	this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
-	    }
-	}
+        }
+    }
 }

@@ -91,9 +91,9 @@ public class Download extends DiscoverOrDownload {
     private DownloadArtifactFiles downloader = null;
 
     public Download(ArgumentMap am) {
-    	super(am);
-    	
-    	if (!this.done) {
+        super(am);
+
+        if (!this.done) {
             Integer retryAfterHours = null;
             if (am.isSet("retryAfter")) {
                 try {
@@ -120,13 +120,12 @@ public class Download extends DiscoverOrDownload {
                 }
             }
             
-        	if (!this.done) {
-	            ArtifactDAO artifactDAO = new ArtifactDAO();
-	            artifactDAO.setConfig(daoConfig);
-	            
-	            this.downloader = new DownloadArtifactFiles(
-	                artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize,
-	                retryAfterHours, verify);
+            if (!this.done) {
+                ArtifactDAO artifactDAO = new ArtifactDAO();
+                artifactDAO.setConfig(daoConfig);
+
+                this.downloader = new DownloadArtifactFiles(
+                        artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
         	}
     	}
     }
@@ -156,19 +155,19 @@ public class Download extends DiscoverOrDownload {
     }
     
     public void execute() throws Exception {
-    	if (!this.done) {
-    		this.setExitValue(2);
+        if (!this.done) {
+            this.setExitValue(2);
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             listeners.add(downloader);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
             super.execute();
-    	}
+        }
     }
     
     protected boolean executeCommand() throws Exception {
-    	boolean stopDownload = false;
+        boolean stopDownload = false;
         if (this.subject != null) {
-        	stopDownload = Subject.doAs(this.subject, downloader) == 0;
+            stopDownload = Subject.doAs(this.subject, downloader) == 0;
         } else {
         	stopDownload = downloader.run() == 0;
         }

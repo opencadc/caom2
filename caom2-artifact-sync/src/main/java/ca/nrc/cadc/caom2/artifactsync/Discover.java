@@ -91,18 +91,18 @@ public class Discover extends DiscoverOrDownload {
     private ArtifactHarvester harvester = null;
 
     public Discover(ArgumentMap am) {
-    	super(am);
-    	
-    	if (!this.done) {
-	        this.collection = this.parseCollection(am);
-	    	if (!this.done) {
-		        ObservationDAO observationDAO = new ObservationDAO();
-		        observationDAO.setConfig(this.daoConfig);
+        super(am);
 
-		        this.harvester = new ArtifactHarvester(
-		            observationDAO, dbInfo, artifactStore, collection, this.batchSize);
-	    	}
-    	}
+        if (!this.done) {
+            this.collection = this.parseCollection(am);
+            if (!this.done) {
+                ObservationDAO observationDAO = new ObservationDAO();
+                observationDAO.setConfig(this.daoConfig);
+
+                this.harvester = new ArtifactHarvester(
+                        observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+            }
+        }
     }
 
     public void printUsage() {
@@ -128,8 +128,8 @@ public class Discover extends DiscoverOrDownload {
     }
     
     public void execute() throws Exception {
-    	if (!this.done) {
-    		this.setExitValue(2);
+        if (!this.done) {
+            this.setExitValue(2);
             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
             listeners.add(harvester);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -138,7 +138,7 @@ public class Discover extends DiscoverOrDownload {
     }
     
     protected boolean executeCommand() throws Exception {
-    	boolean stopHarvest = false;
+        boolean stopHarvest = false;
         if (this.subject != null) {
             stopHarvest = Subject.doAs(this.subject, harvester) == 0;
         } else {

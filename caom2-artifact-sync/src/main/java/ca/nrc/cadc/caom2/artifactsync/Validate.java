@@ -84,22 +84,22 @@ public class Validate extends ValidateOrDiff {
     private static Logger log = Logger.getLogger(Validate.class);
     
     public Validate(ArgumentMap am) {
-    	super(am);
-    	
-    	if (!this.done) {
-        	// parent has not discovered any show stopper
+        super(am);
+
+        if (!this.done) {
+            // parent has not discovered any show stopper
             if (!am.isSet("database")) {
                 String msg = "Missing required parameter 'database'";
-	            this.printErrorUsage(msg);
+                this.printErrorUsage(msg);
             } else {
                 this.parseDbParam(am, "database");
                 ObservationDAO observationDAO = new ObservationDAO();
                 observationDAO.setConfig(this.daoConfig);
-                
+
                 this.validator = new DbBasedValidator(observationDAO.getDataSource(),
-                	this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
+                        this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
             }
-    	}
+        }
     }
 
     public void printUsage() {

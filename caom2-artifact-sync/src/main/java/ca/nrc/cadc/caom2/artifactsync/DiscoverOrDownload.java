@@ -89,11 +89,11 @@ public abstract class DiscoverOrDownload extends Caom2ArtifactSync {
     abstract boolean executeCommand() throws Exception;
 
     public DiscoverOrDownload(ArgumentMap am) {
-    	super(am);
+        super(am);
 
-    	// save ArgumentMap instance to allow us to create Subject instance
-    	// in the execution loop
-    	this.am = am;
+        // save ArgumentMap instance to allow us to create Subject instance
+        // in the execution loop
+        this.am = am;
         if (!this.done) {
             if (am.isSet("batchsize")) {
                 try {

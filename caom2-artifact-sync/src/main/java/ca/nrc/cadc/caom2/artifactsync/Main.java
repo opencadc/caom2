@@ -82,21 +82,21 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
-	private static Caom2ArtifactSync command = null;
+	private static Caom2ArtifactSync command;
 
     public static void main(String[] args) {
         try {         	
             ArgumentMap am = new ArgumentMap(args);
             if (am.isSet("discover")) {
-            	command = new Discover(am);
+                command = new Discover(am);
             } else if (am.isSet("download")) {
-            	command = new Download(am);
+                command = new Download(am);
             } else if (am.isSet("validate")) {
-            	command = new Validate(am);
+                command = new Validate(am);
             } else if (am.isSet("diff")) {
-            	command = new Diff(am);
+                command = new Diff(am);
             } else {
-        		command = new Caom2ArtifactSync(am);
+                command = new Caom2ArtifactSync(am);
             }
 
             command.execute();
@@ -106,6 +106,6 @@ public class Main {
             System.exit(exitValue);
         } finally {
             System.exit(command.getExitValue());
-        }        
+        }
     }
 }
