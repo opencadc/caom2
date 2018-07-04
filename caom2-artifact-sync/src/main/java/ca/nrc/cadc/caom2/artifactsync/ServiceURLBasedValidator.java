@@ -85,15 +85,15 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
  * @author yeunga
  *
  */
-public class TapServiceURLBasedValidator extends TapBasedValidator {
+public class ServiceURLBasedValidator extends TapBasedValidator {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     
     private URL caomTapURL;
         
-    private static final Logger log = Logger.getLogger(TapServiceURLBasedValidator.class);
+    private static final Logger log = Logger.getLogger(ServiceURLBasedValidator.class);
     
-    public TapServiceURLBasedValidator(URL caomTapURL, 
+    public ServiceURLBasedValidator(URL caomTapURL, 
             String collection, boolean reportOnly, ArtifactStore artifactStore) {
         super(collection, reportOnly, artifactStore);
         this.caomTapURL = caomTapURL;

@@ -133,12 +133,12 @@ public class Diff extends ValidateOrDiff {
         } else if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            this.validator = new TapResourceIDBasedValidator(tapResourceID, collection, true, artifactStore);
+            this.validator = new ResourceIDBasedValidator(tapResourceID, collection, true, artifactStore);
         } else if (source.contains("http:")) {
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);
-                this.validator = new TapServiceURLBasedValidator(tapServiceURL, collection, true, artifactStore);
+                this.validator = new ServiceURLBasedValidator(tapServiceURL, collection, true, artifactStore);
             } catch (MalformedURLException e) {
                 String msg = "Must specify source." ;
                 this.logException(msg, e);
