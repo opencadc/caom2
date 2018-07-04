@@ -79,7 +79,7 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
+ * Class to support both 'validate' and 'diff' modes.
  *
  * @author majorb, yeunga
  */

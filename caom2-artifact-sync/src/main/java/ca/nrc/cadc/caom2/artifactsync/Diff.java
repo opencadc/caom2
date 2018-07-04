@@ -73,12 +73,14 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.StringUtil;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 
 import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
+ * Class to support the 'diff' mode.
  *
  * @author majorb, yeunga
  */
@@ -131,16 +133,16 @@ public class Diff extends ValidateOrDiff {
         } else if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            validator = new TapBasedValidator(tapResourceID, collection, true, artifactStore);
+            this.validator = new TapResourceIDBasedValidator(tapResourceID, collection, true, artifactStore);
 	    } else if (source.contains("http:")) {
-	    	// TODO: use getServiceURL() to support source=URL
-            String msg = "source=URL is currently not supported." ;
-            this.printErrorUsage(msg);
-	    	/*
-	        // source points to an URL
-	        URI tapResourceID = URI.create(source);
-	        //validator = new TapBasedValidator(tapResourceID, collection, true, true, artifactStore);
-	         */
+	    	URL tapServiceURL;
+			try {
+				tapServiceURL = new URL(source);
+	            this.validator = new TapServiceURLBasedValidator(tapServiceURL, collection, true, artifactStore);
+			} catch (MalformedURLException e) {
+	            String msg = "Must specify source." ;
+	            this.logException(msg, e);
+			}
 	    } else {
 	    	// source points to a database
 	    	this.parseDbParam(am, "source");

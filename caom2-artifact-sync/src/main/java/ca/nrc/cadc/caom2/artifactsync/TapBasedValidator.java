@@ -70,7 +70,6 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -78,35 +77,26 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 
 /**
- * Class that compares artifacts in the caom2 metadata with the artifacts
- * in storage (via ArtifactStore).
+ * Class to support the 'diff' mode with source=<TAP resource ID | TAP service URL>.
  * 
  * @author majorb, yeunga
  *
  */
-public class TapBasedValidator extends ArtifactValidator {
+public abstract class TapBasedValidator extends ArtifactValidator {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
-    
-    private URI caomTapResourceID;
         
     private static final Logger log = Logger.getLogger(TapBasedValidator.class);
     
-    public TapBasedValidator(URI caomTapResourceID, 
-    		String collection, boolean reportOnly, ArtifactStore artifactStore) {
+    public TapBasedValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
     	super(collection, reportOnly, artifactStore);
-        this.caomTapResourceID = caomTapResourceID;
     }
     
     protected boolean supportSkipURITable() {
@@ -118,11 +108,7 @@ public class TapBasedValidator extends ArtifactValidator {
         return false;
     }
     
-    protected TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        RegistryClient regClient = new RegistryClient();
-        AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
-        URL caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
-
+    protected TreeSet<ArtifactMetadata> getLogicalMetadata(URL caomTapURL) throws Exception {
         String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
         		"(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
         		"      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +

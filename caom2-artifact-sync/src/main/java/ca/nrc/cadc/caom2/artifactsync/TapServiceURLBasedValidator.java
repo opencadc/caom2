@@ -70,121 +70,36 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
+import java.net.URL;
 import java.util.TreeSet;
-
-import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.date.DateUtil;
 
 /**
- * Class to support all modes that use 'database | source =<server.database.schema>'.
+ * Class to support the 'diff' mode with source=<TAP service URL>.
  * 
- * @author majorb, yeunga
+ * @author yeunga
  *
  */
-public class DbBasedValidator extends ArtifactValidator {
+public class TapServiceURLBasedValidator extends TapBasedValidator {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     
-    private ObservationDAO observationDAO;
-    private HarvestSkipURIDAO harvestSkipURIDAO;
-    private String source;
+    private URL caomTapURL;
         
-    private static final Logger log = Logger.getLogger(DbBasedValidator.class);
-
-    public DbBasedValidator(DataSource dataSource, String[] dbInfo, ObservationDAO observationDAO, 
+    private static final Logger log = Logger.getLogger(TapServiceURLBasedValidator.class);
+    
+    public TapServiceURLBasedValidator(URL caomTapURL, 
     		String collection, boolean reportOnly, ArtifactStore artifactStore) {
     	super(collection, reportOnly, artifactStore);
-        this.observationDAO = observationDAO;
-        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
-    }
-
-    protected boolean supportSkipURITable() {
-    	return true;
-    }
-    
-    protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
-        // add to HavestSkipURI table if there is not already a row in the table
-        Date releaseDate = artifact.releaseDate;
-        URI artifactURI = new URI(artifact.artifactURI);
-        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
-        if (skip == null && releaseDate != null) {
-            if (!this.reportOnly) {
-                skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
-                harvestSkipURIDAO.put(skip);
-                
-        		// validate 
-                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
-                logJSON(new String[]
-                    {"logType", "detail",
-                     "action", "addedToSkipTable",
-                     "artifactURI", artifact.artifactURI,
-                     "storageID", artifact.storageID,
-                     "caomCollection", artifact.collection,
-                     "caomLastModified", df.format(artifact.lastModified)},
-                    true);
-            }
-            return true;
-        }
-        return false;
+        this.caomTapURL = caomTapURL;
     }
     
     protected TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        long start = System.currentTimeMillis();
-        List<Observation> observations = observationDAO.getList(Observation.class, null, null, 3);
-        TreeSet<ArtifactMetadata> result = getMetadata(observations);
-        log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
-        return result;
-    }
-    
-    private TreeSet<ArtifactMetadata> getMetadata(List<Observation> observations) throws Exception {
-        TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());;
-        for (Observation obs : observations) {
-        	for (Plane plane : obs.getPlanes()) {
-        		for (Artifact artifact : plane.getArtifacts()) {
-        			ArtifactMetadata metadata = new ArtifactMetadata(); 
-        			metadata.artifactURI = artifact.getURI().toASCIIString();
-        			metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
-        			metadata.contentLength = Long.toString(artifact.contentLength);
-        			metadata.contentType = artifact.contentType;
-        			metadata.collection = this.collection;
-        			metadata.lastModified = artifact.getLastModified();
-        			metadata.storageID = this.artifactStore.toStorageID(artifact.getURI().toASCIIString());
-        			ReleaseType type = artifact.getReleaseType();
-        			if (ReleaseType.DATA.equals(type)) {
-        				metadata.releaseDate = plane.dataRelease;
-        			} else if (ReleaseType.META.equals(type)) {
-        				metadata.releaseDate = plane.metaRelease;
-        			} else {
-        				metadata.releaseDate = null;
-        			}
-        			artifacts.add(metadata);
-        		}
-        	}
-        }
-        
-        return artifacts;
-    }
-    
-    private String getStorageChecksum(String checksum) throws Exception {
-        int colon = checksum.indexOf(":");
-        return checksum.substring(colon + 1, checksum.length());
+        return super.getLogicalMetadata(caomTapURL);
     }
 }
