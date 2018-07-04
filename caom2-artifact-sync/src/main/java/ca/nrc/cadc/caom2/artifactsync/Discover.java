@@ -104,6 +104,28 @@ public class Discover extends DiscoverOrDownload {
 	    	}
     	}
     }
+
+    public void printUsage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
+        sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --database=<server.database.schema>");
+        sb.append("\n        --collection=<collection> : The collection to discover");
+        sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
+        sb.append("\n        --continue : Repeat batches until no work left");
+        sb.append("\n\n    optional general args:");
+        sb.append("\n        -v | --verbose");
+        sb.append("\n        -d | --debug");
+        sb.append("\n        -h | --help");
+        sb.append("\n        --profile : Profile task execution");
+        sb.append("\n\n    authentication:");
+        sb.append("\n        [--netrc|--cert=<pem file>]");
+        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
+
+        log.warn(sb.toString());    
+        this.done = true;
+    }
     
     public void execute() throws Exception {
     	if (!this.done) {
