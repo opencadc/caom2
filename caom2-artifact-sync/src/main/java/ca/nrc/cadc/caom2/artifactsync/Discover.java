@@ -69,7 +69,13 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
@@ -78,15 +84,44 @@ import org.apache.log4j.Logger;
  *
  * @author majorb, yeunga
  */
-public class Discover extends Caom2ArtifactSync {
+public class Discover extends DiscoverOrDownload {
 
     private static Logger log = Logger.getLogger(Discover.class);
-    
+    private String collection = null;
+    private ArtifactHarvester harvester = null;
+
     public Discover(ArgumentMap am) {
     	super(am);
+    	
+    	if (!this.done) {
+	        this.collection = this.parseCollection(am);
+	    	if (!this.done) {
+		        ObservationDAO observationDAO = new ObservationDAO();
+		        observationDAO.setConfig(this.daoConfig);
+
+		        this.harvester = new ArtifactHarvester(
+		            observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+	    	}
+    	}
     }
     
     public void execute() throws Exception {
-    	
+    	if (!this.done) {
+    		this.setExitValue(2);
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            listeners.add(harvester);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+            super.execute();
+    	}
+    }
+    
+    protected boolean executeCommand() throws Exception {
+    	boolean stopHarvest = false;
+        if (this.subject != null) {
+            stopHarvest = Subject.doAs(this.subject, harvester) == 0;
+        } else {
+            stopHarvest = harvester.run() == 0;
+        }
+        return stopHarvest;
     }
 }

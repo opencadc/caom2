@@ -98,39 +98,49 @@ public class Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Caom2ArtifactSync.class);
     
+    private String asClassName;
+    private Exception asException;
+    private String exceptionMsg;
     private int exitValue = 0;
-    protected ArtifactStore artifactStore = null;
-    protected String appName = "caom2-artifact-sync";
-    protected String errorMsg = "";
-    protected String exceptionMsg = "";
-    protected Subject subject = null;
-    protected boolean done = false;
-    protected String asClassName =null;
-    protected Exception asException = null;
+
+    protected ArtifactStore artifactStore;
+    protected String applicationName = "caom2-artifact-sync";
+    protected String errorMsg;
+    protected Subject subject;
     protected String[] dbInfo;
-    protected Map<String, Object> daoConfig = null;
+    protected Map<String, Object> daoConfig;
+
+    public boolean done = false;
 
     public void execute() throws Exception {
-    	// TODO: throw an exception
-    	log.error("Method not supported");
+    	if (!done) {
+    		// not a help command and required parameters (e.g. ArtifactStore) are provided
+    		String msg = "Missing a valid mode: discover, download, validate, diff.";
+    		this.printErrorUsage(msg);
+    	}
     }
     
     public Caom2ArtifactSync(ArgumentMap am) {
-     	initAppName();
-        setLogLevel(am);
-    	loadArtifactStore(am);
-        setLogLevel(am);
-    	createSubject(am);
+     	init(am);
+     	
+        if (am.isSet("h") || am.isSet("help")) {
+            this.printUsage();;
+            this.setExitValue(0);
+        } else {
+            log.debug("Artifact store class: " + asClassName);
+
+	        if (StringUtil.hasText(errorMsg)) {
+	            printErrorUsage(errorMsg);
+	        } else if (StringUtil.hasText(exceptionMsg)) {
+	            this.logException(exceptionMsg, asException);
+	        }
+        }
     }
     
     public void printUsage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ");
-        sb.append(this.appName);
-        sb.append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
-        sb.append("\n\n    use '");
-        sb.append(this.appName);
-        sb.append(" <mode> <-h|--help>' to get help on a <mode>");
+        sb.append("\n\nusage: ").append(applicationName).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
+        sb.append("\n\n    use '").append(applicationName).append(" <mode> <-h|--help>' to get help on a <mode>");
         sb.append("\n    where <mode> can be one of:");
         sb.append("\n        --discover: Incrementally harvest artifacts");
         sb.append("\n        --download: Download artifacts");
@@ -157,7 +167,7 @@ public class Caom2ArtifactSync {
     }
     
     public int getExitValue() {
-    	return this.exitValue;
+    	return exitValue;
     }
 
     protected class ShutdownHook implements Runnable {
@@ -191,7 +201,7 @@ public class Caom2ArtifactSync {
 
     protected void parseDbParam(ArgumentMap am, String source) {
         String database = am.getValue(source);
-        if (database.length() == 0) {
+        if (!StringUtil.hasText(database)) {
             String msg = "Must specify database." ;
             this.printErrorUsage(msg);
         } else if (database.equalsIgnoreCase("true")) {
@@ -203,9 +213,9 @@ public class Caom2ArtifactSync {
             if (tempDbInfo.length == 3) {
             	this.dbInfo = tempDbInfo;
                 this.daoConfig = new HashMap<>(2);
-                this.daoConfig.put("server", this.dbInfo[0]);
-                this.daoConfig.put("database", this.dbInfo[1]);
-                this.daoConfig.put("schema", this.dbInfo[2]);
+                this.daoConfig.put("server", dbInfo[0]);
+                this.daoConfig.put("database", dbInfo[1]);
+                this.daoConfig.put("schema", dbInfo[2]);
                 this.daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             } else {
                 String msg = "database must be <server.database.schema>.";
@@ -214,11 +224,43 @@ public class Caom2ArtifactSync {
         }
     }
     
+    protected String parseCollection(ArgumentMap am) {
+		String collection = am.getValue("collection");
+        if (!StringUtil.hasText(collection)) {
+            String msg = "Must specify collection.";
+            this.printErrorUsage(msg);
+        } else if (collection.equalsIgnoreCase("true")) {
+            String msg = "Must specify collection with collection=";
+            this.printErrorUsage(msg);
+        }return collection;
+    }
+    
+    protected void createSubject(ArgumentMap am) {
+        if (am.isSet("netrc")) {
+            this.subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
+        } else if (am.isSet("cert")) {
+            this.subject = CertCmdArgUtil.initSubject(am);
+        }
+        
+        if (this.subject != null) {
+            AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            log.debug("authentication using: " + meth);
+        }
+    }
+    
+    private void init(ArgumentMap am) {
+     	initAppName();
+        setLogLevel(am);
+    	loadArtifactStore(am);
+        setLogLevel(am);
+    	this.createSubject(am);
+    }
+    
     private void initAppName() {
     	// A custom application name can be passed in via this environment variable
      	String importedName = System.getProperty("ca.nrc.cadc.caom2.artifactsync.Main.name");
      	if (StringUtil.hasText(importedName)) {
-     		this.appName = importedName;
+     		this.applicationName = importedName;
      	} 
     }
     
@@ -263,16 +305,16 @@ public class Caom2ArtifactSync {
         this.asClassName = am.getValue("artifactStore");
         String asPackage = null;
         
-        if (this.asClassName != null) {
+        if (asClassName != null) {
             try {
                 Class<?> asClass = Class.forName(asClassName);
                 asPackage = asClass.getPackage().getName();
                 this.artifactStore = (ArtifactStore) asClass.newInstance();
             } catch (ClassNotFoundException cnfe) {
-            	this.exceptionMsg = "Failed to load store class:." + this.asClassName;
+            	this.exceptionMsg = "Failed to load store class:." + asClassName;
                 this.asException = cnfe;
             } catch (Exception e) {
-            	this.exceptionMsg = "Failed to access store class " + this.asClassName;
+            	this.exceptionMsg = "Failed to access store class " + asClassName;
                 this.asException = e;
             }
         } else {
@@ -281,18 +323,4 @@ public class Caom2ArtifactSync {
         
         setLogLevel(am, asPackage);
     }
-    
-    private void createSubject(ArgumentMap am) {
-        if (am.isSet("netrc")) {
-            this.subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-        } else if (am.isSet("cert")) {
-            this.subject = CertCmdArgUtil.initSubject(am);
-        }
-        
-        if (this.subject != null) {
-            AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            log.debug("authentication using: " + meth);
-        }
-    }
-
 }

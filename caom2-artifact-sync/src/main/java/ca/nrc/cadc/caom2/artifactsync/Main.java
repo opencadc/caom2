@@ -96,12 +96,7 @@ public class Main {
             } else if (am.isSet("diff")) {
             	command = new Diff(am);
             } else {
-            	if (!am.isSet("h") && !am.isSet("help")) {
-            		String msg = "Missing a valid mode: discover, download, validate, diff.";
-            		command = new Caom2ArtifactSync(am);
-            		command.printErrorUsage(msg);
-                    System.exit(-1);
-            	}
+        		command = new Caom2ArtifactSync(am);
             }
 
             command.execute();

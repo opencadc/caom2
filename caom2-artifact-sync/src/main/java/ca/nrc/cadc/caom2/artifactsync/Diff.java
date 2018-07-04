@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URI;
 
@@ -89,7 +90,7 @@ public class Diff extends ValidateOrDiff {
     	super(am);
 
     	if (!this.done) {
-        	// parent has not discovered any show stopper errors
+        	// parent has not discovered any show stopper
             if (!am.isSet("source")) {
                 String msg = "Missing required parameter 'source'";
 	            this.printErrorUsage(msg);
@@ -101,7 +102,7 @@ public class Diff extends ValidateOrDiff {
 
     public void printUsage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(this.appName).append(" [mode-args]");
+        sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
         sb.append("\n        --source=<server.database.schema | TAP resource ID | URL>");
         sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
@@ -121,7 +122,7 @@ public class Diff extends ValidateOrDiff {
     
     private void parseSourceParam(ArgumentMap am) {
         String source = am.getValue("source");
-        if (source.length() == 0) {
+        if (!StringUtil.hasText(source)) {
             String msg = "Must specify source." ;
             this.printErrorUsage(msg);
         } else if (source.equalsIgnoreCase("true")) {

@@ -69,24 +69,85 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
  *
- * @author yeunga
+ * @author majorb, yeunga
  */
-public class Download extends Caom2ArtifactSync {
+public class Download extends DiscoverOrDownload {
 
     private static Logger log = Logger.getLogger(Download.class);
     
+    private DownloadArtifactFiles downloader = null;
+
     public Download(ArgumentMap am) {
     	super(am);
+    	
+    	if (!this.done) {
+            Integer retryAfterHours = null;
+            if (am.isSet("retryAfter")) {
+                try {
+                    retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                } catch (NumberFormatException e) {
+                    String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
+                    this.printErrorUsage(msg);
+                }
+            }
+            
+            boolean verify = !am.isSet("noverify");
+
+            int nthreads = 1;
+            if (am.isSet("threads")) {
+                try {
+                    nthreads = Integer.parseInt(am.getValue("threads"));
+                    if (nthreads < 1 || nthreads > 250) {
+                        String msg = "value for --threads must be between 1 and 250";
+                        this.printErrorUsage(msg);
+                    }
+                } catch (NumberFormatException nfe) {
+                    String msg = "Illegal value for --threads: " + am.getValue("threads");
+                    this.printErrorUsage(msg);
+                }
+            }
+            
+        	if (!this.done) {
+	            ArtifactDAO artifactDAO = new ArtifactDAO();
+	            artifactDAO.setConfig(daoConfig);
+	            
+	            this.downloader = new DownloadArtifactFiles(
+	                artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize,
+	                retryAfterHours, verify);
+        	}
+    	}
     }
     
     public void execute() throws Exception {
-    	
+    	if (!this.done) {
+    		this.setExitValue(2);
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            listeners.add(downloader);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+            super.execute();
+    	}
+    }
+    
+    protected boolean executeCommand() throws Exception {
+    	boolean stopDownload = false;
+        if (this.subject != null) {
+        	stopDownload = Subject.doAs(this.subject, downloader) == 0;
+        } else {
+        	stopDownload = downloader.run() == 0;
+        }
+        return stopDownload;
     }
 }

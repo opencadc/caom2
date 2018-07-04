@@ -87,7 +87,7 @@ public class Validate extends ValidateOrDiff {
     	super(am);
     	
     	if (!this.done) {
-        	// parent has not discovered any show stopper errors
+        	// parent has not discovered any show stopper
             if (!am.isSet("database")) {
                 String msg = "Missing required parameter 'database'";
 	            this.printErrorUsage(msg);
@@ -104,7 +104,7 @@ public class Validate extends ValidateOrDiff {
 
     public void printUsage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(this.appName).append(" [mode-args]");
+        sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
         sb.append("\n        --database=<server.database.schema>");
         sb.append("\n        --collection=<collection> : The collection to validate");
