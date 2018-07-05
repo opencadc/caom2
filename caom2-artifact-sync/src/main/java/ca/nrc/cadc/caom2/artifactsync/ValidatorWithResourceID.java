@@ -90,15 +90,15 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
  * @author majorb, yeunga
  *
  */
-public class ResourceIDBasedValidator extends TapBasedValidator {
+public class ValidatorWithResourceID extends TapBasedValidator {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     
     private URI caomTapResourceID;
         
-    private static final Logger log = Logger.getLogger(ResourceIDBasedValidator.class);
+    private static final Logger log = Logger.getLogger(ValidatorWithResourceID.class);
     
-    public ResourceIDBasedValidator(URI caomTapResourceID, 
+    public ValidatorWithResourceID(URI caomTapResourceID, 
             String collection, boolean reportOnly, ArtifactStore artifactStore) {
         super(collection, reportOnly, artifactStore);
         this.caomTapResourceID = caomTapResourceID;
