@@ -106,7 +106,7 @@ public class Diff extends ValidateOrDiff {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
-        sb.append("\n        --source=<server.database.schema | TAP resource ID | URL>");
+        sb.append("\n        --source=<server.database.schema | TAP resource ID | TAP Service URL>");
         sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
