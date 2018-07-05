@@ -70,17 +70,6 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.TreeSet;
-
-import javax.sql.DataSource;
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
@@ -91,6 +80,17 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.TreeSet;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
 
 /**
  * Class to support all modes that use 'database | source = server.database.schema'.

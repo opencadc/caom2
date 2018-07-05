@@ -126,8 +126,8 @@ public class Download extends DiscoverOrDownload {
 
                 this.downloader = new DownloadArtifactFiles(
                         artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
-        	}
-    	}
+            }
+        }
     }
 
     public void printUsage() {
@@ -169,7 +169,7 @@ public class Download extends DiscoverOrDownload {
         if (this.subject != null) {
             stopDownload = Subject.doAs(this.subject, downloader) == 0;
         } else {
-        	stopDownload = downloader.run() == 0;
+            stopDownload = downloader.run() == 0;
         }
         return stopDownload;
     }

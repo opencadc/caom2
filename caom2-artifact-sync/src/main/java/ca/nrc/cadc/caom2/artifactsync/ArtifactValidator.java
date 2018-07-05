@@ -70,12 +70,12 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.date.DateUtil;
+
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.util.TreeSet;
@@ -86,12 +86,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.net.InputStreamWrapper;
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
-import ca.nrc.cadc.caom2.artifact.ArtifactStore;
-import ca.nrc.cadc.date.DateUtil;
 
 /**
  * Class that compares artifacts in the caom2 metadata with the artifacts
@@ -113,7 +107,9 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
     
     abstract boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException;
+    
     abstract TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception;
+    
     abstract boolean supportSkipURITable();
     
     public ArtifactValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
@@ -172,8 +168,8 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                 logicalArtifacts.remove(nextLogical);
                 if (nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
-                    if (nextLogical.contentLength == null || 
-                            !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
+                    if (nextLogical.contentLength == null 
+                            || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                         diffLength++;
                         if (supportSkipURITable) {
                             if (this.checkAddToSkipTable(nextLogical)) {
@@ -193,8 +189,8 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                              "caomLastModified", df.format(nextLogical.lastModified),
                              "ingestDate", df.format(nextPhysical.lastModified)},
                             false);
-                    } else if (nextLogical.contentType == null ||
-                            !nextLogical.contentType.equals(nextPhysical.contentType)) {
+                    } else if (nextLogical.contentType == null
+                            || !nextLogical.contentType.equals(nextPhysical.contentType)) {
                         diffType++;
                         if (supportSkipURITable) {
                             if (this.checkAddToSkipTable(nextLogical)) {
@@ -276,34 +272,34 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         if (reportOnly) {
             // diff
             logJSON(new String[] {
-                    "logType", "summary",
-                    "collection", collection,
-                    "totalInCAOM", Long.toString(logicalCount),
-                    "totalInStorage", Long.toString(physicalCount),
-                    "totalCorrect", Long.toString(correct),
-                    "totalDiffChecksum", Long.toString(diffChecksum),
-                    "totalDiffLength", Long.toString(diffLength),
-                    "totalDiffType", Long.toString(diffType),
-                    "totalNotInCAOM", Long.toString(notInLogical),
-                    "totalNotInStorage", Long.toString(notInPhysical),
-                    "time", Long.toString(System.currentTimeMillis() - start)
+                "logType", "summary",
+                "collection", collection,
+                "totalInCAOM", Long.toString(logicalCount),
+                "totalInStorage", Long.toString(physicalCount),
+                "totalCorrect", Long.toString(correct),
+                "totalDiffChecksum", Long.toString(diffChecksum),
+                "totalDiffLength", Long.toString(diffLength),
+                "totalDiffType", Long.toString(diffType),
+                "totalNotInCAOM", Long.toString(notInLogical),
+                "totalNotInStorage", Long.toString(notInPhysical),
+                "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
             // validate
             logJSON(new String[] {
-                    "logType", "summary",
-                    "collection", collection,
-                    "totalInCAOM", Long.toString(logicalCount),
-                    "totalInStorage", Long.toString(physicalCount),
-                    "totalCorrect", Long.toString(correct),
-                    "totalDiffChecksum", Long.toString(diffChecksum),
-                    "totalDiffLength", Long.toString(diffLength),
-                    "totalDiffType", Long.toString(diffType),
-                    "totalNotInCAOM", Long.toString(notInLogical),
-                    "totalNotInStorage", Long.toString(notInPhysical),
-                    "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
-                    "totalNewSkipURI", Long.toString(skipURICount),
-                    "time", Long.toString(System.currentTimeMillis() - start)
+                "logType", "summary",
+                "collection", collection,
+                "totalInCAOM", Long.toString(logicalCount),
+                "totalInStorage", Long.toString(physicalCount),
+                "totalCorrect", Long.toString(correct),
+                "totalDiffChecksum", Long.toString(diffChecksum),
+                "totalDiffLength", Long.toString(diffLength),
+                "totalDiffType", Long.toString(diffType),
+                "totalNotInCAOM", Long.toString(notInLogical),
+                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
+                "totalNewSkipURI", Long.toString(skipURICount),
+                "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         }
     
@@ -349,82 +345,4 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
             }
         }
     }
-}
-
-class ResultReader implements InputStreamWrapper {
-    
-    private static final Logger log = Logger.getLogger(ResultReader.class);
-    
-    TreeSet<ArtifactMetadata> artifacts;
-    private boolean logical;
-    private ArtifactStore artifactStore;
-    
-    public ResultReader(ArtifactStore artifactStore, boolean logical) 
-            throws NoSuchAlgorithmException {
-        artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
-        this.logical = logical;
-        this.artifactStore = artifactStore;
-    }
-
-    @Override
-    public void read(InputStream inputStream) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        String[] parts;
-        ArtifactMetadata am = null;
-        boolean firstLine = true;
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
-        while ((line = reader.readLine()) != null) {
-            if (firstLine) {
-                // first line is a header
-                firstLine = false;
-            } else {
-                try {
-                    parts = line.split("\t");
-                    if (parts.length == 0) {
-                        // empty line
-                    } else {
-                        am = new ArtifactMetadata();
-                        if (logical) {
-                            am.artifactURI = parts[0];
-                            am.storageID = this.artifactStore.toStorageID(am.artifactURI);
-                        } else {
-                            am.storageID = parts[0];
-                        }
-                        
-                        // read lastModified
-                        am.lastModified = df.parse(parts[1]);
-                        
-                        if (parts.length > 2) {
-                            if (logical) {
-                                am.checksum = getStorageChecksum(parts[2]);
-                            } else {
-                                am.checksum = parts[2];
-                            }
-                        }
-                        if (parts.length > 3) {
-                            am.contentLength = parts[3];
-                        }
-                        if (parts.length > 4) {
-                            am.contentType = parts[4];
-                        }
-                        if (parts.length > 5) {
-                            am.releaseDate = df.parse(parts[5]);
-                        }
-                        artifacts.add(am);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to read " + (logical ? "logical" : "physical") +
-                            " artifact: " + line, e);
-                }
-            }
-        }
-        log.debug("Finished reading " + (logical ? "logical" : "physical") + " artifacts.");
-    }
-    
-    private String getStorageChecksum(String checksum) throws Exception {
-        int colon = checksum.indexOf(":");
-        return checksum.substring(colon + 1, checksum.length());
-    }
-
 }

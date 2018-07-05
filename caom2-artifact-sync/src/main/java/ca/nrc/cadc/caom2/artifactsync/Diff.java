@@ -97,9 +97,9 @@ public class Diff extends ValidateOrDiff {
                 String msg = "Missing required parameter 'source'";
                 this.printErrorUsage(msg);
             } else {
-            	this.parseSourceParam(am);
+                this.parseSourceParam(am);
             }
-    	}
+        }
     }
 
     public void printUsage() {
@@ -150,7 +150,7 @@ public class Diff extends ValidateOrDiff {
             observationDAO.setConfig(this.daoConfig);
             
             this.validator = new DbBasedValidator(observationDAO.getDataSource(),
-            	this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
+                    this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
         }
     }
 }

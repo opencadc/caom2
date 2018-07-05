@@ -70,18 +70,18 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.net.HttpDownload;
+
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
-import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 
 /**
  * Class to support the 'diff' mode with 'source= TAP resource ID | TAP service URL'.
@@ -96,11 +96,11 @@ public abstract class TapBasedValidator extends ArtifactValidator {
     private static final Logger log = Logger.getLogger(TapBasedValidator.class);
     
     public TapBasedValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
-    	super(collection, reportOnly, artifactStore);
+        super(collection, reportOnly, artifactStore);
     }
     
     protected boolean supportSkipURITable() {
-    	return false;
+        return false;
     }
     
     protected boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
@@ -109,15 +109,15 @@ public abstract class TapBasedValidator extends ArtifactValidator {
     }
     
     protected TreeSet<ArtifactMetadata> getLogicalMetadata(URL caomTapURL) throws Exception {
-        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, " +
-                "(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease " +
-                "      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease " +
-                "      ELSE NULL " +
-                "END) as releaseDate " +
-                "from caom2.Artifact a " +
-                "join caom2.Plane p on a.planeID = p.planeID " +
-                "join caom2.Observation o on p.obsID = o.obsID " +
-                "where o.collection='" + this.collection + "'";
+        String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, "
+                + "(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease "
+                + "      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease "
+                + "      ELSE NULL "
+                + "END) as releaseDate "
+                + "from caom2.Artifact a "
+                + "join caom2.Plane p on a.planeID = p.planeID "
+                + "join caom2.Observation o on p.obsID = o.obsID "
+                + "where o.collection='" + this.collection + "'";
         
         log.debug("logical query: " + adql);
         long start = System.currentTimeMillis();

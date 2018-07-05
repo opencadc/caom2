@@ -82,10 +82,10 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
-	private static Caom2ArtifactSync command;
+    private static Caom2ArtifactSync command;
 
     public static void main(String[] args) {
-        try {         	
+        try {
             ArgumentMap am = new ArgumentMap(args);
             if (am.isSet("discover")) {
                 command = new Discover(am);

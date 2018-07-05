@@ -70,19 +70,19 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+
 import java.net.URI;
 import java.net.URL;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
-import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 
 /**
  * Class to support the 'diff' mode with 'source= TAP resource ID'.

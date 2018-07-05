@@ -232,7 +232,9 @@ public class Caom2ArtifactSync {
         } else if (collection.equalsIgnoreCase("true")) {
             String msg = "Must specify collection with collection=";
             this.printErrorUsage(msg);
-        }return collection;
+        }
+        
+        return collection;
     }
     
     protected void createSubject(ArgumentMap am) {
@@ -311,14 +313,14 @@ public class Caom2ArtifactSync {
                 asPackage = asClass.getPackage().getName();
                 this.artifactStore = (ArtifactStore) asClass.newInstance();
             } catch (ClassNotFoundException cnfe) {
-            	this.exceptionMsg = "Failed to load store class:." + asClassName;
+                this.exceptionMsg = "Failed to load store class:." + asClassName;
                 this.asException = cnfe;
             } catch (Exception e) {
-            	this.exceptionMsg = "Failed to access store class " + asClassName;
+                this.exceptionMsg = "Failed to access store class " + asClassName;
                 this.asException = e;
             }
         } else {
-        	this.errorMsg = "Must specify artifactStore";
+            this.errorMsg = "Must specify artifactStore";
         }
         
         setLogLevel(am, asPackage);

@@ -134,7 +134,7 @@ public class Discover extends DiscoverOrDownload {
             listeners.add(harvester);
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
             super.execute();
-    	}
+        }
     }
     
     protected boolean executeCommand() throws Exception {
