@@ -124,13 +124,13 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         long start = System.currentTimeMillis();
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
-        Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
+        final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
                 return getLogicalMetadata();
             }
         });
         log.debug("Submitted query to caom2");
-        Future<TreeSet<ArtifactMetadata>> physicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
+        final Future<TreeSet<ArtifactMetadata>> physicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
                 return getPhysicalMetadata();
             }
