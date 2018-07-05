@@ -111,14 +111,6 @@ public class Caom2ArtifactSync {
     protected Map<String, Object> daoConfig;
 
     public boolean done = false;
-
-    public void execute() throws Exception {
-        if (!done) {
-            // not a help command and required parameters (e.g. ArtifactStore) are provided
-            String msg = "Missing a valid mode: discover, download, validate, diff.";
-            this.printErrorUsage(msg);
-        }
-    }
     
     public Caom2ArtifactSync(ArgumentMap am) {
         init(am);
@@ -136,7 +128,15 @@ public class Caom2ArtifactSync {
             }
         }
     }
-    
+
+    public void execute() throws Exception {
+        if (!done) {
+            // not a help command and required parameters (e.g. ArtifactStore) are provided
+            String msg = "Missing a valid mode: discover, download, validate, diff.";
+            this.printErrorUsage(msg);
+        }
+    }
+
     public void printUsage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(applicationName).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
