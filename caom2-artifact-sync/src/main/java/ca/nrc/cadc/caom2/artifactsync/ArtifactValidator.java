@@ -135,7 +135,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                 return getPhysicalMetadata();
             }
         });
-        log.debug("Submitted query to ad");
+        log.debug("Submitted queries");
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.DAYS);
         log.debug("Queryies are complete");

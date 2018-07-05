@@ -135,6 +135,7 @@ public class Diff extends ValidateOrDiff {
             URI tapResourceID = URI.create(source);
             this.validator = new ValidatorWithResourceID(tapResourceID, collection, true, artifactStore);
         } else if (source.contains("http:")) {
+            // source points to a TAP Service URL
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);

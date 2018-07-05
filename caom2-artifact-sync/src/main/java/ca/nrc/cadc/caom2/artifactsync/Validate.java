@@ -75,7 +75,7 @@ import ca.nrc.cadc.util.ArgumentMap;
 import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
+ * Class to support the 'validate' mode.
  *
  * @author majorb, yeunga
  */

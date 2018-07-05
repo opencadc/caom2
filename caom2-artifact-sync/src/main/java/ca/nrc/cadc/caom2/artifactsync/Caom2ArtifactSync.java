@@ -90,7 +90,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * Base class to parse the shared command line inputs for the caom2-artifact-sync tool.
+ * Base class to parse the shared command line inputs for all modes. 
+ * It handles the case when no mode is specified.
  *
  * @author majorb, yeunga
  */
