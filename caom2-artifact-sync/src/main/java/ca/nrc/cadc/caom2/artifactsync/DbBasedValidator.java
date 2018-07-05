@@ -93,7 +93,7 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
 
 /**
- * Class to support all modes that use 'database | source =<server.database.schema>'.
+ * Class to support all modes that use 'database | source = server.database.schema'.
  * 
  * @author majorb, yeunga
  *

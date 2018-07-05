@@ -85,7 +85,7 @@ import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 
 /**
- * Class to support the 'diff' mode with source=<TAP resource ID>.
+ * Class to support the 'diff' mode with 'source= TAP resource ID'.
  * 
  * @author majorb, yeunga
  *
