@@ -326,13 +326,15 @@ public class PackageRunner implements JobRunner
     }
 
     // temporary hack to support both caom and ivo uris in generatePackageName
-    private PlaneURI toPlaneURI(PublisherID pid)
+    // used by a unit test
+    static PlaneURI toPlaneURI(PublisherID pid)
     {
         StringBuilder sb = new StringBuilder();
         sb.append("caom:");
         String collection = pid.getResourceID().getPath();
-        while (collection.charAt(0) == '/')
-            collection = collection.substring(1);
+        int i = collection.lastIndexOf("/");
+        if (i >= 0)
+            collection = collection.substring(i+1);
         sb.append(collection).append("/");
         sb.append(pid.getURI().getQuery());
         return new PlaneURI(URI.create(sb.toString()));
