@@ -93,11 +93,12 @@ import org.apache.log4j.Logger;
  * Base class to parse the shared command line inputs for all modes. 
  * It handles the case when no mode is specified.
  *
- * @author majorb, yeunga
+ * @author majorb
  */
-public class Caom2ArtifactSync {
+public abstract class Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Caom2ArtifactSync.class);
+    public static String DEFAULT_APPLICATION_NAME = "caom2-artifact-sync";
 
     private String asClassName;
     private Exception asException;
@@ -105,13 +106,30 @@ public class Caom2ArtifactSync {
     private int exitValue = 0;
 
     protected ArtifactStore artifactStore;
-    protected String applicationName = "caom2-artifact-sync";
+    protected String applicationName = DEFAULT_APPLICATION_NAME;
+    protected String mode;
     protected String errorMsg;
     protected Subject subject;
     protected String[] dbInfo;
     protected Map<String, Object> daoConfig;
 
-    public boolean done = false;
+    // when isDone is true, do not execute the command any further
+    protected boolean isDone = false;
+    
+    public abstract void execute() throws Exception;
+    
+    protected abstract void printUsage();
+    
+    public static String getApplicationName() {
+        String appName = Caom2ArtifactSync.DEFAULT_APPLICATION_NAME;
+        // A custom application name can be passed in via this environment variable
+        String importedName = System.getProperty("ca.nrc.cadc.caom2.artifactsync.Main.name");
+        if (StringUtil.hasText(importedName)) {
+            appName = importedName;
+        }
+        
+        return appName;
+    }
     
     public Caom2ArtifactSync(ArgumentMap am) {
         init(am);
@@ -128,37 +146,6 @@ public class Caom2ArtifactSync {
                 this.logException(exceptionMsg, asException);
             }
         }
-    }
-
-    public void execute() throws Exception {
-        if (!done) {
-            // not a help command and required parameters (e.g. ArtifactStore) are provided
-            String msg = "Missing a valid mode: discover, download, validate, diff.";
-            this.printErrorUsage(msg);
-        }
-    }
-
-    public void printUsage() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(applicationName).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
-        sb.append("\n\n    use '").append(applicationName).append(" <mode> <-h|--help>' to get help on a <mode>");
-        sb.append("\n    where <mode> can be one of:");
-        sb.append("\n        --discover: Incrementally harvest artifacts");
-        sb.append("\n        --download: Download artifacts");
-        sb.append("\n        --validate: Discover missing artifacts and update the HarvestSkipURI table");
-        sb.append("\n        --diff: Discover and report missing artifacts");
-        sb.append("\n\n    optional general args:");
-        sb.append("\n        -v | --verbose");
-        sb.append("\n        -d | --debug");
-        sb.append("\n        -h | --help");
-        sb.append("\n        --profile : Profile task execution");
-        sb.append("\n\n    authentication:");
-        sb.append("\n        [--netrc|--cert=<pem file>]");
-        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
-
-        log.warn(sb.toString());    
-        this.done = true;
     }
     
     public void printErrorUsage(String msg) {
@@ -190,6 +177,10 @@ public class Caom2ArtifactSync {
         }
     }
     
+    protected void setIsDone(boolean value) {
+        this.isDone = value;
+    }
+ 
     protected void setExitValue(int value) {
         this.exitValue = value;
     }
@@ -197,7 +188,7 @@ public class Caom2ArtifactSync {
     protected void logException(String msg, Exception ex) {
         log.error(msg, ex);
         this.setExitValue(-1);
-        this.done = true;
+        this.isDone = true;
     }
 
     protected void parseDbParam(ArgumentMap am, String source) {
@@ -252,19 +243,12 @@ public class Caom2ArtifactSync {
     }
     
     private void init(ArgumentMap am) {
-        initAppName();
+        this.applicationName = getApplicationName();
+        this.mode = am.getPositionalArgs().get(0);
         setLogLevel(am);
         loadArtifactStore(am);
         setLogLevel(am);
         this.createSubject(am);
-    }
-    
-    private void initAppName() {
-        // A custom application name can be passed in via this environment variable
-        String importedName = System.getProperty("ca.nrc.cadc.caom2.artifactsync.Main.name");
-        if (StringUtil.hasText(importedName)) {
-            this.applicationName = importedName;
-        } 
     }
     
     private static void setLogLevel(ArgumentMap am) {

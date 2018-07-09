@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
 
@@ -80,27 +81,101 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
- * Class to support the 'discover' mode.
+ * Class to support both 'discover' and 'download' modes.
  *
- * @author majorb, yeunga
+ * @author majorb
  */
-public class Discover extends DiscoverOrDownload {
+public class Discover extends Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Discover.class);
+    private ArgumentMap am;
+    protected int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
+    protected boolean loop = false;
     private String collection = null;
+    private DownloadArtifactFiles downloader = null;
     private ArtifactHarvester harvester = null;
 
     public Discover(ArgumentMap am) {
         super(am);
 
-        if (!this.done) {
-            this.collection = this.parseCollection(am);
-            if (!this.done) {
-                ObservationDAO observationDAO = new ObservationDAO();
-                observationDAO.setConfig(this.daoConfig);
+        // save ArgumentMap instance to allow us to create Subject instance
+        // in the execution loop
+        this.am = am;
+        
+        if (!this.isDone) {
+            // arguments common to 'discover' and 'download' modes
+            if (am.isSet("batchsize")) {
+                try {
+                    this.batchSize = Integer.parseInt(am.getValue("batchsize"));
+                    if (batchSize < 1 || batchSize > 100000) {
+                        String msg = "value for --batchsize must be between 1 and 100000";
+                        printErrorUsage(msg);
+                    }
+                } catch (NumberFormatException nfe) {
+                    String msg = "Illegal value for --batchsize: " + am.getValue("batchsize");
+                    printErrorUsage(msg);
+                }
+            }
 
-                this.harvester = new ArtifactHarvester(
-                        observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+            if (!isDone) {
+                this.parseDbParam(am, "database");
+                this.loop = am.isSet("continue");
+            }
+            
+            if (!isDone) {
+                if (this.mode.equals("download")) {
+                    // arguments that apply to 'download' mode
+                    Integer retryAfterHours = null;
+                    if (am.isSet("retryAfter")) {
+                        try {
+                            retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                        } catch (NumberFormatException e) {
+                            String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
+                            this.printErrorUsage(msg);
+                        }
+                    }
+                    
+                    boolean verify = !am.isSet("noverify");
+
+                    int nthreads = 1;
+                    if (am.isSet("threads")) {
+                        try {
+                            nthreads = Integer.parseInt(am.getValue("threads"));
+                            if (nthreads < 1 || nthreads > 250) {
+                                String msg = "value for --threads must be between 1 and 250";
+                                this.printErrorUsage(msg);
+                            }
+                        } catch (NumberFormatException nfe) {
+                            String msg = "Illegal value for --threads: " + am.getValue("threads");
+                            this.printErrorUsage(msg);
+                        }
+                    }
+                    
+                    if (!this.isDone) {
+                        ArtifactDAO artifactDAO = new ArtifactDAO();
+                        artifactDAO.setConfig(daoConfig);
+
+                        this.downloader = new DownloadArtifactFiles(
+                                artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
+                        List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+                        listeners.add(downloader);
+                        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                    }
+                } else {
+                    // arguments that apply to 'discover' mode
+                    this.collection = this.parseCollection(am);
+                    
+                    if (!this.isDone) {
+                        ObservationDAO observationDAO = new ObservationDAO();
+                        observationDAO.setConfig(this.daoConfig);
+
+                        this.harvester = new ArtifactHarvester(
+                                observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+                        List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+                        listeners.add(harvester);
+                        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                    }
+                }
             }
         }
     }
@@ -110,9 +185,16 @@ public class Discover extends DiscoverOrDownload {
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
         sb.append("\n        --database=<server.database.schema>");
-        sb.append("\n        --collection=<collection> : The collection to discover");
-        sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
         sb.append("\n        --continue : Repeat batches until no work left");
+        if (this.mode.equals("download")) {
+            sb.append("\n        --threads=<integer> : Number of download threads (default: 1)>");
+            sb.append("\n        --batchsize=<integer> Max skip URIs to download (default: 1000)");
+            sb.append("\n        --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
+            sb.append("\n        --noverify : Do not confirm by MD5 sum after download");
+        } else {
+            sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
+            sb.append("\n        --collection=<collection> : The collection to discover");
+        }
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");
@@ -124,26 +206,51 @@ public class Discover extends DiscoverOrDownload {
         sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());    
-        this.done = true;
+        this.setIsDone(true);
     }
     
     public void execute() throws Exception {
-        if (!this.done) {
+        if (!this.isDone) {
             this.setExitValue(2);
-            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
-            listeners.add(harvester);
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
-            super.execute();
+            int loopNum = 1;
+            boolean stop = false;
+            do {
+                if (loop) {
+                    log.info("-- STARTING LOOP #" + loopNum + " --");
+                }
+
+                stop = this.executeCommand();
+
+                if (loop) {
+                    log.info("-- ENDING LOOP #" + loopNum + " --");
+                }
+
+                loopNum++;
+                
+                // re-initialize the subject
+                this.createSubject(am);
+                
+            } while (loop && !stop); // continue if work was done
+
+            this.setExitValue(0); // finished cleanly
         }
     }
     
     protected boolean executeCommand() throws Exception {
-        boolean stopHarvest = false;
+        boolean stop = false;
         if (this.subject != null) {
-            stopHarvest = Subject.doAs(this.subject, harvester) == 0;
+            if (this.mode.equals("download")) {
+                stop = Subject.doAs(this.subject, downloader) == 0;
+            } else {
+                stop = Subject.doAs(this.subject, harvester) == 0;
+            }
         } else {
-            stopHarvest = harvester.run() == 0;
+            if (this.mode.equals("download")) {
+                stop = downloader.run() == 0;
+            } else {
+                stop = harvester.run() == 0;
+            }
         }
-        return stopHarvest;
+        return stop;
     }
 }

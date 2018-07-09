@@ -71,34 +71,80 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
 /**
- * Class to support the 'validate' mode.
+ * Class to support both 'validate' and 'diff' modes.
  *
- * @author majorb, yeunga
+ * @author majorb
  */
-public class Validate extends ValidateOrDiff {
+public class Validate extends Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Validate.class);
-    
+    protected ArtifactValidator validator = null;
+    protected String collection = null;
+
     public Validate(ArgumentMap am) {
         super(am);
 
-        if (!this.done) {
+        if (!this.isDone) {
             // parent has not discovered any show stopper
-            if (!am.isSet("database")) {
-                String msg = "Missing required parameter 'database'";
+            // arguments common to 'diff' and 'validate' modes
+            if (this.subject == null) {
+                String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
+                this.printErrorUsage(msg);
+            } else if (!am.isSet("collection")) {
+                String msg = "Missing required parameter 'collection'";
                 this.printErrorUsage(msg);
             } else {
-                this.parseDbParam(am, "database");
-                ObservationDAO observationDAO = new ObservationDAO();
-                observationDAO.setConfig(this.daoConfig);
-
-                this.validator = new DbBasedValidator(observationDAO.getDataSource(),
-                        this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
+                this.collection = this.parseCollection(am);
+                
+                if (!this.isDone) {
+                    if (this.mode.equals("diff")) {
+                        // diff mode
+                        if (!am.isSet("source")) {
+                            String msg = "Missing required parameter 'source'";
+                            this.printErrorUsage(msg);
+                        } else {
+                            this.parseSourceParam(am);
+                        }
+                    } else {
+                        // validate mode
+                        if (!am.isSet("database")) {
+                            String msg = "Missing required parameter 'database'";
+                            this.printErrorUsage(msg);
+                        } else {
+                            this.parseDbParam(am, "database");
+                            ObservationDAO observationDAO = new ObservationDAO();
+                            observationDAO.setConfig(this.daoConfig);
+        
+                            this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+                                    this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
+                        }
+                    }
+                }
             }
+        }
+    }
+    
+    public void execute() throws Exception {
+        if (!this.isDone) {
+            this.setExitValue(2);
+            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+            listeners.add(validator);
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+            Subject.doAs(this.subject, validator);
+            this.setExitValue(0); // finished cleanly
         }
     }
 
@@ -106,8 +152,13 @@ public class Validate extends ValidateOrDiff {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
-        sb.append("\n        --database=<server.database.schema>");
-        sb.append("\n        --collection=<collection> : The collection to validate");
+        if (this.mode.equals("diff")) {
+            sb.append("\n        --source=<server.database.schema | TAP resource ID | TAP Service URL>");
+            sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
+        } else {
+            sb.append("\n        --database=<server.database.schema>");
+            sb.append("\n        --collection=<collection> : The collection to validate");
+        }
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");
@@ -119,6 +170,39 @@ public class Validate extends ValidateOrDiff {
         sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
 
         log.warn(sb.toString());    
-        this.done = true;
+        this.setIsDone(true);
+    }
+    
+    private void parseSourceParam(ArgumentMap am) {
+        String source = am.getValue("source");
+        if (!StringUtil.hasText(source)) {
+            String msg = "Must specify source." ;
+            this.printErrorUsage(msg);
+        } else if (source.equalsIgnoreCase("true")) {
+            String msg = "Must specify source with source=";
+            this.printErrorUsage(msg);
+        } else if (source.contains("ivo:")) {
+            // source points to a TAP Resource ID
+            URI tapResourceID = URI.create(source);
+            this.validator = new ValidatorWithResourceID(tapResourceID, collection, true, artifactStore);
+        } else if (source.contains("http:")) {
+            // source points to a TAP Service URL
+            URL tapServiceURL;
+            try {
+                tapServiceURL = new URL(source);
+                this.validator = new ValidatorWithServiceURL(tapServiceURL, collection, true, artifactStore);
+            } catch (MalformedURLException e) {
+                String msg = "Must specify source." ;
+                this.logException(msg, e);
+            }
+        } else {
+            // source points to a database
+            this.parseDbParam(am, "source");
+            ObservationDAO observationDAO = new ObservationDAO();
+            observationDAO.setConfig(this.daoConfig);
+            
+            this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+                    this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
+        }
     }
 }

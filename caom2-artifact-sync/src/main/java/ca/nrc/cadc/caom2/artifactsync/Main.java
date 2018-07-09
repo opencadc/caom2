@@ -70,42 +70,86 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
 
+import java.util.List;
+
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
  *
- * @author majorb, yeunga
+ * @author majorb
  */
 public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
-    private static int exitValue = 0;
     private static Caom2ArtifactSync command;
 
     public static void main(String[] args) {
         try {
+            Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
             ArgumentMap am = new ArgumentMap(args);
-            if (am.isSet("discover")) {
-                command = new Discover(am);
-            } else if (am.isSet("download")) {
-                command = new Download(am);
-            } else if (am.isSet("validate")) {
-                command = new Validate(am);
-            } else if (am.isSet("diff")) {
-                command = new Diff(am);
+            List<String> positionalArgs = am.getPositionalArgs();
+            if (positionalArgs.size() == 0) {
+                if (am.isSet("h") || am.isSet("help")) {
+                    // help on caom2-artifact-sync
+                    printUsage();
+                } else {
+                    String msg = "Missing a valid mode: discover, download, validate, diff.";
+                    exitWithErrorUsage(msg);
+                }
+            } else if (positionalArgs.size() > 1) {
+                String msg = "Only one valid mode is allowed: discover, download, validate, diff.";
+                exitWithErrorUsage(msg);
             } else {
-                command = new Caom2ArtifactSync(am);
+                // one mode is specified
+                String mode = positionalArgs.get(0);
+                if (mode.equals("discover") || mode.equals("download")) {
+                    command = new Discover(am);
+                } else if (mode.equals("validate") || mode.equals("diff")) {
+                    command = new Validate(am);
+                } else {
+                    String msg = "Unsupported mode: " + mode;
+                    exitWithErrorUsage(msg);
+                }
             }
 
             command.execute();
         } catch (Throwable t) {
             log.error("uncaught exception", t);
-            exitValue = -1;
-            System.exit(exitValue);
+            System.exit(-1);
         } finally {
             System.exit(command.getExitValue());
         }
+    }
+
+    private static void printUsage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
+        sb.append("\n\n    use '").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> <-h|--help>' to get help on a <mode>");
+        sb.append("\n    where <mode> can be one of:");
+        sb.append("\n        --discover: Incrementally harvest artifacts");
+        sb.append("\n        --download: Download artifacts");
+        sb.append("\n        --validate: Discover missing artifacts and update the HarvestSkipURI table");
+        sb.append("\n        --diff: Discover and report missing artifacts");
+        sb.append("\n\n    optional general args:");
+        sb.append("\n        -v | --verbose");
+        sb.append("\n        -d | --debug");
+        sb.append("\n        -h | --help");
+        sb.append("\n        --profile : Profile task execution");
+        sb.append("\n\n    authentication:");
+        sb.append("\n        [--netrc|--cert=<pem file>]");
+        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
+        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
+
+        log.warn(sb.toString());    
+    }
+
+    private static void exitWithErrorUsage(String msg) {
+        log.error(msg);
+        printUsage();
+        System.exit(-1);
     }
 }
