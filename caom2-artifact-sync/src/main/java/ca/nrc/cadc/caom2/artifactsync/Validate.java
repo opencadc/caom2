@@ -99,7 +99,7 @@ public class Validate extends Caom2ArtifactSync {
 
         if (!this.isDone) {
             // parent has not discovered any show stopper
-            // arguments common to 'diff' and 'validate' modes
+            // arguments common to 'diff' and 'validategit' modes
             if (this.subject == null) {
                 String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
                 this.printErrorUsage(msg);
@@ -128,7 +128,7 @@ public class Validate extends Caom2ArtifactSync {
                             ObservationDAO observationDAO = new ObservationDAO();
                             observationDAO.setConfig(this.daoConfig);
         
-                            this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+                            this.validator = new Validator(observationDAO.getDataSource(),
                                     this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
                         }
                     }
@@ -184,13 +184,13 @@ public class Validate extends Caom2ArtifactSync {
         } else if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            this.validator = new ValidatorWithResourceID(tapResourceID, collection, true, artifactStore);
+            this.validator = new Validator(tapResourceID, collection, true, artifactStore);
         } else if (source.contains("http:")) {
             // source points to a TAP Service URL
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);
-                this.validator = new ValidatorWithServiceURL(tapServiceURL, collection, true, artifactStore);
+                this.validator = new Validator(tapServiceURL, collection, true, artifactStore);
             } catch (MalformedURLException e) {
                 String msg = "Must specify source." ;
                 this.logException(msg, e);
@@ -201,7 +201,7 @@ public class Validate extends Caom2ArtifactSync {
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(this.daoConfig);
             
-            this.validator = new DbBasedValidator(observationDAO.getDataSource(),
+            this.validator = new Validator(observationDAO.getDataSource(),
                     this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
         }
     }
