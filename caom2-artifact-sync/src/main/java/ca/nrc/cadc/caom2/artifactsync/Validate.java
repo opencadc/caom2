@@ -99,7 +99,7 @@ public class Validate extends Caom2ArtifactSync {
 
         if (!this.isDone) {
             // parent has not discovered any show stopper
-            // arguments common to 'diff' and 'validategit' modes
+            // arguments common to 'diff' and 'validate' modes
             if (this.subject == null) {
                 String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
                 this.printErrorUsage(msg);
