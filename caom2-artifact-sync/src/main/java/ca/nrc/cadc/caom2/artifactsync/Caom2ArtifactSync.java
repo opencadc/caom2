@@ -245,26 +245,34 @@ public abstract class Caom2ArtifactSync {
     private void init(ArgumentMap am) {
         this.applicationName = getApplicationName();
         this.mode = am.getPositionalArgs().get(0);
-        setLogLevel(am);
-        loadArtifactStore(am);
-        setLogLevel(am);
+        String asPackage = loadArtifactStore(am);
+        setLogLevel(am, asPackage);
         this.createSubject(am);
     }
     
-    private static void setLogLevel(ArgumentMap am) {
+    private static void setLogLevel(ArgumentMap am, String asPackage) {
         if (am.isSet("d") || am.isSet("debug")) {
             Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.DEBUG);
             Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
             Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
+            if (asPackage != null) {
+                Log4jInit.setLevel(asPackage, Level.DEBUG);
+            }
         } else if (am.isSet("v") || am.isSet("verbose")) {
             Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
             Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+            if (asPackage != null) {
+                Log4jInit.setLevel(asPackage, Level.INFO);
+            }
         } else {
             Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.WARN);
+            if (asPackage != null) {
+                Log4jInit.setLevel(asPackage, Level.WARN);
+            }
         }
         
         if (am.isSet("profile")) {
@@ -272,23 +280,7 @@ public abstract class Caom2ArtifactSync {
         }
     }
     
-    private static void setLogLevel(ArgumentMap am, String asPackage) {
-        if (am.isSet("d") || am.isSet("debug")) {
-            if (asPackage != null) {
-                Log4jInit.setLevel(asPackage, Level.DEBUG);
-            }
-        } else if (am.isSet("v") || am.isSet("verbose")) {
-            if (asPackage != null) {
-                Log4jInit.setLevel(asPackage, Level.INFO);
-            }
-        } else {
-            if (asPackage != null) {
-                Log4jInit.setLevel(asPackage, Level.WARN);
-            }
-        }
-    }
-    
-    private void loadArtifactStore(ArgumentMap am) {
+    private String loadArtifactStore(ArgumentMap am) {
         this.asClassName = am.getValue("artifactStore");
         String asPackage = null;
         
@@ -308,6 +300,6 @@ public abstract class Caom2ArtifactSync {
             this.errorMsg = "Must specify artifactStore";
         }
         
-        setLogLevel(am, asPackage);
+        return asPackage;
     }
 }

@@ -130,10 +130,10 @@ public class Main {
         sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
         sb.append("\n\n    use '").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> <-h|--help>' to get help on a <mode>");
         sb.append("\n    where <mode> can be one of:");
-        sb.append("\n        --discover: Incrementally harvest artifacts");
-        sb.append("\n        --download: Download artifacts");
-        sb.append("\n        --validate: Discover missing artifacts and update the HarvestSkipURI table");
-        sb.append("\n        --diff: Discover and report missing artifacts");
+        sb.append("\n        discover: Incrementally harvest artifacts");
+        sb.append("\n        download: Download artifacts");
+        sb.append("\n        validate: Discover missing artifacts and update the HarvestSkipURI table");
+        sb.append("\n        diff: Discover and report missing artifacts");
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");

@@ -70,20 +70,39 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.StringUtil;
 
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
@@ -94,25 +113,45 @@ import org.apache.log4j.Logger;
  * @author majorb
  *
  */
-public abstract class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
+public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     
-    protected ArtifactStore artifactStore;
-    protected String collection;
-    protected boolean reportOnly;
+    private ObservationDAO observationDAO;
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String source;
+    private ArtifactStore artifactStore;
+    private String collection;
+    private boolean reportOnly;
+    private URI caomTapResourceID;
+    private URL caomTapURL;
+    private boolean supportSkipURITable = false;
         
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
+
+    public ArtifactValidator(DataSource dataSource, String[] dbInfo, ObservationDAO observationDAO, 
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        this(collection, reportOnly, artifactStore);
+        this.observationDAO = observationDAO;
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
+    }
     
-    abstract boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException;
+    public ArtifactValidator(URI caomTapResourceID, 
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        this(collection, reportOnly, artifactStore);
+        this.caomTapResourceID = caomTapResourceID;
+    }
     
-    abstract TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception;
+    public ArtifactValidator(URL caomTapURL, 
+            String collection, boolean reportOnly, ArtifactStore artifactStore) {
+        this(collection, reportOnly, artifactStore);
+        this.caomTapURL = caomTapURL;
+    }
     
-    abstract boolean supportSkipURITable();
-    
-    public ArtifactValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
+    private ArtifactValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
@@ -141,7 +180,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         log.debug("Queryies are complete");
         executor.shutdownNow();
         
-        boolean supportSkipURITable = this.supportSkipURITable();
+        boolean supportSkipURITable = supportSkipURITable();
         TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
         TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
         long logicalCount = logicalArtifacts.size();
@@ -172,7 +211,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                             || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                         diffLength++;
                         if (supportSkipURITable) {
-                            if (this.checkAddToSkipTable(nextLogical)) {
+                            if (checkAddToSkipTable(nextLogical)) {
                                 skipURICount++;
                             } else {
                                 inSkipURICount++;
@@ -193,7 +232,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                             || !nextLogical.contentType.equals(nextPhysical.contentType)) {
                         diffType++;
                         if (supportSkipURITable) {
-                            if (this.checkAddToSkipTable(nextLogical)) {
+                            if (checkAddToSkipTable(nextLogical)) {
                                 skipURICount++;
                             } else {
                                 inSkipURICount++;
@@ -216,7 +255,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        if (this.checkAddToSkipTable(nextLogical)) {
+                        if (checkAddToSkipTable(nextLogical)) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -261,7 +300,7 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
                 
             // add to HavestSkipURI table if there is not already a row in the table
             if (supportSkipURITable) {
-                if (this.checkAddToSkipTable(next)) {
+                if (checkAddToSkipTable(next)) {
                     skipURICount++;
                 } else {
                     inSkipURICount++;
@@ -306,7 +345,19 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         return null;
     }
     
-    protected void logJSON(String[] data, boolean summaryInfo) {
+    public void shutdown() {
+        if (executor != null) {
+            executor.shutdownNow();
+            try {
+                executor.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                log.warn("Shutdown interruped");
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+   
+    private void logJSON(String[] data, boolean summaryInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         boolean paired = true;
@@ -328,21 +379,139 @@ public abstract class ArtifactValidator implements PrivilegedExceptionAction<Obj
         }
     }
 
-    private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
-        TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        metadata.addAll(artifactStore.list(this.collection));
-        return metadata;
+    private boolean supportSkipURITable() {
+        return supportSkipURITable;
     }
     
-    public void shutdown() {
-        if (executor != null) {
-            executor.shutdownNow();
-            try {
-                executor.awaitTermination(2, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                log.warn("Shutdown interruped");
-                Thread.currentThread().interrupt();
+    private boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
+        if (supportSkipURITable) {
+            // add to HavestSkipURI table if there is not already a row in the table
+            Date releaseDate = artifact.releaseDate;
+            URI artifactURI = new URI(artifact.artifactURI);
+            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+            if (skip == null && releaseDate != null) {
+                if (!reportOnly) {
+                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                    harvestSkipURIDAO.put(skip);
+                    
+                    // validate 
+                    DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+                    logJSON(new String[]
+                        {"logType", "detail",
+                         "action", "addedToSkipTable",
+                         "artifactURI", artifact.artifactURI,
+                         "caomCollection", artifact.collection,
+                         "caomChecksum", artifact.checksum,
+                         "caomLastModified", df.format(artifact.lastModified)},
+                        true);
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        return false;
+    }
+    
+    private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
+        TreeSet<ArtifactMetadata> result;
+        if (StringUtil.hasText(source)) {
+            // use database <server.database.schema>
+            // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
+            this.supportSkipURITable = !reportOnly;
+            long start = System.currentTimeMillis();
+            List<Observation> observations = observationDAO.getList(Observation.class, null, null, 3);
+            result = getMetadata(observations);
+            log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
+        } else {
+            this.supportSkipURITable = false;
+            if (caomTapResourceID != null) {
+                // source is a TAP resource ID
+                RegistryClient regClient = new RegistryClient();
+                AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
+                this.caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
+            }
+            
+            // source is a TAP service URL or a TAP resource ID
+            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, "
+                    + "(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease "
+                    + "      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease "
+                    + "      ELSE NULL "
+                    + "END) as releaseDate "
+                    + "from caom2.Artifact a "
+                    + "join caom2.Plane p on a.planeID = p.planeID "
+                    + "join caom2.Observation o on p.obsID = o.obsID "
+                    + "where o.collection='" + collection + "'";
+            
+            log.debug("logical query: " + adql);
+            long start = System.currentTimeMillis();
+            result = query(caomTapURL, adql, true);
+            log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
+        }
+        return result;
+    }
+    
+    private TreeSet<ArtifactMetadata> getMetadata(List<Observation> observations) throws Exception {
+        TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());;
+        for (Observation obs : observations) {
+            for (Plane plane : obs.getPlanes()) {
+                for (Artifact artifact : plane.getArtifacts()) {
+                    ArtifactMetadata metadata = new ArtifactMetadata(); 
+                    metadata.artifactURI = artifact.getURI().toASCIIString();
+                    metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
+                    metadata.contentLength = Long.toString(artifact.contentLength);
+                    metadata.contentType = artifact.contentType;
+                    metadata.collection = collection;
+                    metadata.lastModified = artifact.getLastModified();
+                    metadata.storageID = artifactStore.toStorageID(artifact.getURI().toASCIIString());
+                    ReleaseType type = artifact.getReleaseType();
+                    if (ReleaseType.DATA.equals(type)) {
+                        metadata.releaseDate = plane.dataRelease;
+                    } else if (ReleaseType.META.equals(type)) {
+                        metadata.releaseDate = plane.metaRelease;
+                    } else {
+                        metadata.releaseDate = null;
+                    }
+                    artifacts.add(metadata);
+                }
             }
         }
+        
+        return artifacts;
+    }
+    
+    private TreeSet<ArtifactMetadata> query(URL baseURL, String adql, boolean logical) throws Exception {
+        StringBuilder queryString = new StringBuilder();
+        queryString.append("LANG=ADQL&RESPONSEFORMAT=tsv&QUERY=");
+        queryString.append(URLEncoder.encode(adql, "UTF-8"));
+        URL url = new URL(baseURL.toString() + "?" + queryString.toString());
+        ResultReader resultReader = new ResultReader(artifactStore, logical);
+        HttpDownload get = new HttpDownload(url, resultReader);
+        try {
+            get.run();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+        if (get.getThrowable() != null) {
+            if (get.getThrowable() instanceof Exception) {
+                throw (Exception) get.getThrowable();
+            } else {
+                throw new RuntimeException(get.getThrowable());
+            }
+        }
+        
+        return resultReader.artifacts;
+    }
+    
+    private String getStorageChecksum(String checksum) throws Exception {
+        int colon = checksum.indexOf(":");
+        return checksum.substring(colon + 1, checksum.length());
+    }
+
+    private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
+        TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
+        metadata.addAll(artifactStore.list(collection));
+        return metadata;
     }
 }
