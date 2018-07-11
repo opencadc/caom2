@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,73 +67,103 @@
 ************************************************************************
 */
 
+
 package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.net.TransientException;
-import ca.nrc.cadc.util.FileMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.InputStreamWrapper;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.security.AccessControlException;
+import java.io.InputStreamReader;
+import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.util.TreeSet;
+
+import org.apache.log4j.Logger;
 
 /**
- * An interface to a CAOM2 artifact storage system.
- *
+ * Class that reads the results of a query.
+ * 
  * @author majorb
+ *
  */
-public interface ArtifactStore {
+public class ResultReader implements InputStreamWrapper {
+    
+    private static final Logger log = Logger.getLogger(ResultReader.class);
+    
+    TreeSet<ArtifactMetadata> artifacts;
+    private boolean logical;
+    private ArtifactStore artifactStore;
+    
+    public ResultReader(ArtifactStore artifactStore, boolean logical) 
+            throws NoSuchAlgorithmException {
+        artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
+        this.logical = logical;
+        this.artifactStore = artifactStore;
+    }
 
-    /**
-     * Checks for artifact existence.
-     *
-     * @param artifactURI
-     *            The artifact identifier.
-     * @param checksum
-     *            The checksum of the artifact.
-     * @return True in the artifact exists with the given checksum.
-     *
-     * @throws UnsupportedOperationException
-     *             If the artifact uri cannot be resolved.
-     * @throws UnsupportedOperationException
-     *             If the checksum algorith is not supported.
-     * @throws IllegalArgumentException
-     *             If an aspect of the artifact uri is incorrect.
-     * @throws AccessControlException
-     *             If the calling user is not allowed to perform the query.
-     * @throws TransientException
-     *             If an unexpected runtime error occurs.
-     * @throws RuntimeException
-     *             If an unrecovarable error occurs.
-     */
-    public boolean contains(URI artifactURI, URI checksum)
-            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
-
-    /**
-     * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
-     *
-     * @param artifactURI
-     *            The artifact identifier.
-     * @param data
-     *            The artifact data.
-     * @param metadata
-     *            Artifact metadata, including md5sum, contentLength and contentType
-     *
-     * @throws UnsupportedOperationException
-     *             If the artifact uri cannot be resolved.
-     * @throws UnsupportedOperationException
-     *             If the checksum algorith is not supported.
-     * @throws IllegalArgumentException
-     *             If an aspect of the artifact uri is incorrect.
-     * @throws AccessControlException
-     *             If the calling user is not allowed to upload the artifact.
-     * @throws IllegalStateException
-     *             If the artifact already exists.
-     * @throws TransientException
-     *             If an unexpected runtime error occurs.
-     * @throws RuntimeException
-     *             If an unrecovarable error occurs.
-     */
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata)
-            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
-
+    @Override
+    public void read(InputStream inputStream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line;
+        String[] parts;
+        ArtifactMetadata am = null;
+        boolean firstLine = true;
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+        while ((line = reader.readLine()) != null) {
+            if (firstLine) {
+                // first line is a header
+                firstLine = false;
+            } else {
+                try {
+                    parts = line.split("\t");
+                    if (parts.length == 0) {
+                        // empty line
+                    } else {
+                        am = new ArtifactMetadata();
+                        if (logical) {
+                            am.artifactURI = parts[0];
+                            am.storageID = this.artifactStore.toStorageID(am.artifactURI);
+                        } else {
+                            am.storageID = parts[0];
+                        }
+                        
+                        // read lastModified
+                        am.lastModified = df.parse(parts[1]);
+                        
+                        if (parts.length > 2) {
+                            if (logical) {
+                                am.checksum = getStorageChecksum(parts[2]);
+                            } else {
+                                am.checksum = parts[2];
+                            }
+                        }
+                        if (parts.length > 3) {
+                            am.contentLength = parts[3];
+                        }
+                        if (parts.length > 4) {
+                            am.contentType = parts[4];
+                        }
+                        if (parts.length > 5) {
+                            am.releaseDate = df.parse(parts[5]);
+                        }
+                        artifacts.add(am);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to read " + (logical ? "logical" : "physical")
+                            + " artifact: " + line, e);
+                }
+            }
+        }
+        log.debug("Finished reading " + (logical ? "logical" : "physical") + " artifacts.");
+    }
+    
+    private String getStorageChecksum(String checksum) throws Exception {
+        int colon = checksum.indexOf(":");
+        return checksum.substring(colon + 1, checksum.length());
+    }
 }

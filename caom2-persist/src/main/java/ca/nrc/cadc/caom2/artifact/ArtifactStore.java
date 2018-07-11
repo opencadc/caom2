@@ -67,89 +67,95 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package ca.nrc.cadc.caom2.artifact;
 
-import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.FileMetadata;
 
-import java.util.List;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import java.io.InputStream;
+import java.net.URI;
+import java.security.AccessControlException;
+import java.util.Set;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
+ * An interface to a CAOM2 artifact storage system.
  *
  * @author majorb
  */
-public class Main {
+public interface ArtifactStore {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static Caom2ArtifactSync command;
+    /**
+     * Checks for artifact existence.
+     *
+     * @param artifactURI
+     *            The artifact identifier.
+     * @param checksum
+     *            The checksum of the artifact.
+     * @return True in the artifact exists with the given checksum.
+     *
+     * @throws UnsupportedOperationException
+     *             If the artifact uri cannot be resolved.
+     * @throws UnsupportedOperationException
+     *             If the checksum algorith is not supported.
+     * @throws IllegalArgumentException
+     *             If an aspect of the artifact uri is incorrect.
+     * @throws AccessControlException
+     *             If the calling user is not allowed to perform the query.
+     * @throws TransientException
+     *             If an unexpected runtime error occurs.
+     * @throws RuntimeException
+     *             If an unrecovarable error occurs.
+     */
+    public boolean contains(URI artifactURI, URI checksum)
+            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
-    public static void main(String[] args) {
-        try {
-            Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
-            ArgumentMap am = new ArgumentMap(args);
-            List<String> positionalArgs = am.getPositionalArgs();
-            if (positionalArgs.size() == 0) {
-                if (am.isSet("h") || am.isSet("help")) {
-                    // help on caom2-artifact-sync
-                    printUsage();
-                } else {
-                    String msg = "Missing a valid mode: discover, download, validate, diff.";
-                    exitWithErrorUsage(msg);
-                }
-            } else if (positionalArgs.size() > 1) {
-                String msg = "Only one valid mode is allowed: discover, download, validate, diff.";
-                exitWithErrorUsage(msg);
-            } else {
-                // one mode is specified
-                String mode = positionalArgs.get(0);
-                if (mode.equals("discover") || mode.equals("download")) {
-                    command = new Discover(am);
-                } else if (mode.equals("validate") || mode.equals("diff")) {
-                    command = new Validate(am);
-                } else {
-                    String msg = "Unsupported mode: " + mode;
-                    exitWithErrorUsage(msg);
-                }
-            }
+    /**
+     * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
+     *
+     * @param artifactURI
+     *            The artifact identifier.
+     * @param data
+     *            The artifact data.
+     * @param metadata
+     *            Artifact metadata, including md5sum, contentLength and contentType
+     *
+     * @throws UnsupportedOperationException
+     *             If the artifact uri cannot be resolved.
+     * @throws UnsupportedOperationException
+     *             If the checksum algorith is not supported.
+     * @throws IllegalArgumentException
+     *             If an aspect of the artifact uri is incorrect.
+     * @throws AccessControlException
+     *             If the calling user is not allowed to upload the artifact.
+     * @throws IllegalStateException
+     *             If the artifact already exists.
+     * @throws TransientException
+     *             If an unexpected runtime error occurs.
+     * @throws RuntimeException
+     *             If an unrecovarable error occurs.
+     */
+    public void store(URI artifactURI, InputStream data, FileMetadata metadata)
+            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+    
+    /**
+     * Get the list of all artifacts in a certain archive.
+     * 
+     * @param archive The archive on which to search for files.
+     * @return A list of archive metadata objects
+     * @throws TransientException
+     * @throws UnsupportedOperationException
+     * @throws AccessControlException
+     */
+    public Set<ArtifactMetadata> list(String archive)
+            throws TransientException, UnsupportedOperationException, AccessControlException;
+    
+    /**
+     * Convert an artifact URI to a storage ID.
+     * 
+     * @param artifactURI The artifact URI to be converted.
+     * @return A string representing the storage ID
+     * @throws IllegalArgumentException If an aspect of the artifact uri is incorrect.
+     */
+    public String toStorageID(String artifactURI) throws IllegalArgumentException;
 
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            System.exit(-1);
-        } finally {
-            System.exit(command.getExitValue());
-        }
-    }
-
-    private static void printUsage() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
-        sb.append("\n\n    use '").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> <-h|--help>' to get help on a <mode>");
-        sb.append("\n    where <mode> can be one of:");
-        sb.append("\n        discover: Incrementally harvest artifacts");
-        sb.append("\n        download: Download artifacts");
-        sb.append("\n        validate: Discover missing artifacts and update the HarvestSkipURI table");
-        sb.append("\n        diff: Discover and report missing artifacts");
-        sb.append("\n\n    optional general args:");
-        sb.append("\n        -v | --verbose");
-        sb.append("\n        -d | --debug");
-        sb.append("\n        -h | --help");
-        sb.append("\n        --profile : Profile task execution");
-        sb.append("\n\n    authentication:");
-        sb.append("\n        [--netrc|--cert=<pem file>]");
-        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
-
-        log.warn(sb.toString());    
-    }
-
-    private static void exitWithErrorUsage(String msg) {
-        log.error(msg);
-        printUsage();
-        System.exit(-1);
-    }
 }
