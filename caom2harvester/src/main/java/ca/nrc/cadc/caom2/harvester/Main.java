@@ -180,7 +180,7 @@ public class Main {
 
             boolean nosrc = (source == null || source.trim().length() == 0);
             if (nosrc) {
-                log.warn("missing required argument: --source=<server.database.schema> | ");
+                log.warn("missing required argument: --source=<server.database.schema>");
                 usage();
                 System.exit(1);
             }
@@ -414,7 +414,7 @@ public class Main {
         sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
-        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: true with --resourceID, false with other --source values)");
+        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: false when --source is a database, otherwise true)");
         log.warn(sb.toString());
     }
 
@@ -428,11 +428,13 @@ public class Main {
         }
 
         // Try source as resourceUri
-        try {
-            new URI(source);
-            return HarvestResource.SOURCE_URI;
-        } catch (URISyntaxException e) {
-            // Not an URI
+        if(source.startsWith("ivo://")) {
+            try {
+                new URI(source);
+                return HarvestResource.SOURCE_URI;
+            } catch (URISyntaxException e) {
+                // Not an URI
+            }
         }
        
         // Try source as DB

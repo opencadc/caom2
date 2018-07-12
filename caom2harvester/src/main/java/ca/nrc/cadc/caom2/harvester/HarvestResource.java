@@ -166,7 +166,7 @@ public class HarvestResource {
         if (resourceID != null) {
             return resourceID.toASCIIString() + "?" + collection;
         } else if (capabilitiesURL != null) {
-            return capabilitiesURL.toString() + "#" + collection;
+            return createProperUrlId(capabilitiesURL.toString(), collection);
         }
         return databaseServer + "." + database + "." + schema + "?" + collection;
     }
@@ -220,6 +220,19 @@ public class HarvestResource {
         } else {
             return "UNKNOWN";
         }
+    }
+    
+    private String createProperUrlId(String urlBase, String collection) {
+        String properId;
+        if(urlBase.indexOf("?")<0) {
+            properId = urlBase+"?"+collection;
+        }else if(urlBase.endsWith("?") || urlBase.endsWith("&")) {
+            properId = urlBase+collection;
+        }else{
+            properId = urlBase+"&"+collection;
+        }
+        
+        return properId;
     }
 
 }
