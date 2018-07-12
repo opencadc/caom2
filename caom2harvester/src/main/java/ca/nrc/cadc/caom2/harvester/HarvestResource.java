@@ -221,17 +221,17 @@ public class HarvestResource {
             return "UNKNOWN";
         }
     }
-    
+
     private String createProperUrlId(String urlBase, String collection) {
         String properId;
-        if(urlBase.indexOf("?")<0) {
-            properId = urlBase+"?"+collection;
-        }else if(urlBase.endsWith("?") || urlBase.endsWith("&")) {
-            properId = urlBase+collection;
-        }else{
-            properId = urlBase+"&"+collection;
+        if (urlBase.indexOf("?") < 0) {
+            properId = urlBase + "?" + collection;
+        } else if (urlBase.endsWith("?") || urlBase.endsWith("&")) {
+            properId = urlBase + collection;
+        } else {
+            properId = urlBase + "&" + collection;
         }
-        
+
         return properId;
     }
 

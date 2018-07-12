@@ -428,7 +428,7 @@ public class Main {
         }
 
         // Try source as resourceUri
-        if(source.startsWith("ivo://")) {
+        if (source.startsWith("ivo://")) {
             try {
                 new URI(source);
                 return HarvestResource.SOURCE_URI;
@@ -436,7 +436,7 @@ public class Main {
                 // Not an URI
             }
         }
-       
+
         // Try source as DB
         String[] srcDS = source.split("[.]");
         if (srcDS.length != 3) {
