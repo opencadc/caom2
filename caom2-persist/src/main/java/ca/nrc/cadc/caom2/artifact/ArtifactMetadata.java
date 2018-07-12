@@ -67,89 +67,44 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package ca.nrc.cadc.caom2.artifact;
 
-import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
+import java.util.Comparator;
+import java.util.Date;
 
-import java.util.List;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
- *
+ * Class to hold meta information about an artifact.
+ * 
  * @author majorb
+ *
  */
-public class Main {
+public class ArtifactMetadata {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static Caom2ArtifactSync command;
-
-    public static void main(String[] args) {
-        try {
-            Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
-            ArgumentMap am = new ArgumentMap(args);
-            List<String> positionalArgs = am.getPositionalArgs();
-            if (positionalArgs.size() == 0) {
-                if (am.isSet("h") || am.isSet("help")) {
-                    // help on caom2-artifact-sync
-                    printUsage();
-                } else {
-                    String msg = "Missing a valid mode: discover, download, validate, diff.";
-                    exitWithErrorUsage(msg);
-                }
-            } else if (positionalArgs.size() > 1) {
-                String msg = "Only one valid mode is allowed: discover, download, validate, diff.";
-                exitWithErrorUsage(msg);
-            } else {
-                // one mode is specified
-                String mode = positionalArgs.get(0);
-                if (mode.equals("discover") || mode.equals("download")) {
-                    command = new Discover(am);
-                } else if (mode.equals("validate") || mode.equals("diff")) {
-                    command = new Validate(am);
-                } else {
-                    String msg = "Unsupported mode: " + mode;
-                    exitWithErrorUsage(msg);
-                }
-            }
-
-            command.execute();
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            System.exit(-1);
-        } finally {
-            System.exit(command.getExitValue());
+    public String artifactURI;
+    public String checksum;
+    public String contentLength;
+    public String contentType;
+    public String collection;
+    public Date lastModified;
+    public String storageID;
+    public Date releaseDate;
+    
+    public boolean equals(Object o) {
+        if (o instanceof ArtifactMetadata) {
+            ArtifactMetadata other = (ArtifactMetadata) o;
+            Comparator<ArtifactMetadata> comparator = ArtifactMetadata.getComparator();
+            return comparator.compare(this, other) == 0;
         }
+        return false;
     }
-
-    private static void printUsage() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
-        sb.append("\n\n    use '").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> <-h|--help>' to get help on a <mode>");
-        sb.append("\n    where <mode> can be one of:");
-        sb.append("\n        discover: Incrementally harvest artifacts");
-        sb.append("\n        download: Download artifacts");
-        sb.append("\n        validate: Discover missing artifacts and update the HarvestSkipURI table");
-        sb.append("\n        diff: Discover and report missing artifacts");
-        sb.append("\n\n    optional general args:");
-        sb.append("\n        -v | --verbose");
-        sb.append("\n        -d | --debug");
-        sb.append("\n        -h | --help");
-        sb.append("\n        --profile : Profile task execution");
-        sb.append("\n\n    authentication:");
-        sb.append("\n        [--netrc|--cert=<pem file>]");
-        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
-
-        log.warn(sb.toString());    
-    }
-
-    private static void exitWithErrorUsage(String msg) {
-        log.error(msg);
-        printUsage();
-        System.exit(-1);
+    
+    public static Comparator<ArtifactMetadata> getComparator() {
+        return new Comparator<ArtifactMetadata>() {
+            @Override
+            public int compare(ArtifactMetadata o1, ArtifactMetadata o2) {
+                return o1.storageID.compareTo(o2.storageID);
+            }
+        };
     }
 }

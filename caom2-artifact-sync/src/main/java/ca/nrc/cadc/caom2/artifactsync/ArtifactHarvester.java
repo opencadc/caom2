@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
@@ -99,12 +100,10 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
     private String collection; // Will be used in the future
-    private boolean full;
     private int batchSize;
     private String source;
     private Date startDate;
     private Date stopDate;
-    private boolean firstRun;
     private DateFormat df;
     
     // reset each run
@@ -113,13 +112,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     Date start = new Date();
 
     public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
-                             ArtifactStore artifactStore, String collection, boolean full, int
-                                 batchSize) {
+                             ArtifactStore artifactStore, String collection, 
+                             int batchSize) {
 
         this.observationDAO = observationDAO;
         this.artifactStore = artifactStore;
         this.collection = collection;
-        this.full = full;
         this.batchSize = batchSize;
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
@@ -129,8 +127,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
         this.startDate = null;
         this.stopDate = new Date();
-
-        this.firstRun = true;
         
         df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
@@ -145,19 +141,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         int num = 0;
 
         try {
-            // Delete harvest skip URI records when in full mode
-            if (full && firstRun) {
-                harvestSkipURIDAO.delete(source, STATE_CLASS);
-                log.debug("Cleared harvest skip URI records for full harvesting.");
-            }
-
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
-            if (!full || !firstRun) {
-                startDate = state.curLastModified;
-            }
-            firstRun = false;
-
+            startDate = state.curLastModified;
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
                 stopDate, batchSize);
 
