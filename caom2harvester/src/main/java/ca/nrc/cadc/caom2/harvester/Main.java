@@ -387,13 +387,17 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
+        sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
         sb.append("\n         --destination=<server.database.schema> : persist output directly to a databsee server");
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
         sb.append("\n\nSource selection:");
-        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (default: 1)");
-        sb.append("\n         --source=<server.database.schema> | <resource ID> | <resource capabilities URL>:  (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
+        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n          <capabilities URL> : direct URl to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
+        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
+        
 
         sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
         sb.append("\n         --validate : validate all Observation.accMetaChecksum values between source and destination ");
@@ -407,11 +411,11 @@ public class Main {
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n         --batchSize=<number of observations per batch> (default: ");
-        sb.append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append("\n         --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ");
-        sb.append(DEFAULT_BATCH_FACTOR).append(")");
+        sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n         --dryrun : check for work but don't do anything");
+        
+        sb.append("\n\nLegacy options (probably only useful for CADC):");
+        sb.append("\n         --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         sb.append("\n         --noac : do not harvest ReadAccess tuples (default: false when --source is a database, otherwise true)");
@@ -433,7 +437,7 @@ public class Main {
                 new URI(source);
                 return HarvestResource.SOURCE_URI;
             } catch (URISyntaxException e) {
-                // Not an URI
+                // Not an resourceID
             }
         }
 
