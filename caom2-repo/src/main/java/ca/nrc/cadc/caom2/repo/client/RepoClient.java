@@ -1,71 +1,71 @@
 /*
-************************************************************************
-*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
-**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
-*
-*  (c) 2018.                            (c) 2018.
-*  Government of Canada                 Gouvernement du Canada
-*  National Research Council            Conseil national de recherches
-*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-*  All rights reserved                  Tous droits réservés
-*
-*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
-*  expressed, implied, or               énoncée, implicite ou légale,
-*  statutory, of any kind with          de quelque nature que ce
-*  respect to the software,             soit, concernant le logiciel,
-*  including without limitation         y compris sans restriction
-*  any warranty of merchantability      toute garantie de valeur
-*  or fitness for a particular          marchande ou de pertinence
-*  purpose. NRC shall not be            pour un usage particulier.
-*  liable in any event for any          Le CNRC ne pourra en aucun cas
-*  damages, whether direct or           être tenu responsable de tout
-*  indirect, special or general,        dommage, direct ou indirect,
-*  consequential or incidental,         particulier ou général,
-*  arising from the use of the          accessoire ou fortuit, résultant
-*  software.  Neither the name          de l'utilisation du logiciel. Ni
-*  of the National Research             le nom du Conseil National de
-*  Council of Canada nor the            Recherches du Canada ni les noms
-*  names of its contributors may        de ses  participants ne peuvent
-*  be used to endorse or promote        être utilisés pour approuver ou
-*  products derived from this           promouvoir les produits dérivés
-*  software without specific prior      de ce logiciel sans autorisation
-*  written permission.                  préalable et particulière
-*                                       par écrit.
-*
-*  This file is part of the             Ce fichier fait partie du projet
-*  OpenCADC project.                    OpenCADC.
-*
-*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
-*  you can redistribute it and/or       vous pouvez le redistribuer ou le
-*  modify it under the terms of         modifier suivant les termes de
-*  the GNU Affero General Public        la “GNU Affero General Public
-*  License as published by the          License” telle que publiée
-*  Free Software Foundation,            par la Free Software Foundation
-*  either version 3 of the              : soit la version 3 de cette
-*  License, or (at your option)         licence, soit (à votre gré)
-*  any later version.                   toute version ultérieure.
-*
-*  OpenCADC is distributed in the       OpenCADC est distribué
-*  hope that it will be useful,         dans l’espoir qu’il vous
-*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
-*  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
-*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
-*  General Public License for           Générale Publique GNU Affero
-*  more details.                        pour plus de détails.
-*
-*  You should have received             Vous devriez avoir reçu une
-*  a copy of the GNU Affero             copie de la Licence Générale
-*  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
-*
-*  $Revision: 5 $
-*
-************************************************************************
-*/
+ ************************************************************************
+ *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+ **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ *
+ *  (c) 2018.                            (c) 2018.
+ *  Government of Canada                 Gouvernement du Canada
+ *  National Research Council            Conseil national de recherches
+ *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ *  All rights reserved                  Tous droits réservés
+ *
+ *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+ *  expressed, implied, or               énoncée, implicite ou légale,
+ *  statutory, of any kind with          de quelque nature que ce
+ *  respect to the software,             soit, concernant le logiciel,
+ *  including without limitation         y compris sans restriction
+ *  any warranty of merchantability      toute garantie de valeur
+ *  or fitness for a particular          marchande ou de pertinence
+ *  purpose. NRC shall not be            pour un usage particulier.
+ *  liable in any event for any          Le CNRC ne pourra en aucun cas
+ *  damages, whether direct or           être tenu responsable de tout
+ *  indirect, special or general,        dommage, direct ou indirect,
+ *  consequential or incidental,         particulier ou général,
+ *  arising from the use of the          accessoire ou fortuit, résultant
+ *  software.  Neither the name          de l'utilisation du logiciel. Ni
+ *  of the National Research             le nom du Conseil National de
+ *  Council of Canada nor the            Recherches du Canada ni les noms
+ *  names of its contributors may        de ses  participants ne peuvent
+ *  be used to endorse or promote        être utilisés pour approuver ou
+ *  products derived from this           promouvoir les produits dérivés
+ *  software without specific prior      de ce logiciel sans autorisation
+ *  written permission.                  préalable et particulière
+ *                                       par écrit.
+ *
+ *  This file is part of the             Ce fichier fait partie du projet
+ *  OpenCADC project.                    OpenCADC.
+ *
+ *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+ *  you can redistribute it and/or       vous pouvez le redistribuer ou le
+ *  modify it under the terms of         modifier suivant les termes de
+ *  the GNU Affero General Public        la “GNU Affero General Public
+ *  License as published by the          License” telle que publiée
+ *  Free Software Foundation,            par la Free Software Foundation
+ *  either version 3 of the              : soit la version 3 de cette
+ *  License, or (at your option)         licence, soit (à votre gré)
+ *  any later version.                   toute version ultérieure.
+ *
+ *  OpenCADC is distributed in the       OpenCADC est distribué
+ *  hope that it will be useful,         dans l’espoir qu’il vous
+ *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+ *  without even the implied             GARANTIE : sans même la garantie
+ *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+ *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+ *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+ *  General Public License for           Générale Publique GNU Affero
+ *  more details.                        pour plus de détails.
+ *
+ *  You should have received             Vous devriez avoir reçu une
+ *  a copy of the GNU Affero             copie de la Licence Générale
+ *  General Public License along         Publique GNU Affero avec
+ *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+ *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+ *                                       <http://www.gnu.org/licenses/>.
+ *
+ *  $Revision: 5 $
+ *
+ ************************************************************************
+ */
 
 package ca.nrc.cadc.caom2.repo.client;
 
@@ -81,6 +81,10 @@ import ca.nrc.cadc.caom2.repo.client.transform.ObservationStateListReader;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.reg.Capabilities;
+import ca.nrc.cadc.reg.CapabilitiesReader;
+import ca.nrc.cadc.reg.Capability;
+import ca.nrc.cadc.reg.Interface;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 
@@ -119,14 +123,37 @@ import org.apache.log4j.Logger;
  */
 public class RepoClient {
 
+    private static final int INIT_FROM_REGISTRY = 0;
+    private static final int INIT_FROM_CAPABILITIES_URL = 1;
+
     private static final Logger log = Logger.getLogger(RepoClient.class);
     private static final Integer DEFAULT_BATCH_SIZE = 50000;
 
     private final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     private RegistryClient rc;
     private URI resourceID = null;
+    private URL capabilitiesURL = null;
+    private int initType = INIT_FROM_REGISTRY;
+
     private URL baseServiceURL = null;
     private URL baseDeletionURL = null;
+
+    private boolean isObsAvailable = false;
+    private boolean isDelAvailable = false;
+
+    /**
+     * @return the isObsAvailable
+     */
+    public boolean isObsAvailable() {
+        return isObsAvailable;
+    }
+
+    /**
+     * @return the isDelAvailable
+     */
+    public boolean isDelAvailable() {
+        return isDelAvailable;
+    }
 
     private int nthreads = 1;
     private Comparator<ObservationState> maxLasModifiedComparatorForState = new Comparator<ObservationState>() {
@@ -158,6 +185,18 @@ public class RepoClient {
         this.nthreads = nthreads;
         this.resourceID = resourceID;
         this.rc = new RegistryClient();
+        this.initType = INIT_FROM_REGISTRY;
+        init();
+        initDel();
+    }
+
+    public RepoClient(URL capabilitiesURL, int nthreads) {
+        this.nthreads = nthreads;
+        this.capabilitiesURL = capabilitiesURL;
+        this.rc = new RegistryClient();
+        this.initType = INIT_FROM_CAPABILITIES_URL;
+        init();
+        initDel();
     }
 
     private void init() {
@@ -166,12 +205,42 @@ public class RepoClient {
         if (meth == null) {
             meth = AuthMethod.ANON;
         }
-        this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
+
+        if (initType == INIT_FROM_REGISTRY) {
+            this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
+        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
+            CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
+
+            Capabilities capabilities;
+            try {
+                capabilities = capabilitiesReader.read(capabilitiesURL.openStream());
+            } catch (IOException e) {
+                throw new RuntimeException("Imposible to read capabilities: " + capabilitiesURL);
+            }
+
+            Capability cap = capabilities.findCapability(Standards.CAOM2REPO_OBS_23);
+
+            if (cap != null) {
+                // locate the associated interface, throws RuntimeException if
+                // more than
+                // one interface match
+                Interface intf = cap.findInterface(meth);
+
+                if (intf != null) {
+                    this.baseServiceURL = intf.getAccessURL().getURL();
+                }
+            }
+
+        } else {
+            log.debug("Invalid initialisation.");
+        }
+
         if (baseServiceURL == null) {
             throw new RuntimeException("not found: " + resourceID + " + " + Standards.CAOM2REPO_OBS_23 + " + " + meth);
         }
         log.debug("observation list URL: " + baseServiceURL.toString());
         log.debug("AuthMethod:  " + meth);
+        this.isObsAvailable = true;
     }
 
     private void initDel() {
@@ -180,23 +249,59 @@ public class RepoClient {
         if (meth == null) {
             meth = AuthMethod.ANON;
         }
-        this.baseDeletionURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_DEL_23, meth);
+
+        if (initType == INIT_FROM_REGISTRY) {
+            this.baseDeletionURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_DEL_23, meth);
+        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
+            CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
+
+            Capabilities capabilities;
+            try {
+                capabilities = capabilitiesReader.read(capabilitiesURL.openStream());
+            } catch (IOException e) {
+                throw new RuntimeException("Imposible to read capabilities: " + capabilitiesURL);
+            }
+
+            Capability cap = capabilities.findCapability(Standards.CAOM2REPO_DEL_23);
+
+            if (cap != null) {
+                // locate the associated interface, throws RuntimeException if
+                // more than
+                // one interface match
+                Interface intf = cap.findInterface(meth);
+
+                if (intf != null) {
+                    this.baseDeletionURL = intf.getAccessURL().getURL();
+                }
+            }
+
+        } else {
+            log.debug("Invalid initialisation.");
+        }
+
         if (baseDeletionURL == null) {
-            throw new RuntimeException("not found: " + resourceID + " + " + Standards.CAOM2REPO_DEL_23 + " + " + meth);
+            isDelAvailable = false;
+            return;
         }
         log.debug("deletion list URL: " + baseDeletionURL.toString());
         log.debug("AuthMethod:  " + meth);
+
+        this.isDelAvailable = true;
     }
 
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
-        initDel();
         return readDeletedEntityList(new DeletionListReader(), collection, start, end, maxrec);
-        // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
+        // TODO: make call(s) to the deletion endpoint until requested number of
+        // entries (like getObservationList)
 
-        // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
+        // parse each line into the following 4 values, create
+        // DeletedObservation, and add to output list, eg:
         /*
-         * UUID id = null; String col = null; String observationID = null; Date lastModified = null; DeletedObservation de = new DeletedObservation(id, new
-         * ObservationURI(col, observationID)); CaomUtil.assignLastModified(de, lastModified, "lastModified"); ret.add(de);
+         * UUID id = null; String col = null; String observationID = null; Date
+         * lastModified = null; DeletedObservation de = new
+         * DeletedObservation(id, new ObservationURI(col, observationID));
+         * CaomUtil.assignLastModified(de, lastModified, "lastModified");
+         * ret.add(de);
          */
     }
 
@@ -204,9 +309,8 @@ public class RepoClient {
         return readObservationStateList(new ObservationStateListReader(), collection, start, end, maxrec);
     }
 
-    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-            throws InterruptedException, ExecutionException {
-        init();
+    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException,
+            ExecutionException {
 
         // startDate = null;
         // end = df.parse("2017-06-20T09:03:15.360");
@@ -257,7 +361,6 @@ public class RepoClient {
     }
 
     public ObservationResponse get(ObservationURI uri) {
-        init();
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
@@ -271,11 +374,10 @@ public class RepoClient {
     }
 
     public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException {
-        init();
         if (listURI == null) {
             throw new IllegalArgumentException("list of uri cannot be null");
         }
-        //****************
+        // ****************
         List<ObservationResponse> list = new ArrayList<>();
         // Create tasks for each file
         List<Callable<ObservationResponse>> tasks = new ArrayList<>();
@@ -317,7 +419,7 @@ public class RepoClient {
         }
         Collections.sort(list, maxLasModifiedComparatorForResponse);
 
-        //****************
+        // ****************
         return list;
     }
 
@@ -325,8 +427,6 @@ public class RepoClient {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
-
-        init();
 
         log.debug("******************* getObservationList(collection, start, null, null) " + collection);
 
@@ -353,7 +453,6 @@ public class RepoClient {
     }
 
     private List<ObservationState> readObservationStateList(ObservationStateListReader transformer, String collection, Date start, Date end, Integer maxrec) {
-        init();
 
         List<ObservationState> accList = new ArrayList<>();
         boolean tooBigRequest = maxrec == null || maxrec > DEFAULT_BATCH_SIZE;
@@ -393,17 +492,18 @@ public class RepoClient {
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
 
-                //                if (responseCode == 302) {
-                //                    // redirected url
-                //                    url = get.getRedirectURL();
-                //                    log.debug("REDIRECTED URL: " + url);
-                //                    bos = new ByteArrayOutputStream();
-                //                    get = new HttpDownload(url, bos);
-                //                    get.run();
-                //                    responseCode = get.getResponseCode();
-                //                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
+                // if (responseCode == 302) {
+                // // redirected url
+                // url = get.getRedirectURL();
+                // log.debug("REDIRECTED URL: " + url);
+                // bos = new ByteArrayOutputStream();
+                // get = new HttpDownload(url, bos);
+                // get.run();
+                // responseCode = get.getResponseCode();
+                // log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode
+                // + "'");
                 //
-                //                }
+                // }
 
                 if (get.getThrowable() != null) {
                     if (get.getThrowable() instanceof AccessControlException) {
@@ -428,7 +528,7 @@ public class RepoClient {
                 }
 
                 bos.close();
-                
+
                 if (accList.size() > 0) {
                     start = accList.get(accList.size() - 1).maxLastModified;
                 }
@@ -459,11 +559,12 @@ public class RepoClient {
         return accList;
 
     }
-    
-    // pdowler: was going to use this so the HttpDownload would pass the InputStream directly to the reader
+
+    // pdowler: was going to use this so the HttpDownload would pass the
+    // InputStream directly to the reader
     // but will take additional refactoring
     private class StreamingListReader<T> implements InputStreamWrapper {
-        
+
         AbstractListReader<T> reader;
         List<T> result;
         Exception fail;
@@ -471,7 +572,7 @@ public class RepoClient {
         public StreamingListReader(AbstractListReader<T> reader) {
             this.reader = reader;
         }
-        
+
         @Override
         public void read(InputStream in) throws IOException {
             try {
@@ -549,7 +650,9 @@ public class RepoClient {
             try {
                 // log.debug("RESPONSE = '" + bos.toString() + "'");
                 partialList = transformer.read(new ByteArrayInputStream(bos.toByteArray()));
-                //partialList = transformByteArrayOutputStreamIntoListOfObservationState(bos, df, '\t', '\n');
+                // partialList =
+                // transformByteArrayOutputStreamIntoListOfObservationState(bos,
+                // df, '\t', '\n');
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);
                 }
@@ -594,5 +697,16 @@ public class RepoClient {
             }
         }
         return partialList;
+    }
+
+    @Override
+    public String toString() {
+        if (initType == INIT_FROM_REGISTRY) {
+            return this.resourceID.toASCIIString();
+        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
+            return this.capabilitiesURL.toString();
+        } else {
+            return "UNKNOWN";
+        }
     }
 }

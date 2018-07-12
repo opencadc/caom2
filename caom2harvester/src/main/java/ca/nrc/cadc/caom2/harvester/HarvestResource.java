@@ -68,6 +68,8 @@
 package ca.nrc.cadc.caom2.harvester;
 
 import java.net.URI;
+import java.net.URL;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -86,17 +88,29 @@ public class HarvestResource {
     private boolean harvestAC;
 
     private URI resourceID;
+    private URL capabilitiesURL;
+
     private String collection;
+
+    private int resourceType;
+
+    public static final int SOURCE_DB = 0;
+    public static final int SOURCE_URI = 1;
+    public static final int SOURCE_CAP_URL = 2;
+    public static final int SOURCE_UNKNOWN = -1;
 
     /**
      * Create a HarvestResource for a database. This is suitable for a
-     * destination and
-     * when intending to harvest access control tuples.
+     * destination and when intending to harvest access control tuples.
      *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
+     * @param databaseServer
+     *            server name in $HOME/.dbrc
+     * @param database
+     *            database name in $HOME/.dbrc and query generation
+     * @param schema
+     *            schema name for query generation
+     * @param collection
+     *            name of collection to harvest
      */
     public HarvestResource(String databaseServer, String database, String schema, String collection) {
         this(databaseServer, database, schema, collection, true);
@@ -105,11 +119,16 @@ public class HarvestResource {
     /**
      * Create a HarvestResource for a database.
      *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     * @param harvestAC true to enable harvesting access control tuples
+     * @param databaseServer
+     *            server name in $HOME/.dbrc
+     * @param database
+     *            database name in $HOME/.dbrc and query generation
+     * @param schema
+     *            schema name for query generation
+     * @param collection
+     *            name of collection to harvest
+     * @param harvestAC
+     *            true to enable harvesting access control tuples
      */
     public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC) {
         if (databaseServer == null || database == null || schema == null || collection == null) {
@@ -120,6 +139,7 @@ public class HarvestResource {
         this.schema = schema;
         this.collection = collection;
         this.harvestAC = harvestAC;
+        this.resourceType = SOURCE_DB;
     }
 
     public HarvestResource(URI resourceID, String collection) {
@@ -129,11 +149,24 @@ public class HarvestResource {
         this.resourceID = resourceID;
         this.collection = collection;
         this.harvestAC = true; // no API for this
+        this.resourceType = SOURCE_URI;
+    }
+
+    public HarvestResource(URL resourceCapabilitiesURL, String collection) {
+        if (resourceCapabilitiesURL == null || collection == null) {
+            throw new IllegalArgumentException("resourceCapabilitiesURL and collection args cannot be null");
+        }
+        this.capabilitiesURL = resourceCapabilitiesURL;
+        this.collection = collection;
+        this.harvestAC = true; // no API for this
+        this.resourceType = SOURCE_CAP_URL;
     }
 
     public String getIdentifier() {
         if (resourceID != null) {
             return resourceID.toASCIIString() + "?" + collection;
+        } else if (capabilitiesURL != null) {
+            return createProperUrlId(capabilitiesURL.toString(), collection);
         }
         return databaseServer + "." + database + "." + schema + "?" + collection;
     }
@@ -161,4 +194,45 @@ public class HarvestResource {
     public String getCollection() {
         return collection;
     }
+
+    /**
+     * @return the capabilitiesURL
+     */
+    public URL getCapabilitiesURL() {
+        return capabilitiesURL;
+    }
+
+    /**
+     * @return the resourceType
+     */
+    public int getResourceType() {
+        return resourceType;
+    }
+
+    @Override
+    public String toString() {
+        if (resourceType == SOURCE_URI) {
+            return this.resourceID.toASCIIString();
+        } else if (resourceType == SOURCE_DB) {
+            return this.databaseServer;
+        } else if (resourceType == SOURCE_CAP_URL) {
+            return this.capabilitiesURL.toString();
+        } else {
+            return "UNKNOWN";
+        }
+    }
+
+    private String createProperUrlId(String urlBase, String collection) {
+        String properId;
+        if (urlBase.indexOf("?") < 0) {
+            properId = urlBase + "?" + collection;
+        } else if (urlBase.endsWith("?") || urlBase.endsWith("&")) {
+            properId = urlBase + collection;
+        } else {
+            properId = urlBase + "&" + collection;
+        }
+
+        return properId;
+    }
+
 }

@@ -79,8 +79,10 @@ import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -108,12 +110,12 @@ public class Main {
 
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
-                //Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+                // Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
-                //Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+                // Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
@@ -175,26 +177,49 @@ public class Main {
 
             // source can be a database or service
             String source = am.getValue("source");
-            String resourceID = am.getValue("resourceID");
 
             boolean nosrc = (source == null || source.trim().length() == 0);
-            boolean nosrv = (resourceID == null || resourceID.trim().length() == 0);
-            if (nosrc && nosrv) {
-                log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier>");
+            if (nosrc) {
+                log.warn("missing required argument: --source=<server.database.schema>");
                 usage();
                 System.exit(1);
             }
 
+            int sourceType = getSourceType(source);
+
             HarvestResource src = null;
             int nthreads = 1;
-            if (resourceID != null) {
+            if (sourceType == HarvestResource.SOURCE_URI) {
                 try {
-                    src = new HarvestResource(new URI(resourceID), collection);
+                    src = new HarvestResource(new URI(source), collection);
                     if (am.isSet("threads")) {
                         nthreads = Integer.parseInt(am.getValue("threads"));
                     }
                 } catch (URISyntaxException ex) {
-                    log.warn("invalid value for --resourceID parameter: " + resourceID + " reason: " + ex.toString());
+                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                    usage();
+                    System.exit(1);
+                } catch (NumberFormatException nfe) {
+                    log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
+                    usage();
+                    System.exit(1);
+                }
+            } else if (sourceType == HarvestResource.SOURCE_DB) {
+                String[] srcDS = source.split("[.]");
+                if (srcDS.length != 3) {
+                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                    usage();
+                    System.exit(1);
+                }
+                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
+            } else if (sourceType == HarvestResource.SOURCE_CAP_URL) {
+                try {
+                    src = new HarvestResource(new URL(source), collection);
+                    if (am.isSet("threads")) {
+                        nthreads = Integer.parseInt(am.getValue("threads"));
+                    }
+                } catch (MalformedURLException ex) {
+                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
                     usage();
                     System.exit(1);
                 } catch (NumberFormatException nfe) {
@@ -203,13 +228,9 @@ public class Main {
                     System.exit(1);
                 }
             } else {
-                String[] srcDS = source.split("[.]");
-                if (srcDS.length != 3) {
-                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
-                    usage();
-                    System.exit(1);
-                }
-                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
+                log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
+                usage();
+                System.exit(1);
             }
 
             URI basePublisherID = null;
@@ -319,9 +340,10 @@ public class Main {
 
                 try {
                     CaomValidator cv = new CaomValidator(dryrun, noChecksum, src, dest, batchSize);
-                    // [min,max] timestamps not supported by validator (only full)
-                    //cv.setMinDate(minDate);
-                    //cv.setMaxDate(maxDate);
+                    // [min,max] timestamps not supported by validator (only
+                    // full)
+                    // cv.setMinDate(minDate);
+                    // cv.setMaxDate(maxDate);
                     action = cv;
                 } catch (IOException ioex) {
 
@@ -369,10 +391,9 @@ public class Main {
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
-        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema>");
-        sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
-        sb.append("\n         --threads : number  of threads used to read observation documents (default: 1)");
-        sb.append("\n         --source : harvest directly from a database server");
+        sb.append("\n\nSource selection:");
+        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (default: 1)");
+        sb.append("\n         --source=<server.database.schema> | <resource ID> | <resource capabilities URL>:  (e.g. ivo://cadc.nrc.ca/caom2repo)");
 
         sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
         sb.append("\n         --validate : validate all Observation.accMetaChecksum values between source and destination ");
@@ -393,7 +414,35 @@ public class Main {
         sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
-        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: true with --resourceID, false with --source)");
+        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: false when --source is a database, otherwise true)");
         log.warn(sb.toString());
+    }
+
+    private static int getSourceType(String source) {
+        // Try source as URL
+        try {
+            new URL(source);
+            return HarvestResource.SOURCE_CAP_URL;
+        } catch (MalformedURLException e) {
+            // Not an URL
+        }
+
+        // Try source as resourceUri
+        if (source.startsWith("ivo://")) {
+            try {
+                new URI(source);
+                return HarvestResource.SOURCE_URI;
+            } catch (URISyntaxException e) {
+                // Not an URI
+            }
+        }
+
+        // Try source as DB
+        String[] srcDS = source.split("[.]");
+        if (srcDS.length != 3) {
+            return HarvestResource.SOURCE_DB;
+        }
+
+        return HarvestResource.SOURCE_UNKNOWN;
     }
 }

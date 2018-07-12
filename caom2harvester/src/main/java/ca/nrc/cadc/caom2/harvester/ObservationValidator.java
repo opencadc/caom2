@@ -132,6 +132,7 @@ public class ObservationValidator extends Harvester {
         destObservationDAO.setConfig(config2);
         destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
+        
     }
 
     @Override

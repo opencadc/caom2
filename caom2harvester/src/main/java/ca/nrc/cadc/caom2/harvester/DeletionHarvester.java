@@ -1,4 +1,3 @@
-
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -78,12 +77,14 @@ import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -104,6 +105,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
     private boolean initHarvestState;
     private Date initDate;
 
+    private boolean ready = false;
+
     /**
      * Constructor.
      *
@@ -116,7 +119,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @param batchSize
      *            ignored, always full list
      * @param dryrun
-     *            true if no changed in the data base are applied during the process
+     *            true if no changed in the data base are applied during the
+     *            process
      * @throws IOException
      *             IOException
      * @throws URISyntaxException
@@ -124,9 +128,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @throws NumberFormatException
      *             NumberFormatException
      */
-    public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean dryrun)
-            throws IOException, NumberFormatException, URISyntaxException {
+    public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean dryrun) throws IOException,
+            NumberFormatException, URISyntaxException {
         super(entityClass, src, dest, batchSize, false, dryrun);
+        init();
     }
 
     /**
@@ -156,14 +161,16 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @throws URISyntaxException
      *             URISyntaxException
      */
-    private void init() throws IOException, URISyntaxException {
+    private void init() throws IOException {
         // source
-        if (src.getDatabaseServer() != null) {
+        if (src.getResourceType() == HarvestResource.SOURCE_DB && src.getDatabaseServer() != null) {
             Map<String, Object> config1 = getConfigDAO(src);
             this.deletedDAO = new DeletedEntityDAO();
             deletedDAO.setConfig(config1);
-        } else {
+        } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.repoClient = new RepoClient(src.getResourceID(), 1);
+        } else {
+            this.repoClient = new RepoClient(src.getCapabilitiesURL(), 1);
         }
 
         // destination
@@ -173,6 +180,11 @@ public class DeletionHarvester extends Harvester implements Runnable {
         this.txnManager = obsDAO.getTransactionManager();
         initHarvestState(obsDAO.getDataSource(), entityClass);
 
+        if (repoClient != null && repoClient.isDelAvailable()) {
+            ready = true;
+        } else {
+            log.error("Not available deletion endpoint in " + repoClient.toString());
+        }
     }
 
     /**
@@ -189,12 +201,14 @@ public class DeletionHarvester extends Harvester implements Runnable {
      */
     @Override
     public void run() {
-        log.info("START: " + entityClass.getSimpleName());
-        try {
-            init();
-        } catch (Throwable oops) {
-            throw new RuntimeException("failed to init connections and state", oops);
+
+        if (!ready) {
+            log.error("Deletion Harvester not ready");
+            return;
         }
+
+        log.info("START: " + entityClass.getSimpleName());
+
         boolean go = true;
         while (go) {
             Progress num = doit();
@@ -278,7 +292,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
                     startDate = super.minDate;
                 }
                 endDate = super.maxDate;
-                // harvest up to a little in the past because the head of the sequence may be volatile
+                // harvest up to a little in the past because the head of the
+                // sequence may be volatile
                 long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
                 if (endDate == null) {
                     endDate = new Date(fiveMinAgo);
@@ -352,7 +367,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                         log.debug("commit: OK");
                     }
                     ok = true;
-                    
+
                 } catch (Throwable t) {
                     log.error("unexpected exception", t);
                 } finally {
@@ -410,4 +425,5 @@ public class DeletionHarvester extends Harvester implements Runnable {
         }
 
     }
+
 }
