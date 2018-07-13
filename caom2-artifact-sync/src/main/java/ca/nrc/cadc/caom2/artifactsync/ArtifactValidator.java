@@ -74,6 +74,8 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
@@ -93,6 +95,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
@@ -126,6 +129,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URI caomTapResourceID;
     private URL caomTapURL;
     private boolean supportSkipURITable = false;
+    private List<ObservationResponse> orphanedObservations = new ArrayList<ObservationResponse>();
         
     private ExecutorService executor;
     
@@ -195,6 +199,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long notInPhysical = 0;
         long skipURICount = 0;
         long inSkipURICount = 0;
+        long getObservationExceptionCount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
         
@@ -307,7 +312,32 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
         }
+        
+        if (orphanedObservations.size() > 0) {
+            getObservationExceptionCount = orphanedObservations.size();
+            for (ObservationResponse resp : orphanedObservations) {
+                ObservationState state = resp.observationState;
+                logJSON(new String[]
+                        {"logType", "detail",
+                         "anomaly", "observationError",
+                         "observationURI", state.getURI().toString(),
+                         "caomCollection", collection,
+                         "caomAccMetaChecksum", state.accMetaChecksum.toString(),
+                         "caomLastModified", df.format(state.getMaxLastModified()),
+                         "errorDetail", resp.error.getMessage()},
+                        false);
+            }
+        }
 
+        if (getObservationExceptionCount > 0) {
+            String msg = "*** Failed to get " 
+                    + getObservationExceptionCount 
+                    + " observations. "
+                    + "totalInCAOM and totalNotInCAOM counts may not be correct. "
+                    + "Refer to getObservationException anomaly for details. ***";
+            log.warn(msg);
+        }
+        
         if (reportOnly) {
             // diff
             logJSON(new String[] {
@@ -321,6 +351,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalNotInStorage", Long.toString(notInPhysical),
+                "totalCAOMErrors", Long.toString(getObservationExceptionCount),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
@@ -336,6 +367,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalNotInStorage", Long.toString(notInPhysical),
+                "totalCAOMErrors", Long.toString(getObservationExceptionCount),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
                 "totalNewSkipURI", Long.toString(skipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -414,14 +446,27 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     }
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
-        TreeSet<ArtifactMetadata> result;
+        TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
         if (StringUtil.hasText(source)) {
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
+            int batchsize = 1000;
             long start = System.currentTimeMillis();
-            List<Observation> observations = observationDAO.getList(Observation.class, null, null, 3);
-            result = getMetadata(observations);
+            Date minLastModified = null;
+            List<ObservationResponse> obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize);
+            while (obsResponses.size() ==  batchsize) {
+                List<Observation> observations = getObservations(obsResponses);
+                result.addAll(getMetadata(observations));
+                minLastModified = observations.get(observations.size() - 1).getMaxLastModified();
+                obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize);
+            }
+            
+            if (obsResponses.size() > 0 ) {
+                List<Observation> observations = getObservations(obsResponses);
+                result.addAll(getMetadata(observations));
+            }
+            
             log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
         } else {
             this.supportSkipURITable = false;
@@ -433,16 +478,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, "
-                    + "(CASE WHEN a.releaseType='" + ReleaseType.DATA + "' THEN p.dataRelease "
-                    + "      WHEN a.releaseType='" + ReleaseType.META + "' THEN p.metaRelease "
-                    + "      ELSE NULL "
-                    + "END) as releaseDate "
+            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
                     + "join caom2.Observation o on p.obsID = o.obsID "
                     + "where o.collection='" + collection + "'";
-            
+
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql, true);
@@ -451,8 +492,21 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return result;
     }
     
+    private List<Observation> getObservations(List<ObservationResponse> observationResponses) throws Exception {
+        List<Observation> observations = new ArrayList<Observation>();
+        for (ObservationResponse resp : observationResponses) {
+            if (resp.error != null) {
+                orphanedObservations.add(resp);
+            } else {
+                observations.add(resp.observation);
+            }
+        }
+        
+        return observations;
+    }
+    
     private TreeSet<ArtifactMetadata> getMetadata(List<Observation> observations) throws Exception {
-        TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());;
+        TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
         for (Observation obs : observations) {
             for (Plane plane : obs.getPlanes()) {
                 for (Artifact artifact : plane.getArtifacts()) {
