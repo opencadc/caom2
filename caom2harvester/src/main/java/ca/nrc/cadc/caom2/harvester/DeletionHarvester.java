@@ -167,6 +167,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             Map<String, Object> config1 = getConfigDAO(src);
             this.deletedDAO = new DeletedEntityDAO();
             deletedDAO.setConfig(config1);
+            ready = true;
         } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.repoClient = new RepoClient(src.getResourceID(), 1);
         } else {
@@ -180,10 +181,12 @@ public class DeletionHarvester extends Harvester implements Runnable {
         this.txnManager = obsDAO.getTransactionManager();
         initHarvestState(obsDAO.getDataSource(), entityClass);
 
-        if (repoClient != null && repoClient.isDelAvailable()) {
-            ready = true;
-        } else {
-            log.error("Not available deletion endpoint in " + repoClient.toString());
+        if (repoClient != null) {
+            if (repoClient.isDelAvailable()) {
+                ready = true;
+            } else {
+                log.error("Not available deletion endpoint in " + repoClient.toString());
+            }
         }
     }
 

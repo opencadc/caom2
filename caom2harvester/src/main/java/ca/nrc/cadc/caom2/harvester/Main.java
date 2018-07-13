@@ -443,7 +443,7 @@ public class Main {
 
         // Try source as DB
         String[] srcDS = source.split("[.]");
-        if (srcDS.length != 3) {
+        if (srcDS.length == 3) {
             return HarvestResource.SOURCE_DB;
         }
 

@@ -157,6 +157,7 @@ public class ObservationHarvester extends Harvester {
             Map<String, Object> config1 = getConfigDAO(src);
             this.srcObservationDAO = new ObservationDAO();
             srcObservationDAO.setConfig(config1);
+            ready = true;
         } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
         } else {
@@ -171,10 +172,12 @@ public class ObservationHarvester extends Harvester {
         destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
 
-        if (srcObservationService != null && srcObservationService.isObsAvailable()) {
-            ready = true;
-        } else {
-            log.error("Not available obs endpoint in " + srcObservationService.toString());
+        if (srcObservationService != null) {
+            if (srcObservationService.isObsAvailable()) {
+                ready = true;
+            } else {
+                log.error("Not available obs endpoint in " + srcObservationService.toString());
+            }
         }
     }
 
