@@ -318,14 +318,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             for (ObservationResponse resp : orphanedObservations) {
                 ObservationState state = resp.observationState;
                 logJSON(new String[]
-                        {"logType", "detail",
-                         "anomaly", "observationError",
-                         "observationURI", state.getURI().toString(),
-                         "caomCollection", collection,
-                         "caomAccMetaChecksum", state.accMetaChecksum.toString(),
-                         "caomLastModified", df.format(state.getMaxLastModified()),
-                         "errorDetail", resp.error.getMessage()},
-                        false);
+                    {"logType", "detail",
+                     "anomaly", "observationError",
+                     "observationURI", state.getURI().toString(),
+                     "caomCollection", collection,
+                     "caomAccMetaChecksum", state.accMetaChecksum.toString(),
+                     "caomLastModified", df.format(state.getMaxLastModified()),
+                     "errorDetail", resp.error.getMessage()},
+                    false);
             }
         }
 
@@ -462,7 +462,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize);
             }
             
-            if (obsResponses.size() > 0 ) {
+            if (obsResponses.size() > 0) {
                 List<Observation> observations = getObservations(obsResponses);
                 result.addAll(getMetadata(observations));
             }
