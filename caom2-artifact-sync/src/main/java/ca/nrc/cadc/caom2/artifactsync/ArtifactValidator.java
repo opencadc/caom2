@@ -75,7 +75,6 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
@@ -129,7 +128,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URI caomTapResourceID;
     private URL caomTapURL;
     private boolean supportSkipURITable = false;
-    private List<ObservationResponse> orphanedObservations = new ArrayList<ObservationResponse>();
         
     private ExecutorService executor;
     
@@ -199,7 +197,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long notInPhysical = 0;
         long skipURICount = 0;
         long inSkipURICount = 0;
-        long getObservationExceptionCount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
         
@@ -313,31 +310,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
         }
         
-        if (orphanedObservations.size() > 0) {
-            getObservationExceptionCount = orphanedObservations.size();
-            for (ObservationResponse resp : orphanedObservations) {
-                ObservationState state = resp.observationState;
-                logJSON(new String[]
-                    {"logType", "detail",
-                     "anomaly", "observationError",
-                     "observationURI", state.getURI().toString(),
-                     "caomCollection", collection,
-                     "caomAccMetaChecksum", state.accMetaChecksum.toString(),
-                     "caomLastModified", df.format(state.getMaxLastModified()),
-                     "errorDetail", resp.error.getMessage()},
-                    false);
-            }
-        }
-
-        if (getObservationExceptionCount > 0) {
-            String msg = "*** Failed to get " 
-                    + getObservationExceptionCount 
-                    + " observations. "
-                    + "totalInCAOM and totalNotInCAOM counts may not be correct. "
-                    + "Refer to getObservationException anomaly for details. ***";
-            log.warn(msg);
-        }
-        
         if (reportOnly) {
             // diff
             logJSON(new String[] {
@@ -351,7 +323,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalNotInStorage", Long.toString(notInPhysical),
-                "totalCAOMErrors", Long.toString(getObservationExceptionCount),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
@@ -367,7 +338,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalNotInStorage", Long.toString(notInPhysical),
-                "totalCAOMErrors", Long.toString(getObservationExceptionCount),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
                 "totalNewSkipURI", Long.toString(skipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -496,7 +466,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         List<Observation> observations = new ArrayList<Observation>();
         for (ObservationResponse resp : observationResponses) {
             if (resp.error != null) {
-                orphanedObservations.add(resp);
+                String msg = "Failed to getCAOM metadata. "
+                    + "Observation URI: " + resp.observationState.getURI().toString() + ", "
+                    + "accMetaChecksum: " + resp.observationState.accMetaChecksum.toString() + ", "
+                    + "maxLastModified: " + resp.observationState.maxLastModified.toString();
+                log.error(msg);
+                throw resp.error;
             } else {
                 observations.add(resp.observation);
             }
