@@ -119,6 +119,7 @@ public class PostgreSQLGeneratorTest
         }
     }
 
+    /*
     @Test
     public void testSelectObservationSQL()
     {
@@ -140,7 +141,8 @@ public class PostgreSQLGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    */
+    
     @Test
     public void testSelectByLastModifiedSQL()
     {
