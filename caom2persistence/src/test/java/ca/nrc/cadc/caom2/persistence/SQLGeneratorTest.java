@@ -79,12 +79,8 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
@@ -115,14 +111,7 @@ public class SQLGeneratorTest
         "cadctest.caom2.Part",
         "cadctest.caom2.Chunk",
 
-        "cadctest.caom2.ObservationMetaReadAccess",
-        "cadctest.caom2.PlaneMetaReadAccess",
-        "cadctest.caom2.PlaneDataReadAccess",
-
-        "cadctest.caom2.DeletedObservation",
-        "cadctest.caom2.DeletedObservationMetaReadAccess",
-        "cadctest.caom2.DeletedPlaneMetaReadAccess",
-        "cadctest.caom2.DeletedPlaneDataReadAccess"
+        "cadctest.caom2.DeletedObservation"
     };
     String[] pk = { "obsID", "planeID", "artifactID", "partID", "chunkID", 
         "readAccessID", "readAccessID", "readAccessID",
@@ -138,14 +127,7 @@ public class SQLGeneratorTest
         Part.class,
         Chunk.class,
 
-        ObservationMetaReadAccess.class,
-        PlaneMetaReadAccess.class,
-        PlaneDataReadAccess.class,
-
         DeletedObservation.class,
-        DeletedObservationMetaReadAccess.class,
-        DeletedPlaneMetaReadAccess.class,
-        DeletedPlaneDataReadAccess.class
     };
 
     SQLGenerator gen = new DummyBaseSQLGenerator();

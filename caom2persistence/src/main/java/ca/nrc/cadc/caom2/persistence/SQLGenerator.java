@@ -79,9 +79,6 @@ import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -112,17 +109,11 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneDataReadAccess;
-import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
-import ca.nrc.cadc.caom2.persistence.skel.ObservationMetaReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
-import ca.nrc.cadc.caom2.persistence.skel.PlaneDataReadAccessSkeleton;
-import ca.nrc.cadc.caom2.persistence.skel.PlaneMetaReadAccessSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.types.Circle;
@@ -172,7 +163,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -190,26 +180,29 @@ public class SQLGenerator {
     
     protected static final String BASE_PKG = "ca.nrc.cadc.caom2";
     
-    protected static final Class[] ENTITY_CLASSES
-            = {
-                Observation.class, Plane.class, Artifact.class, Part.class, Chunk.class,
-                ObservationMetaReadAccess.class, PlaneMetaReadAccess.class, PlaneDataReadAccess.class,
-                DeletedObservation.class,
-                DeletedObservationMetaReadAccess.class, DeletedPlaneMetaReadAccess.class, DeletedPlaneDataReadAccess.class
-            };
-    protected static final Class[] SKELETON_CLASSES
-            = {
-                ObservationSkeleton.class, PlaneSkeleton.class, ArtifactSkeleton.class, PartSkeleton.class, ChunkSkeleton.class,
-                ObservationMetaReadAccessSkeleton.class, PlaneMetaReadAccessSkeleton.class, PlaneDataReadAccessSkeleton.class
-            };
-    protected static final Class[] STATE_CLASSES
-            = {
-                ObservationState.class
-            };
-    protected static final Class[] JOIN_CLASSES
-            = {
-                ObservationMember.class, ProvenanceInput.class
-            };
+    protected static final Class[] ENTITY_CLASSES =
+    {
+        Observation.class, Plane.class, Artifact.class, Part.class, Chunk.class,
+        //ObservationMetaReadAccess.class, PlaneMetaReadAccess.class, PlaneDataReadAccess.class,
+        DeletedObservation.class,
+        //DeletedObservationMetaReadAccess.class, DeletedPlaneMetaReadAccess.class, DeletedPlaneDataReadAccess.class
+    };
+    
+    protected static final Class[] SKELETON_CLASSES =
+    {
+        ObservationSkeleton.class, PlaneSkeleton.class, ArtifactSkeleton.class, PartSkeleton.class, ChunkSkeleton.class,
+        //ObservationMetaReadAccessSkeleton.class, PlaneMetaReadAccessSkeleton.class, PlaneDataReadAccessSkeleton.class
+    };
+    
+    protected static final Class[] STATE_CLASSES =
+    {
+        ObservationState.class
+    };
+    
+    protected static final Class[] JOIN_CLASSES =
+    {
+        ObservationMember.class, ProvenanceInput.class
+    };
 
     static final String SIMPLE_TYPE = "S";
     static final String COMPOSITE_TYPE = "C";
@@ -257,7 +250,6 @@ public class SQLGenerator {
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class, String> aliasMap = new TreeMap<Class, String>(new ClassComp());
 
-    //protected final Map<Class,String> alternateLastModifiedColumn = new TreeMap<Class,String>(new ClassComp());
     protected DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
     private SQLGenerator() {
@@ -347,6 +339,8 @@ public class SQLGenerator {
             "environment_tau", "environment_wavelengthTau", "environment_ambientTemp",
             "environment_photometric",
             "members",
+            //"metaReadAccess", 
+            "metaReadAccessGroups",
             "lastModified", "maxLastModified",
             "stateCode", "metaChecksum", "accMetaChecksum",
             "obsID"
@@ -375,6 +369,10 @@ public class SQLGenerator {
             "provenance_inputs", "provenance_keywords",
             "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
             "metrics_fluxDensityLimit", "metrics_magLimit",
+            //"metaReadAccess", 
+            "metaReadAccessGroups",
+            //"dataReadAccess", 
+            "dataReadAccessGroups",
             "quality_flag",
             "lastModified", "maxLastModified",
             "stateCode", "metaChecksum", "accMetaChecksum",
@@ -532,24 +530,24 @@ public class SQLGenerator {
         }
         columnMap.put(Chunk.class, chunkColumns);
 
-        String[] metaReadAccessCols = new String[]{
-            "assetID", "groupID", "lastModified", "stateCode", "metaChecksum", "readAccessID"
-        };
-        columnMap.put(ObservationMetaReadAccess.class, metaReadAccessCols);
-        columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
-        columnMap.put(PlaneDataReadAccess.class, metaReadAccessCols);
+        //String[] metaReadAccessCols = new String[]{
+        //    "assetID", "groupID", "lastModified", "stateCode", "metaChecksum", "readAccessID"
+        //};
+        //columnMap.put(ObservationMetaReadAccess.class, metaReadAccessCols);
+        //columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
+        //columnMap.put(PlaneDataReadAccess.class, metaReadAccessCols);
 
         String[] deletedObservationCols = new String[]{
             "collection", "observationID", "lastModified", "id"
         };
         columnMap.put(DeletedObservation.class, deletedObservationCols);
         
-        String[] deletedEntityCols = new String[]{
-            "lastModified", "id"
-        };
-        columnMap.put(DeletedObservationMetaReadAccess.class, deletedEntityCols);
-        columnMap.put(DeletedPlaneMetaReadAccess.class, deletedEntityCols);
-        columnMap.put(DeletedPlaneDataReadAccess.class, deletedEntityCols);
+        //String[] deletedEntityCols = new String[]{
+        //    "lastModified", "id"
+        //};
+        //columnMap.put(DeletedObservationMetaReadAccess.class, deletedEntityCols);
+        //columnMap.put(DeletedPlaneMetaReadAccess.class, deletedEntityCols);
+        //columnMap.put(DeletedPlaneDataReadAccess.class, deletedEntityCols);
 
         columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "obsID"});
         columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "planeID"});
@@ -557,9 +555,9 @@ public class SQLGenerator {
         columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "partID"});
         columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "chunkID"});
 
-        columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
-        columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
-        columnMap.put(PlaneDataReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
+        //columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
+        //columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
+        //columnMap.put(PlaneDataReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
 
         columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum"});
     }
@@ -988,17 +986,17 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add) {
-        throw new UnsupportedOperationException();
-    }
-
+    //protected String getUpdateAssetSQL(Class asset, Class ra, boolean add) {
+    //    throw new UnsupportedOperationException();
+    //}
+    
     // test access
-    String getReadAccessCol(Class raclz) {
-        if (PlaneDataReadAccess.class.equals(raclz)) {
-            return "dataReadAccessGroups";
-        }
-        return "metaReadAccessGroups";
-    }
+    //String getReadAccessCol(Class raclz) {
+    //    if (PlaneDataReadAccess.class.equals(raclz)) {
+    //        return "dataReadAccessGroups";
+    //    }
+    //    return "metaReadAccessGroups";
+    //}
 
     public EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate) {
         if (Observation.class.isAssignableFrom(c)) {
@@ -1021,9 +1019,9 @@ public class SQLGenerator {
             return new ChunkPut(isUpdate);
         }
 
-        if (ReadAccess.class.isAssignableFrom(c)) {
-            return new ReadAccessPut(isUpdate);
-        }
+        //if (ReadAccess.class.isAssignableFrom(c)) {
+        //    return new ReadAccessPut(isUpdate);
+        //}
 
         throw new UnsupportedOperationException();
     }
@@ -1057,7 +1055,8 @@ public class SQLGenerator {
         if (DeletedObservation.class.equals(c)) {
             return new DeletedObservationPut(isUpdate);
         }
-        return new DeletedReadAccessPut(c, isUpdate);
+        //return new DeletedReadAccessPut(c, isUpdate);
+        throw new UnsupportedOperationException("no entity delete for " + c.getName());
     }
     
     private class DeletedObservationPut implements DeletedEntityPut<DeletedObservation>, PreparedStatementCreator {
@@ -1120,66 +1119,10 @@ public class SQLGenerator {
         
     }
     
-    private class DeletedReadAccessPut implements DeletedEntityPut<DeletedEntity>, PreparedStatementCreator {
-        private boolean update;
-        private Class<? extends DeletedEntity> clz;
-        private DeletedEntity value;
-
-        public DeletedReadAccessPut(Class<? extends DeletedEntity> c, boolean update) {
-            this.clz = c;
-            this.update = update;
-        }
-        
-        
-        public void execute(JdbcTemplate jdbc) {
-            jdbc.update(this);
-        }
-
-        
-        public void setValue(DeletedEntity value) {
-            this.value = value;
-        }
-        
-        
-        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
-            String sql = null;
-            if (update) {
-                sql = getUpdateSQL(clz);
-            } else {
-                sql = getInsertSQL(clz);
-            }
-            PreparedStatement prep = conn.prepareStatement(sql);
-            log.debug(sql);
-            loadValues(prep);
-            return prep;
-        }
-
-        private void loadValues(PreparedStatement ps)
-                throws SQLException {
-            if (value == null) {
-                throw new IllegalStateException("null DeletedEntity");
-            }
-
-            StringBuilder sb = null;
-            if (log.isDebugEnabled()) {
-                sb = new StringBuilder();
-            }
-
-            int col = 1;
-            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
-            safeSetUUID(sb, ps, col++, value.getID());
-
-            if (sb != null) {
-                log.debug(sb.toString());
-            }
-        }
-    }
-
-    
     public EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey) {
-        if (ReadAccess.class.isAssignableFrom(c)) {
-            return new ReadAccessEntityDelete(c, true);
-        }
+        //if (ReadAccess.class.isAssignableFrom(c)) {
+        //    return new ReadAccessEntityDelete(c, true);
+        //}
         return new BaseEntityDelete(c, primaryKey);
     }
 
@@ -1223,80 +1166,6 @@ public class SQLGenerator {
         
         public void setValue(CaomEntity value) {
             throw new UnsupportedOperationException();
-        }
-    }
-
-    // extended version to cleanup optimized persistence
-    private class ReadAccessEntityDelete extends BaseEntityDelete implements PreparedStatementCreator {
-
-        ReadAccess ra;
-        Class assetClass;
-
-        public ReadAccessEntityDelete(Class<? extends CaomEntity> c, boolean byPK) {
-            super(c, byPK);
-        }
-
-        
-        public void setValue(CaomEntity value) {
-            this.ra = (ReadAccess) value;
-        }
-
-        
-        public void execute(JdbcTemplate jdbc) {
-            super.execute(jdbc);
-
-            if (!persistReadAccessWithAsset) {
-                return;
-            }
-
-            // this is a PreparedStatement for asset table updates
-            if (ObservationMetaReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Observation.class;
-                jdbc.update(this);
-            } else if (PlaneDataReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Plane.class;
-                jdbc.update(this);
-            } else if (PlaneMetaReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Plane.class;
-                jdbc.update(this);
-                this.assetClass = Artifact.class;
-                jdbc.update(this);
-                this.assetClass = Part.class;
-                jdbc.update(this);
-                this.assetClass = Chunk.class;
-                jdbc.update(this);
-            }
-        }
-
-        
-        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
-            String sql = getUpdateAssetSQL(assetClass, ra.getClass(), false);
-            PreparedStatement prep = conn.prepareStatement(sql);
-            log.debug(sql);
-            loadValues(prep);
-            return prep;
-        }
-
-        private void loadValues(PreparedStatement ps)
-                throws SQLException {
-            if (ra == null) {
-                throw new IllegalStateException("null read access");
-            }
-
-            StringBuilder sb = null;
-            if (log.isDebugEnabled()) {
-                sb = new StringBuilder();
-            }
-            int col = 1;
-            safeSetString(sb, ps, col++, ra.getGroupName());
-            if (useLongForUUID) {
-                safeSetLongUUID(sb, ps, col++, ra.getAssetID());
-            } else {
-                safeSetUUID(sb, ps, col++, ra.getAssetID());
-            }
-            if (sb != null) {
-                log.debug(sb.toString());
-            }
         }
     }
 
@@ -1497,6 +1366,13 @@ public class SQLGenerator {
                 safeSetString(sb, ps, col++, null);
             }
 
+            if (obs.getMetaReadAccess().isEmpty()) {
+                //safeSetString(sb, ps, col++, null);
+                safeSetVector(sb, ps, col++, null);
+            } else {
+                throw new UnsupportedOperationException("persist: Observation.metaReadAccess");
+            }
+            
             if (persistOptimisations) {
                 safeSetURI(sb, ps, col++, obs.getURI().getURI());
             }
@@ -1696,6 +1572,19 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
             }
 
+            if (plane.getMetaReadAccess().isEmpty()) {
+                //safeSetString(sb, ps, col++, null);
+                safeSetVector(sb, ps, col++, null);
+            } else {
+                throw new UnsupportedOperationException("persist: Plane.metaReadAccess");
+            }
+            if (plane.getDataReadAccess().isEmpty()) {
+                //safeSetString(sb, ps, col++, null);
+                safeSetVector(sb, ps, col++, null);
+            } else {
+                throw new UnsupportedOperationException("persist: Plane.dataReadAccess");
+            }
+            
             if (plane.quality != null) {
                 safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
             } else {
@@ -2470,128 +2359,6 @@ public class SQLGenerator {
         }
     }
 
-    private class ReadAccessPut implements EntityPut<ReadAccess>, PreparedStatementCreator {
-
-        private boolean update;
-        private ReadAccess ra;
-
-        private int putCount = 0;
-        private Class assetClass;
-
-        ReadAccessPut(boolean update) {
-            this.update = update;
-        }
-
-        public void execute(JdbcTemplate jdbc) {
-            jdbc.update(this);
-
-            if (!persistReadAccessWithAsset) {
-                return;
-            }
-
-            putCount++;
-
-            if (ObservationMetaReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Observation.class;
-                int num = jdbc.update(this);
-                if (num == 0) {
-                    throw new DataIntegrityViolationException("failed to update Observation " + ra.getAssetID());
-                }
-            } else if (PlaneDataReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Plane.class;
-                int num = jdbc.update(this);
-                if (num == 0) {
-                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
-                }
-            } else if (PlaneMetaReadAccess.class.equals(ra.getClass())) {
-                this.assetClass = Plane.class;
-                int num = jdbc.update(this);
-                if (num == 0) {
-                    throw new DataIntegrityViolationException("failed to update Plane " + ra.getAssetID());
-                }
-
-                // we do not know how many child assets exist under the plane so we cannot detect
-                // if the following succeeds or fails due to missing entities; if a later update
-                // adds children, then the observation gets reharvested and presumably ReadAccess
-                // tuples get regenerated with new timestamps and we'll try this again
-                this.assetClass = Artifact.class;
-                num = jdbc.update(this);
-                log.debug("update asset count " + assetClass.getSimpleName() + " : " + num);
-                //if (num == 0)
-                //    throw new DataIntegrityViolationException("failed to update Artifact(s) planeID=" + ra.getAssetID());
-
-                this.assetClass = Part.class;
-                num = jdbc.update(this);
-                log.debug("update asset count " + assetClass.getSimpleName() + " : " + num);
-                //if (num == 0)
-                //    throw new DataIntegrityViolationException("failed to update Part(s) planeID=" + ra.getAssetID());
-
-                this.assetClass = Chunk.class;
-                num = jdbc.update(this);
-                log.debug("update asset count " + assetClass.getSimpleName() + " : " + num);
-                //if (num == 0)
-                //    throw new DataIntegrityViolationException("failed to update Chunk(s) planeID=" + ra.getAssetID());
-            }
-        }
-
-        public void setValue(ReadAccess ra, List<CaomEntity> unused) {
-            this.ra = ra;
-        }
-
-        public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
-            String sql = null;
-            if (putCount == 0) {
-                if (update) {
-                    sql = getUpdateSQL(ra.getClass());
-                } else {
-                    sql = getInsertSQL(ra.getClass());
-                }
-            } else {
-                sql = getUpdateAssetSQL(assetClass, ra.getClass(), true);
-            }
-            PreparedStatement prep = conn.prepareStatement(sql);
-            log.debug(sql);
-            loadValues(prep);
-            return prep;
-        }
-
-        private void loadValues(PreparedStatement ps)
-                throws SQLException {
-            if (ra == null) {
-                throw new IllegalStateException("null read access");
-            }
-
-            StringBuilder sb = null;
-            if (log.isDebugEnabled()) {
-                sb = new StringBuilder();
-            }
-            if (putCount == 0) {
-                int col = 1;
-                if (useLongForUUID) {
-                    safeSetLongUUID(sb, ps, col++, ra.getAssetID());
-                } else {
-                    safeSetUUID(sb, ps, col++, ra.getAssetID());
-                }
-                safeSetString(sb, ps, col++, ra.getGroupID().toASCIIString());
-                safeSetDate(sb, ps, col++, ra.getLastModified(), utcCalendar);
-                safeSetInteger(sb, ps, col++, ra.getStateCode());
-                safeSetURI(sb, ps, col++, ra.getMetaChecksum());
-                safeSetUUID(sb, ps, col++, ra.getID());
-            } else {
-                int col = 1;
-                safeSetString(sb, ps, col++, ra.getGroupName()); // short name
-                if (useLongForUUID) {
-                    safeSetLongUUID(sb, ps, col++, ra.getAssetID());
-                } else {
-                    safeSetUUID(sb, ps, col++, ra.getAssetID());
-                }
-            }
-            if (sb != null) {
-                log.debug(sb.toString());
-            }
-        }
-    }
-
     protected void safeSetDate(StringBuilder sb, PreparedStatement ps, int col, Date val, Calendar cal)
             throws SQLException {
         if (val != null) {
@@ -2618,6 +2385,11 @@ public class SQLGenerator {
         }
     }
 
+    protected void safeSetVector(StringBuilder sb, PreparedStatement ps, int col, Object val)
+            throws SQLException {
+        ps.setObject(col, null);
+    }
+    
     protected void safeSetURI(StringBuilder sb, PreparedStatement ps, int col, URI val)
             throws SQLException {
         String str = null;
@@ -3219,37 +2991,9 @@ public class SQLGenerator {
         return new ReadAccessMapper(c);
     }
 
-    public Class<? extends Skeleton> getSkeletonClass(Class c) {
-        if (c.equals(ObservationMetaReadAccess.class)) {
-            return ObservationMetaReadAccessSkeleton.class;
-        }
-
-        if (c.equals(PlaneMetaReadAccess.class)) {
-            return PlaneMetaReadAccessSkeleton.class;
-        }
-
-        if (c.equals(PlaneDataReadAccess.class)) {
-            return PlaneDataReadAccessSkeleton.class;
-        }
-
-        throw new UnsupportedOperationException("getSkeletonClass: " + c.getName());
-    }
-
     public ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> c) {
         if (c.equals(ObservationSkeleton.class)) {
             return new ObservationSkeletonExtractor();
-        }
-
-        if (c.equals(ObservationMetaReadAccessSkeleton.class)) {
-            return new ReadAccessSkeletonExtractor(ObservationMetaReadAccessSkeleton.class);
-        }
-
-        if (c.equals(PlaneMetaReadAccessSkeleton.class)) {
-            return new ReadAccessSkeletonExtractor(PlaneMetaReadAccessSkeleton.class);
-        }
-
-        if (c.equals(PlaneDataReadAccessSkeleton.class)) {
-            return new ReadAccessSkeletonExtractor(PlaneDataReadAccessSkeleton.class);
         }
 
         throw new UnsupportedOperationException("getSkeletonExtractor: " + c.getName());
@@ -3449,6 +3193,11 @@ public class SQLGenerator {
                 skipAndLog(rs, col, 1);
                 col += 1; // skip
             }
+            
+            String metaReadAccessGroups = rs.getString(col++);
+            if (metaReadAccessGroups != null) {
+                throw new UnsupportedOperationException("map Observation.metaReadAccessGroups");
+            }
 
             if (persistOptimisations) {
                 col += numOptObservationColumns;
@@ -3577,6 +3326,15 @@ public class SQLGenerator {
                 p.metrics = m;
             }
 
+            String metaReadAccessGroups = rs.getString(col++);
+            if (metaReadAccessGroups != null) {
+                throw new UnsupportedOperationException("map Plane.metaReadAccessGroups");
+            }
+            String dataReadAccessGroups = rs.getString(col++);
+            if (dataReadAccessGroups != null) {
+                throw new UnsupportedOperationException("map Plane.dataReadAccessGroups");
+            }
+            
             String qflag = rs.getString(col++);
             if (qflag != null) {
                 p.quality = new DataQuality(Quality.toValue(qflag));

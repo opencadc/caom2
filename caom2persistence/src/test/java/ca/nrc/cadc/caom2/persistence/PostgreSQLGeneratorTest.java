@@ -70,13 +70,11 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.text.DateFormat;
 import java.util.Date;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -146,15 +144,15 @@ public class PostgreSQLGeneratorTest
     {
         try
         {
-            String start = "select observationmetareadaccess.";
-            String end = " order by observationmetareadaccess.lastmodified limit 10";
+            String start = "select observationstate.";
+            String end = " order by observationstate.maxlastmodified limit 10";
             Date d1 = new Date();
             Date d2 = new Date(d1.getTime() + 1000000L);
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-            String exp1 = "observationmetareadaccess.lastmodified >= '" + df.format(d1) + "'";
+            String exp1 = "observationstate.maxlastmodified >= '" + df.format(d1) + "'";
 
-            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, null, batchSize);
+            String sql = gen.getSelectSQL(ObservationState.class, d1, null, batchSize);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
 

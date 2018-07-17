@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
@@ -119,6 +117,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         return "LIMIT " + batchSize;
     }
 
+    /*
     @Override
     protected String getUpdateAssetSQL(Class asset, Class ra, boolean add) {
         StringBuilder sb = new StringBuilder();
@@ -144,7 +143,8 @@ public class PostgreSQLGenerator extends SQLGenerator {
 
         return sb.toString();
     }
-
+    */
+    
     @Override
     protected String literal(UUID value) {
         // uuid datatype accepts a string with the standard hex string format
