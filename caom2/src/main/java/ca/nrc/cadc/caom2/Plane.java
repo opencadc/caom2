@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 
 import java.net.URI;
@@ -93,6 +94,8 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
 
     // mutable contents
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
+    private final Set<ReadAccess> metaReadAccess = new TreeSet<ReadAccess>();
+    private final Set<ReadAccess> dataReadAccess = new TreeSet<ReadAccess>();
 
     // mutable state
     public URI creatorID;
@@ -127,6 +130,14 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
         return artifacts;
     }
 
+    public Set<ReadAccess> getMetaReadAccess() {
+        return metaReadAccess;
+    }
+
+    public Set<ReadAccess> getDataReadAccess() {
+        return dataReadAccess;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (o == null) {

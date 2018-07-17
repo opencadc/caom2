@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.util.Date;
 import java.util.Set;
@@ -79,8 +80,7 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public abstract class Observation extends CaomEntity
-        implements Comparable<Observation> {
+public abstract class Observation extends CaomEntity implements Comparable<Observation> {
     private static final long serialVersionUID = 201604081100L;
 
     // immutable state
@@ -104,6 +104,7 @@ public abstract class Observation extends CaomEntity
 
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
+    private final Set<ReadAccess> metaReadAccess = new TreeSet<ReadAccess>();
 
     protected Observation(String collection, String observationID,
             Algorithm algorithm) {
@@ -147,6 +148,10 @@ public abstract class Observation extends CaomEntity
 
     public Set<Plane> getPlanes() {
         return planes;
+    }
+
+    public Set<ReadAccess> getMetaReadAccess() {
+        return metaReadAccess;
     }
 
     @Override

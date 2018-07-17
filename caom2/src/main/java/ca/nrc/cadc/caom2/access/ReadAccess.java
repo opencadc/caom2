@@ -111,6 +111,7 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
         return groupID;
     }
 
+    @Deprecated
     public final String getGroupName() {
         // canonical form: ivo://<authority>/<path>?<name>
 
@@ -147,20 +148,16 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
     }
 
     public int compareTo(ReadAccess o) {
-        // groupID,assetID,classname==permission type
+        // groupID,assetID
         int ret = this.groupID.compareTo(o.groupID);
         if (ret == 0) {
             ret = this.assetID.compareTo(o.assetID);
-        }
-        if (ret == 0) {
-            ret = this.getClass().getName().compareTo(o.getClass().getName());
         }
         return ret;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + assetID + "," + groupID
-                + "]";
+        return this.getClass().getSimpleName() + "[" + assetID + "," + groupID + "]";
     }
 }

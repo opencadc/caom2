@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.access;
 
@@ -81,179 +81,97 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class ReadAccessTest 
-{
+public class ReadAccessTest {
+
     private static final Logger log = Logger.getLogger(ReadAccessTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     UUID assetID = UUID.randomUUID();
     String groupStr = "ivo://cadc.nrc.ca/gms?ABC";
 
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    @Test
+    public void testConstructor() {
+        try {
+            URI guri = new URI("ivo://cadc.nrc.ca/gms?ABC");
+            ReadAccess ra = new ReadAccess(assetID, guri);
+            
+            try {
+                ra = new ReadAccess(assetID, null);
+                Assert.fail("expected IllegalArgumentException, got: " + ra);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected: " + expected);
+            }
+            
+            try {
+                ra = new ReadAccess(null, guri);
+                Assert.fail("expected IllegalArgumentException, got: " + ra);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected: " + expected);
+            }
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGetGroupName()
-    {
-        try
-        {
+    public void testGetGroupName() {
+        try {
             URI guri = new URI("ivo://cadc.nrc.ca/gms?ABC");
-            ObservationMetaReadAccess ra = new ObservationMetaReadAccess(assetID, guri);
+            ReadAccess ra = new ReadAccess(assetID, guri);
             String gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
             Assert.assertEquals(guri, ra.getGroupID());
-            
+
             // compat with fragments
             URI guriCompat = new URI("ivo://cadc.nrc.ca/gms#ABC");
-            ra = new ObservationMetaReadAccess(assetID, guriCompat);
+            ra = new ReadAccess(assetID, guriCompat);
             gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
-            
+
             // compat with simple name
             URI guriNameOnly = new URI("ABC");
-            ra = new ObservationMetaReadAccess(assetID, guriNameOnly);
+            ra = new ReadAccess(assetID, guriNameOnly);
             gname = ra.getGroupName();
             Assert.assertEquals("ABC", gname);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testObservationMetaReadAccess()
-    {
-        try
-        {
-            URI groupID = new URI(groupStr);
-            ReadAccess ra = new ObservationMetaReadAccess(assetID, groupID);
-            ra.toString();
-            Assert.assertEquals(assetID, ra.getAssetID());
-            Assert.assertEquals(groupID, ra.getGroupID());
-            
-            Assert.assertEquals(ra, ra);
-            Assert.assertEquals(0, ra.compareTo(ra));
-            
-            ReadAccess raeq = new ObservationMetaReadAccess(assetID, groupID);
-            Assert.assertEquals(ra, raeq);
-            Assert.assertEquals(0, ra.compareTo(raeq));
-            
-            ReadAccess rane = new ObservationMetaReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) < 0);
-            
-            rane = new ObservationMetaReadAccess(UUID.randomUUID(), groupID);
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) != 0);
-            
-            rane = new PlaneMetaReadAccess(assetID, groupID); // diff class
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) < 0); // obs < plane
-            
-            rane = null;
-            Assert.assertFalse(ra.equals(rane));
-            
-            
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testPlaneMetaReadAccess()
-    {
-        try
-        {
+    public void testReadAccessComparable() {
+        try {
             URI groupID = new URI(groupStr);
-            ReadAccess ra = new PlaneMetaReadAccess(assetID, groupID);
+            ReadAccess ra = new ReadAccess(assetID, groupID);
             ra.toString();
             Assert.assertEquals(assetID, ra.getAssetID());
             Assert.assertEquals(groupID, ra.getGroupID());
-            
-            Assert.assertEquals(ra, ra);
-            Assert.assertEquals(0, ra.compareTo(ra));
-            
-            ReadAccess raeq = new PlaneMetaReadAccess(assetID, groupID);
-            Assert.assertEquals(ra, raeq);
-            Assert.assertEquals(0, ra.compareTo(raeq));
-            
-            ReadAccess rane = new PlaneMetaReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) < 0);
-            
-            rane = new PlaneMetaReadAccess(UUID.randomUUID(), groupID);
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) != 0);
-            
-            rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) > 0); // plane > obs
-            
-            rane = null;
-            Assert.assertFalse(ra.equals(rane));
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 
-    @Test
-    public void testPlaneDataReadAccess()
-    {
-        try
-        {
-            URI groupID = new URI(groupStr);
-            ReadAccess ra = new PlaneDataReadAccess(assetID, groupID);
-            ra.toString();
-            Assert.assertEquals(assetID, ra.getAssetID());
-            Assert.assertEquals(groupID, ra.getGroupID());
-            
             Assert.assertEquals(ra, ra);
             Assert.assertEquals(0, ra.compareTo(ra));
-            
-            ReadAccess raeq = new PlaneDataReadAccess(assetID, groupID);
+
+            ReadAccess raeq = new ReadAccess(assetID, groupID);
             Assert.assertEquals(ra, raeq);
             Assert.assertEquals(0, ra.compareTo(raeq));
-            
-            ReadAccess rane = new PlaneDataReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
+
+            ReadAccess rane = new ReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
             Assert.assertFalse(ra.equals(rane));
             Assert.assertTrue(ra.compareTo(rane) < 0);
-            
-            rane = new PlaneDataReadAccess(UUID.randomUUID(), groupID);
+
+            rane = new ReadAccess(UUID.randomUUID(), groupID);
             Assert.assertFalse(ra.equals(rane));
             Assert.assertTrue(ra.compareTo(rane) != 0);
-            
-            rane = new ObservationMetaReadAccess(assetID, groupID); // diff class
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) > 0); // plane > obs
-            
+
             rane = null;
             Assert.assertFalse(ra.equals(rane));
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
