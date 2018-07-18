@@ -162,7 +162,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     @Override
     public Object run() throws Exception {
         
-        long start = System.currentTimeMillis();
+        final long start = System.currentTimeMillis();
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
