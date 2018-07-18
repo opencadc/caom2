@@ -75,6 +75,8 @@ import java.util.Date;
 
 /**
  * Class to hold meta information about an artifact.
+ * validate mode uses checksum. StorageID must not be null.
+ * Other attributes are optional and can be left as null.
  * 
  * @author majorb
  *
