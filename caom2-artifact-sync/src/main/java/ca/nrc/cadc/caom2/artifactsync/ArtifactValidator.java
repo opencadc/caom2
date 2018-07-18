@@ -182,9 +182,15 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         log.debug("Queryies are complete");
         executor.shutdownNow();
         
-        boolean supportSkipURITable = supportSkipURITable();
         TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
         TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
+        compareMetadata(logicalArtifacts, physicalArtifacts, start);
+        return null;
+    }
+    
+    void compareMetadata(TreeSet<ArtifactMetadata> logicalArtifacts, TreeSet<ArtifactMetadata> physicalArtifacts,
+            long start) throws Exception {
+        boolean supportSkipURITable = supportSkipURITable();
         long logicalCount = logicalArtifacts.size();
         long physicalCount = physicalArtifacts.size();
         log.debug("Found " + logicalCount + " logical artifacts.");
@@ -203,22 +209,23 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         ArtifactMetadata nextLogical = null;
         
         for (ArtifactMetadata nextPhysical : physicalArtifacts) {
-  
+            
+            String physicalLastModified = "null";
+            if (nextPhysical.lastModified != null) {
+                physicalLastModified = df.format(nextPhysical.lastModified);
+            }
             if (logicalArtifacts.contains(nextPhysical)) {
                 nextLogical = logicalArtifacts.ceiling(nextPhysical);
+                String logicalicalLastModified = "null";
+                if (nextLogical.lastModified != null) {
+                    logicalicalLastModified = df.format(nextLogical.lastModified);
+                }
                 logicalArtifacts.remove(nextLogical);
                 if (nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
                     if (nextLogical.contentLength == null 
                             || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                         diffLength++;
-                        if (supportSkipURITable) {
-                            if (checkAddToSkipTable(nextLogical)) {
-                                skipURICount++;
-                            } else {
-                                inSkipURICount++;
-                            }
-                        }
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffLength",
@@ -227,19 +234,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "caomContentLength", nextLogical.contentLength,
                              "storageContentLength", nextPhysical.contentLength,
                              "caomCollection", nextLogical.collection,
-                             "caomLastModified", df.format(nextLogical.lastModified),
-                             "ingestDate", df.format(nextPhysical.lastModified)},
+                             "caomLastModified", logicalicalLastModified,
+                             "ingestDate", physicalLastModified},
                             false);
                     } else if (nextLogical.contentType == null
                             || !nextLogical.contentType.equals(nextPhysical.contentType)) {
                         diffType++;
-                        if (supportSkipURITable) {
-                            if (checkAddToSkipTable(nextLogical)) {
-                                skipURICount++;
-                            } else {
-                                inSkipURICount++;
-                            }
-                        }
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffType",
@@ -248,15 +248,15 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "caomContentType", nextLogical.contentType,
                              "storageContentType", nextPhysical.contentType,
                              "caomCollection", nextLogical.collection,
-                             "caomLastModified", df.format(nextLogical.lastModified),
-                             "ingestDate", df.format(nextPhysical.lastModified)},
+                             "caomLastModified", logicalicalLastModified,
+                             "ingestDate", physicalLastModified},
                             false);
                     } else {
                         correct++;
                     }
                 } else {
                     diffChecksum++;
-                    if (supportSkipURITable) {
+                    if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
                         if (checkAddToSkipTable(nextLogical)) {
                             skipURICount++;
                         } else {
@@ -273,8 +273,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "storageChecksum", nextPhysical.checksum,
                          "storageSize", nextPhysical.contentLength,
                          "caomCollection", nextLogical.collection,
-                         "caomLastModified", df.format(nextLogical.lastModified),
-                         "ingestDate", df.format(nextPhysical.lastModified)},
+                         "caomLastModified", logicalicalLastModified,
+                         "ingestDate", physicalLastModified},
                         false);
                 }
             } else {
@@ -283,7 +283,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     {"logType", "detail",
                      "anomaly", "notInCAOM",
                      "storageID", nextPhysical.storageID,
-                     "ingestDate", df.format(nextPhysical.lastModified)},
+                     "ingestDate", physicalLastModified},
                     false);
             }
         }
@@ -291,13 +291,17 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         notInPhysical += logicalArtifacts.size();
         for (ArtifactMetadata next : logicalArtifacts) {
+            String lastModified = "null";
+            if (next.lastModified != null) {
+                lastModified = df.format(next.lastModified);
+            }
             logJSON(new String[]
                 {"logType", "detail",
                  "anomaly", "notInStorage",
                  "artifactURI", next.artifactURI,
                  "storageID", next.storageID,
                  "caomCollection", next.collection,
-                 "caomLastModified", df.format(next.lastModified)},
+                 "caomLastModified", lastModified},
                 false);
                 
             // add to HavestSkipURI table if there is not already a row in the table
@@ -343,8 +347,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         }
-    
-        return null;
     }
     
     public void shutdown() {
@@ -424,12 +426,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             int batchsize = 1000;
             long start = System.currentTimeMillis();
             Date minLastModified = null;
-            List<ObservationResponse> obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize);
+            List<ObservationResponse> obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize, 3);
             while (obsResponses.size() ==  batchsize) {
                 List<Observation> observations = getObservations(obsResponses);
                 result.addAll(getMetadata(observations));
                 minLastModified = observations.get(observations.size() - 1).getMaxLastModified();
-                obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize);
+                obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize, 3);
             }
             
             if (obsResponses.size() > 0) {
