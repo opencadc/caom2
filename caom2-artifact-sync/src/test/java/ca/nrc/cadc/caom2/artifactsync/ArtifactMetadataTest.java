@@ -87,6 +87,7 @@ public class ArtifactMetadataTest
     @Test
     public void testValidateCompareMetadata() throws Exception
     {
+        // test validate
         boolean reportOnly = false;
         testCompareMetadata(reportOnly);
     }
@@ -94,6 +95,7 @@ public class ArtifactMetadataTest
     @Test 
     public void testDiffCompareMetadata() throws Exception
     {
+        // test diff
         boolean reportOnly = true;
         testCompareMetadata(reportOnly);
     }
@@ -103,7 +105,7 @@ public class ArtifactMetadataTest
         String collection = "HST";
         ArtifactStore artifactStore = null;
 
-        // 1. test validation
+        // 1. test the operation
         ArtifactValidator validator = new ArtifactValidator(caomTapResourceID, collection, reportOnly, artifactStore);
         // a. logicalArtifacts is empty, physicalArtifacts is empty
         TreeSet<ArtifactMetadata> logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
@@ -137,8 +139,8 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         ArtifactMetadata logicalMetadata = new ArtifactMetadata();
         ArtifactMetadata physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.storageID = "0000219ecaea66ea0b69d94570418f0444753cca538ab3e39835964041919e232806743c7815a4c3360f3acdfffbd7a2d06318a330af1f43a7add53621a842a9";
-        physicalMetadata.storageID = "000080f6ffced3b719c0247b8d891de29c78cb5a1da2a9c765c857c55453fea25a52786c82f3281d0cd35b909b045d3f54b16409ed6efa6082c5aeba73c8ba04";
+        logicalMetadata.storageID = "foo";
+        physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
@@ -148,7 +150,7 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.storageID = "0000219ecaea66ea0b69d94570418f0444753cca538ab3e39835964041919e232806743c7815a4c3360f3acdfffbd7a2d06318a330af1f43a7add53621a842a9";
+        logicalMetadata.storageID = "foo";
         logicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
         logicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         logicalMetadata.contentLength = "10";
@@ -156,7 +158,7 @@ public class ArtifactMetadataTest
         logicalMetadata.collection = "HST";
         logicalMetadata.lastModified = new Date();
         logicalMetadata.releaseDate = new Date();
-        physicalMetadata.storageID = "000080f6ffced3b719c0247b8d891de29c78cb5a1da2a9c765c857c55453fea25a52786c82f3281d0cd35b909b045d3f54b16409ed6efa6082c5aeba73c8ba04";
+        physicalMetadata.storageID = "foo";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
@@ -166,7 +168,7 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.storageID = "0000219ecaea66ea0b69d94570418f0444753cca538ab3e39835964041919e232806743c7815a4c3360f3acdfffbd7a2d06318a330af1f43a7add53621a842a9";
+        logicalMetadata.storageID = "bar";
         physicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
         physicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         physicalMetadata.contentLength = "10";
@@ -174,7 +176,7 @@ public class ArtifactMetadataTest
         physicalMetadata.collection = "HST";
         physicalMetadata.lastModified = new Date();
         physicalMetadata.releaseDate = new Date();
-        physicalMetadata.storageID = "000080f6ffced3b719c0247b8d891de29c78cb5a1da2a9c765c857c55453fea25a52786c82f3281d0cd35b909b045d3f54b16409ed6efa6082c5aeba73c8ba04";
+        physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);

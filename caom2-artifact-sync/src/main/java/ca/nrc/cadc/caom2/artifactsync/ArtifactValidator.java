@@ -75,6 +75,7 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
@@ -97,6 +98,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -221,7 +223,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
                 logicalArtifacts.remove(nextLogical);
-                if (nextLogical.checksum.equals(nextPhysical.checksum)) {
+                if (nextLogical.checksum != null && nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
                     if (nextLogical.contentLength == null 
                             || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
@@ -423,23 +425,27 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
-            int batchsize = 1000;
-            long start = System.currentTimeMillis();
-            Date minLastModified = null;
-            List<ObservationResponse> obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize, 3);
-            while (obsResponses.size() ==  batchsize) {
-                List<Observation> observations = getObservations(obsResponses);
-                result.addAll(getMetadata(observations));
-                minLastModified = observations.get(observations.size() - 1).getMaxLastModified();
-                obsResponses = observationDAO.getList(collection, minLastModified, null, batchsize, 3);
+            long t1 = System.currentTimeMillis();
+            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
+            long t2 = System.currentTimeMillis();
+            long dt = t2 - t1;
+            log.info("get-state-list: " + states.size() + " " + dt + " ms");
+            
+            int depth = 3;
+            ListIterator<ObservationState> iter = states.listIterator();
+            t1 = System.currentTimeMillis();
+            while (iter.hasNext()) {
+                ObservationState s = iter.next();
+                iter.remove(); // GC
+                ObservationResponse resp = observationDAO.getAlt(s, depth);
+                for (Plane plane : resp.observation.getPlanes()) {
+                    for (Artifact artifact : plane.getArtifacts()) {
+                        result.add(getMetadata(artifact, plane.dataRelease, plane.metaRelease));
+                    }
+                }
             }
             
-            if (obsResponses.size() > 0) {
-                List<Observation> observations = getObservations(obsResponses);
-                result.addAll(getMetadata(observations));
-            }
-            
-            log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
+            log.debug("Finished logical query in " + (System.currentTimeMillis() - t1) + " ms");
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -464,51 +470,25 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return result;
     }
     
-    private List<Observation> getObservations(List<ObservationResponse> observationResponses) throws Exception {
-        List<Observation> observations = new ArrayList<Observation>();
-        for (ObservationResponse resp : observationResponses) {
-            if (resp.error != null) {
-                String msg = "Failed to getCAOM metadata. "
-                    + "Observation URI: " + resp.observationState.getURI().toString() + ", "
-                    + "accMetaChecksum: " + resp.observationState.accMetaChecksum.toString() + ", "
-                    + "maxLastModified: " + resp.observationState.maxLastModified.toString();
-                log.error(msg);
-                throw resp.error;
-            } else {
-                observations.add(resp.observation);
-            }
+    private ArtifactMetadata getMetadata(Artifact artifact, Date dataRelease, Date metaRelease) throws Exception {
+        ArtifactMetadata metadata = new ArtifactMetadata(); 
+        metadata.artifactURI = artifact.getURI().toASCIIString();
+        metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
+        metadata.contentLength = Long.toString(artifact.contentLength);
+        metadata.contentType = artifact.contentType;
+        metadata.collection = collection;
+        metadata.lastModified = artifact.getLastModified();
+        metadata.storageID = artifactStore.toStorageID(artifact.getURI().toASCIIString());
+        ReleaseType type = artifact.getReleaseType();
+        if (ReleaseType.DATA.equals(type)) {
+            metadata.releaseDate = dataRelease;
+        } else if (ReleaseType.META.equals(type)) {
+            metadata.releaseDate = metaRelease;
+        } else {
+            metadata.releaseDate = null;
         }
         
-        return observations;
-    }
-    
-    private TreeSet<ArtifactMetadata> getMetadata(List<Observation> observations) throws Exception {
-        TreeSet<ArtifactMetadata> artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
-        for (Observation obs : observations) {
-            for (Plane plane : obs.getPlanes()) {
-                for (Artifact artifact : plane.getArtifacts()) {
-                    ArtifactMetadata metadata = new ArtifactMetadata(); 
-                    metadata.artifactURI = artifact.getURI().toASCIIString();
-                    metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
-                    metadata.contentLength = Long.toString(artifact.contentLength);
-                    metadata.contentType = artifact.contentType;
-                    metadata.collection = collection;
-                    metadata.lastModified = artifact.getLastModified();
-                    metadata.storageID = artifactStore.toStorageID(artifact.getURI().toASCIIString());
-                    ReleaseType type = artifact.getReleaseType();
-                    if (ReleaseType.DATA.equals(type)) {
-                        metadata.releaseDate = plane.dataRelease;
-                    } else if (ReleaseType.META.equals(type)) {
-                        metadata.releaseDate = plane.metaRelease;
-                    } else {
-                        metadata.releaseDate = null;
-                    }
-                    artifacts.add(metadata);
-                }
-            }
-        }
-        
-        return artifacts;
+        return metadata;
     }
     
     private TreeSet<ArtifactMetadata> query(URL baseURL, String adql, boolean logical) throws Exception {
