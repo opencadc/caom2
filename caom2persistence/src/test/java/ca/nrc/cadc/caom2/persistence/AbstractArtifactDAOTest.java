@@ -177,6 +177,7 @@ public abstract class AbstractArtifactDAOTest
         }
     }
 
+    /*
     @Test
     public void testGetList()
     {
@@ -242,6 +243,7 @@ public abstract class AbstractArtifactDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    */
     
     @Test
     public void testGetByURI()

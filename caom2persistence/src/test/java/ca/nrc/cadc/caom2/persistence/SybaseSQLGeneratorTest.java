@@ -109,6 +109,7 @@ public class SybaseSQLGeneratorTest
         }
     }
 
+    /*
     @Test
     public void testSelectLastModifiedBatchSizeSQL()
     {
@@ -141,6 +142,7 @@ public class SybaseSQLGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    */
 
     @Test
     public void testSelectByLastModifiedSQL()

@@ -374,7 +374,7 @@ public abstract class AbstractObservationDAOTest
     }
     
     @Test
-    public void testGetObservationStateAndObservationList()
+    public void testGetObservationListByCollection()
     {
         try
         {
@@ -984,6 +984,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
+    /*
     @Test
     public void testGetObservationList()
     {
@@ -1049,7 +1050,8 @@ public abstract class AbstractObservationDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    */
+    
     @Test
     public void testPutObservationDeleteChildren()
     {

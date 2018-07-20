@@ -605,10 +605,6 @@ public class SQLGenerator {
         return id;
     }
 
-    public String getSelectSQL(ObservationURI uri, int depth) {
-        return getSelectSQL(uri, depth, false);
-    }
-
     public String getSelectSQL(ObservationURI uri, int depth, boolean skeleton) {
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(Observation.class);
@@ -818,7 +814,7 @@ public class SQLGenerator {
     }
 
     // select batchSize Observation.maxLastModified, starting at minLastModified and in maxLastModified order
-    
+    /*
     public String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
         if (!Observation.class.equals(c)) {
             throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
@@ -861,7 +857,8 @@ public class SQLGenerator {
         }
         return sb.toString();
     }
-
+    */
+    
     protected String getTopConstraint(Integer batchSize) {
         return null;
     }

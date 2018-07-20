@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -82,6 +83,7 @@ import org.apache.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -118,6 +120,43 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
         return gen.getTable(c);
     }
 
+    /**
+     * Get up to batchSize objects sorted by lastModified. This implementation
+     * performs a direct query and returns the specified number of instances.
+     *
+     * @param c
+     * @param minLastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @return
+     */
+    public List<ReadAccess> getList(Class<ReadAccess> c, Date minLastModified, Date maxLastModified, Integer batchSize) {
+        log.debug("GET: " + batchSize);
+        long t = System.currentTimeMillis();
+        try {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+
+            String sql = gen.getSelectSQL(c, minLastModified, maxLastModified, batchSize);
+            log.debug("GET SQL: " + sql);
+
+            Object result = jdbc.query(sql, gen.getReadAccessMapper(c));
+            if (result == null) {
+                return new ArrayList<ReadAccess>(0);
+            }
+
+            if (result instanceof List) {
+                List res = (List) result;
+                List<ReadAccess> ret = new ArrayList<ReadAccess>(res.size());
+                ret.addAll(res);
+                return ret;
+            }
+            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + batchSize + " " + dt + "ms");
+        }
+    }
+    
     public ReadAccess get(Class<? extends ReadAccess> c, UUID assetID, URI groupID) {
         checkInit();
         if (c == null || assetID == null || groupID == null) {
