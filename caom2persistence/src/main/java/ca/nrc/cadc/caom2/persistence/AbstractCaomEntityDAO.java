@@ -129,7 +129,7 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
 
     
 
-    /**
+    /*
      * Get batch of Observations. This implementation finds a range of
      * lastModified that should yield the requested batchSize and then performs
      * a date-range query with the specified depth (if needed) to get the target
