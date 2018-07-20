@@ -8,8 +8,9 @@ jdk:
   - oraclejdk8
 before_script: openssl s_client -CApath /etc/ssl/certs/ -connect plugins.gradle.org:443 </dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/gradle.crt; sudo keytool -importcert -noprompt -file /tmp/gradle.crt -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -alias root -storepass changeit;
 
+## temporarily remove caom2-artifact-sync for multi-stage release
 script:
-  - for mod in caom2-persist caom2-repo caom2persistence caom2-repo-server caom2harvester caom2-artifact-sync caom2-test-repo; do
+  - for mod in caom2-persist caom2-repo caom2persistence caom2-repo-server caom2harvester caom2-test-repo; do
       cd $mod;
       gradle --info assemble javadoc install || break -1;
       if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
