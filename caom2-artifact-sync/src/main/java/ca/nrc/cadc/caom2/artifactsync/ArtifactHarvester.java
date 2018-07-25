@@ -86,6 +86,9 @@ import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.UUID;
+
 import org.apache.log4j.Logger;
 
 public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, ShutdownListener {
@@ -145,7 +148,24 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
             startDate = state.curLastModified;
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
-                stopDate, batchSize);
+                stopDate, batchSize + 1);
+            
+            // avoid re-processing the last successful one stored in
+            // HarvestState (normal case because query: >= startDate)
+            if (!observationStates.isEmpty()) {
+                ListIterator<ObservationState> iter = observationStates.listIterator();
+                ObservationState curBatchLeader = iter.next();
+                if (curBatchLeader != null) {
+                    log.debug("harvesState: " + format(state.curID) + ", "+ df.format(state.curLastModified));
+                    if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
+                        Observation observation = observationDAO.get(curBatchLeader.getURI());
+                        log.debug("current batch: " + format(observation.getID()) + ", " + df.format(curBatchLeader.getMaxLastModified()));
+                        if (state.curID != null && state.curID.equals(observation.getID())) {
+                            iter.remove();
+                        }
+                    }
+                }
+            }
 
             num = observationStates.size();
             log.debug("Found " + num + " observations to process.");
@@ -153,13 +173,16 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             for (ObservationState observationState : observationStates) {
 
                 try {
-                    
                     observationDAO.getTransactionManager().startTransaction();
                     Observation observation = observationDAO.get(observationState.getURI());
                     
                     if (observation == null) {
                         log.debug("Observation no longer exists: " + observationState.getURI());
                     } else {
+                        // will make progress even on failures
+                        state.curLastModified = observation.getMaxLastModified();
+                        state.curID = observation.getID();
+                        
                         for (Plane plane : observation.getPlanes()) {
                             for (Artifact artifact : plane.getArtifacts()) {
                                 
@@ -217,7 +240,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         harvestSkipURIDAO.put(skip);
                                         added = true;
                                     } finally {
-                                        state.curLastModified = artifact.getLastModified();
                                         logEnd(artifact, success, added, message);
                                         if (added) {
                                             downloadCount++;
@@ -230,6 +252,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
                     harvestStateDAO.put(state);
                     log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                    log.debug("Updated artifact harvest state.  ID: " + format(state.curID));
                     
                     observationDAO.getTransactionManager().commitTransaction();
                     
@@ -246,6 +269,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     }
 
+    private String format(UUID id) {
+        if (id == null) {
+            return "null";
+        }
+        return id.toString();
+    }
+    
     private void logStart(Artifact artifact) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
