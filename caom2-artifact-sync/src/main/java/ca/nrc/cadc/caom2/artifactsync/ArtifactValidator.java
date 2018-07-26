@@ -235,7 +235,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "storageID", nextLogical.storageID,
                              "caomContentLength", nextLogical.contentLength,
                              "storageContentLength", nextPhysical.contentLength,
-                             "caomCollection", nextLogical.collection,
+                             "caomCollection", collection,
                              "caomLastModified", logicalicalLastModified,
                              "ingestDate", physicalLastModified},
                             false);
@@ -249,7 +249,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "storageID", nextLogical.storageID,
                              "caomContentType", nextLogical.contentType,
                              "storageContentType", nextPhysical.contentType,
-                             "caomCollection", nextLogical.collection,
+                             "caomCollection", collection,
                              "caomLastModified", logicalicalLastModified,
                              "ingestDate", physicalLastModified},
                             false);
@@ -274,7 +274,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "caomSize", nextLogical.contentLength,
                          "storageChecksum", nextPhysical.checksum,
                          "storageSize", nextPhysical.contentLength,
-                         "caomCollection", nextLogical.collection,
+                         "caomCollection", collection,
                          "caomLastModified", logicalicalLastModified,
                          "ingestDate", physicalLastModified},
                         false);
@@ -302,7 +302,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                  "anomaly", "notInStorage",
                  "artifactURI", next.artifactURI,
                  "storageID", next.storageID,
-                 "caomCollection", next.collection,
+                 "caomCollection", collection,
                  "caomLastModified", lastModified},
                 false);
                 
