@@ -156,7 +156,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                 ListIterator<ObservationState> iter = observationStates.listIterator();
                 ObservationState curBatchLeader = iter.next();
                 if (curBatchLeader != null) {
-                    log.debug("harvesState: " + format(state.curID) + ", "+ df.format(state.curLastModified));
+                    log.debug("harvesState: " + format(state.curID) + ", " + df.format(state.curLastModified));
                     if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
                         Observation observation = observationDAO.get(curBatchLeader.getURI());
                         log.debug("current batch: " + format(observation.getID()) + ", " + df.format(curBatchLeader.getMaxLastModified()));
