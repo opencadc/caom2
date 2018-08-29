@@ -91,6 +91,7 @@ public class InitDatabaseTest {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
         if (testSchema != null) {
@@ -151,9 +152,10 @@ public class InitDatabaseTest {
     @Test
     public void testParseCreateDDL() {
         try {
+            InitDatabase init = new InitDatabase(null, null, schema);
             for (String fname : InitDatabase.CREATE_SQL) {
                 log.info("process file: " + fname);
-                List<String> statements = InitDatabase.parseDDL(fname, schema);
+                List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);
                 Assert.assertFalse(statements.isEmpty());
                 for (String s : statements) {
@@ -197,9 +199,10 @@ public class InitDatabaseTest {
     @Test
     public void testParseUpgradeDDL() {
         try {
+            InitDatabase init = new InitDatabase(null, null, schema);
             for (String fname : InitDatabase.UPGRADE_SQL) {
                 log.info("process file: " + fname);
-                List<String> statements = InitDatabase.parseDDL(fname, schema);
+                List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);
                 Assert.assertFalse(statements.isEmpty());
             }

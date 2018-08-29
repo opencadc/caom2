@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.db.DatabaseTransactionManager;
+import ca.nrc.cadc.db.TransactionManager;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Map;
