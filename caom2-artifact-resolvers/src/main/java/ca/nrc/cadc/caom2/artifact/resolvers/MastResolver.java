@@ -82,7 +82,7 @@ import org.apache.log4j.Logger;
 public class MastResolver implements StorageResolver {
 
     public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "http://mastpartners.stsci.edu/portal/Download/file/";
+    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
 
     public MastResolver() {
     }
