@@ -100,7 +100,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 
@@ -147,10 +146,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
-    AtomicLong successes = new AtomicLong(0);
-    AtomicLong totalElapsedTime = new AtomicLong(0);
-    AtomicLong totalBytes = new AtomicLong(0);
-
     @Override
     public Integer run() throws Exception {
 
@@ -171,6 +166,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         }
 
         // reset each batch
+        long successes = 0;
+        long totalElapsedTime = 0;
+        long totalBytes = 0;
         results = new ArrayList<Future<ArtifactDownloadResult>>();
         start = System.currentTimeMillis();
 
@@ -188,9 +186,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 try {
                     ArtifactDownloadResult result = f.get();
                     if (result.success) {
-                        successes.incrementAndGet();
-                        totalElapsedTime.addAndGet(result.elapsedTimeMillis);
-                        totalBytes.addAndGet(result.bytesTransferred);
+                        successes++;
+                        totalElapsedTime += result.elapsedTimeMillis;
+                        totalBytes += result.bytesTransferred;
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.info("Thread execution error", e);
@@ -209,7 +207,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 executor.shutdownNow();
             }
             executor = null;
-            processResults(results.size(), successes.get(), totalElapsedTime.get(), totalBytes.get());
+            processResults(results.size(), successes, totalElapsedTime, totalBytes);
         }
 
         return workCount;
