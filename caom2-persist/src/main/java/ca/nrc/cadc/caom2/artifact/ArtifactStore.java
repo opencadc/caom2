@@ -136,26 +136,44 @@ public interface ArtifactStore {
      */
     public void store(URI artifactURI, InputStream data, FileMetadata metadata)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
-    
+
     /**
      * Get the list of all artifacts in a certain archive.
-     * 
-     * @param archive The archive on which to search for files.
+     *
+     * @param archive
+     *            The archive on which to search for files.
      * @return A list of archive metadata objects
      * @throws TransientException
      * @throws UnsupportedOperationException
      * @throws AccessControlException
      */
-    public Set<ArtifactMetadata> list(String archive)
-            throws TransientException, UnsupportedOperationException, AccessControlException;
-    
+    public Set<ArtifactMetadata> list(String archive) throws TransientException, UnsupportedOperationException, AccessControlException;
+
     /**
      * Convert an artifact URI to a storage ID.
-     * 
-     * @param artifactURI The artifact URI to be converted.
+     *
+     * @param artifactURI
+     *            The artifact URI to be converted.
      * @return A string representing the storage ID
-     * @throws IllegalArgumentException If an aspect of the artifact uri is incorrect.
+     * @throws IllegalArgumentException
+     *             If an aspect of the artifact uri is incorrect.
      */
     public String toStorageID(String artifactURI) throws IllegalArgumentException;
+
+    /**
+     * Process results from a batch of files downloaded.
+     *
+     * @param total
+     *            Number of files processed.
+     * @param successes
+     *            Number of files actually downloaded.
+     * @param totalElapsedTime
+     *            Total elapsed time in ms.
+     * @param totalBytes
+     *            Total bytes downloaded.
+     * @param threads
+     *            Threads used.
+     */
+    public void processResults(long total, long successes, long totalElapsedTime, long totalBytes, int threads);
 
 }
