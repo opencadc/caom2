@@ -100,8 +100,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>, ShutdownListener {
@@ -121,19 +121,19 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
-    
+
     ExecutorService executor = null;
-    List<Future<ArtifactDownloadResult>>  results;
+    List<Future<ArtifactDownloadResult>> results;
     long start;
 
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads,
-                                 int batchSize, Integer retryAfterHours, boolean verify) {
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize, Integer retryAfterHours,
+            boolean verify) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
-        
+
         this.threads = threads;
         this.batchSize = batchSize;
         this.verify = verify;
@@ -143,16 +143,19 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         } else {
             this.retryAfterHours = retryAfterHours;
         }
-        
+
         df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
+
+    AtomicLong successes = new AtomicLong(0);
+    AtomicLong totalElapsedTime = new AtomicLong(0);
+    AtomicLong totalBytes = new AtomicLong(0);
 
     @Override
     public Integer run() throws Exception {
 
         log.debug("Querying for skip records between " + startDate + " and " + stopDate);
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate,
-            stopDate, batchSize);
+        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
         executor = Executors.newFixedThreadPool(threads);
 
         Integer workCount = artifacts.size();
@@ -166,31 +169,28 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         if (workCount > 0) {
             startDate = artifacts.get(workCount - 1).getTryAfter();
         }
-        
+
         // reset each batch
-        long successes = 0;
-        long totalElapsedTime = 0;
-        long totalBytes = 0;
         results = new ArrayList<Future<ArtifactDownloadResult>>();
         start = System.currentTimeMillis();
-        
+
         try {
             // submit the results asynchronously
             for (Callable<ArtifactDownloadResult> task : tasks) {
                 results.add(executor.submit(task));
             }
-            
+
             // let pool know no new tasks can be added
             executor.shutdown();
-            
+
             // wait for them to complete by calling f.get()
             for (Future<ArtifactDownloadResult> f : results) {
                 try {
                     ArtifactDownloadResult result = f.get();
                     if (result.success) {
-                        successes++;
-                        totalElapsedTime += result.elapsedTimeMillis;
-                        totalBytes += result.bytesTransferred;
+                        successes.incrementAndGet();
+                        totalElapsedTime.addAndGet(result.elapsedTimeMillis);
+                        totalBytes.addAndGet(result.bytesTransferred);
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.info("Thread execution error", e);
@@ -209,7 +209,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 executor.shutdownNow();
             }
             executor = null;
-            logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
+            processResults(results.size(), successes.get(), totalElapsedTime.get(), totalBytes.get());
         }
 
         return workCount;
@@ -223,7 +223,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         boolean uploadSuccess = true;
         String uploadErrorMessage;
         long bytesTransferred;
-        
+
         Logger threadLog = Logger.getLogger(ArtifactDownloader.class);
 
         FileMetadata metadata;
@@ -239,18 +239,18 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
             Profiler profiler = new Profiler(ArtifactDownloader.class);
             logStart(threadLog, skip);
-            
+
             ArtifactDownloadResult result = null;
-            
+
             try {
 
                 URI artifactURI = skip.getSkipID();
                 final Artifact artifact = artifactDAO.get(artifactURI);
                 profiler.checkpoint("artifactDAO.get");
-                
+
                 result = new ArtifactDownloadResult(artifactURI);
                 result.success = false;
-            
+
                 if (artifact == null) {
                     // artifact no longer exists, remove from skip uri table
                     threadLog.debug("Artifact no longer exists, removing from skip uri table");
@@ -258,15 +258,15 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     result.message = "Artifact no longer exists";
                     return result;
                 }
-                
+
                 MastResolver resolver = new MastResolver();
                 final URL url = resolver.toURL(artifactURI);
-    
+
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
                 metadata.setMd5Sum(artifact.contentChecksum.getSchemeSpecificPart());
                 metadata.setContentLength(artifact.contentLength);
-            
+
                 // get the md5 and contentLength of the artifact
                 OutputStream out = new ByteArrayOutputStream();
                 HttpDownload head = new HttpDownload(url, out);
@@ -318,7 +318,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 download.run();
                 threadLog.debug("Completed download of " + artifactURI + " from " + url);
                 result.elapsedTimeMillis = System.currentTimeMillis() - start;
-                
+
                 respCode = download.getResponseCode();
                 threadLog.debug("Download response code: " + respCode);
                 profiler.checkpoint("download/upload");
@@ -332,7 +332,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 } else {
                     if (uploadSuccess) {
                         if (verify) {
-                            if (!artifactStore.contains(artifactURI,artifact.contentChecksum)) {
+                            if (!artifactStore.contains(artifactURI, artifact.contentChecksum)) {
                                 String msgDetail = "Artifact with checksum [" + artifact.contentChecksum + "] not in storage.";
                                 result.message = "Post download verification failure: " + msgDetail;
                             } else {
@@ -348,13 +348,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
 
                 return result;
-                
+
             } catch (Throwable t) {
                 // unexpected error
                 log.error("unexpected", t);
                 result.message = "unexpected error: " + t.getMessage();
                 return result;
-                
+
             } finally {
                 // Update the skip table
                 try {
@@ -371,7 +371,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                             profiler.checkpoint("harvestSkipURIDAO.update");
                         }
                     }
-                    
+
                 } catch (Throwable t) {
                     threadLog.error("Failed to update or delete from skip table", t);
                 }
@@ -446,8 +446,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         startMessage.append("}");
         threadLog.info(startMessage.toString());
     }
-    
-    private void logBatchEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
+
+    public void processResults(long total, long successes, long totalElapsedTime, long totalBytes) {
         final long end = System.currentTimeMillis() - start;
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("ENDBATCH: {");
@@ -468,6 +468,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         endMessage.append("\"threads\":\"").append(threads).append("\"");
         endMessage.append("}");
         log.info(endMessage.toString());
+        artifactStore.processResults(total, successes, totalElapsedTime, totalBytes, threads);
     }
 
     @Override
@@ -475,7 +476,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         if (executor != null) {
             log.info("Shutting down downloader.");
             List<Runnable> incomplete = executor.shutdownNow();
-            
+
             if (results == null) {
                 StringBuilder endMessage = new StringBuilder();
                 endMessage.append("ENDBATCH: {");
@@ -496,7 +497,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 long successes = 0;
                 long totalElapsedTime = 0;
                 long totalBytes = 0;
-                
+
                 // wait for them to complete by calling f.get()
                 for (Future<ArtifactDownloadResult> f : results) {
                     if (f.isDone()) {
@@ -513,10 +514,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         }
                     }
                 }
-                
-                logBatchEnd(total, successes, totalElapsedTime, totalBytes);
+
+                processResults(total, successes, totalElapsedTime, totalBytes);
             }
-            
+
             try {
                 executor.awaitTermination(60, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
