@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -167,6 +168,52 @@ public class CaomValidatorTest
             try 
             { 
                 CaomValidator.assertPositive(this.getClass(), "test", 0.0); 
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testAssertValidChecksumURI()
+    {
+        try
+        {
+            CaomValidator.assertValidChecksumURI(URI.create("md5:d41d8cd98f00b204e9800998ecf8427e"));
+            
+            CaomValidator.assertValidChecksumURI(URI.create("foo:0123456789abcdef"));
+            
+            CaomValidator.assertValidChecksumURI(URI.create("foo:FEDCBA9876543210"));
+            
+            try 
+            { 
+                CaomValidator.assertValidChecksumURI(URI.create("md5:xyz"));
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertValidChecksumURI(URI.create("md5:"));
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertValidChecksumURI(URI.create("md5"));
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected) { }
+            
+            try 
+            { 
+                CaomValidator.assertValidChecksumURI(URI.create("foo"));
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected) { }
