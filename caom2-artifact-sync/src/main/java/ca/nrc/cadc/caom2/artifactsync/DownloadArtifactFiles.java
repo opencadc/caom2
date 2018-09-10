@@ -207,7 +207,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 executor.shutdownNow();
             }
             executor = null;
-            processResults(results.size(), successes, totalElapsedTime, totalBytes);
+            logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
         }
 
         return workCount;
@@ -445,7 +445,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         threadLog.info(startMessage.toString());
     }
 
-    public void processResults(long total, long successes, long totalElapsedTime, long totalBytes) {
+    public void logBatchEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
         final long end = System.currentTimeMillis() - start;
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("ENDBATCH: {");
@@ -513,7 +513,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     }
                 }
 
-                processResults(total, successes, totalElapsedTime, totalBytes);
+                logBatchEnd(total, successes, totalElapsedTime, totalBytes);
             }
 
             try {
