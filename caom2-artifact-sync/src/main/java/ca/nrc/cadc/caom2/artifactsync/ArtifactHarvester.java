@@ -106,7 +106,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private int batchSize;
     private String source;
     private Date startDate;
-    private Date stopDate;
     private DateFormat df;
     
     // reset each run
@@ -129,7 +128,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
 
         this.startDate = null;
-        this.stopDate = new Date();
         
         df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
@@ -147,6 +145,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
             startDate = state.curLastModified;
+            // harvest up to a little in the past because the head of
+            // the sequence may be volatile
+            long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+            Date stopDate = new Date(fiveMinAgo);
+            log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
                 stopDate, batchSize + 1);
             
@@ -168,7 +171,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             }
 
             num = observationStates.size();
-            log.debug("Found " + num + " observations to process.");
+            log.info("Found: " + num);
 
             for (ObservationState observationState : observationStates) {
 
