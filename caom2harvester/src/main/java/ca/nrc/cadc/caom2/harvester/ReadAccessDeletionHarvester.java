@@ -77,7 +77,7 @@ import ca.nrc.cadc.caom2.access.PlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
-import ca.nrc.cadc.caom2.persistence.TransactionManager;
+import ca.nrc.cadc.db.TransactionManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
