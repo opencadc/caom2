@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.db.DatabaseTransactionManager;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Date;
