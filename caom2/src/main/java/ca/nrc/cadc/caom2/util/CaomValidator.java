@@ -69,9 +69,12 @@
 
 package ca.nrc.cadc.caom2.util;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.util.HexUtil;
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -91,6 +94,7 @@ public final class CaomValidator {
     public static void validate(Observation obs) {
         validateKeywords(obs);
         validatePlanes(obs);
+        validateChecksumURIs(obs);
     }
     
     /**
@@ -171,6 +175,27 @@ public final class CaomValidator {
         }
     }
     
+    /**
+     * Checksum URI validation.
+     * 
+     * @param uri 
+     * @throws IllegalArgumentException 
+     */
+    public static void assertValidChecksumURI(URI uri) {
+        String scheme = uri.getScheme();
+        String sval = uri.getSchemeSpecificPart();
+        if (scheme == null || sval == null) {
+            throw new IllegalArgumentException("invalid Artifact.contentChecksum: " 
+                + uri + " -- expected <algorithm>:<hex value>");
+        }
+        try {
+            byte[] b = HexUtil.toBytes(sval);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("invalid Artifact.contentChecksum: " 
+                + uri + " contains invalid hex chars -- expected <algorithm>:<hex value>");
+        }
+    }
+    
     private static void validateKeywords(String name, Set<String> vals) {
         for (String s : vals) {
             assertValidKeyword(CaomValidator.class, name, s);
@@ -201,31 +226,6 @@ public final class CaomValidator {
         }
     }
 
-    // restrict Observation.intent and Artifact.productType combinations
-    // NOTE: no longer used in validate(Observation)
-    /*
-    private static void validateIntent(Observation obs) {
-        if (obs.intent == null) {
-            return;
-        }
-
-        ProductType ban = ProductType.CALIBRATION;
-        if (ObservationIntentType.CALIBRATION.equals(obs.intent)) {
-            ban = ProductType.SCIENCE;
-        }
-        for (Plane p : obs.getPlanes()) {
-            for (Artifact a : p.getArtifacts()) {
-                if (ban.equals(a.getProductType())) {
-                    throw new IllegalArgumentException("Observation.intent = "
-                            + obs.intent.getValue() + " but artifact "
-                            + a.getURI().toASCIIString() + " has productType = "
-                            + a.getProductType().getValue());
-                }
-            }
-        }
-    }
-    */
-
     private static void validatePlanes(Observation obs) {
         for (Plane p : obs.getPlanes()) {
             if (p.position != null) {
@@ -239,6 +239,16 @@ public final class CaomValidator {
             }
             if (p.time != null && p.time.bounds != null) {
                 p.time.bounds.validate();
+            }
+        }
+    }
+    
+    private static void validateChecksumURIs(Observation obs) {
+        for (Plane p : obs.getPlanes()) {
+            for (Artifact a : p.getArtifacts()) {
+                if (a.contentChecksum != null) {
+                    assertValidChecksumURI(a.contentChecksum);
+                }
             }
         }
     }
