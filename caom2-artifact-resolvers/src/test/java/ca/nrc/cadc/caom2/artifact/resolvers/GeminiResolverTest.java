@@ -72,8 +72,6 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -89,8 +87,9 @@ public class GeminiResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE1 = "flub.fits";
+    String VALID_FILE = "flub.fits";
     String VALID_FILE2 = "blub.fits";
+    String VALID_PREVIEW = "flub.jpg";
     String PROTOCOL_STR = "https";
     String BASE_URL = "archive.gemini.edu";
 
@@ -110,23 +109,25 @@ public class GeminiResolverTest {
     @Test
     public void testValidURI() {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE1;
+            String uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_FILE;
             URI uri = new URI(uriStr);
             URL url = geminiResolver.toURL(uri);
 
+            String expectedPath = GeminiResolver.FILE_URI + "/" + VALID_FILE;
             log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE1);
-            Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
+            Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE);
+            Assert.assertEquals("/" + expectedPath, url.getPath());
             Assert.assertEquals(BASE_URL, url.getHost());
 
 
-            uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.FILE_URI + "/" + VALID_FILE2;
+            uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_PREVIEW;
             uri = new URI(uriStr);
             url = geminiResolver.toURL(uri);
 
+            expectedPath = GeminiResolver.PREVIEW_URI + "/" + VALID_FILE;
             log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE2);
-            Assert.assertEquals("/" + uri.getSchemeSpecificPart(), url.getPath());
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + "://" + BASE_URL + "/preview/" + VALID_FILE);
+            Assert.assertEquals("/" + expectedPath, url.getPath());
             Assert.assertEquals(BASE_URL, url.getHost());
 
         } catch (Exception unexpected) {
@@ -165,7 +166,7 @@ public class GeminiResolverTest {
     @Test
     public void testInvalidUriType() {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_FILE1;
+            String uriStr = GeminiResolver.SCHEME + ":badArchive/" + VALID_FILE;
             URI uri = new URI(uriStr);
             URL url = geminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
