@@ -85,8 +85,7 @@ public class GeminiResolver implements StorageResolver {
         String fileName = path[1];
         String fileType = FILE_URI;
         String[] fileNameParts = fileName.split("\\.");
-        if (fileNameParts[1].equals("jpg"))
-        {
+        if (fileNameParts[1].equals("jpg")) {
             fileName = fileNameParts[0] + ".fits"; 
             fileType = PREVIEW_URI;
         }
