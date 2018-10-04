@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
+import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.Transform;
@@ -188,7 +189,22 @@ public final class CutoutUtil {
                     }
                 }
                 // no time cutout
-                // no polarization cutout
+                // polarization cutout
+                if (polarStates != null && !polarStates.isEmpty()) {
+                    if (canPolarizationCutout(c)) {
+                        long[] cut = getPolarizationBounds(c.polarization, polarStates);
+                        if (polCut == null) {
+                            polCut = cut;
+                        } else if (polCut.length == 2 && cut != null) { // subset
+                            if (cut.length == 0) {
+                                polCut = cut;
+                            } else { // both are length 4
+                                polCut[0] = Math.min(polCut[0], cut[0]);
+                                polCut[1] = Math.max(polCut[1], cut[1]);
+                            }
+                        }
+                    }
+                }
                 // no input observable cutout, but merge
                 if (canObservableCutout(c)) {
                     long[] cut = getObservableCutout(c.observable);
@@ -255,7 +271,22 @@ public final class CutoutUtil {
 
             // time cutout: not supported
 
-            // polarization cutout: not supported
+            if (polCut != null) {
+                // cut.length==0 means cut contains all pixels
+                // cut.length==2 means cut picks a subset of pixels
+                int i = sb.indexOf(POL_CUT);
+                if (polCut.length == 2) {
+                    sb.replace(i, i + CUT_LEN, polCut[0] + ":" + polCut[1]);
+                    doCutObservable = true;
+                } else {
+                    sb.replace(i, i + CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("polarization cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+            } else if (polarStates != null && !polarStates.isEmpty()) {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no polarization overlap");
+                doCut = false;
+            }
 
             if (obsCut != null) {
                 int i = sb.indexOf(OBS_CUT);
@@ -462,10 +493,9 @@ public final class CutoutUtil {
 
     // check if polarization cutout is possible (currently function only)
     protected static boolean canPolarizationCutout(Chunk c) {
-        boolean polarizationCutout = false;
-        //(c.naxis != null && c.naxis.intValue() >= 1
-        //            && c.polarization != null && c.polarization.getAxis().function != null
-        //            && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
+        boolean polarizationCutout = (c.naxis != null && c.naxis.intValue() >= 1
+                    && c.polarization != null && c.polarization.getAxis().function != null
+                    && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
         return polarizationCutout;
     }
 
@@ -692,7 +722,7 @@ public final class CutoutUtil {
             long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
             long x2 = (long) Math.max(p1.coordinates[0], p2.coordinates[0]);
 
-            return doEnergyClipCheck(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
+            return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
 
         if (wcs.getAxis().bounds != null) {
@@ -721,7 +751,7 @@ public final class CutoutUtil {
                 long p1 = (long) (pix1 + 0.5); // round up
                 long p2 = (long) pix2;         // round down
 
-                return doEnergyClipCheck(maxPixValue, p1, p2);
+                return doClipCheck1D(maxPixValue, p1, p2);
             }
             log.debug("bounds INTERSECT wcs.bounds == null");
             return null;
@@ -744,27 +774,66 @@ public final class CutoutUtil {
         return null;
     }
 
-    private static long[] doEnergyClipCheck(long len, long x1, long x2) {
+    static long[] getPolarizationBounds(PolarizationWCS wcs, List<PolarizationState> states) {
+        List<PolarizationState> dataPols = PolarizationUtil.wcsToStates(wcs);
+        // find dataPols intersect states
+        List<PolarizationState> keep = new ArrayList<PolarizationState>();
+        for (PolarizationState ps : states) {
+            if (dataPols.contains(ps)) {
+                keep.add(ps);
+                log.warn("getPolarizationBounds keep: " + ps);
+            }
+        }
+        if (keep.isEmpty()) {
+            log.warn("getPolarizationBounds: empty");
+            return null; // no intersection
+        }
+        if (keep.size() == dataPols.size()) {
+            log.warn("getPolarizationBounds: all");
+            return new long[0]; // keep all pixels
+        }
+        
+        // keep some states AKA cutout
+        double pix1 = Double.MAX_VALUE;
+        double pix2 = Double.MIN_VALUE;
+        for (PolarizationState ps : keep) {
+            // function only: see canPolarizationCut above
+            double wval = PolarizationState.intValue(ps);
+            double px = Util.val2pix(wcs.getAxis().function, wval);
+            pix1 = Math.min(pix1, px);
+            pix2 = Math.max(pix2, px);
+        }
+        
+        return doClipCheck1D(wcs.getAxis().function.getNaxis(), (long) pix1, (long) pix2);
+    }
+    
+    private static long[] doClipCheck1D(long len, long x1, long x2) {
         if (x1 < 1) {
             x1 = 1;
         }
         if (x2 > len) {
             x2 = len;
         }
-        log.debug("doClipCheck: " + x1 + "," + x2 + " " + len);
+        log.warn("doClipCheck1D: " + len + " " + x1 + ":" + x2);
 
         // validity check
-        if (len == 1 && x1 == 1 && x2 == 1) {
-            return new long[0]; // the single pixel is included
-        }
-        // no pixels included
-        if (x1 >= len || x2 <= 1) {
-            return null;
-        }
+        //if (len == 1 && x1 == 1 && x2 == 1) {
+        //    log.warn("doClipCheck1D: single");
+        //    return new long[0]; // the single pixel is included
+        //}
+        
         // all pixels includes
         if (x1 == 1 && x2 == len) {
+            log.warn("doClipCheck1D: all");
             return new long[0];
         }
+        
+        // no pixels included
+        if (x1 > len || x2 < 1) {
+            log.warn("doClipCheck1D: none");
+            return null;
+        }
+        
         // an actual cutout
         return new long[] {x1, x2};
     }

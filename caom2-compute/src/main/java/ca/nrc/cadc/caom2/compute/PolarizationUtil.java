@@ -76,8 +76,10 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
@@ -101,30 +103,7 @@ public final class PolarizationUtil {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         if (c.polarization != null) {
                             numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            CoordRange1D range = c.polarization.getAxis().range;
-                            CoordBounds1D bounds = c.polarization.getAxis().bounds;
-                            CoordFunction1D function = c.polarization.getAxis().function;
-                            if (range != null) {
-                                int lb = (int) range.getStart().val;
-                                int ub = (int) range.getEnd().val;
-                                for (int i = lb; i <= ub; i++) {
-                                    pol.add(PolarizationState.toValue(i));
-                                }
-                            } else if (bounds != null) {
-                                for (CoordRange1D cr : bounds.getSamples()) {
-                                    int lb = (int) cr.getStart().val;
-                                    int ub = (int) cr.getEnd().val;
-                                    for (int i = lb; i <= ub; i++) {
-                                        pol.add(PolarizationState.toValue(i));
-                                    }
-                                }
-                            } else if (function != null) {
-                                for (int i = 1; i <= function.getNaxis(); i++) {
-                                    double pix = (double) i;
-                                    int val = (int) Util.pix2val(function, pix);
-                                    pol.add(PolarizationState.toValue(val));
-                                }
-                            }
+                            pol.addAll(wcsToStates(c.polarization));
                         }
                     }
                 }
@@ -138,5 +117,34 @@ public final class PolarizationUtil {
             p.dimension = new Long(numPixels);
         }
         return p;
+    }
+    
+    static List<PolarizationState> wcsToStates(PolarizationWCS wcs) {
+        List<PolarizationState> pol = new ArrayList<PolarizationState>();
+        CoordRange1D range = wcs.getAxis().range;
+        CoordBounds1D bounds = wcs.getAxis().bounds;
+        CoordFunction1D function = wcs.getAxis().function;
+        if (range != null) {
+            int lb = (int) range.getStart().val;
+            int ub = (int) range.getEnd().val;
+            for (int i = lb; i <= ub; i++) {
+                pol.add(PolarizationState.toValue(i));
+            }
+        } else if (bounds != null) {
+            for (CoordRange1D cr : bounds.getSamples()) {
+                int lb = (int) cr.getStart().val;
+                int ub = (int) cr.getEnd().val;
+                for (int i = lb; i <= ub; i++) {
+                    pol.add(PolarizationState.toValue(i));
+                }
+            }
+        } else if (function != null) {
+            for (int i = 1; i <= function.getNaxis(); i++) {
+                double pix = (double) i;
+                int val = (int) Util.pix2val(function, pix);
+                pol.add(PolarizationState.toValue(val));
+            }
+        }
+        return  pol;
     }
 }
