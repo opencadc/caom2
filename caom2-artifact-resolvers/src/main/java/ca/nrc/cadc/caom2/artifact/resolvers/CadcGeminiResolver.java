@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import java.net.URI;
@@ -87,9 +88,7 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
 
     @Override
     public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
-        }
+        ResolverUtil.validate(uri, SCHEME);
 
         try {
             AdResolver adResolver = new AdResolver();

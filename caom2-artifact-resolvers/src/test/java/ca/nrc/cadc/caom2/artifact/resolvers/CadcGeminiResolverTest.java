@@ -127,7 +127,7 @@ public class CadcGeminiResolverTest {
             URL url = cadcGeminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("invalid scheme"));
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
