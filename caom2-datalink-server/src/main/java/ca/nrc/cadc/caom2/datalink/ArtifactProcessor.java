@@ -77,6 +77,7 @@ import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.compute.CutoutUtil;
@@ -88,7 +89,9 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
@@ -113,7 +116,11 @@ public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
     
+    private static final String CONTENT_TYPE_TAR = "application/x-tar";
+    
     private URI sodaID;
+    private URI defaultPackageID;
+    
     private boolean initConfigDone = false;
     
     // deprecated stuff for CADC service that is being replaced by SODA
@@ -126,12 +133,14 @@ public class ArtifactProcessor
     private final CaomArtifactResolver artifactResolver;
     private boolean downloadOnly;
 
-    public ArtifactProcessor(URI sodaID, String runID)
+    public ArtifactProcessor(ServiceConfig dlc, String runID)
     {
-        this.sodaID = sodaID;
+        this.sodaID = dlc.getSodaID();
+        this.defaultPackageID = dlc.getPkgID();
         this.runID = runID;
         this.registryClient = new RegistryClient();
         this.artifactResolver = new CaomArtifactResolver();
+        artifactResolver.setRunID(runID);
     }
 
     /**
@@ -149,16 +158,20 @@ public class ArtifactProcessor
     public List<DataLink> process(URI uri, ArtifactQueryResult ar)
     {
         List<DataLink> ret = new ArrayList<>(ar.getArtifacts().size());
+        int numFiles = ar.getArtifacts().size();
+        boolean pkgReadable = true;
         for (Artifact a : ar.getArtifacts())
         {
             DataLink.Term sem = DataLink.Term.THIS;
             if (ProductType.PREVIEW.equals(a.getProductType()))
             {
                 sem = DataLink.Term.PREVIEW;
+                numFiles--; // exclude from #pkg
             }
             else if (ProductType.THUMBNAIL.equals(a.getProductType()))
             {
                 sem = DataLink.Term.THUMBNAIL;
+                numFiles--; // exclude from #pkg
             }
             else if (ProductType.CATALOG.equals(a.getProductType()))
             {
@@ -179,6 +192,9 @@ public class ArtifactProcessor
                 readable = ar.metaReadable;
             // else: new releaseType is not likely without major caom design change
             
+            if (readable != null) {
+                pkgReadable = pkgReadable && readable;
+            }
             // direct download links
             try
             {
@@ -224,6 +240,23 @@ public class ArtifactProcessor
                 {
                     throw new RuntimeException("FAIL: invalid WCS", ex);
                 }
+            }
+        }
+        log.debug("numFiles: " + numFiles);
+        if (numFiles > 1) {
+            
+            URL pkg = getBasePackageURL(uri);
+            if (pkg != null) {
+                DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
+                try {
+                    link.url = getPackageURL(pkg, uri);
+                    link.contentType = CONTENT_TYPE_TAR;
+                    link.description = "single download containing all files (previews and thumbnails excluded)";
+                    link.readable = pkgReadable;
+                } catch (MalformedURLException ex) {
+                    link.errorMessage = "failed to create package link: " + ex;
+                }
+                ret.add(link);
             }
         }
         return ret;
@@ -327,9 +360,18 @@ public class ArtifactProcessor
             log.warn("failed to generate accessURL for: " + serviceID + " + " + standardID + " + " + authMethod);
 
         ServiceParameter sp;
-        sp = new ServiceParameter("ID", "char", "*", "");
-        sp.setValueRef(artifactURI.toASCIIString(), null);
+        String val = artifactURI.toASCIIString();
+        String arraysize = Integer.toString(val.length());
+        sp = new ServiceParameter("ID", "char", arraysize, "");
+        sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
+        
+        if (StringUtil.hasText(runID)) {
+            arraysize = Integer.toString(runID.length());
+            sp = new ServiceParameter("RUNID", "char", arraysize, "");
+            sp.setValueRef(runID, null);
+            sd.getInputParams().add(sp);
+        }
         
         if (ab.poly != null)
         {
@@ -388,8 +430,7 @@ public class ArtifactProcessor
     }
     
     /**
-     * Convert a URI to a URL. TBD: This method fails if the SchemeHandler returns multiple URLs,
-     * but in principle we could make multiple DataLinks out of it.
+     * Convert a URI to a URL.
      *
      * @param a 
      * @return u
@@ -400,15 +441,41 @@ public class ArtifactProcessor
     {
         URL url = artifactResolver.getURL(a.getURI());
 
-        if ( StringUtil.hasText(runID) )
-        {
-            String appendQS = "?runid=";
-            String qs = url.getQuery();
-            if (qs != null && qs.length() > 0)
-                appendQS = "&runid=";
-            String surl = url.toExternalForm() + appendQS + runID;
-            return new URL(surl);
-        }
         return url;
+    }
+    
+    /**
+     * Find the package service associated with a publisherID.
+     * 
+     * @param id
+     * @return base package service url for current auth method or null if no such service
+     */
+    protected URL getBasePackageURL(URI id) {
+        Subject caller = AuthenticationUtil.getCurrentSubject();
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
+        if (authMethod == null) {
+            authMethod = AuthMethod.ANON;
+        }
+        
+        if ("caom".equals(id.getScheme())) {
+            // not resolvable: use config
+            return registryClient.getServiceURL(defaultPackageID, Standards.PKG_10, authMethod);
+        }
+        
+        // resolvable
+        PublisherID pubID = new PublisherID(id);
+        URI resourceID = pubID.getResourceID();
+        URL ret = registryClient.getServiceURL(resourceID, Standards.PKG_10, authMethod);
+        return ret;
+    }
+    
+    private URL getPackageURL(URL pkg, URI uri) throws MalformedURLException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(pkg.toExternalForm());
+        sb.append("?ID=").append(NetUtil.encode(uri.toASCIIString()));
+        if (StringUtil.hasLength(runID)) {
+            sb.append("&RUNID=").append(NetUtil.encode(runID));
+        }
+        return new URL(sb.toString());
     }
 }

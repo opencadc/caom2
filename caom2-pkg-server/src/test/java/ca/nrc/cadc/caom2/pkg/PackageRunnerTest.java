@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,105 +62,58 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.tap.impl;
+package ca.nrc.cadc.caom2.pkg;
 
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.postgresql.PgInterval;
-import ca.nrc.cadc.tap.BasicUploadManager;
-import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoint;
-import ca.nrc.cadc.tap.parser.region.pgsphere.function.Spoly;
-import java.sql.SQLException;
-import org.postgresql.util.PGobject;
+
+import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class UploadManagerImpl extends BasicUploadManager
-{
-    /**
-     * Default maximum number of rows allowed in the UPLOAD VOTable.
-     */
-    public static final int MAX_UPLOAD_ROWS = 10000;
-    
-    public UploadManagerImpl()
-    {
-        super(MAX_UPLOAD_ROWS);
-    }
-    
-    // convert TAP-1.0 (STC-S) geometry values
-    
-    @Override
-    protected Object getPointObject(ca.nrc.cadc.stc.Position pos)
-        throws SQLException
-    {
-        Spoint sval = new Spoint(pos);
-        PGobject pgo = new PGobject();
-        String str = sval.toVertex();
-        pgo.setType("spoint");
-        pgo.setValue(str);
-        return pgo;
-    }
+public class PackageRunnerTest {
+    private static final Logger log = Logger.getLogger(PackageRunnerTest.class);
 
-    @Override
-    protected Object getRegionObject(ca.nrc.cadc.stc.Region reg)
-        throws SQLException
-    {
-        if (reg instanceof ca.nrc.cadc.stc.Polygon)
-        {
-            ca.nrc.cadc.stc.Polygon poly = ( ca.nrc.cadc.stc.Polygon) reg;
-            Spoly sval = new Spoly(poly);
-            PGobject pgo = new PGobject();
-            String str = sval.toVertexList();
-            pgo.setType("spoly");
-            pgo.setValue(str);
-            return pgo;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
+    
+    public PackageRunnerTest() { 
+    }
+    
+    @Test
+    public void testStandardPublisherID() {
+        try {
+            PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/COLLECTION?observationID/productID"));
+            PlaneURI puri = PackageRunner.toPlaneURI(pid);
+            log.info(pid.getURI() + " -> " + puri);
+            Assert.assertNotNull(puri);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        throw new UnsupportedOperationException("cannot convert a " + reg.getClass().getSimpleName());
     }
     
-    // convert DALI-1.1 geometry values
-
-    @Override
-    protected Object getPointObject(Point p) throws SQLException
-    {
-        Spoint sval = new Spoint(p);
-        PGobject pgo = new PGobject();
-        String str = sval.toVertex();
-        pgo.setType("spoint");
-        pgo.setValue(str);
-        return pgo;
-    }
-    
-    @Override
-    protected Object getPolygonObject(Polygon poly) throws SQLException
-    {
-        Spoly sval = new Spoly(poly);
-        PGobject pgo = new PGobject();
-        String str = sval.toVertexList();
-        pgo.setType("spoly");
-        pgo.setValue(str);
-        return pgo;
-    }
-
-    @Override
-    protected Object getIntervalObject(DoubleInterval inter)
-    {
-        PgInterval gen = new PgInterval();
-        return gen.generatePolygon2D(inter);
-    }
-
-    @Override
-    protected Object getIntervalArrayObject(DoubleInterval[] inter)
-    {
-        PgInterval gen = new PgInterval();
-        return gen.generatePolygon2D(inter);
+    @Test
+    public void testPrefixedPublisherID() {
+        try {
+            PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/prefix/COLLECTION?observationID/productID"));
+            PlaneURI puri = PackageRunner.toPlaneURI(pid);
+            log.info(pid.getURI() + " -> " + puri);
+            Assert.assertNotNull(puri);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

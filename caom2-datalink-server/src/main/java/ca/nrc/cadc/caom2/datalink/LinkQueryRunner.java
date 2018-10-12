@@ -210,7 +210,7 @@ public class LinkQueryRunner implements JobRunner
                 runID = job.getRunID();
             
             CaomTapQuery query = new CaomTapQuery(tapServiceID, runID);
-            ArtifactProcessor ap = new ArtifactProcessor(dlc.getSodaID(), runID);
+            ArtifactProcessor ap = new ArtifactProcessor(dlc, runID);
             ap.setDownloadOnly(downloadFilesOnly); 
             DynamicTableData dtd = null;
             if (downloadFilesOnly)

@@ -191,7 +191,6 @@ public class DynamicTableData implements TableData
                     }
                     if (pubID != null || planeURI != null)
                     {
-                        
                         try
                         {   
                             ArtifactQueryResult ar;

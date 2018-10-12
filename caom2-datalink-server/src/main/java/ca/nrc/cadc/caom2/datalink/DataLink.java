@@ -99,7 +99,8 @@ public class DataLink implements Iterable<Object>
         DERIVATION("#derivation"),
         PROC("#proc"),
         CUTOUT("#cutout"),
-        THUMBNAIL("http://www.openadc.org/caom2#thumbnail");
+        THUMBNAIL("http://www.openadc.org/caom2#thumbnail"),
+        PKG("http://www.openadc.org/caom2#pkg");
         
         private final String value;
         private Term(String value) { this.value = value; }
@@ -252,6 +253,6 @@ public class DataLink implements Iterable<Object>
     @Override
     public String toString()
     {
-        return "DataLink[" + id + "," + url + "]";
+        return "DataLink[" + id + "," + url + "," + semantics + "]";
     }
 }

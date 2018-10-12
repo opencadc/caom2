@@ -103,6 +103,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'environment_photometric', 'conditions were photometric (0=false, 1=true)', 'caom2:Observation.environment.photometric', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 76),
 
 ( 'caom2.Observation', 'members', 'members of a composite observation (space-separated list of Observation URIs)', 'caom2:Observation.members', NULL, NULL, 'char','*','clob', 0,0,0 , 80),
+( 'caom2.Observation', 'typeCode', 'single character code to denote type: S(impleObservation) or C(ompositeOvservation)', 'caom2:Observation.typeCOde', NULL, NULL, 'char',NULL,NULL, 0,0,0 , 81),
 
 ( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 100),
 ( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this observation', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 101),
@@ -347,6 +348,48 @@ insert into tap_schema.columns11 (table_name,column_name,description,datatype,ar
 ('caom2.ProvenanceInput', 'inputID', 'input plane identifier', 'char', '*', 'uri', 0,1,0)
 ;
 
+insert into tap_schema.keys11 (key_id,from_table,target_table,description) values
+('caom2-p-o', 'caom2.Plane', 'caom2.Observation','standard way to join the caom2.Observation and caom2.Plane tables'),
+('caom2-a-p', 'caom2.Artifact', 'caom2.Plane', 'standard way to join the caom2.Plane and caom2.Artifact tables'),
+('caom2-p-a', 'caom2.Part', 'caom2.Artifact','standard way to join the caom2.Artifact and caom2.Part tables'),
+('caom2-c-p', 'caom2.Chunk', 'caom2.Part','standard way to join the caom2.Part and caom2. tables'),
+
+('caom2-composite-member', 'caom2.Observation', 'caom2.ObservationMember', 
+    'standard way to join caom2.Observation (CompositeObservation) and caom2.ObservationMember [join table]'),
+('caom2-member-simple', 'caom2.ObservationMember', 'caom2.Observation',
+    'standard way to join caom2.ObservationMember and caom2.Observation (SimpleObservation) [join table]'),
+
+('caom2-plane-prov', 'caom2.Plane', 'caom2.ProvenanceInput',
+    'standard way to join caom2.Plane (product) and caom2.ProvenanceInput [join table]'),
+('caom2-prov-input', 'caom2.ProvenanceInput', 'caom2.Plane',
+    'standard way to join caom2.ProvenanceInput and caom2.Plane (input) [join table]')
+;
+
+insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
+('caom2-p-o', 'obsID', 'obsID'),
+('caom2-a-p', 'planeID', 'planeID'),
+('caom2-p-a', 'artifactID', 'artifactID'),
+('caom2-c-p', 'partID', 'partID'),
+('caom2-composite-member', 'obsID', 'compositeID' ),
+('caom2-member-simple', 'simpleID', 'observationURI'),
+('caom2-plane-prov', 'planeID', 'outputID' ),
+('caom2-prov-input', 'inputID', 'planeURI')
+;
+
+insert into tap_schema.tables11 (schema_name,table_name,table_type,description) values
+('caom2', 'caom2.HarvestSkipURI', 'table', 'list of observations that failed to be harvested');
+
+insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
+( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
+( 'caom2.HarvestSkipURI', 'cname', 'entity (class name)', 'char', '*', NULL, 1,1,1),
+( 'caom2.HarvestSkipURI', 'skipID', 'URI of skipped entity instance', 'char', '*', 'uuid', 1,1,1),
+( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '23*', 'timestamp', 1,1,1),
+( 'caom2.HarvestSkipURI', 'errorMessage', 'reason for harvest failure', 'char', '*', NULL, 1,0,1),
+( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '23*', 'timestamp', 1,0,1);
+
+
+-- additional tables and views to support data discovery --
+
 -- EnumField
 insert into tap_schema.columns11 (table_name,column_name,description,utype,datatype,arraysize,xtype,principal,indexed,std,column_index) values
 ( 'caom2.EnumField', 'num_tuples',    'number of occurances of this combination', NULL, 'long',NULL,NULL, 0,1,0 , 1),
@@ -374,35 +417,6 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,datat
 
 ( 'caom2.distinct_proposal_title', 'num_tuples',    'number of occurances of this value', NULL, 'long', NULL, NULL, 0,1,0 , NULL),
 ( 'caom2.distinct_proposal_title', 'proposal_title',    'title of proposal', 'caom2:Observation.proposal.title', 'char', '256*',NULL, 0,1,0 , NULL)
-;
-
-
-insert into tap_schema.keys11 (key_id,from_table,target_table,description) values
-('caom2-p-o', 'caom2.Plane', 'caom2.Observation','standard way to join the caom2.Observation and caom2.Plane tables'),
-('caom2-a-p', 'caom2.Artifact', 'caom2.Plane', 'standard way to join the caom2.Plane and caom2.Artifact tables'),
-('caom2-p-a', 'caom2.Part', 'caom2.Artifact','standard way to join the caom2.Artifact and caom2.Part tables'),
-('caom2-c-p', 'caom2.Chunk', 'caom2.Part','standard way to join the caom2.Part and caom2. tables'),
-
-('caom2-composite-member', 'caom2.Observation', 'caom2.ObservationMember', 
-    'standard way to join caom2.Observation (CompositeObservation) and caom2.ObservationMember [join table]'),
-('caom2-member-simple', 'caom2.ObservationMember', 'caom2.Observation',
-    'standard way to join caom2.ObservationMember and caom2.Observation (SimpleObservation) [join table]'),
-
-('caom2-plane-prov', 'caom2.Plane', 'caom2.ProvenanceInput',
-    'standard way to join caom2.Plane (product) and caom2.ProvenanceInput [join table]'),
-('caom2-prov-input', 'caom2.ProvenanceInput', 'caom2.Plane',
-    'standard way to join caom2.ProvenanceInput and caom2.Plane (input) [join table]')
-;
-
-insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
-('caom2-p-o', 'obsID', 'obsID'),
-('caom2-a-p', 'planeID', 'planeID'),
-('caom2-p-a', 'artifactID', 'artifactID'),
-('caom2-c-p', 'partID', 'partID'),
-('caom2-composite-member', 'obsID', 'compositeID' ),
-('caom2-member-simple', 'simpleID', 'observationURI'),
-('caom2-plane-prov', 'planeID', 'outputID' ),
-('caom2-prov-input', 'inputID', 'planeURI')
 ;
 
 -- ObsCoreEnumField
@@ -451,17 +465,6 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,unit,da
 ( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 ),
 ( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 )
 ;
-
-insert into tap_schema.tables11 (schema_name,table_name,table_type,description) values
-('caom2', 'caom2.HarvestSkipURI', 'table', 'list of observations that failed to be harvested');
-
-insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
-( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
-( 'caom2.HarvestSkipURI', 'cname', 'entity (class name)', 'char', '*', NULL, 1,1,1),
-( 'caom2.HarvestSkipURI', 'skipID', 'URI of skipped entity instance', 'char', '*', 'uuid', 1,1,1),
-( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '23*', 'timestamp', 1,1,1),
-( 'caom2.HarvestSkipURI', 'errorMessage', 'reason for harvest failure', 'char', '*', NULL, 1,0,1),
-( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '23*', 'timestamp', 1,0,1);
 
 
 -- backwards compatible: fill "size" column with values from arraysize set above

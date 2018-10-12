@@ -129,10 +129,10 @@ public class EchoAction extends RestAction
             if (path.charAt(0) == '/')
                 path = path.substring(1);
             String msg = Base64.decodeString(path);
-            log.warn("parse msg: " + msg);
+            log.debug("parse msg: " + msg);
             String[] parts = msg.split("[|]");
             for (String s : parts)
-                log.warn("msg part: " + s);
+                log.debug("msg part: " + s);
             if (parts.length > 0)
                 ret.code = Integer.parseInt(parts[0]);
             if (parts.length > 1)

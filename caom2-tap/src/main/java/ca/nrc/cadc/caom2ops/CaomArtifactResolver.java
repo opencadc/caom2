@@ -71,7 +71,10 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.net.Traceable;
+import ca.nrc.cadc.util.StringUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -97,6 +100,7 @@ public class CaomArtifactResolver {
     private final Map<String, StorageResolver> handlers = new HashMap<String, StorageResolver>();
 
     private AuthMethod authMethod;
+    private String runID;
 
     /**
      * Create a MultiStorageResolver from the default config. By default, a resource named
@@ -161,6 +165,16 @@ public class CaomArtifactResolver {
     }
 
     /**
+     * Set RUNID value to optionally append to URLs. The runid is appended if the
+     * StorageResolver implements the Traceable interface.
+     * 
+     * @param runID 
+     */
+    public void setRunID(String runID) {
+        this.runID = runID;
+    }
+
+    /**
      * Find and call a suitable StorageResolver. This method gets the scheme from the
      * URI and uses it to find a configured StorageResolver. If that is successful, the
      * StorageResolver is used to do the conversion. If no StorageResolver can be found,
@@ -180,7 +194,11 @@ public class CaomArtifactResolver {
 
         StorageResolver resolver = (StorageResolver) handlers.get(uri.getScheme());
         if (resolver != null) {
-            return resolver.toURL(uri);
+            URL ret = resolver.toURL(uri);
+            if (resolver instanceof Traceable) {
+                ret = safeAppendRunID(ret);
+            }
+            return ret;
         }
 
         // fallback: hope for the best
@@ -207,7 +225,11 @@ public class CaomArtifactResolver {
         if (resolver != null && resolver instanceof CutoutGenerator)
         {
             CutoutGenerator gen = (CutoutGenerator) resolver;
-            return gen.toURL(uri, cutouts);
+            URL ret = gen.toURL(uri, cutouts);
+            if (resolver instanceof Traceable) {
+                ret = safeAppendRunID(ret);
+            }
+            return ret;
         }
         throw new IllegalArgumentException("cutout not supported: " + uri.getScheme()
                 + " resolver: " + resolver.getClass().getName());
@@ -222,5 +244,20 @@ public class CaomArtifactResolver {
      */
     public void addStorageResolver(String scheme, StorageResolver handler) {
         handlers.put(scheme, handler);
+    }
+    
+    private URL safeAppendRunID(URL url) throws MalformedURLException {
+        if (StringUtil.hasText(runID)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(url.toExternalForm());
+            if (StringUtil.hasText(url.getQuery())) {
+                sb.append("&");
+            } else {
+                sb.append("?");
+            }
+            sb.append("RUNID=").append(NetUtil.encode(runID));
+            return new URL(sb.toString());
+        }
+        return url;
     }
 }
