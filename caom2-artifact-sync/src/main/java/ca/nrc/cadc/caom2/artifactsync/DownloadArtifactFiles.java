@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
+import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
@@ -125,12 +126,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     List<Future<ArtifactDownloadResult>> results;
     long start;
 
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, int threads, int batchSize, Integer retryAfterHours,
-            boolean verify) {
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, String collection, 
+            int threads, int batchSize, Integer retryAfterHours, boolean verify) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
-        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
+        HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
+        this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
 
         this.threads = threads;
