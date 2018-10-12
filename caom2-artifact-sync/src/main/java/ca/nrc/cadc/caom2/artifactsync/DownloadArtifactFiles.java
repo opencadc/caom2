@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -79,6 +80,7 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.profiler.Profiler;
 import ca.nrc.cadc.util.FileMetadata;
 
@@ -257,8 +259,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     return result;
                 }
 
-                MastResolver resolver = new MastResolver();
-                final URL url = resolver.toURL(artifactURI);
+                // determine the subtype of StorageResolver to use and translate uri to url
+                StorageResolver resolver = null;
+                URL url = null;
+                if ("mast".equals(artifactURI.getScheme())) {
+                    resolver = new MastResolver();
+                } else if ("gemini".equals(artifactURI.getScheme())) {
+                    resolver = new GeminiResolver();
+                } else {
+                    throw new IllegalArgumentException("unsupported scheme in artifactURI: " + artifactURI.toString());
+                }
+                url = resolver.toURL(artifactURI);
 
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
@@ -283,7 +294,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     }
 
                     String md5String = head.getContentMD5();
-                    threadLog.debug("MAST content MD5: " + md5String);
+                    threadLog.debug(artifactURI.getScheme() + " content MD5: " + md5String);
                     if (md5String != null) {
                         URI sourceChecksum = URI.create("MD5:" + md5String);
                         if (!sourceChecksum.equals(artifact.contentChecksum)) {
