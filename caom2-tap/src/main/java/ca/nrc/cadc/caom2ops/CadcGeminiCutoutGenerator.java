@@ -68,90 +68,38 @@
 package ca.nrc.cadc.caom2ops;
 
 
-import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class CaomArtifactResolverTest 
-{
-    private static final Logger log = Logger.getLogger(CaomArtifactResolverTest.class);
+public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements CutoutGenerator {
+    private static final Logger log = Logger.getLogger(CadcGeminiCutoutGenerator.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
-    }
-    
-    public CaomArtifactResolverTest() { }
-  
-    @Test
-    public void testBaseURL() {
-        try {
-            CaomArtifactResolver car = new CaomArtifactResolver();
-            
-            URI uri = null;
-            URL url = null;
-            
-            uri = URI.create("ad:FOO/bar");
-            url = car.getURL(uri);
-            Assert.assertNotNull(uri + " -> URL",url);
-            
-            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
-            url = car.getURL(uri);
-            Assert.assertNotNull(uri + " -> URL",url);
-            
-            uri = URI.create("mast:products/bar/bar.fits");
-            url = car.getURL(uri);
-            Assert.assertNotNull(uri + " -> URL",url);
-            
-            uri = URI.create("gemini:GEM/N20101231S0343.fits");
-            url = car.getURL(uri);
-            Assert.assertNotNull(uri + " -> URL",url);
-            
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+    public CadcGeminiCutoutGenerator() { }
+
+    @Override
+    public URL toURL(URI uri, List<String> cutouts) 
+            throws IllegalArgumentException {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
         }
-    }
-    
-    @Test
-    public void testCutoutURL() {
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        
         try {
-            CaomArtifactResolver car = new CaomArtifactResolver();
-            
-            URI uri = null;
-            URL url = null;
-            List<String> cutouts = new ArrayList<String>();
-            String cut = "[[1][20:40,30;50]";
-            cutouts.add(cut);
-            
-            uri = URI.create("ad:FOO/bar");
-            url = car.getURL(uri, cutouts);
-            Assert.assertNotNull(uri + cut + " -> URL", url);
-            
-            uri = URI.create("vos://cadc.nrc.ca~vospace/FOO/bar");
-            url = car.getURL(uri, cutouts);
-            Assert.assertNotNull(uri + cut + " -> URL", url);
-            
-            uri = URI.create("mast:products/bar/bar.fits");
-            url = car.getURL(uri, cutouts);
-            Assert.assertNotNull(uri + cut + " -> URL", url);
-            
-            uri = URI.create("gemini:GEM/N20101231S0343.fits");
-            url = car.getURL(uri, cutouts);
-            Assert.assertNotNull(uri + cut + " -> URL", url);
-            
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
     }
 }
