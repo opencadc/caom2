@@ -116,10 +116,18 @@ public class Discover extends Caom2ArtifactSync {
                     printErrorUsage(msg);
                 }
             }
-
+            
             if (!isDone) {
-                this.parseDbParam(am, "database");
-                this.loop = am.isSet("continue");
+                if (!am.isSet("collection")) {
+                    String msg = "Missing required parameter 'collection'";
+                    this.printErrorUsage(msg);
+                } else {
+                    this.collection = this.parseCollection(am);
+                    if (!isDone) {
+                        this.parseDbParam(am, "database");
+                        this.loop = am.isSet("continue");
+                    }
+                }
             }
             
             if (!isDone) {
@@ -156,25 +164,20 @@ public class Discover extends Caom2ArtifactSync {
                         artifactDAO.setConfig(daoConfig);
 
                         this.downloader = new DownloadArtifactFiles(
-                                artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
+                                artifactDAO, dbInfo, artifactStore, collection, nthreads, this.batchSize, retryAfterHours, verify);
                         List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                         listeners.add(downloader);
                         Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                     }
                 } else {
-                    // arguments that apply to 'discover' mode
-                    this.collection = this.parseCollection(am);
-                    
-                    if (!this.isDone) {
-                        ObservationDAO observationDAO = new ObservationDAO();
-                        observationDAO.setConfig(this.daoConfig);
+                    ObservationDAO observationDAO = new ObservationDAO();
+                    observationDAO.setConfig(this.daoConfig);
 
-                        this.harvester = new ArtifactHarvester(
-                                observationDAO, dbInfo, artifactStore, collection, this.batchSize);
-                        List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
-                        listeners.add(harvester);
-                        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
-                    }
+                    this.harvester = new ArtifactHarvester(
+                            observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+                    List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+                    listeners.add(harvester);
+                    Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 }
             }
         }
@@ -184,6 +187,7 @@ public class Discover extends Caom2ArtifactSync {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --collection=<collection> : The collection to use");
         sb.append("\n        --database=<server.database.schema>");
         sb.append("\n        --continue : Repeat batches until no work left");
         if (this.mode.equals("download")) {
@@ -193,7 +197,6 @@ public class Discover extends Caom2ArtifactSync {
             sb.append("\n        --noverify : Do not confirm by MD5 sum after download");
         } else {
             sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
-            sb.append("\n        --collection=<collection> : The collection to discover");
         }
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
