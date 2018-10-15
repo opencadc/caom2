@@ -73,13 +73,13 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -95,7 +95,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -139,6 +138,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             String collection, boolean reportOnly, ArtifactStore artifactStore) {
         this(collection, reportOnly, artifactStore);
         this.observationDAO = observationDAO;
+        HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
+        this.source = harvestResource.getIdentifier();
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
