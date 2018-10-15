@@ -140,7 +140,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         this.observationDAO = observationDAO;
         HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
         this.source = harvestResource.getIdentifier();
-        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
     }
     
