@@ -134,13 +134,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
-    public ArtifactValidator(DataSource dataSource, String[] dbInfo, ObservationDAO observationDAO, 
-            String collection, boolean reportOnly, ArtifactStore artifactStore) {
-        this(collection, reportOnly, artifactStore);
+    public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
+            boolean reportOnly, ArtifactStore artifactStore) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore);
         this.observationDAO = observationDAO;
-        HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
         this.source = harvestResource.getIdentifier();
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, 

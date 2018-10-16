@@ -91,7 +91,6 @@ public class Discover extends Caom2ArtifactSync {
     private ArgumentMap am;
     protected int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
     protected boolean loop = false;
-    private String collection = null;
     private DownloadArtifactFiles downloader = null;
     private ArtifactHarvester harvester = null;
 
@@ -118,66 +117,57 @@ public class Discover extends Caom2ArtifactSync {
             }
             
             if (!isDone) {
-                if (!am.isSet("collection")) {
-                    String msg = "Missing required parameter 'collection'";
-                    this.printErrorUsage(msg);
-                } else {
-                    this.collection = this.parseCollection(am);
-                    if (!isDone) {
-                        this.parseDbParam(am, "database");
-                        this.loop = am.isSet("continue");
-                    }
-                }
-            }
-            
-            if (!isDone) {
-                if (this.mode.equals("download")) {
-                    // arguments that apply to 'download' mode
-                    Integer retryAfterHours = null;
-                    if (am.isSet("retryAfter")) {
-                        try {
-                            retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
-                        } catch (NumberFormatException e) {
-                            String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
-                            this.printErrorUsage(msg);
-                        }
-                    }
-                    
-                    boolean verify = !am.isSet("noverify");
-
-                    int nthreads = 1;
-                    if (am.isSet("threads")) {
-                        try {
-                            nthreads = Integer.parseInt(am.getValue("threads"));
-                            if (nthreads < 1 || nthreads > 250) {
-                                String msg = "value for --threads must be between 1 and 250";
+                this.validateDbParamFromDatabase(am);
+                this.loop = am.isSet("continue");
+                if (!isDone) {
+                    if (this.mode.equals("download")) {
+                        // arguments that apply to 'download' mode
+                        Integer retryAfterHours = null;
+                        if (am.isSet("retryAfter")) {
+                            try {
+                                retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                            } catch (NumberFormatException e) {
+                                String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
                                 this.printErrorUsage(msg);
                             }
-                        } catch (NumberFormatException nfe) {
-                            String msg = "Illegal value for --threads: " + am.getValue("threads");
-                            this.printErrorUsage(msg);
                         }
-                    }
-                    
-                    if (!this.isDone) {
-                        ArtifactDAO artifactDAO = new ArtifactDAO();
-                        artifactDAO.setConfig(daoConfig);
-
-                        this.downloader = new DownloadArtifactFiles(
-                                artifactDAO, dbInfo, artifactStore, collection, nthreads, this.batchSize, retryAfterHours, verify);
+                        
+                        boolean verify = !am.isSet("noverify");
+    
+                        int nthreads = 1;
+                        if (am.isSet("threads")) {
+                            try {
+                                nthreads = Integer.parseInt(am.getValue("threads"));
+                                if (nthreads < 1 || nthreads > 250) {
+                                    String msg = "value for --threads must be between 1 and 250";
+                                    this.printErrorUsage(msg);
+                                }
+                            } catch (NumberFormatException nfe) {
+                                String msg = "Illegal value for --threads: " + am.getValue("threads");
+                                this.printErrorUsage(msg);
+                            }
+                        }
+                        
+                        if (!this.isDone) {
+                            ArtifactDAO artifactDAO = new ArtifactDAO();
+                            artifactDAO.setConfig(daoConfig);
+    
+                            this.downloader = new DownloadArtifactFiles(
+                                    artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
+                            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+                            listeners.add(downloader);
+                            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                        }
+                    } else {
+                        ObservationDAO observationDAO = new ObservationDAO();
+                        observationDAO.setConfig(this.daoConfig);
+    
+                        this.harvester = new ArtifactHarvester(
+                                observationDAO, harvestResource, artifactStore, this.batchSize);
                         List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
-                        listeners.add(downloader);
+                        listeners.add(harvester);
                         Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                     }
-                } else {
-                    ObservationDAO observationDAO = new ObservationDAO();
-                    observationDAO.setConfig(this.daoConfig);
-
-                    this.harvester = new ArtifactHarvester(
-                            observationDAO, dbInfo, artifactStore, collection, this.batchSize);
-                    List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
-                    listeners.add(harvester);
-                    Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
                 }
             }
         }

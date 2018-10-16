@@ -92,7 +92,6 @@ public class Validate extends Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Validate.class);
     protected ArtifactValidator validator = null;
-    protected String collection = null;
 
     public Validate(ArgumentMap am) {
         super(am);
@@ -103,34 +102,27 @@ public class Validate extends Caom2ArtifactSync {
             if (this.subject == null) {
                 String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
                 this.printErrorUsage(msg);
-            } else if (!am.isSet("collection")) {
-                String msg = "Missing required parameter 'collection'";
-                this.printErrorUsage(msg);
             } else {
-                this.collection = this.parseCollection(am);
-                
-                if (!this.isDone) {
-                    if (this.mode.equals("diff")) {
-                        // diff mode
-                        if (!am.isSet("source")) {
-                            String msg = "Missing required parameter 'source'";
-                            this.printErrorUsage(msg);
-                        } else {
-                            this.parseSourceParam(am);
-                        }
+                if (this.mode.equals("diff")) {
+                    // diff mode
+                    if (!am.isSet("source")) {
+                        String msg = "Missing required parameter 'source'";
+                        this.printErrorUsage(msg);
                     } else {
-                        // validate mode
-                        if (!am.isSet("database")) {
-                            String msg = "Missing required parameter 'database'";
-                            this.printErrorUsage(msg);
-                        } else {
-                            this.parseDbParam(am, "database");
-                            ObservationDAO observationDAO = new ObservationDAO();
-                            observationDAO.setConfig(this.daoConfig);
-        
-                            this.validator = new ArtifactValidator(observationDAO.getDataSource(),
-                                    this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
-                        }
+                        this.parseSourceParam(am);
+                    }
+                } else {
+                    // validate mode
+                    if (!am.isSet("database")) {
+                        String msg = "Missing required parameter 'database'";
+                        this.printErrorUsage(msg);
+                    } else {
+                        this.validateDbParamFromDatabase(am);
+                        ObservationDAO observationDAO = new ObservationDAO();
+                        observationDAO.setConfig(this.daoConfig);
+    
+                        this.validator = new ArtifactValidator(observationDAO.getDataSource(),
+                                this.harvestResource, observationDAO, false, this.artifactStore);
                     }
                 }
             }
@@ -197,12 +189,12 @@ public class Validate extends Caom2ArtifactSync {
             }
         } else {
             // source points to a database
-            this.parseDbParam(am, "source");
+            this.validateDbParamFromSource(am);
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(this.daoConfig);
             
             this.validator = new ArtifactValidator(observationDAO.getDataSource(),
-                    this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
+                    this.harvestResource, observationDAO, true, this.artifactStore);
         }
     }
 }

@@ -126,14 +126,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     List<Future<ArtifactDownloadResult>> results;
     long start;
 
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, String collection, 
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
             int threads, int batchSize, Integer retryAfterHours, boolean verify) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
-        HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
         this.source = harvestResource.getIdentifier();
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), harvestResource.getDatabase(), harvestResource.getSchema());
 
         this.threads = threads;
         this.batchSize = batchSize;
