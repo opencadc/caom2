@@ -96,16 +96,16 @@ public class AccessUtil {
      * @param dataReadAccessGroups
      * @return correctly deduced permissions
      */
-    public static ArtifactAccess getArtifactAccess(Artifact artifact, ReleaseType releaseType, 
+    public static ArtifactAccess getArtifactAccess(Artifact artifact,
             Date metaRelease, List<URI> metaReadAccessGroups,
             Date dataRelease, List<URI> dataReadAccessGroups) {
         ArtifactAccess ret = new ArtifactAccess(artifact);
-        if (ReleaseType.META.equals(releaseType)) {
+        if (ReleaseType.META.equals(artifact.getReleaseType())) {
             if (metaRelease != null && metaRelease.getTime() < System.currentTimeMillis()) {
                 ret.isPublic = true;
             }
             ret.getReadGroups().addAll(metaReadAccessGroups);
-        } else if (ReleaseType.DATA.equals(releaseType)) {
+        } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
             if (dataRelease != null && dataRelease.getTime() < System.currentTimeMillis()) {
                 ret.isPublic = true;
             }
