@@ -156,6 +156,7 @@ public class ArtifactAccessReader {
             throw new IllegalArgumentException("missing/invalid uri element: " + s + " expected: valid URI");
         }
     }
+    
     private Long getLong(String s) {
         if (s == null) {
             return null;
