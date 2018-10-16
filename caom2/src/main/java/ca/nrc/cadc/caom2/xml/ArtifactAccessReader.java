@@ -67,6 +67,9 @@
 
 package ca.nrc.cadc.caom2.xml;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
@@ -90,7 +93,7 @@ public class ArtifactAccessReader {
 
     static enum ENAMES {
         artifactAccess(),
-        uri(),
+        artifact(), uri(), productType(), releaseType(), contentLength(), contentType(), contentChecksum(),
         isPublic(),
         readGroups(),
         writeGroups();
@@ -125,8 +128,8 @@ public class ArtifactAccessReader {
             throw new IllegalArgumentException("invalid root element: " + root.getName() + " expected: " + ENAMES.artifactAccess);
         }
         
-        URI uri = getURI(root.getChildTextTrim(ENAMES.uri.name()));
-        ArtifactAccess ret = new ArtifactAccess(uri);
+        Artifact a = getArtifact(root.getChild(ENAMES.artifact.name()));
+        ArtifactAccess ret = new ArtifactAccess(a);
         
         ret.isPublic = getBoolean(root.getChildTextTrim(ENAMES.isPublic.name()));
         
@@ -143,12 +146,38 @@ public class ArtifactAccessReader {
         return false;
     }
     
-    private URI getURI(String s) {
+    private URI getURI(String s, boolean required) {
+        if (!required && s == null) {
+            return null;
+        }
         try { 
             return new URI(s);
         } catch (Exception ex) {
             throw new IllegalArgumentException("missing/invalid uri element: " + s + " expected: valid URI");
         }
+    }
+    
+    private Long getLong(String s) {
+        if (s == null) {
+            return null;
+        }
+        try {
+            return Long.parseLong(s);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("invalid numeric element: " + s + " expected: valid long");
+        }
+    }
+    
+    private Artifact getArtifact(Element ae) {
+        URI uri = getURI(ae.getChildTextTrim(ENAMES.uri.name()), true);
+        ProductType pt = ProductType.toValue(ae.getChildTextTrim(ENAMES.productType.name()));
+        ReleaseType rt = ReleaseType.toValue(ae.getChildTextTrim(ENAMES.releaseType.name()));
+        Artifact ret = new Artifact(uri, pt, rt);
+        ret.contentChecksum = getURI(ae.getChildTextTrim(ENAMES.contentChecksum.name()), false);
+        ret.contentLength = getLong(ae.getChildTextTrim(ENAMES.contentLength.name()));
+        ret.contentType = ae.getChildTextTrim(ENAMES.contentType.name());
+        
+        return ret;
     }
     
     private void getGroupList(List<URI> fill, String ename, List<Element> elements) {
@@ -164,7 +193,7 @@ public class ArtifactAccessReader {
             if (!ENAMES.uri.name().equals(e.getName())) {
                 throw new IllegalArgumentException("invalid child element in " + ename + ": " + e.getName() + " expected: uri");
             }
-            URI guri = getURI(e.getTextTrim());
+            URI guri = getURI(e.getTextTrim(), true);
             fill.add(guri);
         }
     }
