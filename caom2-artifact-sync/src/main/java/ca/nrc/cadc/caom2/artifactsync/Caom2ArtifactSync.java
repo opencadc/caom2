@@ -225,12 +225,14 @@ public abstract class Caom2ArtifactSync {
         } 
     }
 
-    private void validateDbInfo(String database) {
-        // database=<server.database.schema>
-        String [] tempDbInfo = database.split("[.]");
-        if (tempDbInfo.length != 3) {
-            String msg = "database must be <server.database.schema>.";
-            this.printErrorUsage(msg);
+    private void validateDbInfo(ArgumentMap am, String database) {
+        if (hasDbParam(am, database)) {
+            // database=<server.database.schema>
+            String [] tempDbInfo = database.split("[.]");
+            if (tempDbInfo.length != 3) {
+                String msg = "database must be <server.database.schema>.";
+                this.printErrorUsage(msg);
+            }
         }
     }
     
@@ -251,16 +253,12 @@ public abstract class Caom2ArtifactSync {
 
     protected void validateDbParamFromSource(ArgumentMap am) {
         String database = am.getValue("source");
-        if (hasDbParam(am, database)) {
-            validateDbInfo(database);
-        }
+        validateDbInfo(am, database);
     }
     
     protected void validateDbParamFromDatabase(ArgumentMap am) {
         String database = am.getValue("database");
-        if (hasDbParam(am, database)) {
-            validateDbInfo(database);
-        }
+        validateDbInfo(am, database);
     }
     
     protected String parseCollection(ArgumentMap am) {
