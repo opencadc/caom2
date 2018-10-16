@@ -224,7 +224,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
                     ret.metaReadAccessGroups.add(gname);
                 }
             }
-            log.warn("raw: " + mgs + " -> " + ret.metaReadAccessGroups.size());
+            log.debug("raw: " + mgs + " -> " + ret.metaReadAccessGroups.size());
             
             if (StringUtil.hasText(dgs)) {
                 String[] ss = dgs.replaceAll("'", "").split(" ");
@@ -232,7 +232,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
                     ret.dataReadAccessGroups.add(gname);
                 }
             }
-            log.warn("raw: " + dgs + " -> " + ret.dataReadAccessGroups.size());
+            log.debug("raw: " + dgs + " -> " + ret.dataReadAccessGroups.size());
             
             return ret;
         }

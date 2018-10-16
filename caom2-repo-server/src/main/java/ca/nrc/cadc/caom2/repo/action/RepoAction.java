@@ -157,8 +157,8 @@ public abstract class RepoAction extends RestAction {
 
     protected void doGetCollectionList() throws Exception {
         log.debug("START: (collection list)");
-        CaomRepoConfig curConfig = getConfig();
-        Iterator<String> collectionListIterator = curConfig.collectionIterator();
+        initConfig();
+        Iterator<String> collectionListIterator = repoConfig.collectionIterator();
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         
         OutputStream os = syncOutput.getOutputStream();
@@ -249,23 +249,17 @@ public abstract class RepoAction extends RestAction {
     }
 
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
-        CaomRepoConfig.Item i = getCollectionConfig(collection);
+        initConfig();
+        Map<String,Object> ret = repoConfig.getDAOConfig(collection); // might throw
+        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
         if (i != null) {
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
             this.raGroupConfig.put("proposalGroup", i.getProposalGroup());
             this.raGroupConfig.put("operatorGroup", i.getOperatorGroup());
             this.raGroupConfig.put("staffGroup", i.getStaffGroup());
-            
-            Map<String, Object> props = new HashMap<String, Object>();
-            props.put("jndiDataSourceName", i.getDataSourceName());
-            props.put("database", i.getDatabase());
-            props.put("schema", i.getSchema());
-            props.put("basePublisherID", i.getBasePublisherID().toASCIIString());
-            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
-            return props;
         }
-        throw new IllegalArgumentException("unknown collection: " + collection);
+        return ret;
     }
     
     protected ObservationDAO getDAO() throws IOException {
@@ -330,7 +324,8 @@ public abstract class RepoAction extends RestAction {
             throw new IllegalStateException(STATE_READ_ONLY_MSG);
         }
 
-        CaomRepoConfig.Item i = getCollectionConfig(collection);
+        initConfig();
+        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
         if (i == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
@@ -391,7 +386,8 @@ public abstract class RepoAction extends RestAction {
             throw new IllegalStateException(STATE_OFFLINE_MSG);
         }
 
-        CaomRepoConfig.Item i = getCollectionConfig(uri.getCollection());
+        initConfig();
+        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
         if (i == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
@@ -462,29 +458,7 @@ public abstract class RepoAction extends RestAction {
         return null;
     }
 
-    /**
-     * Get configuration for specified collection.
-     *
-     * @param collection
-     * @return
-     * @throws IOException
-     */
-
-    private CaomRepoConfig.Item getCollectionConfig(String collection) throws IOException {
-        if (this.repoConfig == null) {
-            getConfig();
-        }
-
-        return this.repoConfig.getConfig(collection);
-    }
-
-    /**
-     * Get the CaomRepo configuration.
-     *
-     * @return CaomRepo configuration
-     * @throws IOException Error encountered while reading the configuration file
-     */
-    public CaomRepoConfig getConfig() throws IOException {
+    private void initConfig() throws IOException {
         if (this.repoConfig == null) {
             String serviceName = syncInput.getContextPath();
             File config = new File(System.getProperty("user.home") + "/config",
@@ -494,9 +468,7 @@ public abstract class RepoAction extends RestAction {
             if (this.repoConfig.isEmpty()) {
                 throw new IllegalStateException("no RepoConfig.Item(s)found");
             }
-
         }
-        return this.repoConfig;
     }
     
     public Map<String, Object> getReadAccessGroupConfig() {
