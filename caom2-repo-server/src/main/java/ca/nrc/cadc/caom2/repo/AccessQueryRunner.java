@@ -194,9 +194,6 @@ public class AccessQueryRunner implements JobRunner {
                 }
                 ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.artifact,
                         raa.metaRelease, metaReadAccessGroups, raa.dataRelease, dataReadAccessGroups);
-                log.warn("raw: " + raa.releaseType 
-                        + "(" + raa.metaReadAccessGroups.size() + "," + raa.dataReadAccessGroups.size() + ")"
-                        + " -> aa.readGroups: " + aa.getReadGroups().size());
                 ArtifactAccessWriter w = new ArtifactAccessWriter();
                 syncOutput.setHeader("Content-Type", "text/xml");
                 syncOutput.setResponseCode(200);
@@ -278,10 +275,8 @@ public class AccessQueryRunner implements JobRunner {
             return false;
         }
         if (uri.toASCIIString().contains(pattern)) {
-            log.warn(uri + " vs " + pattern + ": true");
             return true;
         }
-        log.warn(uri + " vs " + pattern + ": false");
         return false;
     }
     
