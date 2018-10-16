@@ -67,9 +67,7 @@
 
 package ca.nrc.cadc.caom2.access;
 
-
 import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;

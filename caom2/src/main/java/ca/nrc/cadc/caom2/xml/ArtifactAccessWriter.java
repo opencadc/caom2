@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2.xml;
 
-
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import java.io.IOException;
 import java.io.OutputStream;
