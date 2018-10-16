@@ -114,20 +114,18 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     int processedCount = 0;
     Date start = new Date();
 
-    public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
-                             ArtifactStore artifactStore, String collection, 
-                             int batchSize) {
+    public ArtifactHarvester(ObservationDAO observationDAO, HarvestResource harvestResource,
+                             ArtifactStore artifactStore, int batchSize) {
 
         this.observationDAO = observationDAO;
         this.artifactStore = artifactStore;
-        this.collection = collection;
         this.batchSize = batchSize;
-
-        HarvestResource harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
         this.source = harvestResource.getIdentifier();
 
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        String database = harvestResource.getDatabase();
+        String schema = harvestResource.getSchema();
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), database, schema);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), database, schema);
 
         this.startDate = null;
         
