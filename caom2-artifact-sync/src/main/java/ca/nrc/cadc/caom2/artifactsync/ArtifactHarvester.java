@@ -122,6 +122,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         this.batchSize = batchSize;
         this.source = harvestResource.getIdentifier();
 
+        this.collection = harvestResource.getCollection();
         String database = harvestResource.getDatabase();
         String schema = harvestResource.getSchema();
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), database, schema);
@@ -149,7 +150,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             // the sequence may be volatile
             long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
             Date stopDate = new Date(fiveMinAgo);
-            log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
+            if (startDate == null) {
+                log.info("harvest window: null " + df.format(stopDate) + " [" + batchSize + "]");
+            }
+            else {
+                log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
+            }
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
                 stopDate, batchSize + 1);
             
@@ -159,7 +165,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                 ListIterator<ObservationState> iter = observationStates.listIterator();
                 ObservationState curBatchLeader = iter.next();
                 if (curBatchLeader != null) {
-                    log.debug("harvesState: " + format(state.curID) + ", " + df.format(state.curLastModified));
+                    if (state.curLastModified != null) {
+                        log.debug("harvesState: " + format(state.curID) + ", " + df.format(state.curLastModified));
+                    }
                     if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
                         Observation observation = observationDAO.get(curBatchLeader.getURI());
                         log.debug("current batch: " + format(observation.getID()) + ", " + df.format(curBatchLeader.getMaxLastModified()));
