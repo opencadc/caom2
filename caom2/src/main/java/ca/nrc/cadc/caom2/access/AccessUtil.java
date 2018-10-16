@@ -89,7 +89,6 @@ public class AccessUtil {
      * group permissions.
      * 
      * @param artifact the artifact
-     * @param releaseType
      * @param metaRelease
      * @param metaReadAccessGroups
      * @param dataRelease
