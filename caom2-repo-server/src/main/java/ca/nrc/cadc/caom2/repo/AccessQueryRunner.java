@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
