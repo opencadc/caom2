@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2.access;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
 import java.util.Date;
@@ -87,7 +88,7 @@ public class AccessUtil {
      * Determine access to an artifact using the ReleaseType-specific release date and 
      * group permissions.
      * 
-     * @param uri the Artifact URI
+     * @param artifact the artifact
      * @param releaseType
      * @param metaRelease
      * @param metaReadAccessGroups
@@ -95,10 +96,10 @@ public class AccessUtil {
      * @param dataReadAccessGroups
      * @return correctly deduced permissions
      */
-    public static ArtifactAccess getArtifactAccess(URI uri, ReleaseType releaseType, 
+    public static ArtifactAccess getArtifactAccess(Artifact artifact, ReleaseType releaseType, 
             Date metaRelease, List<URI> metaReadAccessGroups,
             Date dataRelease, List<URI> dataReadAccessGroups) {
-        ArtifactAccess ret = new ArtifactAccess(uri);
+        ArtifactAccess ret = new ArtifactAccess(artifact);
         if (ReleaseType.META.equals(releaseType)) {
             if (metaRelease != null && metaRelease.getTime() < System.currentTimeMillis()) {
                 ret.isPublic = true;

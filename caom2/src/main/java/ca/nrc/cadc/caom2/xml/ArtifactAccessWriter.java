@@ -104,9 +104,21 @@ public class ArtifactAccessWriter {
     public void write(ArtifactAccess aa, Writer writer) throws IOException {
         Element root = new Element(ArtifactAccessReader.ENAMES.artifactAccess.name());
         
-        Element uri = new Element(ArtifactAccessReader.ENAMES.uri.name());
-        uri.setText(aa.getURI().toASCIIString());
-        root.addContent(uri);
+        Element ae = new Element(ArtifactAccessReader.ENAMES.artifact.name());
+        root.addContent(ae);
+        
+        addChild(ae, ArtifactAccessReader.ENAMES.uri.name(), aa.getArtifact().getURI().toASCIIString());
+        addChild(ae, ArtifactAccessReader.ENAMES.productType.name(), aa.getArtifact().getProductType().getValue());
+        addChild(ae, ArtifactAccessReader.ENAMES.releaseType.name(), aa.getArtifact().getReleaseType().getValue());
+        if (aa.getArtifact().contentChecksum != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentChecksum.name(), aa.getArtifact().contentChecksum.toASCIIString());
+        }
+        if (aa.getArtifact().contentLength != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentLength.name(), aa.getArtifact().contentLength.toString());
+        }
+        if (aa.getArtifact().contentType != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentType.name(), aa.getArtifact().contentType);
+        }
         
         Element pub = new Element(ArtifactAccessReader.ENAMES.isPublic.name());
         pub.setText(Boolean.toString(aa.isPublic));
@@ -128,6 +140,12 @@ public class ArtifactAccessWriter {
         XMLOutputter outputter = new XMLOutputter();
         outputter.setFormat(Format.getPrettyFormat());
         outputter.output(doc, writer);
+    }
+    
+    private void addChild(Element parent, String ename, String eval) {
+        Element uri = new Element(ename);
+        uri.setText(eval);
+        parent.addContent(uri);
     }
     
     private void addGroups(List<URI> groups, Element parent) {

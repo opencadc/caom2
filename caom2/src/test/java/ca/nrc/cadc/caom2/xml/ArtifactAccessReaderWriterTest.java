@@ -67,6 +67,9 @@
 
 package ca.nrc.cadc.caom2.xml;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
@@ -95,7 +98,8 @@ public class ArtifactAccessReaderWriterTest {
     @Test
     public void testMinimal() {
         try {
-            ArtifactAccess expected = new ArtifactAccess(URI.create("foo:BAR/baz"));
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
+            ArtifactAccess expected = new ArtifactAccess(a);
             
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ArtifactAccessWriter aw = new ArtifactAccessWriter();
@@ -107,7 +111,13 @@ public class ArtifactAccessReaderWriterTest {
             ArtifactAccessReader ar = new ArtifactAccessReader();
             ArtifactAccess actual = ar.read(xml);
             
-            Assert.assertEquals(expected.getURI(), actual.getURI());
+            Assert.assertEquals(expected.getArtifact().getURI(), actual.getArtifact().getURI());
+            Assert.assertEquals(expected.getArtifact().getProductType(), actual.getArtifact().getProductType());
+            Assert.assertEquals(expected.getArtifact().getReleaseType(), actual.getArtifact().getReleaseType());
+            Assert.assertEquals(expected.getArtifact().contentChecksum, actual.getArtifact().contentChecksum);
+            Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
+            Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
+            
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertTrue(actual.getReadGroups().isEmpty());
             Assert.assertTrue(actual.getWriteGroups().isEmpty());
@@ -121,7 +131,12 @@ public class ArtifactAccessReaderWriterTest {
     @Test
     public void testRoundTrip() {
         try {
-            ArtifactAccess expected = new ArtifactAccess(URI.create("foo:BAR/baz"));
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
+            ArtifactAccess expected = new ArtifactAccess(a);
+            
+            a.contentChecksum = URI.create("md5:d41d8cd98f00b204e9800998ecf8427e");
+            a.contentLength = 0L;
+            a.contentType = "text/plain";
             expected.isPublic = true;
             expected.getReadGroups().add(URI.create("ivo://example.net/aa?group1"));
             expected.getReadGroups().add(URI.create("ivo://example.net/aa?group2"));
@@ -138,7 +153,13 @@ public class ArtifactAccessReaderWriterTest {
             ArtifactAccessReader ar = new ArtifactAccessReader();
             ArtifactAccess actual = ar.read(xml);
             
-            Assert.assertEquals(expected.getURI(), actual.getURI());
+            Assert.assertEquals(expected.getArtifact().getURI(), actual.getArtifact().getURI());
+            Assert.assertEquals(expected.getArtifact().getProductType(), actual.getArtifact().getProductType());
+            Assert.assertEquals(expected.getArtifact().getReleaseType(), actual.getArtifact().getReleaseType());
+            Assert.assertEquals(expected.getArtifact().contentChecksum, actual.getArtifact().contentChecksum);
+            Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
+            Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
+            
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertEquals(expected.getReadGroups().size(), actual.getReadGroups().size());
             Assert.assertEquals(expected.getWriteGroups().size(), actual.getWriteGroups().size());

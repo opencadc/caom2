@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2.access;
 
+import ca.nrc.cadc.caom2.Artifact;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +80,7 @@ import org.apache.log4j.Logger;
 public class ArtifactAccess {
     private static final Logger log = Logger.getLogger(ArtifactAccess.class);
 
-    private final URI uri;
+    private final Artifact artifact;
     
     private final List<URI> readGroups = new ArrayList<URI>();
     private final List<URI> writeGroups = new ArrayList<URI>();
@@ -92,19 +93,19 @@ public class ArtifactAccess {
     /**
      * Constructor.
      * 
-     * @param uri the Artifact URI these access permissions apply to
+     * @param artifact the Artifact
      */
-    public ArtifactAccess(URI uri) {
-        this.uri = uri;
+    public ArtifactAccess(Artifact artifact) {
+        this.artifact = artifact;
     }
 
     /**
-     * Get theArtifact URI.
+     * Get the complete artifact. This does not include parts.
      * 
-     * @return the artifact URI
+     * @return the artifact
      */
-    public URI getURI() {
-        return uri;
+    public Artifact getArtifact() {
+        return artifact;
     }
 
     /**
@@ -127,6 +128,6 @@ public class ArtifactAccess {
 
     @Override
     public String toString() {
-        return ArtifactAccess.class.getSimpleName() + "[" + uri + "]";
+        return ArtifactAccess.class.getSimpleName() + "[" + artifact.getURI() + "]";
     }
 }
