@@ -193,7 +193,7 @@ public class AccessQueryRunner implements JobRunner {
                     URI guri = URI.create(gms.toASCIIString() + "?" + s);
                     dataReadAccessGroups.add(guri);
                 }
-                ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.uri, raa.releaseType, 
+                ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.artifact,
                         raa.metaRelease, metaReadAccessGroups, raa.dataRelease, dataReadAccessGroups);
                 log.warn("raw: " + raa.releaseType 
                         + "(" + raa.metaReadAccessGroups.size() + "," + raa.dataReadAccessGroups.size() + ")"

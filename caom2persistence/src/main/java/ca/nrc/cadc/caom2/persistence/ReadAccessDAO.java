@@ -151,8 +151,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
             
             StringBuilder sb = new StringBuilder();
             sb.append("SELECT ");
-            sb.append(aa).append(".uri").append(",");
-            sb.append(aa).append(".releaseType").append(",");
+            sb.append(gen.getColumns(Artifact.class, aa)).append(",");
             sb.append(pa).append(".metaRelease").append(",");
             sb.append(pa).append(".dataRelease").append(",");
             sb.append(pa).append(".metaReadAccessGroups").append(",");
@@ -196,7 +195,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     }
     
     public static class RawArtifactAccess {
-        public URI uri;
+        public Artifact artifact;
         public ReleaseType releaseType;
         public Date metaRelease;
         public Date dataRelease;
@@ -207,16 +206,19 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
     private class ArtifactAccessMapper implements RowMapper {
         @Override
         public Object mapRow(ResultSet rs, int i) throws SQLException {
-            final RawArtifactAccess ret = new RawArtifactAccess();
-            ret.uri = Util.getURI(rs, 1);
             
-            String rts = rs.getString(2);
-            ret.releaseType = ReleaseType.toValue(rts);
-            ret.metaRelease = Util.getDate(rs, 3, utcCalendar);
-            ret.dataRelease = Util.getDate(rs, 4, utcCalendar);
+            PartialRowMapper<Artifact> am = gen.getArtifactMapper();
+
+            RawArtifactAccess ret = new RawArtifactAccess();
+            ret.artifact = am.mapRow(rs, i, 1);
+            int col = am.getColumnCount();
+            col++;
             
-            String mgs = rs.getString(5);
-            String dgs = rs.getString(6);
+            ret.metaRelease = Util.getDate(rs, col++, utcCalendar);
+            ret.dataRelease = Util.getDate(rs, col++, utcCalendar);
+            
+            String mgs = rs.getString(col++);
+            String dgs = rs.getString(col++);
             
             if (StringUtil.hasText(mgs)) {
                 String[] ss = mgs.replaceAll("'", "").split(" ");
