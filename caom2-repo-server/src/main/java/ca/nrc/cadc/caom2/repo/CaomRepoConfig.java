@@ -83,8 +83,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
@@ -104,6 +106,20 @@ public class CaomRepoConfig {
         this.config = loadConfig(config);
     }
 
+    public Map<String, Object> getDAOConfig(String collection) throws IOException {
+        CaomRepoConfig.Item i = getConfig(collection);
+        if (i != null) {
+            Map<String, Object> props = new HashMap<String, Object>();
+            props.put("jndiDataSourceName", i.getDataSourceName());
+            props.put("database", i.getDatabase());
+            props.put("schema", i.getSchema());
+            props.put("basePublisherID", i.getBasePublisherID().toASCIIString());
+            props.put(SQLGenerator.class.getName(), i.getSqlGenerator());
+            return props;
+        }
+        throw new IllegalArgumentException("unknown collection: " + collection);
+    }
+    
     public Item getConfig(String collection) {
         Iterator<Item> i = config.iterator();
         while (i.hasNext()) {
@@ -215,6 +231,9 @@ public class CaomRepoConfig {
         private boolean proposalGroup;
         private GroupURI operatorGroup;
         private GroupURI staffGroup;
+        
+        // CADC-specific temporary hack
+        private String artifactPattern;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database,
                 String schema, String obsTableName, GroupURI readOnlyGroup,
@@ -300,6 +319,10 @@ public class CaomRepoConfig {
             return schema;
         }
 
+        public String getArtifactPattern() {
+            return artifactPattern;
+        }
+        
         private Item() {
         }
     }
@@ -367,6 +390,7 @@ public class CaomRepoConfig {
             String staffGroup = null;
             boolean publicRead = false;
             URI basePublisherID = null;
+            String pattern = null;
             for (int i = 7; i < parts.length; i++) {
                 String option = parts[i]; // key=value pair
                 log.debug(collection + " options: " + option);
@@ -388,6 +412,8 @@ public class CaomRepoConfig {
                     staffGroup = kv[1];
                 } else if ("basePublisherID".equals(kv[0])) {
                     basePublisherID = new URI(kv[1]);
+                } else if ("artifactPattern".equals(kv[0])) {
+                    pattern = kv[1];
                 }
                 // else: ignore
             }
@@ -421,6 +447,8 @@ public class CaomRepoConfig {
             rci.operatorGroup = operatorGroup == null ? null : new GroupURI(operatorGroup);
             rci.staffGroup = staffGroup == null ? null : new GroupURI(staffGroup);
             rci.proposalGroup = proposalGroup;
+            rci.artifactPattern = pattern;
+            
             
             log.debug(collection + ": loaded " + rci);
             return rci;
