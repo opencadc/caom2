@@ -259,12 +259,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     result.message = "Artifact no longer exists";
                     return result;
                 }
-
-                if (artifact.contentChecksum == null) {
-                    // no content checksum, skip download
-                    result.message = "null contentChecksum in artifact " + artifact.getURI().toString();
-                    return result;
-                }
                 
                 // determine the subtype of StorageResolver to use and translate uri to url
                 StorageResolver resolver = null;
