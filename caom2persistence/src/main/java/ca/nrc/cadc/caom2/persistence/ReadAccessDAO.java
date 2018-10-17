@@ -69,13 +69,22 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -93,6 +102,8 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
 
     private static final Logger log = Logger.getLogger(ReadAccessDAO.class);
 
+    private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
+    
     public ReadAccessDAO() {
     }
 
@@ -100,7 +111,7 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
      * Create DAO to participate in transactions with another DAO.
      * @param copyConfig 
      */
-    public ReadAccessDAO(AbstractCaomEntityDAO copyConfig) {
+    public ReadAccessDAO(ObservationDAO copyConfig) {
         this.origin = copyConfig.origin;
         this.dataSource = copyConfig.dataSource;
         this.txnManager = copyConfig.txnManager;
@@ -112,6 +123,122 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
         } catch (NoSuchAlgorithmException ex) {
             throw new RuntimeException("BUG: failed to copy MessageDigest config", ex);
         }
+    }
+    
+    //public List<ArtifactAccess> getArtifactAccess(ObservationURI obsURI) {
+    //    List<ArtifactAccess> ret = new ArrayList<>();
+    // TODO: query for all artifact++ in the observation and populate AA list
+    //    return ret;
+    //}
+    
+    //public List<ArtifactAccess> getArtifactAccess(PublisherID pubID) {
+    //    List<ArtifactAccess> ret = new ArrayList<>();
+    // TODO: query for all artifact++ in the plane and populate AA list
+    //    return ret;
+    //}
+    
+    public RawArtifactAccess getArtifactAccess(URI artifactURI) {
+        checkInit();
+        if (artifactURI == null) {
+            throw new IllegalArgumentException("arg cannot be null");
+        }
+        log.debug("getArtifactAccess: " + artifactURI);
+        long t = System.currentTimeMillis();
+
+        try {
+            String pa = gen.getAlias(Plane.class);
+            String aa = gen.getAlias(Artifact.class);
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT ");
+            sb.append(gen.getColumns(Artifact.class, aa)).append(",");
+            sb.append(pa).append(".metaRelease").append(",");
+            sb.append(pa).append(".dataRelease").append(",");
+            sb.append(pa).append(".metaReadAccessGroups").append(",");
+            sb.append(pa).append(".dataReadAccessGroups");
+            sb.append(" FROM ");
+            sb.append(gen.getFrom(Plane.class, 2, false));
+            sb.append(" WHERE ").append(aa).append(".uri = ?");
+            String sql = sb.toString();
+            if (log.isDebugEnabled()) {
+                log.debug("GET SQL: " + Util.formatSQL(sql));
+            }
+
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Object[] args = new Object[1];
+            args[0] = artifactURI.toASCIIString();
+            Object result = jdbc.query(sql, args, new ArtifactAccessMapper());
+            if (result == null) {
+                return null;
+            }
+            if (result instanceof List) {
+                List obs = (List) result;
+                if (obs.isEmpty()) {
+                    return null;
+                }
+                if (obs.size() > 1) {
+                    throw new RuntimeException("BUG: get ArtifactAccess " + artifactURI + " query returned " + obs.size() + " rows");
+                }
+                Object o = obs.get(0);
+                if (o instanceof RawArtifactAccess) {
+                    RawArtifactAccess ret = (RawArtifactAccess) o;
+                    return ret;
+                } else {
+                    throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
+                }
+            }
+            throw new RuntimeException("BUG: query returned an unexpected list type " + result.getClass().getName());
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("getArtifactAccess: " + artifactURI + " " + dt + "ms");
+        }
+    }
+    
+    public static class RawArtifactAccess {
+        public Artifact artifact;
+        public ReleaseType releaseType;
+        public Date metaRelease;
+        public Date dataRelease;
+        public final List<String> metaReadAccessGroups = new ArrayList<>();
+        public final List<String> dataReadAccessGroups = new ArrayList<>();
+    }
+    
+    private class ArtifactAccessMapper implements RowMapper {
+        @Override
+        public Object mapRow(ResultSet rs, int i) throws SQLException {
+            
+            PartialRowMapper<Artifact> am = gen.getArtifactMapper();
+
+            RawArtifactAccess ret = new RawArtifactAccess();
+            ret.artifact = am.mapRow(rs, i, 1);
+            int col = am.getColumnCount();
+            col++;
+            
+            ret.metaRelease = Util.getDate(rs, col++, utcCalendar);
+            ret.dataRelease = Util.getDate(rs, col++, utcCalendar);
+            
+            String mgs = rs.getString(col++);
+            String dgs = rs.getString(col++);
+            
+            if (StringUtil.hasText(mgs)) {
+                String[] ss = mgs.replaceAll("'", "").split(" ");
+                for (String gname : ss) {
+                    ret.metaReadAccessGroups.add(gname);
+                }
+            }
+            log.debug("raw: " + mgs + " -> " + ret.metaReadAccessGroups.size());
+            
+            if (StringUtil.hasText(dgs)) {
+                String[] ss = dgs.replaceAll("'", "").split(" ");
+                for (String gname : ss) {
+                    ret.dataReadAccessGroups.add(gname);
+                }
+            }
+            log.debug("raw: " + dgs + " -> " + ret.dataReadAccessGroups.size());
+            
+            return ret;
+        }
+        
     }
     
     // need to expose this for caom2ac which has to cleanup tuples for caom2 

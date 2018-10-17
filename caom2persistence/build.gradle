@@ -15,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.21'
+version = '2.3.22'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -25,7 +25,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.1.5,)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.1,)'
-    compile 'org.opencadc:caom2:[2.3.7,)'
+    compile 'org.opencadc:caom2:[2.3.11,)'
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
 
     testCompile 'junit:junit:4.+'
