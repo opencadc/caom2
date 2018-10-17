@@ -128,7 +128,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     List<Future<ArtifactDownloadResult>> results;
     long start;
 
-    public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore, 
+    public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
             int threads, int batchSize, Integer retryAfterHours, boolean verify) {
         this.artifactStore = artifactStore;
 
