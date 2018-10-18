@@ -118,7 +118,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private String source;
     private int batchSize;
     private int threads;
-    private boolean verify;
+    private boolean tolerateNullChecksum;
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
@@ -129,7 +129,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     long start;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
-            int threads, int batchSize, Integer retryAfterHours, boolean verify) {
+            int threads, int batchSize, Integer retryAfterHours, boolean tolerateNullChecksum) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
@@ -138,7 +138,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         this.threads = threads;
         this.batchSize = batchSize;
-        this.verify = verify;
+        this.tolerateNullChecksum = tolerateNullChecksum;
         this.stopDate = new Date();
         if (retryAfterHours == null) {
             retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
@@ -274,8 +274,16 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
-                metadata.setMd5Sum(artifact.contentChecksum.getSchemeSpecificPart());
                 metadata.setContentLength(artifact.contentLength);
+                if (artifact.contentChecksum == null) {
+                    if (!tolerateNullChecksum) {
+                        threadLog.debug("artifact checksum is null for artifact: " + artifactURI);
+                        result.message = "artifact checksum is null";
+                        return result;
+                    }
+                } else {
+                    metadata.setMd5Sum(artifact.contentChecksum.getSchemeSpecificPart());
+                }
 
                 // get the md5 and contentLength of the artifact
                 OutputStream out = new ByteArrayOutputStream();
@@ -311,6 +319,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                             return result;
                         }
                     }
+                } else {
+                    // if we don't have a checksum yet and if checksum in header is not null, use it
+                    String md5FromHeader = head.getContentMD5();
+                    if (metadata.getMd5Sum() == null && md5FromHeader != null) {
+                        metadata.setMd5Sum(md5FromHeader);
+                        threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
+                    }
                 }
 
                 // check again to be sure the destination doesn't already have it
@@ -341,17 +356,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     result.message = sb.toString();
                 } else {
                     if (uploadSuccess) {
-                        if (verify) {
-                            if (!artifactStore.contains(artifactURI, artifact.contentChecksum)) {
-                                String msgDetail = "Artifact with checksum [" + artifact.contentChecksum + "] not in storage.";
-                                result.message = "Post download verification failure: " + msgDetail;
-                            } else {
-                                result.success = true;
-                            }
-                            profiler.checkpoint("local.httpHead.verify");
-                        } else {
-                            result.success = true;
-                        }
+                        result.success = true;
                     } else {
                         result.message = uploadErrorMessage;
                     }
