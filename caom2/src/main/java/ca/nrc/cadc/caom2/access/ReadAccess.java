@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,38 +69,27 @@
 
 package ca.nrc.cadc.caom2.access;
 
-import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.util.StringUtil;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.UUID;
 
 /**
- *
+ * Generic read access tuple granting a one group access to one asset.
+ * 
  * @author pdowler
  */
-public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
-    private static final long serialVersionUID = 201202081620L;
+public class ReadAccess implements Comparable<ReadAccess>, Serializable {
+    private static final long serialVersionUID = 201810181500L;
 
-    private UUID assetID;
-
-    private URI groupID;
-
-    private ReadAccess() {
-    }
+    private final UUID assetID;
+    private final URI groupID;
 
     public ReadAccess(UUID assetID, URI groupID) {
-        super(true);
         CaomValidator.assertNotNull(this.getClass(), "assetID", assetID);
         CaomValidator.assertNotNull(this.getClass(), "groupID", groupID);
         this.assetID = assetID;
         this.groupID = groupID;
-        String name = getGroupName();
-        if (name == null) {
-            throw new IllegalArgumentException(
-                    "invalid groupID (no group name found in query string or fragment): "
-                            + groupID);
-        }
     }
 
     public UUID getAssetID() {
@@ -109,25 +98,6 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
 
     public URI getGroupID() {
         return groupID;
-    }
-
-    @Deprecated
-    public final String getGroupName() {
-        // canonical form: ivo://<authority>/<path>?<name>
-
-        String ret = groupID.getQuery();
-        if (StringUtil.hasText(ret)) {
-            return ret;
-        }
-
-        // backwards compat
-        ret = groupID.getFragment();
-        if (StringUtil.hasText(ret)) {
-            return ret;
-        }
-
-        // temporary backwards compat for caom2ac usage hack
-        return groupID.toASCIIString();
     }
 
     @Override
@@ -143,21 +113,27 @@ public class ReadAccess extends CaomEntity implements Comparable<ReadAccess> {
         }
 
         ReadAccess ra = (ReadAccess) o;
-        return this.groupID.equals(ra.groupID)
-                && this.assetID.equals(ra.assetID);
+        return this.groupID.equals(ra.groupID) && this.assetID.equals(ra.assetID);
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
     }
 
+    @Override
     public int compareTo(ReadAccess o) {
-        // groupID,assetID
-        int ret = this.groupID.compareTo(o.groupID);
+        // assetID,groupID
+        int ret = this.assetID.compareTo(o.assetID);
         if (ret == 0) {
-            ret = this.assetID.compareTo(o.assetID);
+            ret = this.groupID.compareTo(o.groupID);
         }
         return ret;
     }
 
     @Override
     public String toString() {
+        // string order used in hashCode
         return this.getClass().getSimpleName() + "[" + assetID + "," + groupID + "]";
     }
 }

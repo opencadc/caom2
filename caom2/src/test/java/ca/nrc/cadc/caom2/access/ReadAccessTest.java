@@ -119,32 +119,6 @@ public class ReadAccessTest {
     }
 
     @Test
-    public void testGetGroupName() {
-        try {
-            URI guri = new URI("ivo://cadc.nrc.ca/gms?ABC");
-            ReadAccess ra = new ReadAccess(assetID, guri);
-            String gname = ra.getGroupName();
-            Assert.assertEquals("ABC", gname);
-            Assert.assertEquals(guri, ra.getGroupID());
-
-            // compat with fragments
-            URI guriCompat = new URI("ivo://cadc.nrc.ca/gms#ABC");
-            ra = new ReadAccess(assetID, guriCompat);
-            gname = ra.getGroupName();
-            Assert.assertEquals("ABC", gname);
-
-            // compat with simple name
-            URI guriNameOnly = new URI("ABC");
-            ra = new ReadAccess(assetID, guriNameOnly);
-            gname = ra.getGroupName();
-            Assert.assertEquals("ABC", gname);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testReadAccessComparable() {
         try {
             URI groupID = new URI(groupStr);

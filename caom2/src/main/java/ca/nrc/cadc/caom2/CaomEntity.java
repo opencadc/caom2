@@ -102,7 +102,6 @@ public abstract class CaomEntity implements Serializable {
     private static final long serialVersionUID = 201704181300L;
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
-    private static final boolean SC_DEBUG = false; // way to much debug when true
     static boolean MCS_DEBUG = false; // way to much debug when true
 
     // state
@@ -209,28 +208,6 @@ public abstract class CaomEntity implements Serializable {
     @Override
     public int hashCode() {
         return this.id.hashCode();
-    }
-
-    /**
-     * Compute and return a hash code of the non-transient state of the entity.
-     *
-     * @return 32-bit checksum of all non-null fields, 0 for an empty entity
-     * @deprecated
-     */
-    public int getStateCode() {
-        return getStateCode(false);
-    }
-
-    /**
-     * Compute and return a hash code of the entire state of the entity.
-     *
-     * @param includeTransient
-     *            fields in checksum calculation
-     * @return 32-bit checksum of all non-null fields, 0 for an empty entity
-     * @deprecated
-     */
-    public int getStateCode(boolean includeTransient) {
-        return checksum(this.getClass(), this, includeTransient);
     }
 
     /**
@@ -499,97 +476,6 @@ public abstract class CaomEntity implements Serializable {
             throw new RuntimeException("BUG: Unable to clone MessageDigest "
                     + digest.getAlgorithm(), oops);
         }
-    }
-
-    // recursive compute checksum
-    int checksum(Class c, Object o, boolean includeTransient) {
-        int ret = 0;
-        try {
-            SortedSet<Field> fields = getStateFields(c, includeTransient);
-            for (Field f : fields) {
-                f.setAccessible(true);
-                Object fo = f.get(o);
-                if (fo != null) {
-                    if (SC_DEBUG) {
-                        log.debug("checksum: value type is "
-                                + fo.getClass().getName());
-                    }
-                    Class ac = fo.getClass(); // actual class
-                    if (fo instanceof CaomEnum) {
-                        CaomEnum ce = (CaomEnum) fo;
-                        ret = HashUtil.hash(ret, ce.checksum());
-                    } else if (isLocalClass(ac)) {
-                        // only merge the checksum if there is state (cs != 0)
-                        int cs = checksum(ac, fo, includeTransient);
-                        if (cs != 0) {
-                            ret = HashUtil.hash(ret, cs);
-                            if (SC_DEBUG) {
-                                log.debug("checksum: " + c.getName() + "."
-                                        + f.getName() + " = " + cs + " -> "
-                                        + ret);
-                            }
-                        } else if (SC_DEBUG) {
-                            log.debug(
-                                    "skip: " + c.getName() + "." + f.getName());
-                        }
-                    } else if (fo instanceof Collection) {
-                        Collection stuff = (Collection) fo;
-                        Iterator i = stuff.iterator();
-                        while (i.hasNext()) {
-                            Object co = i.next();
-                            Class cc = co.getClass();
-                            if (isLocalClass(cc)) {
-                                // only merge the checksum if there is state (cs
-                                // != 0)
-                                int cs = checksum(cc, co, includeTransient);
-                                if (cs != 0) {
-                                    ret = HashUtil.hash(ret, cs);
-                                    if (SC_DEBUG) {
-                                        log.debug("checksum: " + cc.getName()
-                                                + " = " + cs + " -> " + ret);
-                                    }
-                                } else if (SC_DEBUG) {
-                                    log.debug("skip: " + cc.getName());
-                                }
-                            } else { // non-caom2 class
-                                int hc = fo.hashCode();
-                                ret = HashUtil.hash(ret, hc);
-                                if (SC_DEBUG) {
-                                    log.debug("checksum: " + c.getName() + "."
-                                            + f.getName() + " = " + hc + " -> "
-                                            + ret);
-                                }
-                            }
-                        }
-                    } else if (fo instanceof Date) {
-                        // only compare down to seconds
-                        Date date = (Date) fo;
-                        long sec = (date.getTime() / 1000L);
-                        ret = HashUtil.hash(ret, sec);
-                        if (SC_DEBUG) {
-                            log.debug("checksum: " + c.getName() + "."
-                                    + f.getName() + " = " + sec + " -> " + ret);
-                        }
-                    } else { // non-caom2 class
-                        int hc = fo.hashCode();
-                        if (hc != 0) {
-                            ret = HashUtil.hash(ret, hc);
-                            if (SC_DEBUG) {
-                                log.debug("checksum: " + c.getName() + "."
-                                        + f.getName() + " = " + hc + " -> "
-                                        + ret);
-                            }
-                        }
-                    }
-                } else if (SC_DEBUG) {
-                    log.debug("skip: " + c.getName() + "." + f.getName());
-                }
-            }
-        } catch (IllegalAccessException bug) {
-            throw new RuntimeException("BUG accessing field via reflection",
-                    bug);
-        }
-        return ret;
     }
 
     private boolean isLocalClass(Class c) {
