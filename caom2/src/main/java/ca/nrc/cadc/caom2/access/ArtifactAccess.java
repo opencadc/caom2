@@ -68,6 +68,7 @@
 package ca.nrc.cadc.caom2.access;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +84,6 @@ public class ArtifactAccess {
     private final Artifact artifact;
     
     private final List<URI> readGroups = new ArrayList<URI>();
-    private final List<URI> writeGroups = new ArrayList<URI>();
     
     /**
      * Flag denoting that the resource described by the URI is publicly readable.
@@ -96,6 +96,7 @@ public class ArtifactAccess {
      * @param artifact the Artifact
      */
     public ArtifactAccess(Artifact artifact) {
+        CaomValidator.assertNotNull(ArtifactAccess.class, "artifact", artifact);
         this.artifact = artifact;
     }
 
@@ -115,15 +116,6 @@ public class ArtifactAccess {
      */
     public List<URI> getReadGroups() {
         return readGroups;
-    }
-
-    /**
-     * Get the list of groups with write-access to the  Artifact URI.
-     * 
-     * @return list of groups with write-access
-     */
-    public List<URI> getWriteGroups() {
-        return writeGroups;
     }
 
     @Override

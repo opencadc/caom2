@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,17 +62,16 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
- */
+*/
 
 package ca.nrc.cadc.caom2.access;
 
-import ca.nrc.cadc.util.Log4jInit;
+
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
-import java.util.UUID;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -81,70 +80,31 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class ReadAccessTest {
+public class ArtifactAccessTest {
+    private static final Logger log = Logger.getLogger(ArtifactAccessTest.class);
 
-    private static final Logger log = Logger.getLogger(ReadAccessTest.class);
-
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    public ArtifactAccessTest() { 
     }
-
-    UUID assetID = UUID.randomUUID();
-    String groupStr = "ivo://cadc.nrc.ca/gms?ABC";
-
+    
     @Test
-    public void testConstructor() {
+    public void testCtor() {
         try {
-            URI guri = new URI("ivo://cadc.nrc.ca/gms?ABC");
-            ReadAccess ra = new ReadAccess(assetID, guri);
-            
-            try {
-                ra = new ReadAccess(assetID, null);
-                Assert.fail("expected IllegalArgumentException, got: " + ra);
-            } catch (IllegalArgumentException expected) {
-                log.info("caught expected: " + expected);
-            }
-            
-            try {
-                ra = new ReadAccess(null, guri);
-                Assert.fail("expected IllegalArgumentException, got: " + ra);
-            } catch (IllegalArgumentException expected) {
-                log.info("caught expected: " + expected);
-            }
-
+            URI uri = URI.create("foo:bar/baz");
+            ArtifactAccess aa = new ArtifactAccess(new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA));
+            Assert.assertNotNull(aa.getArtifact());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testReadAccessComparable() {
+    public void testNullCtorArg() {
         try {
-            URI groupID = new URI(groupStr);
-            ReadAccess ra = new ReadAccess(assetID, groupID);
-            ra.toString();
-            Assert.assertEquals(assetID, ra.getAssetID());
-            Assert.assertEquals(groupID, ra.getGroupID());
-
-            Assert.assertEquals(ra, ra);
-            Assert.assertEquals(0, ra.compareTo(ra));
-
-            ReadAccess raeq = new ReadAccess(assetID, groupID);
-            Assert.assertEquals(ra, raeq);
-            Assert.assertEquals(0, ra.compareTo(raeq));
-
-            ReadAccess rane = new ReadAccess(assetID, new URI(groupStr.replace("ABC", "XYZ")));
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) < 0);
-
-            rane = new ReadAccess(UUID.randomUUID(), groupID);
-            Assert.assertFalse(ra.equals(rane));
-            Assert.assertTrue(ra.compareTo(rane) != 0);
-
-            rane = null;
-            Assert.assertFalse(ra.equals(rane));
-
+            ArtifactAccess aa = new ArtifactAccess(null);
+            Assert.fail("ctor did not check null arg");
+        } catch (IllegalArgumentException expected) {
+            log.info("caught expected: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

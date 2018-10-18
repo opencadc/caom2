@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,8 +69,8 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
@@ -104,7 +104,7 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
 
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
-    private final Set<ReadAccess> metaReadAccess = new TreeSet<ReadAccess>();
+    private final Set<URI> metaReadAccessGroups = new TreeSet<URI>();
 
     protected Observation(String collection, String observationID,
             Algorithm algorithm) {
@@ -150,8 +150,8 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
         return planes;
     }
 
-    public Set<ReadAccess> getMetaReadAccess() {
-        return metaReadAccess;
+    public Set<URI> getMetaReadAccessGroups() {
+        return metaReadAccessGroups;
     }
 
     @Override

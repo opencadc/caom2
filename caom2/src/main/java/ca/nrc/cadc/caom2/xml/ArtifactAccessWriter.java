@@ -130,12 +130,6 @@ public class ArtifactAccessWriter {
         }
         addGroups(aa.getReadGroups(), rg);
         
-        Element wg = new Element(ArtifactAccessReader.ENAMES.writeGroups.name());
-        if (!aa.getWriteGroups().isEmpty() || writeEmptyCollections) {
-            root.addContent(wg);
-        }
-        addGroups(aa.getWriteGroups(), wg);
-        
         Document doc = new Document(root);
         XMLOutputter outputter = new XMLOutputter();
         outputter.setFormat(Format.getPrettyFormat());

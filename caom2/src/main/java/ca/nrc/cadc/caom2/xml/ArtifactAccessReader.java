@@ -95,8 +95,7 @@ public class ArtifactAccessReader {
         artifactAccess(),
         artifact(), uri(), productType(), releaseType(), contentLength(), contentType(), contentChecksum(),
         isPublic(),
-        readGroups(),
-        writeGroups();
+        readGroups();
     }
     
     public ArtifactAccessReader() { 
@@ -134,7 +133,6 @@ public class ArtifactAccessReader {
         ret.isPublic = getBoolean(root.getChildTextTrim(ENAMES.isPublic.name()));
         
         getGroupList(ret.getReadGroups(), ENAMES.readGroups.name(), root.getChildren(ENAMES.readGroups.name()));
-        getGroupList(ret.getWriteGroups(), ENAMES.writeGroups.name(), root.getChildren(ENAMES.writeGroups.name()));
         
         return ret;
     }
