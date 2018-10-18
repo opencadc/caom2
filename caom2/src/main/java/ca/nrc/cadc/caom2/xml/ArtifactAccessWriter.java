@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,51 +65,94 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2.xml;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.caom2.access.ArtifactAccess;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URI;
-import java.net.URL;
-
+import java.util.List;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 /**
- * This class can convert a MAST URI into a URL.
  *
- * @author jeevesh
+ * @author pdowler
  */
-public class MastResolver implements StorageResolver {
+public class ArtifactAccessWriter {
+    private static final Logger log = Logger.getLogger(ArtifactAccessWriter.class);
 
-    public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
+    private final boolean writeEmptyCollections;
 
-    public MastResolver() {
+    public ArtifactAccessWriter() { 
+        this(false);
     }
-
-    /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
-     */
-    @Override
-    public String getScheme() {
-        return SCHEME;
+    
+    public ArtifactAccessWriter(boolean writeEmptyCollections) {
+        this.writeEmptyCollections = writeEmptyCollections;
     }
-
-    /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
-     */
-    @Override
-    public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+    
+    public void write(ArtifactAccess aa, OutputStream ostream) throws IOException {
+        write(aa, new OutputStreamWriter(ostream));
     }
-
+    
+    public void write(ArtifactAccess aa, Writer writer) throws IOException {
+        Element root = new Element(ArtifactAccessReader.ENAMES.artifactAccess.name());
+        
+        Element ae = new Element(ArtifactAccessReader.ENAMES.artifact.name());
+        root.addContent(ae);
+        
+        addChild(ae, ArtifactAccessReader.ENAMES.uri.name(), aa.getArtifact().getURI().toASCIIString());
+        addChild(ae, ArtifactAccessReader.ENAMES.productType.name(), aa.getArtifact().getProductType().getValue());
+        addChild(ae, ArtifactAccessReader.ENAMES.releaseType.name(), aa.getArtifact().getReleaseType().getValue());
+        if (aa.getArtifact().contentChecksum != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentChecksum.name(), aa.getArtifact().contentChecksum.toASCIIString());
+        }
+        if (aa.getArtifact().contentLength != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentLength.name(), aa.getArtifact().contentLength.toString());
+        }
+        if (aa.getArtifact().contentType != null) {
+            addChild(ae, ArtifactAccessReader.ENAMES.contentType.name(), aa.getArtifact().contentType);
+        }
+        
+        Element pub = new Element(ArtifactAccessReader.ENAMES.isPublic.name());
+        pub.setText(Boolean.toString(aa.isPublic));
+        root.addContent(pub);
+        
+        Element rg = new Element(ArtifactAccessReader.ENAMES.readGroups.name());
+        if (!aa.getReadGroups().isEmpty() || writeEmptyCollections) {
+            root.addContent(rg);
+        }
+        addGroups(aa.getReadGroups(), rg);
+        
+        Element wg = new Element(ArtifactAccessReader.ENAMES.writeGroups.name());
+        if (!aa.getWriteGroups().isEmpty() || writeEmptyCollections) {
+            root.addContent(wg);
+        }
+        addGroups(aa.getWriteGroups(), wg);
+        
+        Document doc = new Document(root);
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.setFormat(Format.getPrettyFormat());
+        outputter.output(doc, writer);
+    }
+    
+    private void addChild(Element parent, String ename, String eval) {
+        Element uri = new Element(ename);
+        uri.setText(eval);
+        parent.addContent(uri);
+    }
+    
+    private void addGroups(List<URI> groups, Element parent) {
+        for (URI u : groups) {
+            Element uri = new Element(ArtifactAccessReader.ENAMES.uri.name());
+            uri.setText(u.toASCIIString());
+            parent.addContent(uri);
+        }
+    }
 }
-

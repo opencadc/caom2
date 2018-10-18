@@ -276,7 +276,7 @@ public abstract class CaomEntity implements Serializable {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
                 if (ce.id != null) {
-                    digest.update(primitiveValueToBytes(ce.id));
+                    digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
                     if (MCS_DEBUG) {
                         log.debug("metaChecksum: " + ce.getClass().getSimpleName()
                                 + ".id " + ce.id);
@@ -295,11 +295,7 @@ public abstract class CaomEntity implements Serializable {
                     if (fo instanceof CaomEnum) {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        digest.update(primitiveValueToBytes(ce.getValue()));
-                        if (MCS_DEBUG) {
-                            log.debug("metaChecksum: " + cf + ".getValue() "
-                                    + ce.getValue());
-                        }
+                        digest.update(primitiveValueToBytes(ce.getValue(), cf, digest.getAlgorithm()));
                     } else if (isLocalClass(ac)) {
                         calcMetaChecksum(ac, fo, digest);
                     } else if (fo instanceof Collection) {
@@ -312,25 +308,15 @@ public abstract class CaomEntity implements Serializable {
                                 // use ce.getValue
                                 CaomEnum ce = (CaomEnum) co;
                                 digest.update(
-                                        primitiveValueToBytes(ce.getValue()));
-                                if (MCS_DEBUG) {
-                                    log.debug("metaChecksum: " + cf
-                                            + ".getValue() " + ce.getValue());
-                                }
+                                        primitiveValueToBytes(ce.getValue(), cf, digest.getAlgorithm()));
                             } else if (isLocalClass(cc)) {
                                 calcMetaChecksum(cc, co, digest);
                             } else { // non-caom2 class ~primtive value
-                                digest.update(primitiveValueToBytes(co));
-                                if (MCS_DEBUG) {
-                                    log.debug("metaChecksum: " + cf + " " + co);
-                                }
+                                digest.update(primitiveValueToBytes(co, cf, digest.getAlgorithm()));
                             }
                         }
                     } else { // non-caom2 class ~primtive value
-                        digest.update(primitiveValueToBytes(fo));
-                        if (MCS_DEBUG) {
-                            log.debug("metaChecksum: " + cf + " " + fo);
-                        }
+                        digest.update(primitiveValueToBytes(fo, cf, digest.getAlgorithm()));
                     }
                 } else if (MCS_DEBUG) {
                     log.debug("skip: " + cf);
@@ -344,7 +330,7 @@ public abstract class CaomEntity implements Serializable {
         }
     }
 
-    private byte[] primitiveValueToBytes(Object o) {
+    private byte[] primitiveValueToBytes(Object o, String name, String digestAlg) {
         byte[] ret = null;
         if (o instanceof Byte) {
             ret = HexUtil.toBytes((Byte) o); // auto-unbox
@@ -399,8 +385,14 @@ public abstract class CaomEntity implements Serializable {
 
         if (ret != null) {
             if (MCS_DEBUG) {
-                log.debug(o.getClass().getSimpleName() + " " + o.toString()
-                        + " " + ret.length);
+                try {
+                    MessageDigest md  = MessageDigest.getInstance(digestAlg);
+                    byte[] dig = md.digest(ret);
+                    log.debug(o.getClass().getSimpleName() + " " + name + " = " + o.toString()
+                        + " -- " + HexUtil.toHex(dig));
+                } catch (Exception ignore) {
+                    log.debug("OOPS", ignore);
+                }
             }
             return ret;
         }

@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.Circle;
@@ -107,6 +108,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -359,7 +361,7 @@ public class CutoutUtilTest {
     }
 
     @Test
-    public void testCanCutoutEnergy() {
+    public void testCutoutEnergy() {
         try {
             Chunk c = new Chunk();
             Assert.assertFalse(CutoutUtil.canCutout(c));
@@ -442,7 +444,7 @@ public class CutoutUtilTest {
     }
 
     @Test
-    public void testCanCutoutTime() {
+    public void testCutoutTime() {
         try {
             // TODO
         } catch (Exception unexpected) {
@@ -452,9 +454,47 @@ public class CutoutUtilTest {
     }
 
     @Test
-    public void testCanCutoutPolarization() {
+    public void testCutoutPolarization() {
         try {
-            // TODO
+            Chunk c = new Chunk();
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+            
+            c.naxis = 1;
+            c.polarization = new PolarizationWCS(new CoordAxis1D(new Axis("STOKES", null)));
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+            
+            c.polarization.getAxis().range = new CoordRange1D(new RefCoord(0.5, 1.0), new RefCoord(4.5, 4.0)); // IQUV
+            Assert.assertFalse("cutout in range", CutoutUtil.canCutout(c));
+            
+            c.polarization.getAxis().function = new CoordFunction1D(4L, 1.0, new RefCoord(1.0, 1.0)); // IQUV
+            Assert.assertFalse("cutout in metadata", CutoutUtil.canCutout(c)); // still just metadata
+            
+            c.polarizationAxis = 1;
+            Assert.assertTrue("cutout in data", CutoutUtil.canCutout(c)); 
+            
+            List<PolarizationState> states = new ArrayList<PolarizationState>();
+            states.add(PolarizationState.I);
+            
+            long[] cut = CutoutUtil.getPolarizationBounds(c.polarization, states);
+            Assert.assertNotNull("cutout I", cut);
+            Assert.assertEquals("cutout I pix", 2, cut.length);
+            Assert.assertEquals("cutout I min pix", 1L, cut[0]);
+            Assert.assertEquals("cutout I max pix", 1L, cut[1]);
+            
+            states.add(PolarizationState.Q);
+            states.add(PolarizationState.U);
+            states.add(PolarizationState.V);
+            
+            cut = CutoutUtil.getPolarizationBounds(c.polarization, states);
+            Assert.assertNotNull("cutout IQUV", cut);
+            Assert.assertEquals("cutout IQUV", 0, cut.length); // all
+            
+            states.clear();
+            states.add(PolarizationState.RR);
+            cut = CutoutUtil.getPolarizationBounds(c.polarization, states);
+            Assert.assertNull("cutout RR", cut);
+            
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

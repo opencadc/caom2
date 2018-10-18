@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,51 +65,69 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2.access;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.caom2.Artifact;
 import java.net.URI;
-import java.net.URL;
-
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
  *
- * @author jeevesh
+ * @author pdowler
  */
-public class MastResolver implements StorageResolver {
+public class ArtifactAccess {
+    private static final Logger log = Logger.getLogger(ArtifactAccess.class);
 
-    public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
-
-    public MastResolver() {
+    private final Artifact artifact;
+    
+    private final List<URI> readGroups = new ArrayList<URI>();
+    private final List<URI> writeGroups = new ArrayList<URI>();
+    
+    /**
+     * Flag denoting that the resource described by the URI is publicly readable.
+     */
+    public boolean isPublic = false;
+    
+    /**
+     * Constructor.
+     * 
+     * @param artifact the Artifact
+     */
+    public ArtifactAccess(Artifact artifact) {
+        this.artifact = artifact;
     }
 
     /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
+     * Get the complete artifact. This does not include parts.
+     * 
+     * @return the artifact
      */
-    @Override
-    public String getScheme() {
-        return SCHEME;
+    public Artifact getArtifact() {
+        return artifact;
     }
 
     /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     * Get the list of groups with read-access to the  Artifact URI.
+     * 
+     * @return list of groups with read-access
      */
-    @Override
-    public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+    public List<URI> getReadGroups() {
+        return readGroups;
     }
 
+    /**
+     * Get the list of groups with write-access to the  Artifact URI.
+     * 
+     * @return list of groups with write-access
+     */
+    public List<URI> getWriteGroups() {
+        return writeGroups;
+    }
+
+    @Override
+    public String toString() {
+        return ArtifactAccess.class.getSimpleName() + "[" + artifact.getURI() + "]";
+    }
 }
-

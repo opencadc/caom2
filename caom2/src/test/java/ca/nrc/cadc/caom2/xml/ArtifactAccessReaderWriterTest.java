@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,95 +62,108 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2.xml;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.util.StringUtil;
-
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author hjeeves
+ *
+ * @author pdowler
  */
-public class MastResolverTest {
-    private static final Logger log = Logger.getLogger(MastResolverTest.class);
+public class ArtifactAccessReaderWriterTest {
+
+    private static final Logger log = Logger.getLogger(ArtifactAccessReaderWriterTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
     }
 
-    String VALID_URI = "mast:FOO";
-    String VALID_URI2 = "mast:FOO/bar";
-
-    // There are no tests that will validate the content of the
-    // path other than empty.
-    String INVALID_URI_BAD_SCHEME = "ad:FOO/Bar";
-
-    MastResolver mastResolver = new MastResolver();
-
-    public MastResolverTest() {
+    public ArtifactAccessReaderWriterTest() {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(MastResolver.SCHEME.equals(mastResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
+    public void testMinimal() {
         try {
-            List<String> validURIs = new ArrayList<String>();
-            validURIs.add(VALID_URI);
-            validURIs.add(VALID_URI2);
-
-            for (String uriStr : validURIs) {
-
-                URI uri = new URI(uriStr);
-                URL url = mastResolver.toURL(uri);
-
-                log.debug("toURL returned: " + url.toString());
-                Assert.assertTrue(StringUtil.hasLength(url.toString()));
-            }
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
+            ArtifactAccess expected = new ArtifactAccess(a);
+            
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ArtifactAccessWriter aw = new ArtifactAccessWriter();
+            aw.write(expected, bos);
+            
+            String xml = bos.toString();
+            log.info("xml:\n" + xml);
+            
+            ArtifactAccessReader ar = new ArtifactAccessReader();
+            ArtifactAccess actual = ar.read(xml);
+            
+            Assert.assertEquals(expected.getArtifact().getURI(), actual.getArtifact().getURI());
+            Assert.assertEquals(expected.getArtifact().getProductType(), actual.getArtifact().getProductType());
+            Assert.assertEquals(expected.getArtifact().getReleaseType(), actual.getArtifact().getReleaseType());
+            Assert.assertEquals(expected.getArtifact().contentChecksum, actual.getArtifact().contentChecksum);
+            Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
+            Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
+            
+            Assert.assertEquals(expected.isPublic, actual.isPublic);
+            Assert.assertTrue(actual.getReadGroups().isEmpty());
+            Assert.assertTrue(actual.getWriteGroups().isEmpty());
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
-    public void testInvalidURIBadScheme() {
+    public void testRoundTrip() {
         try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = mastResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = mastResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
+            ArtifactAccess expected = new ArtifactAccess(a);
+            
+            a.contentChecksum = URI.create("md5:d41d8cd98f00b204e9800998ecf8427e");
+            a.contentLength = 0L;
+            a.contentType = "text/plain";
+            expected.isPublic = true;
+            expected.getReadGroups().add(URI.create("ivo://example.net/aa?group1"));
+            expected.getReadGroups().add(URI.create("ivo://example.net/aa?group2"));
+            expected.getWriteGroups().add(URI.create("ivo://example.net/aa?group3"));
+            expected.getWriteGroups().add(URI.create("ivo://example.net/aa?group4"));
+            
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ArtifactAccessWriter aw = new ArtifactAccessWriter();
+            aw.write(expected, bos);
+            
+            String xml = bos.toString();
+            log.info("xml:\n" + xml);
+            
+            ArtifactAccessReader ar = new ArtifactAccessReader();
+            ArtifactAccess actual = ar.read(xml);
+            
+            Assert.assertEquals(expected.getArtifact().getURI(), actual.getArtifact().getURI());
+            Assert.assertEquals(expected.getArtifact().getProductType(), actual.getArtifact().getProductType());
+            Assert.assertEquals(expected.getArtifact().getReleaseType(), actual.getArtifact().getReleaseType());
+            Assert.assertEquals(expected.getArtifact().contentChecksum, actual.getArtifact().contentChecksum);
+            Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
+            Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
+            
+            Assert.assertEquals(expected.isPublic, actual.isPublic);
+            Assert.assertEquals(expected.getReadGroups().size(), actual.getReadGroups().size());
+            Assert.assertEquals(expected.getWriteGroups().size(), actual.getWriteGroups().size());
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

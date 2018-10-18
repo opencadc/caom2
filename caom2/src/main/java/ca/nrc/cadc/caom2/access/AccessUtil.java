@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,51 +65,51 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2.access;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
-import java.net.URL;
-
+import java.util.Date;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * This class can convert a MAST URI into a URL.
  *
- * @author jeevesh
+ * @author pdowler
  */
-public class MastResolver implements StorageResolver {
+public class AccessUtil {
+    private static final Logger log = Logger.getLogger(AccessUtil.class);
 
-    public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
-
-    public MastResolver() {
+    private AccessUtil() { 
     }
-
+    
     /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
+     * Determine access to an artifact using the ReleaseType-specific release date and 
+     * group permissions.
+     * 
+     * @param artifact the artifact
+     * @param metaRelease
+     * @param metaReadAccessGroups
+     * @param dataRelease
+     * @param dataReadAccessGroups
+     * @return correctly deduced permissions
      */
-    @Override
-    public String getScheme() {
-        return SCHEME;
+    public static ArtifactAccess getArtifactAccess(Artifact artifact,
+            Date metaRelease, List<URI> metaReadAccessGroups,
+            Date dataRelease, List<URI> dataReadAccessGroups) {
+        ArtifactAccess ret = new ArtifactAccess(artifact);
+        if (ReleaseType.META.equals(artifact.getReleaseType())) {
+            if (metaRelease != null && metaRelease.getTime() < System.currentTimeMillis()) {
+                ret.isPublic = true;
+            }
+            ret.getReadGroups().addAll(metaReadAccessGroups);
+        } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
+            if (dataRelease != null && dataRelease.getTime() < System.currentTimeMillis()) {
+                ret.isPublic = true;
+            }
+            ret.getReadGroups().addAll(dataReadAccessGroups);
+        }
+        return ret;
     }
-
-    /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
-     */
-    @Override
-    public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
-    }
-
 }
-
