@@ -69,23 +69,14 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
-import ca.nrc.cadc.caom2.util.MaxLastModifiedComparator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -129,142 +120,6 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
 
     public T get(UUID id) {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Get up to batchSize objects sorted by lastModified. This implementation
-     * performs a direct query and returns the specified number of instances.
-     *
-     * @param c
-     * @param minLastModified
-     * @param maxLastModified
-     * @param batchSize
-     * @return
-     */
-    public List<T> getList(Class<T> c, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        if (Observation.class.isAssignableFrom(c)) {
-            return getList(c, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
-        }
-
-        if (Artifact.class.isAssignableFrom(c)) {
-            Class<? extends Artifact> rac = (Class<? extends Artifact>) c;
-            return getArtifactList(minLastModified, maxLastModified, batchSize);
-        }
-
-        if (ReadAccess.class.isAssignableFrom(c)) {
-            Class<? extends ReadAccess> rac = (Class<? extends ReadAccess>) c;
-            return getReadAccessList(rac, minLastModified, maxLastModified, batchSize);
-        }
-
-        throw new UnsupportedOperationException("unexpected class for getList: " + c.getName());
-    }
-
-    /**
-     * Get batch of Observations. This implementation finds a range of
-     * lastModified that should yield the requested batchSize and then performs
-     * a date-range query with the specified depth (if needed) to get the target
-     * instances.
-     *
-     * @param c
-     * @param minlastModified
-     * @param batchSize
-     * @param depth
-     * @return
-     */
-    protected List<T> getList(Class<T> c, Date minlastModified, Date maxLastModified, Integer batchSize, int depth) {
-        checkInit();
-
-        log.debug("GET: " + batchSize);
-        long t = System.currentTimeMillis();
-
-        try {
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-
-            // find the range of timestamps that gives batchSize entities
-            Date endDate = maxLastModified;
-            String sql = gen.getSelectLastModifiedRangeSQL(c, minlastModified, maxLastModified, batchSize);
-            if (log.isDebugEnabled()) {
-                log.debug("GET SQL: " + Util.formatSQL(sql));
-            }
-
-            Object o = jdbc.query(sql, gen.getTimestampRowMapper());
-            if (o instanceof List) {
-                List mlm = (List) o;
-                if (mlm.isEmpty()) {
-                    // no observations > minLastModified
-                    return new ArrayList<T>(0);
-                }
-                if (mlm.size() >= batchSize) {
-                    endDate = (Date) mlm.get(mlm.size() - 1); // last == max value
-                }
-            }
-
-            // now query for the specified range of dates
-            sql = gen.getObservationSelectSQL(c, minlastModified, endDate, depth);
-            if (log.isDebugEnabled()) {
-                log.debug("GET SQL: " + Util.formatSQL(sql));
-            }
-
-            Object result = jdbc.query(sql, gen.getObservationExtractor());
-
-            if (result == null) {
-                return new ArrayList<T>(0);
-            }
-
-            if (result instanceof List) {
-                List obs = (List) result;
-                List<T> ret = new ArrayList<T>(obs.size());
-                ret.addAll(obs);
-                // sort list by maxLastModified
-                Collections.sort(ret, new MaxLastModifiedComparator());
-                return ret;
-            }
-            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
-        } finally {
-            long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + batchSize + " " + dt + "ms");
-        }
-    }
-
-    protected List<T> getReadAccessList(Class<? extends ReadAccess> rac, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        checkInit();
-
-        RowMapper rm = gen.getReadAccessMapper(rac);
-        return getListImpl(rm, rac, minLastModified, maxLastModified, batchSize);
-    }
-
-    protected List<T> getArtifactList(Date minLastModified, Date maxLastModified, Integer batchSize) {
-        checkInit();
-
-        RowMapper rm = gen.getArtifactMapper();
-        return getListImpl(rm, Artifact.class, minLastModified, maxLastModified, batchSize);
-    }
-
-    private List<T> getListImpl(RowMapper rm, Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        log.debug("GET: " + batchSize);
-        long t = System.currentTimeMillis();
-        try {
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-
-            String sql = gen.getSelectSQL(c, minLastModified, maxLastModified, batchSize);
-            log.debug("GET SQL: " + sql);
-
-            Object result = jdbc.query(sql, rm);
-            if (result == null) {
-                return new ArrayList<T>(0);
-            }
-
-            if (result instanceof List) {
-                List res = (List) result;
-                List<T> ret = new ArrayList<T>(res.size());
-                ret.addAll(res);
-                return ret;
-            }
-            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
-        } finally {
-            long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + batchSize + " " + dt + "ms");
-        }
     }
 
     protected void put(Skeleton cur, T val, LinkedList<CaomEntity> parents, JdbcTemplate jdbc) {

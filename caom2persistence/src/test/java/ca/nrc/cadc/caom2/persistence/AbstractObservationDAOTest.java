@@ -135,6 +135,7 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -374,7 +375,7 @@ public abstract class AbstractObservationDAOTest
     }
     
     @Test
-    public void testGetObservationStateAndObservationList()
+    public void testGetObservationListByCollection()
     {
         try
         {
@@ -984,6 +985,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
+    /*
     @Test
     public void testGetObservationList()
     {
@@ -1049,7 +1051,8 @@ public abstract class AbstractObservationDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    */
+    
     @Test
     public void testPutObservationDeleteChildren()
     {

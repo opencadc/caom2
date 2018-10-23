@@ -48,7 +48,7 @@ create table <schema>.Observation
     environment_photometric integer,
 
     members text null,
-    metaReadAccess text null,
+    metaReadGroups text null,
 
 -- optimisation
     metaReadAccessGroups tsvector default '',

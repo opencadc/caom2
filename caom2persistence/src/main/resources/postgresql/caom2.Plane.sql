@@ -79,6 +79,9 @@ create table <schema>.Plane
 -- this is long in the code but integer in db for historical reasons
     polarization_dimension  integer,
 
+    metaReadGroups text null,
+    dataReadGroups text null,
+
 -- optimisation
     dataReadAccessGroups tsvector default '',
     metaReadAccessGroups tsvector default '',

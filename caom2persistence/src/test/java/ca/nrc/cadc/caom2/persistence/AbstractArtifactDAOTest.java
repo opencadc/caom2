@@ -76,12 +76,9 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.sql.DataSource;
@@ -177,6 +174,7 @@ public abstract class AbstractArtifactDAOTest
         }
     }
 
+    /*
     @Test
     public void testGetList()
     {
@@ -242,6 +240,7 @@ public abstract class AbstractArtifactDAOTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    */
     
     @Test
     public void testGetByURI()

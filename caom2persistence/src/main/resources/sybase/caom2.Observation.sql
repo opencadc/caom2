@@ -47,6 +47,8 @@ create table caom2_Observation
     environment_photometric int null,
 
     members text null,
+-- needed by 2.4-alpha1
+    metaReadGroups char(1) null,
 
 -- internal
     typeCode char not null,

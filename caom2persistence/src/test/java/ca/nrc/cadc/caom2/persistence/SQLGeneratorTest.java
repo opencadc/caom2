@@ -173,7 +173,7 @@ public class SQLGeneratorTest
             ObservationURI uri = new ObservationURI("FOO", "NoSuchObservation");
             for (int i=1; i<=5; i++)
             {
-                String sql = gen.getSelectSQL(uri, i);
+                String sql = gen.getSelectSQL(uri, i, false);
                 Assert.assertNotNull(sql);
                 log.debug("SQL [" + sql.length() + "] " + sql);
                 

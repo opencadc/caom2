@@ -157,26 +157,26 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     /**
      * @param uri
      * @return
-     * @deprecated use getState and check for not-null return
+     * @deprecated use getState and check for non-null return
      */
     @Deprecated
     public boolean exists(ObservationURI uri) {
-        Observation observation = get(uri, null, 1);
-        return observation != null;
+        ObservationState s = getState(uri);
+        return s != null;
     }
 
     public UUID getID(ObservationURI uri) {
-        Observation observation = get(uri, null, 1);
-        if (observation != null) {
-            return observation.getID();
+        ObservationState s = getState(uri);
+        if (s != null) {
+            return s.getID();
         }
         return null;
     }
 
     public ObservationURI getURI(UUID id) {
-        Observation observation = get(null, id, 1);
-        if (observation != null) {
-            return observation.getURI();
+        ObservationState s = getState(id);
+        if (s != null) {
+            return s.getURI();
         }
         return null;
     }
@@ -229,15 +229,44 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // pdd: temporary hack for use in harvester retrying skipped
+    /**
+     * Get a wrapped complete Observation or error.
+     * 
+     * @param uri
+     * @return wrapped observation
+     */
     public ObservationResponse getAlt(ObservationURI uri) {
+        // TODO: could just get the Observation and build ObservationState from it (single query)
+        ObservationState s = getState(uri);
+        if (s == null) {
+            return null;
+        }
+        return getAlt(s);
+    }
+    
+    /**
+     * Get a wrapped complete Observation or error.
+     * 
+     * @param s
+     * @return wrapped observation
+     */
+    public ObservationResponse getAlt(ObservationState s) {
+        return getAlt(s, SQLGenerator.MAX_DEPTH);
+    }
+    
+    /**
+     * Get a wrapped 
+     * @param s
+     * @param depth
+     * @return 
+     */
+    public ObservationResponse getAlt(ObservationState s, int depth) {
         long t = System.currentTimeMillis();
 
         try {
-            ObservationState s = getState(uri);
             ObservationResponse ret = new ObservationResponse(s);
             try {
-                ret.observation = get(s.getURI());
+                ret.observation = get(s.getURI(), null, depth);
                 if (ret.observation == null) {
                     return null;
                 }
@@ -247,12 +276,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             return ret;
         } finally {
             long dt = System.currentTimeMillis() - t;
-            log.debug("getAlt: " + uri + " " + dt + "ms");
+            log.debug("getAlt: " + s.getURI() + "depth=" + depth + " " + dt + "ms");
         }
     }
-
+    
     /**
-     * Get a list of observations from the specified collection and timestamp range.
+     * Get a list of wrapped observations from the specified collection and optional timestamp range.
      * 
      * @param collection
      * @param minLastModified
@@ -261,6 +290,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @return 
      */
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
+        return getList(collection, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
+    }
+    
+    /**
+     * Get list of wrapped observations to non-standard depth. 
+     * 
+     * @param collection
+     * @param minLastModified
+     * @param maxLastModified
+     * @param batchSize
+     * @param depth
+     * @return 
+     */
+    public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize, int depth) {
         long t = System.currentTimeMillis();
 
         try {
@@ -268,12 +311,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             List<ObservationResponse> ret = new ArrayList<ObservationResponse>(states.size());
 
             for (ObservationState s : states) {
-                ObservationResponse r = new ObservationResponse(s);
-                try {
-                    r.observation = get(s.getURI());
-                } catch (Exception ex) {
-                    r.error = new IllegalStateException(ex.getMessage());
-                }
+                ObservationResponse r = getAlt(s, depth);
                 ret.add(r);
             }
             return ret;
@@ -282,23 +320,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("getList: " + collection + " " + batchSize + " " + dt + "ms");
         }
     }
-
-    /**
-     * Get list of observations to non-standard depth. This method will get observations (depth=1), planes (depth=2), etc. Values from 1 to
-     * SQLGenerator.MAX_DEPTH (5) are valid.
-     *
-     * @param c
-     * @param minlastModified
-     * @param maxLastModified
-     * @param batchSize
-     * @param depth
-     * @return
-     */
-    @Override
-    public List<Observation> getList(Class<Observation> c, Date minlastModified, Date maxLastModified, Integer batchSize, int depth) {
-        return super.getList(c, minlastModified, maxLastModified, batchSize, depth);
-    }
-
+    
     /**
      * Get a stored observation by URI.
      *
@@ -331,7 +353,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         try {
             String sql;
             if (uri != null) {
-                sql = gen.getSelectSQL(uri, depth);
+                sql = gen.getSelectSQL(uri, depth, false);
             } else {
                 sql = gen.getSelectSQL(id, depth, false);
             }
@@ -490,7 +512,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     private void deleteImpl(UUID id, ObservationURI uri) {
         if (readOnly) {
-            throw new UnsupportedOperationException("put in readOnly mode");
+            throw new UnsupportedOperationException("delete in readOnly mode");
         }
         checkInit();
         // null check in public methods above
@@ -610,18 +632,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
 
         // new or changed
-        int nsc = entity.getStateCode();
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
         Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
-        if (s == null) {
+        if (s == null || s.metaChecksum == null) {
             delta = true;
-        } else if (s.metaChecksum != null) {
-            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         } else {
-            delta = (s.stateCode != nsc); // fallback for null checksum in database
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
@@ -666,18 +685,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
 
         // new or changed
-        int nsc = entity.getStateCode();
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
         Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
-        if (s == null) {
+        if (s == null || s.metaChecksum == null) {
             delta = true;
-        } else if (s.metaChecksum != null) {
-            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         } else {
-            delta = (s.stateCode != nsc); // fallback
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
@@ -724,18 +740,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
 
         // new or changed
-        int nsc = entity.getStateCode();
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
         Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
-        if (s == null) {
+        if (s == null || s.metaChecksum == null) {
             delta = true;
-        } else if (s.metaChecksum != null) {
-            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         } else {
-            delta = (s.stateCode != nsc); // fallback
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
@@ -791,18 +804,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
 
         // new or changed
-        int nsc = entity.getStateCode();
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
         Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
-        if (s == null) {
+        if (s == null || s.metaChecksum == null) {
             delta = true;
-        } else if (s.metaChecksum != null) {
-            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         } else {
-            delta = (s.stateCode != nsc); // fallback
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
@@ -829,18 +839,15 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         boolean updateMax = false;
 
         // new or changed
-        int nsc = entity.getStateCode();
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
         Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
-        if (s == null) {
+        if (s == null || s.metaChecksum == null) {
             delta = true;
-        } else if (s.metaChecksum != null) {
-            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         } else {
-            delta = (s.stateCode != nsc); // fallback
+            delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");

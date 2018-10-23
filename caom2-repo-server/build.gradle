@@ -15,23 +15,24 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.11'
+version = '2.3.13'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'net.sourceforge.javacsv:javacsv:2.+'
     compile 'javax.servlet:javax.servlet-api:3.1.+'
     
-    compile 'org.opencadc:cadc-util:[1.0.6,2.0)'
+    compile 'org.opencadc:cadc-util:[1.2.3,2.0)'
     compile 'org.opencadc:cadc-log:1.+'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
-    compile 'org.opencadc:caom2:[2.3.8,3.0)'
+    compile 'org.opencadc:caom2:[2.3.12,3.0)'
     compile 'org.opencadc:caom2-persist:[2.3.2,3.0)'
-    compile 'org.opencadc:caom2persistence:[2.3.13,3.0)'
+    compile 'org.opencadc:caom2persistence:[2.3.22,3.0)'
     compile 'org.opencadc:cadc-access-control:[1.1.4,)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-rest:[1.2.1,2.0)'
+    compile 'org.opencadc:cadc-uws-server:[1.1,)'
     
     compile 'org.opencadc:caom2-compute:[2.3.6,3.0)'
     compile 'org.opencadc:cadc-wcs:[2.0,3.0)'

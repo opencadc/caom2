@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,17 +67,9 @@
 
 package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.persistence.DatabaseTransactionManager;
-import ca.nrc.cadc.caom2.persistence.TransactionManager;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Utility class to setup the caom2 tables in the database. This currently works
@@ -85,14 +77,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author pdowler
  */
-public class InitDatabase {
+public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
 
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
-    // caom2persistence 2.3.12 modifies DeletedObservation table
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.3.15";
-    public static final String PREV_MODEL_VERSION = "2.3.12";
+    public static final String MODEL_VERSION = "2.4.0-alpha1";
+    public static final String PREV_MODEL_VERSION = "2.3.15";
 
     static String[] CREATE_SQL = new String[]{
         "caom2.ModelVersion.sql",
@@ -104,7 +95,6 @@ public class InitDatabase {
         "caom2.HarvestState.sql",
         "caom2.HarvestSkip.sql",
         "caom2.HarvestSkipURI.sql",
-        "caom2.access.sql",
         "caom2.deleted.sql",
         "caom2.extra_indices.sql",
         "caom2.ObsCore.sql",
@@ -114,149 +104,22 @@ public class InitDatabase {
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.3.15.sql",
-        "caom2.ObsCore.sql",
-        "caom2.ObsCore-x.sql",
-        "caom2.permissions.sql"
+        "caom2.upgrade-2.4.0-alpha1.sql"
     };
 
-    private final DataSource dataSource;
-    private final String database;
-    private final String schema;
-
     public InitDatabase(DataSource dataSource, String database, String schema) {
-        this.dataSource = dataSource;
-        this.database = database;
-        this.schema = schema;
-    }
-
-    /**
-     * Create or upgrade the configured database with CAOM tables and indices.
-     *
-     * @return true if tables were created/upgraded; false for no-op
-     */
-    public boolean doInit() {
-        log.debug("doInit: " + MODEL_NAME + " " + MODEL_VERSION);
-        long t = System.currentTimeMillis();
-        String prevVersion = null;
-
-        TransactionManager txn = new DatabaseTransactionManager(dataSource);
-        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-
-        try {
-            // get current ModelVersion
-            ModelVersionDAO vdao = new ModelVersionDAO(dataSource, database, schema);
-            ModelVersion cur = vdao.get(MODEL_NAME);
-            log.debug("found: " + cur);
-            prevVersion = cur.version;
-
-            // select SQL to execute
-            String[] ddls = CREATE_SQL; // default
-            boolean upgrade = false;
-            if (cur.version != null && MODEL_VERSION.equals(cur.version)) {
-                log.debug("doInit: already up to date - nothing to do");
-                return false;
-            }
-            if (cur.version != null && cur.version.equals(PREV_MODEL_VERSION)) {
-                ddls = UPGRADE_SQL;
-                upgrade = true;
-            } else if (cur.version != null) {
-                throw new UnsupportedOperationException("doInit: version upgrade not supported: " + cur.version + " -> " + MODEL_VERSION);
-            }
-
-            // start transaction
-            txn.startTransaction();
-
-            // execute SQL
-            for (String fname : ddls) {
-                log.info("process file: " + fname);
-                List<String> statements = parseDDL(fname, schema);
-                for (String sql : statements) {
-                    if (upgrade) {
-                        log.info("execute:\n" + sql);
-                    } else {
-                        log.debug("execute:\n" + sql);
-                    }
-                    jdbc.execute(sql);
-                }
-            }
-            // update ModelVersion
-            cur.version = MODEL_VERSION;
-            vdao.put(cur);
-
-            // commit transaction
-            txn.commitTransaction();
-            return true;
-        } catch (Exception ex) {
-            log.debug("epic fail", ex);
-
-            if (txn.isOpen()) {
-                try {
-                    txn.rollbackTransaction();
-                } catch (Exception oops) {
-                    log.error("failed to rollback transaction", oops);
-                }
-            }
-            throw new RuntimeException("failed to init database", ex);
-        } finally {
-            // check for open transaction
-            if (txn.isOpen()) {
-                log.error("BUG: open transaction in finally");
-                try {
-                    txn.rollbackTransaction();
-                } catch (Exception ex) {
-                    log.error("failed to rollback transaction in finally", ex);
-                }
-            }
-
-            long dt = System.currentTimeMillis() - t;
-            log.debug("doInit: " + MODEL_NAME + " " + prevVersion + " to " + MODEL_VERSION + " " + dt + "ms");
+        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION, PREV_MODEL_VERSION);
+        for (String s : CREATE_SQL) {
+            createSQL.add(s);
+        }
+        for (String s : UPGRADE_SQL) {
+            upgradeSQL.add(s);
         }
     }
-    
-    static List<String> parseDDL(String fname, String schema) throws IOException {
-        List<String> ret = new ArrayList<>();
 
-        // find file
-        URL url = InitDatabase.class.getClassLoader().getResource("postgresql/" + fname);
-        log.debug("found " + fname + ": " + url);
-
-        // read
-        InputStreamReader isr = new InputStreamReader(url.openStream());
-        LineNumberReader r = new LineNumberReader(isr);
-        try {
-            StringBuilder sb = new StringBuilder();
-            String line = r.readLine();
-            boolean eos = false;
-            while (line != null) {
-                line = line.trim();
-                if (line.startsWith("--")) {
-                    line = "";
-                }
-                if (!line.isEmpty()) {
-                    if (line.endsWith(";")) {
-                        eos = true;
-                        line = line.substring(0, line.length() - 1);
-                    }
-                    sb.append(line).append(" ");
-                    if (eos) {
-                        String st = sb.toString();
-                        
-                        st = st.replaceAll("<schema>", schema);
-                        
-                        log.debug("statement: " + st);
-                        ret.add(st);
-                        sb = new StringBuilder();
-                        eos = false;
-                    }
-                }
-                line = r.readLine();
-            }
-        } finally {
-            r.close();
-        }
-
-        return ret;
+    @Override
+    protected URL findSQL(String fname) {
+        // SQL files are stored inside the jar file
+        return InitDatabase.class.getClassLoader().getResource("postgresql/" + fname);
     }
-
 }

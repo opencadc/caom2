@@ -75,16 +75,14 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.persistence.TransactionManager;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
-
+import ca.nrc.cadc.db.TransactionManager;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 /**

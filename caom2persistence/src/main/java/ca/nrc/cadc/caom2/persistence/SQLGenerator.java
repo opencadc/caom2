@@ -109,7 +109,6 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
@@ -183,15 +182,12 @@ public class SQLGenerator {
     protected static final Class[] ENTITY_CLASSES =
     {
         Observation.class, Plane.class, Artifact.class, Part.class, Chunk.class,
-        //ObservationMetaReadAccess.class, PlaneMetaReadAccess.class, PlaneDataReadAccess.class,
-        DeletedObservation.class,
-        //DeletedObservationMetaReadAccess.class, DeletedPlaneMetaReadAccess.class, DeletedPlaneDataReadAccess.class
+        DeletedObservation.class
     };
     
     protected static final Class[] SKELETON_CLASSES =
     {
-        ObservationSkeleton.class, PlaneSkeleton.class, ArtifactSkeleton.class, PartSkeleton.class, ChunkSkeleton.class,
-        //ObservationMetaReadAccessSkeleton.class, PlaneMetaReadAccessSkeleton.class, PlaneDataReadAccessSkeleton.class
+        ObservationSkeleton.class, PlaneSkeleton.class, ArtifactSkeleton.class, PartSkeleton.class, ChunkSkeleton.class
     };
     
     protected static final Class[] STATE_CLASSES =
@@ -339,10 +335,10 @@ public class SQLGenerator {
             "environment_tau", "environment_wavelengthTau", "environment_ambientTemp",
             "environment_photometric",
             "members",
-            //"metaReadAccess", 
-            "metaReadAccessGroups",
+            "metaReadGroups", 
+            "metaReadAccessGroups", // optimisation from previous version (group names only)
             "lastModified", "maxLastModified",
-            "stateCode", "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum",
             "obsID"
         };
         if (persistOptimisations) {
@@ -369,13 +365,13 @@ public class SQLGenerator {
             "provenance_inputs", "provenance_keywords",
             "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
             "metrics_fluxDensityLimit", "metrics_magLimit",
-            //"metaReadAccess", 
-            "metaReadAccessGroups",
-            //"dataReadAccess", 
-            "dataReadAccessGroups",
+            "metaReadGroups", 
+            "metaReadAccessGroups", // optimisation from previous version (group names only)
+            "dataReadGroups", 
+            "dataReadAccessGroups", // optimisation from previous version (group names only)
             "quality_flag",
             "lastModified", "maxLastModified",
-            "stateCode", "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum",
             "planeID"
         };
         if (persistOptimisations) {
@@ -426,7 +422,7 @@ public class SQLGenerator {
             "uri", "productType", "releaseType",
             "contentType", "contentLength", "contentChecksum",
             "lastModified", "maxLastModified",
-            "stateCode", "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum",
             "artifactID"
         };
         if (persistOptimisations) {
@@ -443,7 +439,7 @@ public class SQLGenerator {
             "artifactID", "planeID", "obsID",
             "name", "productType",
             "lastModified", "maxLastModified",
-            "stateCode", "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum",
             "partID"
         };
         if (persistOptimisations) {
@@ -517,7 +513,7 @@ public class SQLGenerator {
             "observable_independent_axis_cunit",
             "observable_independent_bin",
             "lastModified", "maxLastModified",
-            "stateCode", "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum",
             "chunkID"
         };
         if (persistOptimisations) {
@@ -563,15 +559,15 @@ public class SQLGenerator {
     }
 
     private String[] addExtraColumns(String[] origCols, String[] extraCols) {
-        // insert the extra columns before the CaomEntity columns and PK (last 6)
+        // insert the extra columns before the CaomEntity columns and PK (last 5)
         int n = origCols.length + extraCols.length;
         String[] allCols = new String[n];
 
-        System.arraycopy(origCols, 0, allCols, 0, origCols.length - 6);
-        int num = origCols.length - 6;
+        System.arraycopy(origCols, 0, allCols, 0, origCols.length - 5);
+        int num = origCols.length - 5;
         System.arraycopy(extraCols, 0, allCols, num, extraCols.length);
         num += extraCols.length;
-        System.arraycopy(origCols, origCols.length - 6, allCols, num, 6);
+        System.arraycopy(origCols, origCols.length - 5, allCols, num, 5);
         return allCols;
     }
 
@@ -601,10 +597,6 @@ public class SQLGenerator {
     
     public UUID generateID(UUID id) {
         return id;
-    }
-
-    public String getSelectSQL(ObservationURI uri, int depth) {
-        return getSelectSQL(uri, depth, false);
     }
 
     public String getSelectSQL(ObservationURI uri, int depth, boolean skeleton) {
@@ -721,25 +713,6 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    public String getSelectSQL(Class<? extends ReadAccess> clz, UUID assetID, URI groupID) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT ");
-        String[] cols = columnMap.get(clz);
-        for (int c = 0; c < cols.length; c++) {
-            if (c > 0) {
-                sb.append(",");
-            }
-            sb.append(cols[c]);
-        }
-        sb.append(" FROM ");
-        sb.append(getTable(clz));
-        sb.append(" WHERE assetID = ");
-        sb.append(literal(assetID));
-        sb.append(" AND groupID = ");
-        sb.append(literal(groupID));
-        return sb.toString();
-    }
-
     public String getSelectSQL(Class clz, UUID id) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -816,7 +789,7 @@ public class SQLGenerator {
     }
 
     // select batchSize Observation.maxLastModified, starting at minLastModified and in maxLastModified order
-    
+    /*
     public String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
         if (!Observation.class.equals(c)) {
             throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
@@ -859,7 +832,8 @@ public class SQLGenerator {
         }
         return sb.toString();
     }
-
+    */
+    
     protected String getTopConstraint(Integer batchSize) {
         return null;
     }
@@ -898,7 +872,6 @@ public class SQLGenerator {
 
     public String getForeignKeyColumn(Class c) {
         if (Observation.class.isAssignableFrom(c)
-                || ReadAccess.class.isAssignableFrom(c)
                 || DeletedEntity.class.isAssignableFrom(c)) {
             throw new IllegalArgumentException(c.getSimpleName() + " does not have a foreign key");
         }
@@ -1366,11 +1339,11 @@ public class SQLGenerator {
                 safeSetString(sb, ps, col++, null);
             }
 
-            if (obs.getMetaReadAccess().isEmpty()) {
+            if (obs.getMetaReadGroups().isEmpty()) {
                 //safeSetString(sb, ps, col++, null);
                 safeSetVector(sb, ps, col++, null);
             } else {
-                throw new UnsupportedOperationException("persist: Observation.metaReadAccess");
+                throw new UnsupportedOperationException("persist: Observation.metaReadGroups");
             }
             
             if (persistOptimisations) {
@@ -1379,7 +1352,6 @@ public class SQLGenerator {
 
             safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, obs.getMaxLastModified(), utcCalendar);
-            safeSetInteger(sb, ps, col++, obs.getStateCode());
             safeSetURI(sb, ps, col++, obs.getMetaChecksum());
             safeSetURI(sb, ps, col++, obs.getAccMetaChecksum());
 
@@ -1572,17 +1544,17 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
             }
 
-            if (plane.getMetaReadAccess().isEmpty()) {
+            if (plane.getMetaReadGroups().isEmpty()) {
                 //safeSetString(sb, ps, col++, null);
                 safeSetVector(sb, ps, col++, null);
             } else {
-                throw new UnsupportedOperationException("persist: Plane.metaReadAccess");
+                throw new UnsupportedOperationException("persist: Plane.metaReadGroups");
             }
-            if (plane.getDataReadAccess().isEmpty()) {
+            if (plane.getDataReadGroups().isEmpty()) {
                 //safeSetString(sb, ps, col++, null);
                 safeSetVector(sb, ps, col++, null);
             } else {
-                throw new UnsupportedOperationException("persist: Plane.dataReadAccess");
+                throw new UnsupportedOperationException("persist: Plane.dataReadGroups");
             }
             
             if (plane.quality != null) {
@@ -1721,7 +1693,6 @@ public class SQLGenerator {
 
             safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
-            safeSetInteger(sb, ps, col++, plane.getStateCode());
             safeSetURI(sb, ps, col++, plane.getMetaChecksum());
             safeSetURI(sb, ps, col++, plane.getAccMetaChecksum());
 
@@ -1847,7 +1818,6 @@ public class SQLGenerator {
 
             safeSetDate(sb, ps, col++, artifact.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), utcCalendar);
-            safeSetInteger(sb, ps, col++, artifact.getStateCode());
             safeSetURI(sb, ps, col++, artifact.getMetaChecksum());
             safeSetURI(sb, ps, col++, artifact.getAccMetaChecksum());
 
@@ -1937,8 +1907,6 @@ public class SQLGenerator {
 
             safeSetDate(sb, ps, col++, part.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), utcCalendar);
-            safeSetInteger(sb, ps, col++, part.getStateCode());
-
             safeSetURI(sb, ps, col++, part.getMetaChecksum());
             safeSetURI(sb, ps, col++, part.getAccMetaChecksum());
 
@@ -2259,7 +2227,6 @@ public class SQLGenerator {
 
             safeSetDate(sb, ps, col++, chunk.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), utcCalendar);
-            safeSetInteger(sb, ps, col++, chunk.getStateCode());
             safeSetURI(sb, ps, col++, chunk.getMetaChecksum());
             safeSetURI(sb, ps, col++, chunk.getAccMetaChecksum());
 
@@ -2985,10 +2952,6 @@ public class SQLGenerator {
     
     public RowMapper getObservationStateMapper() {
         return new ObservationStateMapper();
-    }
-
-    public RowMapper getReadAccessMapper(Class<? extends ReadAccess> c) {
-        return new ReadAccessMapper(c);
     }
 
     public ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> c) {
@@ -3949,46 +3912,6 @@ public class SQLGenerator {
                 return ret;
             } catch (Exception bug) {
                 throw new RuntimeException("BUG: failed to create a " + entityClass.getName(), bug);
-            }
-        }
-    }
-
-    class ReadAccessMapper implements RowMapper {
-
-        Class<? extends ReadAccess> entityClass;
-
-        ReadAccessMapper(Class<? extends ReadAccess> entityClass) {
-            this.entityClass = entityClass;
-        }
-
-        public ReadAccess mapRow(ResultSet rs, int row) throws SQLException {
-            try {
-                int col = 1;
-                UUID assetID = Util.getUUID(rs, col++);
-                URI groupID = Util.getURI(rs, col++);
-
-                Constructor<? extends ReadAccess> ctor = entityClass.getConstructor(UUID.class, URI.class);
-                ReadAccess ret = ctor.newInstance(assetID, groupID);
-                log.debug("found: " + ret);
-
-                Date lastModified = Util.getDate(rs, col++, utcCalendar);
-                log.debug("found: ra.lastModified = " + lastModified);
-                Integer stateCode = Util.getInteger(rs, col++);
-                log.debug("found: ra.stateCode = " + stateCode);
-
-                URI metaChecksum = Util.getURI(rs, col++);
-                log.debug("found: ra.metaChecksum = " + metaChecksum);
-
-                UUID id = Util.getUUID(rs, col++);
-                log.debug("found: ra.id = " + id);
-
-                Util.assignID(ret, id);
-                Util.assignLastModified(ret, lastModified, "lastModified");
-                Util.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
-
-                return ret;
-            } catch (Exception ex) {
-                throw new RuntimeException("BUG: failed to create a " + entityClass.getName(), ex);
             }
         }
     }
