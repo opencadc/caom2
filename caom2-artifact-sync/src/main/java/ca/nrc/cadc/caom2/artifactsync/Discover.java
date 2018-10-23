@@ -117,7 +117,6 @@ public class Discover extends Caom2ArtifactSync {
             }
             
             if (!isDone) {
-                this.validateDbParamFromDatabase(am);
                 this.loop = am.isSet("continue");
                 if (!isDone) {
                     if (this.mode.equals("download")) {
