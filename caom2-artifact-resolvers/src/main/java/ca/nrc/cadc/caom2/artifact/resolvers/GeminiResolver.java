@@ -47,6 +47,7 @@ public class GeminiResolver implements StorageResolver {
     public static final String PREVIEW_URI = "preview";
     private static final Logger log = Logger.getLogger(GeminiResolver.class);
     private static final String BASE_URL = "https://archive.gemini.edu";
+    private static final String JPEG_SUFFIX = ".jpg";
 
     public GeminiResolver() {
     }
@@ -84,9 +85,8 @@ public class GeminiResolver implements StorageResolver {
 
         String fileName = path[1];
         String fileType = FILE_URI;
-        String[] fileNameParts = fileName.split("\\.");
-        if (fileName.endsWith(".jpg")) {
-            fileName = fileNameParts[0] + ".fits"; 
+        if (fileName.endsWith(JPEG_SUFFIX)) {
+            fileName = fileName.substring(0, fileName.length() - JPEG_SUFFIX.length()) + ".fits"; 
             fileType = PREVIEW_URI;
         }
 
