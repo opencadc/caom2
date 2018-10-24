@@ -121,15 +121,21 @@ public class CaomRepoConfig {
     }
     
     public Item getConfig(String collection) {
+        return getConfig(collection, true);
+    }
+    
+    public Item getConfig(String collection, boolean doInit) {
         Iterator<Item> i = config.iterator();
         while (i.hasNext()) {
             Item item = i.next();
             if (item.collection.equals(collection)) {
-                try {
-                    initDB(item);
-                } catch (Exception ex) {
-                    log.error("CAOM database INIT FAILED", ex);
-                    return null;
+                if (doInit) {
+                    try {
+                        initDB(item);
+                    } catch (Exception ex) {
+                        log.error("CAOM database INIT FAILED", ex);
+                        return null;
+                    }
                 }
                 return item;
             }
@@ -141,6 +147,11 @@ public class CaomRepoConfig {
         return config.isEmpty();
     }
 
+    /**
+     * Get a config item iterator that initializes the database before returning items.
+     * 
+     * @return item iterator
+     */
     public Iterator<Item> iterator() {
         return new Initerator(config.iterator());
     }
