@@ -176,9 +176,9 @@ public class ReadAccessDAO extends AbstractCaomEntityDAO<ReadAccess> {
                 if (obs.isEmpty()) {
                     return null;
                 }
-                if (obs.size() > 1) {
-                    throw new RuntimeException("BUG: get ArtifactAccess " + artifactURI + " query returned " + obs.size() + " rows");
-                }
+                //if (obs.size() > 1) {
+                //    throw new RuntimeException("BUG: get ArtifactAccess " + artifactURI + " query returned " + obs.size() + " rows");
+                //}
                 Object o = obs.get(0);
                 if (o instanceof RawArtifactAccess) {
                     RawArtifactAccess ret = (RawArtifactAccess) o;
