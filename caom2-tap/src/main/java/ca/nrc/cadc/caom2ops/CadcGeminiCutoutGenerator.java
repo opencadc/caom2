@@ -99,7 +99,7 @@ public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements Cut
         try {
             return new URL(sb.toString());
         } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+            throw new RuntimeException("BUG: failed to generate cutout URL.", ex);
         }
     }
 }
