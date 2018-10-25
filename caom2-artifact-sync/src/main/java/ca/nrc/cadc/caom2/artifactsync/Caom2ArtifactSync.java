@@ -73,6 +73,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
@@ -110,7 +111,8 @@ public abstract class Caom2ArtifactSync {
     protected String mode;
     protected String errorMsg;
     protected Subject subject;
-    protected String[] dbInfo;
+    protected HarvestResource harvestResource;
+    protected String collection;
     protected Map<String, Object> daoConfig;
 
     // when isDone is true, do not execute the command any further
@@ -144,6 +146,32 @@ public abstract class Caom2ArtifactSync {
                 printErrorUsage(errorMsg);
             } else if (StringUtil.hasText(exceptionMsg)) {
                 this.logException(exceptionMsg, asException);
+            } else {
+                if (!am.isSet("collection")) {
+                    String msg = "Missing required parameter 'collection'";
+                    this.printErrorUsage(msg);
+                } else {
+                    this.collection = parseCollection(am);
+                    if (!isDone) {
+                        String database = null;
+                        if (StringUtil.hasText(am.getValue("source"))) {
+                            database = am.getValue("source");
+                        } else if (StringUtil.hasText(am.getValue("database"))) {
+                            database = am.getValue("database");
+                        }
+                        
+                        if (sourceHasDbParam(database) || hasDbParam(database)) {
+                            String[] dbInfo = database.split("[.]");
+                            if (dbInfo.length == 3) {
+                                parseDaoConfig(dbInfo);
+                                this.harvestResource = new HarvestResource(dbInfo[0], dbInfo[1], dbInfo[2], collection);
+                            }  else {
+                                String msg = "database must be <server.database.schema>.";
+                                this.printErrorUsage(msg);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -190,32 +218,50 @@ public abstract class Caom2ArtifactSync {
         this.setExitValue(-1);
         this.isDone = true;
     }
-
-    protected void parseDbParam(ArgumentMap am, String source) {
-        String database = am.getValue(source);
-        if (!StringUtil.hasText(database)) {
-            String msg = "Must specify database." ;
-            this.printErrorUsage(msg);
-        } else if (database.equalsIgnoreCase("true")) {
-            String msg = "Must specify source with database=";
-            this.printErrorUsage(msg);
-        } else {
-            // database=<server.database.schema>
-            String [] tempDbInfo = database.split("[.]");
-            if (tempDbInfo.length == 3) {
-                this.dbInfo = tempDbInfo;
-                this.daoConfig = new HashMap<>(2);
-                this.daoConfig.put("server", dbInfo[0]);
-                this.daoConfig.put("database", dbInfo[1]);
-                this.daoConfig.put("schema", dbInfo[2]);
-                this.daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-            } else {
-                String msg = "database must be <server.database.schema>.";
-                this.printErrorUsage(msg);
-            }
-        }
+    
+    private void parseDaoConfig(String[] dbInfo) {
+        this.daoConfig = new HashMap<>(2);
+        this.daoConfig.put("server", dbInfo[0]);
+        this.daoConfig.put("database", dbInfo[1]);
+        this.daoConfig.put("schema", dbInfo[2]);
+        this.daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
     }
     
+    private boolean hasDbParam(String database) {
+        boolean hasDbParam = false;
+        if (!this.mode.equals("diff")) {
+            if (!StringUtil.hasText(database)) {
+                String msg = "Must specify database." ;
+                this.printErrorUsage(msg);
+            } else if (database.equalsIgnoreCase("true")) {
+                String msg = "Must specify source with database=";
+                this.printErrorUsage(msg);
+            } else {
+                hasDbParam = true;
+            }
+        }
+        
+        return hasDbParam;
+    }
+    
+    private boolean sourceHasDbParam(String source) {
+        boolean sourceHasDbParam = false;
+        if (this.mode.equals("diff")) {
+            if (!StringUtil.hasText(source)) {
+                String msg = "Must specify source." ;
+                this.printErrorUsage(msg);
+            } else if (source.equalsIgnoreCase("true")) {
+                String msg = "Must specify source with source=";
+                this.printErrorUsage(msg);
+            } else if (!source.contains("ivo:") && !source.contains("http:")) {
+                // source points to a database
+                sourceHasDbParam = true;;
+            }
+        }
+        
+        return sourceHasDbParam;
+    }
+
     protected String parseCollection(ArgumentMap am) {
         String collection = am.getValue("collection");
         if (!StringUtil.hasText(collection)) {

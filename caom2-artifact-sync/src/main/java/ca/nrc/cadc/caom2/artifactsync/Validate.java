@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.StringUtil;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -92,7 +91,6 @@ public class Validate extends Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Validate.class);
     protected ArtifactValidator validator = null;
-    protected String collection = null;
 
     public Validate(ArgumentMap am) {
         super(am);
@@ -103,34 +101,26 @@ public class Validate extends Caom2ArtifactSync {
             if (this.subject == null) {
                 String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
                 this.printErrorUsage(msg);
-            } else if (!am.isSet("collection")) {
-                String msg = "Missing required parameter 'collection'";
-                this.printErrorUsage(msg);
             } else {
-                this.collection = this.parseCollection(am);
-                
-                if (!this.isDone) {
-                    if (this.mode.equals("diff")) {
-                        // diff mode
-                        if (!am.isSet("source")) {
-                            String msg = "Missing required parameter 'source'";
-                            this.printErrorUsage(msg);
-                        } else {
-                            this.parseSourceParam(am);
-                        }
+                if (this.mode.equals("diff")) {
+                    // diff mode
+                    if (!am.isSet("source")) {
+                        String msg = "Missing required parameter 'source'";
+                        this.printErrorUsage(msg);
                     } else {
-                        // validate mode
-                        if (!am.isSet("database")) {
-                            String msg = "Missing required parameter 'database'";
-                            this.printErrorUsage(msg);
-                        } else {
-                            this.parseDbParam(am, "database");
-                            ObservationDAO observationDAO = new ObservationDAO();
-                            observationDAO.setConfig(this.daoConfig);
-        
-                            this.validator = new ArtifactValidator(observationDAO.getDataSource(),
-                                    this.dbInfo, observationDAO, this.collection, false, this.artifactStore);
-                        }
+                        this.validator = getValidator(am.getValue("source"));
+                    }
+                } else {
+                    // validate mode
+                    if (!am.isSet("database")) {
+                        String msg = "Missing required parameter 'database'";
+                        this.printErrorUsage(msg);
+                    } else {
+                        ObservationDAO observationDAO = new ObservationDAO();
+                        observationDAO.setConfig(this.daoConfig);
+    
+                        this.validator = new ArtifactValidator(observationDAO.getDataSource(),
+                                this.harvestResource, observationDAO, false, this.artifactStore);
                     }
                 }
             }
@@ -173,36 +163,31 @@ public class Validate extends Caom2ArtifactSync {
         this.setIsDone(true);
     }
     
-    private void parseSourceParam(ArgumentMap am) {
-        String source = am.getValue("source");
-        if (!StringUtil.hasText(source)) {
-            String msg = "Must specify source." ;
-            this.printErrorUsage(msg);
-        } else if (source.equalsIgnoreCase("true")) {
-            String msg = "Must specify source with source=";
-            this.printErrorUsage(msg);
-        } else if (source.contains("ivo:")) {
+    private ArtifactValidator getValidator(String source) {
+        ArtifactValidator validator = null;
+        if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            this.validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore);
+            validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore);
         } else if (source.contains("http:")) {
             // source points to a TAP Service URL
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);
-                this.validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore);
+                validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore);
             } catch (MalformedURLException e) {
                 String msg = "Must specify source." ;
                 this.logException(msg, e);
             }
         } else {
             // source points to a database
-            this.parseDbParam(am, "source");
             ObservationDAO observationDAO = new ObservationDAO();
             observationDAO.setConfig(this.daoConfig);
             
-            this.validator = new ArtifactValidator(observationDAO.getDataSource(),
-                    this.dbInfo, observationDAO, this.collection, true, this.artifactStore);
+            validator = new ArtifactValidator(observationDAO.getDataSource(),
+                this.harvestResource, observationDAO, true, this.artifactStore);
         }
+        
+        return validator;
     }
 }

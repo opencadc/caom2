@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
@@ -113,19 +114,19 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     int processedCount = 0;
     Date start = new Date();
 
-    public ArtifactHarvester(ObservationDAO observationDAO, String[] dbInfo,
-                             ArtifactStore artifactStore, String collection, 
-                             int batchSize) {
+    public ArtifactHarvester(ObservationDAO observationDAO, HarvestResource harvestResource,
+                             ArtifactStore artifactStore, int batchSize) {
 
         this.observationDAO = observationDAO;
         this.artifactStore = artifactStore;
-        this.collection = collection;
         this.batchSize = batchSize;
+        this.source = harvestResource.getIdentifier();
 
-        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
-
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.collection = harvestResource.getCollection();
+        String database = harvestResource.getDatabase();
+        String schema = harvestResource.getSchema();
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), database, schema);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(observationDAO.getDataSource(), database, schema);
 
         this.startDate = null;
         
@@ -149,7 +150,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             // the sequence may be volatile
             long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
             Date stopDate = new Date(fiveMinAgo);
-            log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
+            if (startDate == null) {
+                log.info("harvest window: null " + df.format(stopDate) + " [" + batchSize + "]");
+            } else {
+                log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
+            }
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
                 stopDate, batchSize + 1);
             
@@ -159,7 +164,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                 ListIterator<ObservationState> iter = observationStates.listIterator();
                 ObservationState curBatchLeader = iter.next();
                 if (curBatchLeader != null) {
-                    log.debug("harvesState: " + format(state.curID) + ", " + df.format(state.curLastModified));
+                    if (state.curLastModified != null) {
+                        log.debug("harvesState: " + format(state.curID) + ", " + df.format(state.curLastModified));
+                    }
                     if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
                         Observation observation = observationDAO.get(curBatchLeader.getURI());
                         log.debug("current batch: " + format(observation.getID()) + ", " + df.format(curBatchLeader.getMaxLastModified()));
