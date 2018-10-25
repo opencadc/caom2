@@ -152,8 +152,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             Date stopDate = new Date(fiveMinAgo);
             if (startDate == null) {
                 log.info("harvest window: null " + df.format(stopDate) + " [" + batchSize + "]");
-            }
-            else {
+            } else {
                 log.info("harvest window: " + df.format(startDate) + " " + df.format(stopDate) + " [" + batchSize + "]");
             }
             List<ObservationState> observationStates = observationDAO.getObservationList(collection, startDate,
