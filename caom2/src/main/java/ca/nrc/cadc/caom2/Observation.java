@@ -104,7 +104,7 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
 
     // mutable contents
     private final Set<Plane> planes = new TreeSet<Plane>();
-    private final Set<URI> metaReadAccessGroups = new TreeSet<URI>();
+    private final Set<URI> metaReadGroups = new TreeSet<URI>();
 
     protected Observation(String collection, String observationID,
             Algorithm algorithm) {
@@ -150,8 +150,8 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
         return planes;
     }
 
-    public Set<URI> getMetaReadAccessGroups() {
-        return metaReadAccessGroups;
+    public Set<URI> getMetaReadGroups() {
+        return metaReadGroups;
     }
 
     @Override
