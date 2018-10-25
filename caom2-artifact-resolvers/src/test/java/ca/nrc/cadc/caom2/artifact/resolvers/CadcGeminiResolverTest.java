@@ -62,13 +62,13 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
@@ -78,58 +78,42 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author hjeeves
+ *
+ * @author yeunga
  */
-public class GeminiResolverTest {
-    private static final Logger log = Logger.getLogger(GeminiResolverTest.class);
+public class CadcGeminiResolverTest {
+    private static final Logger log = Logger.getLogger(CadcGeminiResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE = "flub.fits";
-    String VALID_FILE2 = "blub.fits";
-    String VALID_PREVIEW = "flub.jpg";
-    String PROTOCOL_STR = "https";
-    String BASE_URL = "archive.gemini.edu";
+    private static final String FILE_URI = "gemini:GEM/bar.fits";
+    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
-    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
-    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy.fits";
+    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
 
-    GeminiResolver geminiResolver = new GeminiResolver();
+    public CadcGeminiResolverTest() {
 
-    public GeminiResolverTest() {
     }
 
     @Test
-    public void testGetSchema() {
-        Assert.assertTrue(GeminiResolver.SCHEME.equals(geminiResolver.getScheme()));
+    public void testGetScheme() {
+        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
     }
 
+    @Test 
+    public void testTraceable() {
+        Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
+    }
+    
     @Test
-    public void testValidURI() {
+    public void testToURL() {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_FILE;
-            URI uri = new URI(uriStr);
-            URL url = geminiResolver.toURL(uri);
-
-            String expectedPath = GeminiResolver.FILE_URI + "/" + VALID_FILE;
-            log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE);
-            Assert.assertEquals("/" + expectedPath, url.getPath());
-            Assert.assertEquals(BASE_URL, url.getHost());
-
-
-            uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_PREVIEW;
-            uri = new URI(uriStr);
-            url = geminiResolver.toURL(uri);
-
-            expectedPath = GeminiResolver.PREVIEW_URI + "/" + VALID_FILE;
-            log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + "://" + BASE_URL + "/preview/" + VALID_FILE);
-            Assert.assertEquals("/" + expectedPath, url.getPath());
-            Assert.assertEquals(BASE_URL, url.getHost());
-
+            URI uri = new URI(FILE_URI);
+            URL url = cadcGeminiResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -137,45 +121,17 @@ public class GeminiResolverTest {
     }
 
     @Test
-    public void testInvalidURIBadScheme() {
+    public void testInvalidSchemeURI() {
         try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = geminiResolver.toURL(uri);
+            URI uri = new URI(INVALID_SCHEME_URI1);
+            URL url = cadcGeminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = geminiResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidUriType() {
-        try {
-            String uriStr = GeminiResolver.SCHEME + ":badArchive/" + VALID_FILE;
-            URI uri = new URI(uriStr);
-            URL url = geminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
 }

@@ -92,8 +92,8 @@ public class GeminiResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE_URI = "gemini:file/N20101231S0343.fits";
-    String VALID_PREVIEW_URI = "gemini:preview/N20101231S0343.fits";
+    String VALID_FILE_URI = "gemini:GEM/N20101231S0343.fits";
+    String VALID_PREVIEW_URI = "gemini:GEM/N20101231S0343.jpg";
 
     GeminiResolver resolver = new GeminiResolver();
 
