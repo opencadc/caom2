@@ -42,11 +42,12 @@ import org.apache.log4j.Logger;
  */
 public class GeminiResolver implements StorageResolver {
     public static final String SCHEME = "gemini";
+    public static final String ARCHIVE = "GEM";
     public static final String FILE_URI = "file";
     public static final String PREVIEW_URI = "preview";
     private static final Logger log = Logger.getLogger(GeminiResolver.class);
     private static final String BASE_URL = "https://archive.gemini.edu";
-    private static final String CANNOT_GENERATE_URL = "Can't generate URL from URI.";
+    private static final String JPEG_SUFFIX = ".jpg";
 
     public GeminiResolver() {
     }
@@ -77,16 +78,21 @@ public class GeminiResolver implements StorageResolver {
             throw new IllegalArgumentException("Malformed URI. Expected 2 path components, found " + path.length);
         }
 
-        String requestType = path[0];
-        if (!(requestType.equals(FILE_URI) || requestType.equals(PREVIEW_URI))) {
-            throw new IllegalArgumentException("Invalid URI. Expected 'file' or 'preview' and got " + requestType);
+        String archive = path[0];
+        if (!(archive.equals(ARCHIVE))) {
+            throw new IllegalArgumentException("Invalid URI. Expected archive: " + ARCHIVE + ", actual archive: " + archive);
         }
 
         String fileName = path[1];
+        String fileType = FILE_URI;
+        if (fileName.endsWith(JPEG_SUFFIX)) {
+            fileName = fileName.substring(0, fileName.length() - JPEG_SUFFIX.length()) + ".fits"; 
+            fileType = PREVIEW_URI;
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("/");
-        sb.append(requestType);
+        sb.append(fileType);
         sb.append("/");
         sb.append(fileName);
 

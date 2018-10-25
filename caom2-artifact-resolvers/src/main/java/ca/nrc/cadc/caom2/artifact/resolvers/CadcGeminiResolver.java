@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,120 +62,46 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
 *
 ************************************************************************
 */
 
+
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
+import ca.nrc.cadc.net.StorageResolver;
+import ca.nrc.cadc.net.Traceable;
 import java.net.URI;
 import java.net.URL;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- * @author hjeeves
+ * StorageResolver implementation for the GEMINI archive.
+ * This class can convert an MAST URI into a URL . This is an alternate version that uses the RegistryClient to find the data web service base URL.
+ *
+ * @author yeunga
  */
-public class GeminiResolverTest {
-    private static final Logger log = Logger.getLogger(GeminiResolverTest.class);
+public class CadcGeminiResolver implements StorageResolver, Traceable {
+    public static final String SCHEME = "gemini";
+    private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
+    @Override
+    public URL toURL(URI uri) {
+        ResolverUtil.validate(uri, SCHEME);
 
-    String VALID_FILE = "flub.fits";
-    String VALID_FILE2 = "blub.fits";
-    String VALID_PREVIEW = "flub.jpg";
-    String PROTOCOL_STR = "https";
-    String BASE_URL = "archive.gemini.edu";
-
-    // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
-    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy.fits";
-
-    GeminiResolver geminiResolver = new GeminiResolver();
-
-    public GeminiResolverTest() {
-    }
-
-    @Test
-    public void testGetSchema() {
-        Assert.assertTrue(GeminiResolver.SCHEME.equals(geminiResolver.getScheme()));
-    }
-
-    @Test
-    public void testValidURI() {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_FILE;
-            URI uri = new URI(uriStr);
-            URL url = geminiResolver.toURL(uri);
-
-            String expectedPath = GeminiResolver.FILE_URI + "/" + VALID_FILE;
-            log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(),PROTOCOL_STR + "://" + BASE_URL + "/file/" + VALID_FILE);
-            Assert.assertEquals("/" + expectedPath, url.getPath());
-            Assert.assertEquals(BASE_URL, url.getHost());
-
-
-            uriStr = GeminiResolver.SCHEME + ":" + GeminiResolver.ARCHIVE + "/" + VALID_PREVIEW;
-            uri = new URI(uriStr);
-            url = geminiResolver.toURL(uri);
-
-            expectedPath = GeminiResolver.PREVIEW_URI + "/" + VALID_FILE;
-            log.debug("toURL returned: " + url.toString());
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + "://" + BASE_URL + "/preview/" + VALID_FILE);
-            Assert.assertEquals("/" + expectedPath, url.getPath());
-            Assert.assertEquals(BASE_URL, url.getHost());
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            AdResolver adResolver = new AdResolver();
+            String path = uri.getSchemeSpecificPart();
+            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
+        } catch (Throwable t) {
+            String message = "Failed to convert to data URL";
+            throw new RuntimeException(message, t);
         }
     }
 
-    @Test
-    public void testInvalidURIBadScheme() {
-        try {
-            URI uri = new URI(INVALID_URI_BAD_SCHEME);
-            URL url = geminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    @Override
+    public String getScheme() {
+        return SCHEME;
     }
-
-    @Test
-    public void testInvalidNullURI() {
-        try {
-            URL url = geminiResolver.toURL(null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidUriType() {
-        try {
-            String uriStr = GeminiResolver.SCHEME + ":badArchive/" + VALID_FILE;
-            URI uri = new URI(uriStr);
-            URL url = geminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            log.info("IllegalArgumentException thrown as expected. Test passed.: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
 }
