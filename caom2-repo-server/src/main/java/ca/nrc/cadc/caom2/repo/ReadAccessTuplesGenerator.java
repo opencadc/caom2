@@ -166,7 +166,9 @@ public class ReadAccessTuplesGenerator {
         this.collection = collection;
         this.dryrun = dryrun;
         this.readAccessDAO = raDAO;
-        initGroups(collection, groupConfig);
+        initGroups(groupConfig);
+                                       
+        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
         
         // GMSClient to AC webservice        
         if (this.groupBaseURI != null) {
@@ -181,42 +183,34 @@ public class ReadAccessTuplesGenerator {
         String planeTab = raDAO.getTable(Plane.class);
 
         cleanupTupleSQL.put(ObservationMetaReadAccess.class,
-            "delete " + omraTab
-            + " from " + omraTab + " as ra"
-            + " left join " + obsTab + " as obs" + " on ra.assetID = obs.obsID"
-            + " where obs.metaRelease < getdate()" // now public
-            + " OR obs.obsID IS NULL");              // deleted
+            "DELETE FROM " + omraTab + " WHERE assetID NOT IN (SELECT obsID FROM " + obsTab + ")"  // deleted
+        );
         cleanupTupleSQL.put(PlaneMetaReadAccess.class,
-            "delete " + pmraTab 
-            + " from " + pmraTab + " as ra " 
-            + " left join " + planeTab + " as plane on ra.assetID = plane.planeID" 
-            + " where plane.metaRelease < getdate()" // now public
-            + " OR plane.planeID IS NULL");              // deleted
+            "DELETE FROM " + pmraTab + " WHERE assetID NOT IN (SELECT planeID FROM " + planeTab + ")"  // deleted
+        );
         cleanupTupleSQL.put(PlaneDataReadAccess.class,
-            "delete " + pdraTab 
-            + " from " + pdraTab + " as ra" 
-            + " left join " + planeTab + " as plane on ra.assetID = plane.planeID" 
-            + " where plane.dataRelease < getdate()" // now public
-            + " OR plane.planeID IS NULL");              // deleted
+            "DELETE FROM " + pdraTab + " WHERE assetID NOT IN (SELECT planeID FROM " + planeTab + ")"  // deleted
+        );
     }
 
     // test ctor: enough to test the create-tuples and getProposalGroupName methods
     ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig)
         throws IOException, URISyntaxException, GroupNotFoundException {
-        initGroups(collection, groupConfig);
+        this.collection = collection;
+        initGroups(groupConfig);
+        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
-    private void initGroups(String collection, Map<String, Object> groupConfig) 
+    private void initGroups(Map<String, Object> groupConfig) 
         throws IOException, URISyntaxException, GroupNotFoundException {
-        this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
-        this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
-        this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
-        if (this.staffGroupURI != null) {
-            this.groupBaseURI = staffGroupURI.getServiceID();
+        if (groupConfig != null) {
+            this.createProposalGroup = (boolean) groupConfig.get("proposalGroup");
+            this.operatorGroupURI = (GroupURI) groupConfig.get("operatorGroup");
+            this.staffGroupURI = (GroupURI) groupConfig.get("staffGroup");
+            if (this.staffGroupURI != null) {
+                this.groupBaseURI = staffGroupURI.getServiceID();
+            }
         }
-                                       
-        // ISO date format                                                               
-        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
     
     /**
@@ -414,16 +408,11 @@ public class ReadAccessTuplesGenerator {
 
             JdbcTemplate jdbc = new JdbcTemplate(this.readAccessDAO.getDataSource());
             for (Class raClass : READACCESS_CLASSES) {
-                if (this.readAccessDAO.getTransactionManager().isOpen()) {
-                    throw new RuntimeException("BUG: found open transaction at start of deleting public tuples");
-                }
-
                 log.info("Deleting public tuples from " + raClass.getSimpleName());
                 String sql = cleanupTupleSQL.get(raClass);
                 log.debug("SQL : \n" + sql);
                 int count = jdbc.update(sql);
                 log.info("Deleted  " + count + " " + raClass.getSimpleName());
-
             }
         }
     }
