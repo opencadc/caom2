@@ -110,7 +110,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
 
             Date d;
             Date md;
-            Integer sc;
             UUID id;
             URI cs;
             URI acs;
@@ -119,23 +118,20 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
             if (ret.id == null) {
                 d = Util.getDate(rs, col++, utcCalendar);
                 md = Util.getDate(rs, col++, utcCalendar);
-                sc = Util.getInteger(rs, col++);
                 cs = Util.getURI(rs, col++);
                 acs = Util.getURI(rs, col++);
                 id = Util.getUUID(rs, col++);
                 ret.id = id;
                 ret.lastModified = d;
                 ret.maxLastModified = md;
-                ret.stateCode = sc;
                 ret.metaChecksum = cs;
                 ret.accMetaChecksum = acs;
             } else {
-                col += 6; // skip
+                col += 5; // skip
             }
             // plane
             d = Util.getDate(rs, col++, utcCalendar);
             md = Util.getDate(rs, col++, utcCalendar);
-            sc = Util.getInteger(rs, col++);
             cs = Util.getURI(rs, col++);
             acs = Util.getURI(rs, col++);
             id = Util.getUUID(rs, col++);
@@ -145,7 +141,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                     curPlane.id = id;
                     curPlane.lastModified = d;
                     curPlane.maxLastModified = md;
-                    curPlane.stateCode = sc;
                     curPlane.metaChecksum = cs;
                     curPlane.accMetaChecksum = acs;
                     log.debug("add: " + curPlane + " to " + ret);
@@ -155,7 +150,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                 // artifact
                 d = Util.getDate(rs, col++, utcCalendar);
                 md = Util.getDate(rs, col++, utcCalendar);
-                sc = Util.getInteger(rs, col++);
                 cs = Util.getURI(rs, col++);
                 acs = Util.getURI(rs, col++);
                 id = Util.getUUID(rs, col++);
@@ -165,7 +159,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                         curArtifact.id = id;
                         curArtifact.lastModified = d;
                         curArtifact.maxLastModified = md;
-                        curArtifact.stateCode = sc;
                         curArtifact.metaChecksum = cs;
                         curArtifact.accMetaChecksum = acs;
                         log.debug("add: " + curArtifact + " to " + curPlane);
@@ -175,7 +168,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                     // part
                     d = Util.getDate(rs, col++, utcCalendar);
                     md = Util.getDate(rs, col++, utcCalendar);
-                    sc = Util.getInteger(rs, col++);
                     cs = Util.getURI(rs, col++);
                     acs = Util.getURI(rs, col++);
                     id = Util.getUUID(rs, col++);
@@ -185,7 +177,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                             curPart.id = id;
                             curPart.lastModified = d;
                             curPart.maxLastModified = md;
-                            curPart.stateCode = sc;
                             curPart.metaChecksum = cs;
                             curPart.accMetaChecksum = acs;
                             log.debug("add: " + curPart + " to " + curArtifact);
@@ -195,7 +186,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                         // chunk
                         d = Util.getDate(rs, col++, utcCalendar);
                         md = Util.getDate(rs, col++, utcCalendar);
-                        sc = Util.getInteger(rs, col++);
                         cs = Util.getURI(rs, col++);
                         acs = Util.getURI(rs, col++);
                         id = Util.getUUID(rs, col++);
@@ -204,7 +194,6 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                             curChunk.id = id;
                             curChunk.lastModified = d;
                             curChunk.maxLastModified = md;
-                            curChunk.stateCode = sc;
                             curChunk.metaChecksum = cs;
                             curChunk.accMetaChecksum = acs;
                             log.debug("add: " + curChunk + " to " + curPart);

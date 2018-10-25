@@ -258,7 +258,7 @@ public abstract class AbstractObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    //@Test
+    @Test
     public void testTemplate()
     {
         try
@@ -469,6 +469,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
+    @Test
     public void testGetDeleteNonExistentObservation()
     {
         try
@@ -562,7 +563,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-     @Test
+    @Test
     public void testNonOriginPut()
     {
         try
@@ -1254,36 +1255,6 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    private void debugStateCodes(CaomEntity expected, CaomEntity actual)
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-        log.warn("====================== EXPECTED");
-        int esc = getStateCode(expected);
-        log.warn("====================== ACTUAL");
-        int asc = getStateCode(actual);
-        log.warn("====================== DONE");
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-    }
-
-    private int getStateCode(CaomEntity e)
-    {
-        try
-        {
-            Method m = CaomEntity.class.getDeclaredMethod("checksum");
-            m.setAccessible(true);
-            // TODO: if we could get the return here, would not need to access private field below
-            m.invoke(e);
-
-            Field f = CaomEntity.class.getDeclaredField("stateCode");
-            f.setAccessible(true);
-            return f.getInt(e);
-        }
-        catch(Throwable t)
-        {
-            throw new RuntimeException("failed to find stateCode field", t);
-        }
-    }
-    
     private void testEntity(CaomEntity expected, CaomEntity actual)
     {
         log.debug("testEqual: " + expected + " == " + actual);
@@ -1396,6 +1367,13 @@ public abstract class AbstractObservationDAOTest
         }
         else
             Assert.assertNull("environment", actual.environment);
+        
+        Assert.assertEquals("metaReadGroups.size", expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
+        Iterator<URI> eu = expected.getMetaReadGroups().iterator();
+        Iterator<URI> au = actual.getMetaReadGroups().iterator();
+        while (eu.hasNext() || au.hasNext()) {
+            Assert.assertEquals(eu.next(), au.next());
+        }
         
         log.debug("num planes: " + expected.getPlanes().size() + " == " + actual.getPlanes().size());
         Assert.assertEquals("number of planes", expected.getPlanes().size(), actual.getPlanes().size());
@@ -1556,6 +1534,20 @@ public abstract class AbstractObservationDAOTest
                 }
                 Assert.assertEquals(expected.polarization.dimension, actual.polarization.dimension);
             }
+        }
+        
+        Assert.assertEquals("metaReadGroups.size", expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
+        Iterator<URI> emra = expected.getMetaReadGroups().iterator();
+        Iterator<URI> amra = actual.getMetaReadGroups().iterator();
+        while (emra.hasNext() || amra.hasNext()) {
+            Assert.assertEquals(emra.next(), amra.next());
+        }
+        
+        Assert.assertEquals("dataReadGroups.size", expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
+        Iterator<URI> edra = expected.getDataReadGroups().iterator();
+        Iterator<URI> adra = actual.getDataReadGroups().iterator();
+        while (edra.hasNext() || adra.hasNext()) {
+            Assert.assertEquals(edra.next(), adra.next());
         }
 
         log.debug("num artifacts: " + expected.getArtifacts().size() + " == " + actual.getArtifacts().size());
@@ -1847,6 +1839,9 @@ public abstract class AbstractObservationDAOTest
             o.environment = new Environment();
             o.environment.seeing = 0.08;
             o.environment.photometric = Boolean.TRUE;
+            
+            o.getMetaReadGroups().add(URI.create("ivo://example.net/gms?GroupA"));
+            o.getMetaReadGroups().add(URI.create("ivo://example.net/gms?GroupB"));
         }
         
         if (depth == 1)
@@ -1920,9 +1915,11 @@ public abstract class AbstractObservationDAOTest
                 mp.getVertices().add(new Vertex(3.0, 3.0, SegmentType.LINE));
                 mp.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
                 List<Point> points = new ArrayList<Point>();
-                for (Vertex v : mp.getVertices())
-                    if (!SegmentType.CLOSE.equals(v.getType()))
+                for (Vertex v : mp.getVertices()) {
+                    if (!SegmentType.CLOSE.equals(v.getType())) {
                         points.add(new Point(v.cval1, v.cval2));
+                    }
+                }
                 p.position.bounds = new Polygon(points, mp);
             } else {
                 p.position.bounds = new Circle(new Point(0.0, 89.0), 2.0);
@@ -1941,6 +1938,12 @@ public abstract class AbstractObservationDAOTest
             p.time.exposure = 666.0;
             p.time.resolution = 0.5;
             p.time.sampleSize = 0.15;
+            
+            p.getMetaReadGroups().add(URI.create("ivo://example.net/gms?GroupA"));
+            p.getMetaReadGroups().add(URI.create("ivo://example.net/gms?GroupB"));
+            
+            p.getDataReadGroups().add(URI.create("ivo://example.net/gms?GroupC"));
+            p.getDataReadGroups().add(URI.create("ivo://example.net/gms?GroupD"));
         }
         if (depth <= 2)
             return p;

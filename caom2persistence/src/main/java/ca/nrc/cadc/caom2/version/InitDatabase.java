@@ -82,7 +82,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.4.0-alpha1";
+    public static final String MODEL_VERSION = "2.3.25";
     public static final String PREV_MODEL_VERSION = "2.3.15";
 
     static String[] CREATE_SQL = new String[]{
@@ -104,7 +104,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.4.0-alpha1.sql"
+        "caom2.upgrade-2.3.25.sql"
     };
 
     public InitDatabase(DataSource dataSource, String database, String schema) {

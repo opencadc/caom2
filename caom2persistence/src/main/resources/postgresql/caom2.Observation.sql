@@ -47,8 +47,8 @@ create table <schema>.Observation
     environment_ambientTemp double precision,
     environment_photometric integer,
 
-    members text null,
-    metaReadGroups text null,
+    members text,
+    metaReadGroups text,
 
 -- optimisation
     metaReadAccessGroups tsvector default '',

@@ -88,7 +88,6 @@ import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -99,7 +98,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -475,7 +473,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("commit: OK");
             txnOpen = false;
         } catch (DataAccessException e) {
-            log.debug("failed to insert " + obs + ": ", e);
+            log.error("failed to insert " + obs + ": ", e);
             getTransactionManager().rollbackTransaction();
             log.debug("rollback: OK");
             txnOpen = false;

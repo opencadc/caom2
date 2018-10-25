@@ -153,6 +153,7 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -336,14 +337,14 @@ public class SQLGenerator {
             "environment_photometric",
             "members",
             "metaReadGroups", 
-            "metaReadAccessGroups", // optimisation from previous version (group names only)
             "lastModified", "maxLastModified",
             "metaChecksum", "accMetaChecksum",
             "obsID"
         };
         if (persistOptimisations) {
             String[] extraCols = new String[]{
-                "observationURI"
+                "observationURI",
+                "metaReadAccessGroups", // optimisation (group names only)
             };
             this.numOptObservationColumns = extraCols.length;
             obsColumns = addExtraColumns(obsColumns, extraCols);
@@ -365,11 +366,9 @@ public class SQLGenerator {
             "provenance_inputs", "provenance_keywords",
             "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
             "metrics_fluxDensityLimit", "metrics_magLimit",
-            "metaReadGroups", 
-            "metaReadAccessGroups", // optimisation from previous version (group names only)
-            "dataReadGroups", 
-            "dataReadAccessGroups", // optimisation from previous version (group names only)
             "quality_flag",
+            "metaReadGroups", 
+            "dataReadGroups",
             "lastModified", "maxLastModified",
             "metaChecksum", "accMetaChecksum",
             "planeID"
@@ -377,7 +376,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]{
                 "publisherID",
-                "planeURI"
+                "planeURI",
+                "metaReadAccessGroups", // optimisation (group names only)
+                "dataReadAccessGroups"  // optimisation (group names only)
             };
             this.numOptPlaneColumns = extraCols.length;
             planeColumns = addExtraColumns(planeColumns, extraCols);
@@ -527,7 +528,7 @@ public class SQLGenerator {
         columnMap.put(Chunk.class, chunkColumns);
 
         //String[] metaReadAccessCols = new String[]{
-        //    "assetID", "groupID", "lastModified", "stateCode", "metaChecksum", "readAccessID"
+        //    "assetID", "groupID", "lastModified", "metaChecksum", "readAccessID"
         //};
         //columnMap.put(ObservationMetaReadAccess.class, metaReadAccessCols);
         //columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
@@ -545,15 +546,15 @@ public class SQLGenerator {
         //columnMap.put(DeletedPlaneMetaReadAccess.class, deletedEntityCols);
         //columnMap.put(DeletedPlaneDataReadAccess.class, deletedEntityCols);
 
-        columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "obsID"});
-        columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "planeID"});
-        columnMap.put(ArtifactSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "artifactID"});
-        columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "partID"});
-        columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "stateCode", "metaChecksum", "accMetaChecksum", "chunkID"});
+        columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "obsID"});
+        columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "planeID"});
+        columnMap.put(ArtifactSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "artifactID"});
+        columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "partID"});
+        columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
 
-        //columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
-        //columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
-        //columnMap.put(PlaneDataReadAccessSkeleton.class, new String[]{"lastModified", "stateCode", "metaChecksum", "readAccessID"});
+        //columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
+        //columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
+        //columnMap.put(PlaneDataReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
 
         columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum"});
     }
@@ -1340,14 +1341,14 @@ public class SQLGenerator {
             }
 
             if (obs.getMetaReadGroups().isEmpty()) {
-                //safeSetString(sb, ps, col++, null);
-                safeSetVector(sb, ps, col++, null);
+                safeSetString(sb, ps, col++, null);
             } else {
-                throw new UnsupportedOperationException("persist: Observation.metaReadGroups");
+                safeSetString(sb, ps, col++, Util.encodeURIs(obs.getMetaReadGroups()));
             }
             
             if (persistOptimisations) {
                 safeSetURI(sb, ps, col++, obs.getURI().getURI());
+                safeSetGroupOptimisation(sb, ps, col++, obs.getMetaReadGroups());
             }
 
             safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
@@ -1544,23 +1545,22 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
             }
 
-            if (plane.getMetaReadGroups().isEmpty()) {
-                //safeSetString(sb, ps, col++, null);
-                safeSetVector(sb, ps, col++, null);
-            } else {
-                throw new UnsupportedOperationException("persist: Plane.metaReadGroups");
-            }
-            if (plane.getDataReadGroups().isEmpty()) {
-                //safeSetString(sb, ps, col++, null);
-                safeSetVector(sb, ps, col++, null);
-            } else {
-                throw new UnsupportedOperationException("persist: Plane.dataReadGroups");
-            }
-            
             if (plane.quality != null) {
                 safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
             } else {
                 safeSetString(sb, ps, col++, null);
+            }
+            
+            if (plane.getMetaReadGroups().isEmpty()) {
+                safeSetString(sb, ps, col++, null);
+            } else {
+                safeSetString(sb, ps, col++, Util.encodeURIs(plane.getMetaReadGroups()));
+            }
+            
+            if (plane.getDataReadGroups().isEmpty()) {
+                safeSetString(sb, ps, col++, null);
+            } else {
+                safeSetString(sb, ps, col++, Util.encodeURIs(plane.getDataReadGroups()));
             }
 
             if (persistOptimisations) {
@@ -1574,6 +1574,9 @@ public class SQLGenerator {
 
                 safeSetURI(sb, ps, col++, publisherID.getURI());
                 safeSetURI(sb, ps, col++, planeURI.getURI());
+                
+                safeSetGroupOptimisation(sb, ps, col++, plane.getMetaReadGroups());
+                safeSetGroupOptimisation(sb, ps, col++, plane.getDataReadGroups());
             }
             if (persistComputed) {
                 //position
@@ -2352,11 +2355,6 @@ public class SQLGenerator {
         }
     }
 
-    protected void safeSetVector(StringBuilder sb, PreparedStatement ps, int col, Object val)
-            throws SQLException {
-        ps.setObject(col, null);
-    }
-    
     protected void safeSetURI(StringBuilder sb, PreparedStatement ps, int col, URI val)
             throws SQLException {
         String str = null;
@@ -2407,6 +2405,12 @@ public class SQLGenerator {
             sb.append(val);
             sb.append(",");
         }
+    }
+    
+    // optimisation to persist groyup names in a separate field for easier querying
+    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> groups) 
+            throws SQLException {
+        throw new UnsupportedOperationException();
     }
 
     // unused: experiment with what custom extract methods would look like
@@ -3157,9 +3161,9 @@ public class SQLGenerator {
                 col += 1; // skip
             }
             
-            String metaReadAccessGroups = rs.getString(col++);
-            if (metaReadAccessGroups != null) {
-                throw new UnsupportedOperationException("map Observation.metaReadAccessGroups");
+            String uriList = rs.getString(col++);
+            if (uriList != null) {
+                Util.decodeURIs(uriList, o.getMetaReadGroups());
             }
 
             if (persistOptimisations) {
@@ -3174,8 +3178,8 @@ public class SQLGenerator {
             Util.assignLastModified(o, lastModified, "lastModified");
             Util.assignLastModified(o, maxLastModified, "maxLastModified");
 
-            Integer stateCode = Util.getInteger(rs, col++);
-            log.debug("found: observation.stateCode = " + stateCode);
+            //Integer stateCode = Util.getInteger(rs, col++);
+            //log.debug("found: observation.stateCode = " + stateCode);
             //Util.assignStateCode(o, stateCode);
 
             URI metaChecksum = Util.getURI(rs, col++);
@@ -3289,20 +3293,21 @@ public class SQLGenerator {
                 p.metrics = m;
             }
 
-            String metaReadAccessGroups = rs.getString(col++);
-            if (metaReadAccessGroups != null) {
-                throw new UnsupportedOperationException("map Plane.metaReadAccessGroups");
-            }
-            String dataReadAccessGroups = rs.getString(col++);
-            if (dataReadAccessGroups != null) {
-                throw new UnsupportedOperationException("map Plane.dataReadAccessGroups");
-            }
-            
             String qflag = rs.getString(col++);
             if (qflag != null) {
                 p.quality = new DataQuality(Quality.toValue(qflag));
             }
 
+            String mrag = rs.getString(col++);
+            if (mrag != null) {
+                Util.decodeURIs(mrag, p.getMetaReadGroups());
+            }
+            
+            String drag = rs.getString(col++);
+            if (drag != null) {
+                Util.decodeURIs(drag, p.getDataReadGroups());
+            }
+            
             if (persistOptimisations) {
                 col += numOptPlaneColumns;
             }
@@ -3410,8 +3415,8 @@ public class SQLGenerator {
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
 
-            Integer stateCode = Util.getInteger(rs, col++);
-            log.debug("found: plane.stateCode = " + stateCode);
+            //Integer stateCode = Util.getInteger(rs, col++);
+            //log.debug("found: plane.stateCode = " + stateCode);
             //Util.assignStateCode(p, stateCode);
 
             URI metaChecksum = Util.getURI(rs, col++);
@@ -3495,9 +3500,10 @@ public class SQLGenerator {
             Util.assignLastModified(a, lastModified, "lastModified");
             Util.assignLastModified(a, maxLastModified, "maxLastModified");
 
-            Integer stateCode = Util.getInteger(rs, col++);
-            log.debug("found: artifact.stateCode = " + stateCode);
+            //Integer stateCode = Util.getInteger(rs, col++);
+            //log.debug("found: artifact.stateCode = " + stateCode);
             //Util.assignStateCode(a, stateCode);
+            
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(a, metaChecksum, "metaChecksum");
@@ -3563,8 +3569,8 @@ public class SQLGenerator {
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
 
-            Integer stateCode = Util.getInteger(rs, col++);
-            log.debug("found: part.stateCode = " + stateCode);
+            //Integer stateCode = Util.getInteger(rs, col++);
+            //log.debug("found: part.stateCode = " + stateCode);
             //Util.assignStateCode(p, stateCode);
 
             URI metaChecksum = Util.getURI(rs, col++);
@@ -3850,8 +3856,8 @@ public class SQLGenerator {
             Util.assignLastModified(c, lastModified, "lastModified");
             Util.assignLastModified(c, maxLastModified, "maxLastModified");
 
-            Integer stateCode = Util.getInteger(rs, col++);
-            log.debug("found: chunk.stateCode = " + stateCode);
+            //Integer stateCode = Util.getInteger(rs, col++);
+            //log.debug("found: chunk.stateCode = " + stateCode);
             //Util.assignStateCode(c, stateCode);
 
             URI metaChecksum = Util.getURI(rs, col++);
@@ -3956,7 +3962,7 @@ public class SQLGenerator {
                 int col = 1;
                 Skeleton ret = skelClass.newInstance();
                 ret.lastModified = Util.getDate(rs, col++, utcCalendar);
-                ret.stateCode = Util.getInteger(rs, col++);
+                //ret.stateCode = Util.getInteger(rs, col++);
                 ret.metaChecksum = Util.getURI(rs, col++);
                 ret.id = Util.getUUID(rs, col++);
                 log.debug("found: " + ret);

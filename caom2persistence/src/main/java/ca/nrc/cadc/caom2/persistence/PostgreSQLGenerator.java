@@ -81,10 +81,12 @@ import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.postgresql.PgSpoint;
 import ca.nrc.cadc.dali.postgresql.PgSpoly;
+import java.net.URI;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
@@ -144,6 +146,21 @@ public class PostgreSQLGenerator extends SQLGenerator {
         return sb.toString();
     }
     */
+
+    @Override
+    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> val) throws SQLException {
+        // not null list; empty becomes zero-length string
+        String gnames = Util.extractGroupNames(val);
+        PGobject pgo = new PGobject();
+        pgo.setType("tsvector");
+        pgo.setValue(gnames);
+        ps.setObject(col, pgo);
+        if (sb != null) {
+            sb.append(pgo.getValue());
+            sb.append(",");
+        }
+    }
+
     
     @Override
     protected String literal(UUID value) {
