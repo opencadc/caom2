@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.remove;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.Console;

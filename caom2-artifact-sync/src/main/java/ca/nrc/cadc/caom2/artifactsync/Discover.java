@@ -91,7 +91,6 @@ public class Discover extends Caom2ArtifactSync {
     private ArgumentMap am;
     protected int batchSize = ArtifactHarvester.DEFAULT_BATCH_SIZE;
     protected boolean loop = false;
-    private String collection = null;
     private DownloadArtifactFiles downloader = null;
     private ArtifactHarvester harvester = null;
 
@@ -116,61 +115,54 @@ public class Discover extends Caom2ArtifactSync {
                     printErrorUsage(msg);
                 }
             }
-
-            if (!isDone) {
-                this.parseDbParam(am, "database");
-                this.loop = am.isSet("continue");
-            }
             
             if (!isDone) {
-                if (this.mode.equals("download")) {
-                    // arguments that apply to 'download' mode
-                    Integer retryAfterHours = null;
-                    if (am.isSet("retryAfter")) {
-                        try {
-                            retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
-                        } catch (NumberFormatException e) {
-                            String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
-                            this.printErrorUsage(msg);
-                        }
-                    }
-                    
-                    boolean verify = !am.isSet("noverify");
-
-                    int nthreads = 1;
-                    if (am.isSet("threads")) {
-                        try {
-                            nthreads = Integer.parseInt(am.getValue("threads"));
-                            if (nthreads < 1 || nthreads > 250) {
-                                String msg = "value for --threads must be between 1 and 250";
+                this.loop = am.isSet("continue");
+                if (!isDone) {
+                    if (this.mode.equals("download")) {
+                        // arguments that apply to 'download' mode
+                        Integer retryAfterHours = null;
+                        if (am.isSet("retryAfter")) {
+                            try {
+                                retryAfterHours = Integer.parseInt(am.getValue("retryAfter"));
+                            } catch (NumberFormatException e) {
+                                String msg = "Illegal value for --retryAfter: " + am.getValue("retryAfter");
                                 this.printErrorUsage(msg);
                             }
-                        } catch (NumberFormatException nfe) {
-                            String msg = "Illegal value for --threads: " + am.getValue("threads");
-                            this.printErrorUsage(msg);
                         }
-                    }
-                    
-                    if (!this.isDone) {
-                        ArtifactDAO artifactDAO = new ArtifactDAO();
-                        artifactDAO.setConfig(daoConfig);
-
-                        this.downloader = new DownloadArtifactFiles(
-                                artifactDAO, dbInfo, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
-                        List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
-                        listeners.add(downloader);
-                        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
-                    }
-                } else {
-                    // arguments that apply to 'discover' mode
-                    this.collection = this.parseCollection(am);
-                    
-                    if (!this.isDone) {
+                        
+                        boolean verify = !am.isSet("noverify");
+    
+                        int nthreads = 1;
+                        if (am.isSet("threads")) {
+                            try {
+                                nthreads = Integer.parseInt(am.getValue("threads"));
+                                if (nthreads < 1 || nthreads > 250) {
+                                    String msg = "value for --threads must be between 1 and 250";
+                                    this.printErrorUsage(msg);
+                                }
+                            } catch (NumberFormatException nfe) {
+                                String msg = "Illegal value for --threads: " + am.getValue("threads");
+                                this.printErrorUsage(msg);
+                            }
+                        }
+                        
+                        if (!this.isDone) {
+                            ArtifactDAO artifactDAO = new ArtifactDAO();
+                            artifactDAO.setConfig(daoConfig);
+    
+                            this.downloader = new DownloadArtifactFiles(
+                                    artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
+                            List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
+                            listeners.add(downloader);
+                            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
+                        }
+                    } else {
                         ObservationDAO observationDAO = new ObservationDAO();
                         observationDAO.setConfig(this.daoConfig);
-
+    
                         this.harvester = new ArtifactHarvester(
-                                observationDAO, dbInfo, artifactStore, collection, this.batchSize);
+                                observationDAO, harvestResource, artifactStore, this.batchSize);
                         List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                         listeners.add(harvester);
                         Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -184,6 +176,7 @@ public class Discover extends Caom2ArtifactSync {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --collection=<collection> : The collection to use");
         sb.append("\n        --database=<server.database.schema>");
         sb.append("\n        --continue : Repeat batches until no work left");
         if (this.mode.equals("download")) {
@@ -193,7 +186,6 @@ public class Discover extends Caom2ArtifactSync {
             sb.append("\n        --noverify : Do not confirm by MD5 sum after download");
         } else {
             sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
-            sb.append("\n        --collection=<collection> : The collection to discover");
         }
         sb.append("\n\n    optional general args:");
         sb.append("\n        -v | --verbose");
