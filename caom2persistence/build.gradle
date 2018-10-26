@@ -11,6 +11,8 @@ repositories {
     mavenLocal()
 }
 
+apply from: '../intTest.gradle'
+
 sourceCompatibility = 1.7
 
 group = 'org.opencadc'

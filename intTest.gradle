@@ -1,0 +1,48 @@
+configurations {
+    intTestCompile.extendsFrom testCompile
+    intTestRuntime.extendsFrom testRuntime
+}
+
+sourceSets {
+    intTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+        resources.srcDir file('src/intTest/resources')
+    }
+}
+
+tasks.withType(Test) {
+    // reset the report destinations so that intTests go to their own page
+    //reports.html.destination = file("${reporting.baseDir}/${name}")
+    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
+    
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
+}
+
+task intTest(type: Test) {
+    // set the configuration context
+    testClassesDir = sourceSets.intTest.output.classesDir
+    classpath = sourceSets.intTest.runtimeClasspath
+    
+    // run the tests always
+    outputs.upToDateWhen { false }
+}
+
+test {
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+        // "STARTED", 
+    }
+}
+
+intTest {
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+        // "STARTED",
+    }
+}
+
