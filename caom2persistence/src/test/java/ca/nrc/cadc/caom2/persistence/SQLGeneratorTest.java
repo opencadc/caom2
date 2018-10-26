@@ -72,9 +72,6 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
@@ -113,12 +110,8 @@ public class SQLGeneratorTest
 
         "cadctest.caom2.DeletedObservation"
     };
-    String[] pk = { "obsID", "planeID", "artifactID", "partID", "chunkID", 
-        "readAccessID", "readAccessID", "readAccessID",
-        "id", "id", "id", "id" };
-    String[] fk = { null, "obsID", "planeID", "artifactID", "partID", 
-        null, null, null,
-        null, null, null };
+    String[] pk = { "obsID", "planeID", "artifactID", "partID", "chunkID", "id" };
+    String[] fk = { null, "obsID", "planeID", "artifactID", "partID", null };
     Class[] clz =
     {
         Observation.class,
@@ -210,39 +203,16 @@ public class SQLGeneratorTest
     }
 
     @Test
-    public void testSelectReadAccessSQL()
-    {
-        try
-        {
-            UUID id = new UUID(0L, 666L);
-            for (int i=5; i<=7; i++)
-            {
-                String sql = gen.getSelectSQL(clz[i], id);
-                Assert.assertNotNull(sql);
-                log.debug("SQL [" + sql.length() + "] " + sql);
-                Assert.assertTrue(tables[i], sql.contains(tables[i]));
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testSelectDeletedSQL()
     {
         try
         {
             UUID id = new UUID(0L, 666L);
-            for (int i=7; i<=10; i++)
-            {
-                String sql = gen.getSelectSQL(clz[i], id);
-                Assert.assertNotNull(sql);
-                log.debug("SQL [" + sql.length() + "] " + sql);
-                Assert.assertTrue(tables[i], sql.contains(tables[i]));
-            }
+            int i = 5;
+            String sql = gen.getSelectSQL(clz[i], id);
+            Assert.assertNotNull(sql);
+            log.debug("SQL [" + sql.length() + "] " + sql);
+            Assert.assertTrue(tables[i], sql.contains(tables[i]));
         }
         catch(Exception unexpected)
         {

@@ -98,12 +98,6 @@ public abstract class AbstractDeletedEntityDAOTest {
     protected static Logger log;
 
     DeletedEntityDAO dao;
-    Class[] entityClasses
-            = {
-                DeletedObservationMetaReadAccess.class,
-                DeletedPlaneMetaReadAccess.class,
-                DeletedPlaneDataReadAccess.class
-            };
 
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
@@ -125,85 +119,14 @@ public abstract class AbstractDeletedEntityDAOTest {
         }
     }
 
-    @Before
+    //@Before
     public void setup()
             throws Exception {
         log.debug("clearing old tables...");
         SQLGenerator gen = dao.getSQLGenerator();
         DataSource ds = dao.getDataSource();
-        for (Class c : entityClasses) {
-            String s = gen.getTable(c);
-
-            String sql = "delete from " + s;
-            log.debug("setup: " + sql);
-            ds.getConnection().createStatement().execute(sql);
-        }
+        // TODO?
         log.debug("clearing old tables... OK");
-    }
-
-    @Test
-    public void testGetListDeletedReadAccess() {
-        try {
-
-            UUID id1 = new UUID(0L, 100L);
-            UUID id2 = new UUID(0L, 200L);
-            UUID id3 = new UUID(0L, 300L);
-            UUID id4 = new UUID(0L, 400L);
-            UUID id5 = new UUID(0L, 500L);
-
-            for (Class c : entityClasses) {
-                log.info("creating test content: " + c.getSimpleName());
-
-                Constructor<DeletedEntity> ctor = c.getConstructor(UUID.class);
-                DeletedEntity o1 = ctor.newInstance(id1);
-                DeletedEntity o2 = ctor.newInstance(id2);
-                DeletedEntity o3 = ctor.newInstance(id3);
-                DeletedEntity o4 = ctor.newInstance(id4);
-                DeletedEntity o5 = ctor.newInstance(id5);
-
-                log.info("put: \n"
-                    + o1 + "\n"
-                    + o2 + "\n"
-                    + o3 + "\n"
-                    + o4 + "\n"
-                    + o5 + "\n"
-                );
-                
-                dao.put(o1);
-                Thread.sleep(10L);
-                dao.put(o2);
-                Thread.sleep(10L);
-                dao.put(o3);
-                Thread.sleep(10L);
-                dao.put(o4);
-                Thread.sleep(10L);
-                dao.put(o5);
-
-                Date start = new Date(o1.getLastModified().getTime() - 100L); // past
-                Date end = null;
-                Integer batchSize = new Integer(3);
-                List<DeletedEntity> dels;
-
-                // get first batch
-                dels = dao.getList(c, start, end, batchSize);
-                Assert.assertNotNull(c.getSimpleName(), dels);
-                Assert.assertEquals(c.getSimpleName(), 3, dels.size());
-                Assert.assertEquals(c.getSimpleName(), o1.getID(), dels.get(0).getID());
-                Assert.assertEquals(c.getSimpleName(), o2.getID(), dels.get(1).getID());
-                Assert.assertEquals(c.getSimpleName(), o3.getID(), dels.get(2).getID());
-
-                // get next batch
-                dels = dao.getList(c, o3.getLastModified(), end, batchSize);
-                Assert.assertNotNull(c.getSimpleName(), dels);
-                Assert.assertEquals(c.getSimpleName(), 3, dels.size()); // o3 gets picked up by the >=
-                Assert.assertEquals(c.getSimpleName(), o3.getID(), dels.get(0).getID());
-                Assert.assertEquals(c.getSimpleName(), o4.getID(), dels.get(1).getID());
-                Assert.assertEquals(c.getSimpleName(), o5.getID(), dels.get(2).getID());
-            }
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
     }
 
     @Test
