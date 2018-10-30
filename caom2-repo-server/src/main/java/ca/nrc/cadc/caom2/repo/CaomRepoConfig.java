@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.ac.GroupURI;
 
+import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
@@ -415,11 +416,11 @@ public class CaomRepoConfig {
                     computeMetadata = safeParseBoolean(kv[1]);
                 } else if ("computeMetadataValidation".equals(kv[0])) {
                     computeMetadataValidation = safeParseBoolean(kv[1]);
-                } else if ("proposalGroup".equals(kv[0])) {
+                } else if (ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
                     proposalGroup = safeParseBoolean(kv[1]);
-                } else if ("operatorGroup".equals(kv[0])) {
+                } else if (ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
                     operatorGroup = kv[1];
-                } else if ("staffGroup".equals(kv[0])) {
+                } else if (ReadAccessTuplesGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
                     staffGroup = kv[1];
                 } else if ("basePublisherID".equals(kv[0])) {
                     basePublisherID = new URI(kv[1]);

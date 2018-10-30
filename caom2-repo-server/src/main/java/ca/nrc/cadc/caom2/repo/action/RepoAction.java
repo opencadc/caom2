@@ -77,19 +77,19 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
-import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.repo.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import com.csvreader.CsvWriter;
@@ -255,9 +255,9 @@ public abstract class RepoAction extends RestAction {
         if (i != null) {
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
-            this.raGroupConfig.put("proposalGroup", i.getProposalGroup());
-            this.raGroupConfig.put("operatorGroup", i.getOperatorGroup());
-            this.raGroupConfig.put("staffGroup", i.getStaffGroup());
+            this.raGroupConfig.put(ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY, i.getProposalGroup());
+            this.raGroupConfig.put(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY, i.getOperatorGroup());
+            this.raGroupConfig.put(ReadAccessTuplesGenerator.STAFF_GROUP_KEY, i.getStaffGroup());
         }
         return ret;
     }
@@ -268,15 +268,6 @@ public abstract class RepoAction extends RestAction {
             dao.setConfig(getDAOConfig(collection));
         }
         return dao;
-    }
-
-    protected ReadAccessDAO getReadAccessDAO() throws IOException {
-        if (this.readAccessDAO == null) {
-            // want to join transactions with ObservationDAO
-            ObservationDAO master = getDAO();
-            this.readAccessDAO = new ReadAccessDAO(master);
-        }
-        return this.readAccessDAO;
     }
 
     protected DeletedEntityDAO getDeletedDAO() throws IOException {
@@ -412,7 +403,7 @@ public abstract class RepoAction extends RestAction {
         throw new AccessControlException("permission denied: " + getURI());
     }
 
-    protected void validate(Observation obs) {
+    protected void validate(Observation obs) throws TransientException {
         try {
             CaomValidator.validate(obs);
 
@@ -422,6 +413,7 @@ public abstract class RepoAction extends RestAction {
                 }
             }
 
+            // run optional plugins
             if (computeMetadata || computeMetadataValidation) {
                 String ostr = obs.getCollection() + "/" + obs.getObservationID();
                 String cur = ostr;
@@ -444,6 +436,12 @@ public abstract class RepoAction extends RestAction {
                     }
                 }
             }
+            
+            ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessGroupConfig());
+            if (ratGenerator != null) {
+                ratGenerator.generateTuples(obs);
+            }
+        
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
             throw new IllegalArgumentException("invalid input: " + uri, ex);
@@ -480,18 +478,18 @@ public abstract class RepoAction extends RestAction {
      * Returns null otherwise.
      *
      * @param collection
-     * @param raDAO read access DAO
      * @param raGroupConfig read access group data from configuration file
+     * @return read access generator plugin or null if not configured
      * @throws IOException
      * @throws URISyntaxException
      * @throws GroupNotFoundException
      */
-    protected ReadAccessTuplesGenerator getReadAccessTuplesGenerator(String collection, ReadAccessDAO raDAO, Map<String, Object> raGroupConfig)
-        throws IOException, URISyntaxException, GroupNotFoundException, IllegalArgumentException {
+    protected ReadAccessTuplesGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
         ReadAccessTuplesGenerator ratGenerator = null;
         
-        if (raGroupConfig.get("staffGroup") != null || raGroupConfig.get("operatorGroup") != null) {
-            ratGenerator = new ReadAccessTuplesGenerator(collection, raDAO, raGroupConfig);
+        if (raGroupConfig.get(ReadAccessTuplesGenerator.STAFF_GROUP_KEY) != null 
+                || raGroupConfig.get(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY) != null) {
+            ratGenerator = new ReadAccessTuplesGenerator(collection, raGroupConfig);
         }
         
         return ratGenerator;

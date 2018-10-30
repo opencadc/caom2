@@ -129,7 +129,6 @@ create table <schema>.Chunk
     chunkID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
-    stateCode int not null,
     metaChecksum varchar(136) not null,
     accMetaChecksum varchar(136) not null
 )

@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -84,6 +85,8 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.TransientException;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -94,9 +97,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import javax.sql.DataSource;
@@ -112,18 +117,18 @@ public class ObservationHarvester extends Harvester {
 
     private static Logger log = Logger.getLogger(ObservationHarvester.class);
 
-    private boolean service = false;
-
+    private final URI basePublisherID;
+    
     private RepoClient srcObservationService;
     private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
 
-    private boolean skipped;
-    private boolean doCollisionCheck = false;
-    private boolean computePlaneMetadata = false;
     private boolean nochecksum = false;
-    private URI basePublisherID;
-
+    private boolean skipped;
+    
+    private boolean computePlaneMetadata = false;
+    private ReadAccessTuplesGenerator acGenerator;
+    
     private boolean ready = false;
 
     HarvestSkipURIDAO harvestSkipDAO = null;
@@ -140,16 +145,59 @@ public class ObservationHarvester extends Harvester {
         this.skipped = skipped;
     }
 
-    public void setDoCollisionCheck(boolean doCollisionCheck) {
-        this.doCollisionCheck = doCollisionCheck;
+    public boolean getComputePlaneMetadata() {
+        return computePlaneMetadata;
     }
-
+    
     public void setComputePlaneMetadata(boolean computePlaneMetadata) {
         this.computePlaneMetadata = computePlaneMetadata;
     }
 
-    public boolean getComputePlaneMetadata() {
-        return computePlaneMetadata;
+    public void setGenerateReadAccessTuples(File config) {
+        try {
+            Properties props = new Properties();
+            props.load(new FileReader(config));
+            String line = props.getProperty(src.getCollection());
+            if (line == null) {
+                throw new IllegalArgumentException("CONFIG: collection not found: " + src.getCollection());
+            }
+            
+            Map<String,Object> groupConfig = new HashMap<>();
+            String[] parts = line.split("[ \t]+"); // one or more spaces and tabs
+            for (int i = 0; i < parts.length; i++) {
+                String option = parts[i]; // key=value pair
+                String[] kv = option.split("=");
+                if (kv.length != 2) {
+                    throw new IllegalArgumentException("invalid key=value pair: " + option);
+                }
+                if (ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
+                    boolean proposalGroup = "true".equals(kv[1]);
+                    if (proposalGroup) {
+                        groupConfig.put(ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY, proposalGroup);
+                    }
+                } else if (ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
+                    String og = kv[1];
+                    if (og != null) {
+                        URI ouri = new URI(og);
+                        groupConfig.put(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY, ouri);
+                    }
+                } else if (ReadAccessTuplesGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
+                    String sg = kv[1];
+                    if (sg != null) {
+                        URI suri = new URI(sg);
+                        groupConfig.put(ReadAccessTuplesGenerator.STAFF_GROUP_KEY, suri);
+                    }
+                }
+            }
+            for (Map.Entry<String,Object> me : groupConfig.entrySet()) {
+                log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
+            }
+            this.acGenerator = new ReadAccessTuplesGenerator(src.getCollection(), groupConfig);
+        } catch (IOException ex) {
+            throw new RuntimeException("failed to read config from " + config, ex);
+        } catch (Exception ex) {
+            throw new RuntimeException("CONFIG: invalid config " + config, ex);
+        } 
     }
 
     private void init(int nthreads) throws IOException, URISyntaxException {
@@ -385,10 +433,15 @@ public class ObservationHarvester extends Harvester {
                             }
 
                             if (computePlaneMetadata) {
-                                log.debug("computePlaneMetadata: " + o.getObservationID());
+                                log.debug("computePlaneMetadata: " + o.getURI());
                                 for (Plane p : o.getPlanes()) {
                                     ComputeUtil.computeTransientState(o, p);
                                 }
+                            }
+                            
+                            if (acGenerator != null) {
+                                log.debug("generateReadAccessTuples: " + o.getURI());
+                                acGenerator.generateTuples(o);
                             }
 
                             if (!nochecksum) {

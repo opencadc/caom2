@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7.3'
+    id 'checkstyle'
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+sourceCompatibility = 1.7
+
+group = 'org.opencadc'
+
+version = '2.3.0'
+
+dependencies {
+    compile 'log4j:log4j:1.2.+'
+    
+    compile 'org.opencadc:cadc-util:[1.2.3,2.0)'
+    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
+    compile 'org.opencadc:caom2:[2.4.0,3.0)'
+    compile 'org.opencadc:caom2-persist:[2.3.2,3.0)'
+    compile 'org.opencadc:caom2persistence:[2.3.25,3.0)'
+    compile 'org.opencadc:cadc-access-control:[1.1.4,)'
+    compile 'org.opencadc:cadc-registry:[1.4.4,)'
+    
+    testCompile 'junit:junit:4.+'
+}
+
+apply from: '../opencadc.gradle'
+
