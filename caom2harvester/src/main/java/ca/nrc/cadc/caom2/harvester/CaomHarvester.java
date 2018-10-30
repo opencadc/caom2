@@ -91,9 +91,9 @@ import org.apache.log4j.Logger;
 public class CaomHarvester implements Runnable {
     private static Logger log = Logger.getLogger(CaomHarvester.class);
 
-    private InitDatabase initdb;
+    private final InitDatabase initdb;
 
-    private ObservationHarvester obsHarvester;
+    private final ObservationHarvester obsHarvester;
     private DeletionHarvester obsDeleter;
 
     /**
@@ -103,28 +103,25 @@ public class CaomHarvester implements Runnable {
      *            true if no changed in the data base are applied during the process
      * @param nochecksum
      *            disable metadata checksum comparison
-     * @param compute
-     *            compute plane metadata from WCS before insert
      * @param src
-     *            source server,database,schema
+     *            source resource
      * @param dest
-     *            destination server,database,schema
+     *            destination resource (must be a server/database/schema)
      * @param basePublisherID
      *            base to use in generating Plane publisherID values in destination database
      * @param batchSize
      *            number of observations per batch (~memory consumption)
      * @param batchFactor
-     *            multiplier for batchSize when harvesting single-table entities
+     *            multiplier for batchSize when harvesting deletions
      * @param full
      *            full harvest of all source entities
      * @param skip
-     *            flag that indicates if shipped observations should be dealt
+     *            attempt retry of all skipped observations
      * @param nthreads
      *            max threads when harvesting from a service
+     * 
      * @throws java.io.IOException
-     *             IOException
      * @throws URISyntaxException
-     *             URISyntaxException
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, HarvestResource src, HarvestResource dest, URI basePublisherID, int batchSize,
             int batchFactor, boolean full, boolean skip, int nthreads) throws IOException, URISyntaxException {
@@ -162,17 +159,23 @@ public class CaomHarvester implements Runnable {
         }
     }
     
+    /**
+     * Enable the plane metadata compute plugin.
+     * 
+     * @param compute 
+     */
     public void setCompute(boolean compute) {
         obsHarvester.setComputePlaneMetadata(compute);
     }
     
+    /**
+     * Enable the generate read access grants plugin with the specified config.
+     * @param config 
+     */
     public void setGenerateReadAccess(String config) {
         obsHarvester.setGenerateReadAccessTuples(new File(config));
     }
 
-    /**
-     * run
-     */
     @Override
     public void run() {
 

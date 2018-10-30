@@ -131,7 +131,6 @@ public abstract class RepoAction extends RestAction {
 
     private transient CaomRepoConfig repoConfig;
     private transient ObservationDAO dao;
-    private transient ReadAccessDAO readAccessDAO;
     private transient DeletedEntityDAO deletedDAO;
 
     protected RepoAction() {
@@ -480,9 +479,6 @@ public abstract class RepoAction extends RestAction {
      * @param collection
      * @param raGroupConfig read access group data from configuration file
      * @return read access generator plugin or null if not configured
-     * @throws IOException
-     * @throws URISyntaxException
-     * @throws GroupNotFoundException
      */
     protected ReadAccessTuplesGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
         ReadAccessTuplesGenerator ratGenerator = null;
