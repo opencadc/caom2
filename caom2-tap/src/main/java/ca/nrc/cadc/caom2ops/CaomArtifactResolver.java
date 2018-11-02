@@ -1,70 +1,70 @@
 /*
-************************************************************************
-*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
-**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
-*
-*  (c) 2009.                            (c) 2009.
-*  Government of Canada                 Gouvernement du Canada
-*  National Research Council            Conseil national de recherches
-*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-*  All rights reserved                  Tous droits réservés
-*
-*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
-*  expressed, implied, or               énoncée, implicite ou légale,
-*  statutory, of any kind with          de quelque nature que ce
-*  respect to the software,             soit, concernant le logiciel,
-*  including without limitation         y compris sans restriction
-*  any warranty of merchantability      toute garantie de valeur
-*  or fitness for a particular          marchande ou de pertinence
-*  purpose. NRC shall not be            pour un usage particulier.
-*  liable in any event for any          Le CNRC ne pourra en aucun cas
-*  damages, whether direct or           être tenu responsable de tout
-*  indirect, special or general,        dommage, direct ou indirect,
-*  consequential or incidental,         particulier ou général,
-*  arising from the use of the          accessoire ou fortuit, résultant
-*  software.  Neither the name          de l'utilisation du logiciel. Ni
-*  of the National Research             le nom du Conseil National de
-*  Council of Canada nor the            Recherches du Canada ni les noms
-*  names of its contributors may        de ses  participants ne peuvent
-*  be used to endorse or promote        être utilisés pour approuver ou
-*  products derived from this           promouvoir les produits dérivés
-*  software without specific prior      de ce logiciel sans autorisation
-*  written permission.                  préalable et particulière
-*                                       par écrit.
-*
-*  This file is part of the             Ce fichier fait partie du projet
-*  OpenCADC project.                    OpenCADC.
-*
-*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
-*  you can redistribute it and/or       vous pouvez le redistribuer ou le
-*  modify it under the terms of         modifier suivant les termes de
-*  the GNU Affero General Public        la “GNU Affero General Public
-*  License as published by the          License” telle que publiée
-*  Free Software Foundation,            par la Free Software Foundation
-*  either version 3 of the              : soit la version 3 de cette
-*  License, or (at your option)         licence, soit (à votre gré)
-*  any later version.                   toute version ultérieure.
-*
-*  OpenCADC is distributed in the       OpenCADC est distribué
-*  hope that it will be useful,         dans l’espoir qu’il vous
-*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
-*  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
-*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
-*  General Public License for           Générale Publique GNU Affero
-*  more details.                        pour plus de détails.
-*
-*  You should have received             Vous devriez avoir reçu une
-*  a copy of the GNU Affero             copie de la Licence Générale
-*  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
-*
-*  $Revision: 4 $
-*
-************************************************************************
+ ************************************************************************
+ *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+ **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ *
+ *  (c) 2009.                            (c) 2009.
+ *  Government of Canada                 Gouvernement du Canada
+ *  National Research Council            Conseil national de recherches
+ *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ *  All rights reserved                  Tous droits réservés
+ *
+ *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+ *  expressed, implied, or               énoncée, implicite ou légale,
+ *  statutory, of any kind with          de quelque nature que ce
+ *  respect to the software,             soit, concernant le logiciel,
+ *  including without limitation         y compris sans restriction
+ *  any warranty of merchantability      toute garantie de valeur
+ *  or fitness for a particular          marchande ou de pertinence
+ *  purpose. NRC shall not be            pour un usage particulier.
+ *  liable in any event for any          Le CNRC ne pourra en aucun cas
+ *  damages, whether direct or           être tenu responsable de tout
+ *  indirect, special or general,        dommage, direct ou indirect,
+ *  consequential or incidental,         particulier ou général,
+ *  arising from the use of the          accessoire ou fortuit, résultant
+ *  software.  Neither the name          de l'utilisation du logiciel. Ni
+ *  of the National Research             le nom du Conseil National de
+ *  Council of Canada nor the            Recherches du Canada ni les noms
+ *  names of its contributors may        de ses  participants ne peuvent
+ *  be used to endorse or promote        être utilisés pour approuver ou
+ *  products derived from this           promouvoir les produits dérivés
+ *  software without specific prior      de ce logiciel sans autorisation
+ *  written permission.                  préalable et particulière
+ *                                       par écrit.
+ *
+ *  This file is part of the             Ce fichier fait partie du projet
+ *  OpenCADC project.                    OpenCADC.
+ *
+ *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+ *  you can redistribute it and/or       vous pouvez le redistribuer ou le
+ *  modify it under the terms of         modifier suivant les termes de
+ *  the GNU Affero General Public        la “GNU Affero General Public
+ *  License as published by the          License” telle que publiée
+ *  Free Software Foundation,            par la Free Software Foundation
+ *  either version 3 of the              : soit la version 3 de cette
+ *  License, or (at your option)         licence, soit (à votre gré)
+ *  any later version.                   toute version ultérieure.
+ *
+ *  OpenCADC is distributed in the       OpenCADC est distribué
+ *  hope that it will be useful,         dans l’espoir qu’il vous
+ *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+ *  without even the implied             GARANTIE : sans même la garantie
+ *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+ *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+ *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+ *  General Public License for           Générale Publique GNU Affero
+ *  more details.                        pour plus de détails.
+ *
+ *  You should have received             Vous devriez avoir reçu une
+ *  a copy of the GNU Affero             copie de la Licence Générale
+ *  General Public License along         Publique GNU Affero avec
+ *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+ *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+ *                                       <http://www.gnu.org/licenses/>.
+ *
+ *  $Revision: 4 $
+ *
+ ************************************************************************
  */
 
 package ca.nrc.cadc.caom2ops;
@@ -75,6 +75,10 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.StringUtil;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -83,6 +87,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -97,7 +102,7 @@ public class CaomArtifactResolver {
 
     private static final String CACHE_FILENAME = CaomArtifactResolver.class.getSimpleName() + ".properties";
 
-    private final Map<String, StorageResolver> handlers = new HashMap<String, StorageResolver>();
+    private final Map<String, StorageResolver> handlers = new HashMap<>();
 
     private AuthMethod authMethod;
     private String runID;
@@ -112,7 +117,7 @@ public class CaomArtifactResolver {
 
     /**
      * Create a MultiStorageResolver with configuration loaded from the specified URL.
-     *
+     * <p>
      * The config resource has contains URIs (one per line, comments start line with #, blank lines
      * are ignored) with a scheme and a class name of a class that implements the StorageResolver
      * interface for that particular scheme.
@@ -157,8 +162,8 @@ public class CaomArtifactResolver {
      * Override the authentication method from the current subject in order to generate URLs
      * with a possibly different authentication method. This override may not be applicable
      * to all StorsgeResolver implementations.
-     * 
-     * @param authMethod 
+     *
+     * @param authMethod
      */
     public void setAuthMethod(AuthMethod authMethod) {
         this.authMethod = authMethod;
@@ -167,11 +172,36 @@ public class CaomArtifactResolver {
     /**
      * Set RUNID value to optionally append to URLs. The runid is appended if the
      * StorageResolver implements the Traceable interface.
-     * 
-     * @param runID 
+     *
+     * @param runID
      */
     public void setRunID(String runID) {
         this.runID = runID;
+    }
+
+    private void setStorageResolverAuthMethod(final StorageResolver storageResolver) {
+        try {
+            final Class<?> clazz = storageResolver.getClass();
+            final Method m = clazz.getMethod("setAuthMethod", AuthMethod.class);
+            m.invoke(storageResolver, this.authMethod);
+        } catch (NoSuchMethodException nsme) {
+            // Do nothing.  If it's missing, that's fine.
+        } catch (InvocationTargetException | IllegalAccessException classException) {
+            throw new RuntimeException(String.format("Unable to set the auth method in class %s.  Ensure the class " +
+                                                         "contains a public 'setAuthMethod(AuthMethod)' method.",
+                                                     storageResolver.getClass().getSimpleName()),
+                                       classException);
+        }
+    }
+
+    private StorageResolver getStorageResolver(final URI uri) {
+        final StorageResolver storageResolver = handlers.get(uri.getScheme());
+
+        if (storageResolver != null) {
+            setStorageResolverAuthMethod(storageResolver);
+        }
+
+        return storageResolver;
     }
 
     /**
@@ -181,18 +211,18 @@ public class CaomArtifactResolver {
      * the URI.toURL() method is called as a fallback, which is sufficient to handle
      * URIs where the scheme is a known transport protocol (e.g. http).
      *
-     * @param uri
+     * @param uri URI to transform.
      * @return a URL to the identified resource; null if the uri was null
-     * @throws IllegalArgumentException if a URL cannot be generated
+     * @throws IllegalArgumentException      if a URL cannot be generated
      * @throws UnsupportedOperationException if there is no StorageResolver for the URI scheme
      */
     public URL getURL(URI uri)
-            throws IllegalArgumentException, MalformedURLException {
+        throws IllegalArgumentException, MalformedURLException {
         if (uri == null) {
             return null;
         }
 
-        StorageResolver resolver = (StorageResolver) handlers.get(uri.getScheme());
+        StorageResolver resolver = getStorageResolver(uri);
         if (resolver != null) {
             URL ret = resolver.toURL(uri);
             if (resolver instanceof Traceable) {
@@ -207,23 +237,22 @@ public class CaomArtifactResolver {
 
     /**
      * Convert the specified URI to one or more URL(s).
-     * 
-     * @param uri
-     * @param cutouts
+     *
+     * @param uri     URI to transform.
+     * @param cutouts List of cutout inputs.
      * @return resolved URL with cutouts
-     * @throws IllegalArgumentException if the input URI scheme does not match a known 
-     *     CutoutGenerator implementation
-     * @throws MalformedURLException 
+     * @throws IllegalArgumentException if the input URI scheme does not match a known
+     *                                  CutoutGenerator implementation
+     * @throws MalformedURLException
      */
     public URL getURL(URI uri, List<String> cutouts)
-            throws IllegalArgumentException, MalformedURLException {
+        throws IllegalArgumentException, MalformedURLException {
         if (uri == null) {
             return null;
         }
 
-        StorageResolver resolver = (StorageResolver) handlers.get(uri.getScheme());
-        if (resolver != null && resolver instanceof CutoutGenerator)
-        {
+        StorageResolver resolver = getStorageResolver(uri);
+        if (resolver instanceof CutoutGenerator) {
             CutoutGenerator gen = (CutoutGenerator) resolver;
             URL ret = gen.toURL(uri, cutouts);
             if (resolver instanceof Traceable) {
@@ -232,7 +261,7 @@ public class CaomArtifactResolver {
             return ret;
         }
         throw new IllegalArgumentException("cutout not supported: " + uri.getScheme()
-                + " resolver: " + resolver.getClass().getName());
+                                               + " resolver: " + resolver.getClass().getName());
     }
 
     /**
@@ -245,7 +274,7 @@ public class CaomArtifactResolver {
     public void addStorageResolver(String scheme, StorageResolver handler) {
         handlers.put(scheme, handler);
     }
-    
+
     private URL safeAppendRunID(URL url) throws MalformedURLException {
         if (StringUtil.hasText(runID)) {
             StringBuilder sb = new StringBuilder();
