@@ -185,10 +185,9 @@ public class CaomArtifactResolver {
             final Method m = clazz.getMethod("setAuthMethod", AuthMethod.class);
             m.invoke(storageResolver, this.authMethod);
         } catch (NoSuchMethodException nsme) {
-            // Do nothing.  If it's missing, that's fine.
+            log.debug(String.format("No setAuthMethod provided in %s", storageResolver.getClass().getSimpleName()));
         } catch (InvocationTargetException | IllegalAccessException classException) {
-            throw new RuntimeException(String.format("Unable to set the auth method in class %s.  Ensure the class " +
-                                                         "contains a public 'setAuthMethod(AuthMethod)' method.",
+            throw new RuntimeException(String.format("Unable to set the auth method in class %s.",
                                                      storageResolver.getClass().getSimpleName()),
                                        classException);
         }
