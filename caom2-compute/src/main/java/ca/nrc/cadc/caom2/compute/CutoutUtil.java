@@ -634,9 +634,9 @@ public final class CutoutUtil {
                 if (tr != null) {
                     log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
                     x1 = (long) Math.min(x1, tr.coordinates[0]);
-                    x2 = (long) Math.max(x2, tr.coordinates[0]);
+                    x2 = (long) Math.ceil(Math.max(x2, tr.coordinates[0]));
                     y1 = (long) Math.min(y1, tr.coordinates[1]);
-                    y2 = (long) Math.max(y2, tr.coordinates[1]);
+                    y2 = (long) Math.ceil(Math.max(y2, tr.coordinates[1]));
                 }
                 //else
                 //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
@@ -720,7 +720,7 @@ public final class CutoutUtil {
 
             // values can be inverted if WCS is in freq or energy instead of wavelength
             long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
-            long x2 = (long) Math.max(p1.coordinates[0], p2.coordinates[0]);
+            long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]));
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
