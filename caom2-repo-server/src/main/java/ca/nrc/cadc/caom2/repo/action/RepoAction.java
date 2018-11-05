@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.ac.GroupNotFoundException;
 import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
@@ -77,12 +76,11 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
+import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.cred.client.CredUtil;
@@ -254,9 +252,9 @@ public abstract class RepoAction extends RestAction {
         if (i != null) {
             this.computeMetadata = i.getComputeMetadata();
             this.computeMetadataValidation = i.getComputeMetadataValidation();
-            this.raGroupConfig.put(ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY, i.getProposalGroup());
-            this.raGroupConfig.put(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY, i.getOperatorGroup());
-            this.raGroupConfig.put(ReadAccessTuplesGenerator.STAFF_GROUP_KEY, i.getStaffGroup());
+            this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, i.getProposalGroup());
+            this.raGroupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, i.getOperatorGroup());
+            this.raGroupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, i.getStaffGroup());
         }
         return ret;
     }
@@ -436,7 +434,7 @@ public abstract class RepoAction extends RestAction {
                 }
             }
             
-            ReadAccessTuplesGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessGroupConfig());
+            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessGroupConfig());
             if (ratGenerator != null) {
                 ratGenerator.generateTuples(obs);
             }
@@ -480,12 +478,12 @@ public abstract class RepoAction extends RestAction {
      * @param raGroupConfig read access group data from configuration file
      * @return read access generator plugin or null if not configured
      */
-    protected ReadAccessTuplesGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
-        ReadAccessTuplesGenerator ratGenerator = null;
+    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
+        ReadAccessGenerator ratGenerator = null;
         
-        if (raGroupConfig.get(ReadAccessTuplesGenerator.STAFF_GROUP_KEY) != null 
-                || raGroupConfig.get(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY) != null) {
-            ratGenerator = new ReadAccessTuplesGenerator(collection, raGroupConfig);
+        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null 
+                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
+            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
         }
         
         return ratGenerator;

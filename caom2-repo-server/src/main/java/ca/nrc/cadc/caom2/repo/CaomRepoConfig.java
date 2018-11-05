@@ -70,14 +70,12 @@
 package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.ac.GroupURI;
-
-import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
+import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.StringUtil;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -91,7 +89,6 @@ import java.util.Map;
 import java.util.Properties;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -416,11 +413,11 @@ public class CaomRepoConfig {
                     computeMetadata = safeParseBoolean(kv[1]);
                 } else if ("computeMetadataValidation".equals(kv[0])) {
                     computeMetadataValidation = safeParseBoolean(kv[1]);
-                } else if (ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
+                } else if (ReadAccessGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
                     proposalGroup = safeParseBoolean(kv[1]);
-                } else if (ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
+                } else if (ReadAccessGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
                     operatorGroup = kv[1];
-                } else if (ReadAccessTuplesGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
+                } else if (ReadAccessGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
                     staffGroup = kv[1];
                 } else if ("basePublisherID".equals(kv[0])) {
                     basePublisherID = new URI(kv[1]);

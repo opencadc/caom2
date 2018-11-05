@@ -83,8 +83,8 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ReadAccessTuplesTest {
-    private static final Logger log = Logger.getLogger(ReadAccessTuplesTest.class);
+public class ReadAccessGeneratorTest {
+    private static final Logger log = Logger.getLogger(ReadAccessGeneratorTest.class);
 
     private static final String GROUP_BASE_URI = "ivo://cadc.nrc.ca/gms";
     private static final String OPERATOR_GROUP = GROUP_BASE_URI + "?CADC";
@@ -93,7 +93,7 @@ public class ReadAccessTuplesTest {
     String collection = "TEST";
     Map<String, Object> groupConfig;
 
-    public ReadAccessTuplesTest() { }
+    public ReadAccessGeneratorTest() { }
     
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom.ac", Level.DEBUG);
@@ -114,7 +114,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, now, -20L); // 20ms in the past
 
-            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
+            ReadAccessGenerator da = new ReadAccessGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -141,7 +141,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, null, 0L); // null release dates
 
-            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
+            ReadAccessGenerator da = new ReadAccessGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -168,7 +168,7 @@ public class ReadAccessTuplesTest {
             
             Observation obs = getSampleObservation("1", 1, now, 20L); // 20ms in future
             
-            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
+            ReadAccessGenerator da = new ReadAccessGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
@@ -196,7 +196,7 @@ public class ReadAccessTuplesTest {
             Observation obs = getSampleObservation("1", 1, now, 20000L); // 20 s in future
             obs.proposal = null;
             
-            ReadAccessTuplesGenerator da = new ReadAccessTuplesGenerator(collection, groupConfig);
+            ReadAccessGenerator da = new ReadAccessGenerator(collection, groupConfig);
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 

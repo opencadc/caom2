@@ -71,12 +71,8 @@ package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.DeletedObservationMetaReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneDataReadAccess;
-import ca.nrc.cadc.caom2.DeletedPlaneMetaReadAccess;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.date.DateUtil;
-import java.lang.reflect.Constructor;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -86,7 +82,6 @@ import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**

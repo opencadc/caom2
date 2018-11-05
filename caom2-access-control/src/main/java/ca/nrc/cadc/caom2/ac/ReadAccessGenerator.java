@@ -93,9 +93,9 @@ import org.apache.log4j.Logger;
  * be run with within a Subject.doAs(...) with suitable credentials.
  *
  */
-public class ReadAccessTuplesGenerator {
+public class ReadAccessGenerator {
 
-    private static Logger log = Logger.getLogger(ReadAccessTuplesGenerator.class);
+    private static Logger log = Logger.getLogger(ReadAccessGenerator.class);
     
     public static final String OPERATOR_GROUP_KEY = "operatorGroup";
     public static final String STAFF_GROUP_KEY = "staffGroup";
@@ -113,7 +113,7 @@ public class ReadAccessTuplesGenerator {
     private GroupURI operatorGroupURI;
     private GroupURI staffGroupURI;
 
-    private ReadAccessTuplesGenerator() {
+    private ReadAccessGenerator() {
     }
 
     /**
@@ -122,7 +122,7 @@ public class ReadAccessTuplesGenerator {
      * @param collection
      * @param groupConfig group data from configuration file
      */
-    public ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig) {
+    public ReadAccessGenerator(String collection, Map<String, Object> groupConfig) {
         this(collection, groupConfig, false);
     }
 
@@ -142,7 +142,7 @@ public class ReadAccessTuplesGenerator {
      * @param dryrun only show work if true
      * @param groupConfig group data from configuration file
      */
-    public ReadAccessTuplesGenerator(String collection, Map<String, Object> groupConfig, boolean dryrun) {
+    public ReadAccessGenerator(String collection, Map<String, Object> groupConfig, boolean dryrun) {
         this.collection = collection;
         this.dryrun = dryrun;
         initGroups(groupConfig);

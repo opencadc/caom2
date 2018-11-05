@@ -75,7 +75,7 @@ import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ac.ReadAccessTuplesGenerator;
+import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -127,7 +127,7 @@ public class ObservationHarvester extends Harvester {
     private boolean skipped;
     
     private boolean computePlaneMetadata = false;
-    private ReadAccessTuplesGenerator acGenerator;
+    private ReadAccessGenerator acGenerator;
     
     private boolean ready = false;
 
@@ -170,29 +170,29 @@ public class ObservationHarvester extends Harvester {
                 if (kv.length != 2) {
                     throw new IllegalArgumentException("invalid key=value pair: " + option);
                 }
-                if (ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
+                if (ReadAccessGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
                     boolean proposalGroup = "true".equals(kv[1]);
                     if (proposalGroup) {
-                        groupConfig.put(ReadAccessTuplesGenerator.PROPOSAL_GROUP_KEY, proposalGroup);
+                        groupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, proposalGroup);
                     }
-                } else if (ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
+                } else if (ReadAccessGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
                     String og = kv[1];
                     if (og != null) {
                         URI ouri = new URI(og);
-                        groupConfig.put(ReadAccessTuplesGenerator.OPERATOR_GROUP_KEY, ouri);
+                        groupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, ouri);
                     }
-                } else if (ReadAccessTuplesGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
+                } else if (ReadAccessGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
                     String sg = kv[1];
                     if (sg != null) {
                         URI suri = new URI(sg);
-                        groupConfig.put(ReadAccessTuplesGenerator.STAFF_GROUP_KEY, suri);
+                        groupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, suri);
                     }
                 }
             }
             for (Map.Entry<String,Object> me : groupConfig.entrySet()) {
                 log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
             }
-            this.acGenerator = new ReadAccessTuplesGenerator(src.getCollection(), groupConfig);
+            this.acGenerator = new ReadAccessGenerator(src.getCollection(), groupConfig);
         } catch (IOException ex) {
             throw new RuntimeException("failed to read config from " + config, ex);
         } catch (Exception ex) {
