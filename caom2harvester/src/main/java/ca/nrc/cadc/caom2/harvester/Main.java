@@ -112,11 +112,15 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
             }

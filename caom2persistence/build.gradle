@@ -3,6 +3,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
+    id 'application'
     id 'checkstyle'
 }
 
@@ -19,6 +20,8 @@ group = 'org.opencadc'
 
 version = '2.3.25'
 
+mainClassName = 'ca.nrc.cadc.caom2.version.Main'
+
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
@@ -27,7 +30,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.1.5,)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.1,)'
-    compile 'org.opencadc:caom2:[2.3.25,)'
+    compile 'org.opencadc:caom2:[2.3.13,)'
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
 
     testCompile 'junit:junit:4.+'
