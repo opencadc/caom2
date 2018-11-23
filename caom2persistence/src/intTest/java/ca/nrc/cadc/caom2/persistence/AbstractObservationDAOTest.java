@@ -201,6 +201,7 @@ public abstract class AbstractObservationDAOTest
 
     Class[] ENTITY_CLASSES =
     {
+        // including join tables before FK targets
         ObservationMember.class, ProvenanceInput.class, Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 

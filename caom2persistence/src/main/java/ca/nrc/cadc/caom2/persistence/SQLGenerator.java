@@ -600,6 +600,14 @@ public class SQLGenerator {
         return id;
     }
 
+    String getUpdateLockSQL(Observation o) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("UPDATE ").append(getTable(Observation.class));
+        sb.append(" SET accMetaChecksum = ").append(literal(o.getAccMetaChecksum()));
+        sb.append(" WHERE obsID = ").append(literal(o.getID()));
+        return sb.toString();
+    }
+    
     public String getSelectSQL(ObservationURI uri, int depth, boolean skeleton) {
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(Observation.class);
