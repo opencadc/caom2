@@ -6,5 +6,5 @@ convert -append \
 	CAOM3wcs.png \
 	CAOM4entities.png \
 	CAOM5vocabularies.png \
-	CAOM-2.3.png
+	CAOM-2.4.png
 

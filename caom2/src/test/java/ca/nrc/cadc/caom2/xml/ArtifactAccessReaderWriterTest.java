@@ -120,7 +120,6 @@ public class ArtifactAccessReaderWriterTest {
             
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertTrue(actual.getReadGroups().isEmpty());
-            Assert.assertTrue(actual.getWriteGroups().isEmpty());
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -140,8 +139,6 @@ public class ArtifactAccessReaderWriterTest {
             expected.isPublic = true;
             expected.getReadGroups().add(URI.create("ivo://example.net/aa?group1"));
             expected.getReadGroups().add(URI.create("ivo://example.net/aa?group2"));
-            expected.getWriteGroups().add(URI.create("ivo://example.net/aa?group3"));
-            expected.getWriteGroups().add(URI.create("ivo://example.net/aa?group4"));
             
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ArtifactAccessWriter aw = new ArtifactAccessWriter();
@@ -162,7 +159,6 @@ public class ArtifactAccessReaderWriterTest {
             
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertEquals(expected.getReadGroups().size(), actual.getReadGroups().size());
-            Assert.assertEquals(expected.getWriteGroups().size(), actual.getWriteGroups().size());
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

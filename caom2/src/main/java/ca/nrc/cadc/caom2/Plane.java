@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-
 import java.net.URI;
 import java.util.Date;
 import java.util.Set;
@@ -93,6 +92,8 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
 
     // mutable contents
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
+    private final Set<URI> metaReadGroups = new TreeSet<URI>();
+    private final Set<URI> dataReadGroups = new TreeSet<URI>();
 
     // mutable state
     public URI creatorID;
@@ -127,6 +128,14 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
         return artifacts;
     }
 
+    public Set<URI> getMetaReadGroups() {
+        return metaReadGroups;
+    }
+
+    public Set<URI> getDataReadGroups() {
+        return dataReadGroups;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (o == null) {

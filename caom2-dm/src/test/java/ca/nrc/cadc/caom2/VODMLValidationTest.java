@@ -92,10 +92,11 @@ public class VODMLValidationTest
 
     private static final String VODML_FILE_22 = "CAOM-2.2-vodml.xml";
     private static final String VODML_FILE_23 = "CAOM-2.3-vodml.xml";
+    private static final String VODML_FILE_24 = "CAOM-2.4-vodml.xml";
     
     private static final String[] VODML_FILES = new String[]
     {
-        VODML_FILE_22, VODML_FILE_23
+        VODML_FILE_22, VODML_FILE_23, VODML_FILE_24
     };
     
     static

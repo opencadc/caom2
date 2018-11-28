@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,24 +62,52 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.access;
 
+
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
-import java.util.UUID;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class PlaneMetaReadAccess extends ReadAccess {
-    private static final long serialVersionUID = 201202081620L;
+public class ArtifactAccessTest {
+    private static final Logger log = Logger.getLogger(ArtifactAccessTest.class);
 
-    public PlaneMetaReadAccess(UUID assetID, URI groupID) {
-        super(assetID, groupID);
+    public ArtifactAccessTest() { 
+    }
+    
+    @Test
+    public void testCtor() {
+        try {
+            URI uri = URI.create("foo:bar/baz");
+            ArtifactAccess aa = new ArtifactAccess(new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA));
+            Assert.assertNotNull(aa.getArtifact());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testNullCtorArg() {
+        try {
+            ArtifactAccess aa = new ArtifactAccess(null);
+            Assert.fail("ctor did not check null arg");
+        } catch (IllegalArgumentException expected) {
+            log.info("caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }

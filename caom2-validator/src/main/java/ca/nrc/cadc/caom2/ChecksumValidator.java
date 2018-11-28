@@ -82,6 +82,8 @@ public class ChecksumValidator implements Runnable {
     private int depth;
     private final Observation obs;
     
+    private boolean fail = false;
+    
     public ChecksumValidator(Observation obs, int depth, boolean acc) { 
         this.obs = obs;
         this.depth = depth;
@@ -99,6 +101,7 @@ public class ChecksumValidator implements Runnable {
         sb.append(u2);
         if (!eq) {
             sb.append(" [MISMATCH]");
+            fail = true;
         }
     }
     
@@ -138,7 +141,7 @@ public class ChecksumValidator implements Runnable {
                                     compare(cs, pa.getMetaChecksum(), partCS);
                                     if (acc) {
                                         URI partACS = pa.computeAccMetaChecksum(digest);
-                                        acs.append("\n      chunk: ").append(pa.getID()).append(" ");
+                                        acs.append("\n      part: ").append(pa.getID()).append(" ");
                                         compare(acs, pa.getAccMetaChecksum(), partACS);
                                     }
                                 }
@@ -181,6 +184,9 @@ public class ChecksumValidator implements Runnable {
             }
         } catch (Exception ex) {
             log.error("unexpected exception", ex);
+        }
+        if (fail) {
+            throw new IllegalStateException("checksum mismatch");
         }
     }
     

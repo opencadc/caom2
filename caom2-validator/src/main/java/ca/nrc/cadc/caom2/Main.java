@@ -152,6 +152,9 @@ public final class Main {
                 log.info("DONE " + v.getClass().getName() + System.getProperty("line.separator"));
             }
 
+        } catch (IllegalStateException ex) {
+            log.error("validation failed: " + ex.getMessage());
+            System.exit(1);
         } catch (Throwable t) {
             log.error("unexpected failure", t);
             System.exit(1);

@@ -327,6 +327,40 @@ public class CaomUtil implements Serializable {
             }
         }
     }
+    
+    public static String encodeURIs(Set<URI> set) {
+        if (set.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        Iterator<URI> i = set.iterator();
+        while (i.hasNext()) {
+            sb.append(i.next().toASCIIString());
+            if (i.hasNext()) {
+                sb.append(STRING_LIST_SEPARATOR);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static void decodeURIs(String val, Set<URI> out) {
+        if (val == null) {
+            return;
+        }
+        val = val.trim();
+        if (val.length() == 0) {
+            return;
+        }
+        String[] ss = val.split(STRING_LIST_SEPARATOR);
+        for (String s : ss) {
+            try {
+                URI uri = new URI(s);
+                out.add(uri);
+            } catch (URISyntaxException ex) {
+                throw new RuntimeException("failed to decode URI: " + s, ex);
+            }
+        }
+    }
 
     public static String encodeCoordRange1D(CoordRange1D cr) {
         if (cr == null) {
