@@ -16,10 +16,10 @@ alter table <schema>.Observation add column metaReadGroups text;
 
 alter table <schema>.Plane add column metaReadGroups text, add column dataReadGroups text;
 
---drop table <schema>.ObservationMetaReadAccess;
---drop table <schema>.PlaneMetaReadAccess;
---drop table <schema>.PlaneDataReadAccess;
+drop table <schema>.ObservationMetaReadAccess;
+drop table <schema>.PlaneMetaReadAccess;
+drop table <schema>.PlaneDataReadAccess;
 
---drop table <schema>.DeletedObservationMetaReadAccess;
---drop table <schema>.DeletedPlaneMetaReadAccess;
---drop table <schema>.DeletedPlaneDataReadAccess;
+drop table <schema>.DeletedObservationMetaReadAccess;
+drop table <schema>.DeletedPlaneMetaReadAccess;
+drop table <schema>.DeletedPlaneDataReadAccess;
