@@ -131,7 +131,7 @@ public class Discover extends Caom2ArtifactSync {
                             }
                         }
                         
-                        boolean verify = !am.isSet("noverify");
+                        boolean tolerateNullChecksum = am.isSet("tolerateNullChecksum");
     
                         int nthreads = 1;
                         if (am.isSet("threads")) {
@@ -152,7 +152,7 @@ public class Discover extends Caom2ArtifactSync {
                             artifactDAO.setConfig(daoConfig);
     
                             this.downloader = new DownloadArtifactFiles(
-                                    artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, retryAfterHours, verify);
+                                    artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, retryAfterHours, tolerateNullChecksum);
                             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                             listeners.add(downloader);
                             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -183,7 +183,7 @@ public class Discover extends Caom2ArtifactSync {
             sb.append("\n        --threads=<integer> : Number of download threads (default: 1)>");
             sb.append("\n        --batchsize=<integer> Max skip URIs to download (default: 1000)");
             sb.append("\n        --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
-            sb.append("\n        --noverify : Do not confirm by MD5 sum after download");
+            sb.append("\n        --tolerateNullChecksum : Download even when checksum is null");
         } else {
             sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
         }
