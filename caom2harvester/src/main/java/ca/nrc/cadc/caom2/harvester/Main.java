@@ -77,7 +77,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -86,9 +85,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 

@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -89,10 +88,10 @@ public class Main {
             ArgumentMap am = new ArgumentMap(args);
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
-                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.db", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
             }

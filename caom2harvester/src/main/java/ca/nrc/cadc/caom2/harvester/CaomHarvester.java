@@ -173,7 +173,9 @@ public class CaomHarvester implements Runnable {
      * @param config 
      */
     public void setGenerateReadAccess(String config) {
-        obsHarvester.setGenerateReadAccessTuples(new File(config));
+        if (config != null) {
+            obsHarvester.setGenerateReadAccessTuples(new File(config));
+        }
     }
 
     @Override
