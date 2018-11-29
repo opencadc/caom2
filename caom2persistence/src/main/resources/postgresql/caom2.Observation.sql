@@ -47,7 +47,8 @@ create table <schema>.Observation
     environment_ambientTemp double precision,
     environment_photometric integer,
 
-    members text null,
+    members text,
+    metaReadGroups text,
 
 -- optimisation
     metaReadAccessGroups tsvector default '',
@@ -57,7 +58,6 @@ create table <schema>.Observation
     obsID uuid not null primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
-    stateCode int not null,
     metaChecksum varchar(136) not null,
     accMetaChecksum varchar(136) not null
 )

@@ -127,7 +127,6 @@ create table caom2_Chunk
     chunkID bigint not null primary key nonclustered,
     lastModified datetime not null,
     maxLastModified datetime not null,
-    stateCode int not null,
     metaChecksum varchar(36),
     accMetaChecksum varchar(36)
 )

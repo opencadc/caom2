@@ -70,18 +70,13 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.access.ReadAccess;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -137,7 +132,6 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
         }
         checkInit();
 
-        // transition from stateCode to metaChecksum
         boolean delta = false;
         String cmp = " [new]";
         if (cur != null) {

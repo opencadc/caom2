@@ -26,13 +26,15 @@ create table caom2_Plane
     metrics_magLimit double precision null,
 
     quality_flag varchar(16) null,
+-- needed by 2.4-alpha1
+    metaReadGroups char(1) null,
+    dataReadGroups char(1) null,
 
 -- internal
     obsID bigint not null references caom2_Observation (obsID),
     planeID bigint not null  primary key nonclustered,
     lastModified datetime not null,
     maxLastModified datetime not null,
-    stateCode int not null,
     metaChecksum varchar(36),
     accMetaChecksum varchar(36)
 )

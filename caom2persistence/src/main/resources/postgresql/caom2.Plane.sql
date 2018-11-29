@@ -79,6 +79,9 @@ create table <schema>.Plane
 -- this is long in the code but integer in db for historical reasons
     polarization_dimension  integer,
 
+    metaReadGroups text null,
+    dataReadGroups text null,
+
 -- optimisation
     dataReadAccessGroups tsvector default '',
     metaReadAccessGroups tsvector default '',
@@ -88,7 +91,6 @@ create table <schema>.Plane
     planeID uuid not null  primary key,
     lastModified timestamp not null,
     maxLastModified timestamp not null,
-    stateCode int not null,
     metaChecksum varchar(136) not null,
     accMetaChecksum varchar(136) not null
 )

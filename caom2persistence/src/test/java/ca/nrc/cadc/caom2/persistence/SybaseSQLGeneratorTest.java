@@ -70,7 +70,7 @@
 package ca.nrc.cadc.caom2.persistence;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.text.DateFormat;
@@ -150,14 +150,14 @@ public class SybaseSQLGeneratorTest
         try
         {
             String start = "select top 10 ";
-            String end = " order by observationmetareadaccess.lastmodified";
+            String end = " order by observationstate.maxlastmodified";
             Date d1 = new Date();
             Date d2 = null;
             Integer batchSize = new Integer(10);
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-            String exp1 = "observationmetareadaccess.lastmodified >= '" + df.format(d1) + "'";
+            String exp1 = "observationstate.maxlastmodified >= '" + df.format(d1) + "'";
 
-            String sql = gen.getSelectSQL(ObservationMetaReadAccess.class, d1, d2, batchSize);
+            String sql = gen.getSelectSQL(ObservationState.class, d1, d2, batchSize);
             log.debug("SQL: " + sql);
             sql = sql.toLowerCase();
             

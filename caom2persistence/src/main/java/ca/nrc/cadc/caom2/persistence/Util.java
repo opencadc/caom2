@@ -88,7 +88,9 @@ import java.net.URI;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -137,6 +139,14 @@ public class Util extends CaomUtil {
         // note: \\s* matches one or more whitespace chars
         //sql = sql.replaceAll("OUTER JOIN", "\n  OUTER JOIN");
         return sql;
+    }
+    
+    public static String extractGroupNames(Collection<URI> uris) {
+        StringBuilder sb = new StringBuilder();
+        for (URI u : uris) {
+            sb.append(u.getQuery()).append(" ");
+        }
+        return sb.toString();
     }
 
     public static void assignDeletedLastModified(DeletedEntity ce, Date d, String fieldName) {

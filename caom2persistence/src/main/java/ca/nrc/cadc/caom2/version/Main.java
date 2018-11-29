@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,21 +62,74 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.version;
 
-import ca.nrc.cadc.caom2.access.ObservationMetaReadAccess;
-import java.util.UUID;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBConfig;
+import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.Log4jInit;
+import javax.sql.DataSource;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
+ * Main entry point to use the InitDatabase.doInit
  * @author pdowler
  */
-public class DeletedObservationMetaReadAccess extends DeletedEntity {
-    public DeletedObservationMetaReadAccess(UUID id) {
-        super(ObservationMetaReadAccess.class, id);
+public class Main {
+    private static final Logger log = Logger.getLogger(Main.class);
+
+    public static void main(String[] args) {
+        try {
+            ArgumentMap am = new ArgumentMap(args);
+            if (am.isSet("d") || am.isSet("debug")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.db", Level.DEBUG);
+            } else if (am.isSet("v") || am.isSet("verbose")) {
+                Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
+            } else {
+                Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
+            }
+            
+            if (am.isSet("h") || am.isSet("help")) {
+                usage();
+                System.exit(0);
+            }
+
+            String target = am.getValue("target");
+            String[] srcDS = target.split("[.]");
+            if (srcDS.length != 3) {
+                log.warn("malformed --target value, found " + target + " expected: <server>.<database>.<schema>");
+                usage();
+                System.exit(1);
+            }
+            
+            DBConfig dbrc = new DBConfig();
+            ConnectionConfig cc = dbrc.getConnectionConfig(srcDS[0], srcDS[1]);
+            DataSource ds = DBUtil.getDataSource(cc);
+            InitDatabase initdb = new InitDatabase(ds, srcDS[1], srcDS[2]);
+            initdb.doInit();
+        } catch (Throwable t) {
+            log.error("uncaught failure", t);
+            System.exit(1);
+        }
+    }
+    
+    private static void usage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("usage: caom2persistence [-v|--verbose|-d|--debug] [-h|--help] ...");
+        sb.append("\n           --target=<server>.<database>.<schema> : the target database to initialise with caom2 tables");
+        sb.append("\n           --dryrun : NOT IMPLEMENTED -- just to be clear!!!");
+        sb.append("\n");
+        sb.append("\nThis tool will either create or upgrade the caom2 tables in the target database -- USE WITH CAUTION!!!");
+        System.out.println(sb.toString());
+    }
+    
+    private Main() { 
     }
 }

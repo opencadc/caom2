@@ -77,7 +77,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -86,9 +85,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -110,13 +107,17 @@ public class Main {
 
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.DEBUG);
-                // Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.DEBUG);
+                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
-                // Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
+                Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
             }
@@ -133,7 +134,10 @@ public class Main {
             final boolean validate = am.isSet("validate");
             final boolean noChecksum = am.isSet("nochecksum");;
             final boolean noAC = am.isSet("noac");
+            
+            // optional plugins
             final boolean compute = am.isSet("compute");
+            final String generateAC = am.getValue("generate-ac");
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
@@ -325,9 +329,11 @@ public class Main {
             if (!validate) {
 
                 try {
-                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, compute, src, dest, basePublisherID, batchSize, batchFactor, full, skip, nthreads);
+                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, src, dest, basePublisherID, batchSize, batchFactor, full, skip, nthreads);
                     ch.setMinDate(minDate);
                     ch.setMaxDate(maxDate);
+                    ch.setCompute(compute);
+                    ch.setGenerateReadAccess(generateAC);
                     action = ch;
                 } catch (IOException ioex) {
 
@@ -395,7 +401,7 @@ public class Main {
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
         sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
-        sb.append("\n          <capabilities URL> : direct URl to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
+        sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
         sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
         
 
@@ -412,13 +418,16 @@ public class Main {
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n         --batchFactor=<multiplier to batchSize when harvesting deletions (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n         --dryrun : check for work but don't do anything");
-        
-        sb.append("\n\nLegacy options (probably only useful for CADC):");
-        sb.append("\n         --batchFactor=<multiplier to batchSize when getting single-table entities> (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
-        sb.append("\n         --compute : compute additional Plane metadata from WCS using the caom2-compute library [deprecated]");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
-        sb.append("\n         --noac : do not harvest ReadAccess tuples (default: false when --source is a database, otherwise true)");
+        
+        sb.append("\n\nOptional plugin invocation:");
+        sb.append("\n           (probably only useful for CADC; requires --nochecksum since they modify content)");
+        sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
+        sb.append("\n         --generate-ac=<config file> : invoke the caom2-access-control plugin (generates grants for proprietary metadata and data)");
+        sb.append("\n                       <config file> is a properties file with <collection> = <same generate options as caom2-repo-server>");
+        
         log.warn(sb.toString());
     }
 
@@ -428,7 +437,7 @@ public class Main {
             new URL(source);
             return HarvestResource.SOURCE_CAP_URL;
         } catch (MalformedURLException e) {
-            // Not an URL
+            // Not a valid URL
         }
 
         // Try source as resourceUri
@@ -437,7 +446,7 @@ public class Main {
                 new URI(source);
                 return HarvestResource.SOURCE_URI;
             } catch (URISyntaxException e) {
-                // Not an resourceID
+                // Not a valid resourceID
             }
         }
 

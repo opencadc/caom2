@@ -3,6 +3,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
+    id 'application'
     id 'checkstyle'
 }
 
@@ -11,11 +12,15 @@ repositories {
     mavenLocal()
 }
 
+apply from: '../intTest.gradle'
+
 sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.24'
+version = '2.3.25'
+
+mainClassName = 'ca.nrc.cadc.caom2.version.Main'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -25,14 +30,14 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.1.5,)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.1,)'
-    compile 'org.opencadc:caom2:[2.3.11,)'
+    compile 'org.opencadc:caom2:[2.3.13,)'
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
 
     testCompile 'junit:junit:4.+'
     
     // JDBC drivers
-    testRuntime 'net.sourceforge.jtds:jtds:1.+'
-    testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
+    intTestRuntime 'net.sourceforge.jtds:jtds:1.+'
+    intTestRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
 }
 
 apply from: '../opencadc.gradle'

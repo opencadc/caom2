@@ -107,7 +107,8 @@ public abstract class AbstractArtifactDAOTest
 
     Class[] ENTITY_CLASSES =
     {
-        Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
+        // including join tables before FK targets
+        ObservationMember.class, ProvenanceInput.class, Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
     public AbstractArtifactDAOTest(Class genClass, String server, String database, String schema)
