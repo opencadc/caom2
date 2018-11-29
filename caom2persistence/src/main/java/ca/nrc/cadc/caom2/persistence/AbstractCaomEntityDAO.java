@@ -132,7 +132,6 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
         }
         checkInit();
 
-        // transition from stateCode to metaChecksum
         boolean delta = false;
         String cmp = " [new]";
         if (cur != null) {

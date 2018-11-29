@@ -87,7 +87,6 @@ public class Skeleton {
     public URI metaChecksum;
     public URI accMetaChecksum;
 
-    public Integer stateCode;
     public Class targetClass;
 
     protected Skeleton(Class c) {
@@ -96,7 +95,6 @@ public class Skeleton {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + id + "," + lastModified + ","
-                + stateCode + "," + metaChecksum + "]";
+        return getClass().getSimpleName() + "[" + id + "," + lastModified + "," + metaChecksum + "]";
     }
 }

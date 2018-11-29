@@ -36,8 +36,8 @@ dependencies {
     testCompile 'junit:junit:4.+'
     
     // JDBC drivers
-    testRuntime 'net.sourceforge.jtds:jtds:1.+'
-    testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
+    intTestRuntime 'net.sourceforge.jtds:jtds:1.+'
+    intTestRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
 }
 
 apply from: '../opencadc.gradle'

@@ -527,34 +527,16 @@ public class SQLGenerator {
         }
         columnMap.put(Chunk.class, chunkColumns);
 
-        //String[] metaReadAccessCols = new String[]{
-        //    "assetID", "groupID", "lastModified", "metaChecksum", "readAccessID"
-        //};
-        //columnMap.put(ObservationMetaReadAccess.class, metaReadAccessCols);
-        //columnMap.put(PlaneMetaReadAccess.class, metaReadAccessCols);
-        //columnMap.put(PlaneDataReadAccess.class, metaReadAccessCols);
-
         String[] deletedObservationCols = new String[]{
             "collection", "observationID", "lastModified", "id"
         };
         columnMap.put(DeletedObservation.class, deletedObservationCols);
         
-        //String[] deletedEntityCols = new String[]{
-        //    "lastModified", "id"
-        //};
-        //columnMap.put(DeletedObservationMetaReadAccess.class, deletedEntityCols);
-        //columnMap.put(DeletedPlaneMetaReadAccess.class, deletedEntityCols);
-        //columnMap.put(DeletedPlaneDataReadAccess.class, deletedEntityCols);
-
         columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "obsID"});
         columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "planeID"});
         columnMap.put(ArtifactSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "artifactID"});
         columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "partID"});
         columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
-
-        //columnMap.put(ObservationMetaReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
-        //columnMap.put(PlaneMetaReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
-        //columnMap.put(PlaneDataReadAccessSkeleton.class, new String[]{"lastModified", "metaChecksum", "readAccessID"});
 
         columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum"});
     }
@@ -968,18 +950,6 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    //protected String getUpdateAssetSQL(Class asset, Class ra, boolean add) {
-    //    throw new UnsupportedOperationException();
-    //}
-    
-    // test access
-    //String getReadAccessCol(Class raclz) {
-    //    if (PlaneDataReadAccess.class.equals(raclz)) {
-    //        return "dataReadAccessGroups";
-    //    }
-    //    return "metaReadAccessGroups";
-    //}
-
     public EntityPut getEntityPut(Class<? extends CaomEntity> c, boolean isUpdate) {
         if (Observation.class.isAssignableFrom(c)) {
             return new ObservationPut(isUpdate);
@@ -1000,10 +970,6 @@ public class SQLGenerator {
         if (Chunk.class.equals(c)) {
             return new ChunkPut(isUpdate);
         }
-
-        //if (ReadAccess.class.isAssignableFrom(c)) {
-        //    return new ReadAccessPut(isUpdate);
-        //}
 
         throw new UnsupportedOperationException();
     }
@@ -1037,7 +1003,6 @@ public class SQLGenerator {
         if (DeletedObservation.class.equals(c)) {
             return new DeletedObservationPut(isUpdate);
         }
-        //return new DeletedReadAccessPut(c, isUpdate);
         throw new UnsupportedOperationException("no entity delete for " + c.getName());
     }
     
@@ -1102,9 +1067,6 @@ public class SQLGenerator {
     }
     
     public EntityDelete getEntityDelete(Class<? extends CaomEntity> c, boolean primaryKey) {
-        //if (ReadAccess.class.isAssignableFrom(c)) {
-        //    return new ReadAccessEntityDelete(c, true);
-        //}
         return new BaseEntityDelete(c, primaryKey);
     }
 
@@ -3186,10 +3148,6 @@ public class SQLGenerator {
             Util.assignLastModified(o, lastModified, "lastModified");
             Util.assignLastModified(o, maxLastModified, "maxLastModified");
 
-            //Integer stateCode = Util.getInteger(rs, col++);
-            //log.debug("found: observation.stateCode = " + stateCode);
-            //Util.assignStateCode(o, stateCode);
-
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(o, metaChecksum, "metaChecksum");
@@ -3423,10 +3381,6 @@ public class SQLGenerator {
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
 
-            //Integer stateCode = Util.getInteger(rs, col++);
-            //log.debug("found: plane.stateCode = " + stateCode);
-            //Util.assignStateCode(p, stateCode);
-
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
@@ -3508,10 +3462,6 @@ public class SQLGenerator {
             Util.assignLastModified(a, lastModified, "lastModified");
             Util.assignLastModified(a, maxLastModified, "maxLastModified");
 
-            //Integer stateCode = Util.getInteger(rs, col++);
-            //log.debug("found: artifact.stateCode = " + stateCode);
-            //Util.assignStateCode(a, stateCode);
-            
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(a, metaChecksum, "metaChecksum");
@@ -3576,10 +3526,6 @@ public class SQLGenerator {
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
             Util.assignLastModified(p, lastModified, "lastModified");
             Util.assignLastModified(p, maxLastModified, "maxLastModified");
-
-            //Integer stateCode = Util.getInteger(rs, col++);
-            //log.debug("found: part.stateCode = " + stateCode);
-            //Util.assignStateCode(p, stateCode);
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
@@ -3864,10 +3810,6 @@ public class SQLGenerator {
             Util.assignLastModified(c, lastModified, "lastModified");
             Util.assignLastModified(c, maxLastModified, "maxLastModified");
 
-            //Integer stateCode = Util.getInteger(rs, col++);
-            //log.debug("found: chunk.stateCode = " + stateCode);
-            //Util.assignStateCode(c, stateCode);
-
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
@@ -3970,7 +3912,6 @@ public class SQLGenerator {
                 int col = 1;
                 Skeleton ret = skelClass.newInstance();
                 ret.lastModified = Util.getDate(rs, col++, utcCalendar);
-                //ret.stateCode = Util.getInteger(rs, col++);
                 ret.metaChecksum = Util.getURI(rs, col++);
                 ret.id = Util.getUUID(rs, col++);
                 log.debug("found: " + ret);
