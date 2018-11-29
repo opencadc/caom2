@@ -106,7 +106,7 @@ public class SubaruResolverTest {
     String PREVIEW_URL_PATH = "/qlis/ImagePNG";
     String HSC_PREVIEW_URL_PATH = "/shot/HSC";
 
-    String BASE_DATA_URL = "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca";
+    String BASE_DATA_URL = "www.canfar.net";
     String DATA_URL_PATH = "/maq/subaru";
     String DATA_URL_QUERY= "frameinfo=";
 

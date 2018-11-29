@@ -89,7 +89,7 @@ public class SubaruResolver implements StorageResolver {
     private static final String RAW_DATA_URI = "raw";
     private static final String PREVIEW_URI = "preview";
 
-    private static final String BASE_DATA_URL = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/maq/subaru?frameinfo=";
+    private static final String BASE_DATA_URL = "http://www.canfar.net/maq/subaru?frameinfo=";
 
     // Suprime-Cam
     private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp";
@@ -168,8 +168,8 @@ public class SubaruResolver implements StorageResolver {
 
         } else if (path.length == 3 && requestType.equals(RAW_DATA_URI)) {
             // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
-            // expected URL output is http://www.cadc-ccda.hia-iha.nrc-cnrc.gc
-            // .ca/maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
+            // expected URL output is http://www.canfar.net
+            // /maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
             sb = BASE_DATA_URL + NetUtil.encode(path[1] + "/" + path[2]);
         } else {
             throw new IllegalArgumentException("Invalid URI: " + requestType);
