@@ -13,8 +13,11 @@ alter table <schema>.Part drop column stateCode;
 alter table <schema>.Chunk drop column stateCode;
 
 alter table <schema>.Observation add column metaReadGroups text;
-
 alter table <schema>.Plane add column metaReadGroups text, add column dataReadGroups text;
+-- optimisations
+alter table <schema>.Artifact add column metaReadGroups text;
+alter table <schema>.Part add column metaReadGroups text;
+alter table <schema>.Chunk add column metaReadGroups text;
 
 drop table <schema>.ObservationMetaReadAccess;
 drop table <schema>.PlaneMetaReadAccess;

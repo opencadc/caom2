@@ -429,7 +429,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease"
+                "metaRelease",
+                "metaReadGroups", 
+                "metaReadAccessGroups" // optimisation (group names only)
             };
             this.numOptArtifactColumns = extraCols.length;
             artifactColumns = addExtraColumns(artifactColumns, extraCols);
@@ -446,7 +448,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease"
+                "metaRelease",
+                "metaReadGroups", 
+                "metaReadAccessGroups" // optimisation (group names only)
             };
             this.numOptPartColumns = extraCols.length;
             partColumns = addExtraColumns(partColumns, extraCols);
@@ -520,7 +524,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease"
+                "metaRelease",
+                "metaReadGroups", 
+                "metaReadAccessGroups" // optimisation (group names only)
             };
             this.numOptChunkColumns = extraCols.length;
             chunkColumns = addExtraColumns(chunkColumns, extraCols);
@@ -1526,7 +1532,7 @@ public class SQLGenerator {
             } else {
                 safeSetString(sb, ps, col++, Util.encodeURIs(plane.getMetaReadGroups()));
             }
-            
+
             if (plane.getDataReadGroups().isEmpty()) {
                 safeSetString(sb, ps, col++, null);
             } else {
@@ -1787,6 +1793,12 @@ public class SQLGenerator {
 
             if (persistOptimisations) {
                 safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
+                if (plane.getMetaReadGroups().isEmpty()) {
+                    safeSetString(sb, ps, col++, null);
+                } else {
+                    safeSetString(sb, ps, col++, Util.encodeURIs(plane.getMetaReadGroups()));
+                }
+                safeSetGroupOptimisation(sb, ps, col++, plane.getMetaReadGroups());
             }
 
             safeSetDate(sb, ps, col++, artifact.getLastModified(), utcCalendar);
@@ -1874,8 +1886,14 @@ public class SQLGenerator {
                 safeSetString(sb, ps, col++, null);
             }
 
-            if (persistComputed) {
+            if (persistOptimisations) {
                 safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
+                if (plane.getMetaReadGroups().isEmpty()) {
+                    safeSetString(sb, ps, col++, null);
+                } else {
+                    safeSetString(sb, ps, col++, Util.encodeURIs(plane.getMetaReadGroups()));
+                }
+                safeSetGroupOptimisation(sb, ps, col++, plane.getMetaReadGroups());
             }
 
             safeSetDate(sb, ps, col++, part.getLastModified(), utcCalendar);
@@ -2196,6 +2214,12 @@ public class SQLGenerator {
 
             if (persistOptimisations) {
                 safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
+                if (plane.getMetaReadGroups().isEmpty()) {
+                    safeSetString(sb, ps, col++, null);
+                } else {
+                    safeSetString(sb, ps, col++, Util.encodeURIs(plane.getMetaReadGroups()));
+                }
+                safeSetGroupOptimisation(sb, ps, col++, plane.getMetaReadGroups());
             }
 
             safeSetDate(sb, ps, col++, chunk.getLastModified(), utcCalendar);
