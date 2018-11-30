@@ -9,6 +9,7 @@ create table <schema>.Artifact
     contentChecksum varchar(136),
 
 -- optimisation
+    metaReadGroups text,
     metaReadAccessGroups tsvector default '',
 
 -- internal

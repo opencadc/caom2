@@ -118,6 +118,7 @@ create table <schema>.Chunk
     observable_independent_bin bigint,
 
 -- optimisation
+    metaReadGroups text,
     metaReadAccessGroups tsvector default '',
 
 -- internal

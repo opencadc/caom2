@@ -5,6 +5,7 @@ create table <schema>.Part
     productType varchar(64),
     
 -- optimisation
+    metaReadGroups text,
     metaReadAccessGroups tsvector default '',
 
 -- internal
