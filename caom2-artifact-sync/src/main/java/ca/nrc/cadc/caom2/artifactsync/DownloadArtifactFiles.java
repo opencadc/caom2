@@ -427,10 +427,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 uploadSuccess = false;
                 threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);
                 String exMsg = t.getMessage();
-                if (md5sumMessage != null && exMsg.contains("Precondition Failed")) {
-                    uploadErrorMessage = "Upload error: possible mismatch with AD calculated md5sum; " + md5sumMessage;
+                if (md5sumMessage != null && exMsg.contains("possible mismatch with AD")) {
+                    uploadErrorMessage = exMsg + " " + md5sumMessage;
                 } else {
-                	uploadErrorMessage = "Upload error: " + exMsg;
+                	uploadErrorMessage = exMsg;
                 }
             } finally {
                 bytesTransferred = byteCounter.getByteCount();
