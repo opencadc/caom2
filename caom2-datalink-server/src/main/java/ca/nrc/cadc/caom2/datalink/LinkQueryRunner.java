@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,13 +69,6 @@
 
 package ca.nrc.cadc.caom2.datalink;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.util.Date;
-
-
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
@@ -89,7 +82,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.util.ThrowableUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -98,12 +91,15 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
-import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.security.AccessControlException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *

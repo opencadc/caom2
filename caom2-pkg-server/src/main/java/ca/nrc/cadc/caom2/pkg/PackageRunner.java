@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -79,13 +79,13 @@ import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
-import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.util.ThrowableUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -94,7 +94,6 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
-import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
