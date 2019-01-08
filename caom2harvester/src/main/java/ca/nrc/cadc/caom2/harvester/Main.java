@@ -132,12 +132,12 @@ public class Main {
             final boolean skip = am.isSet("skip");
             final boolean dryrun = am.isSet("dryrun");
             final boolean validate = am.isSet("validate");
-            final boolean noChecksum = am.isSet("nochecksum");;
-            final boolean noAC = am.isSet("noac");
             
             // optional plugins
             final boolean compute = am.isSet("compute");
             final String generateAC = am.getValue("generate-ac");
+            final boolean noChecksum = am.isSet("nochecksum") || compute || am.isSet("generate-ac");
+            log.info("accMetaChecksum validation enabled: " + !noChecksum);
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
@@ -215,7 +215,7 @@ public class Main {
                     usage();
                     System.exit(1);
                 }
-                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
+                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
             } else if (sourceType == HarvestResource.SOURCE_CAP_URL) {
                 try {
                     src = new HarvestResource(new URL(source), collection);
@@ -400,7 +400,7 @@ public class Main {
 
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
-        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
         sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
         sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
         
@@ -421,9 +421,10 @@ public class Main {
         sb.append("\n         --batchFactor=<multiplier to batchSize when harvesting deletions (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
         sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
+        sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
         
         sb.append("\n\nOptional plugin invocation:");
-        sb.append("\n           (probably only useful for CADC; requires --nochecksum since they modify content)");
+        sb.append("\n           (probably only useful for CADC; automatically adds --nochecksum since they modify content)");
         sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
         sb.append("\n         --generate-ac=<config file> : invoke the caom2-access-control plugin (generates grants for proprietary metadata and data)");
         sb.append("\n                       <config file> is a properties file with <collection> = <same generate options as caom2-repo-server>");
