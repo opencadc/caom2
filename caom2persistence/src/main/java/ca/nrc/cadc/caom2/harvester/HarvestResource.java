@@ -86,7 +86,6 @@ public class HarvestResource {
     private String databaseServer;
     private String database;
     private String schema;
-    private boolean harvestAC;
 
     private URI resourceID;
     private URL capabilitiesURL;
@@ -114,24 +113,6 @@ public class HarvestResource {
      *            name of collection to harvest
      */
     public HarvestResource(String databaseServer, String database, String schema, String collection) {
-        this(databaseServer, database, schema, collection, true);
-    }
-
-    /**
-     * Create a HarvestResource for a database.
-     *
-     * @param databaseServer
-     *            server name in $HOME/.dbrc
-     * @param database
-     *            database name in $HOME/.dbrc and query generation
-     * @param schema
-     *            schema name for query generation
-     * @param collection
-     *            name of collection to harvest
-     * @param harvestAC
-     *            true to enable harvesting access control tuples
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC) {
         if (databaseServer == null || database == null || schema == null || collection == null) {
             throw new IllegalArgumentException("args cannot be null");
         }
@@ -139,7 +120,6 @@ public class HarvestResource {
         this.database = database;
         this.schema = schema;
         this.collection = collection;
-        this.harvestAC = harvestAC;
         this.resourceType = SOURCE_DB;
     }
 
@@ -149,7 +129,6 @@ public class HarvestResource {
         }
         this.resourceID = resourceID;
         this.collection = collection;
-        this.harvestAC = true; // no API for this
         this.resourceType = SOURCE_URI;
     }
 
@@ -159,7 +138,6 @@ public class HarvestResource {
         }
         this.capabilitiesURL = resourceCapabilitiesURL;
         this.collection = collection;
-        this.harvestAC = true; // no API for this
         this.resourceType = SOURCE_CAP_URL;
     }
 
@@ -182,10 +160,6 @@ public class HarvestResource {
 
     public String getSchema() {
         return schema;
-    }
-
-    public boolean getHarvestAC() {
-        return harvestAC;
     }
 
     public URI getResourceID() {
