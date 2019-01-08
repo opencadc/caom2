@@ -265,22 +265,11 @@ public class Main {
             }
 
             Integer batchSize = null;
-            Integer batchFactor = null;
             String sbatch = am.getValue("batchSize");
-            String sfactor = am.getValue("batchFactor");
 
             if (sbatch != null && sbatch.trim().length() > 0) {
                 try {
                     batchSize = new Integer(sbatch);
-                } catch (NumberFormatException nex) {
-                    usage();
-                    log.error("value for --batchSize must be an integer, found: " + sbatch);
-                    System.exit(1);
-                }
-            }
-            if (sfactor != null && sfactor.trim().length() > 0) {
-                try {
-                    batchFactor = new Integer(sfactor);
                 } catch (NumberFormatException nex) {
                     usage();
                     log.error("value for --batchSize must be an integer, found: " + sbatch);
@@ -292,12 +281,8 @@ public class Main {
                 log.debug("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
                 batchSize = DEFAULT_BATCH_SIZE;
             }
-            if (batchFactor == null && batchSize != null) {
-                log.debug("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
-                batchFactor = DEFAULT_BATCH_FACTOR;
-            }
             if (!validate) {
-                log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
+                log.info("batchSize: " + batchSize);
             }
 
             Date minDate = null;
@@ -329,7 +314,7 @@ public class Main {
             if (!validate) {
 
                 try {
-                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, src, dest, basePublisherID, batchSize, batchFactor, full, skip, nthreads);
+                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, src, dest, basePublisherID, batchSize, full, skip, nthreads);
                     ch.setMinDate(minDate);
                     ch.setMaxDate(maxDate);
                     ch.setCompute(compute);
@@ -415,11 +400,10 @@ public class Main {
         sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
 
         sb.append("\n\nOptional modifiers:");
+        sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append("\n         --batchFactor=<multiplier to batchSize when harvesting deletions (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
-        sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
         

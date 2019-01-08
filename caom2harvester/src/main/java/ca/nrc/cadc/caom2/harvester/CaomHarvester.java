@@ -111,8 +111,6 @@ public class CaomHarvester implements Runnable {
      *            base to use in generating Plane publisherID values in destination database
      * @param batchSize
      *            number of observations per batch (~memory consumption)
-     * @param batchFactor
-     *            multiplier for batchSize when harvesting deletions
      * @param full
      *            full harvest of all source entities
      * @param skip
@@ -123,9 +121,7 @@ public class CaomHarvester implements Runnable {
      * @throws java.io.IOException if failing to read config information (.dbrc)
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, HarvestResource src, HarvestResource dest, URI basePublisherID, int batchSize,
-            int batchFactor, boolean full, boolean skip, int nthreads) throws IOException {
-        Integer entityBatchSize = batchSize * batchFactor;
-
+            boolean full, boolean skip, int nthreads) throws IOException {
         DBConfig dbrc = new DBConfig();
         ConnectionConfig cc = dbrc.getConnectionConfig(dest.getDatabaseServer(), dest.getDatabase());
         DataSource ds = DBUtil.getDataSource(cc);
@@ -137,7 +133,7 @@ public class CaomHarvester implements Runnable {
 
         // deletions in incremental mode only        
         if (!full && !skip && !src.getIdentifier().equals(dest.getIdentifier())) {
-            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
+            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, batchSize * 100, dryrun);
         }
 
         log.info("     source: " + src.getIdentifier());
