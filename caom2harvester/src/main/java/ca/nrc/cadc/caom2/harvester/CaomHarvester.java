@@ -120,11 +120,10 @@ public class CaomHarvester implements Runnable {
      * @param nthreads
      *            max threads when harvesting from a service
      * 
-     * @throws java.io.IOException
-     * @throws URISyntaxException
+     * @throws java.io.IOException if failing to read config information (.dbrc)
      */
     public CaomHarvester(boolean dryrun, boolean nochecksum, HarvestResource src, HarvestResource dest, URI basePublisherID, int batchSize,
-            int batchFactor, boolean full, boolean skip, int nthreads) throws IOException, URISyntaxException {
+            int batchFactor, boolean full, boolean skip, int nthreads) throws IOException {
         Integer entityBatchSize = batchSize * batchFactor;
 
         DBConfig dbrc = new DBConfig();
@@ -162,7 +161,7 @@ public class CaomHarvester implements Runnable {
     /**
      * Enable the plane metadata compute plugin.
      * 
-     * @param compute 
+     * @param compute enable Plane metadata computation if true
      */
     public void setCompute(boolean compute) {
         obsHarvester.setComputePlaneMetadata(compute);
@@ -170,7 +169,8 @@ public class CaomHarvester implements Runnable {
     
     /**
      * Enable the generate read access grants plugin with the specified config.
-     * @param config 
+     * 
+     * @param config enable read access generation from the specified config file
      */
     public void setGenerateReadAccess(String config) {
         if (config != null) {
