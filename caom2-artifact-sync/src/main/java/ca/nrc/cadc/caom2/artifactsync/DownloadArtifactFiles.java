@@ -283,10 +283,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         return result;
                     }
                 } else {
-                	String md5sumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
-                    metadata.setMd5Sum(md5sumFromCAOM);
-                    md5sumMessage = "md5sum from CAOM was " + md5sumFromCAOM;
-                    threadLog.debug(artifactURI.getScheme() + " content MD5 from CAOM: " + md5sumFromCAOM);
+                    String checksumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
+                    metadata.setMd5Sum(checksumFromCAOM);
+                    md5sumMessage = "md5sum from CAOM was " + checksumFromCAOM;
+                    threadLog.debug(artifactURI.getScheme() + " content MD5 from CAOM: " + checksumFromCAOM);
                 }
 
                 // get the md5 and contentLength of the artifact
@@ -327,17 +327,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     // if we don't have a checksum yet and if checksum in header is not null, use it
                     String md5FromHeader = head.getContentMD5();
                     if (md5FromHeader != null) {
-                    	if (metadata.getMd5Sum() == null) {
+                        if (metadata.getMd5Sum() == null) {
 	                        metadata.setMd5Sum(md5FromHeader);
 	                        md5sumMessage = "md5sum from Http header was " + md5FromHeader;
 	                        threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
-                    	} else {
-                    		// both md5sum from CAOM and md5sum from Http header are not null
-                    		if (!metadata.getMd5Sum().equals(md5FromHeader)) {
-                    			String msg = "md5Sums are different, CAOM: " + metadata.getMd5Sum() + ", Http header: " + md5FromHeader;
-                    			throw new RuntimeException(msg);
-                    		}
-                    	}
+                        } else {
+                            // both md5sum from CAOM and md5sum from Http header are not null
+                            if (!metadata.getMd5Sum().equals(md5FromHeader)) {
+                                String msg = "md5Sums are different, CAOM: " + metadata.getMd5Sum() + ", Http header: " + md5FromHeader;
+                                throw new RuntimeException(msg);
+                            }
+                        }
                     }
                 }
 
@@ -427,10 +427,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 uploadSuccess = false;
                 threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);
                 String exMsg = t.getMessage();
-                if (md5sumMessage != null && exMsg.contains("possible mismatch with AD")) {
+                if (md5sumMessage != null && exMsg.contains("possible mismatch with calculated md5sum")) {
                     uploadErrorMessage = exMsg + " " + md5sumMessage;
                 } else {
-                	uploadErrorMessage = exMsg;
+                    uploadErrorMessage = exMsg;
                 }
             } finally {
                 bytesTransferred = byteCounter.getByteCount();
