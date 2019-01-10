@@ -374,7 +374,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         if (md5sumMessage == null) {
                             result.message = uploadErrorMessage;
                         } else {
-                            result.message = uploadErrorMessage + " " + md5sumMessage;
+                            result.message = md5sumMessage + " " + uploadErrorMessage;
                         }
                     }
                 }
@@ -430,7 +430,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             } catch (Throwable t) {
                 uploadSuccess = false;
                 threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);
-                uploadErrorMessage = t.getMessage();
+                uploadErrorMessage = "Upload error: " + t.getMessage();
             } finally {
                 bytesTransferred = byteCounter.getByteCount();
             }
