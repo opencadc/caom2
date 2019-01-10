@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -128,8 +129,8 @@ public class ReadAccessDAO extends AbstractDAO {
             sb.append(gen.getColumns(Artifact.class, aa)).append(",");
             sb.append(pa).append(".metaRelease").append(",");
             sb.append(pa).append(".dataRelease").append(",");
-            sb.append(pa).append(".metaReadAccessGroups").append(",");
-            sb.append(pa).append(".dataReadAccessGroups");
+            sb.append(pa).append(".metaReadGroups").append(",");
+            sb.append(pa).append(".dataReadGroups");
             sb.append(" FROM ");
             sb.append(gen.getFrom(Plane.class, 2, false));
             sb.append(" WHERE ").append(aa).append(".uri = ?");
@@ -173,8 +174,8 @@ public class ReadAccessDAO extends AbstractDAO {
         public ReleaseType releaseType;
         public Date metaRelease;
         public Date dataRelease;
-        public final List<String> metaReadAccessGroups = new ArrayList<>();
-        public final List<String> dataReadAccessGroups = new ArrayList<>();
+        public final List<URI> metaReadAccessGroups = new ArrayList<>();
+        public final List<URI> dataReadAccessGroups = new ArrayList<>();
     }
     
     private class ArtifactAccessMapper implements RowMapper {
@@ -195,17 +196,25 @@ public class ReadAccessDAO extends AbstractDAO {
             String dgs = rs.getString(col++);
             
             if (StringUtil.hasText(mgs)) {
-                String[] ss = mgs.replaceAll("'", "").split(" ");
-                for (String gname : ss) {
-                    ret.metaReadAccessGroups.add(gname);
+                String[] ss = mgs.split(" ");
+                for (String suri : ss) {
+                    try {
+                        ret.metaReadAccessGroups.add(new URI(suri));
+                    } catch (URISyntaxException ex) {
+                        throw new RuntimeException("invalid content: " + suri + " not a valid URI", ex);
+                    }
                 }
             }
             log.debug("raw: " + mgs + " -> " + ret.metaReadAccessGroups.size());
             
             if (StringUtil.hasText(dgs)) {
-                String[] ss = dgs.replaceAll("'", "").split(" ");
-                for (String gname : ss) {
-                    ret.dataReadAccessGroups.add(gname);
+                String[] ss = dgs.split(" ");
+                for (String suri : ss) {
+                    try {
+                        ret.dataReadAccessGroups.add(new URI(suri));
+                    } catch (URISyntaxException ex) {
+                        throw new RuntimeException("invalid content: " + suri + " not a valid URI", ex);
+                    }
                 }
             }
             log.debug("raw: " + dgs + " -> " + ret.dataReadAccessGroups.size());

@@ -182,21 +182,18 @@ public class AccessQueryRunner implements JobRunner {
                 }
                 List<URI> metaReadAccessGroups = new ArrayList<URI>();
                 List<URI> dataReadAccessGroups = new ArrayList<URI>();
-                LocalAuthority loc = new LocalAuthority();
-                URI gms = loc.getServiceURI(Standards.GMS_GROUPS_01.toASCIIString());
-                for (String s : raa.metaReadAccessGroups) {
-                    URI guri = URI.create(gms.toASCIIString() + "?" + s);
-                    metaReadAccessGroups.add(guri);
+                for (URI mra : raa.metaReadAccessGroups) {
+                    metaReadAccessGroups.add(mra);
                 }
-                for (String s : raa.dataReadAccessGroups) {
-                    URI guri = URI.create(gms.toASCIIString() + "?" + s);
-                    dataReadAccessGroups.add(guri);
+                for (URI dra : raa.dataReadAccessGroups) {
+                    dataReadAccessGroups.add(dra);
                 }
-                ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.artifact,
-                        raa.metaRelease, metaReadAccessGroups, raa.dataRelease, dataReadAccessGroups);
+                ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.artifact, 
+                        raa.metaRelease, metaReadAccessGroups, 
+                        raa.dataRelease, dataReadAccessGroups);
                 ArtifactAccessWriter w = new ArtifactAccessWriter();
                 syncOutput.setHeader("Content-Type", "text/xml");
-                syncOutput.setResponseCode(200);
+                syncOutput.setCode(200);
                 w.write(aa, syncOutput.getOutputStream());
                 logInfo.setSuccess(true);
                 
