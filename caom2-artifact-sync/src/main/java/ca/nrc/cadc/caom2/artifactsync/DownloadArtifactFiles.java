@@ -123,7 +123,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
-    private String md5sumMessage = null;
 
     ExecutorService executor = null;
     List<Future<ArtifactDownloadResult>> results;
@@ -225,6 +224,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         boolean uploadSuccess = true;
         String uploadErrorMessage;
         long bytesTransferred;
+        String md5sumMessage = null;
 
         Logger threadLog = Logger.getLogger(ArtifactDownloader.class);
 
@@ -285,7 +285,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 } else {
                     String checksumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
                     metadata.setMd5Sum(checksumFromCAOM);
-                    md5sumMessage = "md5sum from CAOM was " + checksumFromCAOM;
+                    md5sumMessage = "(md5sum from CAOM was " + checksumFromCAOM + ") ";
                     threadLog.debug(artifactURI.getScheme() + " content MD5 from CAOM: " + checksumFromCAOM);
                 }
 
@@ -329,7 +329,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (md5FromHeader != null) {
                         if (metadata.getMd5Sum() == null) {
 	                        metadata.setMd5Sum(md5FromHeader);
-	                        md5sumMessage = "md5sum from Http header was " + md5FromHeader;
+	                        md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ") ";
 	                        threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
                         } else {
                             // both md5sum from CAOM and md5sum from Http header are not null
@@ -371,7 +371,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (uploadSuccess) {
                         result.success = true;
                     } else {
-                        result.message = uploadErrorMessage;
+                        if (md5sumMessage == null) {
+                            result.message = uploadErrorMessage;
+                        } else {
+                            result.message = md5sumMessage + uploadErrorMessage;
+                        }
                     }
                 }
 
@@ -426,12 +430,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             } catch (Throwable t) {
                 uploadSuccess = false;
                 threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);
-                String exMsg = t.getMessage();
-                if (md5sumMessage != null && exMsg.contains("possible mismatch with calculated md5sum")) {
-                    uploadErrorMessage = exMsg + " " + md5sumMessage;
-                } else {
-                    uploadErrorMessage = exMsg;
-                }
+                uploadErrorMessage = t.getMessage();
             } finally {
                 bytesTransferred = byteCounter.getByteCount();
             }
