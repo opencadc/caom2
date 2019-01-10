@@ -285,7 +285,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 } else {
                     String checksumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
                     metadata.setMd5Sum(checksumFromCAOM);
-                    md5sumMessage = "(md5sum from CAOM was " + checksumFromCAOM + ") ";
+                    md5sumMessage = "(md5sum from CAOM was " + checksumFromCAOM + ")";
                     threadLog.debug(artifactURI.getScheme() + " content MD5 from CAOM: " + checksumFromCAOM);
                 }
 
@@ -329,7 +329,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     if (md5FromHeader != null) {
                         if (metadata.getMd5Sum() == null) {
 	                        metadata.setMd5Sum(md5FromHeader);
-	                        md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ") ";
+	                        md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ")";
 	                        threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
                         } else {
                             // both md5sum from CAOM and md5sum from Http header are not null
@@ -374,7 +374,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         if (md5sumMessage == null) {
                             result.message = uploadErrorMessage;
                         } else {
-                            result.message = md5sumMessage + uploadErrorMessage;
+                            result.message = uploadErrorMessage + " " + md5sumMessage;
                         }
                     }
                 }
