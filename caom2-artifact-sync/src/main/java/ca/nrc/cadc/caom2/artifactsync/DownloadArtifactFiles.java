@@ -374,7 +374,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                         if (md5sumMessage == null) {
                             result.message = uploadErrorMessage;
                         } else {
-                            result.message = md5sumMessage + " " + uploadErrorMessage;
+                            result.message = uploadErrorMessage + " " + md5sumMessage;
                         }
                     }
                 }
