@@ -121,13 +121,11 @@ public class DeletionHarvester extends Harvester implements Runnable {
      *            process
      * @throws IOException
      *             IOException
-     * @throws URISyntaxException
-     *             URISyntaxException
      * @throws NumberFormatException
      *             NumberFormatException
      */
     public DeletionHarvester(Class<?> entityClass, HarvestResource src, HarvestResource dest, Integer batchSize, boolean dryrun) throws IOException,
-            NumberFormatException, URISyntaxException {
+            NumberFormatException {
         super(entityClass, src, dest, batchSize, false, dryrun);
         init();
     }
@@ -156,8 +154,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
      *            number of threads to be used
      * @throws IOException
      *             IOException
-     * @throws URISyntaxException
-     *             URISyntaxException
      */
     private void init() throws IOException {
         // source

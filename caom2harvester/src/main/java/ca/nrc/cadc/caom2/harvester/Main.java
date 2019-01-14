@@ -97,8 +97,11 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
 
-    private static final Integer DEFAULT_BATCH_SIZE = new Integer(100);
-    private static final Integer DEFAULT_BATCH_FACTOR = new Integer(2500);
+    // these are CADC-specific features that are very dangerous so can
+    // only be enabled by compiling a special version of this application
+    private static final boolean ENABLE_BACKFILL_FEATURES = false;
+    
+    private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
 
     public static void main(String[] args) {
@@ -132,12 +135,18 @@ public class Main {
             final boolean skip = am.isSet("skip");
             final boolean dryrun = am.isSet("dryrun");
             final boolean validate = am.isSet("validate");
-            final boolean noChecksum = am.isSet("nochecksum");;
-            final boolean noAC = am.isSet("noac");
             
             // optional plugins
-            final boolean compute = am.isSet("compute");
-            final String generateAC = am.getValue("generate-ac");
+            boolean compute = false;
+            String generateAC = null;
+            boolean noChecksum = am.isSet("nochecksum");
+            if (ENABLE_BACKFILL_FEATURES) {
+                compute = am.isSet("compute");
+                generateAC = am.getValue("generate-ac");
+                noChecksum = noChecksum || compute || am.isSet("generate-ac");
+            }
+            
+            log.info("accMetaChecksum validation enabled: " + !noChecksum);
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
@@ -193,48 +202,52 @@ public class Main {
 
             HarvestResource src = null;
             int nthreads = 1;
-            if (sourceType == HarvestResource.SOURCE_URI) {
-                try {
-                    src = new HarvestResource(new URI(source), collection);
-                    if (am.isSet("threads")) {
-                        nthreads = Integer.parseInt(am.getValue("threads"));
-                    }
-                } catch (URISyntaxException ex) {
-                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+            switch (sourceType) {
+                case HarvestResource.SOURCE_URI:
+                    try {
+                        src = new HarvestResource(new URI(source), collection);
+                        if (am.isSet("threads")) {
+                            nthreads = Integer.parseInt(am.getValue("threads"));
+                        }
+                    } catch (URISyntaxException ex) {
+                        log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                        usage();
+                        System.exit(1);
+                    } catch (NumberFormatException nfe) {
+                        log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
+                        usage();
+                        System.exit(1);
+                    }   
+                    break;
+                case HarvestResource.SOURCE_DB:
+                    String[] srcDS = source.split("[.]");
+                    if (srcDS.length != 3) {
+                        log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                        usage();
+                        System.exit(1);
+                    }   
+                    src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
+                    break;
+                case HarvestResource.SOURCE_CAP_URL:
+                    try {
+                        src = new HarvestResource(new URL(source), collection);
+                        if (am.isSet("threads")) {
+                            nthreads = Integer.parseInt(am.getValue("threads"));
+                        }
+                    } catch (MalformedURLException ex) {
+                        log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                        usage();
+                        System.exit(1);
+                    } catch (NumberFormatException nfe) {
+                        log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
+                        usage();
+                        System.exit(1);
+                    }   
+                    break;
+                default:
+                    log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
                     usage();
                     System.exit(1);
-                } catch (NumberFormatException nfe) {
-                    log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
-                    usage();
-                    System.exit(1);
-                }
-            } else if (sourceType == HarvestResource.SOURCE_DB) {
-                String[] srcDS = source.split("[.]");
-                if (srcDS.length != 3) {
-                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
-                    usage();
-                    System.exit(1);
-                }
-                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection, !noAC);
-            } else if (sourceType == HarvestResource.SOURCE_CAP_URL) {
-                try {
-                    src = new HarvestResource(new URL(source), collection);
-                    if (am.isSet("threads")) {
-                        nthreads = Integer.parseInt(am.getValue("threads"));
-                    }
-                } catch (MalformedURLException ex) {
-                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
-                    usage();
-                    System.exit(1);
-                } catch (NumberFormatException nfe) {
-                    log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
-                    usage();
-                    System.exit(1);
-                }
-            } else {
-                log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
-                usage();
-                System.exit(1);
             }
 
             URI basePublisherID = null;
@@ -265,22 +278,11 @@ public class Main {
             }
 
             Integer batchSize = null;
-            Integer batchFactor = null;
             String sbatch = am.getValue("batchSize");
-            String sfactor = am.getValue("batchFactor");
 
             if (sbatch != null && sbatch.trim().length() > 0) {
                 try {
                     batchSize = new Integer(sbatch);
-                } catch (NumberFormatException nex) {
-                    usage();
-                    log.error("value for --batchSize must be an integer, found: " + sbatch);
-                    System.exit(1);
-                }
-            }
-            if (sfactor != null && sfactor.trim().length() > 0) {
-                try {
-                    batchFactor = new Integer(sfactor);
                 } catch (NumberFormatException nex) {
                     usage();
                     log.error("value for --batchSize must be an integer, found: " + sbatch);
@@ -292,12 +294,8 @@ public class Main {
                 log.debug("no --batchSize specified: defaulting to " + DEFAULT_BATCH_SIZE);
                 batchSize = DEFAULT_BATCH_SIZE;
             }
-            if (batchFactor == null && batchSize != null) {
-                log.debug("no --batchFactor specified: defaulting to " + DEFAULT_BATCH_FACTOR);
-                batchFactor = DEFAULT_BATCH_FACTOR;
-            }
             if (!validate) {
-                log.info("batchSize: " + batchSize + "  batchFactor: " + batchFactor);
+                log.info("batchSize: " + batchSize);
             }
 
             Date minDate = null;
@@ -329,7 +327,7 @@ public class Main {
             if (!validate) {
 
                 try {
-                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, src, dest, basePublisherID, batchSize, batchFactor, full, skip, nthreads);
+                    CaomHarvester ch = new CaomHarvester(dryrun, noChecksum, src, dest, basePublisherID, batchSize, full, skip, nthreads);
                     ch.setMinDate(minDate);
                     ch.setMaxDate(maxDate);
                     ch.setCompute(compute);
@@ -346,10 +344,7 @@ public class Main {
 
                 try {
                     CaomValidator cv = new CaomValidator(dryrun, noChecksum, src, dest, batchSize);
-                    // [min,max] timestamps not supported by validator (only
-                    // full)
-                    // cv.setMinDate(minDate);
-                    // cv.setMaxDate(maxDate);
+                    // [min,max] timestamps not supported by validator (only full)
                     action = cv;
                 } catch (IOException ioex) {
 
@@ -400,7 +395,7 @@ public class Main {
 
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
-        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
         sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
         sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
         
@@ -415,19 +410,21 @@ public class Main {
         sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
 
         sb.append("\n\nOptional modifiers:");
+        sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
-        sb.append("\n         --batchFactor=<multiplier to batchSize when harvesting deletions (default: ").append(DEFAULT_BATCH_FACTOR).append(")");
-        sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         
-        sb.append("\n\nOptional plugin invocation:");
-        sb.append("\n           (probably only useful for CADC; requires --nochecksum since they modify content)");
-        sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
-        sb.append("\n         --generate-ac=<config file> : invoke the caom2-access-control plugin (generates grants for proprietary metadata and data)");
-        sb.append("\n                       <config file> is a properties file with <collection> = <same generate options as caom2-repo-server>");
-        
+        if (ENABLE_BACKFILL_FEATURES) {
+            sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
+            sb.append("\n\nOptional plugin invocation:");
+            sb.append("\n           (probably only useful for CADC; automatically adds --nochecksum since they modify content)");
+            sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
+            sb.append("\n         --generate-ac=<config file> : invoke the caom2-access-control plugin (generates grants for proprietary metadata and data)");
+            sb.append("\n                       <config file> is a properties file with <collection> = <same generate options as caom2-repo-server>");
+        } 
+        sb.append("\n");
         log.warn(sb.toString());
     }
 

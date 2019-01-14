@@ -119,7 +119,7 @@ public class ReadAccessGenerator {
     /**
      * Constructor.
      *
-     * @param collection
+     * @param collection the CAOM collection name
      * @param groupConfig group data from configuration file
      */
     public ReadAccessGenerator(String collection, Map<String, Object> groupConfig) {
@@ -138,7 +138,7 @@ public class ReadAccessGenerator {
      * names are of the form {Observation.collection}-{Observation.proposalID}. The staffGroup is set as
      * an admin of the proposalGroup so a staffGroup is mandatory when proposalGroup is true.
      *
-     * @param collection
+     * @param collection the CAOM collection name
      * @param dryrun only show work if true
      * @param groupConfig group data from configuration file
      */
@@ -172,7 +172,10 @@ public class ReadAccessGenerator {
                 this.groupBaseURI = staffGroupURI.getServiceID();
             }
 
-            this.createProposalGroup = (boolean) groupConfig.get(PROPOSAL_GROUP_KEY);            
+            Object opg = groupConfig.get(PROPOSAL_GROUP_KEY);
+            if (opg instanceof Boolean) { 
+                this.createProposalGroup = (Boolean) opg;
+            }
 
             if (this.createProposalGroup && this.staffGroupURI == null) {
                 

@@ -134,7 +134,7 @@ public class ObservationHarvester extends Harvester {
     HarvestSkipURIDAO harvestSkipDAO = null;
 
     public ObservationHarvester(HarvestResource src, HarvestResource dest, URI basePublisherID, Integer batchSize, boolean full, boolean dryrun,
-            boolean nochecksum, int nthreads) throws IOException, URISyntaxException {
+            boolean nochecksum, int nthreads) throws IOException {
         super(Observation.class, src, dest, batchSize, full, dryrun);
         this.nochecksum = nochecksum;
         this.basePublisherID = basePublisherID;
@@ -151,6 +151,7 @@ public class ObservationHarvester extends Harvester {
     
     public void setComputePlaneMetadata(boolean computePlaneMetadata) {
         this.computePlaneMetadata = computePlaneMetadata;
+        this.destObservationDAO.setOrigin(true);
     }
 
     public void setGenerateReadAccessTuples(File config) {
@@ -193,6 +194,7 @@ public class ObservationHarvester extends Harvester {
                 log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
             }
             this.acGenerator = new ReadAccessGenerator(src.getCollection(), groupConfig);
+            this.destObservationDAO.setOrigin(true);
         } catch (IOException ex) {
             throw new RuntimeException("failed to read config from " + config, ex);
         } catch (Exception ex) {
@@ -200,7 +202,7 @@ public class ObservationHarvester extends Harvester {
         } 
     }
 
-    private void init(int nthreads) throws IOException, URISyntaxException {
+    private void init(int nthreads) throws IOException {
         if (src.getResourceType() == HarvestResource.SOURCE_DB && src.getDatabaseServer() != null) {
             Map<String, Object> config1 = getConfigDAO(src);
             this.srcObservationDAO = new ObservationDAO();

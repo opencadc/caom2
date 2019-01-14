@@ -330,18 +330,14 @@ public class ObservationValidator extends Harvester {
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);
                 }
-            } 
-        }
-        /*
-          else if (!nochecksum && !listCorrect.contains(os)) {
-                ObservationStateError ose = new ObservationStateError(os, "computation or serialization bug");
-                log.info("************************ adding computation or serialization bug: " + os.getURI());
+            } else if (!nochecksum && !listCorrect.contains(os)) {
+                ObservationStateError ose = new ObservationStateError(os, "mismatched accMetaChecksum");
+                log.info("************************ adding mismatched accMetaChecksum: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);
                 }
             }
         }
-        */
 
         return listErroneous;
     }

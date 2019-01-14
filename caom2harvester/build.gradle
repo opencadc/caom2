@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.7.1'
+    id 'com.jfrog.bintray' version '1.8.4'
     id 'application'
     id 'checkstyle'
 }
@@ -16,7 +16,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.4.4'
+version = '2.4.5'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 applicationDefaultJvmArgs = ['-Xms1024m','-Xmx4096m','-XX:OnOutOfMemoryError="kill -3 %p"']
@@ -28,7 +28,7 @@ dependencies {
     
     compile 'org.opencadc:cadc-util:[1.2.2,)'
     compile 'org.opencadc:caom2:[2.3.9,)'
-    compile 'org.opencadc:caom2persistence:[2.3.25,)'
+    compile 'org.opencadc:caom2persistence:[2.3.26,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
     compile 'org.opencadc:caom2-repo:[1.3,)'
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
@@ -37,7 +37,7 @@ dependencies {
     compile 'org.opencadc:caom2-compute:[2.3.14,)'
     
     // needed to run access-control regen plugin (--generate-ac)
-    compile 'org.opencadc:caom2-access-control:[2.3.0,)'
+    compile 'org.opencadc:caom2-access-control:[2.3.1,)'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'

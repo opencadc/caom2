@@ -15,14 +15,7 @@ drop table if exists <schema>.Plane;
 drop table if exists <schema>.ObservationMember;
 drop table if exists <schema>.Observation;
 
-drop table if exists <schema>.ObservationMetaReadAccess;
-drop table if exists <schema>.PlaneMetaReadAccess;
-drop table if exists <schema>.PlaneDataReadAccess;
-
 drop table if exists <schema>.DeletedObservation;
-drop table if exists <schema>.DeletedObservationMetaReadAccess;
-drop table if exists <schema>.DeletedPlaneMetaReadAccess;
-drop table if exists <schema>.DeletedPlaneDataReadAccess;
 
 drop table if exists <schema>.HarvestState;
 drop table if exists <schema>.HarvestSkip;
