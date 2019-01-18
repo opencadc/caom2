@@ -10,7 +10,7 @@ before_script: openssl s_client -CApath /etc/ssl/certs/ -connect plugins.gradle.
 
 ## temporarily remove caom2-artifact-sync for multi-stage release
 script:
-  - for mod in caom2-access-control caom2-persist caom2-repo caom2persistence caom2-repo-server caom2harvester caom2-test-repo; do
+  - for mod in caom2-access-control caom2-persist caom2-repo caom2persistence caom2-artifact-sync caom2-repo-server caom2harvester caom2-test-repo; do
       cd $mod;
       gradle --info assemble javadoc install || break -1;
       if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
