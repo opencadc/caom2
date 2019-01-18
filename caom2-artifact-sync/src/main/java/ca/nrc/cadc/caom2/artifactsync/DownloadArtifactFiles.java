@@ -328,9 +328,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     String md5FromHeader = head.getContentMD5();
                     if (md5FromHeader != null) {
                         if (metadata.getMd5Sum() == null) {
-	                        metadata.setMd5Sum(md5FromHeader);
-	                        md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ")";
-	                        threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
+                            metadata.setMd5Sum(md5FromHeader);
+                            md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ")";
+                            threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
                         } else {
                             // both md5sum from CAOM and md5sum from Http header are not null
                             if (!metadata.getMd5Sum().equals(md5FromHeader)) {
