@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
@@ -123,6 +124,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
+    private CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
 
     ExecutorService executor = null;
     List<Future<ArtifactDownloadResult>> results;
@@ -262,16 +264,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
                 
                 // determine the subtype of StorageResolver to use and translate uri to url
-                StorageResolver resolver = null;
-                URL url = null;
-                if ("mast".equals(artifactURI.getScheme())) {
-                    resolver = new MastResolver();
-                } else if ("gemini".equals(artifactURI.getScheme())) {
-                    resolver = new GeminiResolver();
-                } else {
-                    throw new IllegalArgumentException("unsupported scheme in artifactURI: " + artifactURI.toString());
-                }
-                url = resolver.toURL(artifactURI);
+                URL url = caomArtifactResolver.getURL(artifactURI);
 
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
