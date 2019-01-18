@@ -116,10 +116,9 @@ public class CaomArtifactResolver {
 
     /**
      * Create a MultiStorageResolver with configuration loaded from the specified URL.
-     * <p>
-     * The config resource has contains URIs (one per line, comments start line with #, blank lines
+     * <p>The config resource has contains URIs (one per line, comments start line with #, blank lines
      * are ignored) with a scheme and a class name of a class that implements the StorageResolver
-     * interface for that particular scheme.
+     * interface for that particular scheme.</p>
      *
      * @param url
      */
@@ -150,8 +149,6 @@ public class CaomArtifactResolver {
             }
         } catch (Exception ex) {
             log.error("failed to read config from " + url, ex);
-        } finally {
-
         }
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
