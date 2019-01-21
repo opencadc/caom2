@@ -69,10 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
