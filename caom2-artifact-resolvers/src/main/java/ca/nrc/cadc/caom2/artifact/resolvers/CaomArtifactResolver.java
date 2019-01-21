@@ -99,7 +99,8 @@ public class CaomArtifactResolver {
 
     private static final Logger log = Logger.getLogger(CaomArtifactResolver.class);
 
-    private static final String CACHE_FILENAME = CaomArtifactResolver.class.getSimpleName() + ".properties";
+    private static final String CONFIG_FILENAME = CaomArtifactResolver.class.getSimpleName() + ".properties";
+    private static final String CONFIG_FILENAME_DEFAULT = CaomArtifactResolver.class.getSimpleName() + ".properties.default";
 
     private final Map<String, StorageResolver> handlers = new HashMap<>();
 
@@ -107,25 +108,28 @@ public class CaomArtifactResolver {
     private String runID;
 
     /**
-     * Create a MultiStorageResolver from the default config. By default, a resource named
-     * MultiStorageResolver.properties is found via the class loader that loaded this class.
+     * Create a CaomArtifactResolver from the default config. By default, a resource named
+     * CaomArtifactResolver.properties is found via the class loader that loaded this class.
+     * If this configuration file is not found, the default one 
+     * CaomArtifactResolver.properties.default is used.
      */
     public CaomArtifactResolver() {
-        this(CaomArtifactResolver.class.getClassLoader().getResource(CACHE_FILENAME));
+        this(CaomArtifactResolver.class.getClassLoader().getResource(CONFIG_FILENAME));
     }
 
     /**
-     * Create a MultiStorageResolver with configuration loaded from the specified URL.
+     * Create a CaomArtifactResolver with configuration loaded from the specified URL.
      * <p>The config resource has contains URIs (one per line, comments start line with #, blank lines
      * are ignored) with a scheme and a class name of a class that implements the StorageResolver
      * interface for that particular scheme.</p>
      *
      * @param url
      */
-    public CaomArtifactResolver(URL url) {
+    public CaomArtifactResolver(URL configUrl) {
+        URL url = configUrl;
         if (url == null) {
-            log.debug("config URL is null: no custom scheme support");
-            return;
+            log.debug("config URL is null: using default configuration.");
+            url = CaomArtifactResolver.class.getClassLoader().getResource(CONFIG_FILENAME_DEFAULT);
         }
 
         try {
