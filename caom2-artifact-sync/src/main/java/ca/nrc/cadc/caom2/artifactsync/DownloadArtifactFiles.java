@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
@@ -123,6 +124,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private Date stopDate;
     private int retryAfterHours;
     private DateFormat df;
+    private CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
 
     ExecutorService executor = null;
     List<Future<ArtifactDownloadResult>> results;
@@ -261,18 +263,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     return result;
                 }
                 
-                // determine the subtype of StorageResolver to use and translate uri to url
-                StorageResolver resolver = null;
-                URL url = null;
-                if ("mast".equals(artifactURI.getScheme())) {
-                    resolver = new MastResolver();
-                } else if ("gemini".equals(artifactURI.getScheme())) {
-                    resolver = new GeminiResolver();
-                } else {
-                    throw new IllegalArgumentException("unsupported scheme in artifactURI: " + artifactURI.toString());
-                }
-                url = resolver.toURL(artifactURI);
-
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);
                 metadata.setContentLength(artifact.contentLength);
@@ -290,6 +280,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
 
                 // get the md5 and contentLength of the artifact
+                URL url = caomArtifactResolver.getURL(artifactURI);
+
                 OutputStream out = new ByteArrayOutputStream();
                 HttpDownload head = new HttpDownload(url, out);
                 head.setHeadOnly(true);
@@ -332,7 +324,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                             md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ")";
                             threadLog.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
                         } else {
-                            // both md5sum from CAOM and md5sum from Http header are not null
+                            // both md5sum from CAOM and md5sum from Http header
+                            // are not null
                             if (!metadata.getMd5Sum().equals(md5FromHeader)) {
                                 String msg = "md5Sums are different, CAOM: " + metadata.getMd5Sum() + ", Http header: " + md5FromHeader;
                                 throw new RuntimeException(msg);
