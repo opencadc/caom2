@@ -123,7 +123,7 @@ public class CaomArtifactResolver {
      * are ignored) with a scheme and a class name of a class that implements the StorageResolver
      * interface for that particular scheme.</p>
      *
-     * @param url
+     * @param configUrl URL of the configuration
      */
     public CaomArtifactResolver(URL configUrl) {
         URL url = configUrl;
@@ -163,7 +163,7 @@ public class CaomArtifactResolver {
      * with a possibly different authentication method. This override may not be applicable
      * to all StorsgeResolver implementations.
      *
-     * @param authMethod
+     * @param authMethod authentication method
      */
     public void setAuthMethod(AuthMethod authMethod) {
         this.authMethod = authMethod;
@@ -173,7 +173,7 @@ public class CaomArtifactResolver {
      * Set RUNID value to optionally append to URLs. The runid is appended if the
      * StorageResolver implements the Traceable interface.
      *
-     * @param runID
+     * @param runID RUNID value to optionally append to URLs
      */
     public void setRunID(String runID) {
         this.runID = runID;
@@ -213,7 +213,7 @@ public class CaomArtifactResolver {
      * @param uri URI to transform.
      * @return a URL to the identified resource; null if the uri was null
      * @throws IllegalArgumentException      if a URL cannot be generated
-     * @throws UnsupportedOperationException if there is no StorageResolver for the URI scheme
+     * @throws MalformedURLException    if a URL is not correctly generated
      */
     public URL getURL(URI uri)
         throws IllegalArgumentException, MalformedURLException {
@@ -238,8 +238,8 @@ public class CaomArtifactResolver {
      * Add a new StorageResolver to the converter. If this handler has the same scheme as an
      * existing handler, it will replace the previous one.
      *
-     * @param scheme
-     * @param handler
+     * @param scheme URI scheme part
+     * @param handler StorageResolver to be added.
      */
     public void addStorageResolver(String scheme, StorageResolver handler) {
         handlers.put(scheme, handler);
