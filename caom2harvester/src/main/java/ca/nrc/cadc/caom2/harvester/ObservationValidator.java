@@ -118,13 +118,16 @@ public class ObservationValidator extends Harvester {
     }
 
     private void init() throws IOException, URISyntaxException {
-        if (src.getResourceID() != null) {
-            // 1 thread since we only use the ObservationState listing
-            this.srcObservationService = new RepoClient(src.getResourceID(), 1);
-        } else {
+        if (src.getResourceType() == HarvestResource.SOURCE_DB && src.getDatabaseServer() != null) {
             Map<String, Object> config1 = getConfigDAO(src);
             this.srcObservationDAO = new ObservationDAO();
             srcObservationDAO.setConfig(config1);
+        } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
+            this.srcObservationService = new RepoClient(src.getResourceID(), 1);
+        } else if (src.getResourceType() == HarvestResource.SOURCE_CAP_URL) {
+            this.srcObservationService = new RepoClient(src.getCapabilitiesURL(), 1);
+        } else {
+            throw new IllegalStateException("BUG: unexpected HarvestResource resource type: " + src);
         }
 
         Map<String, Object> config2 = getConfigDAO(dest);
@@ -132,7 +135,6 @@ public class ObservationValidator extends Harvester {
         destObservationDAO.setConfig(config2);
         destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
-        
     }
 
     @Override

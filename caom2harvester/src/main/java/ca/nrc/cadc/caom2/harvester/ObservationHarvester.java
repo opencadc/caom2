@@ -210,8 +210,10 @@ public class ObservationHarvester extends Harvester {
             ready = true;
         } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
-        } else {
+        } else if (src.getResourceType() == HarvestResource.SOURCE_CAP_URL) {
             this.srcObservationService = new RepoClient(src.getCapabilitiesURL(), nthreads);
+        } else {
+            throw new IllegalStateException("BUG: unexpected HarvestResource resource type: " + src);
         }
 
         // for now, dest is always a database
