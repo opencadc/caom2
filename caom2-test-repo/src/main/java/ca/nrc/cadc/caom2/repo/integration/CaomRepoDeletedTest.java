@@ -174,10 +174,8 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
             log.info("testListDeletedSuccess deleted: " + obs.getURI());
             Date clientDeleted = new Date();
             final long localDt = clientDeleted.getTime() - clientInserted.getTime();
-
             Date endDate = new Date(inserted.getTime() + localDt + 100);
 
-            log.info("clock skew: " + df.format(clientDeleted) + " -> " + df.format(endDate));
             log.info("local operation dt: " + df.format(clientDeleted) + " -> " + df.format(clientInserted));
 
             StringBuilder sb = new StringBuilder();
