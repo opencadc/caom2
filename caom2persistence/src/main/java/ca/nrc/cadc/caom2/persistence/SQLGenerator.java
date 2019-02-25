@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2019.                            (c) 2019.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -3002,12 +3002,15 @@ public class SQLGenerator {
     }
 
     class ObservationMapper implements PartialRowMapper<Observation> {
-
-        private int columnCount;
-
-        /**
-         * @return the number of columns consumed mapping the last Observation
-         */
+        @Override
+        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+            int n = getColumnCount() - 1;
+            UUID id = Util.getUUID(rs, offset + n);
+            log.debug("found: entity ID = " + id);
+            return id;
+        }
+        
+        @Override
         public int getColumnCount() {
             return columnMap.get(Observation.class).length;
         }
@@ -3193,11 +3196,19 @@ public class SQLGenerator {
     }
 
     class PlaneMapper implements PartialRowMapper<Plane> {
-
+        @Override
+        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+            int n = getColumnCount() - 1;
+            UUID id = Util.getUUID(rs, offset + n);
+            log.debug("found: entity ID = " + id);
+            return id;
+        }
+        
+        @Override
         public int getColumnCount() {
             return columnMap.get(Plane.class).length;
         }
-
+        
         public Object mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
@@ -3419,11 +3430,19 @@ public class SQLGenerator {
     }
 
     class ArtifactMapper implements PartialRowMapper<Artifact> {
-
+        @Override
+        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+            int n = getColumnCount() - 1;
+            UUID id = Util.getUUID(rs, offset + n);
+            log.debug("found: entity ID = " + id);
+            return id;
+        }
+        
+        @Override
         public int getColumnCount() {
             return columnMap.get(Artifact.class).length;
         }
-
+        
         public Object mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
@@ -3500,7 +3519,15 @@ public class SQLGenerator {
     }
 
     class PartMapper implements PartialRowMapper<Part> {
-
+        @Override
+        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+            int n = getColumnCount() - 1;
+            UUID id = Util.getUUID(rs, offset + n);
+            log.debug("found: entity ID = " + id);
+            return id;
+        }
+        
+        @Override
         public int getColumnCount() {
             return columnMap.get(Part.class).length;
         }
@@ -3565,7 +3592,15 @@ public class SQLGenerator {
     }
 
     class ChunkMapper implements PartialRowMapper<Chunk> {
-
+        @Override
+        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+            int n = getColumnCount() - 1;
+            UUID id = Util.getUUID(rs, offset + n);
+            log.debug("found: entity ID = " + id);
+            return id;
+        }
+        
+        @Override
         public int getColumnCount() {
             return columnMap.get(Chunk.class).length;
         }

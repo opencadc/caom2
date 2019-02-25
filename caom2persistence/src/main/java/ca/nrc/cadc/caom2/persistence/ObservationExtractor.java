@@ -78,6 +78,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
@@ -124,31 +125,30 @@ public class ObservationExtractor implements ResultSetExtractor {
         while (rs.next()) {
             row++;
             int col = 1;
-            log.debug("mapping Observation at column " + col);
-            Observation obs = obsMapper.mapRow(rs, row, col);
-            col += obsMapper.getColumnCount();
-            if (curObs == null || !curObs.getID().equals(obs.getID())) {
+            UUID obsID = obsMapper.getID(rs, row, col);
+            if (curObs == null || !curObs.getID().equals(obsID)) {
+                log.debug("mapping Observation at column " + col);
                 if (curObs != null) {
                     log.debug("END observation: " + curObs.getID());
                 }
 
-                curObs = obs;
+                curObs = obsMapper.mapRow(rs, row, col);
                 ret.add(curObs);
                 log.debug("START observation: " + curObs.getID());
-            }
-            // else: obs content repeated due to join -- ignore it
+            } // else: obs content repeated due to join -- ignore it
+            col += obsMapper.getColumnCount();
 
             if (ncol > col) {
                 log.debug("mapping Plane at column " + col);
-                Plane p = planeMapper.mapRow(rs, row, col);
-                col += planeMapper.getColumnCount();
-                if (p != null) {
-                    if (curPlane == null || !curPlane.getID().equals(p.getID())) {
+                UUID planeID = planeMapper.getID(rs, row, col);
+                
+                if (planeID != null) {
+                    if (curPlane == null || !curPlane.getID().equals(planeID)) {
                         if (curPlane != null) {
                             log.debug("END plane: " + curPlane.getID());
                         }
-                        curPlane = p;
-                        curObs.getPlanes().add(p);
+                        curPlane = planeMapper.mapRow(rs, row, col);
+                        curObs.getPlanes().add(curPlane);
                         log.debug("START plane: " + curPlane.getID());
                     }
                     //else:  plane content repeated due to join -- ignore it
@@ -156,17 +156,17 @@ public class ObservationExtractor implements ResultSetExtractor {
                     log.debug("observation: " + curObs.getID() + ": no planes");
                     curPlane = null;
                 }
+                col += planeMapper.getColumnCount();
             }
             if (curPlane != null && ncol > col) {
                 log.debug("mapping Artifact at column " + col);
-                Artifact a = artifactMapper.mapRow(rs, row, col);
-                col += artifactMapper.getColumnCount();
-                if (a != null) {
-                    if (curArtifact == null || !curArtifact.getID().equals(a.getID())) {
+                UUID artifactID = artifactMapper.getID(rs, row, col);
+                if (artifactID != null) {
+                    if (curArtifact == null || !curArtifact.getID().equals(artifactID)) {
                         if (curArtifact != null) {
                             log.debug("END artifact: " + curArtifact.getID());
                         }
-                        curArtifact = a;
+                        curArtifact = artifactMapper.mapRow(rs, row, col);
                         curPlane.getArtifacts().add(curArtifact);
                         log.debug("START artifact: " + curArtifact.getID());
                     }
@@ -175,17 +175,17 @@ public class ObservationExtractor implements ResultSetExtractor {
                     log.debug("plane: " + curPlane.getID() + ": no artifacts");
                     curArtifact = null;
                 }
+                col += artifactMapper.getColumnCount();
             }
             if (curArtifact != null && ncol > col) {
                 log.debug("mapping Part at column " + col);
-                Part p = partMapper.mapRow(rs, row, col);
-                col += partMapper.getColumnCount();
-                if (p != null) {
-                    if (curPart == null || !curPart.getID().equals(p.getID())) {
+                UUID partID = partMapper.getID(rs, row, col);
+                if (partID != null) {
+                    if (curPart == null || !curPart.getID().equals(partID)) {
                         if (curPart != null) {
                             log.debug("END part: " + curPart.getID());
                         }
-                        curPart = p;
+                        curPart = partMapper.mapRow(rs, row, col);
                         curArtifact.getParts().add(curPart);
                         log.debug("START part: " + curPart.getID());
                     }
@@ -194,17 +194,17 @@ public class ObservationExtractor implements ResultSetExtractor {
                     log.debug("artifact: " + curArtifact.getID() + ": no parts");
                     curPart = null;
                 }
+                col += partMapper.getColumnCount();
             }
             if (curPart != null && ncol > col) {
                 log.debug("mapping Chunk at column " + col);
-                Chunk c = chunkMapper.mapRow(rs, row, col);
-                col += chunkMapper.getColumnCount();
-                if (c != null) {
-                    if (curChunk == null || !curChunk.getID().equals(c.getID())) {
+                UUID chunkID = chunkMapper.getID(rs, row, col);
+                if (chunkID != null) {
+                    if (curChunk == null || !curChunk.getID().equals(chunkID)) {
                         if (curChunk != null) {
                             log.debug("END part: " + curChunk.getID());
                         }
-                        curChunk = c;
+                        curChunk = chunkMapper.mapRow(rs, row, col);
                         curPart.getChunks().add(curChunk);
                         log.debug("START chunk: " + curChunk.getID());
                     }
@@ -213,6 +213,7 @@ public class ObservationExtractor implements ResultSetExtractor {
                     log.debug("part: " + curPart.getID() + ": no chunks");
                     curChunk = null;
                 }
+                col += chunkMapper.getColumnCount();
             }
         }
 

@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.persistence;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -80,10 +81,25 @@ import org.springframework.jdbc.core.RowMapper;
 public interface PartialRowMapper<T> extends RowMapper {
 
     /**
-     *
+     * Get the number of columns consumed by this mapper.
+     * 
      * @return the number of columns this RowMapper consumes
      */
     public int getColumnCount();
+    
+    /**
+     * Get the CaomEntity ID value for the entity mapped by this mapper. This is
+     * useful to peak at the partial row and decide if it is a duplicate of values
+     * in a previously mapped row.
+     * 
+     * @param rs the result set
+     * @param row row number for debug logging
+     * @param offset the first column from which to get domain object state
+     * @return ID value for the entity
+     * @throws java.sql.SQLException
+     */
+    public UUID getID(ResultSet rs, int row, int offset)
+            throws SQLException;
 
     /**
      * Construct a complete or partial domain object from part of the

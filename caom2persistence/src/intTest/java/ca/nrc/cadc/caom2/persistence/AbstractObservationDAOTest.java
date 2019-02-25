@@ -259,7 +259,7 @@ public abstract class AbstractObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    @Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -589,7 +589,8 @@ public abstract class AbstractObservationDAOTest
             
             // EXISTS
             //txnManager.startTransaction();
-            Assert.assertTrue(dao.exists(orig.getURI()));
+            ObservationState os1 = dao.getState(orig.getURI());
+            Assert.assertNotNull("exists", os1);
             //txnManager.commitTransaction();
 
             // GET by URI
@@ -612,7 +613,8 @@ public abstract class AbstractObservationDAOTest
             
             // EXISTS
             //txnManager.startTransaction();
-            Assert.assertFalse("exists", dao.exists(orig.getURI()));
+            ObservationState os2 = dao.getState(orig.getURI());
+            Assert.assertNull("!exists", os2);
             //txnManager.commitTransaction();
             
             log.info("check deletion track: " + orig.getID());
