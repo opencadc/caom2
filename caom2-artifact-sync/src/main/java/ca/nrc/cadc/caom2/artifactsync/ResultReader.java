@@ -133,7 +133,12 @@ public class ResultReader implements InputStreamWrapper {
                         }
                         
                         // read lastModified
-                        am.lastModified = df.parse(parts[1]);
+                        String dateString = parts[1];
+                        if (dateString == null || dateString.length() == 0) {
+                            am.lastModified = null;
+                        } else {
+                            am.lastModified = df.parse(parts[1]);
+                        }
                         
                         if (parts.length > 2) {
                             if (logical) {
@@ -149,7 +154,9 @@ public class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.releaseDate = df.parse(parts[5]);
+                            if (logical) {
+                                am.observationID = parts[5];
+                            }
                         }
                         artifacts.add(am);
                     }

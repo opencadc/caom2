@@ -230,6 +230,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffLength",
+                             "observationID", nextLogical.observationID,
                              "artifactURI", nextLogical.artifactURI,
                              "storageID", nextLogical.storageID,
                              "caomContentLength", nextLogical.contentLength,
@@ -244,6 +245,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         logJSON(new String[]
                             {"logType", "detail",
                              "anomaly", "diffType",
+                             "observationID", nextLogical.observationID,
                              "artifactURI", nextLogical.artifactURI,
                              "storageID", nextLogical.storageID,
                              "caomContentType", nextLogical.contentType,
@@ -267,6 +269,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     logJSON(new String[]
                         {"logType", "detail",
                          "anomaly", "diffChecksum",
+                         "observationID", nextLogical.observationID,
                          "artifactURI", nextLogical.artifactURI,
                          "storageID", nextLogical.storageID,
                          "caomChecksum", nextLogical.checksum,
@@ -299,6 +302,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             logJSON(new String[]
                 {"logType", "detail",
                  "anomaly", "notInStorage",
+                 "observationID", next.observationID,
                  "artifactURI", next.artifactURI,
                  "storageID", next.storageID,
                  "caomCollection", collection,
@@ -439,7 +443,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 ObservationResponse resp = observationDAO.getAlt(s, depth);
                 for (Plane plane : resp.observation.getPlanes()) {
                     for (Artifact artifact : plane.getArtifacts()) {
-                        result.add(getMetadata(artifact, plane.dataRelease, plane.metaRelease));
+                        String observationID = s.getURI().getObservationID();
+                        result.add(getMetadata(observationID, artifact, plane.dataRelease, plane.metaRelease));
                     }
                 }
             }
@@ -455,7 +460,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType "
+            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.observationID "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
                     + "join caom2.Observation o on p.obsID = o.obsID "
@@ -469,8 +474,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return result;
     }
     
-    private ArtifactMetadata getMetadata(Artifact artifact, Date dataRelease, Date metaRelease) throws Exception {
+    private ArtifactMetadata getMetadata(String observationID, Artifact artifact, Date dataRelease, Date metaRelease) throws Exception {
         ArtifactMetadata metadata = new ArtifactMetadata(); 
+        metadata.observationID = observationID;
         metadata.artifactURI = artifact.getURI().toASCIIString();
         metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
         metadata.contentLength = Long.toString(artifact.contentLength);
