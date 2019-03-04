@@ -334,9 +334,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
         throws URISyntaxException, MalformedURLException {
         // extract the path from the uri
         URI ouri = new URI(uri);
-        String surl = baseHTTPURL + "/" + ouri.getSchemeSpecificPart();
+        String surl = baseAnonURL + "/" + ouri.getSchemeSpecificPart();
         if (subject != null) {
-            surl = baseHTTPSURL + "/" + ouri.getSchemeSpecificPart();
+            surl = baseCertURL + "/" + ouri.getSchemeSpecificPart();
         }
 
         if (maxRec != null) {
@@ -459,11 +459,11 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
     private List<String> listCollections(boolean testAnon, Subject subject) throws Exception {
         List<String> retList = new ArrayList<>();
 
-        String surl = baseHTTPURL;
+        String surl = baseAnonURL;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         if (!testAnon) {
-            surl = baseHTTPSURL;
+            surl = baseCertURL;
         }
 
         URL url = new URL(surl);

@@ -118,8 +118,8 @@ class CaomRepoBaseIntTests {
     // subject3 has not read or write permission on the TEST collection
     Subject subject3;
 
-    final String baseHTTPURL;
-    final String baseHTTPSURL;
+    final String baseAnonURL;
+    final String baseCertURL;
 
     static final String SCHEME = "caom:";
 
@@ -134,8 +134,8 @@ class CaomRepoBaseIntTests {
         subject1 = null;
         subject2 = null;
         subject3 = null;
-        baseHTTPURL = null;
-        baseHTTPSURL = null;
+        baseAnonURL = null;
+        baseCertURL = null;
     }
 
     /**
@@ -164,13 +164,13 @@ class CaomRepoBaseIntTests {
             RegistryClient rc = new RegistryClient();
 
             URL serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.ANON);
-            baseHTTPURL = serviceURL.toExternalForm();
+            baseAnonURL = serviceURL.toExternalForm();
 
             serviceURL = rc.getServiceURL(resourceID, repoStandardID, AuthMethod.CERT);
-            baseHTTPSURL = serviceURL.toExternalForm();
+            baseCertURL = serviceURL.toExternalForm();
 
-            log.debug("test service URL: " + baseHTTPURL);
-            log.debug("test service URL: " + baseHTTPSURL);
+            log.debug("test service URL: " + baseAnonURL);
+            log.debug("test service URL: " + baseCertURL);
         } catch (Throwable t) {
             String message = "Failed int-test initialization: " + t.getMessage();
             log.fatal(message, t);
@@ -187,11 +187,11 @@ class CaomRepoBaseIntTests {
         HttpURLConnection conn;
         URL url;
         if (subject == null) {
-            url = new URL(baseHTTPURL + "/" + urlPath);
+            url = new URL(baseAnonURL + "/" + urlPath);
             log.debug("opening connection to: " + url.toString());
             conn = (HttpURLConnection) url.openConnection();
         } else {
-            url = new URL(baseHTTPSURL + "/" + urlPath);
+            url = new URL(baseCertURL + "/" + urlPath);
             log.debug("opening connection to: " + url.toString());
             conn = (HttpsURLConnection) url.openConnection();
             SSLSocketFactory sf = SSLUtil.getSocketFactory(subject);
@@ -277,9 +277,9 @@ class CaomRepoBaseIntTests {
 
         // extract the path from the uri
         URI ouri = new URI(uri);
-        String surl = baseHTTPURL + "/" + ouri.getSchemeSpecificPart();
+        String surl = baseAnonURL + "/" + ouri.getSchemeSpecificPart();
         if (subject != null) {
-            surl = baseHTTPSURL + "/" + ouri.getSchemeSpecificPart();
+            surl = baseCertURL + "/" + ouri.getSchemeSpecificPart();
         }
         URL url = new URL(surl);
         ObservationReader reader = new ObservationReader();

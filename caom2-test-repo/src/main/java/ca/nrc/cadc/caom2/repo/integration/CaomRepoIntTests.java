@@ -557,7 +557,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         throws Exception {
         String path = TEST_COLLECTION + "/" + observationID;
         String uri = SCHEME + path;
-        final URL url = new URL(baseHTTPSURL + "/" + path);
+        final URL url = new URL(baseCertURL + "/" + path);
 
         PrivilegedExceptionAction<Object> p = new PrivilegedExceptionAction<Object>() {
             @Override

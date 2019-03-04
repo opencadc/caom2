@@ -107,7 +107,7 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
     public void testListCollections() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(new URL(baseHTTPURL), bos);
+            HttpDownload get = new HttpDownload(new URL(baseAnonURL), bos);
             get.run();
 
             Assert.assertNull("testListCollections", get.getThrowable());
@@ -135,7 +135,7 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
     public void testListDeletedDenied() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(new URL(baseHTTPURL + "/" + TEST_COLLECTION), bos);
+            HttpDownload get = new HttpDownload(new URL(baseAnonURL + "/" + TEST_COLLECTION), bos);
             get.run();
 
             Assert.assertNotNull("testListDeletedDenied", get.getThrowable());
@@ -179,7 +179,7 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
             log.info("local operation dt: " + df.format(clientDeleted) + " -> " + df.format(clientInserted));
 
             StringBuilder sb = new StringBuilder();
-            sb.append(baseHTTPSURL).append("/").append(TEST_COLLECTION);
+            sb.append(baseCertURL).append("/").append(TEST_COLLECTION);
             sb.append("?").append("maxrec=1");
             sb.append("&").append("start=").append(df.format(inserted));
             sb.append("&").append("end=").append(df.format(endDate));
