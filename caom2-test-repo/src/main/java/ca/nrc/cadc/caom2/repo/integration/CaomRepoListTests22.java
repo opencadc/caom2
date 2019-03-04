@@ -317,9 +317,9 @@ public class CaomRepoListTests22 extends CaomRepoBaseIntTests {
 
         // extract the path from the uri
         URI ouri = new URI(uri);
-        String surl = super.baseHTTPURL + "/" + ouri.getSchemeSpecificPart();
+        String surl = super.baseAnonURL + "/" + ouri.getSchemeSpecificPart();
         if (subject != null) {
-            surl = super.baseHTTPSURL + "/" + ouri.getSchemeSpecificPart();
+            surl = super.baseCertURL + "/" + ouri.getSchemeSpecificPart();
         }
 
         if (maxRec != null) {
