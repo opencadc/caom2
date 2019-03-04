@@ -83,6 +83,7 @@ import java.util.Date;
  */
 public class ArtifactMetadata {
 
+    public String observationID;
     public String artifactURI;
     public String checksum;
     public String contentLength;
