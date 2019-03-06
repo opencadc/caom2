@@ -257,18 +257,19 @@ public class CaomTapQuery
         throws IOException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
-        // obtain credentials fropm CDP if the user is authorized
+        // obtain credentials from CDP if the user is authorized
         AuthMethod queryAuthMethod = AuthMethod.ANON;
-        if ( CredUtil.checkCredentials() ) {
+        if (CredUtil.checkCredentials()) {
             Subject s = AuthenticationUtil.getCurrentSubject();
             queryAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(s);
         }
 
         RegistryClient reg = new RegistryClient();
-        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod, Standards.INTERFACE_UWS_SYNC);
+        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod);
+        URL tapSync = new URL(tapURL.toExternalForm() + "/sync");
             
-        log.debug("post: " + uri + " " + tapURL);
-        HttpPost httpPost = new HttpPost(tapURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
+        log.debug("post: " + uri + " " + tapSync);
+        HttpPost httpPost = new HttpPost(tapSync, getQueryParameters(VOTABLE_FORMAT, adql), false);
         httpPost.run();
         if (httpPost.getThrowable() != null)
             throw new TransientFault("query failed: " + uri, httpPost.getResponseCode(), httpPost.getThrowable());

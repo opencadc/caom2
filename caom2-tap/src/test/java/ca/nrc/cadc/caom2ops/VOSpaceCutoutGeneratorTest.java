@@ -99,7 +99,7 @@ public class VOSpaceCutoutGeneratorTest {
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpget";
+    private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpsget"; // assumption
 
     VOSpaceCutoutGenerator vosResolver = new VOSpaceCutoutGenerator();
 
@@ -120,7 +120,6 @@ public class VOSpaceCutoutGeneratorTest {
             URL url = vosResolver.toURL(uri, cutouts);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
             String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
             Assert.assertEquals(FILE_URI.toString(), paramArray[0].split("=")[1]);
             Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
