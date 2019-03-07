@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,58 +69,30 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.reg.Capabilities;
-import ca.nrc.cadc.reg.Capability;
-import ca.nrc.cadc.reg.Interface;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
- * StorageResolver implementation for the MAST archive.
- * This class can convert an MAST URI into a URL. This is an alternate version that uses the RegistryClient to find the data web service base URL.
+ * StorageResolver implementation for the ALMA archive.
+ * This class can convert an ALMA URI into a URL. The conversion is delegated to the AdResolver.
  *
  * @author yeunga
  */
-public class CadcMastResolver implements StorageResolver, Traceable {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
-    private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-    private String baseDataURL;
+public class CadcAlmaResolver implements StorageResolver, Traceable {
+    public static final String SCHEME = "alma";
+    private static final Logger log = Logger.getLogger(CadcAlmaResolver.class);
 
     @Override
     public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
-        }
+        ResolverUtil.validate(uri, SCHEME);
 
         try {
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            if (authMethod == null) {
-                authMethod = AuthMethod.ANON;
-            }
-            RegistryClient rc = new RegistryClient();
-            Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
-            Capability dataCap = caps.findCapability(Standards.DATA_10);
-            Interface ifc = dataCap.findInterface(authMethod);
-            if (ifc == null) {
-                throw new IllegalArgumentException("No interface for auth method " + authMethod);
-            }
-            String baseDataURL = ifc.getAccessURL().getURL().toString();
-            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG", ex);
+            AdResolver adResolver = new AdResolver();
+            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);
