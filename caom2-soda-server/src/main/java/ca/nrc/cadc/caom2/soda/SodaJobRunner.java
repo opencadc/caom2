@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -411,6 +412,9 @@ public class SodaJobRunner implements JobRunner
         catch(FileNotFoundException ex)
         {
             handleError(404, ex.getMessage());
+        }
+        catch (ResourceNotFoundException ex) {
+            handleError(500, ex.getMessage());
         }
         catch(IOException ex)
         {
