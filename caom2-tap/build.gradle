@@ -23,6 +23,8 @@ dependencies {
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-registry:[1.5.0,)'
+    // not yet promoted to jcenter
+    //compile 'org.opencadc:cadc-tap:[1.0,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-vos:[1.0,)'

@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.TransientFault;
 import ca.nrc.cadc.dali.tables.TableData;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
@@ -253,6 +254,9 @@ public class DynamicTableData implements TableData
                 catch(IOException ex)
                 {
                     throw new RuntimeException("query failed: " + s, ex);
+                }
+                catch(ResourceNotFoundException ex) {
+                    throw new RuntimeException("cannot find TAP service: " + s, ex);
                 }
                 catch(CertificateException ex)
                 {

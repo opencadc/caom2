@@ -98,6 +98,7 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.IOException;
@@ -112,9 +113,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -149,13 +148,14 @@ public class CaomTapQuery
      * @param uri
      * @return an observation
      * @throws IOException
+     * @throws ResourceNotFoundException if a suitable TAP endpoint cannot be found
      * @throws UnexpectedContentException
      * @throws AccessControlException
      * @throws CertificateException 
      */
     // use by caom2-meta-server
     public Observation performQuery(final ObservationURI uri)
-        throws IOException, UnexpectedContentException, 
+        throws IOException, ResourceNotFoundException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
         
@@ -175,12 +175,13 @@ public class CaomTapQuery
      * @param artifactOnly
      * @return artifact query result
      * @throws IOException
+     * @throws ResourceNotFoundException if a suitable TAP endpoint cannot be found
      * @throws UnexpectedContentException
      * @throws AccessControlException
      * @throws CertificateException 
      */
     public ArtifactQueryResult performQuery(final PublisherID uri, boolean artifactOnly)
-        throws IOException, UnexpectedContentException, 
+        throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
     	log.debug("performing query on plane URI = " + uri.toString() + " artifactOnly=" + artifactOnly);
@@ -202,13 +203,14 @@ public class CaomTapQuery
      * @param artifactOnly
      * @return artifact query result
      * @throws IOException
+     * @throws ResourceNotFoundException if a suitable TAP endpoint cannot be found
      * @throws UnexpectedContentException
      * @throws AccessControlException
      * @throws CertificateException 
      */
     // used by caom2-datalink-server
     public ArtifactQueryResult performQuery(final PlaneURI uri, boolean artifactOnly)
-        throws IOException, UnexpectedContentException, 
+        throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
     	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
@@ -229,13 +231,14 @@ public class CaomTapQuery
      * @param uri
      * @return an artifact
      * @throws IOException
+     * @throws ResourceNotFoundException if a suitable TAP endpoint cannot be found
      * @throws UnexpectedContentException
      * @throws AccessControlException
      * @throws CertificateException 
      */
     // used by caom2-soda-server
     public Artifact performQuery(final URI uri)
-        throws IOException, UnexpectedContentException, 
+        throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
     	log.debug("query uri: " + uri.toString());
@@ -254,7 +257,7 @@ public class CaomTapQuery
     }
     
     private VOTableDocument execQuery(String uri, String adql)
-        throws IOException, UnexpectedContentException, 
+        throws IOException, ResourceNotFoundException, UnexpectedContentException, 
             AccessControlException, CertificateException
     {
         // obtain credentials from CDP if the user is authorized
@@ -264,12 +267,16 @@ public class CaomTapQuery
             queryAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(s);
         }
 
-        RegistryClient reg = new RegistryClient();
-        URL tapURL = reg.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod);
-        URL tapSync = new URL(tapURL.toExternalForm() + "/sync");
+        //TapClient tc = new TapClient(tapServiceID);
+        //URL tapSyncURL = tc.getSyncURL(queryAuthMethod);
+        
+        // temporary code until cadc-tap (TapClient) is approved
+        RegistryClient regClient = new RegistryClient();
+        URL tapBaseURL = regClient.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod);
+        URL tapSyncURL = new URL(tapBaseURL.toExternalForm() + "/sync");
             
-        log.debug("post: " + uri + " " + tapSync);
-        HttpPost httpPost = new HttpPost(tapSync, getQueryParameters(VOTABLE_FORMAT, adql), false);
+        log.debug("post: " + uri + " " + tapSyncURL);
+        HttpPost httpPost = new HttpPost(tapSyncURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
         httpPost.run();
         if (httpPost.getThrowable() != null)
             throw new TransientFault("query failed: " + uri, httpPost.getResponseCode(), httpPost.getThrowable());
