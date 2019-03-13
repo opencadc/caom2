@@ -99,8 +99,6 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -115,6 +113,7 @@ import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.tap.TapClient;
 
 /**
  * Performs a TAP query based on a Plane URI, optionally filters the query,
@@ -267,14 +266,9 @@ public class CaomTapQuery
             queryAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(s);
         }
 
-        //TapClient tc = new TapClient(tapServiceID);
-        //URL tapSyncURL = tc.getSyncURL(queryAuthMethod);
+        TapClient tc = new TapClient(tapServiceID);
+        URL tapSyncURL = tc.getSyncURL(queryAuthMethod);
         
-        // temporary code until cadc-tap (TapClient) is approved
-        RegistryClient regClient = new RegistryClient();
-        URL tapBaseURL = regClient.getServiceURL(tapServiceID, Standards.TAP_10, queryAuthMethod);
-        URL tapSyncURL = new URL(tapBaseURL.toExternalForm() + "/sync");
-            
         log.debug("post: " + uri + " " + tapSyncURL);
         HttpPost httpPost = new HttpPost(tapSyncURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
         httpPost.run();
