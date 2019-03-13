@@ -120,7 +120,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 0,1,0 , 2),
 ( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
 
-( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '32*', NULL, 1,1,1 , NULL),
+( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , NULL),
 ( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 4),
 ( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
 

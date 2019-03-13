@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.7.1'
+    id 'com.jfrog.bintray' version '1.8.4'
 }
 
 repositories {
@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.6.6'
+version = '1.6.9'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -22,7 +22,8 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.1.1,)'
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-registry:[1.3.2,)'
+    compile 'org.opencadc:cadc-registry:[1.5.0,)'
+    compile 'org.opencadc:cadc-tap:[1.0,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-vos:[1.0,)'

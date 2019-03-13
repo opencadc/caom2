@@ -69,29 +69,17 @@
 
 package ca.nrc.cadc.caom2.meta;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.security.cert.CertificateException;
-import java.util.Date;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.reg.Standards;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.xml.JsonWriter;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
 import ca.nrc.cadc.log.WebServiceLogInfo;
-import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.util.ThrowableUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -100,12 +88,16 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
-import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.cert.CertificateException;
+import java.util.Date;
+import org.apache.log4j.Logger;
 
 /**
  * MetaQueryRunner hard coded to output CAOM-2.2 documents.

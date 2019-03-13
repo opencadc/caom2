@@ -117,7 +117,6 @@ public class AdCutoutGeneratorTest {
             URL url = adResolver.toURL(uri, cutouts);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertEquals("http", url.getProtocol());
             String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
             Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
             Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);

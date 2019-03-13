@@ -84,14 +84,15 @@ import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
-import ca.nrc.cadc.caom2ops.SchemeHandler;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -102,7 +103,6 @@ import ca.nrc.cadc.uws.server.JobNotFoundException;
 import ca.nrc.cadc.uws.server.JobPersistenceException;
 import ca.nrc.cadc.uws.server.JobRunner;
 import ca.nrc.cadc.uws.server.JobUpdater;
-import ca.nrc.cadc.uws.server.SyncOutput;
 import ca.nrc.cadc.uws.util.JobLogInfo;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -412,6 +412,9 @@ public class SodaJobRunner implements JobRunner
         catch(FileNotFoundException ex)
         {
             handleError(404, ex.getMessage());
+        }
+        catch (ResourceNotFoundException ex) {
+            handleError(500, ex.getMessage());
         }
         catch(IOException ex)
         {
