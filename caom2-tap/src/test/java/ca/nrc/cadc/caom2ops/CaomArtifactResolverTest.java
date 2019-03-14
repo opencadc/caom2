@@ -152,7 +152,7 @@ public class CaomArtifactResolverTest {
             Assert.assertNotNull(uri + cut + " -> URL", url);
 
             try {
-                uri = URI.create("noao:file/k4m_170919_104606_ooi_VR_v1.fits.fz");
+                uri = URI.create("noao:k4m_170919_104606_ooi_VR_v1.fits.fz");
                 url = car.getURL(uri, cutouts);
                 Assert.fail(uri + cut + " -> " + url);
             } catch (IllegalArgumentException expected) {
