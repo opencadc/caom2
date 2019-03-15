@@ -456,7 +456,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 // source is a TAP resource ID
                 RegistryClient regClient = new RegistryClient();
                 AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
-                this.caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod, Standards.INTERFACE_UWS_SYNC);
+                this.caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod);
             }
             
             // source is a TAP service URL or a TAP resource ID
