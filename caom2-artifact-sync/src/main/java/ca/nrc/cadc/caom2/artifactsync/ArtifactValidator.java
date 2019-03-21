@@ -460,8 +460,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     this.caomTapURL = tapClient.getSyncURL(authMethod);
                 } catch (ResourceNotFoundException ex) {
                     if (ex.getMessage().contains("with password")) {
-                        throw new ResourceNotFoundException("TAP service for " +
-                            caomTapResourceID + " does not support password authentication.", ex);
+                        throw new ResourceNotFoundException("TAP service for "
+                            + caomTapResourceID + " does not support password authentication.", ex);
                     }
                 }
             }
