@@ -85,8 +85,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URI;
@@ -108,6 +107,7 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
+import org.opencadc.tap.TapClient;
 
 /**
  * Class that compares artifacts in the caom2 metadata with the artifacts
@@ -454,9 +454,16 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
                 // source is a TAP resource ID
-                RegistryClient regClient = new RegistryClient();
                 AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
-                this.caomTapURL = regClient.getServiceURL(caomTapResourceID, Standards.TAP_10, authMethod);
+                TapClient tapClient = new TapClient(caomTapResourceID);
+                try {
+                    this.caomTapURL = tapClient.getSyncURL(authMethod);
+                } catch (ResourceNotFoundException ex) {
+                    if (ex.getMessage().contains("with password")) {
+                        throw new ResourceNotFoundException("TAP service for "
+                            + caomTapResourceID + " does not support password authentication.", ex);
+                    }
+                }
             }
             
             // source is a TAP service URL or a TAP resource ID
