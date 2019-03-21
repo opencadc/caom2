@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URI;
@@ -455,7 +456,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 // source is a TAP resource ID
                 AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
                 TapClient tapClient = new TapClient(caomTapResourceID);
-                this.caomTapURL = tapClient.getSyncURL(authMethod);
+                try {
+                    this.caomTapURL = tapClient.getSyncURL(authMethod);
+                } catch (ResourceNotFoundException ex) {
+                    if (ex.getMessage().contains("with password")) {
+                        throw new ResourceNotFoundException("TAP service for " +
+                            caomTapResourceID + " does not support password authentication.", ex);
+                    }
+                }
             }
             
             // source is a TAP service URL or a TAP resource ID
