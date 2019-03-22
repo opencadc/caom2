@@ -102,13 +102,14 @@ public class Validate extends Caom2ArtifactSync {
                 String msg = "Anonymous execution not supported.  Please use --netrc or --cert";
                 this.printErrorUsage(msg);
             } else {
+                boolean tolerateNullChecksum = am.isSet("tolerateNullChecksum");
                 if (this.mode.equals("diff")) {
                     // diff mode
                     if (!am.isSet("source")) {
                         String msg = "Missing required parameter 'source'";
                         this.printErrorUsage(msg);
                     } else {
-                        this.validator = getValidator(am.getValue("source"));
+                        this.validator = getValidator(am.getValue("source"), tolerateNullChecksum);
                     }
                 } else {
                     // validate mode
@@ -120,7 +121,7 @@ public class Validate extends Caom2ArtifactSync {
                         observationDAO.setConfig(this.daoConfig);
     
                         this.validator = new ArtifactValidator(observationDAO.getDataSource(),
-                                this.harvestResource, observationDAO, false, this.artifactStore);
+                                this.harvestResource, observationDAO, false, this.artifactStore, tolerateNullChecksum);
                     }
                 }
             }
@@ -142,6 +143,7 @@ public class Validate extends Caom2ArtifactSync {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
+        sb.append("\n        --tolerateNullChecksum : validate even when checksum is null");
         if (this.mode.equals("diff")) {
             sb.append("\n        --source=<server.database.schema | TAP resource ID | TAP Service URL>");
             sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
@@ -163,18 +165,18 @@ public class Validate extends Caom2ArtifactSync {
         this.setIsDone(true);
     }
     
-    private ArtifactValidator getValidator(String source) {
+    private ArtifactValidator getValidator(String source, boolean tolerateNullChecksum) {
         ArtifactValidator validator = null;
         if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore);
+            validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore, tolerateNullChecksum);
         } else if (source.contains("http:")) {
             // source points to a TAP Service URL
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);
-                validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore);
+                validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore, tolerateNullChecksum);
             } catch (MalformedURLException e) {
                 String msg = "Must specify source." ;
                 this.logException(msg, e);
@@ -185,7 +187,7 @@ public class Validate extends Caom2ArtifactSync {
             observationDAO.setConfig(this.daoConfig);
             
             validator = new ArtifactValidator(observationDAO.getDataSource(),
-                this.harvestResource, observationDAO, true, this.artifactStore);
+                this.harvestResource, observationDAO, true, this.artifactStore, tolerateNullChecksum);
         }
         
         return validator;
