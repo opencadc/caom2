@@ -547,9 +547,8 @@ public final class PositionUtil {
 
         if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
             // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
-            if (poly != null && poly.getArea() > MAX_SANE_AREA) {
-                throw new IllegalPolygonException("area too large, assuming invalid WCS: " + wcs.toString() + " : "
-                    + poly.getArea());
+            if (poly.getArea() > MAX_SANE_AREA) {
+                throw new IllegalPolygonException("area too large: " + poly.getArea() + " sq. deg. -- assuming invalid WCS");
             }
         }
 
