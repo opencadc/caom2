@@ -65,16 +65,23 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.persistence;
 
-import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -84,19 +91,17 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class PostgreSQLGeneratorTest
-{
+public class PostgreSQLGeneratorTest {
+
     private static final Logger log = Logger.getLogger(PostgreSQLGeneratorTest.class);
 
     static String schema;
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
-        if (testSchema != null)
-        {
+        if (testSchema != null) {
             schema = testSchema;
         }
     }
@@ -104,14 +109,10 @@ public class PostgreSQLGeneratorTest
     PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", schema);
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -139,13 +140,10 @@ public class PostgreSQLGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    */
-    
+     */
     @Test
-    public void testSelectByLastModifiedSQL()
-    {
-        try
-        {
+    public void testSelectByLastModifiedSQL() {
+        try {
             String start = "select observationstate.";
             String end = " order by observationstate.maxlastmodified limit 10";
             Date d1 = new Date();
@@ -165,9 +163,40 @@ public class PostgreSQLGeneratorTest
 
             log.debug("look for: " + exp1);
             Assert.assertTrue(sql.contains(exp1));
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        catch(Exception unexpected)
-        {
+    }
+
+    @Test
+    public void testCircleToPolygonApproximatiom() {
+        try {
+            Circle c = new Circle(new Point(12.0, 34.0), 1.0);
+            double ca = c.getArea();
+            double cs = c.getSize();
+
+            for (int i = 4; i < 32; i += 2) {
+                ca.nrc.cadc.dali.Polygon dpoly = gen.generatePolygonApproximation(c, i);
+                List<Vertex> verts = new ArrayList<Vertex>();
+                List<Point> points = new ArrayList<Point>();
+                SegmentType t = SegmentType.MOVE;
+                for (ca.nrc.cadc.dali.Point dp : dpoly.getVertices()) {
+                    points.add(new Point(dp.getLongitude(), dp.getLatitude()));
+                    verts.add(new Vertex(dp.getLongitude(), dp.getLatitude(), t));
+                    t = SegmentType.LINE;
+                }
+                verts.add(Vertex.CLOSE);
+                MultiPolygon mp = new MultiPolygon(verts);
+                Polygon poly = new Polygon(points, mp);
+
+                double pa = poly.getArea();
+                double ps = poly.getSize();
+                double da = pa / ca;
+                log.info("n=" + i + " poly: " + ps + " " + pa + " (" + da + ")");
+            }
+            log.info("circle: " + ca + " " + cs);
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
