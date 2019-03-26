@@ -90,6 +90,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.AccessControlException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -494,7 +495,16 @@ public class ObservationHarvester extends Harvester {
                 } catch (Throwable oops) {
                     skipMsg = null;
                     String str = oops.toString();
-                    if (oops instanceof IllegalStateException) {
+                    if (oops instanceof HarvestReadException) {
+                        // unwrap HarvestReadException from above
+                        oops = oops.getCause();
+                        // unwrap intervening RuntimeException(s)
+                        while (oops.getCause() != null && oops instanceof RuntimeException) {
+                            oops = oops.getCause();
+                        }
+                        log.error("HARVEST PROBLEM - failed to read observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                        ret.handled++;
+                    } else if (oops instanceof IllegalStateException) {
                         if (oops.getMessage().contains("XML failed schema validation")) {
                             log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
                             ret.handled++;
@@ -502,12 +512,6 @@ public class ObservationHarvester extends Harvester {
                             log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
                             ret.handled++;
                         }
-                    } else if (oops instanceof HarvestReadException) {
-                        Throwable cause = oops.getCause();
-                        log.error("CONTENT PROBLEM - failed to read: " + ow.entity.observationState.getURI() + " - " + cause);
-                        ret.handled++;
-                        // unwrap
-                        oops = cause;
                     } else if (oops instanceof IllegalArgumentException) {
                         log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
                         if (oops.getCause() != null) {
