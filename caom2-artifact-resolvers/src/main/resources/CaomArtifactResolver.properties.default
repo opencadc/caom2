@@ -5,8 +5,8 @@
 
 ad=ca.nrc.cadc.caom2.artifact.resolvers.AdResolver
 chandra=ca.nrc.cadc.caom2.artifact.resolvers.ChandraResolver
-gemini=ca.nrc.cadc.caom2.artifact.resolvers.handlers.GeminiResolver
-noao=ca.nrc.cadc.caom2.artifact.resolvers.handlers.NoaoResolver
+gemini=ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver
+noao=ca.nrc.cadc.caom2.artifact.resolvers.NoaoResolver
 sdss=ca.nrc.cadc.caom2.artifact.resolvers.SdssResolver
 subaru=ca.nrc.cadc.caom2.artifact.resolvers.SubaruResolver
 xmm=ca.nrc.cadc.caom2.artifact.resolvers.XmmResolver
