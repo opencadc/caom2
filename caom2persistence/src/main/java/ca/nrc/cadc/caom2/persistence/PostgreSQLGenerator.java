@@ -321,7 +321,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
             }
         } else {
             log.debug("[safeSetPositionBounds] in: " + val);
-            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 6);
+            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 13);
             PgSpoly pgs = new PgSpoly();
             PGobject pgo = pgs.generatePolygon(poly);
             ps.setObject(col, pgo);
@@ -537,7 +537,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         return ret;
     }
     
-    private ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
+    ca.nrc.cadc.dali.Polygon generatePolygonApproximation(Circle val, int numVerts) {
         if (numVerts < 4) {
             throw new IllegalArgumentException("number of vertices in approximation too small (min: 4)");
         }
@@ -549,7 +549,8 @@ public class PostgreSQLGenerator extends SQLGenerator {
         double phi = 2.0 * Math.PI / ((double) numVerts);
         // compute distance to vertices so that the edges are tangent and circle is
         // inside the polygon
-        double vdist = val.getRadius() / Math.sin(phi / 2.0);
+        double vdist = val.getRadius() / Math.cos(phi / 2.0);
+        //log.info("phi = " + phi + " vdist=" + vdist);
         
         CartesianTransform inv = trans.getInverseTransform();
         ca.nrc.cadc.dali.Polygon ret = new ca.nrc.cadc.dali.Polygon();        
