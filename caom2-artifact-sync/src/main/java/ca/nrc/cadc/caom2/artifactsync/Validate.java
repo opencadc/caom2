@@ -143,11 +143,12 @@ public class Validate extends Caom2ArtifactSync {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
-        sb.append("\n        --tolerateNullChecksum : validate even when checksum is null");
         if (this.mode.equals("diff")) {
+            sb.append("\n        --tolerateNullChecksum : look for difference even when checksum is null");
             sb.append("\n        --source=<server.database.schema | TAP resource ID | TAP Service URL>");
             sb.append("\n        --collection=<collection> : The collection to determine the artifacts differences");
         } else {
+            sb.append("\n        --tolerateNullChecksum : validate even when checksum is null");
             sb.append("\n        --database=<server.database.schema>");
             sb.append("\n        --collection=<collection> : The collection to validate");
         }
