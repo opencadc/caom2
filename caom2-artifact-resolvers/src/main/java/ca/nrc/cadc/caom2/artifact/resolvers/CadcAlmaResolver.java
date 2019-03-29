@@ -91,12 +91,12 @@ public class CadcAlmaResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "alma";
     private static final Logger log = Logger.getLogger(CadcAlmaResolver.class);
 
-    private void sanitize(String s)
-    {
+    private void sanitize(String s) {
         Pattern regex = Pattern.compile("^[a-zA-Z 0-9\\_\\.\\,\\-\\+\\@]*$");
         Matcher matcher = regex.matcher(s);
-        if (!matcher.find())
+        if (!matcher.find()) {
             throw new IllegalArgumentException("Invalid dataset characters.");
+        }
     }
    
     private String removeNamespace(final URI uri) {
@@ -106,21 +106,21 @@ public class CadcAlmaResolver implements StorageResolver, Traceable {
         int i = parts.indexOf('/');
         if (i > 0) {
             archive = parts.substring(0,i);
-            parts = parts.substring(i+1); // namespace+fileID
+            parts = parts.substring(i + 1); // namespace+fileID
         }
 
         i = parts.lastIndexOf('/');
         if (i > 0) {
-            fileID = parts.substring(i+1);
+            fileID = parts.substring(i + 1);
         } else {
             fileID = parts;
         }
         
-        if ( !StringUtil.hasText(archive) ) {
+        if (!StringUtil.hasText(archive)) {
             throw new IllegalArgumentException("cannot extract archive from " + uri);
         }
         
-        if ( !StringUtil.hasText(fileID) ) {
+        if (!StringUtil.hasText(fileID)) {
             throw new IllegalArgumentException("cannot extract fileID from " + uri);
         }
 
