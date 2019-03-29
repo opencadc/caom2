@@ -152,7 +152,10 @@ public class ObservationHarvester extends Harvester {
     
     public void setComputePlaneMetadata(boolean computePlaneMetadata) {
         this.computePlaneMetadata = computePlaneMetadata;
-        this.destObservationDAO.setOrigin(true);
+        if (computePlaneMetadata) {
+            log.info("computePlaneMeta: setting origin=true");
+            this.destObservationDAO.setOrigin(true);
+        }
     }
 
     public void setGenerateReadAccessTuples(File config) {
@@ -195,6 +198,7 @@ public class ObservationHarvester extends Harvester {
                 log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
             }
             this.acGenerator = new ReadAccessGenerator(src.getCollection(), groupConfig);
+            log.info("generateAC: setting origin=true");
             this.destObservationDAO.setOrigin(true);
         } catch (IOException ex) {
             throw new RuntimeException("failed to read config from " + config, ex);
