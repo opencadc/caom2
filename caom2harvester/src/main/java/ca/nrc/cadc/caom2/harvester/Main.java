@@ -98,14 +98,17 @@ public class Main {
     private static Logger log = Logger.getLogger(Main.class);
 
     // these are CADC-specific features that are very dangerous so can
-    // only be enabled by compiling a special version of this application
-    private static final boolean ENABLE_BACKFILL_FEATURES = false;
+    // only be enabled by setting a system property
+    private static boolean ENABLE_COMPUTE_FEATURES = false;
     
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
 
     public static void main(String[] args) {
         try {
+            String ecf = System.getProperty("ca.nrc.cadc.caom2.harvester.Main.ecf");
+            ENABLE_COMPUTE_FEATURES = "true".equals(ecf);
+            
             ArgumentMap am = new ArgumentMap(args);
 
             if (am.isSet("d") || am.isSet("debug")) {
@@ -140,7 +143,7 @@ public class Main {
             boolean compute = false;
             String generateAC = null;
             boolean noChecksum = am.isSet("nochecksum");
-            if (ENABLE_BACKFILL_FEATURES) {
+            if (ENABLE_COMPUTE_FEATURES) {
                 compute = am.isSet("compute");
                 generateAC = am.getValue("generate-ac");
                 noChecksum = noChecksum || compute || am.isSet("generate-ac");
@@ -418,7 +421,7 @@ public class Main {
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         
-        if (ENABLE_BACKFILL_FEATURES) {
+        if (ENABLE_COMPUTE_FEATURES) {
             sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
             sb.append("\n\nOptional plugin invocation:");
             sb.append("\n           (probably only useful for CADC; automatically adds --nochecksum since they modify content)");
