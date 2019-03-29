@@ -76,6 +76,7 @@ import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.StringUtil;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -148,11 +149,11 @@ public class CaomArtifactResolver {
                     handlers.put(scheme, handler);
                     log.debug("success: " + scheme + " is supported");
                 } catch (Exception fail) {
-                    log.warn("failed to load " + cname + ", reason: " + fail);
+                    throw new RuntimeException("CONFIG: failed to load " + cname, fail);
                 }
             }
-        } catch (Exception ex) {
-            log.error("failed to read config from " + url, ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("CONFIG: failed to read config from " + url, ex);
         }
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
