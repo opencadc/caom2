@@ -115,8 +115,7 @@ public class CadcAlmaResolverTest {
             URI uri = new URI(FILE_URI);
             URL url = cadcAlmaResolver.toURL(uri);
             Assert.assertNotNull(url);
-            String urlString = url.toString();
-            String[] parts = urlString.split("/");
+            String[] parts = url.toString().split("/");
             Assert.assertEquals("incorrect archive", "ALMA", parts[parts.length - 2]);
             Assert.assertEquals("incorrect archive", "bar.fits", parts[parts.length - 1]);
             log.info("testFile: " + uri + " -> " + url);
