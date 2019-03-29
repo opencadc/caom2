@@ -129,35 +129,38 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URI caomTapResourceID;
     private URL caomTapURL;
     private boolean supportSkipURITable = false;
+    private boolean tolerateNullChecksum = false;
         
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
-    public ArtifactValidator(URI caomTapResourceID, 
-            String collection, boolean reportOnly, ArtifactStore artifactStore) {
-        this(collection, reportOnly, artifactStore);
+    public ArtifactValidator(URI caomTapResourceID, String collection, 
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
         this.caomTapResourceID = caomTapResourceID;
     }
     
-    public ArtifactValidator(URL caomTapURL, 
-            String collection, boolean reportOnly, ArtifactStore artifactStore) {
-        this(collection, reportOnly, artifactStore);
+    public ArtifactValidator(URL caomTapURL, String collection, 
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
         this.caomTapURL = caomTapURL;
     }
     
-    private ArtifactValidator(String collection, boolean reportOnly, ArtifactStore artifactStore) {
+    private ArtifactValidator(String collection, boolean reportOnly, 
+            ArtifactStore artifactStore, boolean tolerateNullChecksum) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
+        this.tolerateNullChecksum = tolerateNullChecksum;
     }
 
     @Override
@@ -180,7 +183,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         log.debug("Submitted queries");
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.DAYS);
-        log.debug("Queryies are complete");
+        log.debug("Queries are complete");
         executor.shutdownNow();
         
         TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
@@ -485,7 +488,13 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         ArtifactMetadata metadata = new ArtifactMetadata(); 
         metadata.observationID = observationID;
         metadata.artifactURI = artifact.getURI().toASCIIString();
-        metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
+        if (artifact.contentChecksum == null) {
+            if (!this.tolerateNullChecksum) {
+                throw new RuntimeException("content checksum is null for artifact URI: " + metadata.artifactURI);
+            }
+        } else {
+            metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
+        }
         metadata.contentLength = Long.toString(artifact.contentLength);
         metadata.contentType = artifact.contentType;
         metadata.collection = collection;
