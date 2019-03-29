@@ -140,10 +140,17 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
 
             // change in accMetaChecksum means maxLastModified changed
             // this correctly maintains accMetaChecksum and maxLastModified
-            if (!delta && val.getAccMetaChecksum() != null) {
+            if (!delta) {
                 delta = !val.getAccMetaChecksum().equals(cur.accMetaChecksum);
                 cmp = cmp + " -- " + cur.accMetaChecksum + " vs " + val.getAccMetaChecksum();
             }
+            
+            // temporary(?) work-around for a caom2harvester bug that set origin=true and assigned new timestamps
+            // if not origin but lastModified values are inconsistent: force an update
+            if (!origin && !delta) {
+                delta = !val.getLastModified().equals(cur.lastModified) || !val.getMaxLastModified().equals(cur.maxLastModified);
+            }
+            // end of work-around
             log.debug("PUT: " + val.getClass().getSimpleName() + cmp);
         } else {
             log.debug("PUT: " + val.getClass().getSimpleName() + cmp);

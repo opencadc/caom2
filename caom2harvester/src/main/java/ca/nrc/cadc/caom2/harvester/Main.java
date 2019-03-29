@@ -331,7 +331,9 @@ public class Main {
                     ch.setMinDate(minDate);
                     ch.setMaxDate(maxDate);
                     ch.setCompute(compute);
-                    ch.setGenerateReadAccess(generateAC);
+                    if (generateAC != null) {
+                        ch.setGenerateReadAccess(generateAC);
+                    }
                     action = ch;
                 } catch (IOException ioex) {
 
