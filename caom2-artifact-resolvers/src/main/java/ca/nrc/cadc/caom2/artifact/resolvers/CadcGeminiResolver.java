@@ -78,7 +78,7 @@ import org.apache.log4j.Logger;
 
 /**
  * StorageResolver implementation for the GEMINI archive.
- * This class can convert an MAST URI into a URL . This is an alternate version that uses the RegistryClient to find the data web service base URL.
+ * This class can convert a GEMINI URI into a URL. The conversion is delegated to the AdResolver.
  *
  * @author yeunga
  */
@@ -92,7 +92,6 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
 
         try {
             AdResolver adResolver = new AdResolver();
-            String path = uri.getSchemeSpecificPart();
             return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";

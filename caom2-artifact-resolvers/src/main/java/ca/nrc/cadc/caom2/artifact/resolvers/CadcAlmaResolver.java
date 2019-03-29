@@ -69,58 +69,81 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.reg.Capabilities;
-import ca.nrc.cadc.reg.Capability;
-import ca.nrc.cadc.reg.Interface;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.MalformedURLException;
+import ca.nrc.cadc.util.StringUtil;
+
 import java.net.URI;
 import java.net.URL;
-import javax.security.auth.Subject;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
 
 /**
- * StorageResolver implementation for the MAST archive.
- * This class can convert an MAST URI into a URL. This is an alternate version that uses the RegistryClient to find the data web service base URL.
+ * StorageResolver implementation for the ALMA archive.
+ * This class can convert an ALMA URI into a URL. The conversion is delegated to the AdResolver.
  *
  * @author yeunga
  */
-public class CadcMastResolver implements StorageResolver, Traceable {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
-    private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-    private String baseDataURL;
+public class CadcAlmaResolver implements StorageResolver, Traceable {
+    public static final String SCHEME = "alma";
+    private static final Logger log = Logger.getLogger(CadcAlmaResolver.class);
 
-    @Override
-    public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
+    private void sanitize(String s) {
+        Pattern regex = Pattern.compile("^[a-zA-Z 0-9\\_\\.\\,\\-\\+\\@]*$");
+        Matcher matcher = regex.matcher(s);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Invalid dataset characters.");
+        }
+    }
+   
+    private String removeNamespace(final URI uri) {
+        String archive = null;
+        String fileID = null;
+        String parts = uri.getRawSchemeSpecificPart();
+        int i = parts.indexOf('/');
+        if (i > 0) {
+            archive = parts.substring(0,i);
+            parts = parts.substring(i + 1); // namespace+fileID
         }
 
+        i = parts.lastIndexOf('/');
+        if (i > 0) {
+            fileID = parts.substring(i + 1);
+        } else {
+            fileID = parts;
+        }
+        
+        if (!StringUtil.hasText(archive)) {
+            throw new IllegalArgumentException("cannot extract archive from " + uri);
+        }
+        
+        if (!StringUtil.hasText(fileID)) {
+            throw new IllegalArgumentException("cannot extract fileID from " + uri);
+        }
+
+        sanitize(archive);
+        sanitize(fileID);
+
+        // trim the archive to 6 characters
+        // TODO: Remove this trim when AD supports longer archive names
+        if (archive.length() > 6) {
+            archive = archive.substring(0, 6);
+        }
+        
+        return archive + "/" + fileID;
+    }
+    
+    @Override
+    public URL toURL(URI uri) {
+        ResolverUtil.validate(uri, SCHEME);
+        String uriStringWithNoNamespace = removeNamespace(uri);
+
         try {
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            if (authMethod == null) {
-                authMethod = AuthMethod.ANON;
-            }
-            RegistryClient rc = new RegistryClient();
-            Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
-            Capability dataCap = caps.findCapability(Standards.DATA_10);
-            Interface ifc = dataCap.findInterface(authMethod);
-            if (ifc == null) {
-                throw new IllegalArgumentException("No interface for auth method " + authMethod);
-            }
-            String baseDataURL = ifc.getAccessURL().getURL().toString();
-            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG", ex);
+            AdResolver adResolver = new AdResolver();
+            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uriStringWithNoNamespace));
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);
