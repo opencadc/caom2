@@ -88,7 +88,7 @@ public class CadcAlmaResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "alma:ALMA/bar.fits";
+    private static final String FILE_URI = "alma:ALMA/some/name/space/bar.fits";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
     CadcAlmaResolver cadcAlmaResolver = new CadcAlmaResolver();
