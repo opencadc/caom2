@@ -437,10 +437,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             getTransactionManager().startTransaction();
             txnOpen = true;
             
-            // obtain row lock on observation
-            String lock = gen.getUpdateLockSQL(obs);
-            log.debug("LOCK SQL: " + lock);
-            jdbc.update(lock);
+            // obtain row lock on observation update
+            if (cur != null) {
+                String lock = gen.getUpdateLockSQL(obs);
+                log.debug("LOCK SQL: " + lock);
+                jdbc.update(lock);
+            }
             
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
