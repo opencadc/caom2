@@ -132,7 +132,7 @@ public final class CaomValidator {
             return;
         }
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid "
-                + name + ": may not contain pipe (|)");
+                + name + ": " + val + "-- keyword not contain pipe (|)");
     }
 
     /**
@@ -156,8 +156,8 @@ public final class CaomValidator {
             return;
         }
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid "
-                + name
-                + ": may not contain space ( ), slash (/), escape (\\), or percent (%)");
+                + name + ": " + test
+                + " -- value may not contain space ( ), slash (/), escape (\\), or percent (%)");
     }
 
     /**
