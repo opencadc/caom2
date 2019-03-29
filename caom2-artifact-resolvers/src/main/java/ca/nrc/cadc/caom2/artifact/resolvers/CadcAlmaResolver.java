@@ -139,10 +139,11 @@ public class CadcAlmaResolver implements StorageResolver, Traceable {
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
+        String uriStringWithNoNamespace = removeNamespace(uri);
 
         try {
             AdResolver adResolver = new AdResolver();
-            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + removeNamespace(uri)));
+            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uriStringWithNoNamespace));
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);

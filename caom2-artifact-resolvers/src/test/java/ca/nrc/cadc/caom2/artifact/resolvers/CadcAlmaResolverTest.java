@@ -89,6 +89,8 @@ public class CadcAlmaResolverTest {
     }
 
     private static final String FILE_URI = "alma:ALMA/some/name/space/bar.fits";
+    private static final String INVALID_ARCHIVE_URI = "alma:bar.fits";
+    private static final String INVALID_FILE_ID_URI = "alma:ALMA/";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
     CadcAlmaResolver cadcAlmaResolver = new CadcAlmaResolver();
@@ -113,7 +115,41 @@ public class CadcAlmaResolverTest {
             URI uri = new URI(FILE_URI);
             URL url = cadcAlmaResolver.toURL(uri);
             Assert.assertNotNull(url);
+            String urlString = url.toString();
+            String[] parts = urlString.split("/");
+            Assert.assertEquals("incorrect archive", "ALMA", parts[parts.length - 2]);
+            Assert.assertEquals("incorrect archive", "bar.fits", parts[parts.length - 1]);
             log.info("testFile: " + uri + " -> " + url);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidArchiveURI() {
+        try {
+            URI uri = new URI(INVALID_ARCHIVE_URI);
+            URL url = cadcAlmaResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("cannot extract archive from"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidFileIdURI() {
+        try {
+            URI uri = new URI(INVALID_FILE_ID_URI);
+            URL url = cadcAlmaResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("cannot extract fileID from"));
+            log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
