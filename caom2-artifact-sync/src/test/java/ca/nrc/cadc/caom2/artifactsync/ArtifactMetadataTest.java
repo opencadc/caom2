@@ -104,9 +104,10 @@ public class ArtifactMetadataTest
         URI caomTapResourceID = null;
         String collection = "HST";
         ArtifactStore artifactStore = null;
+        boolean tolerateNullChecksum = false;
 
         // 1. test the operation
-        ArtifactValidator validator = new ArtifactValidator(caomTapResourceID, collection, reportOnly, artifactStore);
+        ArtifactValidator validator = new ArtifactValidator(caomTapResourceID, collection, reportOnly, artifactStore, tolerateNullChecksum);
         // a. logicalArtifacts is empty, physicalArtifacts is empty
         TreeSet<ArtifactMetadata> logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         TreeSet<ArtifactMetadata> physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
