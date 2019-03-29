@@ -490,7 +490,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         metadata.artifactURI = artifact.getURI().toASCIIString();
         if (artifact.contentChecksum == null) {
             if (!this.tolerateNullChecksum) {
-                log.error("content checksum is null for artifact URI: " + metadata.artifactURI);
+                throw new RuntimeException("content checksum is null for artifact URI: " + metadata.artifactURI);
             }
         } else {
             metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
