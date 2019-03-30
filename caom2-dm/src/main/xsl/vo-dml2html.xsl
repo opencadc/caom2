@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!DOCTYPE stylesheet [
-<!ENTITY cr "<xsl:text>
-</xsl:text>">
+<!ENTITY cr "<xsl:text> </xsl:text>">
 <!ENTITY bl "<xsl:text> </xsl:text>">
 <!ENTITY nbsp "&#160;">
 <!ENTITY tab "&#160;&#160;&#160;&#160;">
@@ -15,7 +14,7 @@ http://www.objectsbydesign.com/projects/xmi.css
 -->
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1.0">
+	xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1">
   
   <xsl:import href="common.xsl"/>
   <xsl:import href="utype.xsl"/>
@@ -35,10 +34,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   <xsl:param name="project_name"/>
   <xsl:param name="pathsfile"/>
   <!-- 
-  The root directoryr which should contain the folowing files: preamble.html, abstract.html, status.html and acknowledgment.html 
+  The root directory which should contain the folowing files: preamble.html, abstract.html, status.html and acknowledgment.html 
   These will be copied at particular places in the generated document.
   -->
   <xsl:param name="preamble"/> 
+  <xsl:param name="abstract"/> 
+  <xsl:param name="status"/> 
+  <xsl:param name="acknowledgment"/> 
   
   <!-- IF Graphviz png and map are available use these  -->
   <xsl:param name="graphviz_png"/>
@@ -68,8 +70,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 <title>
 <xsl:value-of select="title"/>
 </title>
-    <link rel="stylesheet" href="https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa_wg.css" type="text/css"/>
-    <link rel="stylesheet" href="https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/xmi.css" type="text/css"/>
+    <link rel="stylesheet" href="http://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/style/ivoa_wg.css" type="text/css"/>
+    <link rel="stylesheet" href="http://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/style/xmi.css" type="text/css"/>
 </head>
 <body>
   
@@ -78,8 +80,25 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 <br/>
 <hr/>
 </xsl:if>
+
 <xsl:apply-templates select="." mode="TOC"/>
 <hr/>  
+
+<a name="abstract"></a>
+<h1>Abstract</h1>
+<xsl:if test="$abstract != ''">
+  <xsl:apply-templates select="document($abstract)" mode="copy"/>
+</xsl:if>
+<br/>
+<hr/>
+<a name="status"></a>
+<h1>Status</h1>
+<xsl:if test="$status != ''">
+  <xsl:apply-templates select="document($status)" mode="copy"/>
+</xsl:if>
+<br/>
+<hr/>
+
 <xsl:apply-templates select="." mode="section"/>
 <hr/>  
 <xsl:apply-templates select="." mode="contents"/>
@@ -235,11 +254,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   <xsl:if test="previousVersion">
   <tr><td align="right">Previous version:</td><td>&bl;:&bl;</td><td><a><xsl:attribute name="href" select="previousVersion"/><xsl:value-of select="previousVersion"/></a></td></tr>
   </xsl:if>
-  <tr><td align="right" valign="top"><b>Abstract</b></td><td valign="top">&bl;:&bl;</td><td><xsl:value-of select="description"/></td></tr>
+  <tr><td align="right" valign="top"><b>Description</b></td><td valign="top">&bl;:&bl;</td><td><xsl:value-of select="description"/></td></tr>
 
-<!--
+    <!--
     <xsl:if test="$graphviz_png">
-    
     <tr><td align="right"  valign="top"><b>Diagram</b></td><td valign="top">&bl;:&bl;</td>
     <td>The following diagram has been generated from the model using the <a href="http://www.graphviz.org/" target="_blank">GraphViz</a> tool.<br/>
     The classes and packages in the diagram can be clicked and are mapped to the descriptions of the corresponding element elsewhere in the document. 
@@ -247,7 +265,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     <tr><td colspan="3">
     </td></tr>
     </xsl:if>
--->
+    -->
   </table>
       <xsl:if test="$graphviz_png">
     <xsl:call-template name="graphviz"/>
@@ -279,101 +297,100 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 
 <xsl:template match="vo-dml:model" mode="contents">
 
-<h1><xsl:value-of select="$contents_section_number"/> <a name="packages">Model contents: Packages and Types</a></h1>
-<p>
-The following sub-sections present all packages in the model with their types.
-The packages are listed here in alphabetical order.
-Each sub-section contains a description of the package and a table containing its various features.
-</p>
-      <h3><a name="rootpackage"/><xsl:apply-templates select="." mode="section_label"/>&bl;[root package]</h3>
-          
-      <table border="1" cellspacing="2" width="100%">
-      <tr>
-        <td class="objecttype-title" width="20%">Model</td>
-        <td class="objecttype-name">
-          <xsl:value-of select="name"/>
-        </td>
-      </tr>
-
+  <h1><xsl:value-of select="$contents_section_number"/> <a name="packages">Model contents: Packages and Types</a></h1>
+  <p>
+  The following sub-sections present all packages in the model with their types.
+  The packages are listed here in alphabetical order.
+  Each sub-section contains a description of the package and a table containing its various features.
+  </p>
+  <h3><a name="rootpackage"/><xsl:apply-templates select="." mode="section_label"/>&bl;[root package]</h3>
+  
+  <table border="1" cellspacing="2" width="100%">
+    <tr>
+      <td class="objecttype-title" width="20%">Model</td>
+      <td class="objecttype-name">
+        <xsl:value-of select="name"/>
+      </td>
+    </tr>
+    
     <xsl:if test="package">
       <xsl:apply-templates select="." mode="containedpackages"/>
     </xsl:if>
     <xsl:apply-templates select="." mode="typerows"/>
-    </table>
-      
-    <xsl:apply-templates select="." mode="types"/>
-    
-    <xsl:for-each select="//package">
-      <xsl:sort select="vodml-id"/>
-      <xsl:apply-templates select="."/>
-    </xsl:for-each>
-  </xsl:template>
+  </table>
+  
+  <xsl:apply-templates select="." mode="types"/>
+  
+  <xsl:for-each select="//package">
+    <xsl:sort select="vodml-id"/>
+    <xsl:apply-templates select="."/>
+  </xsl:for-each>
+</xsl:template>
 
 
+<xsl:template match="vo-dml:model|package" mode="typerows">
+  <xsl:if test="objectType">
+    <xsl:apply-templates select="." mode="objectType"/>
+  </xsl:if>
+  <xsl:if test="dataType">
+    <xsl:apply-templates select="." mode="dataType"/>
+  </xsl:if>
+  <xsl:if test="enumeration">
+    <xsl:apply-templates select="." mode="enumeration"/>
+  </xsl:if>
+  <xsl:if test="primitiveType">
+    <xsl:apply-templates select="." mode="primitiveType"/>
+  </xsl:if>
+</xsl:template>  
 
-  <xsl:template match="vo-dml:model|package" mode="typerows">
-    <xsl:if test="objectType">
-        <xsl:apply-templates select="." mode="objectType"/>
-    </xsl:if>
-    <xsl:if test="dataType">
-        <xsl:apply-templates select="." mode="dataType"/>
-    </xsl:if>
-    <xsl:if test="enumeration">
-        <xsl:apply-templates select="." mode="enumeration"/>
-    </xsl:if>
-    <xsl:if test="primitiveType">
-      <xsl:apply-templates select="." mode="primitiveType"/>
-    </xsl:if>
-  </xsl:template>  
+<!-- Template for entry to list ObjectType-s -->
+<xsl:template match="vo-dml:model|package" mode="objectType">
+  <tr>
+    <td width="20%" class="info-title">Object types</td>
+    <td colspan="2" class="feature-detail">
+      <xsl:for-each select="objectType">
+        <xsl:sort select="name"/>
+	<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
+      </xsl:for-each>
+    </td>
+  </tr>
+</xsl:template>
 
-  <xsl:template match="vo-dml:model|package" mode="objectType">
-        <tr>
-            <td width="20%" class="info-title">Object types</td>
-            <td colspan="2" class="feature-detail">
-            <xsl:for-each select="objectType">
-            <xsl:sort select="name"/>
-<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
-            </xsl:for-each>
-            </td>
-            </tr>
-  </xsl:template>
+<xsl:template match="vo-dml:model|package" mode="enumeration">
+  <tr>
+    <td width="20%" class="info-title">Enumerations</td>
+    <td colspan="2" class="feature-detail">
+      <xsl:for-each select="enumeration">
+        <xsl:sort select="name"/>
+	<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
+      </xsl:for-each>
+    </td>
+  </tr>
+</xsl:template>
 
-  <xsl:template match="vo-dml:model|package" mode="enumeration">
-        <tr>
-            <td width="20%" class="info-title">Enumerations</td>
-            <td colspan="2" class="feature-detail">
-            <xsl:for-each select="enumeration">
-            <xsl:sort select="name"/>
-<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
-            </xsl:for-each>
-            </td>
-            </tr>
-  </xsl:template>
+<xsl:template match="vo-dml:model|package" mode="dataType">
+  <tr>
+    <td width="20%" class="info-title">Data types</td>
+    <td colspan="2" class="feature-detail">
+      <xsl:for-each select="dataType">
+        <xsl:sort select="name"/>
+	<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
+      </xsl:for-each>
+    </td>
+  </tr>
+</xsl:template>
 
-  <xsl:template match="vo-dml:model|package" mode="dataType">
-        <tr>
-            <td width="20%" class="info-title">Data types</td>
-            <td colspan="2" class="feature-detail">
-            <xsl:for-each select="dataType">
-            <xsl:sort select="name"/>
-<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
-            </xsl:for-each>
-            </td>
-            </tr>
-  </xsl:template>
-
-  <xsl:template match="vo-dml:model|package" mode="primitiveType">
-        <tr>
-            <td width="20%" class="info-title">Primitive types</td>
-            <td colspan="2" class="feature-detail">
-            <xsl:for-each select="primitiveType">
-            <xsl:sort select="name"/>
-<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
-            </xsl:for-each>
-            </td>
-            </tr>
-  </xsl:template>
-
+<xsl:template match="vo-dml:model|package" mode="primitiveType">
+  <tr>
+    <td width="20%" class="info-title">Primitive types</td>
+    <td colspan="2" class="feature-detail">
+      <xsl:for-each select="primitiveType">
+        <xsl:sort select="name"/>
+	<a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
+      </xsl:for-each>
+    </td>
+  </tr>
+</xsl:template>
 
 <xsl:template match="vo-dml:model|package" mode="types">
   <xsl:for-each select="objectType|dataType|enumeration|primitiveType">
@@ -381,7 +398,6 @@ Each sub-section contains a description of the package and a table containing it
     <xsl:apply-templates select="."/>
   </xsl:for-each>
 </xsl:template>
-
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->  
 <!--                  START  model imports                     -->  
@@ -504,147 +520,155 @@ For each imported model we list URLs to the VO-DML and HTML representations and 
 
   <xsl:template match="objectType|dataType" >
     <xsl:variable name="vodml-id" select="vodml-id"/>
-
+    
     <h3><a name="{$vodml-id}"/><xsl:apply-templates select="." mode="section_label"/>&bl;<xsl:value-of select="concat(name(),': ',name)"/></h3>
     <div align="center">
-    <table border="1" width="100%" cellspacing="2">
-    <xsl:apply-templates select="." mode="vodml-id"/>
-    <xsl:apply-templates select="." mode="description"/>
-    <tr>
-    <td colspan="2" >
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-
-    <tr>
-        <td colspan="2" bgcolor="#cacaca">
-        <table width="100%" border="0" cellpadding="3" cellspacing="1">
-         <xsl:apply-templates select="." mode="package"/>
-        <xsl:if test="extends">
-          <xsl:apply-templates select="." mode="extends"/>
-        </xsl:if>  
-        <xsl:apply-templates select="." mode="subclasses"/>
-        <xsl:if test="container">
-          <xsl:apply-templates select="." mode="container"/>
-        </xsl:if>  
-        <xsl:if test="name() = 'objectType'">
-        <xsl:apply-templates select="." mode="referrer"/>
-        </xsl:if>
-
-        <xsl:if test="attribute">
-        <xsl:call-template name="feature-rows">
-          <xsl:with-param name="title" select="'attributes'"/>
-        </xsl:call-template>
-        <xsl:apply-templates select="attribute">
-          <!-- <xsl:sort select="name"/> -->
-        </xsl:apply-templates>
-        </xsl:if>       
-        
-        <xsl:if test="reference">
-        <xsl:call-template name="feature-rows">
-          <xsl:with-param name="title" select="'references'"/>
-        </xsl:call-template>
-        <xsl:apply-templates select="reference">
-          <xsl:sort select="name"/>
-        </xsl:apply-templates>
-        </xsl:if>       
-
-        <xsl:if test="composition">
-        <xsl:call-template name="feature-rows">
-          <xsl:with-param name="title" select="'compositions'"/>
-        </xsl:call-template>
-        <xsl:apply-templates select="composition">
-          <xsl:sort select="name"/>
-        </xsl:apply-templates>
-        </xsl:if>       
-
-        <xsl:if test="constraint[not(@xsi:type='vo-dml:SubsettedRole')]">
-        <tr>
-        <td colspan="3" class="info-title"><xsl:value-of select="'constraints'"/></td>
-    </tr>
-        <xsl:apply-templates select="constraint[not(@xsi:type='vo-dml:SubsettedRole')]" mode="plainconstraints"/>
-        </xsl:if>
-        <xsl:if test="constraint[@xsi:type='vo-dml:SubsettedRole']">
-        <tr>
-        <td colspan="3" class="info-title"><xsl:value-of select="'role constraints'"/></td>
-    </tr>
-    <tr>
-        <td class="feature-heading" width="30%">Constrained Role</td>
-        <td class="feature-heading" width="20%">Constraint Feature</td>
-        <td class="feature-heading" width="50%">Constraint Value</td>
-    </tr>
-        <xsl:apply-templates select="constraint[@xsi:type='vo-dml:SubsettedRole']" mode="roleconstraints"/>
-		</xsl:if>
-        </table>
-        </td>
-    </tr>
-
-    </table>
-    </td>
-    </tr>
-    </table>
+      <table border="1" width="100%" cellspacing="2">
+	<xsl:apply-templates select="." mode="vodml-id"/>
+	<xsl:apply-templates select="." mode="description"/>
+	<tr>
+	  <td colspan="2" >
+	    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+	      <tr>
+		<td colspan="2" bgcolor="#cacaca">
+		  <table width="100%" border="0" cellpadding="3" cellspacing="1">
+		    <xsl:apply-templates select="." mode="package"/>
+		    <xsl:if test="extends">
+		      <xsl:apply-templates select="." mode="extends"/>
+		    </xsl:if>  
+		    <xsl:apply-templates select="." mode="abstract"/>
+		    <xsl:apply-templates select="." mode="subclasses"/>
+		    <xsl:if test="container">
+		      <xsl:apply-templates select="." mode="container"/>
+		    </xsl:if>  
+		    <xsl:if test="name() = 'objectType'">
+		      <xsl:apply-templates select="." mode="referrer"/>
+		    </xsl:if>
+		    
+		    <xsl:if test="attribute">
+		      <xsl:call-template name="feature-rows">
+			<xsl:with-param name="title" select="'attributes'"/>
+		      </xsl:call-template>
+		      <xsl:apply-templates select="attribute">
+			<!-- <xsl:sort select="name"/> -->
+		      </xsl:apply-templates>
+		    </xsl:if>       
+		    
+		    <xsl:if test="reference">
+		      <xsl:call-template name="feature-rows">
+			<xsl:with-param name="title" select="'references'"/>
+		      </xsl:call-template>
+		      <xsl:apply-templates select="reference">
+			<xsl:sort select="name"/>
+		      </xsl:apply-templates>
+		    </xsl:if>       
+		    
+		    <xsl:if test="composition">
+		      <xsl:call-template name="feature-rows">
+			<xsl:with-param name="title" select="'compositions'"/>
+		      </xsl:call-template>
+		      <xsl:apply-templates select="composition">
+			<xsl:sort select="name"/>
+		      </xsl:apply-templates>
+		    </xsl:if>       
+		    
+		    <xsl:if test="constraint[not(@xsi:type='vo-dml:SubsettedRole')]">
+		      <tr>
+			<td colspan="3" class="info-title"><xsl:value-of select="'constraints'"/></td>
+		      </tr>
+		      <xsl:apply-templates select="constraint[not(@xsi:type='vo-dml:SubsettedRole')]" mode="plainconstraints"/>
+		    </xsl:if>
+		    <xsl:if test="constraint[@xsi:type='vo-dml:SubsettedRole']">
+		      <tr>
+			<td colspan="3" class="info-title"><xsl:value-of select="'role constraints'"/></td>
+		      </tr>
+		      <tr>
+			<td class="feature-heading" width="30%">Constrained Role</td>
+			<td class="feature-heading" width="20%">Constraint Feature</td>
+			<td class="feature-heading" width="50%">Constraint Value</td>
+		      </tr>
+		      <xsl:apply-templates select="constraint[@xsi:type='vo-dml:SubsettedRole']" mode="roleconstraints"/>
+		    </xsl:if>
+		  </table>
+		</td>
+	      </tr>
+	      
+	    </table>
+	  </td>
+	</tr>
+      </table>
     </div>
     <br/>
   </xsl:template>
 
 
-
-
   <xsl:template match="objectType|dataType|enumeration|primitiveType" mode="package">
     <xsl:variable name="package" select="key('package',../vodml-id)"/>
-  <xsl:if test="$package">
-        <tr>
-            <td width="20%" class="info-title">package</td>
-            <td colspan="3" class="feature-detail">
-<a><xsl:attribute name="href" select="concat('#',$package/../vodml-id)"/><xsl:value-of select="$package/../name"/></a>
-            </td>
-            </tr>
-            </xsl:if>
-  </xsl:template>
-
-
-
-  <xsl:template match="objectType|dataType|enumeration|primitiveType" mode="subclasses">
-    <xsl:variable name="vodml-id" select="vodml-id"/>
-    <xsl:variable name="vodml-ref"><xsl:apply-templates select="vodml-id" mode="asvodml-ref"/></xsl:variable>
-    <xsl:if test="//extends[vodml-ref = $vodml-ref]">
-          <tr>
-            <td class="info-title">Subclasses in this model</td>
-            <td class="feature-detail" colspan="3">
-       <xsl:for-each select="key('element',//extends[vodml-ref = $vodml-ref]/../vodml-id)" >
-          <xsl:sort select="../name"/>
- <a><xsl:attribute name="href" select="concat('#',.)"/><xsl:value-of select="../name"/></a>&bl;
-        </xsl:for-each>
-            </td>
-          </tr>
+    <xsl:if test="$package">
+      <tr>
+        <td width="20%" class="info-title">package</td>
+        <td colspan="3" class="feature-detail">
+	  <a><xsl:attribute name="href" select="concat('#',$package/../vodml-id)"/><xsl:value-of select="$package/../name"/></a>
+        </td>
+      </tr>
     </xsl:if>
   </xsl:template>
 
 
+  <!-- Template for Abstract entry in Type description block  -->
+  <xsl:template match="objectType|dataType|enumeration|primitiveType" mode="abstract">
+    <xsl:variable name="isAbstract"><xsl:value-of select="@abstract"/></xsl:variable>
+    <xsl:if test="$isAbstract='true'">
+      <tr>
+	<td class="info-title" width="20%">abstract</td>
+	<td class="feature-detail" colspan="3">True</td>
+      </tr>
+    </xsl:if>
+  </xsl:template>
+
+  <!-- Template for Subclass list entry in Type description block  -->
+  <xsl:template match="objectType|dataType|enumeration|primitiveType" mode="subclasses">
+    <xsl:variable name="vodml-id" select="vodml-id"/>
+    <xsl:variable name="vodml-ref"><xsl:apply-templates select="vodml-id" mode="asvodml-ref"/></xsl:variable>
+    <!-- Subclasses list -->
+    <xsl:if test="//extends[vodml-ref = $vodml-ref]">
+      <tr>
+        <td class="info-title" width="20%">Subclasses in this model</td>
+        <td class="feature-detail" colspan="3">
+	  <xsl:for-each select="key('element',//extends[vodml-ref = $vodml-ref]/../vodml-id)" >
+            <xsl:sort select="../name"/>
+	    <a><xsl:attribute name="href" select="concat('#',.)"/><xsl:value-of select="../name"/></a>&bl;
+          </xsl:for-each>
+        </td>
+      </tr>
+    </xsl:if>
+  </xsl:template>
+
+  <!-- Template for Referrer list entry in ObjectType description block  -->
   <xsl:template match="objectType" mode="referrer">
     <xsl:variable name="vodml-id" select="vodml-id"/>
     <xsl:variable name="vodml-ref"><xsl:apply-templates select="vodml-id" mode="asvodml-ref"/></xsl:variable>
     <xsl:if test="//reference[datatype/vodml-ref = $vodml-ref]">
-          <tr>
-            <td class="info-title">referrers</td>
-            <td class="feature-detail" colspan="3">
-       <xsl:for-each select="//reference[datatype/vodml-ref = $vodml-ref]/..">
-          <xsl:sort select="name"/>
- <a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
-        </xsl:for-each>
-            </td>
-          </tr>
+      <tr>
+        <td class="info-title">referrers</td>
+        <td class="feature-detail" colspan="3">
+	  <xsl:for-each select="//reference[datatype/vodml-ref = $vodml-ref]/..">
+            <xsl:sort select="name"/>
+	    <a><xsl:attribute name="href" select="concat('#',vodml-id)"/><xsl:value-of select="name"/></a>&bl;
+          </xsl:for-each>
+        </td>
+      </tr>
     </xsl:if>
   </xsl:template>
 
-
-
-
+  <!-- Template for Extends entry in Type description block  -->
   <xsl:template match="objectType|dataType|enumeration|primitiveType" mode="extends">
-        <tr>
-            <td width="20%" class="info-title">extends</td>
-            <td colspan="3" class="feature-detail">
-               <xsl:apply-templates select="extends/vodml-ref" mode="classifier"/>
-            </td>
-            </tr>
+    <tr>
+      <td width="20%" class="info-title">extends</td>
+      <td colspan="3" class="feature-detail">
+        <xsl:apply-templates select="extends/vodml-ref" mode="classifier"/>
+      </td>
+    </tr>
   </xsl:template>
 
 
@@ -654,252 +678,240 @@ For each imported model we list URLs to the VO-DML and HTML representations and 
     
     <xsl:variable name="container" select="key('element',$containerID)/.."/>
     <xsl:variable name="composition" select="$container/composition[datatype/vodml-ref = $vodml-ref]"/>
-        <tr>
-            <td width="20%" class="info-title"><a><xsl:attribute name="name" select="container/vodml-id" /></a>container</td>
-            <td colspan="3" class="feature-detail">
-<a><xsl:attribute name="href" select="concat('#',$containerID)"/><xsl:value-of select="$container/name"/></a>.<a><xsl:attribute name="href" select="concat('#',$composition/vodml-id)"/><xsl:value-of select="$composition/name"/></a>
-            </td>
-            </tr>
+    <tr>
+      <td width="20%" class="info-title"><a><xsl:attribute name="name" select="container/vodml-id" /></a>container</td>
+      <td colspan="3" class="feature-detail">
+	<a><xsl:attribute name="href" select="concat('#',$containerID)"/><xsl:value-of select="$container/name"/></a>.<a><xsl:attribute name="href" select="concat('#',$composition/vodml-id)"/><xsl:value-of select="$composition/name"/></a>
+      </td>
+    </tr>
   </xsl:template>
-
+  
   <xsl:template name="feature-rows">
     <xsl:param name="title"/>
-        <tr>
-        <td colspan="3" class="info-title"><xsl:value-of select="$title"/></td>
+    <tr>
+      <td colspan="3" class="info-title"><xsl:value-of select="$title"/></td>
     </tr>
     <tr>
-        <td class="feature-heading" width="20%">name</td>
-        <td class="feature-heading" width="10%">feature</td>
-        <td class="feature-heading" width="70%">value</td>
+      <td class="feature-heading" width="20%">name</td>
+      <td class="feature-heading" width="10%">feature</td>
+      <td class="feature-heading" width="70%">value</td>
     </tr>
   </xsl:template>
 
 
+  <!-- Description entry template.. for all -->
   <xsl:template match="*" mode="description">
     <xsl:param name="colspan" select="'1'"/>
-        <tr><td  class="info-title">description</td><td class="feature-detail" colspan="{$colspan}">
-          <xsl:choose>
-            <xsl:when test="description">
+    <tr><td  class="info-title">description</td><td class="feature-detail" colspan="{$colspan}">
+        <xsl:choose>
+          <xsl:when test="description">
             <xsl:value-of select="description"/>
           </xsl:when>
           <xsl:otherwise>[TODO add description!]</xsl:otherwise>
         </xsl:choose>
-      </td></tr>
+    </td></tr>
   </xsl:template>  
   
+  <!-- VODML-ID entry template.. for all -->
   <xsl:template match="*" mode="vodml-id">
     <xsl:param name="colspan" select="'1'"/>
-      <tr>
-        <td class="objecttype-title" width="20%">vodml-id</td>
-        <td class="objecttype-name" colspan="{$colspan}">
-          <xsl:value-of select="vodml-id"/>
-        </td>
-      </tr>
+    <tr>
+      <td class="objecttype-title" width="20%">vodml-id</td>
+      <td class="objecttype-name" colspan="{$colspan}">
+        <xsl:value-of select="vodml-id"/>
+      </td>
+    </tr>
   </xsl:template>  
   
+  <!-- Enumeration Type Description block template -->
   <xsl:template match="enumeration">
     <xsl:param name="section_number"/>
     <xsl:variable name="vodml-id" select="vodml-id"/>
     <h3><a name="{$vodml-id}"/><xsl:apply-templates select="." mode="section_label"/>&bl;<xsl:value-of select="concat(name(),': ',name)"/></h3>
     <table border="1" width="100%" cellspacing="2">
-    <xsl:apply-templates select="." mode="vodml-id">
-    <xsl:with-param name="colspan" select="'2'"/>
-    </xsl:apply-templates>
-    <xsl:apply-templates select="." mode="description">
-    <xsl:with-param name="colspan" select="'2'"/>
-    </xsl:apply-templates>
-    <xsl:apply-templates select="." mode="package"/>
-        <tr>
+      <xsl:apply-templates select="." mode="vodml-id">
+	<xsl:with-param name="colspan" select="'2'"/>
+      </xsl:apply-templates>
+      <xsl:apply-templates select="." mode="description">
+	<xsl:with-param name="colspan" select="'2'"/>
+      </xsl:apply-templates>
+      <xsl:apply-templates select="." mode="package"/>
+      <tr>
         <td colspan="3" class="info-title" align="center">literals</td>
-    </tr>
-    <tr>
+      </tr>
+      <tr>
         <td class="feature-heading" width="25%">name</td>
         <td class="feature-heading" width="25%">feature</td>
         <td class="feature-heading" width="50%">value</td>
-    </tr>
-        <xsl:apply-templates select="literal"/>
-<!-- 
-        </table>
-        </td>
-    </tr>
-     </table>
-    </td>
-    </tr>
--->
+      </tr>
+      <xsl:apply-templates select="literal"/>
     </table >
     <br/>
   </xsl:template>
   
+  <!-- Literal entry template for Enumeration type --> 
+  <xsl:template match="literal" >
+    <tr>
+      <td class="feature-detail" rowspan="2" valign="top">
+        <a><xsl:attribute name="name" select="vodml-id"/></a><xsl:value-of select="name"/>
+      </td>
+      <td class="feature-heading">vodml-id</td><td class="feature-detail"><xsl:value-of select="vodml-id"/></td></tr>
+    <tr><td class="feature-heading">description</td><td class="feature-detail">
+	<xsl:choose>
+	  <xsl:when test="description">
+	    <xsl:value-of select="description"/>
+	  </xsl:when>
+	  <xsl:otherwise>TBD</xsl:otherwise>
+	</xsl:choose>
+      </td>
+    </tr>
+  </xsl:template>
+
   
   <xsl:template match="primitiveType">
     <xsl:variable name="vodml-id" select="vodml-id"/>
     <h3><a name="{$vodml-id}"/><xsl:apply-templates select="." mode="section_label"/>&bl;<xsl:value-of select="concat(name(),': ',name)"/></h3>
-   <table border="1" width="100%" cellspacing="2">
-    <xsl:apply-templates select="." mode="vodml-id"/>
-    <xsl:apply-templates select="." mode="description"/>
-    <xsl:apply-templates select="." mode="package"/>
+    <table border="1" width="100%" cellspacing="2">
+      <xsl:apply-templates select="." mode="vodml-id"/>
+      <xsl:apply-templates select="." mode="description"/>
+      <xsl:apply-templates select="." mode="package"/>
     </table>
     <br/>
   </xsl:template>
   
-
-
-
-    
-  <xsl:template match="literal" >
-    <tr>
-        <td class="feature-detail" rowspan="2" valign="top">
-        <a><xsl:attribute name="name" select="vodml-id"/></a><xsl:value-of select="name"/>
-        </td>
-        <td class="feature-heading">vodml-id</td><td class="feature-detail"><xsl:value-of select="vodml-id"/></td></tr>
-        <tr><td class="feature-heading">description</td><td class="feature-detail">
-      <xsl:choose>
-<xsl:when test="description">
-    <xsl:value-of select="description"/>
-</xsl:when>
-<xsl:otherwise>TBD</xsl:otherwise>
-      </xsl:choose>
-        </td>
-    </tr>
-  </xsl:template>
-  
-     
-
-    
   <xsl:template match="constraint" mode="plainconstraints">
     <tr>
-        <td>
-          <xsl:attribute name="class" select="'feature-detail'"/>
-          <xsl:attribute name="valign" select="'top'"/>
-          <xsl:attribute name="colspan" select="'3'"/>
+      <td>
+        <xsl:attribute name="class" select="'feature-detail'"/>
+        <xsl:attribute name="valign" select="'top'"/>
+        <xsl:attribute name="colspan" select="'3'"/>
         <xsl:choose><xsl:when test="description"><xsl:value-of select="description"/></xsl:when>
-        <xsl:otherwise>TBD</xsl:otherwise>
+          <xsl:otherwise>TBD</xsl:otherwise>
         </xsl:choose>
       </td>
     </tr>
   </xsl:template>
 
   <xsl:template match="constraint" mode="roleconstraints">
-  <xsl:variable name="rowcount" select="1+count(datatype|semanticconcept)"/>
+    <xsl:variable name="rowcount" select="1+count(datatype|semanticconcept)"/>
     <tr>
-        <td colspan="3">
-          <xsl:attribute name="class" select="'feature-detail'"/>
-          <xsl:attribute name="valign" select="'top'"/>
-         <xsl:apply-templates select="role/vodml-ref" mode="classifier"/>
+      <td colspan="3">
+        <xsl:attribute name="class" select="'feature-detail'"/>
+        <xsl:attribute name="valign" select="'top'"/>
+        <xsl:apply-templates select="role/vodml-ref" mode="classifier"/>
       </td>
-      </tr>
-      <xsl:if test="datatype">
+    </tr>
+    <xsl:if test="datatype">
       <tr>
-      <td>
-      <xsl:attribute name="class" select="'feature-detail'"/>
-      </td>
-      <td><xsl:attribute name="class" select="'feature-heading'"/>
+	<td>
+	  <xsl:attribute name="class" select="'feature-detail'"/>
+	</td>
+	<td><xsl:attribute name="class" select="'feature-heading'"/>
           <xsl:attribute name="valign" select="'top'"/>
-      datatype</td>
-      <td>
-      <xsl:attribute name="class" select="'feature-detail'"/>
-      <xsl:apply-templates select="datatype/vodml-ref" mode="classifier"/></td>
-    </tr>
-      </xsl:if>
-      <xsl:if test="semanticconcept">
-    <tr>
-      <td>
-      <xsl:attribute name="class" select="'feature-detail'"/>
-      </td>
-      <td><xsl:attribute name="class" select="'feature-heading'"/>
+	  datatype</td>
+	<td>
+	  <xsl:attribute name="class" select="'feature-detail'"/>
+	  <xsl:apply-templates select="datatype/vodml-ref" mode="classifier"/></td>
+      </tr>
+    </xsl:if>
+    <xsl:if test="semanticconcept">
+      <tr>
+	<td>
+	  <xsl:attribute name="class" select="'feature-detail'"/>
+	</td>
+	<td><xsl:attribute name="class" select="'feature-heading'"/>
           <xsl:attribute name="valign" select="'top'"/>
-      semantic concept</td>
-      <td><xsl:attribute name="valign" select="'top'"/>
-      <xsl:attribute name="class" select="'feature-detail'"/>
-      top concept: <xsl:value-of select="semanticconcept/topConcept"/><br/>
-      vocabulary URI: <xsl:value-of select="semanticconcept/vocabularyURI"/>
-      </td>
-    </tr>
+	  semantic concept</td>
+	<td><xsl:attribute name="valign" select="'top'"/>
+	  <xsl:attribute name="class" select="'feature-detail'"/>
+	  top concept: <xsl:value-of select="semanticconcept/topConcept"/><br/>
+	  vocabulary URI: <xsl:value-of select="semanticconcept/vocabularyURI"/>
+	</td>
+      </tr>
     </xsl:if>
   </xsl:template>
 
   <xsl:template match="attribute|reference|composition" >
-  <xsl:variable name="vodml-id">
-    <xsl:value-of select="vodml-id"/>
-  </xsl:variable>
+    <xsl:variable name="vodml-id">
+      <xsl:value-of select="vodml-id"/>
+    </xsl:variable>
     <tr>
-        <td>
-          <xsl:attribute name="class" select="'feature-detail'"/>
-          <xsl:attribute name="valign" select="'top'"/>
-          <xsl:attribute name="rowspan">
-        <xsl:choose>
-        <xsl:when test="semanticconcept or name() = 'composition'">
-          <xsl:value-of select="'5'"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="'4'"/>
-        </xsl:otherwise>
-        </xsl:choose> 
-          </xsl:attribute>        
+      <td>
+        <xsl:attribute name="class" select="'feature-detail'"/>
+        <xsl:attribute name="valign" select="'top'"/>
+        <xsl:attribute name="rowspan">
+          <xsl:choose>
+            <xsl:when test="semanticconcept or name() = 'composition'">
+              <xsl:value-of select="'5'"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="'4'"/>
+            </xsl:otherwise>
+          </xsl:choose> 
+        </xsl:attribute>        
         <a><xsl:attribute name="name" select="$vodml-id"/></a>
         <b><xsl:value-of select="name"/></b>
-      <xsl:if test="subsets">
-        <br/>{subsets&nbsp;<xsl:apply-templates select="subsets"/> } 
-      </xsl:if>
-        </td>
-        <td class="feature-heading">type</td>
-        <td class="feature-detail" >
+	<xsl:if test="subsets">
+          <br/>{subsets&nbsp;<xsl:apply-templates select="subsets"/> } 
+	</xsl:if>
+      </td>
+      <td class="feature-heading">type</td>
+      <td class="feature-detail" >
         <xsl:apply-templates select="datatype/vodml-ref" mode="classifier"/>
-        </td>
-     </tr>
-     <xsl:if test="semanticconcept">
-     <tr>
+      </td>
+    </tr>
+    <xsl:if test="semanticconcept">
+      <tr>
         <td class="feature-heading">semanticconcept</td>
         <td class="feature-detail" >
-        Semantic top concept:<br/> 
-        <a><xsl:attribute name="href" select="semanticconcept/topConcept"/><xsl:attribute name="target" select="'_blank'"/>
-        <xsl:value-of select="semanticconcept/topConcept"/></a>
-        <xsl:if test="semanticconcept/vocabularyURI">
-        <br/>Vocabulary URI:<br/>  
-        <xsl:for-each select="semanticconcept/vocabularyURI">
-        <xsl:if test="position() > 1"><br/></xsl:if>
-        <a><xsl:attribute name="href" select="."/><xsl:attribute name="target" select="'_blank'"/>
-        <xsl:value-of select="."/></a>
-        </xsl:for-each>
-        </xsl:if>
+          Semantic top concept:<br/> 
+          <a><xsl:attribute name="href" select="semanticconcept/topConcept"/><xsl:attribute name="target" select="'_blank'"/>
+            <xsl:value-of select="semanticconcept/topConcept"/></a>
+          <xsl:if test="semanticconcept/vocabularyURI">
+            <br/>Vocabulary URI:<br/>  
+            <xsl:for-each select="semanticconcept/vocabularyURI">
+              <xsl:if test="position() > 1"><br/></xsl:if>
+              <a><xsl:attribute name="href" select="."/><xsl:attribute name="target" select="'_blank'"/>
+		<xsl:value-of select="."/></a>
+            </xsl:for-each>
+          </xsl:if>
         </td>
-     </tr>
-     </xsl:if>
-     <tr>
-        <td class="feature-heading">vodml-id</td>
-        <td class="feature-detail"><xsl:value-of select="$vodml-id"/></td>
       </tr>
-      <tr>
-        <td class="feature-heading">multiplicity</td>
-        <td class="feature-detail">
+    </xsl:if>
+    <tr>
+      <td class="feature-heading">vodml-id</td>
+      <td class="feature-detail"><xsl:value-of select="$vodml-id"/></td>
+    </tr>
+    <tr>
+      <td class="feature-heading">multiplicity</td>
+      <td class="feature-detail">
         <xsl:apply-templates select="multiplicity" mode="tostring"/>
-        </td>
-      </tr>
-      <xsl:if test="name() = 'composition'">
+      </td>
+    </tr>
+    <xsl:if test="name() = 'composition'">
       <tr>
         <td class="feature-heading">isOrdered</td>
         <td class="feature-detail">
-        <xsl:choose>
-          <xsl:when test="isOrdered">
-        <xsl:value-of select="isOrdered"/>
-          </xsl:when>
-          <xsl:otherwise>
-                  <xsl:value-of select="'false'"/>
-          </xsl:otherwise>
-        </xsl:choose>
+          <xsl:choose>
+            <xsl:when test="isOrdered">
+              <xsl:value-of select="isOrdered"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="'false'"/>
+            </xsl:otherwise>
+          </xsl:choose>
         </td>
       </tr>
-      </xsl:if>
-      <tr>
-        <td class="feature-heading">description</td>
-        <td class="feature-detail">
+    </xsl:if>
+    <tr>
+      <td class="feature-heading">description</td>
+      <td class="feature-detail">
         <xsl:choose><xsl:when test="description"><xsl:value-of select="description"/></xsl:when>
-        <xsl:otherwise>TBD</xsl:otherwise>
+          <xsl:otherwise>TBD</xsl:otherwise>
         </xsl:choose>
       </td>
     </tr>
   </xsl:template>
-  
   
 
   <xsl:template match="subsets">

@@ -4,7 +4,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -57,8 +57,8 @@
     <uri/>
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
-    <version>2.4</version>
-    <lastModified>2018-11-27T16:00:00</lastModified>
+    <version>2.4-pr1</version>
+    <lastModified>2019-05-15T16:00:00</lastModified>
     
     <import>
         <name>ivoa</name>
@@ -74,13 +74,33 @@
         <extends>
             <vodml-ref>ivoa:string</vodml-ref>
         </extends>
-        <!-- TODO: restrict format like we do in the xsd -->
+        <!-- possible to restrict format like we do in the xsd? -->
     </primitiveType>
-        
+    
     <package>
         <vodml-id>caom2</vodml-id>
         <name>caom2</name>
         <description>this package contains the CAOM object types and enumerations</description>
+        
+        <!-- caom2 specific primitiveTypes -->
+        <primitiveType>
+            <vodml-id>ObservationURI</vodml-id>
+            <name>ObservationURI</name>
+            <description>Observation identifier of the form caom:{Observation.collection}/{Observation.observationID}</description>
+            <extends>
+                <vodml-ref>ivo:anyURI</vodml-ref>
+            </extends>
+        </primitiveType>
+        
+        <primitiveType>
+            <vodml-id>PlaneURI</vodml-id>
+            <name>PlaneURI</name>
+            <description>Plane identifier of the form caom:{Observation.collection}/{Observation.observationID}/{Plane.productID} 
+                aka {observationURI}/{Plane.productID}</description>
+            <extends>
+                <vodml-ref>ivo:anyURI</vodml-ref>
+            </extends>
+        </primitiveType>
         
         <!-- observation enums -->
         <enumeration>
@@ -125,6 +145,7 @@
             <literal>
                 <vodml-id>Status.FAIL</vodml-id>
                 <name>fail</name>
+                <description>the observation failed to meet the requirements of the proposal</description>
             </literal>
         </enumeration>
         
@@ -416,10 +437,6 @@
             <extends>
                 <vodml-ref>caom2:VocabularyTerm</vodml-ref>
             </extends>
-            <!-- intent is to define constants of type DataProductType in this class so
-                it behaves more or less like an enum but is extensible
-                TODO: can that be done in VODML?
-            -->
         </dataType>
         
         <dataType abstract="false">
@@ -430,10 +447,6 @@
             <extends>
                 <vodml-ref>caom2:VocabularyTerm</vodml-ref>
             </extends>
-            <!-- intent is to define constants of type ProductType in this class so
-                it behaves more or less like an enum but is extensible
-                TODO: can that be done in VODML?
-            -->
         </dataType>
         
         <objectType abstract="true">
@@ -508,7 +521,7 @@
                     date: truncate time to whole number of seconds and treat as a long (seconds since 1970-01-01 00:00:00 UTC)
                     </description>
                 <datatype>
-                    <!-- TODO: should be ChecksumURI -->
+                    <!-- possible to constrain the form of the URI? should we define ChecksumURI -->
                     <vodml-ref>ivoa:anyURI</vodml-ref>
                 </datatype>
                 <multiplicity>
@@ -529,7 +542,7 @@
                     of the same metadata directly.
                     </description>
                 <datatype>
-                    <!-- TODO: should be ChecksumURI -->
+                    <!-- possible to constrain the form of the URI? should we define ChecksumURI -->
                     <vodml-ref>ivoa:anyURI</vodml-ref>
                 </datatype>
                 <multiplicity>
@@ -761,10 +774,10 @@
             <attribute>
                 <vodml-id>CompositeObservation.members</vodml-id>
                 <name>members</name>
-                <description>members are the observations grouped together by the algorithm that defines the composite</description>
+                <description>members are the observations grouped together by the algorithm that defines the composite; 
+                    these are the intended components of the composite product -- actual inputs are described by the provenance</description>
                 <datatype>
-                    <!-- TODO: should be ObservationURI -->
-                    <vodml-ref>ivoa:anyURI</vodml-ref>
+                    <vodml-ref>caom2:ObservationURI</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -1003,7 +1016,9 @@
             <attribute>
                 <vodml-id>Artifact.productType</vodml-id>
                 <name>productType</name>
-                <description>TODO: define this</description>
+                <description>the primary product type of the artifact; for multi-part artifacts where the parts have different
+                types, this is the primary type; for example, if an artifact has a science part and an auxiliary part, the artifact
+                should have type science</description>
                 <datatype>
                     <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
@@ -1102,7 +1117,7 @@
             <attribute>
                 <vodml-id>Part.productType</vodml-id>
                 <name>productType</name>
-                <description>TODO: define this</description>
+                <description>the type of content in this part, sometimes relative to the type of the artifact</description>
                 <datatype>
                     <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
@@ -1137,7 +1152,7 @@
             <attribute>
                 <vodml-id>Chunk.productType</vodml-id>
                 <name>productType</name>
-                <description>TODO: define this</description>
+                <description>the type of content in this chunk, sometimes relative to the type of the artifact</description>
                 <datatype>
                     <vodml-ref>caom2:ProductType</vodml-ref>
                 </datatype>
@@ -1295,10 +1310,14 @@
         <objectType>
             <vodml-id>Algorithm</vodml-id>
             <name>Algorithm</name>
-            <description>TODO: describe this</description>
+            <description>the algorithm that was responsible for creating the observation; for a CompositeObservation this is the 
+                algorithm that defines the intended set of members to include
+            </description>
             <attribute>
                 <vodml-id>Algorithm.name</vodml-id>
                 <name>name</name>
+                <description>common name of the algorithm; for SimpleObservation: exposure; 
+                    TODO: publish a list of acceptable values as a machine-readable vocabulary</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1312,11 +1331,11 @@
         <objectType>
             <vodml-id>Telescope</vodml-id>
             <name>Telescope</name>
-            <description>description of the telescope where an observation was created</description>
+            <description>the telescope used to acquire the data for an observation</description>
             <attribute>
                 <vodml-id>Telescope.name</vodml-id>
                 <name>name</name>
-                <description>common name of the telescope</description>
+                <description>common name of the telescope; TODO: reference to a standard list of names</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1385,7 +1404,8 @@
         <objectType>
             <vodml-id>Instrument</vodml-id>
             <name>Instrument</name>
-            <description>description of the instrument used to acquire the data</description>
+            <description>the instrument used to acquire or create the observation; this could be used for both physical
+            instruments that acquire data or software that generates it (e.g. simulated data)</description>
             <attribute>
                 <vodml-id>Instrument.name</vodml-id>
                 <name>name</name>
@@ -1423,7 +1443,7 @@
             <attribute>
                 <vodml-id>Environment.seeing</vodml-id>
                 <name>name</name>
-                <description>typical atmospheric distortion (full-width-half-max of point source)</description>
+                <description>typical atmospheric distortion (full-width-half-max of a point source)</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1435,7 +1455,7 @@
             <attribute>
                 <vodml-id>Environment.humidity</vodml-id>
                 <name>humidity</name>
-                <description>humidity [0,1]</description>
+                <description>fractional relative humidity [0,1]</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1447,7 +1467,7 @@
             <attribute>
                 <vodml-id>Environment.elevation</vodml-id>
                 <name>elevation</name>
-                <description>angular elevation (alt in alt-azimuth?) above horizon</description>
+                <description>angular elevation above horizon [0,90]</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1459,7 +1479,7 @@
             <attribute>
                 <vodml-id>Environment.tau</vodml-id>
                 <name>tau</name>
-                <description>TODO</description>
+                <description>the opacity of the atmosphere [0,1]</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1471,7 +1491,7 @@
             <attribute>
                 <vodml-id>Environment.wavelengthTau</vodml-id>
                 <name>wavelengthTau</name>
-                <description>TODO</description>
+                <description>wavelength at which opacity was measured</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1483,7 +1503,7 @@
             <attribute>
                 <vodml-id>Environment.ambientTemp</vodml-id>
                 <name>ambientTemp</name>
-                <description>ambient temperature (outside or inside the telescope?)</description>
+                <description>ambient temperature at the telescope</description>
                 <datatype>
                     <vodml-ref>ivoa:real</vodml-ref>
                 </datatype>
@@ -1495,7 +1515,7 @@
             <attribute>
                 <vodml-id>Environment.photometric</vodml-id>
                 <name>photometric</name>
-                <description>indicator that flux and/or color calibration is stable/feasible?</description>
+                <description>indicator that flux and/or color calibration is stable</description>
                 <datatype>
                     <vodml-ref>ivoa:boolean</vodml-ref>
                 </datatype>
@@ -1578,7 +1598,7 @@
         <objectType>
             <vodml-id>Target</vodml-id>
             <name>Target</name>
-            <description>description of the target of an observation</description>
+            <description>the target of an observation</description>
             <attribute>
                 <vodml-id>Target.name</vodml-id>
                 <name>name</name>
@@ -1660,7 +1680,7 @@
         <objectType>
             <vodml-id>TargetPosition</vodml-id>
             <name>TargetPosition</name>
-            <description>description of the intended position of the observation 
+            <description>the intended position of the observation 
                 (not the position of the intended or actual target)</description>
             <attribute>
                 <vodml-id>TargetPosition.coordsys</vodml-id>
@@ -1703,11 +1723,11 @@
         <objectType>
             <vodml-id>Requirements</vodml-id>
             <name>Requirements</name>
-            <description>description of the observational requirements specified by the proposal</description>
+            <description>the observational requirements specified by the proposal</description>
             <attribute>
                 <vodml-id>Requirements.flag</vodml-id>
                 <name>flag</name>
-                <description>flag indicating degree to which requirements were satisfied</description>
+                <description>flag indicating degree to which requirements were satisfied by the observation</description>
                 <datatype>
                     <vodml-ref>caom2:Status</vodml-ref>
                 </datatype>
@@ -1811,7 +1831,7 @@
             <attribute>
                 <vodml-id>Provenance.keywords</vodml-id>
                 <name>keywords</name>
-                <description>addituional keywords that describe the processing; this may include both general
+                <description>additional keywords that describe the processing; this may include both general
                     descriptive words and those specific to this particular execution of the processing; 
                     keywords cannot contain the pipe (|) character - it is reserved for use in persistence
                     systems (e.g. to store all keywords in a single column in a table)</description>
@@ -1820,16 +1840,15 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>1</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
             <attribute>
                 <vodml-id>Provenance.inputs</vodml-id>
                 <name>inputs</name>
-                <description>version of the software or process that produced the data</description>
+                <description>local identifier for input planes; these are the actual inputs that went into the product</description>
                 <datatype>
-                    <!-- TODO: should be a PlaneURI or PublisherID -->
-                    <vodml-ref>ivoa:anyURI</vodml-ref>
+                    <vodml-ref>caom2:PlaneURI</vodml-ref>
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
@@ -2248,6 +2267,7 @@
             <dataType>
                 <vodml-id>Circle</vodml-id>
                 <name>Circle</name>
+                <description>a circular region on the sky</description>
                 <extends>
                     <vodml-ref>caom2:Shape</vodml-ref>
                 </extends>
@@ -2278,6 +2298,9 @@
             <dataType>
                 <vodml-id>MultiPolygon</vodml-id>
                 <name>MultiPolygon</name>
+                <description>a region on the sky defined a sequence of points connected by great-circle segments; each simple polygon is
+                is terminated by a special type of vertex and multiple simple polygons are permitted to describe disconnected regions as
+                a single value</description>
                 <attribute>
                     <vodml-id>MultiPolygon.vertices</vodml-id>
                     <name>vertices</name>
@@ -2294,6 +2317,7 @@
             <dataType>
                 <vodml-id>Polygon</vodml-id>
                 <name>Polygon</name>
+                <description>a simple polygon region on the sky defined a sequence of points connected by great-circle segments</description>
                 <extends>
                     <vodml-ref>caom2:Shape</vodml-ref>
                 </extends>
@@ -2324,6 +2348,7 @@
             <dataType>
                 <vodml-id>SubInterval</vodml-id>
                 <name>SubInterval</name>
+                <description>a sub-sample of an interval</description>
                 <attribute>
                     <vodml-id>SubInterval.lower</vodml-id>
                     <name>lower</name>
@@ -2351,6 +2376,7 @@
             <dataType>
                 <vodml-id>Interval</vodml-id>
                 <name>Interval</name>
+                <description>a set of numeric values defined by a lower and upper bound (bounds included: [a,b])</description>
                 <attribute>
                     <vodml-id>Interval.lower</vodml-id>
                     <name>lower</name>
@@ -2376,6 +2402,9 @@
                 <attribute>
                     <vodml-id>Interval.samples</vodml-id>
                     <name>samples</name>
+                    <description>the samples within an interval describe possible holes in the interval; in the simple case there is 
+                    one sample that is identical to the outer interval; samples within an interval are not allowed to overlap 
+                        (TBD: the bounds of adjacent samples may be equal?)</description>
                     <datatype>
                         <vodml-ref>caom2:SubInterval</vodml-ref>
                     </datatype>
@@ -2395,6 +2424,7 @@
             <dataType>
                 <vodml-id>Axis</vodml-id>
                 <name>Axis</name>
+                <description>one-dimensional coordinate axis description</description>
                 <attribute>
                     <vodml-id>Axis.ctype</vodml-id>
                     <name>ctype</name>
@@ -2422,6 +2452,7 @@
             <dataType>
                 <vodml-id>Dimension2D</vodml-id>
                 <name>Dimension2D</name>
+                <description>dimension (number of pixels) for a two-dimensional axis</description>
                 <attribute>
                     <vodml-id>Dimension2D.naxis1</vodml-id>
                     <name>naxis1</name>
@@ -2449,6 +2480,7 @@
             <dataType>
                 <vodml-id>RefCoord</vodml-id>
                 <name>RefCoord</name>
+                <description>a reference coordinate with a pixel and cooresponding world coordinate value</description>
                 <attribute>
                     <vodml-id>RefCoord.pix</vodml-id>
                     <name>pix</name>
@@ -2476,6 +2508,7 @@
             <dataType>
                 <vodml-id>CoordError</vodml-id>
                 <name>CoordError</name>
+                <description>coordinate error from FITS WCS</description>
                 <attribute>
                     <vodml-id>CoordError.rnder</vodml-id>
                     <name>crder</name>
@@ -2503,9 +2536,11 @@
             <dataType>
                 <vodml-id>Slice</vodml-id>
                 <name>Slice</name>
+                <description>a one-dimensional subset of a two-dimensional array</description>
                 <attribute>
                     <vodml-id>Slice.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the values within a the slice</description>
                     <datatype>
                         <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
@@ -2517,6 +2552,7 @@
                 <attribute>
                     <vodml-id>Slice.bin</vodml-id>
                     <name>bin</name>
+                    <description>a constant-pixel value in the two-dimensional array that specifies the pixels in the slice</description>
                     <datatype>
                         <vodml-ref>ivoa:integer</vodml-ref>
                     </datatype>
@@ -2533,6 +2569,7 @@
                 <attribute>
                     <vodml-id>EnergyTransition.species</vodml-id>
                     <name>species</name>
+                    <description>TODO</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -2544,6 +2581,7 @@
                 <attribute>
                     <vodml-id>EnergyTransition.transition</vodml-id>
                     <name>transition</name>
+                    <description>TODO</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -2557,6 +2595,7 @@
             <dataType>
                 <vodml-id>Coord2D</vodml-id>
                 <name>Coord2D</name>
+                <description>a two-dimensional (pair) of reference coordinates</description>
                 <attribute>
                     <vodml-id>Coord2D.coord1</vodml-id>
                     <name>coord1</name>
@@ -2584,6 +2623,7 @@
             <dataType>
                 <vodml-id>CoordRange1D</vodml-id>
                 <name>CoordRange1D</name>
+                <description>a one-dimensional range of reference coordinates</description>
                 <attribute>
                     <vodml-id>CoordRange1D.start</vodml-id>
                     <name>start</name>
@@ -2611,6 +2651,7 @@
             <dataType>
                 <vodml-id>CoordBounds1D</vodml-id>
                 <name>CoordBounds1D</name>
+                <description>a one-dimensional sequence of reference coordinate ranges</description>
                 <attribute>
                     <vodml-id>CoordBounds1D.samples</vodml-id>
                     <name>vertices</name>
@@ -2627,9 +2668,11 @@
             <dataType>
                 <vodml-id>CoordFunction1D</vodml-id>
                 <name>CoordFunction1D</name>
+                <description>a one-dimensional (linear) WCS coordinate transformation function</description>
                 <attribute>
                     <vodml-id>CoordFunction1D.dimension</vodml-id>
                     <name>dimension</name>
+                    <description>number of pixels along the axis</description>
                     <datatype>
                         <vodml-ref>ivoa:integer</vodml-ref>
                     </datatype>
@@ -2641,6 +2684,7 @@
                 <attribute>
                     <vodml-id>CoordFunction1D.refCoord</vodml-id>
                     <name>refCoord</name>
+                    <description>the reference pixel and world coordinate values</description>
                     <datatype>
                         <vodml-ref>caom2:RefCoord</vodml-ref>
                     </datatype>
@@ -2651,7 +2695,8 @@
                 </attribute>
                 <attribute>
                     <vodml-id>CoordFunction1D.delta</vodml-id>
-                    <name>cd11</name>
+                    <name>delta</name>
+                    <description>delta in world coordinate value (size of one pixel)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -2665,9 +2710,11 @@
             <dataType>
                 <vodml-id>CoordAxis1D</vodml-id>
                 <name>CoordAxis1D</name>
+                <description>a one-dimensional coordinate axis: quantity, values, errors</description>
                 <attribute>
                     <vodml-id>CoordAxis1D.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the quantity</description>
                     <datatype>
                         <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
@@ -2679,6 +2726,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.error</vodml-id>
                     <name>error</name>
+                    <description>errors</description>
                     <datatype>
                         <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
@@ -2690,6 +2738,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.range</vodml-id>
                     <name>range</name>
+                    <description>pixel and world coordinate values covered by this axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordRange1D</vodml-ref>
                     </datatype>
@@ -2701,6 +2750,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.bounds</vodml-id>
                     <name>bounds</name>
+                    <description>pixel and world coordinate values covered by this axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordBounds1D</vodml-ref>
                     </datatype>
@@ -2712,6 +2762,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.function</vodml-id>
                     <name>function</name>
+                    <description>pixel and world coordinate values covered by this axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordFunction1D</vodml-ref>
                     </datatype>
@@ -2725,9 +2776,11 @@
             <dataType>
                 <vodml-id>CoordRange2D</vodml-id>
                 <name>CoordRange2D</name>
+                <description>a two-dimensional range of reference coordinates</description>
                 <attribute>
                     <vodml-id>CoordRange2D.start</vodml-id>
                     <name>start</name>
+                    <description>TODO</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2739,6 +2792,7 @@
                 <attribute>
                     <vodml-id>CoordRange2D.end</vodml-id>
                     <name>end</name>
+                    <description>TODO</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2752,6 +2806,7 @@
             <dataType>
                 <vodml-id>CoordBounds2D</vodml-id>
                 <name>CoordBounds2D</name>
+                <description>a two-dimensional region in pixel and world coordinates</description>
                 <attribute>
                     <vodml-id>CoordBounds2D.vertices</vodml-id>
                     <name>vertices</name>
@@ -2768,9 +2823,11 @@
             <dataType>
                 <vodml-id>CoordFunction2D</vodml-id>
                 <name>CoordFunction2D</name>
+                <description>a two-dimensional (linear) WCS coordinate transformation function</description>
                 <attribute>
                     <vodml-id>CoordFunction2D.dimension</vodml-id>
                     <name>dimension</name>
+                    <description>number of pixels along each axis of the two-dimensional space (FITS: NAXISi)</description>
                     <datatype>
                         <vodml-ref>caom2:Dimension2D</vodml-ref>
                     </datatype>
@@ -2782,6 +2839,7 @@
                 <attribute>
                     <vodml-id>CoordFunction2D.refCoord</vodml-id>
                     <name>refCoord</name>
+                    <description>two-dimensional reference pixel and world coordinate values (FITS: CRPIXi, CRVALi)</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2793,6 +2851,7 @@
                 <attribute>
                     <vodml-id>CoordFunction2D.cd11</vodml-id>
                     <name>cd11</name>
+                    <description>two-dimensional scale and rotation (CD) matrix (FITS: CD1_1)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -2804,6 +2863,7 @@
                 <attribute>
                     <vodml-id>CoordFunction2D.cd12</vodml-id>
                     <name>cd12</name>
+                    <description>two-dimensional scale and rotation (CD) matrix (FITS: CD1_2)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -2815,6 +2875,7 @@
                 <attribute>
                     <vodml-id>CoordFunction2D.cd21</vodml-id>
                     <name>cd21</name>
+                    <description>two-dimensional scale and rotation (CD) matrix (FITS: CD2_1)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -2826,6 +2887,7 @@
                 <attribute>
                     <vodml-id>CoordFunction2D.cd22</vodml-id>
                     <name>cd22</name>
+                    <description>two-dimensional scale and rotation (CD) matrix (FITS: CD2_2)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -2839,9 +2901,12 @@
             <dataType>
                 <vodml-id>CoordAxis2D</vodml-id>
                 <name>CoordAxis2D</name>
+                <description>a two-dimensional coordinate axis pair: quantity, values, errors; 
+                    this is useful to describe spatial coordinates (longitude and latitude)</description>
                 <attribute>
                     <vodml-id>CoordAxis2D.axis1</vodml-id>
                     <name>axis1</name>
+                    <description>first axis of the spatial coordinate system; usually longitude</description>
                     <datatype>
                         <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
@@ -2853,6 +2918,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.axis2</vodml-id>
                     <name>axis2</name>
+                    <description>second axis of the spatial coordinate system; usually latitude</description>
                     <datatype>
                         <vodml-ref>caom2:Axis</vodml-ref>
                     </datatype>
@@ -2864,6 +2930,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.error1</vodml-id>
                     <name>error1</name>
+                    <description>position errors on the first axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
@@ -2875,6 +2942,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.error2</vodml-id>
                     <name>error2</name>
+                    <description>position errors on the second axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordError</vodml-ref>
                     </datatype>
@@ -2886,6 +2954,8 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.range</vodml-id>
                     <name>range</name>
+                    <description>pixel and world coordinate values covered by this axis expressed as a simple range of values with approximate coverage;
+                    this value is used when no better position information is available (no bounds or function)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordRange2D</vodml-ref>
                     </datatype>
@@ -2897,6 +2967,9 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.bounds</vodml-id>
                     <name>bounds</name>
+                    <description>pixel and world coordinate values covered by this axis expressed as a bounding polygon in pixel and world coordinates; 
+                        this can be provided in cases where there is no function to specify where each pixel is or as a subset of the rectangular region 
+                        described by the function (e.g. to specify valid pixels)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordBounds2D</vodml-ref>
                     </datatype>
@@ -2908,6 +2981,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.function</vodml-id>
                     <name>function</name>
+                    <description>pixel and world coordinate values covered by this axis expressed as a WCS transformation function</description>
                     <datatype>
                         <vodml-ref>caom2:CoordFunction2D</vodml-ref>
                     </datatype>
@@ -2921,6 +2995,7 @@
             <objectType>
                 <vodml-id>SpatialWCS</vodml-id>
                 <name>SpatialWCS</name>
+                <description>TODO</description>
                 <attribute>
                     <vodml-id>SpatialWCS.axis</vodml-id>
                     <name>axis</name>
