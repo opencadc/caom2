@@ -257,92 +257,92 @@
             <literal>
                 <vodml-id>PolarizationState.I</vodml-id>
                 <name>I</name>
-                <description>TODO</description>
+                <description>unpolarized</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.Q</vodml-id>
                 <name>Q</name>
-                <description>TODO</description>
+                <description>Stokes linear Q</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.U</vodml-id>
                 <name>U</name>
-                <description>TODO</description>
+                <description>Stokes linear U</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.V</vodml-id>
                 <name>V</name>
-                <description>TODO</description>
+                <description>Stokes circular V</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.RR</vodml-id>
                 <name>RR</name>
-                <description>TODO</description>
+                <description>right-right circular</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.LL</vodml-id>
                 <name>LL</name>
-                <description>TODO</description>
+                <description>left-left circular</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.RL</vodml-id>
                 <name>RL</name>
-                <description>TODO</description>
+                <description>right-left cross-circular</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.LR</vodml-id>
                 <name>LR</name>
-                <description>TODO</description>
+                <description>left-right cross-circular</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.XX</vodml-id>
                 <name>XX</name>
-                <description>TODO</description>
+                <description>X parallel linear</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.YY</vodml-id>
                 <name>YY</name>
-                <description>TODO</description>
+                <description>Y parallel linear</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.XY</vodml-id>
                 <name>XY</name>
-                <description>TODO</description>
+                <description>XY cross-linear</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.YX</vodml-id>
                 <name>YX</name>
-                <description>TODO</description>
+                <description>YX cross-linear</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.POLI</vodml-id>
                 <name>POLI</name>
-                <description>TODO</description>
+                <description>linear polarized intensity: sqrt(Q^2 + U^2)</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.FPOLI</vodml-id>
                 <name>FPOLI</name>
-                <description>TODO</description>
+                <description>fractional linear polarization: POLI/I</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.POLA</vodml-id>
                 <name>POLA</name>
-                <description>TODO</description>
+                <description>linear polarization angle: 1/2 arctan(U,Q)</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.EPOLI</vodml-id>
                 <name>EPOLI</name>
-                <description>TODO</description>
+                <description>elliptical polarization intensity: sqrt(Q^2 + U^2 + V^2)</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.CPOLI</vodml-id>
                 <name>CPOLI</name>
-                <description>TODO</description>
+                <description>circular polarization intensity: |V|</description>
             </literal>
             <literal>
                 <vodml-id>PolarizationState.NPOLI</vodml-id>
                 <name>NPOLI</name>
-                <description>TODO</description>
+                <description>unpolarized intensity: I - EPOLI</description>
             </literal>
         </enumeration>
         
@@ -611,7 +611,7 @@
             <attribute>
                 <vodml-id>Observation.type</vodml-id>
                 <name>type</name>
-                <description>TODO: define this</description>
+                <description>the type of observation (FITS OBSTYPE keyword); usually OBJECT for intent = science</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1317,7 +1317,7 @@
                 <vodml-id>Algorithm.name</vodml-id>
                 <name>name</name>
                 <description>common name of the algorithm; for SimpleObservation: exposure; 
-                    TODO: publish a list of acceptable values as a machine-readable vocabulary</description>
+                    TBD: publish a list of acceptable values as a machine-readable vocabulary?</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -1335,7 +1335,7 @@
             <attribute>
                 <vodml-id>Telescope.name</vodml-id>
                 <name>name</name>
-                <description>common name of the telescope; TODO: reference to a standard list of names</description>
+                <description>common name of the telescope; TBD: reference to a standard list of names?</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
@@ -2710,7 +2710,11 @@
             <dataType>
                 <vodml-id>CoordAxis1D</vodml-id>
                 <name>CoordAxis1D</name>
-                <description>a one-dimensional coordinate axis: quantity, values, errors</description>
+                <description>a one-dimensional coordinate axis: quantity, values, errors; it is usually only necessary to specify one of the 
+                    range, bounds, or function as they describe the world and pixel coordinate coverage at different levels
+                    of detail and the less detailed description is redundant (exception: when the range or bounds and function 
+                    are both specified, the range/bounds is a subset of the pixels described by the function and denotes the 
+                    valid pixels</description>
                 <attribute>
                     <vodml-id>CoordAxis1D.axis</vodml-id>
                     <name>axis</name>
@@ -2724,7 +2728,7 @@
                     </multiplicity>
                 </attribute>
                 <attribute>
-                    <vodml-id>CoordAxis2D.error</vodml-id>
+                    <vodml-id>CoordAxis1D.error</vodml-id>
                     <name>error</name>
                     <description>errors</description>
                     <datatype>
@@ -2738,7 +2742,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.range</vodml-id>
                     <name>range</name>
-                    <description>pixel and world coordinate values covered by this axis</description>
+                    <description>pixel and world coordinate values covered by this axis (min,max)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordRange1D</vodml-ref>
                     </datatype>
@@ -2750,7 +2754,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.bounds</vodml-id>
                     <name>bounds</name>
-                    <description>pixel and world coordinate values covered by this axis</description>
+                    <description>pixel and world coordinate values covered by this axis (min,max of tiles)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordBounds1D</vodml-ref>
                     </datatype>
@@ -2762,7 +2766,7 @@
                 <attribute>
                     <vodml-id>CoordAxis1D.function</vodml-id>
                     <name>function</name>
-                    <description>pixel and world coordinate values covered by this axis</description>
+                    <description>pixel and world coordinate values covered by this axis (coordinates of every pixel)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordFunction1D</vodml-ref>
                     </datatype>
@@ -2776,11 +2780,12 @@
             <dataType>
                 <vodml-id>CoordRange2D</vodml-id>
                 <name>CoordRange2D</name>
-                <description>a two-dimensional range of reference coordinates</description>
+                <description>a two-dimensional range of reference coordinates; this can be used to specify an axis-aligned bounding box
+                    in pixel and world coordinates</description>
                 <attribute>
                     <vodml-id>CoordRange2D.start</vodml-id>
                     <name>start</name>
-                    <description>TODO</description>
+                    <description>the two-dimensional reference coordinates with minimum longitude and latitude</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2792,7 +2797,7 @@
                 <attribute>
                     <vodml-id>CoordRange2D.end</vodml-id>
                     <name>end</name>
-                    <description>TODO</description>
+                    <description>the two-dimensional reference coordinates with maximum longitude and latitude</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2806,10 +2811,12 @@
             <dataType>
                 <vodml-id>CoordBounds2D</vodml-id>
                 <name>CoordBounds2D</name>
-                <description>a two-dimensional region in pixel and world coordinates</description>
+                <description>a two-dimensional region in pixel and world coordinates; this can be used to specify a simple polygon
+                    boundary in pixel and world coordinates</description>
                 <attribute>
                     <vodml-id>CoordBounds2D.vertices</vodml-id>
                     <name>vertices</name>
+                    <description>the vertices of the polygon with implicit segment from the last vertex back to the first</description>
                     <datatype>
                         <vodml-ref>caom2:Coord2D</vodml-ref>
                     </datatype>
@@ -2823,7 +2830,8 @@
             <dataType>
                 <vodml-id>CoordFunction2D</vodml-id>
                 <name>CoordFunction2D</name>
-                <description>a two-dimensional (linear) WCS coordinate transformation function</description>
+                <description>a two-dimensional (linear) WCS coordinate transformation function; this can be used to compute the world
+                    coordinates of every pixel</description>
                 <attribute>
                     <vodml-id>CoordFunction2D.dimension</vodml-id>
                     <name>dimension</name>
@@ -2901,8 +2909,11 @@
             <dataType>
                 <vodml-id>CoordAxis2D</vodml-id>
                 <name>CoordAxis2D</name>
-                <description>a two-dimensional coordinate axis pair: quantity, values, errors; 
-                    this is useful to describe spatial coordinates (longitude and latitude)</description>
+                <description>a two-dimensional coordinate axis pair: quantity, values, errors; it is usually only necessary 
+                    to specify one of the range, bounds, or function as they describe the world and pixel coordinate coverage 
+                    at different levels of detail and the less detailed description is redundant (exception: when the range or 
+                    bounds and function are both specified, the range/bounds is a subset of the pixels described by the function 
+                    and denotes the valid pixels</description>
                 <attribute>
                     <vodml-id>CoordAxis2D.axis1</vodml-id>
                     <name>axis1</name>
@@ -2954,8 +2965,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.range</vodml-id>
                     <name>range</name>
-                    <description>pixel and world coordinate values covered by this axis expressed as a simple range of values with approximate coverage;
-                    this value is used when no better position information is available (no bounds or function)</description>
+                    <description>pixel and world coordinate values covered by this axis (min,max)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordRange2D</vodml-ref>
                     </datatype>
@@ -2967,9 +2977,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.bounds</vodml-id>
                     <name>bounds</name>
-                    <description>pixel and world coordinate values covered by this axis expressed as a bounding polygon in pixel and world coordinates; 
-                        this can be provided in cases where there is no function to specify where each pixel is or as a subset of the rectangular region 
-                        described by the function (e.g. to specify valid pixels)</description>
+                    <description>pixel and world coordinate values covered by this axis (boundary)</description>
                     <datatype>
                         <vodml-ref>caom2:CoordBounds2D</vodml-ref>
                     </datatype>
@@ -2981,7 +2989,7 @@
                 <attribute>
                     <vodml-id>CoordAxis2D.function</vodml-id>
                     <name>function</name>
-                    <description>pixel and world coordinate values covered by this axis expressed as a WCS transformation function</description>
+                    <description>pixel and world coordinate values covered by this axis (coordinates of every pixel</description>
                     <datatype>
                         <vodml-ref>caom2:CoordFunction2D</vodml-ref>
                     </datatype>
@@ -2995,10 +3003,11 @@
             <objectType>
                 <vodml-id>SpatialWCS</vodml-id>
                 <name>SpatialWCS</name>
-                <description>TODO</description>
+                <description>World Coordinate System (WCS) metadata for the position axes</description>
                 <attribute>
                     <vodml-id>SpatialWCS.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the two-dimensional position axes</description>
                     <datatype>
                         <vodml-ref>caom2:CoordAxis2D</vodml-ref>
                     </datatype>
@@ -3010,6 +3019,7 @@
                 <attribute>
                     <vodml-id>SpatialWCS.coordsys</vodml-id>
                     <name>coordsys</name>
+                    <description>name of the coordinate system</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3021,6 +3031,7 @@
                 <attribute>
                     <vodml-id>SpatialWCS.equinox</vodml-id>
                     <name>equinox</name>
+                    <description>equinox of the coordinate system</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3032,6 +3043,8 @@
                 <attribute>
                     <vodml-id>SpatialWCS.resolution</vodml-id>
                     <name>resolution</name>
+                    <description>effective resolution of the data (FWHM of a point source); 
+                        this is usually the value measured at the time of data acquisition</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3048,6 +3061,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the one-dimensional energy axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
@@ -3059,6 +3073,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.specsys</vodml-id>
                     <name>specsys</name>
+                    <description>reference frame for the spectral coordinate</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3070,6 +3085,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.ssysobs</vodml-id>
                     <name>ssysobs</name>
+                    <description>reference frame that is constant over the range of the non-spectral world coordinates</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3081,6 +3097,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.ssyssrc</vodml-id>
                     <name>ssyssrc</name>
+                    <description>reference frame for the velocity of the source (zsource)</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3092,6 +3109,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.restfrq</vodml-id>
                     <name>restfrq</name>
+                    <description>rest frequency of the spectral feature of interest</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3103,6 +3121,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.restwav</vodml-id>
                     <name>restwav</name>
+                    <description>rest wavelength of the spectral feature of interest</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3114,6 +3133,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.velosys</vodml-id>
                     <name>velosys</name>
+                    <description>correction for the observatory's motion with respect to the barycenter</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3125,6 +3145,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.zsource</vodml-id>
                     <name>zsource</name>
+                    <description>redshift of the source (relative to ssyssrc)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3136,6 +3157,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.velang</vodml-id>
                     <name>velang</name>
+                    <description>angle of true velocity from tangent to line of sight</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3147,6 +3169,8 @@
                 <attribute>
                     <vodml-id>SpectralWCS.bandpassName</vodml-id>
                     <name>bandpassName</name>
+                    <description>telescope- or instrument-specific name for the energy band covered by the data; this is usually
+                        a filter name</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3158,6 +3182,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.transition</vodml-id>
                     <name>transition</name>
+                    <description>description of the energy transition observed</description>
                     <datatype>
                         <vodml-ref>caom2:EnergyTransition</vodml-ref>
                     </datatype>
@@ -3169,6 +3194,7 @@
                 <attribute>
                     <vodml-id>SpectralWCS.resolvingPower</vodml-id>
                     <name>resolvingPower</name>
+                    <description>ratio of wavelength to resolution (lambda/delta-lambda)</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3182,9 +3208,11 @@
             <objectType>
                 <vodml-id>TemporalWCS</vodml-id>
                 <name>TemporalWCS</name>
+                <description>one-dimensional pixel and world coordinates describing the time axis</description>
                 <attribute>
                     <vodml-id>TemporalWCS.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the time axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
@@ -3196,6 +3224,7 @@
                 <attribute>
                     <vodml-id>TemporalWCS.timesys</vodml-id>
                     <name>timesys</name>
+                    <description>time scale for the time coordinates</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3207,6 +3236,7 @@
                 <attribute>
                     <vodml-id>TemporalWCS.trefpos</vodml-id>
                     <name>trefpos</name>
+                    <description>reference position for the time coordinates</description>
                     <datatype>
                         <vodml-ref>ivoa:string</vodml-ref>
                     </datatype>
@@ -3218,6 +3248,7 @@
                 <attribute>
                     <vodml-id>TemporalWCS.mjdref</vodml-id>
                     <name>mjdref</name>
+                    <description>base time offset; time coordinate values are relative to this</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3229,6 +3260,7 @@
                 <attribute>
                     <vodml-id>TemporalWCS.exposure</vodml-id>
                     <name>exposure</name>
+                    <description>duration in time that the instrument was collecting data</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3240,6 +3272,7 @@
                 <attribute>
                     <vodml-id>TemporalWCS.resolution</vodml-id>
                     <name>resolution</name>
+                    <description>smallest separation in time that can be distinguished</description>
                     <datatype>
                         <vodml-ref>ivoa:real</vodml-ref>
                     </datatype>
@@ -3253,9 +3286,11 @@
             <objectType>
                 <vodml-id>PolarizationWCS</vodml-id>
                 <name>PolarizationWCS</name>
+                <description>one-dimensional pixel and world coordinates describing the polarization states</description>
                 <attribute>
                     <vodml-id>PolarizationWCS.axis</vodml-id>
                     <name>axis</name>
+                    <description>description of the polarization axis</description>
                     <datatype>
                         <vodml-ref>caom2:CoordAxis1D</vodml-ref>
                     </datatype>
@@ -3269,9 +3304,13 @@
             <objectType>
                 <vodml-id>ObservableAxis</vodml-id>
                 <name>ObservableAxis</name>
+                <description>an axis in the data (array) that varies by observable rather than coordinate; this axis is used when
+                    the data array containts values with different meaning in different subsets of the array (e.g. a row of pixels
+                    with wavelength values and a second row with flux values)</description>
                 <attribute>
                     <vodml-id>ObservableAxis.dependent</vodml-id>
                     <name>dependent</name>
+                    <description>the part of the array containing the observable values</description>
                     <datatype>
                         <vodml-ref>caom2:Slice</vodml-ref>
                     </datatype>
@@ -3283,6 +3322,7 @@
                 <attribute>
                     <vodml-id>ObservableAxis.independent</vodml-id>
                     <name>independent</name>
+                    <description>the part of the array containing coordinate values</description>
                     <datatype>
                         <vodml-ref>caom2:Slice</vodml-ref>
                     </datatype>
