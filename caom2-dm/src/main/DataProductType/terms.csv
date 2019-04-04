@@ -1,0 +1,19 @@
+#predicate,parent,label,Description
+
+
+image,1,two-dimensional image,"two-dimensional data where the axes are position (longitude and latitide)"
+
+cube,1,multi-dimensional dataset,"dataset with three or more axes"
+
+spectrum,1,dataset with spectral axis,"one- or two-dimensional data where the primary axis is energy"
+
+timeseries,1,time series data,"data presenting some quantity as a function of time"
+
+visibility,1,visibility data,"instrumental radio data that may contain positon-energy-time-polarization axes"
+
+event,1,event list,"list of discrete events (usually detections of single photons)"
+
+measurements,1,derived results,"a list of values extacted by analysis of other types of datasets"
+catalog,2,source catalog [CAOM],"measurements of spatially resolved sources extracted from an image or cube"
+
+sed,1,spectral energy distribution,"data product produced by combining flux data at different energies"

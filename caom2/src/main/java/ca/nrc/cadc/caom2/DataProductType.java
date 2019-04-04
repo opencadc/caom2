@@ -90,27 +90,23 @@ public class DataProductType extends VocabularyTerm
 
     // ObsCore-1.0
     public static final DataProductType IMAGE = new DataProductType("image");
-    public static final DataProductType SPECTRUM = new DataProductType(
-            "spectrum");
-    public static final DataProductType TIMESERIES = new DataProductType(
-            "timeseries");
-    public static final DataProductType VISIBILITY = new DataProductType(
-            "visibility");
-    public static final DataProductType EVENTLIST = new DataProductType(
-            "eventlist");
+    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
+    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
+    public static final DataProductType VISIBILITY = new DataProductType("visibility");
+    public static final DataProductType EVENTLIST = new DataProductType("event");
     public static final DataProductType CUBE = new DataProductType("cube");
+    
 
     // ObsCore-1.1
-    public static final DataProductType MEASUREMENTS = new DataProductType(
-            "measurements");
+    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
+    public static final DataProductType SED = new DataProductType("sed");
 
     // CAOM-2.3
-    public static final DataProductType CATALOG = new DataProductType(CAOM,
-            "catalog");
+    public static final DataProductType CATALOG = new DataProductType(CAOM, "catalog");
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       EVENTLIST, CUBE, MEASUREMENTS, CATALOG };
+                                       EVENTLIST, CUBE, SED, MEASUREMENTS, CATALOG };
     }
 
     private DataProductType(String value) {
