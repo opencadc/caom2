@@ -16,13 +16,31 @@
     <table>
         <tr> <th>utype</th>  <th>unit</th> <th>coordinate system</th> </tr>
         
+        <tr><td>caom2:CaomEntity.lastModified</td><td>d</td><td>UTC</td></tr>
+        <tr><td>caom2:CaomEntity.maxLastModified</td><td>s</td><td></td></tr>
+        
+        <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Observation.environment.ambientTemp</td><td>C</td><td></td></tr>
         <tr><td>caom2:Observation.environment.elevation</td><td>deg</td><td></td></tr>
         <tr><td>caom2:Observation.environment.seeing</td><td>arcsec</td><td></td></tr>
         <tr><td>caom2:Observation.environment.wavelengthTau</td><td>m</td><td></td></tr>
+        <tr><td>caom2:Observation.metaRelease</td><td>d</td><td>UTC</td></tr>        
         <tr><td>caom2:Observation.targetPosition.coordinates.cval1</td><td>deg</td><td></td></tr>
         <tr><td>caom2:Observation.targetPosition.coordinates.cval2</td><td>deg</td><td></td></tr>
         
+        <tr><td  colspan="3"><br/></td></tr>
+        <tr><td>caom2:Plane.dataRelease</td><td>d</td><td>UTC</td></tr>
+        <tr><td>caom2:Plane.metaRelease</td><td>d</td><td>UTC</td></tr>
+        
+        <tr><td  colspan="3"><br/></td></tr>
+        <tr><td>caom2:Plane.position.bounds</td><td>deg</td><td>ICRS</td></tr>
+        <tr><td>caom2:Plane.position.bounds.points</td><td>deg</td><td>ICRS</td></tr>
+        <tr><td>caom2:Plane.position.bounds.samples</td><td>deg</td><td>ICRS</td></tr>
+        <tr><td>caom2:Plane.position.bounds.size</td><td>deg</td><td></td></tr>
+        <tr><td>caom2:Plane.position.resolution</td><td>arcsec</td><td></td></tr>
+        <tr><td>caom2:Plane.position.sampleSize</td><td>arcsec</td><td></td></tr>
+        
+        <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Plane.energy.bounds</td><td>m</td><td>barycentric vacuum wavelength</td></tr>
         <tr><td>caom2:Plane.energy.bounds.samples</td><td>m</td><td>barycentric vacuum wavelength</td></tr>
         <tr><td>caom2:Plane.energy.bounds.integrated</td><td>m</td><td></td></tr>
@@ -34,18 +52,8 @@
         <tr><td>caom2:Plane.energy.freqSampleSize</td><td>Hz</td><td>alt representation of sampleSize</td></tr>
         <tr><td>caom2:Plane.energy.freqWidth</td><td>Hz</td><td>alt representation of width</td></tr>
         
-        <tr><td>caom2:Plane.metrics.background</td><td>Jy/pix</td><td></td></tr>
-        <tr><td>caom2:Plane.metrics.backgroundStddev</td><td>Jy/pix</td><td></td></tr>
-        <tr><td>caom2:Plane.metrics.fluxDensityLimit</td><td>Jy</td><td>S:N=5 for point source</td></tr>
-        <tr><td>caom2:Plane.metrics.sourceNumberDensity</td><td>deg-2</td><td></td></tr>
         
-        <tr><td>caom2:Plane.position.bounds</td><td>deg</td><td>ICRS</td></tr>
-        <tr><td>caom2:Plane.position.bounds.points</td><td>deg</td><td>ICRS</td></tr>
-        <tr><td>caom2:Plane.position.bounds.samples</td><td>deg</td><td>ICRS</td></tr>
-        <tr><td>caom2:Plane.position.bounds.size</td><td>deg</td><td></td></tr>
-        <tr><td>caom2:Plane.position.resolution</td><td>arcsec</td><td></td></tr>
-        <tr><td>caom2:Plane.position.sampleSize</td><td>arcsec</td><td></td></tr>
-        
+        <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Plane.time.bounds</td><td>d</td><td>MJD-UTC</td></tr>
         <tr><td>caom2:Plane.time.bounds.samples</td><td>m</td><td>MJD-UTC</td></tr>
         <tr><td>caom2:Plane.time.bounds.integrated</td><td>d</td><td></td></tr>
@@ -55,14 +63,24 @@
         <tr><td>caom2:Plane.time.exposure</td><td>s</td><td></td></tr>
         <tr><td>caom2:Plane.time.resolution</td><td>d</td><td></td></tr>
         <tr><td>caom2:Plane.time.sampleSize</td><td>d</td><td></td></tr>
-
+        
+        <tr><td  colspan="3"><br/></td></tr>
+        <tr><td>caom2:Plane.metrics.background</td><td>Jy/pix</td><td></td></tr>
+        <tr><td>caom2:Plane.metrics.backgroundStddev</td><td>Jy/pix</td><td></td></tr>
+        <tr><td>caom2:Plane.metrics.fluxDensityLimit</td><td>Jy</td><td>S:N=5 for point source</td></tr>
+        <tr><td>caom2:Plane.metrics.sourceNumberDensity</td><td>deg-2</td><td></td></tr>
+        
+        <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Artifact.contentLength</td><td>byte</td><td></td></tr>
         
+        <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Chunk.position.equinox</td><td>a</td><td></td></tr>
         <tr><td>caom2:Chunk.position.resolution</td><td>arcsec</td><td></td></tr>
         <tr><td>caom2:Chunk.time.exposure</td><td>s</td><td></td></tr>
         <tr><td>caom2:Chunk.time.mjdref</td><td>d</td><td></td></tr>
         <tr><td>caom2:Chunk.time.resolution</td><td>s</td><td></td></tr>
+        
+        
     </table>
     
 </div>
