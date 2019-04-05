@@ -26,6 +26,7 @@ task initHTML(type: Copy, dependsOn: test) {
     from 'src/main/resources'
     into 'build/html'
     include '**/*.png'
+    include '**-profile.html'
 }
 
 xslt {
