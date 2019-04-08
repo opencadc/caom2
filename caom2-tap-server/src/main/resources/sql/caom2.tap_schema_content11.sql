@@ -83,6 +83,11 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'target_moving', 'flag for moving target', 'caom2:Observation.target.moving', NULL, NULL, 'int', NULL,NULL, 0,0,0 , 34),
 ( 'caom2.Observation', 'target_keywords', 'target keywords (separated by |)', 'caom2:Observation.target.keywords', NULL, NULL, 'char', '*',NULL, 0,0,0 , 35),
 
+( 'caom2.Observation', 'targetPosition_coordsys', 'coordinate system for target position', 'caom2:Observation.targetPosition.coordsys', NULL, NULL, 'char', '16*',NULL, 0,0,0 , 35),
+( 'caom2.Observation', 'targetPosition_equinox', 'equinox of target position coordinate system', 'caom2:Observation.targetPosition.equinox', NULL, NULL, 'double', NULL,NULL, 0,0,0 , 35),
+( 'caom2.Observation', 'targetPosition_coordinates_cval1', 'longitude of target position', 'caom2:Observation.targetPosition.coordinates.cval1', NULL, 'deg', 'double', NULL,NULL, 0,0,0 , 35),
+( 'caom2.Observation', 'targetPosition_coordinates_cval2', 'latitude of target position', 'caom2:Observation.targetPosition.coordinates.cval2', NULL, 'deg', 'double', NULL,NULL, 0,0,0 , 35),
+
 ( 'caom2.Observation', 'telescope_name', 'name of telescope used to acquire observation', 'caom2:Observation.telescope.name', NULL, NULL, 'char', '32*',NULL, 1,0,0 , 40),
 ( 'caom2.Observation', 'telescope_geoLocationX', 'x component of geocentric location of telescope', 'caom2:Observation.telescope.geoLocationX', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 41),
 ( 'caom2.Observation', 'telescope_geoLocationY', 'y component of geocentric location of telescope', 'caom2:Observation.telescope.geoLocationY', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 42),
@@ -137,7 +142,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'provenance_keywords', 'provenance keywords (separated by |)', 'caom2:Plane.provenance.keywords', NULL, NULL, 'char', '*', NULL, 0,0,0 , 27),
 ( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Plane.provenance.inputs', NULL, NULL, 'char','*','clob', 0,0,0 , 28),
 
-( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Plane.metrics.sourceNumberDensity', NULL, 'per sq. deg', 'double', NULL, NULL, 0,0,0 , 30),
+( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Plane.metrics.sourceNumberDensity', NULL, 'deg-2', 'double', NULL, NULL, 0,0,0 , 30),
 ( 'caom2.Plane', 'metrics_background', 'background intensity', 'caom2:Plane.metrics.background', NULL, 'Jy/pix', 'double', NULL,NULL, 0,0,0 , 31),
 ( 'caom2.Plane', 'metrics_backgroundStddev', 'standard deviation in background', 'caom2:Plane.metrics.backgroundStddev', NULL, 'Jy/pix', 'double', NULL, NULL, 0,0,0 , 32),
 ( 'caom2.Plane', 'metrics_fluxDensityLimit', 'flux density limit where S:N=5 for point source', 'caom2:Plane.metrics.fluxDensityLimit', NULL, 'Jy', 'double', NULL, NULL, 0,0,0 , 33),
