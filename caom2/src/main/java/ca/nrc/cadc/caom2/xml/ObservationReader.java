@@ -225,7 +225,9 @@ public class ObservationReader implements Serializable {
                         CAOM22_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.2 schema URL: " + caom22SchemaUrl);
               
-                log.debug("caom-2.3 schema URL: " + caom22SchemaUrl);
+                String caom23SchemaUrl = XmlUtil.getResourceUrlString(
+                        CAOM23_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.3 schema URL: " + caom23SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(
                         XLINK_SCHEMA_RESOURCE, ObservationReader.class);
@@ -243,9 +245,6 @@ public class ObservationReader implements Serializable {
                     throw new RuntimeException("failed to load "
                             + CAOM22_SCHEMA_RESOURCE + " from classpath");
                 }
-                
-                String caom23SchemaUrl = XmlUtil.getResourceUrlString(
-                        CAOM23_SCHEMA_RESOURCE, ObservationReader.class);
                 
                 if (caom23SchemaUrl == null) {
                     throw new RuntimeException("failed to load "
