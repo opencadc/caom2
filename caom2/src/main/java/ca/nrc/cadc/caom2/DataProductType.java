@@ -88,29 +88,63 @@ public class DataProductType extends VocabularyTerm
     private static final URI CAOM = URI
             .create("http://www.opencadc.org/caom2/DataProductType");
 
-    // ObsCore-1.0
+    /**
+     * ObsCore-1.0 image.
+     */
     public static final DataProductType IMAGE = new DataProductType("image");
-    public static final DataProductType SPECTRUM = new DataProductType(
-            "spectrum");
-    public static final DataProductType TIMESERIES = new DataProductType(
-            "timeseries");
-    public static final DataProductType VISIBILITY = new DataProductType(
-            "visibility");
-    public static final DataProductType EVENTLIST = new DataProductType(
-            "eventlist");
+    
+    /**
+     * ObsCore-1.0 spectrum.
+     */
+    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
+    
+    /**
+     * ObsCore-1.0 timeseries.
+     */
+    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
+    
+    /**
+     * ObsCore-1.0 visibility.
+     */
+    public static final DataProductType VISIBILITY = new DataProductType("visibility");
+    
+    /**
+     * ObsCore-1.0 event.
+     */
+    public static final DataProductType EVENT = new DataProductType("event");
+    
+    /**
+     * ObsCore-1.0 eventlist. This constant was mistakenly labelled <em>eventlist</em>
+     * using an early draft version. The value is the same as <em>event</em>.
+     * 
+     * @deprecated 
+     */
+    public static final DataProductType EVENTLIST = new DataProductType("event");
+    
+    /**
+     * ObsCore-1.0 cube.
+     */
     public static final DataProductType CUBE = new DataProductType("cube");
+    
 
-    // ObsCore-1.1
-    public static final DataProductType MEASUREMENTS = new DataProductType(
-            "measurements");
+    /**
+     * ObsCore-1.1 measurements.
+     */
+    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
+    
+    /**
+     * ObsCore-1.1 sed.
+     */
+    public static final DataProductType SED = new DataProductType("sed");
 
-    // CAOM-2.3
-    public static final DataProductType CATALOG = new DataProductType(CAOM,
-            "catalog");
+    /**
+     * CAOM catalog extension. Catalog is a subclass of measurements.
+     */
+    public static final DataProductType CATALOG = new DataProductType(CAOM, "catalog");
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       EVENTLIST, CUBE, MEASUREMENTS, CATALOG };
+                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENTLIST };
     }
 
     private DataProductType(String value) {

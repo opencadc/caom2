@@ -135,6 +135,7 @@ public class Main {
     private static void usage() {
         System.out.println("usage: caom2-viz [-h|--help] (to see this message)");
         System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug] [--productID=<...>] <caom observation xml file>");
+        System.out.println("                 [-r] force recompute of plane position metadata");
         System.out.println("                 [--productID=<caom plane productID>] (to view just that plane)");
     }
 }

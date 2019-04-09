@@ -1,3 +1,41 @@
+<div>
 <p>
-This is the abstract...
+The Common Archive Observation Model (CAOM) is was originally developed by CADC 
+to support unified data discovery and access to a wide range to data collections. 
 </p>
+
+<h2>Data Discovery</h2>
+
+<p>Data discovery is supported by the Observation and Plane classes. Together, instances
+of these classes describe data products in terms of how data was acquired (telescope, 
+instrument, etc) and what data was acquired (position, energy, time, and polarization).</p>
+
+<p>The data discovery parts of the model are designed to work with IVOA data discovery 
+protocols (e.g. TAP, SIA, and SSA) that are applicable to observational data and to 
+support providing support for IVOA data models (e.g. ObsCore) with minimal extra effort.</p>
+
+<h2>Data Access</h2>
+
+<p>Data access is supported by the Artifact class and, for more specialised cases, the 
+Part and Chunk classes. Artifacts are stored data objects (usually files). The structure of
+an artifact is described by it part(s) and the data content of the a part is described by
+one or more chunk(s). The current model allows for a linear sequence of named parts within an
+artifact; this works for some aggregations (e.g. flat tar or zip files) and linear data file formats 
+(e.g. FITS) but is not well-suited to hierarchical structures (e.g. directory structures, HDF). 
+A chunk is able to describe astronomical data arrays (e.g. spectra, images, cubes), but
+cannot describe arbitrary data structures like lists of data objects or tabular data.</p>
+
+<p>The data access parts of the model can be queried via discovery protocols (TAP specifically), 
+but the normal use would be to use specialised services that make use of this metadata to 
+orchestrate the data access. Specifically, Artifact-Part-Chunk metadata is designed to support
+the implementation of IVOA DataLink and SODA services. The Plane-Artifact relation maps
+directly to the one or more download links provided by the standard DataLink output; you invoke 
+DataLink with a plane identifier and get back URLs for all the artifacts. Addtional metadata in 
+the parts and chunks can be used to implement SODA cutout by using the WCS metadata in the chunks to
+compute the sky-to-pixel transformations necessary to extract a subset of the pixels from a larger 
+data array.</p>
+
+<p>The WCS metadata in the chunks can also be used to compute most of the Plane metadata (position, 
+energy, time, and polarization) in a consistent/uniform way. This strategy supports the option to 
+shift some responsibility from the data provider to the metadata service provider.</p>
+</div>

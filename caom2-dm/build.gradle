@@ -1,7 +1,5 @@
 plugins {
     id 'java'
-    //id 'maven'
-    //id 'maven-publish'
     id "com.github.eerohele.saxon-gradle" version "0.2.1"
 }
 
@@ -28,6 +26,7 @@ task initHTML(type: Copy, dependsOn: test) {
     from 'src/main/resources'
     into 'build/html'
     include '**/*.png'
+    include '**-profile.html'
 }
 
 xslt {
@@ -39,7 +38,10 @@ xslt {
     
     parameters(
         project_name: 'Common Archive Observation Model',
-        preamble: '../resources/preamble.html',
+        preamble: '../resources/preamble.html', // relative to stylesheet apparently
+        abstract: '../resources/abstract.html',
+        status: '../resources/status.html',
+        acknowledgment: '../resources/acknowledgment.html',
         graphviz_png: 'CAOM-' + project.version + '.png'
     )
     

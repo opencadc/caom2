@@ -5,7 +5,7 @@
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xmlns:uml="http://schema.omg.org/spec/UML/2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-              	xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1.0">
+              	xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1">
 
 <!-- 
   This XSLT script contains common xsl:templates used by other XSLT scripts.
