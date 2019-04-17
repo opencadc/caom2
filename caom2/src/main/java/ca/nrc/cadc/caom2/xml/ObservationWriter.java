@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,10 +73,11 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -92,6 +93,7 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
+import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
@@ -402,8 +404,12 @@ public class ObservationWriter implements Serializable {
                 .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
         Element element = getCaom2Element("Observation");
-        String type = caom2Namespace.getPrefix() + ":"
-                + obs.getClass().getSimpleName();
+        String type = caom2Namespace.getPrefix() + ":";
+        if (obs instanceof SimpleObservation) {
+            type += "SimpleObservation";
+        } else {
+            type += "CompositeObservation"; // 2.3
+        }
         element.setAttribute("type", type, xsiNamespace);
 
         addEntityAttributes(obs, element, dateFormat);
@@ -429,8 +435,8 @@ public class ObservationWriter implements Serializable {
         addPlanesElement(obs.getPlanes(), element, dateFormat);
 
         // Members must be the last element.
-        if (obs instanceof CompositeObservation) {
-            addMembersElement(((CompositeObservation) obs).getMembers(),
+        if (obs instanceof DerivedObservation) {
+            addMembersElement(((DerivedObservation) obs).getMembers(),
                     element, dateFormat);
         }
 
@@ -881,8 +887,9 @@ public class ObservationWriter implements Serializable {
         if (comp.bandpassName != null) {
             addElement("bandpassName", comp.bandpassName, e);
         }
-        if (comp.emBand != null) {
-            addElement("emBand", comp.emBand.getValue(), e);
+        if (!comp.getEnergyBands().isEmpty()) {
+            String eb = comp.getEnergyBands().get(0).getValue(); // first only
+            addElement("emBand", eb, e);
         }
         if (comp.restwav != null) {
             addNumberElement("restwav", comp.restwav, e);

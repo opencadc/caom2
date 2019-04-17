@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,6 +72,8 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -80,20 +82,15 @@ import java.io.Serializable;
 public class Energy implements Serializable {
     private static final long serialVersionUID = 201202081400L;
 
+    private List<EnergyBand> emBand = new ArrayList<>();
+    
     public Interval bounds;
-
     public Long dimension;
-
     public Double resolvingPower;
-
+    public Interval variableResolvingPower;
     public Double sampleSize;
-
     public String bandpassName;
-
-    public EnergyBand emBand;
-
     public EnergyTransition transition;
-
     public Double restwav;
 
     @Override
@@ -107,6 +104,8 @@ public class Energy implements Serializable {
         sb.append(sampleSize);
         sb.append(",r=");
         sb.append(resolvingPower);
+        sb.append(",v=");
+        sb.append(variableResolvingPower);
         sb.append(",b=");
         sb.append(bandpassName);
         sb.append(",e=");
@@ -119,6 +118,10 @@ public class Energy implements Serializable {
         return sb.toString();
     }
 
+    public List<EnergyBand> getEnergyBands() {
+        return emBand;
+    }
+    
     public Double getFreqWidth() {
         if (bounds == null) {
             return null;

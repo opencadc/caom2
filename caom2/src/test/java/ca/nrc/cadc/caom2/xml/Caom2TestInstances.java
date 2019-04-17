@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,7 +72,7 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
@@ -247,10 +247,10 @@ public class Caom2TestInstances
         return observation;
     }
     
-    public CompositeObservation getCompositeObservation()
+    public DerivedObservation getCompositeObservation()
         throws Exception
     {
-        CompositeObservation observation = new CompositeObservation(collection, observationID, getAlgorithm());
+        DerivedObservation observation = new DerivedObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
             observation.type = "field";
@@ -372,7 +372,7 @@ public class Caom2TestInstances
                 p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
                 p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
                 p.energy.dimension = 2l;
-                p.energy.emBand = EnergyBand.OPTICAL;
+                p.energy.getEnergyBands().add(EnergyBand.OPTICAL);
                 p.energy.resolvingPower = 2.0;
                 p.energy.restwav = 600e-9;
                 p.energy.sampleSize = 100e-6;

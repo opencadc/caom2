@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
@@ -392,13 +392,12 @@ public class ObservationReader implements Serializable {
         Observation obs;
         String simple = namespace.getPrefix() + ":"
                 + SimpleObservation.class.getSimpleName();
-        String comp = namespace.getPrefix() + ":"
-                + CompositeObservation.class.getSimpleName();
+        String comp = namespace.getPrefix() + ":CompositeObservation"; // 2.3
         if (simple.equals(tval)) {
             obs = new SimpleObservation(collection, observationID);
             obs.setAlgorithm(algorithm);
         } else if (comp.equals(tval)) {
-            obs = new CompositeObservation(collection, observationID,
+            obs = new DerivedObservation(collection, observationID,
                     algorithm);
         } else {
             throw new ObservationParsingException(
@@ -426,8 +425,8 @@ public class ObservationReader implements Serializable {
 
         addPlanes(obs.getPlanes(), root, namespace, rc);
 
-        if (obs instanceof CompositeObservation) {
-            addMembers(((CompositeObservation) obs).getMembers(), root,
+        if (obs instanceof DerivedObservation) {
+            addMembers(((DerivedObservation) obs).getMembers(), root,
                     namespace, rc);
         }
 
@@ -989,9 +988,11 @@ public class ObservationReader implements Serializable {
         nrg.bandpassName = getChildText("bandpassName", element, namespace,
                 false);
 
+        // for 2.3 there is 0..1 EnergyBand
+        // for 2.4 there are 0..* EnergyBand(s)
         String emb = getChildText("emBand", element, namespace, false);
         if (emb != null) {
-            nrg.emBand = EnergyBand.toValue(emb);
+            nrg.getEnergyBands().add(EnergyBand.toValue(emb));
         }
         nrg.restwav = getChildTextAsDouble("restwav", element, namespace,
                 false);

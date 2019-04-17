@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -79,7 +79,7 @@ import java.util.TreeSet;
  * 
  * @author pdowler
  */
-public class CompositeObservation extends Observation {
+public class DerivedObservation extends Observation {
     private static final long serialVersionUID = 201110261400L;
 
     // mutable contents
@@ -90,8 +90,7 @@ public class CompositeObservation extends Observation {
      * @param observationID
      * @param algorithm
      */
-    public CompositeObservation(String collection, String observationID,
-            Algorithm algorithm) {
+    public DerivedObservation(String collection, String observationID, Algorithm algorithm) {
         super(collection, observationID, algorithm);
     }
 

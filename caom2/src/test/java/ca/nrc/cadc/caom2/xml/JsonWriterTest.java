@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,7 @@
 package ca.nrc.cadc.caom2.xml;
 
 
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
@@ -189,7 +189,7 @@ public class JsonWriterTest
         return instances.getSimpleObservation();
     }
     
-    protected CompositeObservation getCompleteComposite(int depth, boolean boundsIsCircle)
+    protected DerivedObservation getCompleteComposite(int depth, boolean boundsIsCircle)
         throws Exception
     {        
         Caom2TestInstances instances = new Caom2TestInstances();

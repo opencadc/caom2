@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Environment;
@@ -673,7 +673,7 @@ public class ObservationReaderWriterTest
                 log.info("testMinimalComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                CompositeObservation observation = getMinimalComposite(i, boundsIsCircle);
+                DerivedObservation observation = getMinimalComposite(i, boundsIsCircle);
                 
                 // Write empty elements.
                 testObservation(observation, true);
@@ -709,7 +709,7 @@ public class ObservationReaderWriterTest
                 log.info("testCompleteComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                CompositeObservation observation = getCompleteComposite(i, boundsIsCircle);
+                DerivedObservation observation = getCompleteComposite(i, boundsIsCircle);
                 
                 // Write empty elements.
                 testObservation(observation, true);
@@ -765,7 +765,7 @@ public class ObservationReaderWriterTest
         return instances.getSimpleObservationSetAlgorithm();
     }
     
-    protected CompositeObservation getMinimalComposite(int depth, boolean boundsIsCircle)
+    protected DerivedObservation getMinimalComposite(int depth, boolean boundsIsCircle)
         throws Exception
     {
         Caom2TestInstances instances = new Caom2TestInstances();
@@ -775,7 +775,7 @@ public class ObservationReaderWriterTest
         return instances.getCompositeObservation();
     }
     
-    protected CompositeObservation getCompleteComposite(int depth, boolean boundsIsCircle)
+    protected DerivedObservation getCompleteComposite(int depth, boolean boundsIsCircle)
         throws Exception
     {
         Caom2TestInstances instances = new Caom2TestInstances();
@@ -876,9 +876,9 @@ public class ObservationReaderWriterTest
         
         comparePlanes(expected.getPlanes(), actual.getPlanes());
         
-        if (expected instanceof CompositeObservation && actual instanceof CompositeObservation)
+        if (expected instanceof DerivedObservation && actual instanceof DerivedObservation)
         {
-            compareMembers(((CompositeObservation) expected).getMembers(), ((CompositeObservation) actual).getMembers());
+            compareMembers(((DerivedObservation) expected).getMembers(), ((DerivedObservation) actual).getMembers());
         }
     }
     
@@ -1105,7 +1105,9 @@ public class ObservationReaderWriterTest
         Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
         Assert.assertEquals(expected.sampleSize, actual.sampleSize);
         Assert.assertEquals(expected.bandpassName, actual.bandpassName);
-        Assert.assertEquals(expected.emBand, actual.emBand);
+        Assert.assertEquals(expected.getEnergyBands().size(), actual.getEnergyBands().size());
+        // TODO: copare content of energyband lists
+        
         Assert.assertEquals(expected.restwav, actual.restwav);
         if (expected.transition == null)
             Assert.assertNull(actual.transition);

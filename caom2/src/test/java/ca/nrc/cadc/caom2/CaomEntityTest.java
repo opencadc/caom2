@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,11 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomUtil;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -108,7 +103,7 @@ public class CaomEntityTest {
         try {
             ObservationURI uri = new ObservationURI("FOO", "bar");
             SimpleObservation so = new SimpleObservation("FOO", "bar");
-            CompositeObservation co = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            DerivedObservation co = new DerivedObservation("FOO", "bar", new Algorithm("doit"));
             co.getMembers().add(new ObservationURI("foo", "baz"));
 
             Plane pl = new Plane("thing");
@@ -139,7 +134,7 @@ public class CaomEntityTest {
         }
     }
 
-    static int[] expectedStateFields = {15, 16, 15, 6, 2, 13};
+    static int[] expectedStateFields = {15, 16, 15, 8, 2, 13};
     static int[] expectedChildFields = {1, 1, 1, 1, 1, 0};
 
     //@Test

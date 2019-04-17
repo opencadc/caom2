@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -92,6 +92,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
 
     // mutable contents
     private final Set<Part> parts = new TreeSet<Part>();
+    private final Set<URI> dataReadGroups = new TreeSet<URI>();
     private ProductType productType;
     private ReleaseType releaseType;
 
@@ -99,6 +100,8 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public String contentType;
     public Long contentLength;
     public URI contentChecksum;
+    public Date dataRelease;
+    
 
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
@@ -134,6 +137,10 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public void setReleaseType(ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
         this.releaseType = releaseType;
+    }
+
+    public Set<URI> getDataReadGroups() {
+        return dataReadGroups;
     }
 
     public Set<Part> getParts() {

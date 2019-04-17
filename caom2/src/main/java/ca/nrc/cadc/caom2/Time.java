@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -80,13 +80,10 @@ public class Time implements Serializable {
     private static final long serialVersionUID = 201202081400L;
 
     public Interval bounds;
-
     public Long dimension;
-
     public Double resolution;
-
+    public Interval variableResolution;
     public Double sampleSize;
-
     public Double exposure;
 
     @Override
@@ -100,6 +97,8 @@ public class Time implements Serializable {
         sb.append(sampleSize);
         sb.append(",r=");
         sb.append(resolution);
+        sb.append(",v=");
+        sb.append(variableResolution);
         sb.append(",e=");
         sb.append(exposure);
         sb.append("]");
