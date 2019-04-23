@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
-import ca.nrc.cadc.util.HashUtil;
 import ca.nrc.cadc.util.HexUtil;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -95,7 +94,9 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Base class for CAOM entity classes. The base class contains the UUID, modification
+ * timestamps, and metadata checksums.
+ * 
  * @author pdowler
  */
 public abstract class CaomEntity implements Serializable {
@@ -111,25 +112,15 @@ public abstract class CaomEntity implements Serializable {
     private URI metaChecksum;
     private URI accMetaChecksum;
 
+    /**
+     * Constructor. This implementation assigns a random 128-bit UUID.
+     */
     protected CaomEntity() {
         this.id = UUID.randomUUID();
     }
 
     /**
-     * @param fullUUID true for 128-bit, false for 64-bits used in UUID
-     * @deprecated 
-     */
-    @Deprecated
-    protected CaomEntity(boolean fullUUID) {
-        if (fullUUID) {
-            this.id = UUID.randomUUID();
-        } else {
-            this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
-        }
-    }
-
-    /**
-     * Get the unique persistent numeric identifier for this object.
+     * Get the unique persistent identifier for this object.
      * 
      * @return
      */
@@ -150,7 +141,7 @@ public abstract class CaomEntity implements Serializable {
 
     /**
      * Get the maximum timestamp of the last modification of the state of this
-     * object and any child entities..
+     * object and any child entities.
      *
      * @return
      */

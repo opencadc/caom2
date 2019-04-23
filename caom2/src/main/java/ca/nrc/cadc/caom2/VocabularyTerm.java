@@ -105,15 +105,12 @@ public class VocabularyTerm implements Serializable {
      * @param term
      * @param base
      */
-    public VocabularyTerm(URI namespace, String term, boolean base) {
-        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace",
-                namespace);
+    protected VocabularyTerm(URI namespace, String term, boolean base) {
+        CaomValidator.assertNotNull(VocabularyTerm.class, "namespace", namespace);
         CaomValidator.assertNotNull(VocabularyTerm.class, "term", term);
-        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term",
-                term);
+        CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term", term);
         if (namespace.getFragment() != null) {
-            throw new IllegalArgumentException(
-                    "vocabulary namespace canniot have a fragment");
+            throw new IllegalArgumentException("vocabulary namespace cannot have a fragment");
         }
         this.namespace = namespace;
         this.term = term;
@@ -148,14 +145,6 @@ public class VocabularyTerm implements Serializable {
 
     @Override
     public int hashCode() {
-        return getValue().hashCode();
-    }
-
-    /**
-     * @return
-     * @deprecated
-     */
-    public int checksum() {
         return getValue().hashCode();
     }
 

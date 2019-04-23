@@ -69,37 +69,37 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.net.URI;
+
 /**
  * @author pdowler
  */
-public enum TargetType implements CaomEnum<String> {
-    OBJECT("object"), FIELD("field");
+public class TargetType extends VocabularyTerm implements CaomEnum<String> {
+    
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/TargetType");
+    
+    public static final TargetType OBJECT = new TargetType("object");
+    public static final TargetType FIELD = new TargetType("field");
 
-    private String value;
-
+    public static final TargetType[] values() { 
+        return new TargetType[] { OBJECT, FIELD };
+    }
+    
     private TargetType(String value) {
-        this.value = value;
+        super(CAOM, value, true);
     }
 
     public static TargetType toValue(String s) {
         for (TargetType d : values()) {
-            if (d.value.equals(s)) {
+            if (d.getValue().equals(s)) {
                 return d;
             }
         }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public int checksum() {
-        return value.hashCode();
-    }
-
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + getValue() + "]";
     }
 }

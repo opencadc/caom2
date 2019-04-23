@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,38 +69,55 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  *
  * @author pdowler
  */
-public enum Status implements CaomEnum<String> {
-    FAIL("fail");
+public class Status extends VocabularyTerm implements CaomEnum<String> {
+    
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/Status");
 
-    private final String value;
+    public static final Status FAIL = new Status("fail");
 
+    public static final Status[] values() { 
+        return new Status[] { FAIL };
+    }
+    
     private Status(String value) {
-        this.value = value;
+        super(CAOM, value, true);
+    }
+    
+    private Status(URI ns, String term) {
+        super(ns, term);
     }
 
     public static Status toValue(String s) {
         for (Status d : values()) {
-            if (d.value.equals(s)) {
+            if (d.getValue().equals(s)) {
                 return d;
             }
         }
-        throw new IllegalArgumentException("invalid value: " + s);
-    }
-
-    public int checksum() {
-        return value.hashCode();
-    }
-
-    public String getValue() {
-        return value;
+        
+        // custom term
+        try {
+            URI u = new URI(s);
+            String t = u.getFragment();
+            if (t == null) {
+                throw new IllegalArgumentException("invalid value (no term/fragment): " + s);
+            }
+            String[] ss = u.toASCIIString().split("#");
+            URI ns = new URI(ss[0]);
+            return new Status(ns, t);
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("invalid value: " + s, ex);
+        }
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + getValue() + "]";
     }
 }

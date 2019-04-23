@@ -79,14 +79,11 @@ import java.net.URISyntaxException;
  * 
  * @author pdowler
  */
-public class DataProductType extends VocabularyTerm
-        implements CaomEnum<String>, Serializable {
+public class DataProductType extends VocabularyTerm implements CaomEnum<String>, Serializable {
     private static final long serialVersionUID = 201704061700L;
 
-    private static final URI OBSCORE = URI
-            .create("http://www.ivoa.net/std/ObsCore");
-    private static final URI CAOM = URI
-            .create("http://www.opencadc.org/caom2/DataProductType");
+    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/DataProductType");
 
     /**
      * ObsCore-1.0 image.
