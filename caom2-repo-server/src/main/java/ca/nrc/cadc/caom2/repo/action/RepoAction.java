@@ -251,7 +251,6 @@ public abstract class RepoAction extends RestAction {
         CaomRepoConfig.Item i = repoConfig.getConfig(collection);
         if (i != null) {
             this.computeMetadata = i.getComputeMetadata();
-            this.computeMetadataValidation = i.getComputeMetadataValidation();
             this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, i.getProposalGroup());
             this.raGroupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, i.getOperatorGroup());
             this.raGroupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, i.getStaffGroup());
@@ -411,7 +410,7 @@ public abstract class RepoAction extends RestAction {
             }
 
             // run optional plugins
-            if (computeMetadata || computeMetadataValidation) {
+            if (computeMetadata) {
                 String ostr = obs.getCollection() + "/" + obs.getObservationID();
                 String cur = ostr;
                 try {
@@ -425,12 +424,6 @@ public abstract class RepoAction extends RestAction {
                 } catch (Exception ex) {
                     throw new IllegalArgumentException(
                         "failed to compute metadata for plane " + cur, ex);
-                } finally {
-                    if (!computeMetadata) {
-                        for (Plane p : obs.getPlanes()) {
-                            ComputeUtil.clearTransientState(p);
-                        }
-                    }
                 }
             }
             

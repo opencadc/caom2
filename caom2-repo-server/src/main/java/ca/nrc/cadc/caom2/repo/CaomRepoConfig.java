@@ -236,7 +236,6 @@ public class CaomRepoConfig {
 
         private URI basePublisherID;
         private boolean computeMetadata;
-        private boolean computeMetadataValidation;
         private boolean proposalGroup;
         private GroupURI operatorGroup;
         private GroupURI staffGroup;
@@ -264,7 +263,7 @@ public class CaomRepoConfig {
                     + publicRead + "," + readOnlyGroup + "," + readWriteGroup + ","
                     + sqlGenerator.getSimpleName() + "," 
                     + basePublisherID + ","
-                    + computeMetadata + "," + computeMetadataValidation + "," 
+                    + computeMetadata + ","
                     + proposalGroup + "," + operatorGroup + "," + staffGroup + "]";
         }
 
@@ -278,10 +277,6 @@ public class CaomRepoConfig {
 
         public boolean getComputeMetadata() {
             return computeMetadata;
-        }
-
-        public boolean getComputeMetadataValidation() {
-            return computeMetadataValidation;
         }
 
         public boolean getProposalGroup() {
@@ -393,7 +388,6 @@ public class CaomRepoConfig {
 
             // default values for backwards compatible to existing config
             boolean computeMetadata = false;
-            boolean computeMetadataValidation = true;
             boolean proposalGroup = false;
             String operatorGroup = null;
             String staffGroup = null;
@@ -411,8 +405,6 @@ public class CaomRepoConfig {
                     publicRead = safeParseBoolean(kv[1]);
                 } else if ("computeMetadata".equals(kv[0])) {
                     computeMetadata = safeParseBoolean(kv[1]);
-                } else if ("computeMetadataValidation".equals(kv[0])) {
-                    computeMetadataValidation = safeParseBoolean(kv[1]);
                 } else if (ReadAccessGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
                     proposalGroup = safeParseBoolean(kv[1]);
                 } else if (ReadAccessGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
@@ -452,7 +444,6 @@ public class CaomRepoConfig {
             rci.publicRead = publicRead;
             rci.basePublisherID = basePublisherID;
             rci.computeMetadata = computeMetadata;
-            rci.computeMetadataValidation = computeMetadataValidation;            
             rci.operatorGroup = operatorGroup == null ? null : new GroupURI(operatorGroup);
             rci.staffGroup = staffGroup == null ? null : new GroupURI(staffGroup);
             rci.proposalGroup = proposalGroup;
