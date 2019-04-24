@@ -72,8 +72,6 @@ package ca.nrc.cadc.caom2.artifactsync;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
-import ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver;
-import ca.nrc.cadc.caom2.artifact.resolvers.MastResolver;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -82,7 +80,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
-import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.profiler.Profiler;
 import ca.nrc.cadc.util.FileMetadata;
 
