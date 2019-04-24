@@ -130,37 +130,39 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URL caomTapURL;
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
+    private boolean tolerateNullContentLength = false;
         
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapResourceID = caomTapResourceID;
     }
     
     public ArtifactValidator(URL caomTapURL, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapURL = caomTapURL;
     }
     
     private ArtifactValidator(String collection, boolean reportOnly, 
-            ArtifactStore artifactStore, boolean tolerateNullChecksum) {
+            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.tolerateNullChecksum = tolerateNullChecksum;
+        this.tolerateNullContentLength = tolerateNullContentLength;
     }
 
     @Override
@@ -174,16 +176,16 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 return getLogicalMetadata();
             }
         });
-        log.debug("Submitted query to caom2");
+        log.info("Submitted query to caom2");
         final Future<TreeSet<ArtifactMetadata>> physicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
                 return getPhysicalMetadata();
             }
         });
-        log.debug("Submitted queries");
+        log.info("Submitted query to storage");
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.DAYS);
-        log.debug("Queries are complete");
+        log.info("Queries are complete");
         executor.shutdownNow();
         
         TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
@@ -495,7 +497,13 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         } else {
             metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
         }
-        metadata.contentLength = Long.toString(artifact.contentLength);
+        if (artifact.contentLength == null) {
+            if (!this.tolerateNullContentLength) {
+                throw new RuntimeException("content length is null for artifact URI: " + metadata.artifactURI);
+            }
+        } else {
+            metadata.contentLength = Long.toString(artifact.contentLength);
+        }
         metadata.contentType = artifact.contentType;
         metadata.collection = collection;
         metadata.lastModified = artifact.getLastModified();
