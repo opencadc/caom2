@@ -18,5 +18,5 @@ Creative Commons Attribution-ShareAlike 4.0 International License</a>.
 
 Development starts with the UML diagrams and the current version may be ahead of the VO-DML and documentation. 
 The current UML is <img alt="CAOM UML - development version" style="border-width:0" 
-src="https://github.com/pdowler/caom2/raw/master/caom2-dm/src/main/resources/CAOM-2.4.png" />
+src="https://github.com/pdowler/caom2/raw/caom24/caom2-dm/src/main/resources/CAOM-2.4.png" />
 
