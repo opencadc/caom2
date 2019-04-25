@@ -10,16 +10,13 @@ The currently released documentation generated from this description:
 
 <a href="http://www.opencadc.org/caom2/">http://www.opencadc.org/caom2/</a>
 
-Immediate goals:
-- add some missing classes to the VO-DML 
-- add or update the descriptions of all data model fields in the VO-DML
-- improve the HTML generated from the VO-DML
-- generate the UML diagram from the VO-DML
-- generate the XML Schema from the VO-DML
-
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
 <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a>
 <br />The Common Archive Observation Model is licensed under the
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
 Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+
+Development starts with the UML diagrams and the current version may be ahead of the VO-DML and documentation. 
+The current UML is <img alt="CAOM UML - development version" style="border-width:0" 
+src="https://github.com/pdowler/caom2/raw/master/caom2-dm/src/main/resources/CAOM-2.4.png" />
 
