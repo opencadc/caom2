@@ -362,7 +362,7 @@ public class ArtifactProcessor
         ServiceParameter sp;
         String val = artifactURI.toASCIIString();
         String arraysize = Integer.toString(val.length());
-        sp = new ServiceParameter("ID", "char", arraysize, "");
+        sp = new ServiceParameter("ID", "char", arraysize, "meta.id;meta.dataset");
         sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
         
