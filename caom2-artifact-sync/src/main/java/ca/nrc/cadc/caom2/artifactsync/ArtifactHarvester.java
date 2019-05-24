@@ -96,6 +96,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
+    public static final String PROPRIETARY = "proprietary";
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
@@ -223,7 +224,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         if (skip == null) {
                                             if (downloadDate.after(start)) {
                                                 // proprietary--download in the future
-                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate, PROPRIETARY);
                                             } else {
                                                 boolean correctCopy = artifactStore.contains(artifact.getURI(), artifact
                                                     .contentChecksum);
@@ -247,6 +248,10 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         log.error(message, t);
                                         log.debug("Adding artifact to skip table: " + artifact.getURI());
                                         HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
+                                        if (downloadDate.after(start)) {
+                                            // proprietary--download in the future
+                                            skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate, PROPRIETARY);
+                                        }
                                         harvestSkipURIDAO.put(skip);
                                         added = true;
                                     } finally {

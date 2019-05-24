@@ -94,6 +94,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -188,8 +189,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         log.info("Queries are complete");
         executor.shutdownNow();
         
-        TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
+        TreeSet<ArtifactMetadata> logicalArtifactsFromCAOM = logicalQuery.get();
         TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
+        TreeSet<ArtifactMetadata> logicalArtifacts = removeProprietaryArtifacts(logicalArtifactsFromCAOM);
         compareMetadata(logicalArtifacts, physicalArtifacts, start);
         return null;
     }
@@ -371,6 +373,49 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
    
+    private TreeSet<ArtifactMetadata> removeProprietaryArtifacts(TreeSet<ArtifactMetadata> artifacts) throws URISyntaxException {
+        // add proprietary artifacts only in validate mode
+        if (!reportOnly) {
+            // add proprietary artifacts to the skip table and remove them from artifacts
+            TreeSet<ArtifactMetadata> publicArtifacts = new TreeSet<>(ArtifactMetadata.getComparator());
+            Date now = Date.from(Instant.now());
+            for (ArtifactMetadata artifact : artifacts) {
+                if (artifact.releaseDate == null) {
+                    // null release date means private, skip the artifact 
+                    log.debug("null release date, skipping " + artifact.artifactURI);
+                } else if (artifact.releaseDate.after(now)) {
+                    // proprietary artifact with a release date, add to skip table
+                    URI artifactURI = new URI(artifact.artifactURI);
+                    HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+                    if (skip == null) {
+                        // artifact is not in the skip table, add it
+                        skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, artifact.releaseDate, ArtifactHarvester.PROPRIETARY);
+                        harvestSkipURIDAO.put(skip);
+                        
+                        // log it
+                        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+                        logJSON(new String[]
+                            {"logType", "detail",
+                             "action", "addedToSkipTable",
+                             "artifactURI", artifact.artifactURI,
+                             "caomCollection", artifact.collection,
+                             "caomChecksum", artifact.checksum,
+                             "caomLastModified", df.format(artifact.lastModified),
+                             "errorMessage", ArtifactHarvester.PROPRIETARY},
+                            true);
+                    }
+                } else {
+                    publicArtifacts.add(artifact);
+                }
+            }
+            
+            return publicArtifacts;
+        } else {
+            return artifacts;
+        }
+    }
+    
+    
     private void logJSON(String[] data, boolean summaryInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
