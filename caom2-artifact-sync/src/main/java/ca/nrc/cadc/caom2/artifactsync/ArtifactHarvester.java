@@ -217,7 +217,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                     String errorMessage = null;
                                     processedCount++;
                                     
-                                    if (downloadDate.after(start) ) {
+                                    if (downloadDate.after(start)) {
                                         // private--download in the future
                                         errorMessage = PROPRIETARY;
                                     } 
