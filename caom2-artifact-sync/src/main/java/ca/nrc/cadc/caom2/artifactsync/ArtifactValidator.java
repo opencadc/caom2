@@ -188,9 +188,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         log.info("Queries are complete");
         executor.shutdownNow();
         
-        TreeSet<ArtifactMetadata> logicalArtifactsFromCAOM = logicalQuery.get();
+        TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
         TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
-        TreeSet<ArtifactMetadata> logicalArtifacts = removeProprietaryArtifacts(logicalArtifactsFromCAOM);
         compareMetadata(logicalArtifacts, physicalArtifacts, start);
         return null;
     }
@@ -207,7 +206,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffType = 0;
         long diffChecksum = 0;
         long notInLogical = 0;
-        long notInPhysical = 0;
         long skipURICount = 0;
         long inSkipURICount = 0;
         
@@ -266,7 +264,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical)) {
+                        if (checkAddToSkipTable(nextLogical, null)) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -299,25 +297,37 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
         
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
-        notInPhysical += logicalArtifacts.size();
-        for (ArtifactMetadata next : logicalArtifacts) {
+        long missingFromStorage = 0;
+        Date now = new Date();
+        for (ArtifactMetadata artifact : logicalArtifacts) {
+            String errorMessage = null; 
             String lastModified = "null";
-            if (next.lastModified != null) {
-                lastModified = df.format(next.lastModified);
+            if (artifact.lastModified != null) {
+                lastModified = df.format(artifact.lastModified);
             }
-            logJSON(new String[]
-                {"logType", "detail",
-                 "anomaly", "notInStorage",
-                 "observationID", next.observationID,
-                 "artifactURI", next.artifactURI,
-                 "storageID", next.storageID,
-                 "caomCollection", collection,
-                 "caomLastModified", lastModified},
-                false);
-                
+            
+            if (artifact.releaseDate == null) {
+                // null release date means private, skip the artifact 
+                log.debug("null release date, skipping " + artifact.artifactURI);
+            } else if (artifact.releaseDate.after(now)) {
+                // proprietary artifact with a release date, add to skip table
+                errorMessage = ArtifactHarvester.PROPRIETARY;
+            } else {
+                missingFromStorage++;
+                logJSON(new String[]
+                        {"logType", "detail",
+                         "anomaly", "missingFromStorage",
+                         "observationID", artifact.observationID,
+                         "artifactURI", artifact.artifactURI,
+                         "storageID", artifact.storageID,
+                         "caomCollection", collection,
+                         "caomLastModified", lastModified},
+                        false);
+            }
+
             // add to HavestSkipURI table if there is not already a row in the table
             if (supportSkipURITable) {
-                if (checkAddToSkipTable(next)) {
+                if (checkAddToSkipTable(artifact, errorMessage)) {
                     skipURICount++;
                 } else {
                     inSkipURICount++;
@@ -337,7 +347,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffLength", Long.toString(diffLength),
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
@@ -352,7 +362,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffLength", Long.toString(diffLength),
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
                 "totalNewSkipURI", Long.toString(skipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -369,48 +379,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 log.warn("Shutdown interruped");
                 Thread.currentThread().interrupt();
             }
-        }
-    }
-   
-    private TreeSet<ArtifactMetadata> removeProprietaryArtifacts(TreeSet<ArtifactMetadata> artifacts) throws URISyntaxException {
-        // add proprietary artifacts only in validate mode
-        if (reportOnly) {
-            return artifacts;
-        } else {
-            // add proprietary artifacts to the skip table and remove them from artifacts
-            TreeSet<ArtifactMetadata> publicArtifacts = new TreeSet<>(ArtifactMetadata.getComparator());
-            Date now = new Date();
-            for (ArtifactMetadata artifact : artifacts) {
-                if (artifact.releaseDate == null) {
-                    // null release date means private, skip the artifact 
-                    log.debug("null release date, skipping " + artifact.artifactURI);
-                } else if (artifact.releaseDate.after(now)) {
-                    // proprietary artifact with a release date, add to skip table
-                    URI artifactURI = new URI(artifact.artifactURI);
-                    HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
-                    if (skip == null) {
-                        // artifact is not in the skip table, add it
-                        skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, artifact.releaseDate, ArtifactHarvester.PROPRIETARY);
-                        harvestSkipURIDAO.put(skip);
-                        
-                        // log it
-                        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
-                        logJSON(new String[]
-                            {"logType", "detail",
-                             "action", "addedToSkipTable",
-                             "artifactURI", artifact.artifactURI,
-                             "caomCollection", artifact.collection,
-                             "caomChecksum", artifact.checksum,
-                             "caomLastModified", df.format(artifact.lastModified),
-                             "errorMessage", ArtifactHarvester.PROPRIETARY},
-                            true);
-                    }
-                } else {
-                    publicArtifacts.add(artifact);
-                }
-            }
-            
-            return publicArtifacts;
         }
     }
     
@@ -440,7 +408,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return supportSkipURITable;
     }
     
-    private boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
+    private boolean checkAddToSkipTable(ArtifactMetadata artifact, String errorMessage) throws URISyntaxException {
         if (supportSkipURITable) {
             // add to HavestSkipURI table if there is not already a row in the table
             Date releaseDate = artifact.releaseDate;
@@ -448,10 +416,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
             if (skip == null && releaseDate != null) {
                 if (!reportOnly) {
-                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate, errorMessage);
                     harvestSkipURIDAO.put(skip);
                     
                     // validate 
+                    String errorMessageString = (errorMessage == null) ? "null" : ArtifactHarvester.PROPRIETARY;
                     DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
                     logJSON(new String[]
                         {"logType", "detail",
@@ -459,7 +428,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "artifactURI", artifact.artifactURI,
                          "caomCollection", artifact.collection,
                          "caomChecksum", artifact.checksum,
-                         "caomLastModified", df.format(artifact.lastModified)},
+                         "caomLastModified", df.format(artifact.lastModified),
+                         "errorMessage", errorMessageString},
                         true);
                 }
                 return true;
