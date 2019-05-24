@@ -94,7 +94,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -380,7 +379,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         } else {
             // add proprietary artifacts to the skip table and remove them from artifacts
             TreeSet<ArtifactMetadata> publicArtifacts = new TreeSet<>(ArtifactMetadata.getComparator());
-            Date now = Date.from(Instant.now());
+            Date now = new Date();
             for (ArtifactMetadata artifact : artifacts) {
                 if (artifact.releaseDate == null) {
                     // null release date means private, skip the artifact 
