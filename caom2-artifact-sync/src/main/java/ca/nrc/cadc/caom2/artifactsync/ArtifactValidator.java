@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -375,7 +375,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
    
     private TreeSet<ArtifactMetadata> removeProprietaryArtifacts(TreeSet<ArtifactMetadata> artifacts) throws URISyntaxException {
         // add proprietary artifacts only in validate mode
-        if (!reportOnly) {
+        if (reportOnly) {
+            return artifacts;
+        } else {
             // add proprietary artifacts to the skip table and remove them from artifacts
             TreeSet<ArtifactMetadata> publicArtifacts = new TreeSet<>(ArtifactMetadata.getComparator());
             Date now = Date.from(Instant.now());
@@ -410,11 +412,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             return publicArtifacts;
-        } else {
-            return artifacts;
         }
     }
-    
     
     private void logJSON(String[] data, boolean summaryInfo) {
         StringBuilder sb = new StringBuilder();
