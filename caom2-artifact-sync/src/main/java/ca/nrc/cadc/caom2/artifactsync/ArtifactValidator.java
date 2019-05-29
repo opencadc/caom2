@@ -309,28 +309,30 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             if (artifact.releaseDate == null) {
                 // null release date means private, skip the artifact 
                 log.debug("null release date, skipping " + artifact.artifactURI);
-            } else if (artifact.releaseDate.after(now)) {
-                // proprietary artifact with a release date, add to skip table
-                errorMessage = ArtifactHarvester.PROPRIETARY;
             } else {
-                missingFromStorage++;
-                logJSON(new String[]
-                    {"logType", "detail",
-                     "anomaly", "missingFromStorage",
-                     "observationID", artifact.observationID,
-                     "artifactURI", artifact.artifactURI,
-                     "storageID", artifact.storageID,
-                     "caomCollection", collection,
-                     "caomLastModified", lastModified},
-                    false);
-            }
-
-            // add to HavestSkipURI table if there is not already a row in the table
-            if (supportSkipURITable) {
-                if (checkAddToSkipTable(artifact, errorMessage)) {
-                    skipURICount++;
+                if (artifact.releaseDate.after(now)) {
+                    // proprietary artifact with a release date, add to skip table
+                    errorMessage = ArtifactHarvester.PROPRIETARY;
                 } else {
-                    inSkipURICount++;
+                    missingFromStorage++;
+                    logJSON(new String[]
+                        {"logType", "detail",
+                         "anomaly", "missingFromStorage",
+                         "observationID", artifact.observationID,
+                         "artifactURI", artifact.artifactURI,
+                         "storageID", artifact.storageID,
+                         "caomCollection", collection,
+                         "caomLastModified", lastModified},
+                        false);
+                }
+    
+                // add to HavestSkipURI table if there is not already a row in the table
+                if (supportSkipURITable) {
+                    if (checkAddToSkipTable(artifact, errorMessage)) {
+                        skipURICount++;
+                    } else {
+                        inSkipURICount++;
+                    }
                 }
             }
         }
