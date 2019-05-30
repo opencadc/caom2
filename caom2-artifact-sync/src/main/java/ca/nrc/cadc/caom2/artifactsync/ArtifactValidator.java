@@ -298,6 +298,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         long missingFromStorage = 0;
+        long notPublic = 0;
         Date now = new Date();
         for (ArtifactMetadata artifact : logicalArtifacts) {
             String errorMessage = null; 
@@ -308,10 +309,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             
             if (artifact.releaseDate == null) {
                 // null release date means private, skip the artifact 
+                notPublic++;
                 log.debug("null release date, skipping " + artifact.artifactURI);
             } else {
                 if (artifact.releaseDate.after(now)) {
                     // proprietary artifact with a release date, add to skip table
+                    notPublic++;
                     errorMessage = ArtifactHarvester.PROPRIETARY;
                 } else {
                     missingFromStorage++;
@@ -350,6 +353,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
+                "totalNotPublic", Long.toString(notPublic),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
@@ -365,6 +369,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
+                "totalNotPublic", Long.toString(notPublic),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
                 "totalNewSkipURI", Long.toString(skipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
