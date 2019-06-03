@@ -111,6 +111,15 @@ public abstract class CaomEntity implements Serializable {
     private Date maxLastModified;
     private URI metaChecksum;
     private URI accMetaChecksum;
+    
+    /**
+     * URI of the form {scheme}:{scheme-specific-part} to signify which process created this CAOM instance.
+     * The scheme should be a short human-readable indicator of the institution/data-centre/provider and
+     * the scheme-specific-part would normally be the name and version of a piece of software. Child entities
+     * are assumed to be produced by the same process as their parent unless specifically set otherwise, so 
+     * it is normally sufficient to set this for the observation only.
+     */
+    public URI metaProducer;
 
     /**
      * Constructor. This implementation assigns a random 128-bit UUID.
@@ -227,7 +236,8 @@ public abstract class CaomEntity implements Serializable {
     private void calcMetaChecksum(Class c, Object o, MessageDigest digest) {
         // calculation order:
         // 1. CaomEntity.id for entities
-        // 2. state fields in alphabetic order; depth-first recursion so
+        // 2. CaomEntity.metaProducer
+        // 3. state fields in alphabetic order; depth-first recursion so
         // foo.abc.x comes before foo.def
         // value handling:
         // Date: truncate time to whole number of seconds and treat as a long
@@ -243,11 +253,14 @@ public abstract class CaomEntity implements Serializable {
         try {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
-                if (ce.id != null) {
-                    digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
+                digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
+                if (MCS_DEBUG) {
+                    log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
+                }
+                if (ce.metaProducer != null) {
+                    digest.update(primitiveValueToBytes(ce.metaProducer, "CaomEntity.metaProducer", digest.getAlgorithm()));
                     if (MCS_DEBUG) {
-                        log.debug("metaChecksum: " + ce.getClass().getSimpleName()
-                                + ".id " + ce.id);
+                        log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".metaProducer " + ce.metaProducer);
                     }
                 }
             }

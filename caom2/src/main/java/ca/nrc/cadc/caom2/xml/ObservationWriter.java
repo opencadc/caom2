@@ -202,12 +202,11 @@ public class ObservationWriter implements Serializable {
                             + caom2NamespacePrefix);
         }
 
-        if (namespace == null) {
-            namespace = XmlConstants.CAOM2_3_NAMESPACE; // default
-            log.debug("default namespace: " + namespace);
-        }
-
-        if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
+        if (namespace == null || XmlConstants.CAOM2_4_NAMESPACE.equals(namespace)) {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
+                    XmlConstants.CAOM2_4_NAMESPACE);
+            docVersion = 24;
+        } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
                     XmlConstants.CAOM2_3_NAMESPACE);
             docVersion = 23;
@@ -228,8 +227,7 @@ public class ObservationWriter implements Serializable {
                     "invalid namespace: " + namespace);
         }
 
-        this.xsiNamespace = Namespace.getNamespace("xsi",
-                XmlConstants.XMLSCHEMA);
+        this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
 
         log.debug("output version: " + docVersion + " "
                 + caom2Namespace.getPrefix() + " -> "
@@ -389,6 +387,10 @@ public class ObservationWriter implements Serializable {
             el.setAttribute("accMetaChecksum",
                     ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
         }
+        
+        if (docVersion >= 24 && ce.metaProducer != null) {
+            el.setAttribute("metaProducer", ce.metaProducer.toASCIIString(), el.getNamespace());
+        }
     }
 
     /**
@@ -406,9 +408,11 @@ public class ObservationWriter implements Serializable {
         Element element = getCaom2Element("Observation");
         String type = caom2Namespace.getPrefix() + ":";
         if (obs instanceof SimpleObservation) {
-            type += "SimpleObservation";
+            type += SimpleObservation.class.getSimpleName();
+        } else if (docVersion <= 23) {
+            type += "CompositeObservation";
         } else {
-            type += "CompositeObservation"; // 2.3
+            type += DerivedObservation.class.getSimpleName();
         }
         element.setAttribute("type", type, xsiNamespace);
 
@@ -419,6 +423,7 @@ public class ObservationWriter implements Serializable {
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);
+        // TODO: metaReadGroups
         addNumberElement("sequenceNumber", obs.sequenceNumber, element);
         addAlgorithmElement(obs.getAlgorithm(), element, dateFormat);
         addElement("type", obs.type, element);
@@ -721,24 +726,19 @@ public class ObservationWriter implements Serializable {
                 addURIElement("creatorID", plane.creatorID, planeElement);
             }
 
-            addDateElement("metaRelease", plane.metaRelease, planeElement,
-                    dateFormat);
-            addDateElement("dataRelease", plane.dataRelease, planeElement,
-                    dateFormat);
+            addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
+            // TODO: metaReadGroups
+            addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
+            // TODO: dataReadGroups
             if (plane.dataProductType != null) {
-                if (docVersion < 23 && DataProductType.CATALOG
-                        .equals(plane.dataProductType)) {
-                    addElement("dataProductType",
-                            plane.dataProductType.getTerm(), planeElement);
+                if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) {
+                    addElement("dataProductType", plane.dataProductType.getTerm(), planeElement);
                 } else {
-                    addElement("dataProductType",
-                            plane.dataProductType.getValue(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
                 }
             }
             if (plane.calibrationLevel != null) {
-                addElement("calibrationLevel",
-                        String.valueOf(plane.calibrationLevel.getValue()),
-                        planeElement);
+                addElement("calibrationLevel", String.valueOf(plane.calibrationLevel.getValue()), planeElement);
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
             addMetricsElement(plane.metrics, planeElement, dateFormat);
@@ -1118,19 +1118,21 @@ public class ObservationWriter implements Serializable {
                 addElement("releaseType", artifact.getReleaseType().getValue(),
                         artifactElement);
             }
+            
+            if (docVersion >= 24) {
+                // TODO: dataRelease
+                // TODO: dataReadGroups
+            }
 
             addElement("contentType", artifact.contentType, artifactElement);
-            addNumberElement("contentLength", artifact.contentLength,
-                    artifactElement);
+            addNumberElement("contentLength", artifact.contentLength, artifactElement);
 
             if (docVersion < 22) {
-                addElement("productType", artifact.getProductType().getValue(),
-                        artifactElement);
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
             }
 
             if (docVersion > 22) {
-                addURIElement("contentChecksum", artifact.contentChecksum,
-                        artifactElement);
+                addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
             }
 
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);

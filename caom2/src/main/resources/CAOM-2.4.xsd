@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:xlink="http://www.w3.org/1999/xlink"
-           xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.3"
-           targetNamespace="http://www.opencadc.org/caom2/xml/v2.3"
+           xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.4"
+           targetNamespace="http://www.opencadc.org/caom2/xml/v2.4"
            elementFormDefault="qualified"
            attributeFormDefault="qualified">
 
@@ -23,6 +23,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:element>
+                    <xs:element name="metaReadGroups" type="caom2:GroupList" minOccurs="0"/>
                     <xs:element name="sequenceNumber" type="xs:integer" minOccurs="0"/>
                     <xs:element name="algorithm" type="caom2:Algorithm"/>
                     <xs:element name="type" type="xs:string" minOccurs="0"/>
@@ -45,9 +46,10 @@
         <xs:attribute name="lastModified" type="xs:string"/>
         <xs:attribute name="maxLastModified" type="xs:string"/>
 
-        <!-- Calculated checksums  -->
         <xs:attribute name="metaChecksum" type="xs:anyURI" />
         <xs:attribute name="accMetaChecksum" type="xs:anyURI" />
+        
+        <xs:attribute name="metaProducer" type="xs:anyURI" />
     </xs:complexType>
 
     <xs:simpleType name="UUID">
@@ -76,13 +78,24 @@
         </xs:restriction>
     </xs:simpleType>
     
+    <xs:simpleType name="GroupURI">
+        <xs:restriction base="xs:anyURI">
+            <!-- scheme = ivo-id with fragment for group name, group name
+                cannot contain: space, slash, backslash, percent, caret
+                extra whitespace in regex for readability
+                form: ivo://{authority}/{service}?{group-name}
+            -->
+            <xs:pattern value="ivo://.+/?[^ / \\ % ]*"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
     <xs:complexType name="SimpleObservation">
         <xs:complexContent>
             <xs:extension base="caom2:ObsType"/>
         </xs:complexContent>
     </xs:complexType>
     
-    <xs:complexType name="CompositeObservation">
+    <xs:complexType name="DerivedObservation">
         <xs:complexContent>
             <xs:extension base="caom2:ObsType">
                 <xs:sequence>
@@ -166,6 +179,12 @@
         </xs:sequence>
     </xs:complexType>
     
+    <xs:complexType name="GroupList">
+        <xs:sequence>
+            <xs:element name="groupURI" type="caom2:GroupURI" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
     <!-- Plane -->
     
     <xs:complexType name="Planes">
@@ -188,6 +207,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:element>
+                    <xs:element name="metaReadGroups" type="caom2:GroupList" minOccurs="0"/>
                     <xs:element name="dataRelease" type="xs:string" minOccurs="0">
                         <xs:annotation>
                             <xs:documentation>
@@ -196,6 +216,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:element>
+                    <xs:element name="dataReadGroups" type="caom2:GroupList" minOccurs="0"/>
                     <xs:element name="dataProductType" type="xs:string" minOccurs="0"/>
                     <xs:element name="calibrationLevel" type="caom2:CalibrationLevel" minOccurs="0"/>
                     <xs:element name="provenance" type="caom2:Provenance" minOccurs="0"/>
@@ -405,6 +426,16 @@
                     <xs:element name="uri" type="xs:anyURI"/>
                     <xs:element name="productType" type="caom2:ProductType"/>
                     <xs:element name="releaseType" type="caom2:ReleaseType"/>
+                    
+                    <xs:element name="dataRelease" type="xs:string" minOccurs="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The dataRelease date is expected to be in IVOA date format: 
+                                yyyy-MM-dd'T'HH:mm:ss.SSS
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="dataReadGroups" type="caom2:GroupList" minOccurs="0"/>
 
                     <xs:element name="contentType" type="xs:string" minOccurs="0"/>
                     <xs:element name="contentLength" type="xs:long" minOccurs="0"/>

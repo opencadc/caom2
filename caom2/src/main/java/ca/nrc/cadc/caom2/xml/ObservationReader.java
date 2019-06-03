@@ -74,9 +74,9 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -138,7 +138,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.xml.XmlUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -159,7 +158,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -180,7 +178,8 @@ public class ObservationReader implements Serializable {
     private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
     private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
     private static final String CAOM23_SCHEMA_RESOURCE = "CAOM-2.3.xsd";
-    private static final int CURRENT_CAOM2_SCHEMA_LEVEL = 23;
+    private static final String CAOM24_SCHEMA_RESOURCE = "CAOM-2.4.xsd";
+    private static final int CURRENT_CAOM2_SCHEMA_LEVEL = 24;
 
     private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
 
@@ -228,6 +227,10 @@ public class ObservationReader implements Serializable {
                 String caom23SchemaUrl = XmlUtil.getResourceUrlString(
                         CAOM23_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.3 schema URL: " + caom23SchemaUrl);
+                
+                String caom24SchemaUrl = XmlUtil.getResourceUrlString(
+                        CAOM24_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.4 schema URL: " + caom24SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(
                         XLINK_SCHEMA_RESOURCE, ObservationReader.class);
@@ -245,11 +248,15 @@ public class ObservationReader implements Serializable {
                     throw new RuntimeException("failed to load "
                             + CAOM22_SCHEMA_RESOURCE + " from classpath");
                 }
-                
                 if (caom23SchemaUrl == null) {
                     throw new RuntimeException("failed to load "
                             + CAOM23_SCHEMA_RESOURCE + " from classpath");
                 }
+                if (caom24SchemaUrl == null) {
+                    throw new RuntimeException("failed to load "
+                            + CAOM24_SCHEMA_RESOURCE + " from classpath");
+                }
+                
                 if (xlinkSchemaUrl == null) {
                     throw new RuntimeException("failed to load "
                             + XLINK_SCHEMA_RESOURCE + " from classpath");
@@ -260,6 +267,7 @@ public class ObservationReader implements Serializable {
                 schemaMap.put(XmlConstants.CAOM2_1_NAMESPACE, caom21SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_2_NAMESPACE, caom22SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_3_NAMESPACE, caom23SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_4_NAMESPACE, caom24SchemaUrl);
                 schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
                 log.debug("schema validation enabled");
             } else {
@@ -274,8 +282,7 @@ public class ObservationReader implements Serializable {
 
     private class ReadContext implements Serializable {
         private static final long serialVersionUID = 201604081100L;
-        DateFormat dateFormat = DateUtil
-                .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
 
         // allow for missing milliseconds in timestamps
@@ -375,6 +382,8 @@ public class ObservationReader implements Serializable {
             rc.docVersion = 21;
         } else if (XmlConstants.CAOM2_2_NAMESPACE.equals(namespace.getURI())) {
             rc.docVersion = 22;
+        } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace.getURI())) {
+            rc.docVersion = 23;
         }
 
         // Simple or Composite
@@ -390,18 +399,16 @@ public class ObservationReader implements Serializable {
 
         // Create the Observation.
         Observation obs;
-        String simple = namespace.getPrefix() + ":"
-                + SimpleObservation.class.getSimpleName();
+        String simple = namespace.getPrefix() + ":" + SimpleObservation.class.getSimpleName();
         String comp = namespace.getPrefix() + ":CompositeObservation"; // 2.3
+        String derived = namespace.getPrefix() + ":" + DerivedObservation.class.getSimpleName();
         if (simple.equals(tval)) {
             obs = new SimpleObservation(collection, observationID);
             obs.setAlgorithm(algorithm);
-        } else if (comp.equals(tval)) {
-            obs = new DerivedObservation(collection, observationID,
-                    algorithm);
+        } else if (derived.equals(tval) || comp.equals(tval)) {
+            obs = new DerivedObservation(collection, observationID, algorithm);
         } else {
-            throw new ObservationParsingException(
-                    "unexpected observation type: " + tval);
+            throw new ObservationParsingException("unexpected observation type: " + tval);
         }
 
         // Observation children.
@@ -411,8 +418,7 @@ public class ObservationReader implements Serializable {
         }
         obs.type = getChildText("type", root, namespace, false);
 
-        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace,
-                false, rc.dateFormat);
+        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, rc.dateFormat);
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root,
                 namespace, false);
         obs.proposal = getProposal(root, namespace, rc);
@@ -444,6 +450,7 @@ public class ObservationReader implements Serializable {
                 e.getNamespace());
         Attribute mcs = e.getAttribute("metaChecksum", e.getNamespace());
         Attribute acc = e.getAttribute("accMetaChecksum", e.getNamespace());
+        Attribute amp = e.getAttribute("metaProducer", e.getNamespace());
         try {
             UUID uuid;
             if (rc.docVersion == 20) {
@@ -475,6 +482,12 @@ public class ObservationReader implements Serializable {
                     CaomUtil.assignMetaChecksum(ce, accCS, "accMetaChecksum");
                 }
             }
+            
+            if (rc.docVersion >= 24) {
+                if (amp != null) {
+                    ce.metaProducer = new URI(amp.getValue());
+                }
+            }
         } catch (DataConversionException ex) {
             throw new ObservationParsingException(
                     "invalid id: " + aid.getValue());
@@ -483,7 +496,7 @@ public class ObservationReader implements Serializable {
                     "invalid lastModified: " + alastModified.getValue());
         } catch (URISyntaxException ex) {
             throw new ObservationParsingException(
-                    "invalid checksum uri: " + aid.getValue());
+                    "invalid uri: " + aid.getValue());
         }
     }
 
