@@ -102,6 +102,7 @@ public class TapSchemaDAOImpl extends TapSchemaDAO
         ret.add(new FunctionDesc("isDownloadable", TapDataType.FUNCTION_ARG));
         ret.add(new FunctionDesc("RANGE_S2D", new TapDataType("double", "4", "range")));
         ret.add(new FunctionDesc("NOW", TapDataType.TIMESTAMP));
+        ret.add(new FunctionDesc("split_part", TapDataType.STRING));
         
         return ret;
     }
