@@ -99,17 +99,32 @@ public class AccessUtil {
             Date metaRelease, List<URI> metaReadAccessGroups,
             Date dataRelease, List<URI> dataReadAccessGroups) {
         ArtifactAccess ret = new ArtifactAccess(artifact);
+        Date rd = getReleaseDate(artifact, metaRelease, dataRelease);
+        if (rd != null && rd.getTime() < System.currentTimeMillis()) {
+            ret.isPublic = true;
+        }
         if (ReleaseType.META.equals(artifact.getReleaseType())) {
-            if (metaRelease != null && metaRelease.getTime() < System.currentTimeMillis()) {
-                ret.isPublic = true;
-            }
             ret.getReadGroups().addAll(metaReadAccessGroups);
         } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
-            if (dataRelease != null && dataRelease.getTime() < System.currentTimeMillis()) {
-                ret.isPublic = true;
-            }
             ret.getReadGroups().addAll(dataReadAccessGroups);
         }
         return ret;
+    }
+    
+    /**
+     * Figure out the appropriate release date for the artifact.
+     * 
+     * @param artifact the artifact
+     * @param metaRelease parent Plane.metaRelease
+     * @param dataRelease parent Plane.dataRelease
+     * @return 
+     */
+    public static Date getReleaseDate(Artifact artifact, Date metaRelease, Date dataRelease) {
+        if (ReleaseType.META.equals(artifact.getReleaseType())) {
+            return metaRelease;
+        } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
+            return dataRelease;
+        }
+        throw new IllegalStateException("expected value for ReleaseType: " + artifact.getReleaseType());
     }
 }
