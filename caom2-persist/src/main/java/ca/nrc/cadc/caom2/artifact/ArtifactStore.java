@@ -110,6 +110,16 @@ public interface ArtifactStore {
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
+     * Checks for artifact existence.
+     *
+     * @param archive
+     *            The archive containing the files.
+     * @return True in the archive in storage only contains public files.
+     */
+    public boolean containsPublicOnlyFiles(String archive);
+
+
+    /**
      * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
      *
      * @param artifactURI

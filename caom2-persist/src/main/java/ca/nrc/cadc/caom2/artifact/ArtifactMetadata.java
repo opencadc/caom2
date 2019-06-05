@@ -69,6 +69,10 @@
 
 package ca.nrc.cadc.caom2.artifact;
 
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
+
+import java.net.URI;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -84,14 +88,16 @@ import java.util.Date;
 public class ArtifactMetadata {
 
     public String observationID;
-    public String artifactURI;
+    public URI artifactURI;
     public String checksum;
     public String contentLength;
     public String contentType;
-    public String collection;
     public Date lastModified;
+    public ProductType productType;
     public String storageID;
-    public Date releaseDate;
+    public ReleaseType releaseType;
+    public Date dataRelease;
+    public Date metaRelease;
     
     public boolean equals(Object o) {
         if (o instanceof ArtifactMetadata) {
