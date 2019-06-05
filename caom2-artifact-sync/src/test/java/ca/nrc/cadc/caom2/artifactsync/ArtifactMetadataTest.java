@@ -68,11 +68,22 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
+import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.FileMetadata;
+import ca.nrc.cadc.util.PropertiesReader;
 
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
+import java.security.AccessControlException;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.junit.Assert;
@@ -103,7 +114,7 @@ public class ArtifactMetadataTest
     private void testCompareMetadata(boolean reportOnly) throws Exception {
         URI caomTapResourceID = null;
         String collection = "HST";
-        ArtifactStore artifactStore = null;
+        ArtifactStore artifactStore = new CADCArtifactStore();
         boolean tolerateNullChecksum = false;
         boolean tolerateNullContentLength = false;
 
@@ -131,7 +142,7 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         try {
             logicalArtifacts.add(metadata);
-        Assert.fail("Failed to detect null metadata.storageID in logicalArtifacts.");
+            Assert.fail("Failed to detect null metadata.storageID in logicalArtifacts.");
         } catch (NullPointerException ex) {
             // expected
         }
@@ -141,6 +152,9 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         ArtifactMetadata logicalMetadata = new ArtifactMetadata();
         ArtifactMetadata physicalMetadata = new ArtifactMetadata();
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
+        logicalMetadata.releaseType = ReleaseType.DATA;
         logicalMetadata.storageID = "foo";
         physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
@@ -153,13 +167,15 @@ public class ArtifactMetadataTest
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
         logicalMetadata.storageID = "foo";
-        logicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
         logicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         logicalMetadata.contentLength = "10";
         logicalMetadata.contentType = "logicalType";
-        logicalMetadata.collection = "HST";
         logicalMetadata.lastModified = new Date();
-        logicalMetadata.releaseDate = new Date();
+        logicalMetadata.releaseType = ReleaseType.DATA;
+        logicalMetadata.dataRelease = new Date();
+        logicalMetadata.metaRelease = null;
         physicalMetadata.storageID = "foo";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
@@ -171,16 +187,71 @@ public class ArtifactMetadataTest
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
         logicalMetadata.storageID = "bar";
-        physicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
         physicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         physicalMetadata.contentLength = "10";
         physicalMetadata.contentType = "logicalType";
-        physicalMetadata.collection = "HST";
         physicalMetadata.lastModified = new Date();
-        physicalMetadata.releaseDate = new Date();
         physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
+    }
+    
+    private class CADCArtifactStore implements ArtifactStore {
+        private static final String COLLECTION_CONFIG = "collection-config.properties";
+        private static final String CADC_CONFIG_FILENAME = "CadcArtifactResolver.properties";
+        private static final String PUBLIC_ONLY = "PublicOnly";
+        
+        private CaomArtifactResolver cadcArtifactResolver = null;
+
+        public CADCArtifactStore() {
+            URL configURL = CaomArtifactResolver.class.getClassLoader().getResource(CADC_CONFIG_FILENAME);
+            cadcArtifactResolver = new CaomArtifactResolver(configURL);
+        }
+
+        public boolean contains(URI artifactURI, URI checksum) throws TransientException {
+            // not used by the unit test
+            return false;
+        }
+
+        public boolean containsPublicOnlyFiles(String collection) {
+            String access = getConfiguredValues(collection).split(" ")[1];
+            return access.equalsIgnoreCase(PUBLIC_ONLY);
+        }
+        
+        public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
+            // not used by the unit test
+        }
+        
+        public Set<ArtifactMetadata> list(String collection)
+                throws TransientException, UnsupportedOperationException, AccessControlException {
+            //not used by the unit test
+            return null;
+        }
+        
+        public String toStorageID(String artifactURI) throws IllegalArgumentException {
+            // not used by the unit test
+            return null;
+        }
+        
+        private String getConfiguredValues(String collection) {
+            PropertiesReader pr = new PropertiesReader(COLLECTION_CONFIG);
+            List<String> values = pr.getPropertyValues(collection.toUpperCase());
+            if (values == null) {
+                String msg = "Missing " + COLLECTION_CONFIG 
+                    + " or missing an entry in the config file for collection "
+                    + collection + ".";
+                throw new IllegalArgumentException(msg);
+            }
+            
+            return values.get(0).replaceAll("\\s+", " ");
+        }
+
+        @Override
+        public void processResults(long total, long successes, long totalElapsedTime, long totalBytes, int threads) {
+            // do nothing 
+        }
     }
 }
