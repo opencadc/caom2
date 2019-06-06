@@ -337,15 +337,15 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             
             if (addToSkipTable) {
                 logJSON(new String[]
-                        {"logType", "detail",
-                         "anomaly", "missingFromStorage",
-                         "releaseDate", releaseDateString,
-                         "observationID", metadata.observationID,
-                         "artifactURI", metadata.artifactURI.toString(),
-                         "storageID", metadata.storageID,
-                         "caomCollection", collection,
-                         "caomLastModified", lastModified},
-                        false);
+                    {"logType", "detail",
+                     "anomaly", "missingFromStorage",
+                     "releaseDate", releaseDateString,
+                     "observationID", metadata.observationID,
+                     "artifactURI", metadata.artifactURI.toString(),
+                     "storageID", metadata.storageID,
+                     "caomCollection", collection,
+                     "caomLastModified", lastModified},
+                    false);
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
