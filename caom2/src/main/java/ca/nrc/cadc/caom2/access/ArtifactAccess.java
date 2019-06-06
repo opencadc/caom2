@@ -71,6 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -89,6 +90,12 @@ public class ArtifactAccess {
      * Flag denoting that the resource described by the URI is publicly readable.
      */
     public boolean isPublic = false;
+    
+    /** 
+     * The effective release date. This is determined from the artifact and some values 
+     * from the parent plane.
+     */
+    public Date releaseDate;
     
     /**
      * Constructor.

@@ -99,8 +99,8 @@ public class AccessUtil {
             Date metaRelease, List<URI> metaReadAccessGroups,
             Date dataRelease, List<URI> dataReadAccessGroups) {
         ArtifactAccess ret = new ArtifactAccess(artifact);
-        Date rd = getReleaseDate(artifact, metaRelease, dataRelease);
-        if (rd != null && rd.getTime() < System.currentTimeMillis()) {
+        ret.releaseDate = getReleaseDate(artifact, metaRelease, dataRelease);
+        if (ret.releaseDate != null && ret.releaseDate.getTime() < System.currentTimeMillis()) {
             ret.isPublic = true;
         }
         if (ReleaseType.META.equals(artifact.getReleaseType())) {
