@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -180,6 +181,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
             num = observationStates.size();
             log.info("Found: " + num);
+            boolean isPublicOnly = artifactStore.containsPublicOnlyFiles(collection);
 
             for (ObservationState observationState : observationStates) {
 
@@ -197,43 +199,47 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                         for (Plane plane : observation.getPlanes()) {
                             for (Artifact artifact : plane.getArtifacts()) {
                                 
-                                ReleaseType type = artifact.getReleaseType();
-                                Date downloadDate = null;
-                                if (ReleaseType.DATA.equals(type)) {
-                                    downloadDate = plane.dataRelease;
-                                } else if (ReleaseType.META.equals(type)) {
-                                    downloadDate = plane.metaRelease;
-                                }
-                                
-                                if (downloadDate == null) {
-                                    // null date means private
-                                    log.debug("null release date, skipping");
+                                Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease, plane.dataRelease);
+                                boolean toProcess = false;
+                                String errorMessage = null;
+                                boolean addToSkip = false;
+                                String message = null;
+                                boolean success = true;
+                                boolean added = false;
+                                if (isPublicOnly) {
+                                    // storage of this collection only holds public artifacts
+                                    if (releaseDate == null || releaseDate.after(start)) {
+                                        // private artifact, skip
+                                        log.debug("collection " + collection + " does not store private artifacts, skipping");
+                                    } else {
+                                        // missing public artifact, add to skip table
+                                        toProcess = true;
+                                    }
                                 } else {
+                                    // storage of this collection holds both public and private artifacts
+                                    toProcess = true;
+                                    if (releaseDate == null || releaseDate.after(start)) {
+                                        // private artifact, indicate it in errormessage
+                                        errorMessage = ArtifactHarvester.PROPRIETARY;
+                                    }
+                                }
+
+                                if (toProcess) {
                                     logStart(artifact);
-                                    boolean success = true;
-                                    boolean addToSkip = false;
-                                    boolean added = false;
-                                    String message = null;
-                                    String errorMessage = null;
                                     processedCount++;
-                                    
-                                    if (downloadDate.after(start)) {
-                                        // private--download in the future
-                                        errorMessage = PROPRIETARY;
-                                    } 
                                     
                                     // see if there's already an entry
                                     HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                     if (skip == null) {
                                         // not in skip table but may be in artifactStore already, may be private or public
-                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate, errorMessage);
+                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
                                         addToSkip = true;
                                     } else {
                                         message = "Artifact already exists in skip table.";
                                         if (errorMessage != null) {
                                             // artifact is private
                                             addToSkip = true;
-                                            skip.setTryAfter(downloadDate);
+                                            skip.setTryAfter(releaseDate);
                                             skip.errorMessage = errorMessage;
                                         }
                                     }
