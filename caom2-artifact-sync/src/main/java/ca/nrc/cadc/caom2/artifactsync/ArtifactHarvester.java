@@ -200,33 +200,22 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                             for (Artifact artifact : plane.getArtifacts()) {
                                 
                                 Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease, plane.dataRelease);
-                                boolean toProcess = false;
-                                String errorMessage = null;
-                                boolean addToSkip = false;
-                                String message = null;
-                                boolean success = true;
-                                boolean added = false;
-                                if (isPublicOnly) {
-                                    // storage of this collection only holds public artifacts
-                                    if (releaseDate == null || releaseDate.after(start)) {
-                                        // private artifact, skip
-                                        log.debug("collection " + collection + " does not store private artifacts, skipping");
-                                    } else {
-                                        // missing public artifact, add to skip table
-                                        toProcess = true;
-                                    }
+                                if (releaseDate == null) {
+                                    // null date means private
+                                    log.debug("null release date, skipping");
                                 } else {
-                                    // storage of this collection holds both public and private artifacts
-                                    toProcess = true;
-                                    if (releaseDate == null || releaseDate.after(start)) {
-                                        // private artifact, indicate it in errormessage
+                                    logStart(artifact);
+                                    boolean success = true;
+                                    boolean addToSkip = false;
+                                    boolean added = false;
+                                    String message = null;
+                                    String errorMessage = null;
+                                    processedCount++;
+                                    
+                                    if (releaseDate.after(start)) {
+                                        // private and release date is not null, download in the future
                                         errorMessage = ArtifactHarvester.PROPRIETARY;
                                     }
-                                }
-
-                                if (toProcess) {
-                                    logStart(artifact);
-                                    processedCount++;
                                     
                                     // see if there's already an entry
                                     HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());

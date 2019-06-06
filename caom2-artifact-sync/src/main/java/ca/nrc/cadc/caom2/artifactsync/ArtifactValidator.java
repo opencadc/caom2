@@ -302,40 +302,51 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         for (ArtifactMetadata metadata : logicalMetadata) {
             String errorMessage = null; 
             String lastModified = "null";
-            String releaseDateString = "null";
             if (metadata.lastModified != null) {
                 lastModified = df.format(metadata.lastModified);
             }
             
             Artifact artifact = new Artifact(metadata.artifactURI, metadata.productType, metadata.releaseType);
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
-            boolean addToSkipTable = false;
-            if (isPublicOnly) {
-                // storage of this collection only holds public artifacts
-                if (releaseDate == null || releaseDate.after(now)) {
-                    // private artifact, skip
+            String releaseDateString = "null";
+            boolean miss = false;
+            if (releaseDate == null) {
+                // proprietary artifact, skip
+                log.debug("null release date, skipping");
+                if (isPublicOnly) {
                     notPublic++;
                 } else {
-                    // missing public artifact, add to skip table
-                    missingFromStorage++;
-                    addToSkipTable = true;
-                    releaseDateString = df.format(releaseDate);
+                    // missing proprietary artifact, but won't be added to skip table
+                    miss = true;
                 }
             } else {
-                // storage of this collection holds both public and private artifacts
-                missingFromStorage++;
-                addToSkipTable = true;
-                if (releaseDate == null || releaseDate.after(now)) {
-                    // private artifact, indicate it in errormessage
+                releaseDateString = df.format(releaseDate);
+                if (releaseDate.after(now)) {
+                    // proprietary artifact, add to skip table for future download
                     errorMessage = ArtifactHarvester.PROPRIETARY;
+                    if (isPublicOnly) {
+                        notPublic++;
+                    } else {
+                        // missing proprietary artifact, add to skip table
+                        miss = true;
+                    }
+                } else {
+                    // missing public artifact, add to skip table
+                    miss = true;
                 }
                 
-                if (releaseDate != null) {
-                    releaseDateString = df.format(releaseDate);
+                // add to HavestSkipURI table if there is not already a row in the table
+                if (supportSkipURITable) {
+                    if (checkAddToSkipTable(metadata, errorMessage)) {
+                        skipURICount++;
+                    } else {
+                        inSkipURICount++;
+                    }
                 }
             }
             
-            if (addToSkipTable) {
+            if (miss) {
+                missingFromStorage++;
                 logJSON(new String[]
                     {"logType", "detail",
                      "anomaly", "missingFromStorage",
@@ -346,15 +357,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                      "caomCollection", collection,
                      "caomLastModified", lastModified},
                     false);
-                
-                // add to HavestSkipURI table if there is not already a row in the table
-                if (supportSkipURITable) {
-                    if (checkAddToSkipTable(metadata, errorMessage)) {
-                        skipURICount++;
-                    } else {
-                        inSkipURICount++;
-                    }
-                }
             }
         }
         
