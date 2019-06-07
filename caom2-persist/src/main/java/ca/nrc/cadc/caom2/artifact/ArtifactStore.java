@@ -110,13 +110,13 @@ public interface ArtifactStore {
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
-     * Checks for artifact existence.
+     * Get the storage policy based on the collection provided.
      *
-     * @param archive
-     *            The archive containing the files.
-     * @return True in the archive in storage only contains public files.
+     * @param collection
+     *            The collection containing the files.
+     * @return Storage policy.
      */
-    public boolean containsPublicOnlyFiles(String archive);
+    public StoragePolicy getStoragePolicy(String collection);
 
 
     /**
