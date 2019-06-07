@@ -72,6 +72,7 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
@@ -114,7 +115,7 @@ public class ArtifactMetadataTest
     private void testCompareMetadata(boolean reportOnly) throws Exception {
         URI caomTapResourceID = null;
         String collection = "HST";
-        ArtifactStore artifactStore = new CADCArtifactStore();
+        ArtifactStore artifactStore = new TestArtifactStore(StoragePolicy.PUBLIC_ONLY);
         boolean tolerateNullChecksum = false;
         boolean tolerateNullContentLength = false;
 
@@ -199,59 +200,42 @@ public class ArtifactMetadataTest
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
     }
     
-    private class CADCArtifactStore implements ArtifactStore {
-        private static final String COLLECTION_CONFIG = "collection-config.properties";
-        private static final String CADC_CONFIG_FILENAME = "CadcArtifactResolver.properties";
-        private static final String PUBLIC_ONLY = "PublicOnly";
-        
-        private CaomArtifactResolver cadcArtifactResolver = null;
+    private class TestArtifactStore implements ArtifactStore {
+        private StoragePolicy storagePolicy = null;
 
-        public CADCArtifactStore() {
-            URL configURL = CaomArtifactResolver.class.getClassLoader().getResource(CADC_CONFIG_FILENAME);
-            cadcArtifactResolver = new CaomArtifactResolver(configURL);
+        public TestArtifactStore(StoragePolicy policy) {
+            this.storagePolicy = policy;
         }
 
         public boolean contains(URI artifactURI, URI checksum) throws TransientException {
             // not used by the unit test
-            return false;
+            throw new UnsupportedOperationException("This method should not have been invoked.");
         }
 
-        public boolean containsPublicOnlyFiles(String collection) {
-            String access = getConfiguredValues(collection).split(" ")[1];
-            return access.equalsIgnoreCase(PUBLIC_ONLY);
+        public StoragePolicy getStoragePolicy(String collection) {
+            return this.storagePolicy;
         }
         
-        public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
+        public void store(URI artifactURI, InputStream data, FileMetadata metadata) {
             // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
         }
         
         public Set<ArtifactMetadata> list(String collection)
                 throws TransientException, UnsupportedOperationException, AccessControlException {
             //not used by the unit test
-            return null;
+            throw new UnsupportedOperationException("This method should not have been invoked.");
         }
         
-        public String toStorageID(String artifactURI) throws IllegalArgumentException {
+        public String toStorageID(String artifactURI) {
             // not used by the unit test
-            return null;
-        }
-        
-        private String getConfiguredValues(String collection) {
-            PropertiesReader pr = new PropertiesReader(COLLECTION_CONFIG);
-            List<String> values = pr.getPropertyValues(collection.toUpperCase());
-            if (values == null) {
-                String msg = "Missing " + COLLECTION_CONFIG 
-                    + " or missing an entry in the config file for collection "
-                    + collection + ".";
-                throw new IllegalArgumentException(msg);
-            }
-            
-            return values.get(0).replaceAll("\\s+", " ");
+            throw new UnsupportedOperationException("This method should not have been invoked.");
         }
 
         @Override
         public void processResults(long total, long successes, long totalElapsedTime, long totalBytes, int threads) {
-            // do nothing 
+            // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
         }
     }
 }

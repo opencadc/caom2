@@ -18,8 +18,8 @@ group = 'org.opencadc'
 version = '2.3.29'
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
-    compile 'org.jdom:jdom2:2.+'
+    compile 'log4j:log4j:[1.2.+,)'
+    compile 'org.jdom:jdom2:[2.+,)'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
 
     compile 'org.opencadc:cadc-util:[1.0.17,)'
@@ -31,10 +31,10 @@ dependencies {
     compile 'org.opencadc:caom2-artifact-resolvers:[1.1.11,)'
     compile 'org.opencadc:cadc-tap:[1.0,)'
 
-    runtime 'net.sourceforge.jtds:jtds:1.+'
+    runtime 'net.sourceforge.jtds:jtds:[1.+,)'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    testCompile 'junit:junit:4.+'
+    testCompile 'junit:junit:[4.+,)'
 }
 
 apply from: '../opencadc.gradle'

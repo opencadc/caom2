@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
@@ -181,8 +180,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
             num = observationStates.size();
             log.info("Found: " + num);
-            boolean isPublicOnly = artifactStore.containsPublicOnlyFiles(collection);
-
             for (ObservationState observationState : observationStates) {
 
                 try {

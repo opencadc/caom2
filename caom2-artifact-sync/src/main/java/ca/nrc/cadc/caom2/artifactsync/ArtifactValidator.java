@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -297,7 +298,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
         long missingFromStorage = 0;
         long notPublic = 0;
-        boolean isPublicOnly = artifactStore.containsPublicOnlyFiles(this.collection);
+        StoragePolicy storagePolicy = artifactStore.getStoragePolicy(this.collection);
         Date now = new Date();
         for (ArtifactMetadata metadata : logicalMetadata) {
             String errorMessage = null; 
@@ -313,7 +314,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             if (releaseDate == null) {
                 // proprietary artifact, skip
                 log.debug("null release date, skipping");
-                if (isPublicOnly) {
+                if (StoragePolicy.PUBLIC_ONLY == storagePolicy) {
                     notPublic++;
                 } else {
                     // missing proprietary artifact, but won't be added to skip table
@@ -324,7 +325,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (releaseDate.after(now)) {
                     // proprietary artifact, add to skip table for future download
                     errorMessage = ArtifactHarvester.PROPRIETARY;
-                    if (isPublicOnly) {
+                    if (StoragePolicy.PUBLIC_ONLY == storagePolicy) {
                         notPublic++;
                     } else {
                         // missing proprietary artifact, add to skip table

@@ -89,7 +89,8 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * Class that reads the results of a query.
+ * Class that reads the results of a CAOM (TAP) ADQL query generated and 
+ * handled by ArtifactValidator.query().
  * 
  * @author majorb
  *
