@@ -69,51 +69,37 @@
 
 package ca.nrc.cadc.caom2.artifact;
 
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.ReleaseType;
-
-import java.net.URI;
-import java.util.Comparator;
-import java.util.Date;
-
-
 /**
- * Class to hold meta information about an artifact.
- * validate mode uses checksum. StorageID must not be null.
- * Other attributes are optional and can be left as null.
- * 
- * @author majorb
- *
+ * @author yeunga
  */
-public class ArtifactMetadata {
+public enum StoragePolicy {
+    ALL("All"), PUBLIC_ONLY("PublicOnly");
 
-    public String observationID;
-    public URI artifactURI;
-    public String checksum;
-    public String contentLength;
-    public String contentType;
-    public Date lastModified;
-    public ProductType productType;
-    public String storageID;
-    public ReleaseType releaseType;
-    public Date dataRelease;
-    public Date metaRelease;
-    
-    public boolean equals(Object o) {
-        if (o instanceof ArtifactMetadata) {
-            ArtifactMetadata other = (ArtifactMetadata) o;
-            Comparator<ArtifactMetadata> comparator = ArtifactMetadata.getComparator();
-            return comparator.compare(this, other) == 0;
-        }
-        return false;
+    private String value;
+
+    private StoragePolicy(String value) {
+        this.value = value;
     }
-    
-    public static Comparator<ArtifactMetadata> getComparator() {
-        return new Comparator<ArtifactMetadata>() {
-            @Override
-            public int compare(ArtifactMetadata o1, ArtifactMetadata o2) {
-                return o1.storageID.compareTo(o2.storageID);
+
+    public static StoragePolicy toValue(String s) {
+        for (StoragePolicy d : values()) {
+            if (d.value.equals(s)) {
+                return d;
             }
-        };
+        }
+        throw new IllegalArgumentException("BUG: unexpected policy: " + s);
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public int checksum() {
+        return value.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

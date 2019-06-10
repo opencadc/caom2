@@ -110,6 +110,16 @@ public interface ArtifactStore {
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
+     * Get the storage policy based on the collection provided.
+     *
+     * @param collection
+     *            The collection containing the files.
+     * @return Storage policy.
+     */
+    public StoragePolicy getStoragePolicy(String collection);
+
+
+    /**
      * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
      *
      * @param artifactURI

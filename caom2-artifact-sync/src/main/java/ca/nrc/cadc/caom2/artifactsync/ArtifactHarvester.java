@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -180,7 +180,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
             num = observationStates.size();
             log.info("Found: " + num);
-
             for (ObservationState observationState : observationStates) {
 
                 try {
@@ -197,15 +196,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                         for (Plane plane : observation.getPlanes()) {
                             for (Artifact artifact : plane.getArtifacts()) {
                                 
-                                ReleaseType type = artifact.getReleaseType();
-                                Date downloadDate = null;
-                                if (ReleaseType.DATA.equals(type)) {
-                                    downloadDate = plane.dataRelease;
-                                } else if (ReleaseType.META.equals(type)) {
-                                    downloadDate = plane.metaRelease;
-                                }
-                                
-                                if (downloadDate == null) {
+                                Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease, plane.dataRelease);
+                                if (releaseDate == null) {
                                     // null date means private
                                     log.debug("null release date, skipping");
                                 } else {
@@ -217,23 +209,23 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                     String errorMessage = null;
                                     processedCount++;
                                     
-                                    if (downloadDate.after(start)) {
-                                        // private--download in the future
-                                        errorMessage = PROPRIETARY;
-                                    } 
+                                    if (releaseDate.after(start)) {
+                                        // private and release date is not null, download in the future
+                                        errorMessage = ArtifactHarvester.PROPRIETARY;
+                                    }
                                     
                                     // see if there's already an entry
                                     HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                     if (skip == null) {
                                         // not in skip table but may be in artifactStore already, may be private or public
-                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate, errorMessage);
+                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
                                         addToSkip = true;
                                     } else {
                                         message = "Artifact already exists in skip table.";
                                         if (errorMessage != null) {
                                             // artifact is private
                                             addToSkip = true;
-                                            skip.setTryAfter(downloadDate);
+                                            skip.setTryAfter(releaseDate);
                                             skip.errorMessage = errorMessage;
                                         }
                                     }

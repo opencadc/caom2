@@ -68,11 +68,23 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
+import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.FileMetadata;
+import ca.nrc.cadc.util.PropertiesReader;
 
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
+import java.security.AccessControlException;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.junit.Assert;
@@ -103,7 +115,7 @@ public class ArtifactMetadataTest
     private void testCompareMetadata(boolean reportOnly) throws Exception {
         URI caomTapResourceID = null;
         String collection = "HST";
-        ArtifactStore artifactStore = null;
+        ArtifactStore artifactStore = new TestArtifactStore(StoragePolicy.PUBLIC_ONLY);
         boolean tolerateNullChecksum = false;
         boolean tolerateNullContentLength = false;
 
@@ -131,7 +143,7 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         try {
             logicalArtifacts.add(metadata);
-        Assert.fail("Failed to detect null metadata.storageID in logicalArtifacts.");
+            Assert.fail("Failed to detect null metadata.storageID in logicalArtifacts.");
         } catch (NullPointerException ex) {
             // expected
         }
@@ -141,6 +153,9 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         ArtifactMetadata logicalMetadata = new ArtifactMetadata();
         ArtifactMetadata physicalMetadata = new ArtifactMetadata();
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
+        logicalMetadata.releaseType = ReleaseType.DATA;
         logicalMetadata.storageID = "foo";
         physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
@@ -153,13 +168,15 @@ public class ArtifactMetadataTest
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
         logicalMetadata.storageID = "foo";
-        logicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
         logicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         logicalMetadata.contentLength = "10";
         logicalMetadata.contentType = "logicalType";
-        logicalMetadata.collection = "HST";
         logicalMetadata.lastModified = new Date();
-        logicalMetadata.releaseDate = new Date();
+        logicalMetadata.releaseType = ReleaseType.DATA;
+        logicalMetadata.dataRelease = new Date();
+        logicalMetadata.metaRelease = null;
         physicalMetadata.storageID = "foo";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
@@ -171,16 +188,54 @@ public class ArtifactMetadataTest
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
         logicalMetadata.storageID = "bar";
-        physicalMetadata.artifactURI = "mast:HST/product/id5n04lfq_drc.fits";
+        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata.productType = ProductType.SCIENCE;
         physicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         physicalMetadata.contentLength = "10";
         physicalMetadata.contentType = "logicalType";
-        physicalMetadata.collection = "HST";
         physicalMetadata.lastModified = new Date();
-        physicalMetadata.releaseDate = new Date();
         physicalMetadata.storageID = "bar";
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
+    }
+    
+    private class TestArtifactStore implements ArtifactStore {
+        private StoragePolicy storagePolicy = null;
+
+        public TestArtifactStore(StoragePolicy policy) {
+            this.storagePolicy = policy;
+        }
+
+        public boolean contains(URI artifactURI, URI checksum) throws TransientException {
+            // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
+        }
+
+        public StoragePolicy getStoragePolicy(String collection) {
+            return this.storagePolicy;
+        }
+        
+        public void store(URI artifactURI, InputStream data, FileMetadata metadata) {
+            // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
+        }
+        
+        public Set<ArtifactMetadata> list(String collection)
+                throws TransientException, UnsupportedOperationException, AccessControlException {
+            //not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
+        }
+        
+        public String toStorageID(String artifactURI) {
+            // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
+        }
+
+        @Override
+        public void processResults(long total, long successes, long totalElapsedTime, long totalBytes, int threads) {
+            // not used by the unit test
+            throw new UnsupportedOperationException("This method should not have been invoked.");
+        }
     }
 }
