@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,17 +65,16 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.datalink;
 
-import ca.nrc.cadc.caom2ops.UsageFault;
-import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
+import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.TransientFault;
-import ca.nrc.cadc.dali.tables.TableData;
+import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
@@ -86,189 +85,160 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.datalink.DataLink;
+import org.opencadc.datalink.ServiceDescriptor;
+import org.opencadc.datalink.server.DataLinkSource;
 
 /**
  *
  * @author pdowler
  */
-public class DynamicTableData implements TableData
-{
+public class DynamicTableData implements DataLinkSource {
     private static final Logger log = Logger.getLogger(DynamicTableData.class);
-    
-    private int maxrec;
+
+    private Integer maxrec;
     private Iterator<String> argIter;
     private CaomTapQuery query;
-    private boolean artifactOnly;
+    private boolean downloadOnly;
     private ArtifactProcessor ap;
 
-    private Iterator<List<Object>> curIter;
-    
-    private List<ServiceDescriptor> serviceDescriptors = new ArrayList<ServiceDescriptor>();
-
-    public DynamicTableData(int maxrec, Job job, CaomTapQuery query, boolean artifactOnly, ArtifactProcessor ap)
-    {
+    public DynamicTableData(Job job, CaomTapQuery query, ArtifactProcessor ap) {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
-        if (args == null || args.isEmpty())
+        if (args == null || args.isEmpty()) {
             throw new UsageFault("missing required parameter ID");
-        this.maxrec = maxrec;
+        }
+        
         this.argIter = args.iterator();
         this.query = query;
-        this.artifactOnly = artifactOnly;
         this.ap = ap;
+        log.debug("constructor complete");
     }
 
-    public Iterator<ServiceDescriptor> descriptors()
-    {
-        return serviceDescriptors.iterator();
+    @Override
+    public void setDownloadOnly(boolean downloadOnly) {
+        this.downloadOnly = downloadOnly;
     }
-    
-    public Iterator<List<Object>> iterator()
-    {
+
+    @Override
+    public void setMaxrec(Integer maxrec) {
+        this.maxrec = maxrec;
+    }
+
+    @Override
+    public Iterator<DataLink> links() {
+        log.debug("links() called");
         return new ConcatIterator();
     }
-    
-    private class ConcatIterator implements Iterator<List<Object>>
-    {
-        private int count = 0;
-        public boolean hasNext()
-        {
-            if (argIter == null)
-                return false; // done
 
-            if ( (curIter == null || !curIter.hasNext()) && count < maxrec )
-                curIter = getBatchIterator();
+    
+    @Override
+    public Iterator<ServiceDescriptor> descriptors() {
+        return new ArrayList<ServiceDescriptor>(0).iterator();
+    }
+
+    private class ConcatIterator implements Iterator<DataLink> {
+
+        private int count = 0;
+        private Iterator<DataLink> curIter;
+
+        public boolean hasNext() {
+            if (argIter == null) {
+                return false; // done
+            }
             
-            if (curIter == null)
-            {
-                argIter = null;
+            if (curIter != null && !curIter.hasNext()) {
+                curIter = null; // exhausted
+            }
+            
+            if (curIter == null && (maxrec == null || count < maxrec)) {
+                curIter = getBatchIterator();
+            }
+
+            if (curIter == null) {
                 return false;
             }
 
             return curIter.hasNext();
         }
 
-        public List<Object> next()
-        {
-            List<Object> ret = curIter.next();
+        public DataLink next() {
+            DataLink ret = curIter.next();
             count++;
             return ret;
         }
 
-        public void remove()
-        {
+        public void remove() {
             throw new UnsupportedOperationException();
         }
 
-        private Iterator<List<Object>> getBatchIterator()
-        {
-            if ( !argIter.hasNext() )
-                return null; // done
-
+        private Iterator<DataLink> getBatchIterator() {
+            log.debug("getBatchIterator: START");
+            if (!argIter.hasNext()) {
+                return null;
+            }
             curIter = null;
-            boolean done = false;
-            while (!done && argIter.hasNext())
-            {
+            while (argIter.hasNext() && curIter == null) {
                 String s = argIter.next();
                 URI uri = null;
                 PlaneURI planeURI = null;
                 PublisherID pubID = null;
-                try
-                {
+                try {
                     List<DataLink> links = null;
-                    try
-                    {
+                    try {
                         uri = new URI(s);
-                        if (PublisherID.SCHEME.equals(uri.getScheme()))
+                        if (PublisherID.SCHEME.equals(uri.getScheme())) {
                             pubID = new PublisherID(uri);
-                        else
+                        } else {
                             planeURI = new PlaneURI(uri);
-                    }
-                    catch(Exception ex)
-                    {
+                        }
+                    } catch (Exception ex) {
                         links = new ArrayList<>(1);
                         DataLink usage = new DataLink(s, DataLink.Term.THIS);
                         usage.errorMessage = "UsageFault: invalid ID: " + s;
                         links.add(usage);
                     }
-                    if (pubID != null || planeURI != null)
-                    {
-                        try
-                        {   
+                    if (pubID != null || planeURI != null) {
+                        try {
                             ArtifactQueryResult ar;
-                            if (pubID != null)
-                            {
+                            if (pubID != null) {
                                 log.debug("getBatchIterator: " + pubID);
-                                ar = query.performQuery(pubID, artifactOnly);
-                            }
-                            else
-                            {
+                                ar = query.performQuery(pubID, downloadOnly);
+                            } else {
                                 log.debug("getBatchIterator: " + planeURI);
-                                ar = query.performQuery(planeURI, artifactOnly);
+                                ar = query.performQuery(planeURI, downloadOnly);
                             }
-                            if (ar.getArtifacts().isEmpty())
-                            {
+                            if (ar.getArtifacts().isEmpty()) {
                                 links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
                                 notFound.errorMessage = "NotFoundFault: " + s;
                                 links.add(notFound);
-                            }
-                            else
-                            {
+                            } else {
                                 log.debug("getBatchIterator: " + uri + ": " + ar.getArtifacts().size() + " artifacts");
                                 links = ap.process(uri, ar);
                             }
-                        }
-                        catch(TransientFault f)
-                        {
+                        } catch (TransientFault f) {
                             links = new ArrayList<>(1);
                             DataLink fail = new DataLink(s, DataLink.Term.THIS);
                             fail.errorMessage = f.toString();
                             links.add(fail);
                         }
                     }
-                    
-                    if (links != null && !links.isEmpty())
-                    {
-                        log.debug("getBatchIterator: " + planeURI + ": " + links.size() + " links");
-                        List<List<Object>> rows = new ArrayList<>();
-                        for (DataLink dl : links)
-                        {
-                            log.debug("adding: " + dl);
-                            List<Object> r = new ArrayList<>(dl.size());
-                            for (Object o : dl)
-                            {
-                                r.add(o);
-                            }
-                            rows.add(r);
-                            
-                            if (dl.descriptor != null)
-                            {
-                                log.debug("adding: " + dl.descriptor);
-                                serviceDescriptors.add(dl.descriptor);
-                            }
-                        }
-                        curIter = rows.iterator();
-                        done = true;
+
+                    if (links != null && !links.isEmpty()) {
+                        log.debug("getBatchIterator: " + uri + ": " + links.size() + " links");
+                        curIter = links.iterator();
                     }
-                }
-                catch(IOException ex)
-                {
+                } catch (IOException ex) {
                     throw new RuntimeException("query failed: " + s, ex);
-                }
-                catch(ResourceNotFoundException ex) {
+                } catch (ResourceNotFoundException ex) {
                     throw new RuntimeException("cannot find TAP service: " + s, ex);
-                }
-                catch(CertificateException ex)
-                {
+                } catch (CertificateException ex) {
                     throw new RuntimeException("query failed: " + s, ex);
                 }
-                finally { }
             }
 
             return curIter;
         }
     }
-
-
 
 }

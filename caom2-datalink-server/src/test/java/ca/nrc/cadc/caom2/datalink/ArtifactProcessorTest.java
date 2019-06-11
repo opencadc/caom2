@@ -82,6 +82,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.datalink.DataLink;
 
 /**
  *
@@ -164,9 +165,9 @@ public class ArtifactProcessorTest
                 log.info("testWithRUNID: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.url);
+                Assert.assertNotNull(dl.accessURL);
                 
-                String query = dl.url.getQuery();
+                String query = dl.accessURL.getQuery();
                 Assert.assertNotNull("query string", query);
                 String expected = "runid="+RUNID;
                 String actual = query.toLowerCase();
@@ -203,8 +204,8 @@ public class ArtifactProcessorTest
                 log.info("testNoRUNID: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.url);
-                String query = dl.url.getQuery();
+                Assert.assertNotNull(dl.accessURL);
+                String query = dl.accessURL.getQuery();
                 Assert.assertNull(query); // no runid
             }
         }
@@ -239,8 +240,8 @@ public class ArtifactProcessorTest
                 log.info("testPackageLink: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.url);
-                String query = dl.url.getQuery();
+                Assert.assertNotNull(dl.accessURL);
+                String query = dl.accessURL.getQuery();
                 if (DataLink.Term.PKG.equals(dl.getSemantics())) {
                     Assert.assertNotNull(query);
                     foundPkg = true;
