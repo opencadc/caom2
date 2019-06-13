@@ -337,7 +337,7 @@ public class SodaJobRunner implements JobRunner
                                             log.debug("cutout URL: " + url.toExternalForm());
                                             jobResults.add(new Result(RESULT_OK+"-"+serialNum++, url.toURI()));
                                         } else {
-                                            throw new UnsupportedOperationException("No storage resolver for " + id.toString());
+                                            throw new UnsupportedOperationException("No CutoutGenerator for " + id.toString());
                                         }
                                     }
                                     else
@@ -370,7 +370,7 @@ public class SodaJobRunner implements JobRunner
                                 {
                                     log.error("unexpected", ex);
                                     StringBuilder sb = new StringBuilder();
-                                    sb.append(ex.getClass().getSimpleName() + ": ").append(id).append(" vs");
+                                    sb.append("Error: ").append(ex.getMessage()).append(" ").append(id).append(" vs");
                                     if (pos.name != null)
                                         sb.append(" ").append(pos.name).append("=").append(pos.value);
                                     if (band.name != null)
