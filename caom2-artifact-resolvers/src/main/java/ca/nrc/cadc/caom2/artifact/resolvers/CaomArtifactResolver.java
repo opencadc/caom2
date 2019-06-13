@@ -158,7 +158,7 @@ public class CaomArtifactResolver {
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
     }
-
+    
     /**
      * Override the authentication method from the current subject in order to generate URLs
      * with a possibly different authentication method. This override may not be applicable
@@ -194,7 +194,12 @@ public class CaomArtifactResolver {
         }
     }
 
-    private StorageResolver getStorageResolver(final URI uri) {
+    /**
+     * Instantiate a StorageResolver based on the URI provided.
+     * @param uri URI containing the scheme necessary to instantiate the resolver
+     * @return A StorageResolver instance
+     */
+    public StorageResolver getStorageResolver(final URI uri) {
         final StorageResolver storageResolver = handlers.get(uri.getScheme());
 
         if (storageResolver != null) {
