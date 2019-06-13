@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2019.                            (c) 2019.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -96,6 +96,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
+    public static final String PROPRIETARY = "proprietary";
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
@@ -179,7 +180,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
             num = observationStates.size();
             log.info("Found: " + num);
-
             for (ObservationState observationState : observationStates) {
 
                 try {
@@ -196,65 +196,62 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                         for (Plane plane : observation.getPlanes()) {
                             for (Artifact artifact : plane.getArtifacts()) {
                                 
-                                ReleaseType type = artifact.getReleaseType();
-                                Date downloadDate = null;
-                                if (ReleaseType.DATA.equals(type)) {
-                                    downloadDate = plane.dataRelease;
-                                } else if (ReleaseType.META.equals(type)) {
-                                    downloadDate = plane.metaRelease;
-                                }
-                                
-                                if (downloadDate == null) {
+                                Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease, plane.dataRelease);
+                                if (releaseDate == null) {
                                     // null date means private
                                     log.debug("null release date, skipping");
                                 } else {
-        
                                     logStart(artifact);
                                     boolean success = true;
+                                    boolean addToSkip = false;
                                     boolean added = false;
                                     String message = null;
-                                    try {
-                                        processedCount++;
-                                        
-                                        // see if there's already an entry
-                                        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact
-                                            .getURI());
-                                        
-                                        if (skip == null) {
-                                            if (downloadDate.after(start)) {
-                                                // proprietary--download in the future
-                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
-                                            } else {
-                                                boolean correctCopy = artifactStore.contains(artifact.getURI(), artifact
-                                                    .contentChecksum);
-                                                log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
-                                                    .contentChecksum + " correct copy: " + correctCopy);
-                                                if (!correctCopy) {
-                                                    skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
-                                                }
-                                            }
-                                            if (skip != null) {
-                                                harvestSkipURIDAO.put(skip);
-                                                added = true;
-                                            }
-                                        } else {
-                                            message = "Artifact already exists in skip table.";
-                                        }
-                                    } catch (Throwable t) {
-                                        success = false;
-                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: "
-                                            + t.getMessage();
-                                        log.error(message, t);
-                                        log.debug("Adding artifact to skip table: " + artifact.getURI());
-                                        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), downloadDate);
-                                        harvestSkipURIDAO.put(skip);
-                                        added = true;
-                                    } finally {
-                                        logEnd(artifact, success, added, message);
-                                        if (added) {
-                                            downloadCount++;
+                                    String errorMessage = null;
+                                    processedCount++;
+                                    
+                                    if (releaseDate.after(start)) {
+                                        // private and release date is not null, download in the future
+                                        errorMessage = ArtifactHarvester.PROPRIETARY;
+                                    }
+                                    
+                                    // see if there's already an entry
+                                    HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                                    if (skip == null) {
+                                        // not in skip table but may be in artifactStore already, may be private or public
+                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
+                                        addToSkip = true;
+                                    } else {
+                                        message = "Artifact already exists in skip table.";
+                                        if (errorMessage != null) {
+                                            // artifact is private
+                                            addToSkip = true;
+                                            skip.setTryAfter(releaseDate);
+                                            skip.errorMessage = errorMessage;
                                         }
                                     }
+                                    
+                                    try {
+                                        if (addToSkip && errorMessage == null) {
+                                            // public artifact not in skip table
+                                            boolean correctCopy = artifactStore.contains(artifact.getURI(), artifact
+                                                    .contentChecksum);
+                                            log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
+                                                .contentChecksum + " correct copy: " + correctCopy);
+                                            addToSkip = !correctCopy;
+                                        }
+                                    } catch (Exception ex) {
+                                        success = false;
+                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: " + ex.getMessage();
+                                        log.error(message, ex);
+                                    }
+                                    
+                                    if (addToSkip) {
+                                        harvestSkipURIDAO.put(skip);
+                                        added = true;
+                                        downloadCount++;
+                                    }
+                                    
+                                    logEnd(artifact, success, added, message);
                                 }
                             }
                         }

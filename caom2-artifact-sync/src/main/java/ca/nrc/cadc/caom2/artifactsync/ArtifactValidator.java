@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -76,9 +76,10 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -130,37 +131,39 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private URL caomTapURL;
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
+    private boolean tolerateNullContentLength = false;
         
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapResourceID = caomTapResourceID;
     }
     
     public ArtifactValidator(URL caomTapURL, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapURL = caomTapURL;
     }
     
     private ArtifactValidator(String collection, boolean reportOnly, 
-            ArtifactStore artifactStore, boolean tolerateNullChecksum) {
+            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.tolerateNullChecksum = tolerateNullChecksum;
+        this.tolerateNullContentLength = tolerateNullContentLength;
     }
 
     @Override
@@ -174,29 +177,29 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 return getLogicalMetadata();
             }
         });
-        log.debug("Submitted query to caom2");
+        log.info("Submitted query to caom2");
         final Future<TreeSet<ArtifactMetadata>> physicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
                 return getPhysicalMetadata();
             }
         });
-        log.debug("Submitted queries");
+        log.info("Submitted query to storage");
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.DAYS);
-        log.debug("Queries are complete");
+        log.info("Queries are complete");
         executor.shutdownNow();
         
-        TreeSet<ArtifactMetadata> logicalArtifacts = logicalQuery.get();
-        TreeSet<ArtifactMetadata> physicalArtifacts = physicalQuery.get();
-        compareMetadata(logicalArtifacts, physicalArtifacts, start);
+        TreeSet<ArtifactMetadata> logicalMetadata = logicalQuery.get();
+        TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
+        compareMetadata(logicalMetadata, physicalMetadata, start);
         return null;
     }
     
-    void compareMetadata(TreeSet<ArtifactMetadata> logicalArtifacts, TreeSet<ArtifactMetadata> physicalArtifacts,
+    void compareMetadata(TreeSet<ArtifactMetadata> logicalMetadata, TreeSet<ArtifactMetadata> physicalMetadata,
             long start) throws Exception {
         boolean supportSkipURITable = supportSkipURITable();
-        long logicalCount = logicalArtifacts.size();
-        long physicalCount = physicalArtifacts.size();
+        long logicalCount = logicalMetadata.size();
+        long physicalCount = physicalMetadata.size();
         log.debug("Found " + logicalCount + " logical artifacts.");
         log.debug("Found " + physicalCount + " physical artifacts.");
         long correct = 0;
@@ -204,27 +207,24 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffType = 0;
         long diffChecksum = 0;
         long notInLogical = 0;
-        long notInPhysical = 0;
         long skipURICount = 0;
         long inSkipURICount = 0;
         
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
-        
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ArtifactMetadata nextLogical = null;
-        
-        for (ArtifactMetadata nextPhysical : physicalArtifacts) {
+        for (ArtifactMetadata nextPhysical : physicalMetadata) {
             
             String physicalLastModified = "null";
             if (nextPhysical.lastModified != null) {
                 physicalLastModified = df.format(nextPhysical.lastModified);
             }
-            if (logicalArtifacts.contains(nextPhysical)) {
-                nextLogical = logicalArtifacts.ceiling(nextPhysical);
+            if (logicalMetadata.contains(nextPhysical)) {
+                nextLogical = logicalMetadata.ceiling(nextPhysical);
+                logicalMetadata.remove(nextLogical);
                 String logicalicalLastModified = "null";
                 if (nextLogical.lastModified != null) {
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
-                logicalArtifacts.remove(nextLogical);
                 if (nextLogical.checksum != null && nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
                     if (nextLogical.contentLength == null 
@@ -234,7 +234,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                             {"logType", "detail",
                              "anomaly", "diffLength",
                              "observationID", nextLogical.observationID,
-                             "artifactURI", nextLogical.artifactURI,
+                             "artifactURI", nextLogical.artifactURI.toString(),
                              "storageID", nextLogical.storageID,
                              "caomContentLength", nextLogical.contentLength,
                              "storageContentLength", nextPhysical.contentLength,
@@ -249,7 +249,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                             {"logType", "detail",
                              "anomaly", "diffType",
                              "observationID", nextLogical.observationID,
-                             "artifactURI", nextLogical.artifactURI,
+                             "artifactURI", nextLogical.artifactURI.toString(),
                              "storageID", nextLogical.storageID,
                              "caomContentType", nextLogical.contentType,
                              "storageContentType", nextPhysical.contentType,
@@ -263,7 +263,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical)) {
+                        if (checkAddToSkipTable(nextLogical, null)) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -273,7 +273,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         {"logType", "detail",
                          "anomaly", "diffChecksum",
                          "observationID", nextLogical.observationID,
-                         "artifactURI", nextLogical.artifactURI,
+                         "artifactURI", nextLogical.artifactURI.toString(),
                          "storageID", nextLogical.storageID,
                          "caomChecksum", nextLogical.checksum,
                          "caomSize", nextLogical.contentLength,
@@ -296,29 +296,68 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
         
         // at this point, any artifact that is in logicalArtifacts, is not in physicalArtifacts
-        notInPhysical += logicalArtifacts.size();
-        for (ArtifactMetadata next : logicalArtifacts) {
+        long missingFromStorage = 0;
+        long notPublic = 0;
+        StoragePolicy storagePolicy = artifactStore.getStoragePolicy(this.collection);
+        Date now = new Date();
+        for (ArtifactMetadata metadata : logicalMetadata) {
+            String errorMessage = null; 
             String lastModified = "null";
-            if (next.lastModified != null) {
-                lastModified = df.format(next.lastModified);
+            if (metadata.lastModified != null) {
+                lastModified = df.format(metadata.lastModified);
             }
-            logJSON(new String[]
-                {"logType", "detail",
-                 "anomaly", "notInStorage",
-                 "observationID", next.observationID,
-                 "artifactURI", next.artifactURI,
-                 "storageID", next.storageID,
-                 "caomCollection", collection,
-                 "caomLastModified", lastModified},
-                false);
-                
-            // add to HavestSkipURI table if there is not already a row in the table
-            if (supportSkipURITable) {
-                if (checkAddToSkipTable(next)) {
-                    skipURICount++;
+            
+            Artifact artifact = new Artifact(metadata.artifactURI, metadata.productType, metadata.releaseType);
+            Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
+            String releaseDateString = "null";
+            boolean miss = false;
+            if (releaseDate == null) {
+                // proprietary artifact, skip
+                log.debug("null release date, skipping");
+                if (StoragePolicy.PUBLIC_ONLY == storagePolicy) {
+                    notPublic++;
                 } else {
-                    inSkipURICount++;
+                    // missing proprietary artifact, but won't be added to skip table
+                    miss = true;
                 }
+            } else {
+                releaseDateString = df.format(releaseDate);
+                if (releaseDate.after(now)) {
+                    // proprietary artifact, add to skip table for future download
+                    errorMessage = ArtifactHarvester.PROPRIETARY;
+                    if (StoragePolicy.PUBLIC_ONLY == storagePolicy) {
+                        notPublic++;
+                    } else {
+                        // missing proprietary artifact, add to skip table
+                        miss = true;
+                    }
+                } else {
+                    // missing public artifact, add to skip table
+                    miss = true;
+                }
+                
+                // add to HavestSkipURI table if there is not already a row in the table
+                if (supportSkipURITable) {
+                    if (checkAddToSkipTable(metadata, errorMessage)) {
+                        skipURICount++;
+                    } else {
+                        inSkipURICount++;
+                    }
+                }
+            }
+            
+            if (miss) {
+                missingFromStorage++;
+                logJSON(new String[]
+                    {"logType", "detail",
+                     "anomaly", "missingFromStorage",
+                     "releaseDate", releaseDateString,
+                     "observationID", metadata.observationID,
+                     "artifactURI", metadata.artifactURI.toString(),
+                     "storageID", metadata.storageID,
+                     "caomCollection", collection,
+                     "caomLastModified", lastModified},
+                    false);
             }
         }
         
@@ -334,7 +373,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffLength", Long.toString(diffLength),
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalMissingFromStorage", Long.toString(missingFromStorage),
+                "totalNotPublic", Long.toString(notPublic),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         } else {
@@ -349,7 +389,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalDiffLength", Long.toString(diffLength),
                 "totalDiffType", Long.toString(diffType),
                 "totalNotInCAOM", Long.toString(notInLogical),
-                "totalNotInStorage", Long.toString(notInPhysical),
+                "totalMissingFromStorage", Long.toString(missingFromStorage),
+                "totalNotPublic", Long.toString(notPublic),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
                 "totalNewSkipURI", Long.toString(skipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -368,7 +409,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
         }
     }
-   
+    
     private void logJSON(String[] data, boolean summaryInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
@@ -395,26 +436,28 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return supportSkipURITable;
     }
     
-    private boolean checkAddToSkipTable(ArtifactMetadata artifact) throws URISyntaxException {
+    private boolean checkAddToSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
         if (supportSkipURITable) {
             // add to HavestSkipURI table if there is not already a row in the table
-            Date releaseDate = artifact.releaseDate;
-            URI artifactURI = new URI(artifact.artifactURI);
-            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifactURI);
+            Artifact artifact = new Artifact(metadata.artifactURI, metadata.productType, metadata.releaseType);
+            Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
+            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.artifactURI);
             if (skip == null && releaseDate != null) {
                 if (!reportOnly) {
-                    skip = new HarvestSkipURI(source, STATE_CLASS, artifactURI, releaseDate);
+                    skip = new HarvestSkipURI(source, STATE_CLASS, metadata.artifactURI, releaseDate, errorMessage);
                     harvestSkipURIDAO.put(skip);
                     
                     // validate 
-                    DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+                    String errorMessageString = (errorMessage == null) ? "null" : ArtifactHarvester.PROPRIETARY;
+                    DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
                     logJSON(new String[]
                         {"logType", "detail",
                          "action", "addedToSkipTable",
-                         "artifactURI", artifact.artifactURI,
-                         "caomCollection", artifact.collection,
-                         "caomChecksum", artifact.checksum,
-                         "caomLastModified", df.format(artifact.lastModified)},
+                         "artifactURI", metadata.artifactURI.toString(),
+                         "caomCollection", collection,
+                         "caomChecksum", metadata.checksum,
+                         "caomLastModified", df.format(metadata.lastModified),
+                         "errorMessage", errorMessageString},
                         true);
                 }
                 return true;
@@ -470,7 +513,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.observationID "
+            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+                    + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
                     + "join caom2.Observation o on p.obsID = o.obsID "
@@ -478,7 +522,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
 
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
-            result = query(caomTapURL, adql, true);
+            result = query(caomTapURL, adql);
             log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
         }
         return result;
@@ -487,7 +531,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private ArtifactMetadata getMetadata(String observationID, Artifact artifact, Date dataRelease, Date metaRelease) throws Exception {
         ArtifactMetadata metadata = new ArtifactMetadata(); 
         metadata.observationID = observationID;
-        metadata.artifactURI = artifact.getURI().toASCIIString();
+        metadata.artifactURI = artifact.getURI();
         if (artifact.contentChecksum == null) {
             if (!this.tolerateNullChecksum) {
                 throw new RuntimeException("content checksum is null for artifact URI: " + metadata.artifactURI);
@@ -495,29 +539,30 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         } else {
             metadata.checksum = getStorageChecksum(artifact.contentChecksum.toASCIIString());
         }
-        metadata.contentLength = Long.toString(artifact.contentLength);
+        if (artifact.contentLength == null) {
+            if (!this.tolerateNullContentLength) {
+                throw new RuntimeException("content length is null for artifact URI: " + metadata.artifactURI);
+            }
+        } else {
+            metadata.contentLength = Long.toString(artifact.contentLength);
+        }
         metadata.contentType = artifact.contentType;
-        metadata.collection = collection;
         metadata.lastModified = artifact.getLastModified();
         metadata.storageID = artifactStore.toStorageID(artifact.getURI().toASCIIString());
-        ReleaseType type = artifact.getReleaseType();
-        if (ReleaseType.DATA.equals(type)) {
-            metadata.releaseDate = dataRelease;
-        } else if (ReleaseType.META.equals(type)) {
-            metadata.releaseDate = metaRelease;
-        } else {
-            metadata.releaseDate = null;
-        }
+        metadata.productType = artifact.getProductType();
+        metadata.releaseType = artifact.getReleaseType();
+        metadata.metaRelease = metaRelease;
+        metadata.dataRelease = dataRelease;
         
         return metadata;
     }
     
-    private TreeSet<ArtifactMetadata> query(URL baseURL, String adql, boolean logical) throws Exception {
+    private TreeSet<ArtifactMetadata> query(URL baseURL, String adql) throws Exception {
         StringBuilder queryString = new StringBuilder();
         queryString.append("LANG=ADQL&RESPONSEFORMAT=tsv&QUERY=");
         queryString.append(URLEncoder.encode(adql, "UTF-8"));
         URL url = new URL(baseURL.toString() + "?" + queryString.toString());
-        ResultReader resultReader = new ResultReader(artifactStore, logical);
+        ResultReader resultReader = new ResultReader(artifactStore);
         HttpDownload get = new HttpDownload(url, resultReader);
         try {
             get.run();
@@ -533,7 +578,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
         }
         
-        return resultReader.artifacts;
+        return resultReader.metadata;
     }
     
     private String getStorageChecksum(String checksum) throws Exception {

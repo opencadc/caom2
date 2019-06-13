@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,6 +70,8 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.date.DateUtil;
@@ -79,6 +81,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.util.TreeSet;
@@ -86,7 +89,8 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
- * Class that reads the results of a query.
+ * Class that reads the results of a CAOM (TAP) ADQL query generated and 
+ * handled by ArtifactValidator.query().
  * 
  * @author majorb
  *
@@ -95,14 +99,12 @@ public class ResultReader implements InputStreamWrapper {
     
     private static final Logger log = Logger.getLogger(ResultReader.class);
     
-    TreeSet<ArtifactMetadata> artifacts;
-    private boolean logical;
+    TreeSet<ArtifactMetadata> metadata;
     private ArtifactStore artifactStore;
     
-    public ResultReader(ArtifactStore artifactStore, boolean logical) 
+    public ResultReader(ArtifactStore artifactStore) 
             throws NoSuchAlgorithmException {
-        artifacts = new TreeSet<>(ArtifactMetadata.getComparator());
-        this.logical = logical;
+        metadata = new TreeSet<>(ArtifactMetadata.getComparator());
         this.artifactStore = artifactStore;
     }
 
@@ -113,7 +115,7 @@ public class ResultReader implements InputStreamWrapper {
         String[] parts;
         ArtifactMetadata am = null;
         boolean firstLine = true;
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, null);
+        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         while ((line = reader.readLine()) != null) {
             if (firstLine) {
                 // first line is a header
@@ -125,27 +127,21 @@ public class ResultReader implements InputStreamWrapper {
                         // empty line
                     } else {
                         am = new ArtifactMetadata();
-                        if (logical) {
-                            am.artifactURI = parts[0];
-                            am.storageID = this.artifactStore.toStorageID(am.artifactURI);
-                        } else {
-                            am.storageID = parts[0];
-                        }
+                        am.artifactURI = new URI(parts[0]);
+                        am.storageID = this.artifactStore.toStorageID(am.artifactURI.toString());
                         
                         // read lastModified
                         String dateString = parts[1];
                         if (dateString == null || dateString.length() == 0) {
                             am.lastModified = null;
                         } else {
-                            am.lastModified = df.parse(parts[1]);
+                            am.lastModified = df.parse(dateString);
                         }
                         
                         if (parts.length > 2) {
-                            if (logical) {
-                                am.checksum = getStorageChecksum(parts[2]);
-                            } else {
-                                am.checksum = parts[2];
-                            }
+                            String checksum = parts[2];
+                            int colon = checksum.indexOf(":");
+                            am.checksum = checksum.substring(colon + 1, checksum.length());
                         }
                         if (parts.length > 3) {
                             am.contentLength = parts[3];
@@ -154,23 +150,37 @@ public class ResultReader implements InputStreamWrapper {
                             am.contentType = parts[4];
                         }
                         if (parts.length > 5) {
-                            if (logical) {
-                                am.observationID = parts[5];
+                            am.observationID = parts[5];
+                        }
+                        if (parts.length > 6) {
+                            am.productType = ProductType.toValue(parts[6]);
+                        }
+                        if (parts.length > 7) {
+                            am.releaseType = ReleaseType.toValue(parts[7]);
+                        }
+                        if (parts.length > 8) {
+                            dateString = parts[8];
+                            if (dateString == null || dateString.length() == 0) {
+                                am.dataRelease = null;
+                            } else {
+                                am.dataRelease = df.parse(dateString);
                             }
                         }
-                        artifacts.add(am);
+                        if (parts.length > 9) {
+                            dateString = parts[9];
+                            if (dateString == null || dateString.length() == 0) {
+                                am.metaRelease = null;
+                            } else {
+                                am.metaRelease = df.parse(dateString);
+                            }
+                        }
+                        metadata.add(am);
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to read " + (logical ? "logical" : "physical")
-                            + " artifact: " + line, e);
+                    log.warn("Failed to read logical artifact: " + line, e);
                 }
             }
         }
-        log.debug("Finished reading " + (logical ? "logical" : "physical") + " artifacts.");
-    }
-    
-    private String getStorageChecksum(String checksum) throws Exception {
-        int colon = checksum.indexOf(":");
-        return checksum.substring(colon + 1, checksum.length());
+        log.debug("Finished reading logical artifacts.");
     }
 }
