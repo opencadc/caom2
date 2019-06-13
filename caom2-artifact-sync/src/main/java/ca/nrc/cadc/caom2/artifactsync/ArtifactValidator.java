@@ -264,7 +264,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                             correct++;
                         }
                     } else {
-                        // artifact with null or empty checksum is considered correct
+                        // artifact with null or empty checksum is considered correct, 
+                        // irrespective of its contentLength or contentType
                         correct++;
                     }
                 } else {
