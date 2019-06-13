@@ -104,10 +104,6 @@ public class DynamicTableData implements DataLinkSource {
 
     public DynamicTableData(Job job, CaomTapQuery query, ArtifactProcessor ap) {
         List<String> args = ParameterUtil.findParameterValues("id", job.getParameterList());
-        if (args == null || args.isEmpty()) {
-            throw new UsageFault("missing required parameter ID");
-        }
-        
         this.argIter = args.iterator();
         this.query = query;
         this.ap = ap;
