@@ -226,8 +226,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
                 if (nextPhysical.checksum != null) {
-                    if (nextLogical.checksum != null && nextLogical.checksum.length() > 0 &&
-                        nextLogical.checksum.equals(nextPhysical.checksum)) {
+                    if (nextLogical.checksum != null && nextLogical.checksum.length() > 0
+                        && nextLogical.checksum.equals(nextPhysical.checksum)) {
                         // check content length
                         if (nextLogical.contentLength == null 
                                 || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
