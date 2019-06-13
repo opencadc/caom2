@@ -14,18 +14,18 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.8.3'
+version = '1.8.4'
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
+    compile 'log4j:log4j:[1.2.0,)'
 
     compile 'org.opencadc:cadc-util:[1.0.10,)'
-    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.2,2.0)'
-    compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-registry:[1.0,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile('org.opencadc:cadc-dali:[1.1,)')
-    compile 'org.opencadc:cadc-vos:1.+'
+    compile 'org.opencadc:cadc-vos:[1.0,)'
     compile 'org.opencadc:cadc-uws-server:[1.2,1.3)'
     compile 'org.opencadc:caom2:[2.3.4,3.0)'
     compile 'org.opencadc:caom2-compute:[2.3.10,3.0)'

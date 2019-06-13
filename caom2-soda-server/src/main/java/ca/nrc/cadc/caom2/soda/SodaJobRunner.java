@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.soda;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2.compute.CutoutUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
@@ -82,13 +83,14 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
-import ca.nrc.cadc.caom2ops.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.CutoutGenerator;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -329,10 +331,14 @@ public class SodaJobRunner implements JobRunner
                                     List<String> cutout = CutoutUtil.computeCutout(a, pos.cut, band.cut, time.cut, pol.cut);
                                     if (cutout != null && !cutout.isEmpty())
                                     {
-
-                                        URL url = artifactResolver.getURL(a.getURI(), cutout);
-                                        log.debug("cutout URL: " + url.toExternalForm());
-                                        jobResults.add(new Result(RESULT_OK+"-"+serialNum++, url.toURI()));
+                                        StorageResolver resolver = artifactResolver.getStorageResolver(id);
+                                        if (resolver instanceof CutoutGenerator) {
+                                            URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout);
+                                            log.debug("cutout URL: " + url.toExternalForm());
+                                            jobResults.add(new Result(RESULT_OK+"-"+serialNum++, url.toURI()));
+                                        } else {
+                                            throw new UnsupportedOperationException("No CutoutGenerator for " + id.toString());
+                                        }
                                     }
                                     else
                                     {
@@ -364,7 +370,7 @@ public class SodaJobRunner implements JobRunner
                                 {
                                     log.error("unexpected", ex);
                                     StringBuilder sb = new StringBuilder();
-                                    sb.append("Error: ").append(id).append(" vs");
+                                    sb.append("Error: ").append(ex.getMessage()).append(" ").append(id).append(" vs");
                                     if (pos.name != null)
                                         sb.append(" ").append(pos.name).append("=").append(pos.value);
                                     if (band.name != null)
