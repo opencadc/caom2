@@ -225,7 +225,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (nextLogical.lastModified != null) {
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
-                if (nextLogical.checksum != null && nextLogical.checksum.equals(nextPhysical.checksum)) {
+                if (nextLogical.checksum == null || nextLogical.checksum.length() == 0) {
+                    // an artifact with null or empty checksum is considered to be correct
+                    correct++;
+                } else if (nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
                     if (nextLogical.contentLength == null 
                             || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
@@ -258,6 +261,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "ingestDate", physicalLastModified},
                             false);
                     } else {
+                        // artifact with matched checksum, contentLength and contentType
                         correct++;
                     }
                 } else {
