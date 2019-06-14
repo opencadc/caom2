@@ -226,6 +226,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
                 if (nextLogical.checksum == null || nextLogical.checksum.length() == 0) {
+                    // an artifact with null or empty checksum is considered to be correct
                     correct++;
                 } else if (nextLogical.checksum.equals(nextPhysical.checksum)) {
                     // check content length
