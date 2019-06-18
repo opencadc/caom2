@@ -225,45 +225,42 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (nextLogical.lastModified != null) {
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
-                if (nextLogical.checksum == null || nextLogical.checksum.length() == 0) {
+                // check content length
+                if (nextLogical.contentLength == null 
+                        || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
+                    diffLength++;
+                    logJSON(new String[]
+                        {"logType", "detail",
+                         "anomaly", "diffLength",
+                         "observationID", nextLogical.observationID,
+                         "artifactURI", nextLogical.artifactURI.toString(),
+                         "storageID", nextLogical.storageID,
+                         "caomContentLength", nextLogical.contentLength,
+                         "storageContentLength", nextPhysical.contentLength,
+                         "caomCollection", collection,
+                         "caomLastModified", logicalicalLastModified,
+                         "ingestDate", physicalLastModified},
+                        false);
+                } else if (nextLogical.contentType == null
+                        || !nextLogical.contentType.equals(nextPhysical.contentType)) {
+                    diffType++;
+                    logJSON(new String[]
+                        {"logType", "detail",
+                         "anomaly", "diffType",
+                         "observationID", nextLogical.observationID,
+                         "artifactURI", nextLogical.artifactURI.toString(),
+                         "storageID", nextLogical.storageID,
+                         "caomContentType", nextLogical.contentType,
+                         "storageContentType", nextPhysical.contentType,
+                         "caomCollection", collection,
+                         "caomLastModified", logicalicalLastModified,
+                         "ingestDate", physicalLastModified},
+                        false);
+                } else if (nextLogical.checksum == null || nextLogical.checksum.length() == 0 || 
+                        (nextLogical.checksum != null && 
+                         (nextLogical.checksum.equals(nextPhysical.checksum)))) {
                     // an artifact with null or empty checksum is considered to be correct
                     correct++;
-                } else if (nextLogical.checksum.equals(nextPhysical.checksum)) {
-                    // check content length
-                    if (nextLogical.contentLength == null 
-                            || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
-                        diffLength++;
-                        logJSON(new String[]
-                            {"logType", "detail",
-                             "anomaly", "diffLength",
-                             "observationID", nextLogical.observationID,
-                             "artifactURI", nextLogical.artifactURI.toString(),
-                             "storageID", nextLogical.storageID,
-                             "caomContentLength", nextLogical.contentLength,
-                             "storageContentLength", nextPhysical.contentLength,
-                             "caomCollection", collection,
-                             "caomLastModified", logicalicalLastModified,
-                             "ingestDate", physicalLastModified},
-                            false);
-                    } else if (nextLogical.contentType == null
-                            || !nextLogical.contentType.equals(nextPhysical.contentType)) {
-                        diffType++;
-                        logJSON(new String[]
-                            {"logType", "detail",
-                             "anomaly", "diffType",
-                             "observationID", nextLogical.observationID,
-                             "artifactURI", nextLogical.artifactURI.toString(),
-                             "storageID", nextLogical.storageID,
-                             "caomContentType", nextLogical.contentType,
-                             "storageContentType", nextPhysical.contentType,
-                             "caomCollection", collection,
-                             "caomLastModified", logicalicalLastModified,
-                             "ingestDate", physicalLastModified},
-                            false);
-                    } else {
-                        // artifact with matched checksum, contentLength and contentType
-                        correct++;
-                    }
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
