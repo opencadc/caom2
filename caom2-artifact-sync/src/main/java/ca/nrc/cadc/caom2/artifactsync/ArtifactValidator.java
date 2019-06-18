@@ -256,9 +256,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "caomLastModified", logicalicalLastModified,
                          "ingestDate", physicalLastModified},
                         false);
-                } else if (nextLogical.checksum == null || nextLogical.checksum.length() == 0 || 
-                        (nextLogical.checksum != null && 
-                         (nextLogical.checksum.equals(nextPhysical.checksum)))) {
+                } else if (nextLogical.checksum == null || nextLogical.checksum.length() == 0
+                        || (nextLogical.checksum != null
+                         && (nextLogical.checksum.equals(nextPhysical.checksum)))) {
                     // an artifact with null or empty checksum is considered to be correct
                     correct++;
                 } else {
