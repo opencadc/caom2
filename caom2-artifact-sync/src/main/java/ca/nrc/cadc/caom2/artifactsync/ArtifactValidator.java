@@ -231,7 +231,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     diffLength++;
                     if ((nextLogical.checksum == null || nextLogical.checksum.length() == 0) 
                             && supportSkipURITable && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical, "different contentLengths")) {
+                        if (checkAddToSkipTable(nextLogical, "contentLengths are different")) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -272,7 +272,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical, "different checksums")) {
+                        if (checkAddToSkipTable(nextLogical, "checksums are different")) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
