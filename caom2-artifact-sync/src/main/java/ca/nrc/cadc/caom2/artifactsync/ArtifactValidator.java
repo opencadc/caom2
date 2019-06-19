@@ -229,6 +229,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (nextLogical.contentLength == null 
                         || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
                     diffLength++;
+                    if ((nextLogical.checksum == null || nextLogical.checksum.length() == 0) 
+                            && supportSkipURITable && nextPhysical.checksum != null) {
+                        if (checkAddToSkipTable(nextLogical, "different contentLengths")) {
+                            skipURICount++;
+                        } else {
+                            inSkipURICount++;
+                        }
+                    }
                     logJSON(new String[]
                         {"logType", "detail",
                          "anomaly", "diffLength",
@@ -264,7 +272,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 } else {
                     diffChecksum++;
                     if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical, null)) {
+                        if (checkAddToSkipTable(nextLogical, "different checksums")) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
