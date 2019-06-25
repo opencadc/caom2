@@ -225,46 +225,54 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (nextLogical.lastModified != null) {
                     logicalicalLastModified = df.format(nextLogical.lastModified);
                 }
-                // check content length
-                if (nextLogical.contentLength == null 
-                        || !nextLogical.contentLength.equals(nextPhysical.contentLength)) {
-                    diffLength++;
-                    logJSON(new String[]
-                        {"logType", "detail",
-                         "anomaly", "diffLength",
-                         "observationID", nextLogical.observationID,
-                         "artifactURI", nextLogical.artifactURI.toString(),
-                         "storageID", nextLogical.storageID,
-                         "caomContentLength", nextLogical.contentLength,
-                         "storageContentLength", nextPhysical.contentLength,
-                         "caomCollection", collection,
-                         "caomLastModified", logicalicalLastModified,
-                         "ingestDate", physicalLastModified},
-                        false);
-                } else if (nextLogical.contentType == null
-                        || !nextLogical.contentType.equals(nextPhysical.contentType)) {
-                    diffType++;
-                    logJSON(new String[]
-                        {"logType", "detail",
-                         "anomaly", "diffType",
-                         "observationID", nextLogical.observationID,
-                         "artifactURI", nextLogical.artifactURI.toString(),
-                         "storageID", nextLogical.storageID,
-                         "caomContentType", nextLogical.contentType,
-                         "storageContentType", nextPhysical.contentType,
-                         "caomCollection", collection,
-                         "caomLastModified", logicalicalLastModified,
-                         "ingestDate", physicalLastModified},
-                        false);
-                } else if (nextLogical.checksum == null || nextLogical.checksum.length() == 0
-                        || (nextLogical.checksum != null
-                         && (nextLogical.checksum.equals(nextPhysical.checksum)))) {
-                    // an artifact with null or empty checksum is considered to be correct
-                    correct++;
+                if (matches(nextLogical.checksum, nextPhysical.checksum)) {
+                    if (matches(nextLogical.contentLength, nextPhysical.contentLength)) {
+                        if (matches(nextLogical.contentType, nextPhysical.contentType)) {
+                            correct++;
+                        } else {
+                            // content type mismatch
+                            diffType++;
+                            logJSON(new String[]
+                                {"logType", "detail",
+                                 "anomaly", "diffType",
+                                 "observationID", nextLogical.observationID,
+                                 "artifactURI", nextLogical.artifactURI.toString(),
+                                 "storageID", nextLogical.storageID,
+                                 "caomContentType", nextLogical.contentType,
+                                 "storageContentType", nextPhysical.contentType,
+                                 "caomCollection", collection,
+                                 "caomLastModified", logicalicalLastModified,
+                                 "ingestDate", physicalLastModified},
+                                false);
+                        }
+                    } else {
+                        // content length mismatch
+                        diffLength++;
+                        if (supportSkipURITable) {
+                            if (checkAddToSkipTable(nextLogical, "contentLengths are different")) {
+                                skipURICount++;
+                            } else {
+                                inSkipURICount++;
+                            }
+                        }
+                        logJSON(new String[]
+                            {"logType", "detail",
+                             "anomaly", "diffLength",
+                             "observationID", nextLogical.observationID,
+                             "artifactURI", nextLogical.artifactURI.toString(),
+                             "storageID", nextLogical.storageID,
+                             "caomContentLength", nextLogical.contentLength,
+                             "storageContentLength", nextPhysical.contentLength,
+                             "caomCollection", collection,
+                             "caomLastModified", logicalicalLastModified,
+                             "ingestDate", physicalLastModified},
+                            false);
+                    }
                 } else {
+                    // checksum mismatch
                     diffChecksum++;
-                    if (supportSkipURITable && nextLogical.checksum != null && nextPhysical.checksum != null) {
-                        if (checkAddToSkipTable(nextLogical, null)) {
+                    if (supportSkipURITable) {
+                        if (checkAddToSkipTable(nextLogical, "checksums are different")) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -430,6 +438,16 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         sb.append("}");
         if (summaryInfo || reportOnly) {
             System.out.println(sb.toString());
+        }
+    }
+    
+    private boolean matches(String logical, String physical) {
+        // consider it a match if logical is null or empty or there is an actual match
+        if (logical == null || logical.length() == 0
+            || logical.equals(physical)) {
+            return true;
+        } else {
+            return false;
         }
     }
 
