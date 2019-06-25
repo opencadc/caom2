@@ -256,17 +256,17 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                             }
                         }
                         logJSON(new String[]
-                                {"logType", "detail",
-                                 "anomaly", "diffLength",
-                                 "observationID", nextLogical.observationID,
-                                 "artifactURI", nextLogical.artifactURI.toString(),
-                                 "storageID", nextLogical.storageID,
-                                 "caomContentLength", nextLogical.contentLength,
-                                 "storageContentLength", nextPhysical.contentLength,
-                                 "caomCollection", collection,
-                                 "caomLastModified", logicalicalLastModified,
-                                 "ingestDate", physicalLastModified},
-                                false);
+                            {"logType", "detail",
+                             "anomaly", "diffLength",
+                             "observationID", nextLogical.observationID,
+                             "artifactURI", nextLogical.artifactURI.toString(),
+                             "storageID", nextLogical.storageID,
+                             "caomContentLength", nextLogical.contentLength,
+                             "storageContentLength", nextPhysical.contentLength,
+                             "caomCollection", collection,
+                             "caomLastModified", logicalicalLastModified,
+                             "ingestDate", physicalLastModified},
+                            false);
                     }
                 } else {
                     // checksum mismatch
@@ -279,19 +279,19 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         }
                     }
                     logJSON(new String[]
-                            {"logType", "detail",
-                             "anomaly", "diffChecksum",
-                             "observationID", nextLogical.observationID,
-                             "artifactURI", nextLogical.artifactURI.toString(),
-                             "storageID", nextLogical.storageID,
-                             "caomChecksum", nextLogical.checksum,
-                             "caomSize", nextLogical.contentLength,
-                             "storageChecksum", nextPhysical.checksum,
-                             "storageSize", nextPhysical.contentLength,
-                             "caomCollection", collection,
-                             "caomLastModified", logicalicalLastModified,
-                             "ingestDate", physicalLastModified},
-                            false);
+                        {"logType", "detail",
+                         "anomaly", "diffChecksum",
+                         "observationID", nextLogical.observationID,
+                         "artifactURI", nextLogical.artifactURI.toString(),
+                         "storageID", nextLogical.storageID,
+                         "caomChecksum", nextLogical.checksum,
+                         "caomSize", nextLogical.contentLength,
+                         "storageChecksum", nextPhysical.checksum,
+                         "storageSize", nextPhysical.contentLength,
+                         "caomCollection", collection,
+                         "caomLastModified", logicalicalLastModified,
+                         "ingestDate", physicalLastModified},
+                        false);
                 }
             } else {
                 notInLogical++;
