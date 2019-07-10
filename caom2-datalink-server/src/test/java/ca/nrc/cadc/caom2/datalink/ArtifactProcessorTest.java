@@ -242,7 +242,7 @@ public class ArtifactProcessorTest
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.accessURL);
                 String query = dl.accessURL.getQuery();
-                if (DataLink.Term.PKG.equals(dl.getSemantics())) {
+                if (dl.getSemantics().contains(DataLink.Term.PKG)) {
                     Assert.assertNotNull(query);
                     foundPkg = true;
                 }

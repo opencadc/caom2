@@ -20,7 +20,7 @@ dependencies {
     compile 'log4j:log4j:[1.2.0,)'
 
     compile 'org.opencadc:cadc-util:[1.0.10,)'
-    compile 'org.opencadc:cadc-datalink-server:[1.0,)'
+    compile 'org.opencadc:cadc-datalink-server:[1.0.1,)'
     compile 'org.opencadc:cadc-cdp:[1.0.2,2.0)'
     compile 'org.opencadc:cadc-registry:[1.2,)'
     compile('org.opencadc:cadc-dali:[1.1,)')
