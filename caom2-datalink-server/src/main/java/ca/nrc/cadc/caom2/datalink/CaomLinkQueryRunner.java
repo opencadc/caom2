@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,53 +62,40 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.datalink;
 
 
+import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.caom2ops.ServiceConfig;
 import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.datalink.server.DataLinkSource;
+import org.opencadc.datalink.server.LinkQueryRunner;
 
 /**
  *
  * @author pdowler
  */
-public class ServiceDescriptor 
-{
-    private static final Logger log = Logger.getLogger(ServiceDescriptor.class);
+public class CaomLinkQueryRunner extends LinkQueryRunner {
+    private static final Logger log = Logger.getLogger(CaomLinkQueryRunner.class);
 
-    private String id;
-    private URI resourceIdentifier;
-    private final List<ServiceParameter> inputParams = new ArrayList<ServiceParameter>();
-    
-    public URI standardID;
-    public URL accessURL;
-    
-    public ServiceDescriptor(String id, URI resourceIdentifier) 
-    {
-        this.id = id;
-        this.resourceIdentifier = resourceIdentifier;
+    public CaomLinkQueryRunner() {
+        super();
     }
 
-    public String getID()
-    {
-        return id;
-    }
-    
-    public URI getResourceIdentifier()
-    {
-        return resourceIdentifier;
-    }
-    
-    public List<ServiceParameter> getInputParams()
-    {
-        return inputParams;
+    @Override
+    protected DataLinkSource getDataLinkSource() {
+        String runID = job.getID();
+        if (job.getRunID() != null) {
+            runID = job.getRunID();
+        }
+        ServiceConfig sc = new ServiceConfig();
+        URI tapServiceID = sc.getTapServiceID();
+        CaomTapQuery query = new CaomTapQuery(tapServiceID, runID);
+        ArtifactProcessor ap = new ArtifactProcessor(sc, runID);
+        return new DynamicTableData(job, query, ap);
     }
 }

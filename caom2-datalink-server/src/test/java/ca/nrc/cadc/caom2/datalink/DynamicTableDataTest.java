@@ -88,6 +88,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.datalink.DataLink;
 
 /**
  * @author pdowler
@@ -133,8 +134,10 @@ public class DynamicTableDataTest
             
             ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
-            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
+            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            dtd.setDownloadOnly(false);
+            dtd.setMaxrec(10);
+            Iterator<DataLink> iter = dtd.links();
             
             Assert.assertFalse( iter.hasNext() );
         }
@@ -160,15 +163,17 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
-            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
+            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            dtd.setDownloadOnly(false);
+            dtd.setMaxrec(10);
+            Iterator<DataLink> iter = dtd.links();
 
             Assert.assertTrue(iter.hasNext());
-            List<Object> row1 = iter.next();
-            Assert.assertNotNull(row1.get(3)); // see DataLinkerror message 
+            DataLink row1 = iter.next();
+            Assert.assertNotNull(row1.errorMessage); // see DataLinkerror message 
             Assert.assertTrue(iter.hasNext());
-            List<Object> row2 = iter.next();
-            Assert.assertNotNull(row2.get(3)); // see DataLinkerror message 
+            DataLink row2 = iter.next();
+            Assert.assertNotNull(row2.errorMessage); // see DataLinkerror message 
             
             Assert.assertFalse( iter.hasNext() );
         }
@@ -189,8 +194,10 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
             ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
-            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
+            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            dtd.setDownloadOnly(false);
+            dtd.setMaxrec(10);
+            Iterator<DataLink> iter = dtd.links();
 
             // 1 results
             Assert.assertTrue( iter.hasNext() );
@@ -216,8 +223,10 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
-            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
+            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            dtd.setDownloadOnly(false);
+            dtd.setMaxrec(10);
+            Iterator<DataLink> iter = dtd.links();
 
             // 2x2 results
             Assert.assertTrue( iter.hasNext() );
@@ -246,8 +255,10 @@ public class DynamicTableDataTest
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
             ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 2);
-            DynamicTableData dtd = new DynamicTableData(10, job, query, false, ap);
-            Iterator<List<Object>> iter = dtd.iterator();
+            DynamicTableData dtd = new DynamicTableData(job, query, ap);
+            dtd.setDownloadOnly(false);
+            dtd.setMaxrec(10);
+            Iterator<DataLink> iter = dtd.links();
 
             // 2 ID x2 artifacts + 1 pkg each = 6
             Assert.assertTrue( iter.hasNext() );

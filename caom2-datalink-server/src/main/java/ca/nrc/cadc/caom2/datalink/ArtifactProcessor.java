@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -106,6 +106,9 @@ import java.util.TreeSet;
 import java.util.UUID;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.datalink.DataLink;
+import org.opencadc.datalink.ServiceDescriptor;
+import org.opencadc.datalink.ServiceParameter;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -199,16 +202,17 @@ public class ArtifactProcessor
             try
             {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
-                dl.url = getDownloadURL(a);
+                dl.accessURL = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
                 dl.readable = readable;
+                dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
             }
             catch(MalformedURLException ex)
             {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
-                dl.errorMessage = "FataLFault: failed to generate download URL: " + ex.toString();
+                dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
             }
 
             if (!downloadOnly && canCutout(a))
@@ -223,18 +227,24 @@ public class ArtifactProcessor
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.readable = readable;
-                    link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
-                    if (link.descriptor != null)
+                    link.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
+                    ServiceDescriptor sds = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
+                    if (sds != null) {
+                        link.descriptor = sds;
                         ret.add(link);
-
+                    }
+                    
                     link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
                     link.serviceDef = "soda-" + UUID.randomUUID();
                     link.contentType = a.contentType; // unchanged
                     link.contentLength = null; // unknown
                     link.readable = readable;
-                    link.descriptor = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
-                    if (link.descriptor != null)
+                    link.description = "SODA-async cutout of " + a.getURI().toASCIIString();
+                    ServiceDescriptor sda = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
+                    if (sda != null) {
+                        link.descriptor = sda;
                         ret.add(link);
+                    }
                 }
                 catch(NoSuchKeywordException ex)
                 {
@@ -249,7 +259,7 @@ public class ArtifactProcessor
             if (pkg != null) {
                 DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
                 try {
-                    link.url = getPackageURL(pkg, uri);
+                    link.accessURL = getPackageURL(pkg, uri);
                     link.contentType = CONTENT_TYPE_TAR;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                     link.readable = pkgReadable;
@@ -353,11 +363,11 @@ public class ArtifactProcessor
             authMethod = AuthMethod.ANON;
         
         // generate artifact-specific SODA service descriptor
-        ServiceDescriptor sd = new ServiceDescriptor(id, serviceID);
+        URL accessURL = registryClient.getServiceURL(serviceID, standardID, authMethod);
+        ServiceDescriptor sd = new ServiceDescriptor(accessURL);
+        sd.id = id;
         sd.standardID = standardID;
-        sd.accessURL = registryClient.getServiceURL(serviceID, standardID, authMethod);
-        if (sd.accessURL == null)
-            log.warn("failed to generate accessURL for: " + serviceID + " + " + standardID + " + " + authMethod);
+        sd.resourceIdentifier = serviceID;
 
         ServiceParameter sp;
         String val = artifactURI.toASCIIString();
