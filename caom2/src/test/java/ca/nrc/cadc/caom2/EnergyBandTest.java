@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Set;
 import java.util.TreeSet;
@@ -166,7 +166,7 @@ public class EnergyBandTest
     {
         try
         {
-            Interval inter = null;
+            SampledInterval inter = null;
             EnergyBand e = EnergyBand.getEnergyBand(inter);
             Assert.assertNull(e);
         }
@@ -182,7 +182,7 @@ public class EnergyBandTest
     {
         try
         {
-            Interval i = new Interval(0.0, Double.MIN_VALUE);
+            SampledInterval i = new SampledInterval(0.0, Double.MIN_VALUE);
             EnergyBand eb = EnergyBand.getEnergyBand(i);
             Assert.assertNull(eb);
         }
@@ -198,7 +198,7 @@ public class EnergyBandTest
     {
         try
         {
-            Interval inter = new Interval(-20.0, -10.0);
+            SampledInterval inter = new SampledInterval(-20.0, -10.0);
             EnergyBand e = EnergyBand.getEnergyBand(inter);
             Assert.assertNull(e);
         }
@@ -214,16 +214,16 @@ public class EnergyBandTest
     {
         try
         {
-            Interval inter = new Interval(-20.0, -10.0);
+            SampledInterval inter = new SampledInterval(-20.0, -10.0);
             EnergyBand e = EnergyBand.getEnergyBand(inter);
             Assert.assertNull(e);
             
-            inter = new Interval(200e-9, 900e-9); // 6/7 overlap of optical, below
+            inter = new SampledInterval(200e-9, 900e-9); // 6/7 overlap of optical, below
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
             Assert.assertEquals(EnergyBand.OPTICAL, e);
             
-            inter = new Interval(400e-9, 1100e-9); // 6/7 overlap of optical, above
+            inter = new SampledInterval(400e-9, 1100e-9); // 6/7 overlap of optical, above
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
             Assert.assertEquals(EnergyBand.OPTICAL, e);

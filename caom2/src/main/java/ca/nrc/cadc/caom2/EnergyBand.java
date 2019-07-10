@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -80,9 +80,9 @@ import java.util.List;
  * @author pdowler
  */
 public enum EnergyBand implements CaomEnum<String> {
-    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), OPTICAL(
-            "Optical"), UV(
-                    "UV"), EUV("EUV"), XRAY("X-ray"), GAMMARAY("Gamma-ray");
+    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), 
+    OPTICAL("Optical"), UV("UV"), EUV("EUV"), 
+    XRAY("X-ray"), GAMMARAY("Gamma-ray");
 
     private String value;
 
@@ -115,7 +115,7 @@ public enum EnergyBand implements CaomEnum<String> {
      * @param bounds
      * @return
      */
-    public static EnergyBand getEnergyBand(Interval bounds) {
+    public static EnergyBand getEnergyBand(SampledInterval bounds) {
         if (bounds == null) {
             return null;
         }
@@ -202,7 +202,7 @@ public enum EnergyBand implements CaomEnum<String> {
     }
 
     // fraction of e that overlaps b
-    private static double getOverlapFraction(EnergyBandWrapper b, Interval ei) {
+    private static double getOverlapFraction(EnergyBandWrapper b, SampledInterval ei) {
         // no overlap
         if (b.ub < ei.getLower() || ei.getUpper() < b.lb) {
             return 0.0;

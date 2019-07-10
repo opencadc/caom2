@@ -74,7 +74,6 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
-import org.apache.log4j.Logger;
 
 /**
  * An artifact is a single physical (stored) result. This is normally a file,
@@ -84,9 +83,6 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class Artifact extends CaomEntity implements Comparable<Artifact> {
-    private static final long serialVersionUID = 201604081100L;
-    private static final Logger log = Logger.getLogger(Artifact.class);
-
     // immutable state
     private final URI uri;
 
@@ -101,7 +97,6 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public Long contentLength;
     public URI contentChecksum;
     public Date dataRelease;
-    
 
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);

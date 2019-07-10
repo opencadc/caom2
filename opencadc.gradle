@@ -27,3 +27,12 @@ tasks.withType(Checkstyle).each { checkstyleTask ->
         }
     }
 }
+
+test {
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+        // "STARTED", 
+    }
+}
+
+

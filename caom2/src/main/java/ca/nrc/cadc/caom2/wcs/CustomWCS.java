@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,51 +62,27 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2.wcs;
 
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 
 /**
  *
  * @author pdowler
  */
-public class SubInterval implements Serializable {
-    private static final long serialVersionUID = 201202081100L;
-
-    // package mutable
-    double lower;
-    double upper;
-
-    public static final String[] CTOR_UTYPES = { "lower", "upper" };
-
-    private SubInterval() {
+public class CustomWCS {
+    // immutable state
+    private CoordAxis1D axis;
+    
+    public CustomWCS(CoordAxis1D axis) {
+        CaomValidator.assertNotNull(getClass(), "axis", axis);
+        this.axis = axis;
     }
-
-    public SubInterval(double lower, double upper) {
-        if (upper < lower) {
-            throw new IllegalArgumentException(
-                    "Interval: upper < lower for " + lower + "," + upper);
-        }
-        this.lower = lower;
-        this.upper = upper;
+    
+    public CoordAxis1D getAxis() {
+        return axis;
     }
-
-    @Override
-    public String toString() {
-        return "SubInterval[" + lower + "," + upper + "]";
-    }
-
-    public double getLower() {
-        return lower;
-    }
-
-    public double getUpper() {
-        return upper;
-    }
-
 }

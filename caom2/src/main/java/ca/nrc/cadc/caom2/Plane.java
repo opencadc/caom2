@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,7 +74,6 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
-import org.apache.log4j.Logger;
 
 /**
  * A Plane is a specific science data product resulting from an observation. As
@@ -84,9 +83,6 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class Plane extends CaomEntity implements Comparable<Plane> {
-    private static final long serialVersionUID = 201704121420L;
-    private static final Logger log = Logger.getLogger(Plane.class);
-
     // immutable state
     private final String productID;
 
@@ -101,6 +97,7 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
     public Date dataRelease;
     public DataProductType dataProductType;
     public CalibrationLevel calibrationLevel;
+    public Observable observable;
     public Provenance provenance;
     public Metrics metrics;
     public DataQuality quality;
@@ -108,6 +105,7 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
     public Energy energy;
     public Time time;
     public Polarization polarization;
+    public CustomAxis custom;
 
     public Plane(String productID) {
         CaomValidator.assertValidPathComponent(getClass(), "productID",

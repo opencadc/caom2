@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
@@ -83,6 +84,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -110,8 +112,8 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -127,6 +129,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -419,6 +422,7 @@ public class ObservationReader implements Serializable {
         obs.type = getChildText("type", root, namespace, false);
 
         obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, rc.dateFormat);
+        addGroups(obs.getMetaReadGroups(), "metaReadGroups", root, namespace, rc);
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root,
                 namespace, false);
         obs.proposal = getProposal(root, namespace, rc);
@@ -500,6 +504,27 @@ public class ObservationReader implements Serializable {
         }
     }
 
+    protected void addGroups(Set<URI> uris, String name, Element parent, Namespace namespace,
+            ReadContext rc) throws ObservationParsingException {
+        if (rc.docVersion < 24) {
+            return;
+        }
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return;
+        }
+        List<Element> els = element.getChildren("groupURI", namespace);
+        for (Element e : els) {
+            String s = e.getTextTrim();
+            try {
+                URI u = new URI(s);
+                uris.add(u);
+            } catch (URISyntaxException ex) {
+                throw new ObservationParsingException("invalid " + name + " URI: " + s, ex);
+            }
+        }
+    }
+    
     /**
      * Build an Algorithm from a JDOM representation of an algorithm element.
      *
@@ -617,6 +642,15 @@ public class ObservationReader implements Serializable {
         String name = getChildText("name", element, namespace, true);
 
         Target target = new Target(name);
+        
+        String tid = getChildText("targetID", element, namespace, false);
+        if (tid != null) {
+            try {
+                target.targetID = new URI(tid);
+            } catch (URISyntaxException ex) {
+                throw new ObservationParsingException("invalid targetID: " + tid, ex);
+            }
+        }
 
         String type = getChildText("type", element, namespace, false);
         if (type != null) {
@@ -836,10 +870,10 @@ public class ObservationReader implements Serializable {
                     namespace, true);
             Plane plane = new Plane(productID);
 
-            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement,
-                    namespace, false, rc.dateFormat);
-            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement,
-                    namespace, false, rc.dateFormat);
+            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
+            addGroups(plane.getMetaReadGroups(), "metaReadGroups", planeElement, namespace, rc);
+            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
+            addGroups(plane.getDataReadGroups(), "dataReadGroups", planeElement, namespace, rc);
 
             String creatorIDStr = getChildText("creatorID", planeElement,
                     namespace, false);
@@ -876,6 +910,7 @@ public class ObservationReader implements Serializable {
             plane.energy = getEnergy(planeElement, namespace, rc);
             plane.time = getTime(planeElement, namespace, rc);
             plane.polarization = getPolarization(planeElement, namespace, rc);
+            plane.custom = getCustom(planeElement, namespace, rc);
 
             addArtifacts(plane.getArtifacts(), planeElement, namespace, rc);
 
@@ -961,6 +996,12 @@ public class ObservationReader implements Serializable {
 
         pos.resolution = getChildTextAsDouble("resolution", element, namespace,
                 false);
+        cur = getChildElement("resolutionBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            pos.resolutionBounds = new Interval(lb, ub);
+        }
         pos.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
         pos.timeDependent = getChildTextAsBoolean("timeDependent", element,
@@ -981,7 +1022,7 @@ public class ObservationReader implements Serializable {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            nrg.bounds = new Interval(lb, ub);
+            nrg.bounds = new SampledInterval(lb, ub);
             addSamples(nrg.bounds, cur.getChild("samples", namespace),
                     namespace, rc);
         }
@@ -994,7 +1035,12 @@ public class ObservationReader implements Serializable {
 
         nrg.resolvingPower = getChildTextAsDouble("resolvingPower", element,
                 namespace, false);
-
+        cur = getChildElement("resolvingPowerBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            nrg.resolvingPowerBounds = new Interval(lb, ub);
+        }
         nrg.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
 
@@ -1003,9 +1049,20 @@ public class ObservationReader implements Serializable {
 
         // for 2.3 there is 0..1 EnergyBand
         // for 2.4 there are 0..* EnergyBand(s)
-        String emb = getChildText("emBand", element, namespace, false);
-        if (emb != null) {
-            nrg.getEnergyBands().add(EnergyBand.toValue(emb));
+        if (rc.docVersion < 24) {
+            String emb = getChildText("emBand", element, namespace, false);
+            if (emb != null) {
+                nrg.getEnergyBands().add(EnergyBand.toValue(emb));
+            }
+        } else {
+            cur = getChildElement("energyBands", element, namespace, false);
+            if (cur != null) {
+                List<Element> bes = cur.getChildren("emBand", namespace);
+                for (Element b : bes) {
+                    String emb = b.getTextTrim();
+                    nrg.getEnergyBands().add(EnergyBand.toValue(emb));
+                }
+            }
         }
         nrg.restwav = getChildTextAsDouble("restwav", element, namespace,
                 false);
@@ -1031,29 +1088,24 @@ public class ObservationReader implements Serializable {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            tim.bounds = new Interval(lb, ub);
+            tim.bounds = new SampledInterval(lb, ub);
             addSamples(tim.bounds, cur.getChild("samples", namespace),
                     namespace, rc);
         }
 
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
-            // Attribute type = cur.getAttribute("type", xsiNamespace);
-            // String tval = type.getValue();
-            // String extype = namespace.getPrefix() + ":" +
-            // Long.class.getSimpleName();
-            // if ( extype.equals(tval) )
-            // {
-            tim.dimension = getChildTextAsLong("dimension", element, namespace,
-                    true);
-            // }
-            // else
-            // throw new ObservationParsingException("unsupported dimension
-            // type: " + tval);
+            tim.dimension = getChildTextAsLong("dimension", element, namespace, true);
         }
 
         tim.resolution = getChildTextAsDouble("resolution", element, namespace,
                 false);
+        cur = getChildElement("resolutionBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            tim.resolutionBounds = new Interval(lb, ub);
+        }
 
         tim.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
@@ -1064,7 +1116,32 @@ public class ObservationReader implements Serializable {
         return tim;
     }
 
-    private void addSamples(Interval inter, Element sampleElement,
+    private CustomAxis getCustom(Element parent, Namespace namespace, ReadContext rc)
+            throws ObservationParsingException {
+        Element element = getChildElement("custom", parent, namespace, false);
+        if (element == null) {
+            return null;
+        }
+
+        String ctype = getChildText("ctype", element, namespace, true);
+        CustomAxis cus = new CustomAxis(ctype);
+        Element cur = getChildElement("bounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, true);
+            double ub = getChildTextAsDouble("upper", cur, namespace, true);
+            cus.bounds = new SampledInterval(lb, ub);
+            addSamples(cus.bounds, cur.getChild("samples", namespace), namespace, rc);
+        }
+
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null) {
+            cus.dimension = getChildTextAsLong("dimension", element, namespace, true);
+        }
+
+        return cus;
+    }
+    
+    private void addSamples(SampledInterval inter, Element sampleElement,
             Namespace namespace, ReadContext rc)
             throws ObservationParsingException {
         if (sampleElement != null) {
@@ -1072,13 +1149,13 @@ public class ObservationReader implements Serializable {
             for (Element se : sse) {
                 double lb = getChildTextAsDouble("lower", se, namespace, true);
                 double ub = getChildTextAsDouble("upper", se, namespace, true);
-                inter.getSamples().add(new SubInterval(lb, ub));
+                inter.getSamples().add(new Interval(lb, ub));
             }
         }
         if (rc.docVersion < 23 && inter.getSamples().isEmpty()) {
             // backwards compat
             inter.getSamples()
-                    .add(new SubInterval(inter.getLower(), inter.getUpper()));
+                    .add(new Interval(inter.getLower(), inter.getUpper()));
         }
     }
 
@@ -1183,14 +1260,11 @@ public class ObservationReader implements Serializable {
         Metrics metrics = new Metrics();
         metrics.sourceNumberDensity = getChildTextAsDouble(
                 "sourceNumberDensity", element, namespace, false);
-        metrics.background = getChildTextAsDouble("background", element,
-                namespace, false);
-        metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev",
-                element, namespace, false);
-        metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit",
-                element, namespace, false);
-        metrics.magLimit = getChildTextAsDouble("magLimit", element, namespace,
-                false);
+        metrics.background = getChildTextAsDouble("background", element, namespace, false);
+        metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev", element, namespace, false);
+        metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit", element, namespace, false);
+        metrics.magLimit = getChildTextAsDouble("magLimit", element, namespace, false);
+        metrics.sampleSNR = getChildTextAsDouble("sampleSNR", element, namespace, false);
         return metrics;
     }
 
@@ -1211,6 +1285,27 @@ public class ObservationReader implements Serializable {
 
         String flag = getChildText("flag", element, namespace, true);
         DataQuality ret = new DataQuality(Quality.toValue(flag));
+
+        return ret;
+    }
+    
+    /**
+     * 
+     * @param parent
+     * @param namespace
+     * @param rc
+     * @return
+     * @throws ObservationParsingException
+     */
+    protected Observable getObservable(Element parent, Namespace namespace,
+            ReadContext rc) throws ObservationParsingException {
+        Element element = getChildElement("observable", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return null;
+        }
+
+        String ucd = getChildText("ucd", element, namespace, true);
+        Observable ret = new Observable(ucd);
 
         return ret;
     }
@@ -1345,6 +1440,10 @@ public class ObservationReader implements Serializable {
                     throw new ObservationParsingException(error, e);
                 }
             }
+            
+            artifact.dataRelease = getChildTextAsDate("dataRelease", artifactElement,
+                    namespace, false, rc.dateFormat);
+            addGroups(artifact.getDataReadGroups(), "dataReadGroups", artifactElement, namespace, rc);
 
             addParts(artifact.getParts(), artifactElement, namespace, rc);
 
@@ -1452,60 +1551,22 @@ public class ObservationReader implements Serializable {
                     namespace, false);
             chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis",
                     chunkElement, namespace, false);
+            chunk.customAxis = getChildTextAsInteger("customAxis",
+                    chunkElement, namespace, false);
 
-            chunk.observable = getObservableAxis("observable", chunkElement,
-                    namespace, false, rc);
-            chunk.position = getSpatialWCS("position", chunkElement, namespace,
-                    false, rc);
-            chunk.energy = getSpectralWCS("energy", chunkElement, namespace,
-                    false, rc);
-            chunk.time = getTemporalWCS("time", chunkElement, namespace, false,
-                    rc);
-            chunk.polarization = getPolarizationWCS("polarization",
-                    chunkElement, namespace, false, rc);
+            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
+            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
+            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
+            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
+            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
+            
+            chunk.custom = getCustomWCS("custom", chunkElement, namespace, false, rc);
 
             assignEntityAttributes(chunkElement, chunk, rc);
 
             chunks.add(chunk);
         }
     }
-
-    /*
-     * //alt version for one-chunk-per-part that was reverted from caom-2.2
-     * protected Chunk getChunk(Element parent, Namespace namespace, ReadContext
-     * rc) throws ObservationParsingException { Element chunkParent = parent; if
-     * (rc.docVersion < 22) { // pre 2.2 a part could have multiple chunks
-     * inside a "chunks" element Element e = getChildElement("chunks", parent,
-     * namespace, false); if (e == null) return null; chunkParent = e; } Element
-     * chunkElement = getChildElement("chunk", chunkParent, namespace, false);
-     * if (chunkElement == null) return null;
-     * 
-     * Chunk chunk = new Chunk();
-     * 
-     * chunk.naxis = getChildTextAsInteger("naxis", chunkElement, namespace,
-     * false); chunk.observableAxis = getChildTextAsInteger("observableAxis",
-     * chunkElement, namespace, false); chunk.positionAxis1 =
-     * getChildTextAsInteger("positionAxis1", chunkElement, namespace, false);
-     * chunk.positionAxis2 = getChildTextAsInteger("positionAxis2",
-     * chunkElement, namespace, false); chunk.energyAxis =
-     * getChildTextAsInteger("energyAxis", chunkElement, namespace, false);
-     * chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement,
-     * namespace, false); chunk.polarizationAxis =
-     * getChildTextAsInteger("polarizationAxis", chunkElement, namespace,
-     * false);
-     * 
-     * chunk.observable = getObservableAxis("observable", chunkElement,
-     * namespace, false, rc); chunk.position = getSpatialWCS("position",
-     * chunkElement, namespace, false, rc); chunk.energy =
-     * getSpectralWCS("energy", chunkElement, namespace, false, rc); chunk.time
-     * = getTemporalWCS("time", chunkElement, namespace, false, rc);
-     * chunk.polarization = getPolarizationWCS("polarization", chunkElement,
-     * namespace, false, rc);
-     * 
-     * assignEntityAttributes(chunkElement, chunk, rc);
-     * 
-     * return chunk; }
-     */
 
     /**
      * Build an ObservableAxis from a JDOM representation of an observable
@@ -1682,6 +1743,34 @@ public class ObservationReader implements Serializable {
 
         CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
         return new PolarizationWCS(axis);
+    }
+    
+    /**
+     * Build an CustomWCS from a JDOM representation of an custom
+     * element.
+     * 
+     * @param name
+     *            the name of the Element.
+     * @param parent
+     *            the parent Element.
+     * @param namespace
+     *            of the document.
+     * @param required
+     * @param rc
+     * @return an PolarizationWCS, or null if the document doesn't contain an
+     *         polarization element.
+     * @throws ObservationParsingException
+     */
+    protected CustomWCS getCustomWCS(String name, Element parent,
+            Namespace namespace, boolean required, ReadContext rc)
+            throws ObservationParsingException {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return null;
+        }
+
+        CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
+        return new CustomWCS(axis);
     }
 
     /**
@@ -2319,18 +2408,18 @@ public class ObservationReader implements Serializable {
     protected void addKeywordsToList(Collection<String> list, Element element,
             Namespace ns) throws ObservationParsingException {
         Element kwe = element.getChild("keywords", ns);
-        log.debug("addKeywordsToList: " + kwe);
+        //log.debug("addKeywordsToList: " + kwe);
         if (kwe == null) {
             return;
         }
 
         List kws = kwe.getChildren("keyword", ns);
-        log.debug("addKeywordsToList: " + kws.size());
+        //log.debug("addKeywordsToList: " + kws.size());
         Iterator it = kws.iterator();
         while (it.hasNext()) {
             Element k = (Element) it.next();
             String s = k.getTextTrim();
-            log.debug("addKeywordsToList: " + s);
+            //log.debug("addKeywordsToList: " + s);
             list.add(s);
         }
     }

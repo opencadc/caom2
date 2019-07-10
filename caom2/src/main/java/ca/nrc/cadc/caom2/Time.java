@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import java.io.Serializable;
 
 /**
@@ -77,12 +78,10 @@ import java.io.Serializable;
  * @author pdowler
  */
 public class Time implements Serializable {
-    private static final long serialVersionUID = 201202081400L;
-
-    public Interval bounds;
+    public SampledInterval bounds;
     public Long dimension;
     public Double resolution;
-    public Interval variableResolution;
+    public Interval resolutionBounds;
     public Double sampleSize;
     public Double exposure;
 
@@ -91,16 +90,11 @@ public class Time implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("Time[");
         sb.append(bounds);
-        sb.append(",d=");
-        sb.append(dimension);
-        sb.append(",s=");
-        sb.append(sampleSize);
-        sb.append(",r=");
-        sb.append(resolution);
-        sb.append(",v=");
-        sb.append(variableResolution);
-        sb.append(",e=");
-        sb.append(exposure);
+        sb.append(",d=").append(dimension);
+        sb.append(",r=").append(resolution);
+        sb.append(",rb=").append(resolutionBounds);
+        sb.append(",s=").append(sampleSize);
+        sb.append(",e=").append(exposure);
         sb.append("]");
         return sb.toString();
     }

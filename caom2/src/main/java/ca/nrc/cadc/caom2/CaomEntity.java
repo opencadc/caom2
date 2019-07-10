@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HexUtil;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -99,8 +98,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public abstract class CaomEntity implements Serializable {
-    private static final long serialVersionUID = 201704181300L;
+public abstract class CaomEntity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     static boolean MCS_DEBUG = false; // way to much debug when true

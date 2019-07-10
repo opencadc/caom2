@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,12 +69,12 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-import java.util.Date;
 
 /**
  * A Chunk (of a Part) is one quantitatively specified subsection of the whole.
@@ -87,8 +87,6 @@ import java.util.Date;
  * @author pdowler
  */
 public class Chunk extends CaomEntity implements Comparable<Chunk> {
-    private static final long serialVersionUID = 201110261400L;
-
     // mutable state
     public ProductType productType;
 
@@ -99,13 +97,15 @@ public class Chunk extends CaomEntity implements Comparable<Chunk> {
     public Integer energyAxis;
     public Integer timeAxis;
     public Integer polarizationAxis;
+    public Integer customAxis;
 
     public ObservableAxis observable;
     public SpatialWCS position;
     public SpectralWCS energy;
     public TemporalWCS time;
     public PolarizationWCS polarization;
-
+    public CustomWCS custom;
+    
     public Chunk() {
     }
 

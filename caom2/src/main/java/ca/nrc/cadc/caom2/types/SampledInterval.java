@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,41 +62,122 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.types;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
-    public Shape bounds;
-    public Dimension2D dimension;
-    public Double resolution;
-    public Interval resolutionBounds;
-    public Double sampleSize;
-    public Boolean timeDependent;
-    
+public class SampledInterval implements Serializable {
+    private static final long serialVersionUID = 201708241230L;
+
+    private double lower;
+    private double upper;
+    private List<Interval> samples = new ArrayList<Interval>();
+
+    public static final String[] CTOR_UTYPES = { "lower", "upper" };
+
+    private SampledInterval() {
+    }
+
+    public SampledInterval(double lower, double upper) {
+
+        this.lower = lower;
+        this.upper = upper;
+    }
+
+    public SampledInterval(double lower, double upper, List<Interval> samples) {
+        this.lower = lower;
+        this.upper = upper;
+        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
+        this.samples.addAll(samples);
+        validate();
+    }
+
+    public final void validate() {
+        if (upper < lower) {
+            throw new IllegalArgumentException(
+                    "invalid interval (upper < lower): " + lower + "," + upper);
+        }
+        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "invalid interval (samples cannot be empty)");
+        }
+
+        Interval prev = null;
+        for (Interval si : samples) {
+            if (si.getLower() < lower) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends below lower bound: "
+                                + si + " vs " + lower);
+            }
+            if (si.getUpper() > upper) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends above upper bound: "
+                                + si + " vs " + upper);
+            }
+
+            if (prev != null) {
+                if (si.getLower() <= prev.getUpper()) {
+                    throw new IllegalArgumentException(
+                            "invalid interval: sample overlaps previous sample: "
+                                    + si + " vs " + prev);
+                }
+            }
+            prev = si;
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append(",r=").append(resolution);
-        sb.append(",rb=").append(resolutionBounds);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",t=").append(timeDependent);
+        sb.append("Interval[").append(lower).append(",").append(upper);
+        if (!samples.isEmpty()) {
+            sb.append(" samples[ ");
+            for (Interval si : samples) {
+                sb.append("[").append(si.lower).append(",").append(si.upper)
+                        .append("] ");
+            }
+            sb.append("]");
+        }
         sb.append("]");
         return sb.toString();
+    }
+
+    public double getLower() {
+        return lower;
+    }
+
+    public double getUpper() {
+        return upper;
+    }
+
+    public List<Interval> getSamples() {
+        return samples;
+    }
+
+    public double getWidth() {
+        return (upper - lower);
+    }
+
+    public static SampledInterval intersection(SampledInterval i1, SampledInterval i2) {
+        if (i1.lower > i2.upper || i1.upper < i2.lower) {
+            return null; // no overlap
+        }
+
+        double lb = Math.max(i1.lower, i2.lower);
+        double ub = Math.min(i1.upper, i2.upper);
+        return new SampledInterval(lb, ub);
     }
 }

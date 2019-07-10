@@ -62,41 +62,48 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 
 /**
- *
+ * Description of the observable (~pixel values) in a data product.
+ * 
  * @author pdowler
  */
-public class Position implements Serializable {
-    public Shape bounds;
-    public Dimension2D dimension;
-    public Double resolution;
-    public Interval resolutionBounds;
-    public Double sampleSize;
-    public Boolean timeDependent;
+public class Observable {
+    private String ucd;
+    
+    /**
+     * Constructor. 
+     * 
+     * @param ucd UCD value
+     */
+    public Observable(String ucd) { 
+        CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
+        this.ucd = ucd;
+    }
+
+    /**
+     * Unified Content Descriptor (UCD). See http://www.ivoa.net/Documents/latest/UCD.html
+     * for details.
+     * 
+     * @return the UCD
+     */
+    public String getUCD() {
+        return ucd;
+    }
+
+    public void setUCD(String ucd) {
+        CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
+        this.ucd = ucd;
+    }
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append(",r=").append(resolution);
-        sb.append(",rb=").append(resolutionBounds);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",t=").append(timeDependent);
-        sb.append("]");
-        return sb.toString();
+        return Observable.class.getSimpleName() + "[" + ucd + "]";
     }
 }

@@ -80,7 +80,7 @@
     
     <xs:simpleType name="GroupURI">
         <xs:restriction base="xs:anyURI">
-            <!-- scheme = ivo-id with fragment for group name, group name
+            <!-- scheme = ivo-id with query string for group name, group name
                 cannot contain: space, slash, backslash, percent, caret
                 extra whitespace in regex for readability
                 form: ivo://{authority}/{service}?{group-name}
@@ -124,6 +124,7 @@
     <xs:complexType name="Target">
         <xs:sequence>
             <xs:element name="name" type="xs:string"/>
+            <xs:element name="targetID" type="xs:anyURI" minOccurs="0"/>
             <xs:element name="type" type="caom2:TargetType" minOccurs="0"/>
             <xs:element name="standard" type="xs:boolean"  minOccurs="0"/>
             <xs:element name="redshift" type="xs:double" minOccurs="0"/>
@@ -220,16 +221,15 @@
                     <xs:element name="dataProductType" type="xs:string" minOccurs="0"/>
                     <xs:element name="calibrationLevel" type="caom2:CalibrationLevel" minOccurs="0"/>
                     <xs:element name="provenance" type="caom2:Provenance" minOccurs="0"/>
+                    <xs:element name="observable" type="caom2:Observable" minOccurs="0"/>
                     <xs:element name="metrics" type="caom2:Metrics" minOccurs="0"/>
                     <xs:element name="quality" type="caom2:DataQuality" minOccurs="0"/>
-                    <!-- computed position metadata -->
+
                     <xs:element name="position" type="caom2:Position" minOccurs="0" maxOccurs="1"/>
-                    <!-- computed energy metadata -->
                     <xs:element name="energy" type="caom2:Energy" minOccurs="0" maxOccurs="1"/>
-                    <!-- computed time metadata -->
                     <xs:element name="time" type="caom2:Time" minOccurs="0" maxOccurs="1"/>
-                    <!-- computed polarization metadata -->
                     <xs:element name="polarization" type="caom2:Polarization" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="custom" type="caom2:CustomAxis" minOccurs="0" maxOccurs="1"/>
 
                     <xs:element name="artifacts" type="caom2:Artifacts"  minOccurs="0"/>
                 </xs:sequence>
@@ -265,6 +265,7 @@
             <xs:element name="backgroundStddev" type="xs:double" minOccurs="0"/>
             <xs:element name="fluxDensityLimit" type="xs:double" minOccurs="0"/>
             <xs:element name="magLimit" type="xs:double" minOccurs="0"/>
+            <xs:element name="sampleSNR" type="xs:double" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -278,6 +279,12 @@
     <xs:complexType name="DataQuality">
         <xs:sequence>
             <xs:element name="flag" type="caom2:Quality" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Observable">
+        <xs:sequence>
+            <xs:element name="ucd" type="xs:string" minOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     
@@ -354,38 +361,45 @@
             <xs:element name="bounds" type="caom2:Shape" minOccurs="0" maxOccurs="1"/>
             <xs:element name="dimension" type="caom2:Dimension2D" minOccurs="0" maxOccurs="1"/>
             <xs:element name="resolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="resolutionBounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="sampleSize" type="xs:double" minOccurs="0" maxOccurs="1"/>
             <xs:element name="timeDependent" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     
     <!-- computed energy -->
-    <xs:complexType name="SubIntervalList">
+    <xs:complexType name="EnergyBandList">
         <xs:sequence>
-            <xs:element name="sample" type="caom2:SubInterval" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="emBand" type="caom2:EnergyBand" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="SubInterval">
+    <xs:complexType name="IntervalList">
         <xs:sequence>
-            <xs:element name="lower" type="xs:double" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="upper" type="xs:double" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="sample" type="caom2:Interval" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="Interval">
         <xs:sequence>
             <xs:element name="lower" type="xs:double" minOccurs="1" maxOccurs="1"/>
             <xs:element name="upper" type="xs:double" minOccurs="1" maxOccurs="1"/>
-            <xs:element name="samples" type="caom2:SubIntervalList" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SampledInterval">
+        <xs:sequence>
+            <xs:element name="lower" type="xs:double" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="upper" type="xs:double" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="samples" type="caom2:IntervalList" minOccurs="1" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="Energy">
         <xs:sequence>
-            <xs:element name="bounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="bounds" type="caom2:SampledInterval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="dimension" type="xs:long" minOccurs="0" maxOccurs="1"/>
             <xs:element name="resolvingPower" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="resolvingPowerBounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="sampleSize" type="xs:double" minOccurs="0" maxOccurs="1"/>
             <xs:element name="bandpassName" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="emBand" type="caom2:EnergyBand" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="energyBands" type="caom2:EnergyBandList" minOccurs="0" maxOccurs="1"/>
             <xs:element name="restwav" type="xs:double" minOccurs="0" maxOccurs="1"/>
             <xs:element name="transition" type="caom2:EnergyTransition" minOccurs="0" maxOccurs="1"/>
             
@@ -393,9 +407,10 @@
     </xs:complexType>
     <xs:complexType name="Time">
         <xs:sequence>
-            <xs:element name="bounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="bounds" type="caom2:SampledInterval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="dimension" type="xs:long" minOccurs="0" maxOccurs="1"/>
             <xs:element name="resolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="resolutionBounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="sampleSize" type="xs:double" minOccurs="0" maxOccurs="1"/>
             <xs:element name="exposure" type="xs:double" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
@@ -408,6 +423,13 @@
     <xs:complexType name="Polarization">
         <xs:sequence>
             <xs:element name="states" type="caom2:PolarizationStateList" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="dimension" type="xs:long" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CustomAxis">
+        <xs:sequence>
+            <xs:element name="ctype" type="xs:string"/>
+            <xs:element name="bounds" type="caom2:SampledInterval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="dimension" type="xs:long" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
@@ -486,11 +508,13 @@
                     <xs:element name="energyAxis" type="xs:integer" minOccurs="0"/>
                     <xs:element name="timeAxis" type="xs:integer" minOccurs="0"/>
                     <xs:element name="polarizationAxis" type="xs:integer" minOccurs="0"/>
+                    <xs:element name="customAxis" type="xs:integer" minOccurs="0"/>
                     <xs:element name="observable" type="caom2:ObservableAxis" minOccurs="0"/>
                     <xs:element name="position" type="caom2:SpatialWCS" minOccurs="0"/>
                     <xs:element name="energy" type="caom2:SpectralWCS" minOccurs="0"/>
                     <xs:element name="time" type="caom2:TemporalWCS" minOccurs="0"/>
                     <xs:element name="polarization" type="caom2:PolarizationWCS" minOccurs="0"/>
+                    <xs:element name="custom" type="caom2:CustomWCS" minOccurs="0"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -548,6 +572,11 @@
         </xs:sequence>
     </xs:complexType>
     
+    <xs:complexType name="CustomWCS">
+        <xs:sequence>
+            <xs:element name="axis" type="caom2:CoordAxis1D"/>
+        </xs:sequence>
+    </xs:complexType>
     <!-- Common WCS Types -->
     
     <xs:complexType name="Axis">

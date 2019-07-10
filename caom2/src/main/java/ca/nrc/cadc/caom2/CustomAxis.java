@@ -62,40 +62,42 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.types.SampledInterval;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 
 /**
- *
+ * Custom data axis description.
+ * 
  * @author pdowler
  */
-public class Position implements Serializable {
-    public Shape bounds;
-    public Dimension2D dimension;
-    public Double resolution;
-    public Interval resolutionBounds;
-    public Double sampleSize;
-    public Boolean timeDependent;
+public class CustomAxis {
+    private final String ctype;
     
+    public SampledInterval bounds;
+    public Long dimension;
+    
+    public CustomAxis(String ctype) {
+        CaomValidator.assertNotNull(CustomAxis.class, "ctype", ctype);
+        this.ctype = ctype;
+    }
+
+    public String getCtype() {
+        return ctype;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
+        sb.append(CustomAxis.class.getSimpleName());
+        sb.append("[");
+        sb.append(ctype);
+        sb.append(",").append(bounds);
         sb.append(",d=").append(dimension);
-        sb.append(",r=").append(resolution);
-        sb.append(",rb=").append(resolutionBounds);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",t=").append(timeDependent);
         sb.append("]");
         return sb.toString();
     }

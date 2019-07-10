@@ -70,24 +70,25 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
  * @author pdowler
  */
 public class Energy implements Serializable {
-    private static final long serialVersionUID = 201202081400L;
-
-    private List<EnergyBand> emBand = new ArrayList<>();
+    // mutable content
+    private Set<EnergyBand> emBand = new TreeSet<>(); // sorted enum
     
-    public Interval bounds;
+    public SampledInterval bounds;
     public Long dimension;
     public Double resolvingPower;
-    public Interval variableResolvingPower;
+    public Interval resolvingPowerBounds;
     public Double sampleSize;
     public String bandpassName;
     public EnergyTransition transition;
@@ -98,27 +99,19 @@ public class Energy implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("Energy[");
         sb.append(bounds);
-        sb.append(",d=");
-        sb.append(dimension);
-        sb.append(",s=");
-        sb.append(sampleSize);
-        sb.append(",r=");
-        sb.append(resolvingPower);
-        sb.append(",v=");
-        sb.append(variableResolvingPower);
-        sb.append(",b=");
-        sb.append(bandpassName);
-        sb.append(",e=");
-        sb.append(emBand);
-        sb.append(",t=");
-        sb.append(transition);
-        sb.append(",w=");
-        sb.append(restwav);
+        sb.append(",d=").append(dimension);
+        sb.append(",s=").append(sampleSize);
+        sb.append(",r=").append(resolvingPower);
+        sb.append(",rb=").append(resolvingPowerBounds);
+        sb.append(",b=").append(bandpassName);
+        sb.append(",e=").append(emBand);
+        sb.append(",t=").append(transition);
+        sb.append(",w=").append(restwav);
         sb.append("]");
         return sb.toString();
     }
 
-    public List<EnergyBand> getEnergyBands() {
+    public Set<EnergyBand> getEnergyBands() {
         return emBand;
     }
     

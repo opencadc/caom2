@@ -70,20 +70,17 @@
 package ca.nrc.cadc.caom2;
 
 import java.io.Serializable;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
 public class Metrics implements Serializable {
-    private static final long serialVersionUID = 201205301300L;
-    private static final Logger log = Logger.getLogger(Metrics.class);
-
     // mutable state
     public Double sourceNumberDensity;
     public Double background;
     public Double backgroundStddev;
     public Double fluxDensityLimit;
     public Double magLimit;
+    public Double sampleSNR;
 }
