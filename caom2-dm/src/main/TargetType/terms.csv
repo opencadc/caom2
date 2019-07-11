@@ -1,0 +1,6 @@
+#predicate,parent,label,Description
+
+
+object,1,astronomical object,"an extra-terrestrial object"
+
+field,1,survey field,"the target is a patch of sky named by the project or survey"

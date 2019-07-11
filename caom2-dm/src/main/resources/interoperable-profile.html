@@ -38,6 +38,7 @@
         <tr><td>caom2:Plane.position.bounds.samples</td><td>deg</td><td>ICRS</td></tr>
         <tr><td>caom2:Plane.position.bounds.size</td><td>deg</td><td></td></tr>
         <tr><td>caom2:Plane.position.resolution</td><td>arcsec</td><td></td></tr>
+        <tr><td>caom2:Plane.position.resolutionBounds</td><td>arcsec</td><td></td></tr>
         <tr><td>caom2:Plane.position.sampleSize</td><td>arcsec</td><td></td></tr>
         
         <tr><td  colspan="3"><br/></td></tr>
@@ -55,14 +56,19 @@
         
         <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Plane.time.bounds</td><td>d</td><td>MJD-UTC</td></tr>
-        <tr><td>caom2:Plane.time.bounds.samples</td><td>m</td><td>MJD-UTC</td></tr>
+        <tr><td>caom2:Plane.time.bounds.samples</td><td>d</td><td>MJD-UTC</td></tr>
         <tr><td>caom2:Plane.time.bounds.integrated</td><td>d</td><td></td></tr>
         <tr><td>caom2:Plane.time.bounds.lower</td><td>d</td><td>MJD-UTC</td></tr>
         <tr><td>caom2:Plane.time.bounds.upper</td><td>d</td><td>MJD-UTC</td></tr>
         <tr><td>caom2:Plane.time.bounds.width</td><td>d</td><td></td></tr>
         <tr><td>caom2:Plane.time.exposure</td><td>s</td><td></td></tr>
         <tr><td>caom2:Plane.time.resolution</td><td>d</td><td></td></tr>
+        <tr><td>caom2:Plane.time.resolutionBounds</td><td>d</td><td></td></tr>
         <tr><td>caom2:Plane.time.sampleSize</td><td>d</td><td></td></tr>
+        
+        <tr><td  colspan="3"><br/></td></tr>
+        <tr><td>caom2:Plane.custom.bounds</td><td colspan="2">depends on Plane.custom.ctype</td></tr>
+        <tr><td>caom2:Plane.custom.bounds.samples</td><td  colspan="2">depends on Plane.custom.ctype</tr>
         
         <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Plane.metrics.background</td><td>Jy/pix</td><td></td></tr>
@@ -72,6 +78,7 @@
         
         <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Artifact.contentLength</td><td>byte</td><td></td></tr>
+        <tr><td>caom2:Artifact.contentRelease</td><td>d</td><td>UTC</td></tr>
         
         <tr><td  colspan="3"><br/></td></tr>
         <tr><td>caom2:Chunk.position.equinox</td><td>a</td><td></td></tr>
@@ -79,7 +86,6 @@
         <tr><td>caom2:Chunk.time.exposure</td><td>s</td><td></td></tr>
         <tr><td>caom2:Chunk.time.mjdref</td><td>d</td><td></td></tr>
         <tr><td>caom2:Chunk.time.resolution</td><td>s</td><td></td></tr>
-        
         
     </table>
     

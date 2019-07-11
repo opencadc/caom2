@@ -1,0 +1,4 @@
+#predicate,parent,label,Description
+
+
+fail,1,failed to satisfy requirements,"the data failed to satisfy project requirements but may be useful for other purposes"
