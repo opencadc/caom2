@@ -651,8 +651,8 @@ public class ObservationReaderWriterTest
                 {
                     CaomUtil.assignID(a, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
                     a.contentChecksum = null;
-                    a.dataRelease = null;
-                    a.getDataReadGroups().clear();
+                    a.contentRelease = null;
+                    a.getContentReadGroups().clear();
                     for (Part pa : a.getParts()) {
                         CaomUtil.assignID(pa, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
                         for (Chunk c : pa.getChunks()) {
@@ -1465,6 +1465,9 @@ public class ObservationReaderWriterTest
                 assertEquals(expectedArtifact.contentChecksum, actualArtifact.contentChecksum);
             }
 
+            assertEquals(expectedArtifact.contentRelease, actualArtifact.contentRelease);
+            compareSets("Artifact.contentReadGroups", expectedArtifact.getContentReadGroups(), actualArtifact.getContentReadGroups());
+            
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
             
             compareEntity(expectedArtifact, actualArtifact);

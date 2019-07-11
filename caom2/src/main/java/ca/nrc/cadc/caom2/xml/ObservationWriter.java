@@ -1183,8 +1183,8 @@ public class ObservationWriter implements Serializable {
             }
             
             if (docVersion >= 24) {
-                addDateElement("dataRelease", artifact.dataRelease, artifactElement, dateFormat);
-                addGroupListElement("dataReadGroups", artifact.getDataReadGroups(), artifactElement);
+                addDateElement("contentRelease", artifact.contentRelease, artifactElement, dateFormat);
+                addGroupListElement("contentReadGroups", artifact.getContentReadGroups(), artifactElement);
             }
             
             addElement("contentType", artifact.contentType, artifactElement);

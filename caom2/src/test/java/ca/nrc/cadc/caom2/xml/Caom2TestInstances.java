@@ -502,8 +502,8 @@ public class Caom2TestInstances
                 artifact.contentType = "application/fits";
                 artifact.contentLength = 12345L;
                 artifact.contentChecksum = new URI("md5:d41d8cd98f00b204e9800998ecf8427e");
-                artifact.dataRelease = ivoaDate;
-                artifact.getDataReadGroups().addAll(dataGroups);
+                artifact.contentRelease = ivoaDate;
+                artifact.getContentReadGroups().addAll(dataGroups);
             }
             if (depth > 3)
                 artifact.getParts().addAll(getParts());

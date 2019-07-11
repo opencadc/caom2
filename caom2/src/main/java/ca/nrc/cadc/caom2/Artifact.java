@@ -88,7 +88,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
 
     // mutable contents
     private final Set<Part> parts = new TreeSet<Part>();
-    private final Set<URI> dataReadGroups = new TreeSet<URI>();
+    private final Set<URI> contentReadGroups = new TreeSet<URI>();
     private ProductType productType;
     private ReleaseType releaseType;
 
@@ -96,7 +96,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public String contentType;
     public Long contentLength;
     public URI contentChecksum;
-    public Date dataRelease;
+    public Date contentRelease;
 
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
@@ -134,8 +134,8 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
         this.releaseType = releaseType;
     }
 
-    public Set<URI> getDataReadGroups() {
-        return dataReadGroups;
+    public Set<URI> getContentReadGroups() {
+        return contentReadGroups;
     }
 
     public Set<Part> getParts() {

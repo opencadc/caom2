@@ -1441,9 +1441,9 @@ public class ObservationReader implements Serializable {
                 }
             }
             
-            artifact.dataRelease = getChildTextAsDate("dataRelease", artifactElement,
+            artifact.contentRelease = getChildTextAsDate("contentRelease", artifactElement,
                     namespace, false, rc.dateFormat);
-            addGroups(artifact.getDataReadGroups(), "dataReadGroups", artifactElement, namespace, rc);
+            addGroups(artifact.getContentReadGroups(), "contentReadGroups", artifactElement, namespace, rc);
 
             addParts(artifact.getParts(), artifactElement, namespace, rc);
 
