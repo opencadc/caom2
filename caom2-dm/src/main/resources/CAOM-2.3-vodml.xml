@@ -63,7 +63,7 @@
     <import>
         <name>ivoa</name>
         <url>http://www.ivoa.net/xml/VODML/IVOA-v1.vo-dml.xml</url>
-        <documentationURL>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/IVOA.html</documentationURL>
+        <documentationURL>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/vo-dml/IVOA-v1.0.html</documentationURL>
     </import>
     
     <!-- externally specified primtiveType -->
@@ -725,7 +725,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </composition>
         </objectType>
@@ -756,7 +756,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -940,7 +940,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </composition>
         </objectType>
@@ -1037,7 +1037,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </composition>
         </objectType>
@@ -1085,7 +1085,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </composition>
         </objectType>
@@ -1341,7 +1341,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -1374,7 +1374,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -1534,7 +1534,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -1616,7 +1616,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -1797,7 +1797,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute>
         </objectType>
@@ -2135,7 +2135,7 @@
                 </datatype>
                 <multiplicity>
                     <minOccurs>0</minOccurs>
-                    <maxOccurs>666</maxOccurs>
+                    <maxOccurs>-1</maxOccurs>
                 </multiplicity>
             </attribute><attribute>
                 <vodml-id>Polarization.dimension</vodml-id>
