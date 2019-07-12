@@ -18,7 +18,7 @@ group = 'org.opencadc'
 
 mainClassName = 'ca.nrc.cadc.caom2.remove.Main'
 
-version = '1.0.2'
+version = '1.0.3'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'

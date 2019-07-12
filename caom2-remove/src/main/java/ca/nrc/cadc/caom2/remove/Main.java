@@ -180,7 +180,7 @@ public class Main {
                     usage();
                     System.exit(1);
                 } else {
-                    src = new HarvestResource(sourceDS[0],sourceDS[1],sourceDS[2], collection, false);
+                    src = new HarvestResource(sourceDS[0],sourceDS[1],sourceDS[2], collection);
                 }
             }
 

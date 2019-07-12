@@ -226,10 +226,11 @@ public class ObservationRemover implements Runnable {
                 }
 
             } catch (Exception e) {
+                log.error("failed to list && delete observations", e);
                 ret.abort = true;
             }
         } else {
-            log.error("Problem with data source. Quitting....");
+            log.error("destination DAO is null: Quitting....");
             ret.abort = true;
         }
         return ret;
@@ -257,11 +258,11 @@ public class ObservationRemover implements Runnable {
                 }
 
             } catch (Exception e) {
-                log.error("Could not get list of harvest skip records for this collection");
+                log.error("failed to list && delete harvest skip records", e);
                 ret.abort = true;
             }
         } else {
-            log.error("Problem with data source. Quitting....");
+            log.error("destination DAO is null: Quitting....");
             ret.abort = true;
         }
         return ret;
