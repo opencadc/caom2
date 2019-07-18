@@ -16,10 +16,10 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.4.8'
+version = '2.4.9'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
-applicationDefaultJvmArgs = ['-Xms1024m','-Xmx4096m','-XX:OnOutOfMemoryError="kill -3 %p"']
+applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
 
 dependencies {
     compile 'log4j:log4j:1.2.+'

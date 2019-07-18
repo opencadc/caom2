@@ -376,7 +376,10 @@ public class ObservationValidator extends Harvester {
 
     private List<SkippedWrapperURI<ObservationStateError>> wrap(Set<ObservationStateError> errlist) {
         List<SkippedWrapperURI<ObservationStateError>> ret = new ArrayList<SkippedWrapperURI<ObservationStateError>>(errlist.size());
-        for (ObservationStateError o : errlist) {
+        Iterator<ObservationStateError> iter = errlist.iterator();
+        while (iter.hasNext()) {
+            ObservationStateError o = iter.next();
+            iter.remove(); // allow GC so we don't have to hold complete errlist and ret in memory
             ret.add(new SkippedWrapperURI<ObservationStateError>(o, null));
         }
         return ret;
