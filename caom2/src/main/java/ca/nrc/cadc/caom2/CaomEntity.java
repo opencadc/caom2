@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HexUtil;
+import ca.nrc.cadc.util.UUIDComparator;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -436,7 +437,7 @@ public abstract class CaomEntity {
                     }
                     if (fo instanceof Collection) {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
-                        SortedMap<UUID, byte[]> sorted = new TreeMap<>();
+                        SortedMap<UUID, byte[]> sorted = new TreeMap<>(new UUIDComparator());
                         Iterator<CaomEntity> i = children.iterator();
                         while (i.hasNext()) {
                             CaomEntity ce = i.next();
@@ -450,8 +451,7 @@ public abstract class CaomEntity {
                             // md.reset();
                             sorted.put(ce.getID(), bb);
                         }
-                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet()
-                                .iterator();
+                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet().iterator();
                         while (si.hasNext()) {
                             Map.Entry<UUID, byte[]> me = si.next();
                             if (MCS_DEBUG) {
@@ -461,8 +461,7 @@ public abstract class CaomEntity {
                         }
                     } else {
                         throw new UnsupportedOperationException(
-                                "found single child field " + f.getName()
-                                        + " in " + c.getName());
+                                "found single child field " + f.getName() + " in " + c.getName());
                     }
                 }
                 // child sets are never null

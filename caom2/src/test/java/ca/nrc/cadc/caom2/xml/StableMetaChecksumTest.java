@@ -126,8 +126,8 @@ public class StableMetaChecksumTest
             Observation o = or.read(r);
             Assert.assertNotNull(o);
             
-            boolean verifyAcc = false;
-            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
+            boolean verifyAcc = true;
+            log.info(filename + ": verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
             
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI mcs = o.computeMetaChecksum(digest);
