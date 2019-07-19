@@ -48,7 +48,7 @@
 *  without even the implied             GARANTIE : sans même la garantie
 *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
 *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. 
+*  PURPOSE.                             PARTICULIER. 
 -->
 <vo-dml:model xmlns:vo-dml="http://www.ivoa.net/xml/VODML/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema" version="1.0">
     <name>caom2</name>
@@ -57,7 +57,7 @@
     <uri/>
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
-    <version>2.4-rc1</version>
+    <version>2.4-beta</version>
     <lastModified>2019-07-12T12:00:00</lastModified>
     
     <import>
