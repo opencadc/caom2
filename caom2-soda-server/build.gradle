@@ -26,6 +26,7 @@ dependencies {
     compile 'org.opencadc:cadc-registry:[1.0,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-uws-server:[1.2,1.3)'
+    compile 'org.opencadc:cadc-soda-server:[1.0,)'
     compile 'org.opencadc:caom2:[2.3.9,3.0)'
     compile 'org.opencadc:caom2-compute:[2.3,3.0)'
     compile 'org.opencadc:caom2-tap:[1.6,)'

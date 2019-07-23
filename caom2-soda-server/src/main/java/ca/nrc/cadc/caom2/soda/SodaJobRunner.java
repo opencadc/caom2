@@ -79,6 +79,7 @@ import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
@@ -93,6 +94,9 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.soda.server.AbstractSodaJobRunner;
+import org.opencadc.soda.server.Cutout;
+import org.opencadc.soda.server.SodaPlugin;
 
 /**
  *
@@ -122,7 +126,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     }
 
     @Override
-    public URL toURL(int serialNum, URI uri, Cutout<Object> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol) 
+    public URL toURL(int serialNum, URI uri, Cutout<Shape> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol) 
             throws IOException {
         String runID = job.getRunID();
         if (runID == null)
@@ -208,7 +212,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
         );
     }
     
-    private ca.nrc.cadc.caom2.types.Shape dali2caom2(Object dali) {
+    private ca.nrc.cadc.caom2.types.Shape dali2caom2(Shape dali) {
         if (dali == null) {
             return null;
         }
