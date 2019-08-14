@@ -125,6 +125,34 @@ public abstract class AbstractDeletedEntityDAOTest {
     }
 
     @Test
+    public void testPutGetDelete() {
+        try {
+            UUID id1 = new UUID(0L, 100L);
+
+            Date d1 = new Date();
+
+            ObservationURI u1 = new ObservationURI("FOO", "bar1");
+
+            DeletedObservation o1 = new DeletedObservation(id1, u1);
+
+            log.info("put: " + o1);
+            dao.put(o1);
+            
+            DeletedEntity per = dao.get(DeletedObservation.class, id1);
+            Assert.assertNotNull(per);
+            
+            dao.delete(per);
+            
+            DeletedEntity gone = dao.get(DeletedObservation.class, id1);
+            Assert.assertNull(gone);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testGetListDeletedObservation() {
         try {
             UUID id1 = new UUID(0L, 100L);

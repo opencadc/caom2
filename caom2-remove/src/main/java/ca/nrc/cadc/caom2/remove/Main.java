@@ -76,7 +76,10 @@ import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.Console;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -90,7 +93,7 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     private static int exitValue = 0;
-    private static int DEFAULT_BATCH_SIZE = 10000;
+    private static final int DEFAULT_BATCH_SIZE = 10000;
     private static int batchSize;
 
     public static void main(String[] args) {
@@ -131,13 +134,56 @@ public class Main {
                 usage();
                 System.exit(1);
             }
+            HarvestResource target = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
 
             String source = am.getValue("source");
-            boolean nosource = (source == null || source.trim().length() == 0);
-            if (nosource) {
-                log.warn("missing required argument: --source=<server.database.schema> | <resource ID>");
+            boolean nosource = am.isSet("nosource");
+            if (!nosource && source == null) {
+                log.warn("missing required argument: one of --source | --nosource must be specified");
                 usage();
                 System.exit(1);
+            } else if (nosource && source != null) {
+                log.warn("only one of --source and --nosource can be specified");
+                usage();
+                System.exit(1);
+            }
+            
+            HarvestResource src = null;
+            if (!nosource) {
+                int sourceType = getSourceType(source);
+                switch (sourceType) {
+                    case HarvestResource.SOURCE_URI:
+                        try {
+                            src = new HarvestResource(new URI(source), collection);
+                        } catch (URISyntaxException ex) {
+                            log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                            usage();
+                            System.exit(1);
+                        }
+                        break;
+                    case HarvestResource.SOURCE_DB:
+                        String[] srcDS = source.split("[.]");
+                        if (srcDS.length != 3) {
+                            log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                            usage();
+                            System.exit(1);
+                        }   
+                        src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
+                        break;
+                    case HarvestResource.SOURCE_CAP_URL:
+                        try {
+                            src = new HarvestResource(new URL(source), collection);
+                        } catch (MalformedURLException ex) {
+                            log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                            usage();
+                            System.exit(1);
+                        }
+                        break;
+                    default:
+                        log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
+                        usage();
+                        System.exit(1);
+                }
             }
 
             // Optional arguments
@@ -155,34 +201,7 @@ public class Main {
                 }
             }
 
-            String[] sourceDS = null;
-
-            HarvestResource target = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
-            HarvestResource src = null;
-
-            URI resourceURI = null;
-            try {
-                // Try make it a uri first
-                resourceURI = new URI(source);
-                String scheme = resourceURI.getScheme();
-                if (!scheme.equals("ivo")) {
-                    // must have a scheme, and it must be 'ivo'
-                    log.warn("malformed --source value. Found scheme '" + scheme + "', expected: 'ivo'");
-                    usage();
-                    System.exit(1);
-                } else {
-                    src = new HarvestResource(resourceURI, collection);
-                }
-            } catch (Exception e) {
-                sourceDS = source.split("[.]");
-                if (sourceDS.length != 3) {
-                    log.warn("malformed --source value, found '" + source + "', expected: <server.database.schema>");
-                    usage();
-                    System.exit(1);
-                } else {
-                    src = new HarvestResource(sourceDS[0],sourceDS[1],sourceDS[2], collection);
-                }
-            }
+            
 
             // Assert: at this point the source has been validated to be either a resource ID starting with ivo:
             // or a server + database + scheme combination where the collection can be found.
@@ -253,12 +272,43 @@ public class Main {
 
     private static void usage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: caom2-remove [-d|--debug] [-h|--help] ...");
+        sb.append("\n\nusage: caom2-remove [-v|--verbose|-d|--debug] [-h|--help] --collection=<collection> --database=<server.database.schema>");
         sb.append("\n         --collection=<name> : name of collection to remove (e.g. IRIS)");
         sb.append("\n         --database=<server.database.schema> : collection location");
-        sb.append("\n         --source=<server.database.schema> | <resource ID> :  (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\none of: ");
+        sb.append("\n         --source=<server.database.schema> | <resource ID> : to remove a harvested collection (e.g. ivo://cadc.nrc.ca/source-repo)");
+        sb.append("\n         --nosource : to remove a non-harvested collection (e.g. a repository collection)");
         sb.append("\n\nOptional parameters:");
         sb.append("\n         --batchSize=<integer> :  default = 10000");
         log.warn(sb.toString());
+    }
+    
+    // copied from caom2harvester Main
+    private static int getSourceType(String source) {
+        // Try source as URL
+        try {
+            new URL(source);
+            return HarvestResource.SOURCE_CAP_URL;
+        } catch (MalformedURLException e) {
+            // Not a valid URL
+        }
+
+        // Try source as resourceUri
+        if (source.startsWith("ivo://")) {
+            try {
+                new URI(source);
+                return HarvestResource.SOURCE_URI;
+            } catch (URISyntaxException e) {
+                // Not a valid resourceID
+            }
+        }
+
+        // Try source as DB
+        String[] srcDS = source.split("[.]");
+        if (srcDS.length == 3) {
+            return HarvestResource.SOURCE_DB;
+        }
+
+        return HarvestResource.SOURCE_UNKNOWN;
     }
 }

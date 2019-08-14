@@ -187,9 +187,6 @@ abstract class AbstractCaomEntityDAO<T extends CaomEntity> extends AbstractDAO {
         }
         checkInit();
         // delete by PK
-        //String sql = gen.getDeleteSQL(ce.targetClass, ce.id, true);
-        //log.debug("delete: " + sql);
-        //jdbc.update(sql);
         EntityDelete op = gen.getEntityDelete(ce.targetClass, true);
         op.setID(ce.id);
         op.execute(jdbc);
