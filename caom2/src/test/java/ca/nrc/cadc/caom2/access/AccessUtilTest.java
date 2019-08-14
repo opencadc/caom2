@@ -155,28 +155,34 @@ public class AccessUtilTest {
             
             actual = AccessUtil.getArtifactAccess(data, pastMetaRelease, metaReadGroups, pastDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(pastDataRelease, actual.releaseDate);
             Assert.assertTrue(actual.isPublic);
             
             actual = AccessUtil.getArtifactAccess(meta, pastMetaRelease, metaReadGroups, pastDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(pastMetaRelease, actual.releaseDate);
             Assert.assertTrue(actual.isPublic);
             
             actual = AccessUtil.getArtifactAccess(data, futureMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(futureDataRelease, actual.releaseDate);
             Assert.assertFalse(actual.isPublic);
             
             actual = AccessUtil.getArtifactAccess(meta, futureMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(futureMetaRelease, actual.releaseDate);
             Assert.assertFalse(actual.isPublic);
             
             // mixed
             actual = AccessUtil.getArtifactAccess(data, pastMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(futureDataRelease, actual.releaseDate);
             Assert.assertFalse(actual.isPublic);
             assertListEquals(dataReadGroups, actual.getReadGroups());
             
             actual = AccessUtil.getArtifactAccess(meta, pastMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
             Assert.assertNotNull(actual);
+            Assert.assertEquals(pastMetaRelease, actual.releaseDate);
             Assert.assertTrue(actual.isPublic);
             assertListEquals(metaReadGroups, actual.getReadGroups());
             

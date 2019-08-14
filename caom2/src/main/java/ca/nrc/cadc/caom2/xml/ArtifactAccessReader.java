@@ -71,6 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,6 +79,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
@@ -94,7 +98,7 @@ public class ArtifactAccessReader {
     static enum ENAMES {
         artifactAccess(),
         artifact(), uri(), productType(), releaseType(), contentLength(), contentType(), contentChecksum(),
-        isPublic(),
+        releaseDate(), isPublic(),
         readGroups();
     }
     
@@ -130,6 +134,7 @@ public class ArtifactAccessReader {
         Artifact a = getArtifact(root.getChild(ENAMES.artifact.name()));
         ArtifactAccess ret = new ArtifactAccess(a);
         
+        ret.releaseDate = getDate(root.getChildTextTrim(ENAMES.releaseDate.name()));
         ret.isPublic = getBoolean(root.getChildTextTrim(ENAMES.isPublic.name()));
         
         getGroupList(ret.getReadGroups(), ENAMES.readGroups.name(), root.getChildren(ENAMES.readGroups.name()));
@@ -142,6 +147,18 @@ public class ArtifactAccessReader {
             return true;
         }
         return false;
+    }
+    
+    private Date getDate(String s) {
+        if (s == null) {
+            return null;
+        }
+        try {
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            return df.parse(s);
+        } catch (ParseException ex) {
+            throw new IllegalArgumentException("invalid timestamp: " + s);
+        }
     }
     
     private URI getURI(String s, boolean required) {

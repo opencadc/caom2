@@ -118,6 +118,7 @@ public class ArtifactAccessReaderWriterTest {
             Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
             Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
             
+            Assert.assertEquals(expected.releaseDate, actual.releaseDate);
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertTrue(actual.getReadGroups().isEmpty());
             
@@ -157,6 +158,7 @@ public class ArtifactAccessReaderWriterTest {
             Assert.assertEquals(expected.getArtifact().contentLength, actual.getArtifact().contentLength);
             Assert.assertEquals(expected.getArtifact().contentType, actual.getArtifact().contentType);
             
+            Assert.assertEquals(expected.releaseDate, actual.releaseDate);
             Assert.assertEquals(expected.isPublic, actual.isPublic);
             Assert.assertEquals(expected.getReadGroups().size(), actual.getReadGroups().size());
             

@@ -70,8 +70,8 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.FieldComparator;
-import ca.nrc.cadc.util.HashUtil;
 import ca.nrc.cadc.util.HexUtil;
+import ca.nrc.cadc.util.UUIDComparator;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -434,7 +434,7 @@ public abstract class CaomEntity implements Serializable {
                     }
                     if (fo instanceof Collection) {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
-                        SortedMap<UUID, byte[]> sorted = new TreeMap<>();
+                        SortedMap<UUID, byte[]> sorted = new TreeMap<>(new UUIDComparator());
                         Iterator<CaomEntity> i = children.iterator();
                         while (i.hasNext()) {
                             CaomEntity ce = i.next();
