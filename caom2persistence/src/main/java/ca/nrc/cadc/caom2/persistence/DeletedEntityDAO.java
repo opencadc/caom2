@@ -155,6 +155,28 @@ public class DeletedEntityDAO extends AbstractDAO {
         put(de, jdbc);
     }
     
+    public void delete(DeletedEntity de) {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        delete(de, jdbc);
+    }
+    
+    void delete(DeletedEntity de, JdbcTemplate jdbc) {
+        checkInit();
+        if (de == null) {
+            throw new IllegalArgumentException("arg cannot be null");
+        }
+        log.debug("DELETE: " + de);
+        long t = System.currentTimeMillis();
+
+        try {
+            String sql = gen.getDeleteSQL(de.getClass(), de.getID(), true);
+            jdbc.update(sql);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("PUT: " + de + " " + dt + "ms");
+        }
+    }
+    
     DeletedEntity get(Class<? extends DeletedEntity> c, UUID id) {
         return get(c, id, new JdbcTemplate(dataSource));
     }
