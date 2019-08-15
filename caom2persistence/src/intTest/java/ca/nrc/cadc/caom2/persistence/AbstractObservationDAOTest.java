@@ -156,6 +156,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
@@ -975,6 +976,81 @@ public abstract class AbstractObservationDAOTest
                 Observation deleted = dao.get(orig.getURI());
                 Assert.assertNull("deleted", deleted);
             }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            if ( txnManager.isOpen() )
+                try { txnManager.rollbackTransaction(); }
+                catch(Throwable t)
+                {
+                    log.error("failed to rollback transaction", t);
+                }
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testUpdateCompositeToSimple()
+    {
+        try
+        {
+            CompositeObservation comp = new CompositeObservation("FOO", "bar", new Algorithm("baz"));
+            comp.getMembers().add(new ObservationURI(URI.create("caom:FOO/part")));
+            log.debug("put: comp");
+            dao.put(comp);
+            log.debug("put: comp DONE");
+            
+            String sql = "SELECT count(*) from " + dao.gen.getTable(ObservationMember.class)
+                    + " WHERE compositeID = " + dao.gen.literal(comp.getID());
+            JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
+            
+            if (dao.gen.persistOptimisations) {
+                int compMembers = jdbc.queryForInt(sql);
+                log.info("composite members: " + compMembers);
+                Assert.assertEquals("one compMember", 1, compMembers);
+            }
+            
+            // this is so we can detect incorrect timestamp round trips
+            // caused by assigning something other than what was stored
+            Thread.sleep(2*TIME_TOLERANCE);
+
+            log.debug("get: comp");
+            Observation c = dao.get(comp.getURI());
+            log.debug("get: comp DONE");
+            Assert.assertNotNull("found", c);
+            Assert.assertEquals("composite", CompositeObservation.class, c.getClass());
+            testEqual(comp, c);
+            log.info("verified: " + c);
+
+            Observation simp = new SimpleObservation("FOO", "bar");
+            Util.assignID(simp, comp.getID());
+            
+            log.debug("put: simp");
+            dao.put(simp);
+            log.debug("put: simp DONE");
+            
+            log.debug("get: simp");
+            Observation s = dao.get(simp.getURI());
+            log.debug("get: comp DONE");
+            Assert.assertNotNull("found", s);
+            Assert.assertEquals("simple", simp.getClass(), s.getClass());
+            testEqual(simp, s);
+            log.info("verified: " + s);
+            
+            log.info("update: " + comp.getID() + " == " + simp.getID());
+            Assert.assertEquals("single UUID -- put was an update", comp.getID(), simp.getID());
+            
+            if (dao.gen.persistOptimisations) {
+                int simpMembers = jdbc.queryForInt(sql);
+                log.info("simple members: " + simpMembers);
+                Assert.assertEquals("no simpMembers", 0, simpMembers);
+            }
+            
+            dao.delete(simp.getURI());
+
+            Observation deleted = dao.get(simp.getURI());
+            Assert.assertNull("deleted", deleted);
         }
         catch(Exception unexpected)
         {
