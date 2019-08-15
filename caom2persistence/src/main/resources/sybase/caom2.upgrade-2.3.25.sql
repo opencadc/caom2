@@ -22,10 +22,10 @@ sp_chgattribute caom2_Observation,"dealloc_first_txtpg",1;
 sp_chgattribute caom2_Plane,"dealloc_first_txtpg",1;
 
 
---drop table <schema>.ObservationMetaReadAccess;
---drop table <schema>.PlaneMetaReadAccess;
---drop table <schema>.PlaneDataReadAccess;
+--drop table caom2_ObservationMetaReadAccess;
+--drop table caom2_PlaneMetaReadAccess;
+--drop table caom2_PlaneDataReadAccess;
 
---drop table <schema>.DeletedObservationMetaReadAccess;
---drop table <schema>.DeletedPlaneMetaReadAccess;
---drop table <schema>.DeletedPlaneDataReadAccess;
+--drop table caom2_DeletedObservationMetaReadAccess;
+--drop table caom2_DeletedPlaneMetaReadAccess;
+--drop table caom2_DeletedPlaneDataReadAccess;
