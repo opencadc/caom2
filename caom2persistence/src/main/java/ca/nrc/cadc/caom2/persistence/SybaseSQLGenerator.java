@@ -75,9 +75,12 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 /**
- *
+ * Sybase no longer supported.
+ * 
  * @author pdowler
+ * @deprecated 
  */
+@Deprecated
 public class SybaseSQLGenerator extends SQLGenerator {
 
     public SybaseSQLGenerator(String database, String schema) {
