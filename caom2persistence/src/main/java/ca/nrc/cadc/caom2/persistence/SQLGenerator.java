@@ -785,52 +785,6 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    // select batchSize Observation.maxLastModified, starting at minLastModified and in maxLastModified order
-    /*
-    public String getSelectLastModifiedRangeSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        if (!Observation.class.equals(c)) {
-            throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
-        }
-
-        DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-
-        StringBuilder sb = new StringBuilder();
-        String alias = getAlias(Observation.class);
-        sb.append("SELECT ");
-        String top = getTopConstraint(batchSize);
-        if (top != null && top.length() > 0) {
-            sb.append(top);
-            sb.append(" ");
-        }
-        sb.append(alias).append(".maxLastModified FROM ");
-        sb.append(getFrom(c));
-        if (minLastModified != null) {
-            sb.append(" WHERE ");
-            sb.append(alias).append(".maxLastModified >= '");
-            sb.append(df.format(minLastModified));
-            sb.append("'");
-        }
-        if (maxLastModified != null) {
-            if (minLastModified == null) {
-                sb.append(" WHERE ");
-            } else {
-                sb.append(" AND ");
-            }
-            sb.append(alias).append(".maxLastModified <= '");
-            sb.append(df.format(maxLastModified));
-            sb.append("'");
-        }
-        sb.append(" ORDER BY ");
-        sb.append(alias).append(".maxLastModified");
-        String limit = getLimitConstraint(batchSize);
-        if (limit != null && limit.length() > 0) {
-            sb.append(" ");
-            sb.append(limit);
-        }
-        return sb.toString();
-    }
-    */
-    
     protected String getTopConstraint(Integer batchSize) {
         return null;
     }
@@ -1134,8 +1088,8 @@ public class SQLGenerator {
 
         // three-step execute:
         // 1. insert/update observation
-        // composite only:
         // 2. delete previous ObservationMember join tuples
+        // composite only:
         // 3. insert current ObservationMember join tuples
         @Override
         public void execute(JdbcTemplate jdbc) {
@@ -1145,11 +1099,11 @@ public class SQLGenerator {
                 return;
             }
             
-            if (obs instanceof CompositeObservation) {
-                deleteMembers = true;
-                jdbc.update(this);
-                deleteMembers = false;
+            deleteMembers = true;
+            jdbc.update(this);
+            deleteMembers = false;
                 
+            if (obs instanceof CompositeObservation) {
                 insertMembers = true;
                 CompositeObservation co = (CompositeObservation) obs;
                 for (ObservationURI uri : co.getMembers()) {

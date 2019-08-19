@@ -18,7 +18,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.30'
+version = '2.3.31'
 
 mainClassName = 'ca.nrc.cadc.caom2.version.Main'
 
@@ -30,7 +30,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.1.5,)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.1,)'
-    compile 'org.opencadc:caom2:[2.3.13,)'
+    compile 'org.opencadc:caom2:[2.3.17,)'
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
 
     testCompile 'junit:junit:4.+'

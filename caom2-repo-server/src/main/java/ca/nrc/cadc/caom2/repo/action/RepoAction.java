@@ -124,7 +124,6 @@ public abstract class RepoAction extends RestAction {
     private String collection;
     protected ObservationURI uri;
     protected boolean computeMetadata;
-    protected boolean computeMetadataValidation;
     protected Map<String, Object> raGroupConfig = new HashMap<String, Object>(); 
 
     private transient CaomRepoConfig repoConfig;
@@ -152,6 +151,7 @@ public abstract class RepoAction extends RestAction {
         }
     }
 
+    // used by GetAction and GetDeletedAction
     protected void doGetCollectionList() throws Exception {
         log.debug("START: (collection list)");
         initConfig();
@@ -401,22 +401,25 @@ public abstract class RepoAction extends RestAction {
 
     protected void validate(Observation obs) throws TransientException {
         try {
-            CaomValidator.validate(obs);
+            if (computeMetadata) {
+                for (Plane p : obs.getPlanes()) {
+                    ComputeUtil.clearTransientState(p);
+                }
+            }
 
+            CaomValidator.validate(obs);
             for (Plane pl : obs.getPlanes()) {
                 for (Artifact a : pl.getArtifacts()) {
                     CaomWCSValidator.validate(a);
                 }
             }
 
-            // run optional plugins
             if (computeMetadata) {
                 String ostr = obs.getCollection() + "/" + obs.getObservationID();
                 String cur = ostr;
                 try {
                     for (Plane p : obs.getPlanes()) {
                         cur = ostr + "/" + p.getProductID();
-                        ComputeUtil.clearTransientState(p);
                         ComputeUtil.computeTransientState(obs, p);
                     }
                 } catch (Error er) {
@@ -427,7 +430,7 @@ public abstract class RepoAction extends RestAction {
                 }
             }
             
-            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), getReadAccessGroupConfig());
+            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
             if (ratGenerator != null) {
                 ratGenerator.generateTuples(obs);
             }
@@ -459,10 +462,6 @@ public abstract class RepoAction extends RestAction {
         }
     }
     
-    public Map<String, Object> getReadAccessGroupConfig() {
-        return this.raGroupConfig;
-    }
-
     /**
      * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured. 
      * Returns null otherwise.
