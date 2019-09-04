@@ -100,6 +100,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -479,7 +480,13 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             getTransactionManager().commitTransaction();
             log.debug("commit: OK");
             txnOpen = false;
-        } catch (DataAccessException e) {
+        } catch (DataIntegrityViolationException e) {
+            log.debug("failed to insert " + obs + ": ", e);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw e;
+        } catch (Exception e) {
             log.error("failed to insert " + obs + ": ", e);
             getTransactionManager().rollbackTransaction();
             log.debug("rollback: OK");
