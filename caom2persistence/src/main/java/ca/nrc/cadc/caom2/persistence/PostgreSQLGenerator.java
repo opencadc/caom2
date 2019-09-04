@@ -104,7 +104,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
     public PostgreSQLGenerator(String database, String schema) {
         super(database, schema);
         this.useIntegerForBoolean = true;
-        this.persistComputed = true;
         this.persistOptimisations = true;
         this.persistReadAccessWithAsset = true;
         this.useLongForUUID = false;
