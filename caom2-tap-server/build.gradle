@@ -14,16 +14,16 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.1.9'
+version = '1.1.10'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'org.postgresql:postgresql:9.4.1209.jre7'
 
-    compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-util:[1.0,)'
+    compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
-    compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-registry:[1.0,)'
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.2,)'
@@ -32,9 +32,9 @@ dependencies {
     compile 'org.opencadc:cadc-tap-schema:[1.1.6,)'
     compile 'org.opencadc:cadc-adql:[1.1,)'
     
-    compile 'org.opencadc:cadc-vos:1.+'
-    compile 'org.opencadc:cadc-access-control:[1.1.1,)'
-    compile 'org.opencadc:cadc-access-control-identity:1.+'
+    compile 'org.opencadc:cadc-vos:[1.0,)'
+    compile 'org.opencadc:cadc-gms:[1.0.0,)'
+    compile 'org.opencadc:cadc-access-control:[1.1.1,2.0)'
     
     testCompile 'junit:junit:[4.0,5.0)'
 }

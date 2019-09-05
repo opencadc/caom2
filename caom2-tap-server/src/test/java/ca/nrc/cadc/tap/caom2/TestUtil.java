@@ -70,7 +70,7 @@
 package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.ac.Group;
-import ca.nrc.cadc.ac.GroupURI;
+import org.opencadc.gms.GroupURI;
 import ca.nrc.cadc.ac.Role;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
