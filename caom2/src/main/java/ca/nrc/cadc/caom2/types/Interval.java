@@ -109,4 +109,13 @@ public class Interval implements Serializable {
         return upper;
     }
 
+    public static Interval intersection(Interval i1, Interval i2) {
+        if (i1.lower > i2.upper || i1.upper < i2.lower) {
+            return null; // no overlap
+        }
+
+        double lb = Math.max(i1.lower, i2.lower);
+        double ub = Math.min(i1.upper, i2.upper);
+        return new Interval(lb, ub);
+    }
 }

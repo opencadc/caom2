@@ -107,34 +107,6 @@ public enum EnergyBand implements CaomEnum<String> {
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    /**
-     * Compute the EnergyBand from the wavelength coverage. This finds the band
-     * that overlaps the largest fraction of the specified interval; the current
-     * implementation ignores the sub-intervals.
-     *
-     * @param bounds
-     * @return
-     */
-    public static EnergyBand getEnergyBand(SampledInterval bounds) {
-        if (bounds == null) {
-            return null;
-        }
-
-        double frac = 0.0;
-        EnergyBandWrapper eb = null;
-        for (EnergyBandWrapper b : energyBands) {
-            double f = getOverlapFraction(b, bounds);
-            if (f > frac) {
-                frac = f;
-                eb = b;
-            }
-        }
-        if (eb == null) {
-            return null;
-        }
-        return eb.band;
-    }
-
     @Override
     public String toString() {
         return "EnergyBand[" + value + "]";
@@ -183,6 +155,31 @@ public enum EnergyBand implements CaomEnum<String> {
                 ec.convert(1.0e6, "ENER", "keV")));
     }
 
+    /**
+     * Compute the EnergyBand from the wavelength coverage. This finds the band
+     * that overlaps the largest fraction of the specified interval; the current
+     * implementation ignores the sub-intervals.
+     *
+     * @param bounds
+     * @return
+     */
+    public static List<EnergyBand> getEnergyBand(SampledInterval bounds) {
+        List<EnergyBand> ret = new ArrayList<EnergyBand>();
+        if (bounds == null) {
+            return ret;
+        }
+
+        double frac = 0.0;
+        EnergyBandWrapper eb = null;
+        for (EnergyBandWrapper b : energyBands) {
+            double f = getOverlapFraction(b, bounds);
+            if (f > 0.0) {
+                ret.add(b.band);
+            }
+        }
+        return ret;
+    }
+    
     private static final class EnergyBandWrapper implements Serializable {
         private static final long serialVersionUID = 201207191400L;
         EnergyBand band;

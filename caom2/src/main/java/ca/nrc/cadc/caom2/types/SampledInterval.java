@@ -170,14 +170,4 @@ public class SampledInterval implements Serializable {
     public double getWidth() {
         return (upper - lower);
     }
-
-    public static SampledInterval intersection(SampledInterval i1, SampledInterval i2) {
-        if (i1.lower > i2.upper || i1.upper < i2.lower) {
-            return null; // no overlap
-        }
-
-        double lb = Math.max(i1.lower, i2.lower);
-        double ub = Math.min(i1.upper, i2.upper);
-        return new SampledInterval(lb, ub);
-    }
 }

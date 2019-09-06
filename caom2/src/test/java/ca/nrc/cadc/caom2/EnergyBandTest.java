@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.util.Log4jInit;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.log4j.Level;
@@ -166,9 +167,10 @@ public class EnergyBandTest
     {
         try
         {
-            SampledInterval inter = null;
-            EnergyBand e = EnergyBand.getEnergyBand(inter);
-            Assert.assertNull(e);
+            SampledInterval i = null;
+            List<EnergyBand> e = EnergyBand.getEnergyBand(i);
+            Assert.assertNotNull(e);
+            Assert.assertTrue(e.isEmpty());
         }
         catch(Exception unexpected)
         {
@@ -183,8 +185,9 @@ public class EnergyBandTest
         try
         {
             SampledInterval i = new SampledInterval(0.0, Double.MIN_VALUE);
-            EnergyBand eb = EnergyBand.getEnergyBand(i);
-            Assert.assertNull(eb);
+            List<EnergyBand> e = EnergyBand.getEnergyBand(i);
+            Assert.assertNotNull(e);
+            Assert.assertTrue(e.isEmpty());
         }
         catch(Exception unexpected)
         {
@@ -198,9 +201,10 @@ public class EnergyBandTest
     {
         try
         {
-            SampledInterval inter = new SampledInterval(-20.0, -10.0);
-            EnergyBand e = EnergyBand.getEnergyBand(inter);
-            Assert.assertNull(e);
+            SampledInterval i = new SampledInterval(-20.0, -10.0);
+            List<EnergyBand> e = EnergyBand.getEnergyBand(i);
+            Assert.assertNotNull(e);
+            Assert.assertTrue(e.isEmpty());
         }
         catch(Exception unexpected)
         {
@@ -214,19 +218,20 @@ public class EnergyBandTest
     {
         try
         {
-            SampledInterval inter = new SampledInterval(-20.0, -10.0);
-            EnergyBand e = EnergyBand.getEnergyBand(inter);
-            Assert.assertNull(e);
+            SampledInterval inter;
+            List<EnergyBand> e;
             
-            inter = new SampledInterval(200e-9, 900e-9); // 6/7 overlap of optical, below
+            inter = new SampledInterval(200e-9, 900e-9);
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
-            Assert.assertEquals(EnergyBand.OPTICAL, e);
+            Assert.assertTrue(e.contains(EnergyBand.OPTICAL));  // 6/7 optical
+            Assert.assertTrue(e.contains(EnergyBand.UV));       // 1/7 shorter wavelength
             
-            inter = new SampledInterval(400e-9, 1100e-9); // 6/7 overlap of optical, above
+            inter = new SampledInterval(400e-9, 1100e-9); 
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
-            Assert.assertEquals(EnergyBand.OPTICAL, e);
+            Assert.assertTrue(e.contains(EnergyBand.OPTICAL));  // 6/7 optical
+            Assert.assertTrue(e.contains(EnergyBand.INFRARED)); // 1/7 longer wavelength
             
         }
         catch(Exception unexpected)
