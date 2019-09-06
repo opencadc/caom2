@@ -75,9 +75,9 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -632,11 +632,12 @@ public final class CutoutUtil {
                 // if p2 is null, it was a long way away from the WCS and does not
                 // impose a limit/cutout - so we can safely skip it
                 if (tr != null) {
-                    log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = (long) Math.min(x1, tr.coordinates[0]);
-                    x2 = (long) Math.ceil(Math.max(x2, tr.coordinates[0]));
-                    y1 = (long) Math.min(y1, tr.coordinates[1]);
-                    y2 = (long) Math.ceil(Math.max(y2, tr.coordinates[1]));
+                    //log.warn("pixel coords: " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                    x1 = (long) Math.floor(Math.min(x1, tr.coordinates[0] + 0.5));
+                    x2 = (long) Math.ceil(Math.max(x2, tr.coordinates[0]) - 0.5);
+                    y1 = (long) Math.floor(Math.min(y1, tr.coordinates[1] + 0.5));
+                    y2 = (long) Math.ceil(Math.max(y2, tr.coordinates[1]) - 0.5);
+                    //log.warn("clipped: " + x1 + ":" + x2 + " " + y1 + ":" + y2);
                 }
                 //else
                 //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
@@ -688,12 +689,10 @@ public final class CutoutUtil {
         throws NoSuchKeywordException, WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
             // convert wcs to energy axis interval
-            SubInterval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
-            Interval wbounds = new Interval(si.getLower(), si.getUpper());
-            //log.info("getBounds: wcs = " + wbounds);
+            Interval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
+            Interval inter = Interval.intersection(si, bounds);
             //log.info("getBounds: intersection = " + inter);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
@@ -708,7 +707,6 @@ public final class CutoutUtil {
 
             String ctype = wcs.getAxis().getAxis().getCtype();
             if (!ctype.startsWith(EnergyConverter.CORE_CTYPE)) {
-                //log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
                 kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
                 trans = new Transform(kw);
             }
@@ -719,8 +717,8 @@ public final class CutoutUtil {
             //log.debug("getBounds: sky2pix " + b + " -> " + p2.coordinates[0] + p2.units[0]);
 
             // values can be inverted if WCS is in freq or energy instead of wavelength
-            long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
-            long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]));
+            long x1 = (long) Math.floor(Math.min(p1.coordinates[0], p2.coordinates[0] + 0.5));
+            long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]) - 0.5);
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
@@ -735,10 +733,9 @@ public final class CutoutUtil {
             for (CoordRange1D tile : wcs.getAxis().bounds.getSamples()) {
                 //log.warn("getBounds: tile = " + tile);
                 maxPixValue = Math.max(maxPixValue, (long) tile.getEnd().pix);
-                SubInterval bwmRange = EnergyUtil.toInterval(wcs, tile);
-                Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
+                Interval bwmRange = EnergyUtil.toInterval(wcs, tile);
                 // compute intersection
-                Interval inter = Interval.intersection(wbounds, bounds);
+                Interval inter = Interval.intersection(bwmRange, bounds);
                 //log.warn("getBounds: " + inter + " = " + wbounds + " X " + bounds);
                 if (inter != null) {
                     pix1 = Math.min(pix1, tile.getStart().pix);
@@ -759,10 +756,9 @@ public final class CutoutUtil {
 
         if (wcs.getAxis().range != null) {
             // can only check for complete non-overlap
-            SubInterval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
-            Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
+            Interval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
             // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
+            Interval inter = Interval.intersection(bwmRange, bounds);
             //log.info("getBounds: intersection = " + inter);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.range == null");
@@ -781,15 +777,15 @@ public final class CutoutUtil {
         for (PolarizationState ps : states) {
             if (dataPols.contains(ps)) {
                 keep.add(ps);
-                log.warn("getPolarizationBounds keep: " + ps);
+                //log.warn("getPolarizationBounds keep: " + ps);
             }
         }
         if (keep.isEmpty()) {
-            log.warn("getPolarizationBounds: empty");
+            //log.warn("getPolarizationBounds: empty");
             return null; // no intersection
         }
         if (keep.size() == dataPols.size()) {
-            log.warn("getPolarizationBounds: all");
+            //log.warn("getPolarizationBounds: all");
             return new long[0]; // keep all pixels
         }
         
@@ -814,7 +810,7 @@ public final class CutoutUtil {
         if (x2 > len) {
             x2 = len;
         }
-        log.warn("doClipCheck1D: " + len + " " + x1 + ":" + x2);
+        //log.warn("doClipCheck1D: " + len + " " + x1 + ":" + x2);
 
         // validity check
         //if (len == 1 && x1 == 1 && x2 == 1) {
@@ -824,13 +820,13 @@ public final class CutoutUtil {
         
         // all pixels includes
         if (x1 == 1 && x2 == len) {
-            log.warn("doClipCheck1D: all");
+            //log.warn("doClipCheck1D: all");
             return new long[0];
         }
         
         // no pixels included
         if (x1 > len || x2 < 1) {
-            log.warn("doClipCheck1D: none");
+            //log.warn("doClipCheck1D: none");
             return null;
         }
         

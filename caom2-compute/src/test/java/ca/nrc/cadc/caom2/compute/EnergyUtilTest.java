@@ -131,7 +131,7 @@ public class EnergyUtilTest {
             Assert.assertNull(nrg.bandpassName);
             Assert.assertNull(nrg.bounds);
             Assert.assertNull(nrg.dimension);
-            Assert.assertNull(nrg.emBand);
+            Assert.assertTrue(nrg.getEnergyBands().isEmpty());
             Assert.assertNull(nrg.resolvingPower);
             Assert.assertNull(nrg.sampleSize);
             Assert.assertNull(nrg.transition);
@@ -175,7 +175,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
 
@@ -196,7 +196,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
         } catch (Exception unexpected) {
@@ -235,7 +235,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
         } catch (Exception unexpected) {
@@ -274,7 +274,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
             Assert.assertNotNull(actual.restwav);
             Assert.assertEquals(6563.0e-10, actual.restwav, 1.0e-11);
 
@@ -514,7 +514,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -559,7 +559,7 @@ public class EnergyUtilTest {
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
             Assert.assertEquals(BANDPASS_NAME, actual.bandpassName);
             Assert.assertEquals(TRANSITION, actual.transition);
-            Assert.assertEquals(EnergyBand.OPTICAL, actual.emBand);
+            Assert.assertTrue(actual.getEnergyBands().contains(EnergyBand.OPTICAL));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

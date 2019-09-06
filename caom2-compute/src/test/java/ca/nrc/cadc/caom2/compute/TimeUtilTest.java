@@ -76,7 +76,7 @@ import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -85,13 +85,12 @@ import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * @author pdowler
@@ -249,7 +248,7 @@ public class TimeUtilTest {
             TemporalWCS wcs = new TemporalWCS(axis);
             wcs.timesys = "UTC";
             wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
-            SubInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             Assert.fail("expected IllegalArgumentException, got: " + i);
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);
@@ -264,7 +263,7 @@ public class TimeUtilTest {
             wcs.timesys = "UTC";
             // delata==0 allowed for single bin
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, new RefCoord(0.5, 54321.0));
-            SubInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

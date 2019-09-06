@@ -75,7 +75,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
@@ -127,7 +127,7 @@ public final class EnergyUtil {
             e.resolvingPower = computeResolution(artifacts, productType);
             e.bandpassName = computeBandpassName(artifacts, productType);
             e.transition = computeTransition(artifacts, productType);
-            e.emBand = EnergyBand.getEnergyBand(e.bounds);
+            e.getEnergyBands().addAll(EnergyBand.getEnergyBand(e.bounds));
             e.restwav = computeRestWav(artifacts, productType);
         }
 
@@ -137,10 +137,10 @@ public final class EnergyUtil {
     /**
      * Computes the union.
      */
-    static Interval computeBounds(Set<Artifact> artifacts, ProductType productType)
+    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         double smooth = 0.02;
-        List<SubInterval> subs = new ArrayList<SubInterval>();
+        List<Interval> subs = new ArrayList<Interval>();
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
@@ -151,17 +151,17 @@ public final class EnergyUtil {
                             CoordFunction1D function = c.energy.getAxis().function;
                             if (range != null) {
                                 log.debug("computeBounds: " + range);
-                                SubInterval s = toInterval(c.energy, range);
+                                Interval s = EnergyUtil.toInterval(c.energy, range);
                                 Util.mergeIntoList(s, subs, smooth);
                             } else if (bounds != null) {
                                 log.debug("computeBounds: " + bounds);
                                 for (CoordRange1D sr : bounds.getSamples()) {
-                                    SubInterval s = toInterval(c.energy, sr);
+                                    Interval s = EnergyUtil.toInterval(c.energy, sr);
                                     Util.mergeIntoList(s, subs, smooth);
                                 }
                             } else if (function != null) {
                                 log.debug("computeBounds: " + function);
-                                SubInterval s = toInterval(c.energy, function);
+                                Interval s = toInterval(c.energy, function);
                                 Util.mergeIntoList(s, subs, smooth);
                             }
                         }
@@ -177,13 +177,13 @@ public final class EnergyUtil {
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
-        for (SubInterval sub : subs) {
+        for (Interval sub : subs) {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
 
 
-        return new Interval(lb, ub, subs);
+        return new SampledInterval(lb, ub, subs);
     }
 
     /**
@@ -209,15 +209,15 @@ public final class EnergyUtil {
                             CoordBounds1D bounds = c.energy.getAxis().bounds;
                             CoordFunction1D function = c.energy.getAxis().function;
                             if (range != null) {
-                                SubInterval si = toInterval(c.energy, range);
+                                Interval si = EnergyUtil.toInterval(c.energy, range);
                                 tot = si.getUpper() - si.getLower();
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    SubInterval si = toInterval(c.energy, cr);
+                                    Interval si = EnergyUtil.toInterval(c.energy, cr);
                                     tot += si.getUpper() - si.getLower();
                                 }
                             } else if (function != null) {
-                                SubInterval si = toInterval(c.energy, function);
+                                Interval si = toInterval(c.energy, function);
                                 tot = si.getUpper() - si.getLower();
                             }
                             totSampleSize += tot;
@@ -246,7 +246,7 @@ public final class EnergyUtil {
      * @return number of pixels (approximate)
      * @params productType
      */
-    static Long computeDimensionFromWCS(Interval bounds, Set<Artifact> artifacts, ProductType productType)
+    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException {
         log.debug("computeDimensionFromWCS: " + bounds + " " + productType);
         if (bounds == null) {
@@ -292,7 +292,7 @@ public final class EnergyUtil {
 
         String ctype = sw.getAxis().getAxis().getCtype();
         if (!ctype.startsWith(EnergyConverter.CORE_CTYPE)) {
-            log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
+            log.debug("toSampledInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
             kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
             trans = new Transform(kw);
         }
@@ -471,7 +471,7 @@ public final class EnergyUtil {
         return null;
     }
 
-    static SubInterval toInterval(SpectralWCS wcs, CoordRange1D r) {
+    static Interval toInterval(SpectralWCS wcs, CoordRange1D r) {
         double a = r.getStart().val;
         double b = r.getEnd().val;
 
@@ -490,10 +490,10 @@ public final class EnergyUtil {
             log.debug("toInterval: converting " + b + cunit);
             b = conv.convert(b, EnergyConverter.CORE_CTYPE, cunit);
         }
-        return new SubInterval(Math.min(a, b), Math.max(a, b));
+        return new Interval(Math.min(a, b), Math.max(a, b));
     }
 
-    static SubInterval toInterval(SpectralWCS wcs, CoordFunction1D f)
+    static Interval toInterval(SpectralWCS wcs, CoordFunction1D f)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         // convert to TARGET_CTYPE
         WCSKeywords kw = new WCSWrapper(wcs, 1);
@@ -529,6 +529,6 @@ public final class EnergyUtil {
             b = conv.convert(b, EnergyConverter.CORE_CTYPE, cunit);
         }
 
-        return new SubInterval(Math.min(a, b), Math.max(a, b));
+        return new Interval(Math.min(a, b), Math.max(a, b));
     }
 }

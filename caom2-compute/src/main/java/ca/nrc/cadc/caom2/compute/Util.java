@@ -71,7 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -183,13 +183,13 @@ public final class Util {
 
         if (bounds != null) {
             // count number of distinct bins
-            List<SubInterval> bins = new ArrayList<SubInterval>();
+            List<Interval> bins = new ArrayList<Interval>();
             for (CoordRange1D cr : bounds.getSamples()) {
-                SubInterval si = new SubInterval(cr.getStart().pix, cr.getEnd().pix);
+                Interval si = new Interval(cr.getStart().pix, cr.getEnd().pix);
                 Util.mergeIntoList(si, bins, 0.0);
             }
             double ret = 0.0;
-            for (SubInterval si : bins) {
+            for (Interval si : bins) {
                 ret += Math.abs(si.getUpper() - si.getLower());
             }
             return ret;
@@ -238,9 +238,9 @@ public final class Util {
         return function.getRefCoord().pix + (val - refVal) / function.getDelta();
     }
 
-    // merge a SubInterval into a List of SubInterval
-    static void mergeIntoList(SubInterval si, List<SubInterval> samples, double unionScale) {
-        SubInterval snew = si;
+    // merge a Interval into a List of Interval
+    static void mergeIntoList(Interval si, List<Interval> samples, double unionScale) {
+        Interval snew = si;
 
         //log.debug("[mergeIntoList] " + si.lower + "," + si.upper + " ->  " + samples.size());
         if (samples.size() > 0) {
@@ -248,11 +248,11 @@ public final class Util {
             double a = si.getLower() - f;
             double b = si.getUpper() + f;
 
-            ArrayList<SubInterval> tmp = new ArrayList<SubInterval>(samples.size());
+            ArrayList<Interval> tmp = new ArrayList<Interval>(samples.size());
 
             // find intervals that overlap the new one, move from samples -> tmp
             for (int i = 0; i < samples.size(); i++) {
-                SubInterval s1 = (SubInterval) samples.get(i);
+                Interval s1 = (Interval) samples.get(i);
                 f = unionScale * (s1.getUpper() - s1.getLower());
                 double c = s1.getLower() - f;
                 double d = s1.getUpper() + f;
@@ -273,7 +273,7 @@ public final class Util {
             if (!tmp.isEmpty()) {
                 double lb = si.getLower();
                 double ub = si.getUpper();
-                for (SubInterval s : tmp) {
+                for (Interval s : tmp) {
                     if (lb > s.getLower()) {
                         lb = s.getLower();
                     }
@@ -281,13 +281,13 @@ public final class Util {
                         ub = s.getUpper();
                     }
                 }
-                snew = new SubInterval(lb, ub);
+                snew = new Interval(lb, ub);
             }
         }
         // insert new sub to preserve order
         boolean added = false;
         for (int i = 0; i < samples.size(); i++) {
-            SubInterval ss = samples.get(i);
+            Interval ss = samples.get(i);
             if (snew.getLower() < ss.getLower()) {
                 samples.add(i, snew);
                 added = true;

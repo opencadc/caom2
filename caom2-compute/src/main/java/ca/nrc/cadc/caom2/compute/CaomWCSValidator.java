@@ -74,17 +74,15 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
-import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
@@ -193,7 +191,7 @@ public class CaomWCSValidator {
         if (energy != null) {
             try {
                 CoordAxis1D energyAxis = energy.getAxis();
-                SubInterval si = null;
+                Interval si = null;
 
                 if (energyAxis.range != null) {
                     si = EnergyUtil.toInterval(energy, energyAxis.range);
@@ -231,16 +229,16 @@ public class CaomWCSValidator {
             try {
                 CoordAxis1D timeAxis = time.getAxis();
                 if (timeAxis.range != null) {
-                    SubInterval s = TimeUtil.toInterval(time, timeAxis.range);
+                    Interval s = TimeUtil.toInterval(time, timeAxis.range);
                 }
                 if (timeAxis.bounds != null) {
                     for (CoordRange1D cr : timeAxis.bounds.getSamples()) {
-                        SubInterval s1 = TimeUtil.toInterval(time, cr);
+                        Interval s1 = TimeUtil.toInterval(time, cr);
 
                     }
                 }
                 if (timeAxis.function != null) {
-                    SubInterval s2 = TimeUtil.toInterval(time, timeAxis.function);
+                    Interval s2 = TimeUtil.toInterval(time, timeAxis.function);
 
                     // Currently there is no WCSWrapper for time, so sky2pix
                     // transformation can't be done

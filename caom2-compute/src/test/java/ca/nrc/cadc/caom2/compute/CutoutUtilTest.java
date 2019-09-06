@@ -252,7 +252,7 @@ public class CutoutUtilTest {
 
             CoordFunction2D wcsf = new CoordFunction2D(
                 new Dimension2D(256, 256),
-                new Coord2D(new RefCoord(128.5, 10.0), new RefCoord(128.5, 10.0)),
+                new Coord2D(new RefCoord(128.0, 10.0), new RefCoord(128.0, 10.0)),
                 1.0e-3, 0.0, 0.0, 1.0e-3);
             c.position.getAxis().function = wcsf;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
@@ -325,7 +325,7 @@ public class CutoutUtilTest {
 
             CoordFunction2D wcsf = new CoordFunction2D(
                 new Dimension2D(256, 256),
-                new Coord2D(new RefCoord(128.5, 10.0), new RefCoord(128.5, 10.0)),
+                new Coord2D(new RefCoord(128.0, 10.0), new RefCoord(128.0, 10.0)),
                 1.0e-3, 0.0, 0.0, 1.0e-3);
             c.position.getAxis().function = wcsf;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
