@@ -1,7 +1,7 @@
 
 -- position
 create index Plane_position_i1
-    on <schema>.Plane using gist (position_bounds)
+    on <schema>.Plane using gist (position_bounds_spoly)
 ;
 
 create index Plane_position_i2

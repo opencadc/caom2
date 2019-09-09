@@ -16,14 +16,14 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.4.10'
+version = '2.4.11'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
-    compile 'org.jdom:jdom2:2.+'
+    compile 'log4j:log4j:[1.2,)'
+    compile 'org.jdom:jdom2:[2.0,)'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
     compile 'org.opencadc:cadc-util:[1.2.2,)'
@@ -39,10 +39,9 @@ dependencies {
     // needed to run access-control regen plugin (--generate-ac)
     compile 'org.opencadc:caom2-access-control:[2.3.1,)'
 
-    runtime 'net.sourceforge.jtds:jtds:1.+'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    testCompile 'junit:junit:4.+'
+    testCompile 'junit:junit:[4.0,5.0)'
 }
 
 apply from: '../opencadc.gradle'

@@ -32,12 +32,12 @@ create table <schema>.Plane
     quality_flag varchar(16),
 
 -- position
-    position_bounds          spoly,
-    position_bounds_points   double precision[],
+    position_bounds          double precision[],
+    position_bounds_spoly    spoly,
+    position_bounds_samples  double precision[],
     position_bounds_center   spoint,
     position_bounds_area     double precision,
     position_bounds_size     double precision,
-    position_bounds_samples  double precision[],
     position_dimension_naxis1 bigint,
     position_dimension_naxis2 bigint,
     position_resolution      double precision,
