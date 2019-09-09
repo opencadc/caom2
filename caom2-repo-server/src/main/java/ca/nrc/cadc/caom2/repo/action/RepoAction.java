@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Artifact;
@@ -106,6 +105,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 
 /**
  * @author pdowler
