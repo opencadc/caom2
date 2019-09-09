@@ -69,18 +69,16 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.gms.GroupURI;
 
 /**
  *

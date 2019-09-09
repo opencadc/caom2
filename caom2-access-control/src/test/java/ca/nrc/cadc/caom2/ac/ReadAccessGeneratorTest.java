@@ -67,21 +67,19 @@
 
 package ca.nrc.cadc.caom2.ac;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.util.PropertiesReader;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.gms.GroupURI;
 
 public class ReadAccessGeneratorTest {
     private static final Logger log = Logger.getLogger(ReadAccessGeneratorTest.class);

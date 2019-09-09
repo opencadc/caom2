@@ -69,7 +69,6 @@ package ca.nrc.cadc.caom2.ac;
 
 import ca.nrc.cadc.ac.Group;
 import ca.nrc.cadc.ac.GroupNotFoundException;
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
@@ -85,6 +84,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 
 /**
  * A class to generate read access tuples for an observation. The proposal group,

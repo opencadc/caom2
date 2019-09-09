@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -90,6 +89,7 @@ import java.util.Properties;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 
 /**
  *
