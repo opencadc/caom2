@@ -120,6 +120,7 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -362,8 +363,8 @@ public class SQLGenerator {
             "quality_flag",
             "metaReadGroups", 
             "dataReadGroups",
-            "position_bounds_points",
-            "position_bounds", "position_bounds_samples",
+            "position_bounds",
+            "position_bounds_spoly", "position_bounds_samples",
             "position_bounds_center", "position_bounds_area", "position_bounds_size",
             "position_dimension_naxis1", "position_dimension_naxis2",
             "position_resolution", "position_sampleSize", "position_timeDependent",
@@ -1482,28 +1483,20 @@ public class SQLGenerator {
                 pos = new Position();
             }
             if (pos.bounds != null) {
+                safeSetShape(sb, ps, col++, pos.bounds);
+                safeSetShapeAsPolygon(sb, ps, col++, pos.bounds);
                 if (pos.bounds instanceof Polygon) {
                     Polygon poly = (Polygon) pos.bounds;
-                    safeSetPointList(sb, ps, col++, poly.getPoints());
-                    safeSetPositionBounds(sb, ps, col++, poly);
                     safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
-                    safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                } else if (pos.bounds instanceof Circle) {
-                    Circle circ = (Circle) pos.bounds;
-                    safeSetCircle(sb, ps, col++, circ);
-                    safeSetPositionBounds(sb, ps, col++, circ);
-                    safeSetMultiPolygon(sb, ps, col++, null);
-                    safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                    safeSetDouble(sb, ps, col++, pos.bounds.getSize());
                 } else {
-                    throw new UnsupportedOperationException("cannot persist: " + pos.bounds.getClass().getName());
+                    safeSetMultiPolygon(sb, ps, col++, null);
                 }
+                safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                safeSetDouble(sb, ps, col++, pos.bounds.getSize());
             } else {
-                safeSetPointList(sb, ps, col++, null);
-                safeSetPositionBounds(sb, ps, col++, (Polygon) null);
+                safeSetShape(sb, ps, col++, null);
+                safeSetShapeAsPolygon(sb, ps, col++, null);
                 safeSetMultiPolygon(sb, ps, col++, null);
                 safeSetPoint(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
@@ -2449,24 +2442,11 @@ public class SQLGenerator {
      * @param val
      * @throws SQLException 
      */
-    protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
+    protected void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
     
-    /**
-     * Store a circle so it can be reconstructed.
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Store a polygon to support queries.
      * 
@@ -2476,21 +2456,7 @@ public class SQLGenerator {
      * @param val
      * @throws SQLException 
      */
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    /**
-     * Store a circle to support queries.
-     * 
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val)
+    protected void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }

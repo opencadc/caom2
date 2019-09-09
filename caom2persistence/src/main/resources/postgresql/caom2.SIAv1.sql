@@ -20,6 +20,9 @@ create view <schema>.SIAv1
     accessURL,
     imageFormat,
 
+-- private
+    position_bounds_spoly,
+
 -- CAOM read access
     metaRelease, dataRelease, metaReadAccessGroups,
     planeID
@@ -45,6 +48,8 @@ p.time_exposure,
 a.uri,
 a.uri,
 a.contentType,
+
+p.position_bounds_spoly,
 
 p.metaRelease, p.dataRelease, p.metaReadAccessGroups,
 p.planeID

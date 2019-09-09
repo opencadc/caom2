@@ -25,7 +25,7 @@ tasks.withType(Test) {
 
 task intTest(type: Test) {
     // set the configuration context
-    testClassesDir = sourceSets.intTest.output.classesDir
+    testClassesDirs = sourceSets.intTest.output.classesDirs
     classpath = sourceSets.intTest.runtimeClasspath
     
     // run the tests always
