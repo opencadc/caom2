@@ -119,9 +119,12 @@ public class IsDownloadableConverter extends SelectNavigator
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
     private GMSClient gmsClient;
-    
-    // testing support
-    void setGMSClient(GMSClient gmsClient) 
+
+    /**
+     * Used for testing support.
+     * @param gmsClient
+     */
+    public void setGMSClient(GMSClient gmsClient)
     { 
         this.gmsClient = gmsClient;
     }
