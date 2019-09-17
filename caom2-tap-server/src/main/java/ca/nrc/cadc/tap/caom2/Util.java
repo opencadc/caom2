@@ -69,10 +69,6 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.ac.Group;
-import ca.nrc.cadc.ac.Role;
-import ca.nrc.cadc.ac.UserNotFoundException;
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
@@ -80,6 +76,7 @@ import ca.nrc.cadc.tap.parser.ParserUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlException;
+import java.security.acl.Group;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +88,9 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupClient;
+import org.opencadc.gms.GroupURI;
+import org.opencadc.gms.GroupUtil;
 
 /**
  *
@@ -169,45 +169,68 @@ public class Util
         return rtn;
     }
     
-    public static List<String> getGroupIDs(GMSClient gmsClient)
+    public static List<String> getGroupIDs(GroupClient gmsClient)
         throws AccessControlException
     {
+        List<String> groupIDs = new ArrayList<String>();
+            
         try
         {
-            List<String> groupIDs = new ArrayList<String>();
-            
-            try
+            if (CredUtil.checkCredentials())
             {
-                if (CredUtil.checkCredentials())
+                GroupClient gms = gmsClient;
+                if (gms == null)
                 {
-                    GMSClient gms = gmsClient;
-                    if (gms == null)
-                    {
-                        LocalAuthority loc = new LocalAuthority();
-                        URI gmsURI = loc.getServiceURI(Standards.GMS_GROUPS_01.toString());
-                        gms = new GMSClient(gmsURI);
-                    }
-                    List<Group> groups = gms.getMemberships(Role.MEMBER);
-                    for (Group group : groups)
-                    {
-                        groupIDs.add(group.getID().getName());
-                    }
+                    LocalAuthority loc = new LocalAuthority();
+                    URI gmsURI = loc.getServiceURI(Standards.GMS_GROUPS_01.toString());
+                    gms = GroupUtil.getGroupClient(gmsURI);
+                }
+                List<GroupURI> groups = gms.getMemberships();
+                for (GroupURI g : groups)
+                {
+                    groupIDs.add(g.getName());
                 }
             }
-            catch(UserNotFoundException ex)
-            {
-                throw new RuntimeException("failed to find group memberships (unknown user)", ex);
-            }
-            catch (CertificateException ex)
-            {
-                throw new RuntimeException("failed to find group memberships (invalid proxy certficate)", ex);
-            }
-            catch (IOException ex)
-            {
-                throw new RuntimeException("failed to find group memberships", ex);
-            }
-            return groupIDs;
         }
-        finally { }
+        catch (CertificateException ex)
+        {
+            throw new RuntimeException("failed to find group memberships (invalid proxy certficate)", ex);
+        }
+        return groupIDs;
+    }
+
+    // considers tables in the ivoa schema to be caom2 tables as well
+    static boolean isCAOM2(Table t, List<Table> tabs) {
+        log.debug("isCAOM2: " + t);
+        boolean caom2 = false;
+        for (Table t2 : tabs) {
+            log.debug("   vs: " + t2.getWholeTableName() + " AS " + t2.getAlias());
+            if (t2.getSchemaName().equalsIgnoreCase("caom2") || t2.getSchemaName().equalsIgnoreCase("ivoa")) {
+                if (t != null && t2.getAlias() != null && t2.getAlias().equals(t.getName())) {
+                    return true;
+                }
+                if (t2.getAlias() == null) {
+                    caom2 = true; // unqualified caom2 table in the FROM clause
+                }
+            }
+        }
+        return caom2;
+    }
+
+    static boolean isUploadedTable(Table t, List<Table> tabs) {
+        log.debug("isUploadedTable: " + t);
+        boolean upload = false;
+        for (Table t2 : tabs) {
+            log.debug("   vs: " + t2.getWholeTableName() + " AS " + t2.getAlias());
+            if (t2.getSchemaName().equalsIgnoreCase("tap_upload")) {
+                if (t2.getAlias() != null && t2.getAlias().equals(t.getName())) {
+                    return true;
+                }
+                if (t2.getAlias() == null) {
+                    upload = true; // unqualified upload table in the FROM clause
+                }
+            }
+        }
+        return upload;
     }
 }

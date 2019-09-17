@@ -62,23 +62,108 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.impl;
 
-
+import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.tap.TapSelectItem;
+import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
+import ca.nrc.cadc.tap.caom2.IntervalFormat;
+import ca.nrc.cadc.tap.caom2.PositionBoundsRegionFormat;
+import ca.nrc.cadc.tap.caom2.PositionBoundsSamplesFormat;
+import ca.nrc.cadc.tap.caom2.PositionBoundsShapeFormat;
+import ca.nrc.cadc.tap.writer.format.PostgreSQLFormatFactory;
 import org.apache.log4j.Logger;
 
 /**
  *
- * @author pdowler
- * @deprecated use CaomFormatFactory
+ *
  */
-@Deprecated
-public class FormatFactoryImpl extends CaomFormatFactory {
-    private static final Logger log = Logger.getLogger(FormatFactoryImpl.class);
+public class CaomFormatFactory extends PostgreSQLFormatFactory {
 
-    public FormatFactoryImpl() { 
+    private static Logger log = Logger.getLogger(CaomFormatFactory.class);
+
+    public CaomFormatFactory() {
+        super();
+    }
+
+    @Override
+    public Format<Object> getFormat(TapSelectItem d) {
+        Format<Object> ret = super.getFormat(d);
+        log.warn("fomatter: " + d + " " + ret.getClass().getName());
+        return ret;
+    }
+    
+    @Override
+    protected Format<Object> getShapeFormat(TapSelectItem columnDesc) {
+        // actual output format controlled by the tap_schema: utype and xtype
+        if (columnDesc.utype != null
+                && (columnDesc.utype.equals("caom2:Plane.position.bounds")
+                    || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
+            return new PositionBoundsShapeFormat();
+        }
+        return super.getShapeFormat(columnDesc);
+    }
+
+    @Override
+    protected Format<Object> getMultiPolygonFormat(TapSelectItem columnDesc) {
+        if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds.samples")) {
+            return new PositionBoundsSamplesFormat();
+        }
+        return super.getMultiPolygonFormat(columnDesc);
+    }
+
+    @Override
+    public Format<Object> getRegionFormat(TapSelectItem columnDesc) {
+        // actual output format controlled by the tap_schema: utype and xtype
+        if (columnDesc.utype != null
+                && (columnDesc.utype.equals("caom2:Plane.position.bounds")
+                    || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
+            return new PositionBoundsRegionFormat();
+        }
+        return super.getRegionFormat(columnDesc);
+    }
+
+    @Override
+    public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
+        return new IntervalFormat(columnDesc.getDatatype().isVarSize());
+    }
+
+    @Override
+    protected Format<Object> getMultiIntervalFormat(TapSelectItem columnDesc) {
+        if (columnDesc.utype != null
+            && (columnDesc.utype.equals("caom2:Plane.energy.bounds.samples")
+                || columnDesc.utype.equals("caom2:Plane.time.bounds.samples"))) {
+            return new IntervalFormat(true); // varsize by definition
+        }
+        return super.getMultiIntervalFormat(columnDesc);
+    }
+    
+    @Override
+    public Format<Object> getClobFormat(TapSelectItem columnDesc) {
+
+        // function with CLOB argument
+        if (columnDesc != null) {
+            // caom2.Artifact, caom2.SIAv1
+            if ("caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
+                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName)) {
+                if ("accessURL".equalsIgnoreCase(columnDesc.getColumnName())) {
+                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
+                }
+            }
+
+            // ivoa.ObsCore
+            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName)) {
+                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName())) {
+                    return new DataLinkURLFormat(job.getID());
+                }
+            }
+        }
+
+        return super.getClobFormat(columnDesc);
     }
 }

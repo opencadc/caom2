@@ -69,10 +69,6 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.ac.Group;
-import org.opencadc.gms.GroupURI;
-import ca.nrc.cadc.ac.Role;
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.tap.schema.ColumnDesc;
 import ca.nrc.cadc.tap.schema.FunctionDesc;
@@ -82,11 +78,12 @@ import ca.nrc.cadc.tap.schema.TapDataType;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.uws.Job;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupClient;
+import org.opencadc.gms.GroupURI;
 
 /**
  * Utility class for testings in CAOM 
@@ -123,14 +120,20 @@ public class TestUtil
         TapDataType uuidType = new TapDataType("char", "36", "caom:uuid");
         
         
+        TableDesc obscore = new TableDesc("ivoa", "ivoa.ObsCore");
+        obscore.getColumnDescs().add(new ColumnDesc(obscore.getTableName(), "s_region", new TapDataType("char", "*", "region")));
         
         TableDesc obs = new TableDesc("caom2", "caom2.Observation");
-        obs.getColumnDescs().add(new ColumnDesc("caom2.Observation", "obsID", uuidType));
+        obs.getColumnDescs().add(new ColumnDesc(obs.getTableName(), "obsID", uuidType));
         
         TableDesc plane = new TableDesc("caom2", "caom2.Plane");
-        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "obsID", uuidType));
-        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "planeID", uuidType));
-        plane.getColumnDescs().add(new ColumnDesc("caom2.Plane", "position_bounds", TapDataType.POLYGON));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "obsID", uuidType));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "planeID", uuidType));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds_samples", new TapDataType("char", "*", "caom2:multipolygon")));
+        
+        TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
+        obs.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
         
         SchemaDesc caom2 = new SchemaDesc("caom2");
         caom2.getTableDescs().add(obs);
@@ -159,27 +162,27 @@ public class TestUtil
         public String getID() { return "internal-test-jobID"; }
     };
     
-    static class TestGMSClient extends GMSClient
+    static class TestGMSClient implements GroupClient
     {
         private Subject subjectWithGroups;
         public TestGMSClient(Subject subjectWithGroups)
         {
-            super(URI.create("ivo://cadc.nrc.ca/no-such-thing"));
             this.subjectWithGroups = subjectWithGroups;
         }
 
         @Override
-        public List<Group> getMemberships(Role role)
-        {
+        public boolean isMember(GroupURI guri) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<GroupURI> getMemberships() {
             Subject cur = AuthenticationUtil.getCurrentSubject();
-            List<Group> memberships = new ArrayList<Group>();
+            List<GroupURI> memberships = new ArrayList<GroupURI>();
             if (cur == subjectWithGroups)
             {
-                if (role == Role.MEMBER)
-                {
-                    memberships.add(new Group(new GroupURI("ivo://example.org/gms?666")));
-                    memberships.add(new Group(new GroupURI("ivo://example.org/gms?777")));
-                }
+                memberships.add(new GroupURI("ivo://example.org/gms?666"));
+                memberships.add(new GroupURI("ivo://example.org/gms?777"));
             }
             log.info("TestGMSClient: " + memberships.size() + " groups");
             return memberships;

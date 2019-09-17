@@ -74,6 +74,7 @@ import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
 import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
 import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
+import ca.nrc.cadc.tap.schema.TapSchema;
 import java.util.Iterator;
 import java.util.List;
 import net.sf.jsqlparser.expression.Expression;
@@ -96,9 +97,12 @@ public class CaomSelectListConverter extends SelectNavigator
 {
     private static Logger log = Logger.getLogger(CaomSelectListConverter.class);
     
-    public CaomSelectListConverter()
+    private final TapSchema tapSchema;
+    
+    public CaomSelectListConverter(TapSchema tapSchema)
     {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
+        this.tapSchema = tapSchema;
     }
 
     @Override
@@ -139,7 +143,7 @@ public class CaomSelectListConverter extends SelectNavigator
                             }
                         }
                     }
-                    else if(e instanceof Column)
+                    else if (e instanceof Column)
                     {
                         Column c = (Column) e;
                         fixColumn(c, tabs);
@@ -152,13 +156,18 @@ public class CaomSelectListConverter extends SelectNavigator
     private void fixColumn(Column c, List<Table> tabs)
     {
         Table t = c.getTable();
-        if ( !isUploadedTable(t, tabs))
+        if ( !Util.isUploadedTable(t, tabs))
         {
-            if (isCAOM2(c, tabs))
+            if (Util.isCAOM2(t, tabs))
             {
                 // caom2.Artifact, caom2.SIAv1
                 if (c.getColumnName().equalsIgnoreCase("accessURL"))
                     c.setColumnName("uri");
+                
+                // caom2.Plane changes in caom2persistence-2.3.33:
+                // position_bounds is a caom2:shape
+                // position_bounds_samples is a caom2:multipolygon
+                // position_bounds_spoly is a polygon for use in predicates
                 
                 // caom2.Plane -- position_bounds_points is polymorphic (circles and polygons)
                 // and position_bounds is not (circle approximated as polygon) so we have to 
@@ -169,42 +178,10 @@ public class CaomSelectListConverter extends SelectNavigator
                 
                 // ivoa.ObsCore has STC-S output so we can select the exact polymorphic column
                 // this variant has to match the one in FormatFactoryImpl.getRegionFormat()
-                if (c.getColumnName().equalsIgnoreCase("s_region"))
-                    c.setColumnName("position_bounds_points");
+                //if (c.getColumnName().equalsIgnoreCase("s_region"))
+                //    c.setColumnName("position_bounds_points");
             }
             
         }
-    }
-    
-    // this gets called after TableNameConverter does ivoa.ObsCore to caom2.ObsCore
-    private boolean isCAOM2(Column c, List<Table> tabs)
-    {
-        boolean caom2 = false;
-        Table t = c.getTable();
-        for (Table t2 : tabs)
-        {
-            log.debug("isCAOM2: " + c + " vs " + t2);
-            if ( t2.getSchemaName().equalsIgnoreCase("caom2"))
-            {
-                caom2 = true;
-                if (t != null && t2.getAlias() != null && t2.getAlias().equals(t.getName()))
-                    return true;
-            }
-        }
-        return caom2;
-    }
-                
-
-    private boolean isUploadedTable(Table t, List<Table> tabs)
-    {
-        for (Table t2 : tabs)
-        {
-            if ( t2.getSchemaName().equalsIgnoreCase("tap_upload"))
-            {
-                if (t2.getAlias() != null && t2.getAlias().equals(t.getName()))
-                    return true;
-            }
-        }
-        return false;
     }
 }

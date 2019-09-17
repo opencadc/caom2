@@ -107,6 +107,8 @@ public class AreaFunctionTest
     public String _expected = "";
     public String _sql;
 
+    private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
+    
     /**
      * @throws java.lang.Exception
      */
@@ -145,7 +147,7 @@ public class AreaFunctionTest
         protected void init()
         {
             //super.init();
-            super.navigatorList.add(new CaomRegionConverter());
+            super.navigatorList.add(new CaomRegionConverter(caomTapSchema));
         }
     }
 

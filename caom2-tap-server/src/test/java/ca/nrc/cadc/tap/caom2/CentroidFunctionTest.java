@@ -107,6 +107,8 @@ public class CentroidFunctionTest
     public String _expected = "";
     public String _sql;
 
+    private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
+    
     /**
      * @throws java.lang.Exception
      */
@@ -144,7 +146,7 @@ public class CentroidFunctionTest
     {
         protected void init()
         {
-            super.navigatorList.add(new CaomRegionConverter());
+            super.navigatorList.add(new CaomRegionConverter(caomTapSchema));
         }
     }
 

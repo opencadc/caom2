@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,22 +63,16 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.tap.impl;
-
-
-import org.apache.log4j.Logger;
+package ca.nrc.cadc.tap.caom2;
 
 /**
+ * Formatter for the polymorphic position_bounds_points column.
  *
  * @author pdowler
- * @deprecated use CaomFormatFactory
+ * @deprecated use PositionBoundsRegionFormat
  */
 @Deprecated
-public class FormatFactoryImpl extends CaomFormatFactory {
-    private static final Logger log = Logger.getLogger(FormatFactoryImpl.class);
-
-    public FormatFactoryImpl() { 
-    }
+public class PositionBoundsFormat extends PositionBoundsRegionFormat {
 }

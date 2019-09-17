@@ -69,21 +69,19 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.tap.parser.ParserUtil;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
 import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
 import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
+import ca.nrc.cadc.tap.parser.operator.postgresql.TextSearchMatch;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import ca.nrc.cadc.tap.parser.operator.postgresql.TextSearchMatch;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
@@ -95,6 +93,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupClient;
 
 /**
  * Query converter that injects meta-read-access constraints.
@@ -147,7 +146,7 @@ public class CaomReadAccessConverter extends SelectNavigator
 
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-    private GMSClient gmsClient;
+    private GroupClient gmsClient;
 
     public CaomReadAccessConverter()
     {
@@ -155,7 +154,7 @@ public class CaomReadAccessConverter extends SelectNavigator
     }
 
     // testing support
-    void setGMSClient(GMSClient gmsClient)
+    void setGMSClient(GroupClient gmsClient)
     {
         this.gmsClient = gmsClient;
     }

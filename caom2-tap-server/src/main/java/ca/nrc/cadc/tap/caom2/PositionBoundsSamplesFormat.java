@@ -65,20 +65,34 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.tap.impl;
+package ca.nrc.cadc.tap.caom2;
 
 
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Format position_bounds_samples as a xtype="multipolygon".
  * @author pdowler
- * @deprecated use CaomFormatFactory
  */
-@Deprecated
-public class FormatFactoryImpl extends CaomFormatFactory {
-    private static final Logger log = Logger.getLogger(FormatFactoryImpl.class);
+public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(PositionBoundsSamplesFormat.class);
 
-    public FormatFactoryImpl() { 
+    private DoubleArrayFormat daf = new DoubleArrayFormat();
+     
+    public PositionBoundsSamplesFormat() { 
+    }
+
+    @Override
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
+        return daf.extract(resultSet, columnIndex);
+    }
+
+    @Override
+    public String format(Object o) {
+        return daf.format(o);
     }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,16 +72,19 @@ package ca.nrc.cadc.tap.caom2;
 import ca.nrc.cadc.tap.caom2.function.Area;
 import ca.nrc.cadc.tap.caom2.function.Centroid;
 import ca.nrc.cadc.tap.caom2.function.Coordsys;
+import ca.nrc.cadc.tap.parser.ParserUtil;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
 import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
 import ca.nrc.cadc.tap.parser.region.pgsphere.PgsphereRegionConverter;
 import ca.nrc.cadc.tap.parser.region.pgsphere.function.Interval;
-import ca.nrc.cadc.tap.parser.region.pgsphere.function.Point2D;
+import ca.nrc.cadc.tap.schema.TapSchema;
+import java.util.List;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import org.apache.log4j.Logger;
 
 /**
@@ -94,9 +97,12 @@ public class CaomRegionConverter extends PgsphereRegionConverter
 {
     private static Logger log = Logger.getLogger(CaomRegionConverter.class);
 
-    public CaomRegionConverter()
+    private final TapSchema tapSchema;
+    
+    public CaomRegionConverter(TapSchema tapSchema)
     {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
+        this.tapSchema = tapSchema;
     }
     
     /**
@@ -112,11 +118,40 @@ public class CaomRegionConverter extends PgsphereRegionConverter
     @Override
     protected Expression handleContains(Expression left, Expression right)
     {
+        log.debug("handleContains: " + left  + " " + right);
+        
+        // column renaming
+        List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
+        if (left instanceof Column)
+        {
+            Column c = (Column) left;
+            Table t = c.getTable();
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
+                    c.setColumnName("position_bounds_spoly");
+                } else if (c.getColumnName().equalsIgnoreCase("s_region")) {
+                    c.setColumnName("position_bounds_spoly");
+                }
+            }
+        } 
+        if (right instanceof Column)
+        {
+            Column c = (Column) right;
+            Table t = c.getTable();
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
+                    c.setColumnName("position_bounds_spoly");
+                } else if (c.getColumnName().equalsIgnoreCase("s_region")) {
+                    c.setColumnName("position_bounds_spoly");
+                }
+            }
+        }
+        
         if (right instanceof Interval || Interval.class.equals(getColumnType(right)))
         {
             if (left instanceof Column)
             {   
-                // TODO
+                
             }
             else if (left instanceof Interval)
             {
@@ -135,9 +170,6 @@ public class CaomRegionConverter extends PgsphereRegionConverter
             }
             else
                 throw new IllegalArgumentException("invalid argument type for contains: " + left.getClass().getSimpleName());
-        }
-        else if (right instanceof Column)
-        {
         }
         return super.handleContains(left, right);
     }
@@ -172,6 +204,34 @@ public class CaomRegionConverter extends PgsphereRegionConverter
     @Override
     protected Expression handleIntersects(Expression left, Expression right)
     {
+        log.debug("handleIntersects: " + left  + " " + right);
+        // column renaming
+        List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
+        if (left instanceof Column)
+        {
+            Column c = (Column) left;
+            Table t = c.getTable();
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
+                    c.setColumnName("position_bounds_spoly");
+                } else if (c.getColumnName().equalsIgnoreCase("s_region")) {
+                    c.setColumnName("position_bounds_spoly");
+                }
+            }
+        } 
+        if (right instanceof Column)
+        {
+            Column c = (Column) right;
+            Table t = c.getTable();
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
+                    c.setColumnName("position_bounds_spoly");
+                } else if (c.getColumnName().equalsIgnoreCase("s_region")) {
+                    c.setColumnName("position_bounds_spoly");
+                }
+            }
+        }
+        
         addCast(left);
         addCast(right);
         return super.handleIntersects(left, right);
@@ -243,5 +303,4 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         log.debug("handleCoordSys: " + adqlFunction);
         return new Coordsys(adqlFunction);
     }
-    
 }
