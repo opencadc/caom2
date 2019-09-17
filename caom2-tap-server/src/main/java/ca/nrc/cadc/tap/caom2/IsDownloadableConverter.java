@@ -121,7 +121,7 @@ public class IsDownloadableConverter extends SelectNavigator
     private GroupClient gmsClient;
     
     // testing support
-    private void setGMSClient(GroupClient gmsClient) 
+    public void setGMSClient(GroupClient gmsClient) 
     { 
         this.gmsClient = gmsClient;
     }

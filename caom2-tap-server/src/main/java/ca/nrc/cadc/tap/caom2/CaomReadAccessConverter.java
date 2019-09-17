@@ -153,8 +153,11 @@ public class CaomReadAccessConverter extends SelectNavigator
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
     }
 
-    // testing support
-    void setGMSClient(GroupClient gmsClient)
+    /**
+     * Used for testing support.
+     * @param gmsClient
+     */
+    public void setGMSClient(GroupClient gmsClient)
     {
         this.gmsClient = gmsClient;
     }
