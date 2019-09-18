@@ -122,7 +122,7 @@ public class CaomAdqlQuery extends AdqlQuery
                 new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
 
         // convert ADQL geometry function calls to alternate form
-        super.navigatorList.add(new CaomRegionConverter());
+        super.navigatorList.add(new CaomRegionConverter(tapSchema));
         
         // convert functions to PG-specific names
         navigatorList.add(new FunctionExpressionExtractor(
@@ -151,7 +151,7 @@ public class CaomAdqlQuery extends AdqlQuery
         super.navigatorList.add(new IsDownloadableConverter());
         
         // change caom2.Artifact.accessURL to caom2.Artifact.uri
-        super.navigatorList.add(new CaomSelectListConverter());
+        super.navigatorList.add(new CaomSelectListConverter(tapSchema));
         
         //for (Object o : navigatorList)
         //    log.debug("navigator: " + o.getClass().getName());

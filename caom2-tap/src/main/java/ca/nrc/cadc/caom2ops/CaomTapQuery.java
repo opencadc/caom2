@@ -165,7 +165,11 @@ public class CaomTapQuery
         log.debug("observation query: " + adql);
         
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
-        return buildObservation(doc);
+        try {
+            return buildObservation(doc);
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("got invalid observation " + uri, ex);
+        }
     }
     
     /**

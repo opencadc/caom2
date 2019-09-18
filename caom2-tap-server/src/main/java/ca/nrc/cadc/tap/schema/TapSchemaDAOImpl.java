@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.tap.schema;
 
-import ca.nrc.cadc.ac.client.GMSClient;
 import java.util.List;
 import org.apache.log4j.Logger;
 
@@ -84,14 +83,6 @@ public class TapSchemaDAOImpl extends TapSchemaDAO
     public TapSchemaDAOImpl()
     {
         super();
-    }
-
-    private GMSClient gmsClient;
-
-    // testing support
-    void setGMSClient(GMSClient gmsClient) 
-    { 
-        this.gmsClient = gmsClient;
     }
 
     @Override

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,32 +63,30 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
- */
+*/
 
-package ca.nrc.cadc.tap.impl;
+package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.stc.CoordPair;
-import ca.nrc.cadc.stc.Flavor;
-import ca.nrc.cadc.stc.Frame;
-import ca.nrc.cadc.stc.ReferencePosition;
-import ca.nrc.cadc.stc.STC;
+
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
- * Formatter for the polymorphic position_bounds_points column.
- *
+ * Format a position_bounds value as xtype="caom2:shape".
+ * 
  * @author pdowler
  */
-public class PositionBoundsFormat extends AbstractResultSetFormat {
+public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(PositionBoundsShapeFormat.class);
 
     private DoubleArrayFormat daf = new DoubleArrayFormat();
-
+     
+    public PositionBoundsShapeFormat() { 
+    }
+    
     /**
      * Takes a ResultSet and column index of the position_bounds_points
      * and returns a polymorphic STC-S String.
@@ -101,63 +99,28 @@ public class PositionBoundsFormat extends AbstractResultSetFormat {
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
-        Object o = daf.extract(resultSet, columnIndex);
-        return getRegion(o);
+        return daf.extract(resultSet, columnIndex);
     }
 
-    /**
-     * Takes a String representation of the spoly
-     * and returns a STC-S Polygon String.
-     *
-     * @param object to format.
-     * @return STC-S Polygon String of the spoly.
-     * @throws IllegalArgumentException if the object is not a String, or if
-     * the String cannot be parsed.
-     */
     @Override
-    public String format(Object object) {
-        if (object == null) {
+    public String format(Object o) {
+        if (o == null)
             return "";
-        }
-        return STC.format((ca.nrc.cadc.stc.Region) object);
-    }
-
-    ca.nrc.cadc.stc.Region getRegion(Object object) {
-        if (object == null) {
-            return null;
-        }
-
-        if (object instanceof java.sql.Array) {
-            try {
-                java.sql.Array array = (java.sql.Array) object;
-                object = array.getArray();
-            } catch (SQLException e) {
-                throw new IllegalArgumentException("Error accessing array data for " + object.getClass().getCanonicalName(), e);
-            }
-        }
-
-        if (object instanceof Double[]) {
-            Double[] arr = (Double[]) object;
-            double[] tmp = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                tmp[i] = arr[i]; // unbox
-            }
-            object = tmp;
-        }
-
-        if (object instanceof double[]) {
-            double[] coords = (double[]) object;
-            if (coords.length == 3) {
-                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, null, null, coords[0], coords[1], coords[2]);
-            } else {
-                List<CoordPair> coordPairs = new ArrayList<CoordPair>();
-                for (int i = 0; i < coords.length; i += 2) {
-                    coordPairs.add(new CoordPair(coords[i], coords[i + 1]));
-                }
-                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, null, null, coordPairs);
-            }
-        }
         
-        throw new IllegalArgumentException(object.getClass().getCanonicalName() + " not supported.");
+        double[] dd = daf.unwrap(o);
+        StringBuilder sb = new StringBuilder();
+        
+        if (dd.length == 3)
+            sb.append("circle ");
+        else if (dd.length >= 6)
+            sb.append("polygon ");
+        else
+            throw new RuntimeException("CONTENT: unexpected position_bounds length: " + dd.length); 
+        
+        sb.append(daf.format(dd));
+        
+        return sb.toString();
     }
+    
+    
 }

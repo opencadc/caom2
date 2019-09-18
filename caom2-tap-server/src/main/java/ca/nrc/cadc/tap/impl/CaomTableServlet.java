@@ -80,7 +80,9 @@ import org.apache.log4j.Logger;
 /**
  *
  * @author pdowler
+ * @deprecated use RestServlet and VOSI-tables GetAction from cadc-tap-schema
  */
+@Deprecated
 public class CaomTableServlet extends TableServlet
 {
     private static final Logger log = Logger.getLogger(CaomTableServlet.class);

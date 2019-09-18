@@ -106,6 +106,8 @@ public class CoordsysTest
     public String _query;
     public String _expected = "";
     public String _sql;
+    
+    private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
 
     /**
      * @throws java.lang.Exception
@@ -144,7 +146,7 @@ public class CoordsysTest
     {
         protected void init()
         {
-            super.navigatorList.add(new CaomRegionConverter());
+            super.navigatorList.add(new CaomRegionConverter(caomTapSchema));
         }
     }
 

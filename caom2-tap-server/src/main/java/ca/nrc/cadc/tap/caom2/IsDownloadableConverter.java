@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.tap.parser.ParserUtil;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
@@ -95,6 +94,7 @@ import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupClient;
 
 /**
  * Convert a call to isDownloadable(someColumn) to something that makes the value
@@ -118,13 +118,10 @@ public class IsDownloadableConverter extends SelectNavigator
 
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-    private GMSClient gmsClient;
-
-    /**
-     * Used for testing support.
-     * @param gmsClient
-     */
-    public void setGMSClient(GMSClient gmsClient)
+    private GroupClient gmsClient;
+    
+    // testing support
+    public void setGMSClient(GroupClient gmsClient) 
     { 
         this.gmsClient = gmsClient;
     }
