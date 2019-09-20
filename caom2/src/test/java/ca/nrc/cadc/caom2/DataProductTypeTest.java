@@ -143,12 +143,7 @@ public class DataProductTypeTest
     {
         try
         {
-            DataProductType catalog = DataProductType.toValue("catalog");
-            Assert.assertEquals(DataProductType.CATALOG, catalog);
-            
-            // the wrong value
-            DataProductType eventlist = DataProductType.toValue("eventlist");
-            Assert.assertEquals(DataProductType.EVENT, eventlist);
+           // no supported values
         }
         catch(Exception unexpected)
         {
