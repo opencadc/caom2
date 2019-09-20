@@ -139,6 +139,25 @@ public class DataProductTypeTest
     }
     
     @Test
+    public void testRoundtripCompat()
+    {
+        try
+        {
+            DataProductType catalog = DataProductType.toValue("catalog");
+            Assert.assertEquals(DataProductType.CATALOG, catalog);
+            
+            // the wrong value
+            DataProductType eventlist = DataProductType.toValue("eventlist");
+            Assert.assertEquals(DataProductType.EVENT, eventlist);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testRoundtripCustom()
     {
         try

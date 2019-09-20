@@ -116,7 +116,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
      * 
      * @deprecated 
      */
-    public static final DataProductType EVENTLIST = new DataProductType("event");
+    public static final DataProductType EVENTLIST = EVENT;
     
     /**
      * ObsCore-1.0 cube.
@@ -155,6 +155,9 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
     public static DataProductType toValue(String s) {
         if ("catalog".equals(s)) {
             return CATALOG; // backwards compatibility
+        }
+        if ("eventlist".equals(s)) {
+            return EVENT;
         }
 
         for (DataProductType d : values()) {

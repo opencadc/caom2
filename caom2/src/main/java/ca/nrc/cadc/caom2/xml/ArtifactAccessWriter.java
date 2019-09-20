@@ -68,11 +68,13 @@
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
+import ca.nrc.cadc.date.DateUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.text.DateFormat;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
@@ -118,6 +120,13 @@ public class ArtifactAccessWriter {
         }
         if (aa.getArtifact().contentType != null) {
             addChild(ae, ArtifactAccessReader.ENAMES.contentType.name(), aa.getArtifact().contentType);
+        }
+        
+        if (aa.releaseDate != null) {
+            Element rd = new Element(ArtifactAccessReader.ENAMES.releaseDate.name());
+            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            rd.setText(df.format(aa.releaseDate));
+            root.addContent(rd);
         }
         
         Element pub = new Element(ArtifactAccessReader.ENAMES.isPublic.name());
