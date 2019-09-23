@@ -126,7 +126,7 @@ public abstract class AbstractNestedTransactionTest {
             String uniqID2 = "bar2-" + UUID.randomUUID().toString();
             Observation obs1 = new SimpleObservation("FOO", uniqID1);
             dao.put(obs1);
-            Assert.assertTrue(dao.exists(obs1.getURI()));
+            Assert.assertNotNull(dao.getState(obs1.getURI()));
             log.info("created: " + obs1);
 
             Observation dupe = new SimpleObservation("FOO", uniqID1);
@@ -143,19 +143,19 @@ public abstract class AbstractNestedTransactionTest {
 
             dao.put(obs2); // another nested txn
             log.info("created: " + obs2);
-            Assert.assertTrue(dao.exists(obs2.getURI()));
+            Assert.assertNotNull(dao.getState(obs2.getURI()));
 
             log.info("commit outer");
             dao.getTransactionManager().commitTransaction(); // outer txn
             log.info("commit outer [OK]");
 
-            Observation check1 = dao.get(obs1.getURI());
+            Observation check1 = dao.get(obs1.getID());
             Assert.assertNotNull(check1);
-            Assert.assertEquals(obs1.getID(), check1.getID());
+            Assert.assertEquals(obs1.getURI(), check1.getURI());
 
-            Observation check2 = dao.get(obs2.getURI());
+            Observation check2 = dao.get(obs2.getID());
             Assert.assertNotNull(check2);
-            Assert.assertEquals(obs2.getID(), check2.getID());
+            Assert.assertEquals(obs2.getURI(), check2.getURI());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

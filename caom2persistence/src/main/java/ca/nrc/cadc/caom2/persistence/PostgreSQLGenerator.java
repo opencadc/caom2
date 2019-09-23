@@ -77,7 +77,7 @@ import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.SubInterval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.postgresql.PgSpoint;
@@ -326,7 +326,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -355,7 +355,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<SubInterval> subs)
+    protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
             ps.setObject(col, null);
@@ -366,7 +366,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
             log.debug("[safeSetInterval] in: " + subs.size() + " SubIntervals");
             ca.nrc.cadc.dali.DoubleInterval[] dis = new ca.nrc.cadc.dali.DoubleInterval[subs.size()];
             int i = 0;
-            for (SubInterval si : subs) {
+            for (Interval si : subs) {
                 dis[i++] = new ca.nrc.cadc.dali.DoubleInterval(si.getLower(), si.getUpper());
             }
             PgInterval pgi = new PgInterval();
@@ -457,27 +457,27 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected Interval getInterval(ResultSet rs, int col) throws SQLException {
+    protected SampledInterval getInterval(ResultSet rs, int col) throws SQLException {
         String s = rs.getString(col);
         if (s == null) {
             return null;
         }
         PgInterval pgi = new PgInterval();
         ca.nrc.cadc.dali.DoubleInterval di = pgi.getInterval(s);
-        return new Interval(di.getLower(), di.getUpper());
+        return new SampledInterval(di.getLower(), di.getUpper());
     }
 
     @Override
-    protected List<SubInterval> getSubIntervalList(ResultSet rs, int col) throws SQLException {
+    protected List<Interval> getSubIntervalList(ResultSet rs, int col) throws SQLException {
         String s = rs.getString(col);
         if (s == null) {
             return null;
         }
         PgInterval pgi = new PgInterval();
         ca.nrc.cadc.dali.DoubleInterval[] dis = pgi.getIntervalArray(s);
-        List<SubInterval> ret = new ArrayList<SubInterval>();
+        List<Interval> ret = new ArrayList<Interval>();
         for (ca.nrc.cadc.dali.DoubleInterval di : dis) {
-            ret.add(new SubInterval(di.getLower(), di.getUpper()));
+            ret.add(new Interval(di.getLower(), di.getUpper()));
         }
         return ret;
     }

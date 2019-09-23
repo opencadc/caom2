@@ -152,34 +152,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         return null;
     }
-    
-    /**
-     * @param uri
-     * @return
-     * @deprecated use getState and check for non-null return
-     */
-    @Deprecated
-    public boolean exists(ObservationURI uri) {
-        ObservationState s = getState(uri);
-        return s != null;
-    }
-
-    public UUID getID(ObservationURI uri) {
-        ObservationState s = getState(uri);
-        if (s != null) {
-            return s.getID();
-        }
-        return null;
-    }
-
-    public ObservationURI getURI(UUID id) {
-        ObservationState s = getState(id);
-        if (s != null) {
-            return s.getURI();
-        }
-        return null;
-    }
-
+  
     /**
      * Get list of observation states in ascending order.
      *
@@ -234,13 +207,23 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param uri
      * @return wrapped observation
      */
+    @Deprecated
     public ObservationResponse getAlt(ObservationURI uri) {
-        // TODO: could just get the Observation and build ObservationState from it (single query)
         ObservationState s = getState(uri);
         if (s == null) {
             return null;
         }
         return getAlt(s);
+    }
+    
+    @Deprecated
+    public ObservationResponse getAlt(ObservationState s) {
+        return getObservationResponse(s, SQLGenerator.MAX_DEPTH);
+    }
+    
+    @Deprecated
+    public ObservationResponse getAlt(ObservationState s, int depth) {
+        return getObservationResponse(s, depth);
     }
     
     /**
@@ -249,17 +232,17 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param s
      * @return wrapped observation
      */
-    public ObservationResponse getAlt(ObservationState s) {
-        return getAlt(s, SQLGenerator.MAX_DEPTH);
+    public ObservationResponse getObservationResponse(ObservationState s) {
+        return getObservationResponse(s, SQLGenerator.MAX_DEPTH);
     }
     
     /**
-     * Get a wrapped 
+     * Get a wrapped Observation to the specified depth or error.
      * @param s
      * @param depth
      * @return 
      */
-    public ObservationResponse getAlt(ObservationState s, int depth) {
+    public ObservationResponse getObservationResponse(ObservationState s, int depth) {
         long t = System.currentTimeMillis();
 
         try {
@@ -288,6 +271,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param batchSize
      * @return 
      */
+    @Deprecated
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
         return getList(collection, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
     }
@@ -302,6 +286,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param depth
      * @return 
      */
+    @Deprecated
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize, int depth) {
         long t = System.currentTimeMillis();
 
@@ -310,7 +295,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             List<ObservationResponse> ret = new ArrayList<ObservationResponse>(states.size());
 
             for (ObservationState s : states) {
-                ObservationResponse r = getAlt(s, depth);
+                ObservationResponse r = getObservationResponse(s, depth);
                 ret.add(r);
             }
             return ret;
@@ -326,7 +311,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param uri
      * @return the complete observation
      */
-    public Observation get(ObservationURI uri) {
+    Observation get(ObservationURI uri) {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
@@ -508,6 +493,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      *
      * @param uri
      */
+    @Deprecated
     public void delete(ObservationURI uri) {
         if (uri == null) {
             throw new IllegalArgumentException("uri arg cannot be null");
@@ -548,7 +534,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
             if (skel != null) {
                 if (uri == null) {
-                    uri = getURI(id);
+                    uri = getState(id).getURI(); // null state not possible
                 }
                 if (id == null) {
                     id = skel.id;

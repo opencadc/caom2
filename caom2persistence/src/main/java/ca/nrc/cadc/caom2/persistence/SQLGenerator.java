@@ -74,11 +74,11 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -120,8 +120,8 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -203,7 +203,7 @@ public class SQLGenerator {
     };
 
     static final String SIMPLE_TYPE = "S";
-    static final String COMPOSITE_TYPE = "C";
+    static final String DERIVED_TYPE = "C"; // TODO: change to D??
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
@@ -1087,9 +1087,9 @@ public class SQLGenerator {
             jdbc.update(this);
             deleteMembers = false;
                 
-            if (obs instanceof CompositeObservation) {
+            if (obs instanceof DerivedObservation) {
                 insertMembers = true;
-                CompositeObservation co = (CompositeObservation) obs;
+                DerivedObservation co = (DerivedObservation) obs;
                 for (ObservationURI uri : co.getMembers()) {
                     setValue(new ObservationMember(co.getID(), uri));
                     jdbc.update(this);
@@ -1143,8 +1143,8 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            if (obs instanceof CompositeObservation) {
-                safeSetString(sb, ps, col++, COMPOSITE_TYPE);
+            if (obs instanceof DerivedObservation) {
+                safeSetString(sb, ps, col++, DERIVED_TYPE);
             } else {
                 safeSetString(sb, ps, col++, SIMPLE_TYPE);
             }
@@ -1247,8 +1247,8 @@ public class SQLGenerator {
                 safeSetBoolean(sb, ps, col++, null);
             }
 
-            if (obs instanceof CompositeObservation) {
-                CompositeObservation co = (CompositeObservation) obs;
+            if (obs instanceof DerivedObservation) {
+                DerivedObservation co = (DerivedObservation) obs;
                 safeSetString(sb, ps, col++, Util.encodeObservationURIs(co.getMembers()));
             } else {
                 safeSetString(sb, ps, col++, null);
@@ -1293,8 +1293,8 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, member.getCompositeID());
-            safeSetURI(sb, ps, col++, member.getSimpleID().getURI());
+            safeSetUUID(sb, ps, col++, member.getParentID());
+            safeSetURI(sb, ps, col++, member.getMemberID().getURI());
         }
     }
 
@@ -1519,11 +1519,7 @@ public class SQLGenerator {
             if (nrg == null) {
                 nrg = new Energy();
             }
-            if (nrg.emBand != null) {
-                safeSetString(sb, ps, col++, nrg.emBand.getValue());
-            } else {
-                safeSetString(sb, ps, col++, null);
-            }
+            safeSetString(sb, ps, col++, CaomUtil.encodeBands(nrg.getEnergyBands()));
             if (nrg.bounds != null) {
                 safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
                 safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
@@ -2481,22 +2477,22 @@ public class SQLGenerator {
         throw new UnsupportedOperationException();
     }
 
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<SubInterval> val)
+    protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval> val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected Interval getInterval(ResultSet rs, int col)
+    protected SampledInterval getInterval(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected List<SubInterval> getSubIntervalList(ResultSet rs, int col)
+    protected List<Interval> getSubIntervalList(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
@@ -2950,8 +2946,8 @@ public class SQLGenerator {
             Observation o = null;
             if (SIMPLE_TYPE.equals(typeCode)) {
                 o = new SimpleObservation(collection, observationID, algorithm);
-            } else if (COMPOSITE_TYPE.equals(typeCode)) {
-                o = new CompositeObservation(collection, observationID, algorithm);
+            } else if (DERIVED_TYPE.equals(typeCode)) {
+                o = new DerivedObservation(collection, observationID, algorithm);
             }
 
             o.type = rs.getString(col++);
@@ -3052,8 +3048,8 @@ public class SQLGenerator {
                 o.environment = e;
             }
 
-            if (o instanceof CompositeObservation) {
-                CompositeObservation co = (CompositeObservation) o;
+            if (o instanceof DerivedObservation) {
+                DerivedObservation co = (DerivedObservation) o;
                 Util.decodeObservationURIs(rs.getString(col++), co.getMembers());
             } else {
                 skipAndLog(rs, col, 1);
@@ -3241,17 +3237,14 @@ public class SQLGenerator {
 
             Energy nrg = new Energy();
             String emStr = rs.getString(col++);
-            if (emStr != null) {
-                nrg.emBand = EnergyBand.toValue(emStr);
-            }
-            log.debug("energy_emband: " + nrg.emBand);
+            CaomUtil.decodeBands(emStr, nrg.getEnergyBands());
 
             Double elb = Util.getDouble(rs, col++);
             Double eub = Util.getDouble(rs, col++);
             col++; // energy_bounds polygon
-            List<SubInterval> esi = getSubIntervalList(rs, col++);
+            List<Interval> esi = getSubIntervalList(rs, col++);
             if (elb != null) {
-                nrg.bounds = new Interval(elb, eub, esi);
+                nrg.bounds = new SampledInterval(elb, eub, esi);
             }
             log.debug("energy_bounds: " + nrg.bounds);
             col += 3; // width, freqWidth, freqSampleSize
@@ -3277,9 +3270,9 @@ public class SQLGenerator {
             Double tlb = Util.getDouble(rs, col++);
             Double tub = Util.getDouble(rs, col++);
             col++; // time_bounds polygon
-            List<SubInterval> tsi = getSubIntervalList(rs, col++);
+            List<Interval> tsi = getSubIntervalList(rs, col++);
             if (tlb != null) {
-                tim.bounds = new Interval(tlb, tub, tsi);
+                tim.bounds = new SampledInterval(tlb, tub, tsi);
             }
             log.debug("time_bounds: " + tim.bounds);
             col++; // width

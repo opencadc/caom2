@@ -72,31 +72,31 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- * Internal class to assist persisting CompositeObservation.members values.
+ * Internal class to assist persisting DerivedObservation.members values.
  * 
  * @author pdowler
  */
 class ObservationMember {
     private static final Logger log = Logger.getLogger(ObservationMember.class);
 
-    private final UUID compositeID;
-    private final ObservationURI simpleID;
+    private final UUID parentID;
+    private final ObservationURI memberID;
     
-    public ObservationMember(UUID compositeID, ObservationURI simpleID) { 
-        this.compositeID = compositeID;
-        this.simpleID = simpleID;
+    public ObservationMember(UUID parentID, ObservationURI memberID) { 
+        this.parentID = parentID;
+        this.memberID = memberID;
     }
 
-    public UUID getCompositeID() {
-        return compositeID;
+    public UUID getParentID() {
+        return parentID;
     }
 
-    public ObservationURI getSimpleID() {
-        return simpleID;
+    public ObservationURI getMemberID() {
+        return memberID;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + compositeID + "," + simpleID + "]";
+        return this.getClass().getSimpleName() + "[" + parentID + "," + memberID + "]";
     }
 }
