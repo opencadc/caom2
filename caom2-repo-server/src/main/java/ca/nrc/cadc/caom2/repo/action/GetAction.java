@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -122,10 +122,13 @@ public class GetAction extends RepoAction {
         checkReadPermission(uri.getCollection());
 
         ObservationDAO dao = getDAO();
-        Observation obs = dao.get(uri);
+        ObservationResponse resp = dao.getObservationResponse(uri);
 
-        if (obs == null) {
+        if (resp == null) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
+        if (resp.observation == null) {
+            throw new RuntimeException("failed to retrieve observation: " + uri, resp.error);
         }
 
         // write with default schema
@@ -134,7 +137,7 @@ public class GetAction extends RepoAction {
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(obs, bc);
+        ow.write(resp.observation, bc);
         logInfo.setBytes(bc.getByteCount());
 
         log.debug("DONE: " + uri);

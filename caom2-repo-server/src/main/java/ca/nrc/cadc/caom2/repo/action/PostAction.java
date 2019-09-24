@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -100,9 +101,14 @@ public class PostAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
+        ObservationState s = dao.getState(uri);
 
-        if (!dao.exists(uri)) {
+        if (s == null) {
             throw new ResourceNotFoundException("not found: " + uri);
+        }
+        if (!s.getID().equals(obs.getID())) {
+            // trying to update with non-matching uuid
+            // TODO: test for current exception/message and improve on it here
         }
 
         validate(obs);

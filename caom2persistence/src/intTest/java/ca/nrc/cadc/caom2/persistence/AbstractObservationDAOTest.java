@@ -273,6 +273,30 @@ public abstract class AbstractObservationDAOTest
     }
     
     @Test
+    public void testGetState()
+    {
+        try
+        {
+            String collection = "FOO";
+            
+            Observation obs = new SimpleObservation(collection, "bar1");
+            dao.put(obs);
+            ObservationState o = dao.getState(obs.getID());
+            Assert.assertNotNull(o);
+            log.info("state-by-id: " + o);
+            
+            ObservationState o2 = dao.getState(obs.getURI());
+            Assert.assertNotNull(o);
+            log.info("state-by-uri: " + o);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testGetObservationStateList()
     {
         try

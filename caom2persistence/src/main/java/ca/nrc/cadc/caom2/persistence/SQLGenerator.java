@@ -179,8 +179,6 @@ public class SQLGenerator {
 
     static final int MAX_DEPTH = 5;
     
-    protected static final String BASE_PKG = "ca.nrc.cadc.caom2";
-    
     protected static final Class[] ENTITY_CLASSES =
     {
         Observation.class, Plane.class, Artifact.class, Part.class, Chunk.class,
@@ -213,7 +211,6 @@ public class SQLGenerator {
     // default configuration of features is for a complete caom2 model with no optimisations
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistOptimisations = false;  // persist alternate representations to support optimisations
-    protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
     protected boolean useLongForUUID = false;
     protected String fakeSchemaTablePrefix = null;
 
@@ -240,8 +237,6 @@ public class SQLGenerator {
 
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class, String> aliasMap = new TreeMap<Class, String>(new ClassComp());
-
-    protected DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
     private SQLGenerator() {
     }
@@ -642,7 +637,14 @@ public class SQLGenerator {
         return getSelectSQL(c, minLastModified, maxLastModified, batchSize, true, null);
     }
 
+    
     public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection) {
+        if (ObservationState.class.equals(c) || DeletedObservation.class.equals(c)) {
+            log.debug("getSelectSQL: " + c.getName() + " " + collection);
+        } else {
+            throw new UnsupportedOperationException("select-entity-list requires class " + ObservationState.class.getName()
+                    + " called with: " + c.getName());
+        }
         DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
         String lastModifiedColumn = "lastModified";
@@ -730,45 +732,6 @@ public class SQLGenerator {
         return sb.toString();
     }
     
-    // select Observation(s) with maxLastmodified in [minLastModified,maxLastModified]
-    
-    public String getObservationSelectSQL(Class c, Date minLastModified, Date maxLastModified, int depth) {
-        if (!Observation.class.equals(c)) {
-            throw new UnsupportedOperationException("incremental list query for " + c.getSimpleName());
-        }
-
-        DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-
-        StringBuilder sb = new StringBuilder();
-        String alias = getAlias(Observation.class);
-        sb.append("SELECT ");
-        sb.append(getObservationSelect(depth, false));
-        boolean and = false;
-        if (minLastModified != null) {
-            sb.append(" WHERE ");
-            sb.append(alias).append(".maxLastModified >= '");
-            sb.append(df.format(minLastModified));
-            sb.append("'");
-            and = true;
-        }
-        if (maxLastModified != null) {
-            if (and) {
-                sb.append(" AND ");
-            } else {
-                sb.append(" WHERE ");
-            }
-            sb.append(alias).append(".maxLastModified <= '");
-            sb.append(df.format(maxLastModified));
-            sb.append("'");
-        }
-        String orderBy = getOrderColumns(depth);
-        if (orderBy != null) {
-            sb.append(" ORDER BY ");
-            sb.append(orderBy);
-        }
-        return sb.toString();
-    }
-
     protected String getTopConstraint(Integer batchSize) {
         return null;
     }
@@ -2326,16 +2289,13 @@ public class SQLGenerator {
         }
     }
     
-    // optimisation to persist groyup names in a separate field for easier querying
-    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> groups) 
+    protected final UUID getUUID(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    // unused: experiment with what custom extract methods would look like
-    // pro: simple con: single column storage only
-    // final: cannot actually be implemented and used yet
-    protected final UUID getUUID(ResultSet rs, int col)
+    // optimisation to persist groyup names in a separate field for easier querying
+    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> groups) 
             throws SQLException {
         throw new UnsupportedOperationException();
     }
@@ -2550,55 +2510,21 @@ public class SQLGenerator {
         throw new UnsupportedOperationException();
     }
     
-    protected Class getClassFromUtype(String utype)
-            throws ClassNotFoundException {
-        int i = utype.indexOf('.');
-        String simpleName = utype.substring(0, i);
-        return Class.forName(BASE_PKG + "." + simpleName);
-    }
-
-    public String getColumnName(String utype) {
-        log.debug("getColumnName: " + utype);
-        try {
-            int i = utype.indexOf('.');
-            String simpleName = utype.substring(0, i);
-            Class c = getClassFromUtype(utype);
-            String alias = simpleName;
-            if (c != null) {
-                log.debug("getColumnName: class = " + c.getName());
-                alias = getAlias(c);
-            }
-            utype = utype.substring(i + 1);
-            utype = Util.replaceAll(utype, '.', '_');
-            log.debug("alias: " + alias + "  utype: " + utype);
-            return alias + "." + utype;
-        } catch (ClassNotFoundException cex) {
-            throw new RuntimeException("failed to map utype (" + utype + ") -> Class -> alias", cex);
-        }
-    }
-
-    private static Object NULL_VALUE = null; // a type for calling literal(null)
-
     String getColumns(Class c) {
         return getColumns(c, null);
     }
 
     String getColumns(Class c, String alias) {
-        Object obj = columnMap.get(c);
-        if (obj != null) {
+        String[] cols = columnMap.get(c);
+        if (cols != null) {
             StringBuilder sb = new StringBuilder();
-            String[] cols = (String[]) obj;
             if (alias == null) {
                 alias = getAlias(c);
             }
             for (int i = 0; i < cols.length; i++) {
-                if (cols[i] == null) {
-                    sb.append(literal(NULL_VALUE));
-                } else {
-                    sb.append(alias);
-                    sb.append(".");
-                    sb.append(cols[i]);
-                }
+                sb.append(alias);
+                sb.append(".");
+                sb.append(cols[i]);
                 sb.append(",");
             }
             return sb.substring(0, sb.length() - 1); // strip trailing comma
@@ -2627,8 +2553,6 @@ public class SQLGenerator {
 
     protected String getFrom(Class c) {
         String tab = getTable(c);
-        //if (tab.startsWith("(") && tab.endsWith(")"))
-        //    return tab;
         StringBuilder sb = new StringBuilder();
         sb.append(tab);
         sb.append(" AS ");

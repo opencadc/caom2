@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -93,12 +94,13 @@ public class DeleteAction extends RepoAction {
         checkWritePermission(uri);
 
         ObservationDAO dao = getDAO();
+        ObservationState s = dao.getState(uri);
 
-        if (!dao.exists(uri)) {
+        if (s == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
-        dao.delete(uri);
+        dao.delete(s.getID());
 
         log.debug("DONE: " + uri);
     }

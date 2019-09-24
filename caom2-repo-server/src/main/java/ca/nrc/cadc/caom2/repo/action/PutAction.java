@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
@@ -100,8 +101,9 @@ public class PutAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-
-        if (dao.exists(uri)) {
+        ObservationState s = dao.getState(uri);
+        
+        if (s != null) {
             throw new ResourceAlreadyExistsException("already exists: " + uri);
         }
 

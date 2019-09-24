@@ -75,9 +75,9 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.postgresql.PgSpoint;
@@ -106,7 +106,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
         super(database, schema);
         this.useIntegerForBoolean = true;
         this.persistOptimisations = true;
-        this.persistReadAccessWithAsset = true;
         this.useLongForUUID = false;
         super.init();
     }
@@ -489,7 +488,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
         
         CartesianTransform trans = CartesianTransform.getTransform(val);
         Point cen = trans.transform(val.getCenter());
-        double rad = val.getRadius();
 
         double phi = 2.0 * Math.PI / ((double) numVerts);
         // compute distance to vertices so that the edges are tangent and circle is
