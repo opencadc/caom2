@@ -134,23 +134,11 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     public ObservationState getState(UUID id) {
-        return getState(null, id);
+        return getStateImpl(null, id);
     }
     
     public ObservationState getState(ObservationURI uri) {
-        return getState(uri, null);
-    }
-    
-    private ObservationState getState(ObservationURI uri, UUID id) {
-        Observation o = get(uri, id, 1);
-        if (o != null) {
-            ObservationState ret = new ObservationState(o.getURI());
-            ret.accMetaChecksum = o.getAccMetaChecksum();
-            ret.maxLastModified = o.getMaxLastModified();
-            ret.id = o.getID();
-            return ret;
-        }
-        return null;
+        return getStateImpl(uri, null);
     }
     
     private ObservationState getStateImpl(ObservationURI uri, UUID id) {
@@ -158,31 +146,36 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         if (uri == null && id == null) {
             throw new IllegalArgumentException("args cannot be null");
         }
-        log.debug("GET: " + uri);
+        log.debug("GET: " + uri + " | " + id);
         long t = System.currentTimeMillis();
 
         try {
             String sql = null;
             if (uri != null) {
-                sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
+                sql = gen.getSelectSQL(uri, 1, false);
             } else { 
-                sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
+                sql = gen.getSelectSQL(id, 1, false);
             }
             log.debug("GET: " + sql);
             
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
-            if (skel != null) {
-                ObservationState ret = new ObservationState(uri);
-                ret.id = skel.id;
-                ret.accMetaChecksum = skel.accMetaChecksum;
-                ret.maxLastModified = skel.maxLastModified;
+            //ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+            Observation obs = (Observation) jdbc.query(sql, gen.getObservationExtractor());
+            if (obs != null) {
+                ObservationState ret = new ObservationState(obs.getURI());
+                ret.id = obs.getID();
+                ret.accMetaChecksum = obs.getAccMetaChecksum();
+                ret.maxLastModified = obs.getMaxLastModified();
+                
+                //ret.id = skel.id;
+                //ret.accMetaChecksum = skel.accMetaChecksum;
+                //ret.maxLastModified = skel.maxLastModified;
                 return ret;
             }
             return null;
         } finally {
             long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + uri + " " + dt + "ms");
+            log.debug("GET: " + uri + " | " + id + " " + dt + "ms");
         }
     }
   
@@ -273,17 +266,18 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         try {
             ObservationResponse ret = new ObservationResponse(s);
             try {
-                ret.observation = get(s.getURI(), null, depth);
-                if (ret.observation == null) {
+                Observation o = get(s.getURI());
+                if (o == null) {
                     return null;
                 }
+                ret.observation = o;
             } catch (Exception ex) {
                 ret.error = new IllegalStateException(ex.getMessage());
             }
             return ret;
         } finally {
             long dt = System.currentTimeMillis() - t;
-            log.debug("getAlt: " + s.getURI() + "depth=" + depth + " " + dt + "ms");
+            log.debug("getObservationResponse: " + s.getURI() + " depth=" + depth + " " + dt + "ms");
         }
     }
     
@@ -375,10 +369,13 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             }
 
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            return (Observation) jdbc.query(sql, gen.getObservationExtractor());
+            /**
             Object result = jdbc.query(sql, gen.getObservationExtractor());
             if (result == null) {
                 return null;
             }
+            
             if (result instanceof List) {
                 List obs = (List) result;
                 if (obs.isEmpty()) {
@@ -396,6 +393,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 }
             }
             throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+            */
         } finally {
             long dt = System.currentTimeMillis() - t;
             log.debug("GET: " + uri + " " + dt + "ms");

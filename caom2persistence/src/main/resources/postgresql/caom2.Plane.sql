@@ -11,6 +11,8 @@ create table <schema>.Plane
     dataProductType varchar(64),
     calibrationLevel integer,
 
+    observable_ucd varchar(64),
+
 -- provenance
     provenance_name varchar(64),
     provenance_reference text,
@@ -28,6 +30,7 @@ create table <schema>.Plane
     metrics_backgroundStddev double precision,
     metrics_fluxDensityLimit double precision,
     metrics_magLimit double precision,
+    metrics_sampleSNR double precision,
 
     quality_flag varchar(16),
 
@@ -41,11 +44,14 @@ create table <schema>.Plane
     position_dimension_naxis1 bigint,
     position_dimension_naxis2 bigint,
     position_resolution      double precision,
+    position_resolutionBounds polygon,
+    position_resolutionBounds_lower double precision,
+    position_resolutionBounds_upper double precision,
     position_sampleSize      double precision,
     position_timeDependent   integer,
 
 -- energy
-    energy_emband            varchar(32),
+    energy_energyBands       varchar(64),
     energy_bounds            polygon, 
     energy_bounds_lower      double precision,
     energy_bounds_upper      double precision,
@@ -53,6 +59,9 @@ create table <schema>.Plane
     energy_bounds_samples    polygon,
     energy_dimension         bigint,
     energy_resolvingPower    double precision,
+    energy_resolvingPowerBounds polygon,
+    energy_resolvingPowerBounds_lower double precision,
+    energy_resolvingPowerBounds_upper double precision,
     energy_sampleSize        double precision,
     energy_bandpassName      varchar(64),
     energy_transition_species varchar(32),
@@ -69,6 +78,9 @@ create table <schema>.Plane
     time_bounds_samples     polygon,
     time_dimension          bigint,
     time_resolution         double precision,
+    time_resolutionBounds   polygon,
+    time_resolutionBounds_lower double precision,
+    time_resolutionBounds_upper double precision,
     time_sampleSize         double precision,
     time_exposure           double precision,
 
@@ -77,8 +89,14 @@ create table <schema>.Plane
 -- this is long in the code but integer in db for historical reasons
     polarization_dimension  integer,
 
-    metaReadGroups text null,
-    dataReadGroups text null,
+-- custom axis
+    custom_ctype            varchar(8),
+    custom_bounds           polygon,
+    custom_bounds_samples   polygon,
+    custom_dimension        bigint,
+
+    metaReadGroups text,
+    dataReadGroups text,
 
 -- optimisation
     dataReadAccessGroups tsvector default '',

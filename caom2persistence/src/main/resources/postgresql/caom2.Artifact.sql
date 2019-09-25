@@ -7,6 +7,8 @@ create table <schema>.Artifact
     contentType varchar(128),
     contentLength bigint,
     contentChecksum varchar(136),
+    contentRelease timestamp,
+    contentReadGroups text,
 
 -- optimisation
     metaReadGroups text,

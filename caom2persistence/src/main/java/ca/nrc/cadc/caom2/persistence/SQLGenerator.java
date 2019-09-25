@@ -74,17 +74,18 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.ObservationState;
@@ -134,6 +135,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -315,7 +317,7 @@ public class SQLGenerator {
             "collection", "observationID", "algorithm_name",
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
-            "target_name", "target_type", "target_standard",
+            "target_name", "target_id", "target_type", "target_standard",
             "target_redshift", "target_moving", "target_keywords",
             "targetPosition_coordsys", "targetPosition_equinox", "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
             "requirements_flag",
@@ -341,7 +343,7 @@ public class SQLGenerator {
         columnMap.put(Observation.class, obsColumns);
         
         String[] obsMembersColumns = new String[] {
-            "compositeID", "simpleID"
+            "parentID", "memberID"
         };
         columnMap.put(ObservationMember.class, obsMembersColumns);
 
@@ -354,7 +356,7 @@ public class SQLGenerator {
             "provenance_producer", "provenance_runID", "provenance_lastExecuted",
             "provenance_inputs", "provenance_keywords",
             "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
-            "metrics_fluxDensityLimit", "metrics_magLimit",
+            "metrics_fluxDensityLimit", "metrics_magLimit", "metrics_sampleSNR",
             "quality_flag",
             "metaReadGroups", 
             "dataReadGroups",
@@ -362,20 +364,23 @@ public class SQLGenerator {
             "position_bounds_spoly", "position_bounds_samples",
             "position_bounds_center", "position_bounds_area", "position_bounds_size",
             "position_dimension_naxis1", "position_dimension_naxis2",
-            "position_resolution", "position_sampleSize", "position_timeDependent",
-            "energy_emBand",
-            "energy_bounds_lower", "energy_bounds_upper",
+            "position_resolution", "position_resolutionBounds_lower", "position_resolutionBounds_upper", "position_resolutionBounds", 
+            "position_sampleSize", "position_timeDependent",
+            "energy_energyBands",
+            "energy_bounds_lower", "energy_bounds_upper", "energy_bounds_width",
             "energy_bounds", "energy_bounds_samples",
-            "energy_bounds_width",
             "energy_freqWidth", "energy_freqSampleSize",
-            "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
+            "energy_dimension", "energy_resolvingPower", "energy_resolvingPowerBounds_lower", "energy_resolvingPowerBounds_upper", "energy_resolvingPowerBounds", 
+            "energy_sampleSize",
             "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
             "energy_restwav",
-            "time_bounds_lower", "time_bounds_upper",
+            "time_bounds_lower", "time_bounds_upper", "time_bounds_width",
             "time_bounds", "time_bounds_samples",
-            "time_bounds_width",
-            "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
+            "time_dimension", "time_resolution", "time_resolutionBounds_lower", "time_resolutionBounds_upper", "time_resolutionBounds", 
+            "time_sampleSize", "time_exposure",
             "polarization_states", "polarization_dimension",
+            "custom_ctype", "custom_bounds_lower", "custom_bounds_upper", "custom_bounds_width", "custom_bounds", "custom_bounds_samples", "custom_dimension",
+            "observable_ucd",
             "lastModified", "maxLastModified",
             "metaChecksum", "accMetaChecksum",
             "planeID"
@@ -401,6 +406,7 @@ public class SQLGenerator {
             "planeID", "obsID",
             "uri", "productType", "releaseType",
             "contentType", "contentLength", "contentChecksum",
+            "contentRelease", "contentReadGroups",
             "lastModified", "maxLastModified",
             "metaChecksum", "accMetaChecksum",
             "artifactID"
@@ -408,9 +414,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease",
-                "metaReadGroups", 
-                "metaReadAccessGroups" // optimisation (group names only)
+                "metaRelease",            // inherit from plane
+                "metaReadGroups",         // inherit from plane
+                "metaReadAccessGroups",   // inherit from plane, group names only
             };
             this.numOptArtifactColumns = extraCols.length;
             artifactColumns = addExtraColumns(artifactColumns, extraCols);
@@ -427,9 +433,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease",
-                "metaReadGroups", 
-                "metaReadAccessGroups" // optimisation (group names only)
+                "metaRelease",            // inherit from plane
+                "metaReadGroups",         // inherit from plane
+                "metaReadAccessGroups",   // inherit from plane, group names only
             };
             this.numOptPartColumns = extraCols.length;
             partColumns = addExtraColumns(partColumns, extraCols);
@@ -439,7 +445,9 @@ public class SQLGenerator {
         String[] chunkColumns = new String[]{
             "partID", "artifactID", "planeID", "obsID",
             "productType", "naxis",
-            "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "observableAxis",
+            "positionAxis1", "positionAxis2", "energyAxis", "timeAxis", "polarizationAxis", "customAxis",
+            "observableAxis",
+            
             "position_axis_axis1_ctype",
             "position_axis_axis1_cunit",
             "position_axis_axis2_ctype",
@@ -459,6 +467,7 @@ public class SQLGenerator {
             "position_axis_function_cd11", "position_axis_function_cd12",
             "position_axis_function_cd21", "position_axis_function_cd22",
             "position_coordsys", "position_equinox", "position_resolution",
+            
             "energy_axis_axis_ctype", "energy_axis_axis_cunit",
             "energy_axis_error_syser", "energy_axis_error_rnder",
             "energy_axis_range_start_pix", "energy_axis_range_start_val",
@@ -472,6 +481,7 @@ public class SQLGenerator {
             "energy_velosys", "energy_zsource", "energy_velang",
             "energy_bandpassName", "energy_resolvingPower",
             "energy_transition_species", "energy_transition_transition",
+            
             "time_axis_axis_ctype", "time_axis_axis_cunit",
             "time_axis_error_syser", "time_axis_error_rnder",
             "time_axis_range_start_pix", "time_axis_range_start_val",
@@ -482,6 +492,7 @@ public class SQLGenerator {
             "time_axis_function_delta",
             "time_timesys", "time_trefpos", "time_mjdref",
             "time_exposure", "time_resolution",
+            
             "polarization_axis_axis_ctype", "polarization_axis_axis_cunit",
             "polarization_axis_error_syser", "polarization_axis_error_rnder",
             "polarization_axis_range_start_pix", "polarization_axis_range_start_val",
@@ -490,6 +501,16 @@ public class SQLGenerator {
             "polarization_axis_function_naxis",
             "polarization_axis_function_refCoord_pix", "polarization_axis_function_refCoord_val",
             "polarization_axis_function_delta",
+            
+            "custom_axis_axis_ctype", "custom_axis_axis_cunit",
+            "custom_axis_error_syser", "custom_axis_error_rnder",
+            "custom_axis_range_start_pix", "custom_axis_range_start_val",
+            "custom_axis_range_end_pix", "custom_axis_range_end_val",
+            "custom_axis_bounds",
+            "custom_axis_function_naxis",
+            "custom_axis_function_refCoord_pix", "custom_axis_function_refCoord_val",
+            "custom_axis_function_delta",
+            
             "observable_dependent_axis_ctype",
             "observable_dependent_axis_cunit",
             "observable_dependent_bin",
@@ -503,9 +524,9 @@ public class SQLGenerator {
         if (persistOptimisations) {
             String[] extraCols = new String[]
             {
-                "metaRelease",
-                "metaReadGroups", 
-                "metaReadAccessGroups" // optimisation (group names only)
+                "metaRelease",            // inherit from plane
+                "metaReadGroups",         // inherit from plane
+                "metaReadAccessGroups",   // inherit from plane, group names only
             };
             this.numOptChunkColumns = extraCols.length;
             chunkColumns = addExtraColumns(chunkColumns, extraCols);
@@ -1138,6 +1159,7 @@ public class SQLGenerator {
             }
             if (obs.target != null) {
                 safeSetString(sb, ps, col++, obs.target.getName());
+                safeSetURI(sb, ps, col++, obs.target.targetID);
                 if (obs.target.type != null) {
                     safeSetString(sb, ps, col++, obs.target.type.getValue());
                 } else {
@@ -1149,6 +1171,7 @@ public class SQLGenerator {
                 safeSetKeywords(sb, ps, col++, obs.target.getKeywords());
             } else {
                 safeSetString(sb, ps, col++, null);
+                safeSetURI(sb, ps, col++, null);
                 safeSetString(sb, ps, col++, null);
                 safeSetBoolean(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
@@ -1414,7 +1437,9 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, plane.metrics.backgroundStddev);
                 safeSetDouble(sb, ps, col++, plane.metrics.fluxDensityLimit);
                 safeSetDouble(sb, ps, col++, plane.metrics.magLimit);
+                safeSetDouble(sb, ps, col++, plane.metrics.sampleSNR);
             } else {
+                safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
@@ -1474,6 +1499,14 @@ public class SQLGenerator {
                 safeSetLong(sb, ps, col++, null);
             }
             safeSetDouble(sb, ps, col++, pos.resolution);
+            if (pos.resolutionBounds != null) {
+                safeSetDouble(sb, ps, col++, pos.resolutionBounds.getLower());
+                safeSetDouble(sb, ps, col++, pos.resolutionBounds.getUpper());
+            } else {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+            safeSetInterval(sb, ps, col++, pos.resolutionBounds);
             safeSetDouble(sb, ps, col++, pos.sampleSize);
             safeSetBoolean(sb, ps, col++, pos.timeDependent);
 
@@ -1486,20 +1519,28 @@ public class SQLGenerator {
             if (nrg.bounds != null) {
                 safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
                 safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
-                safeSetInterval(sb, ps, col++, nrg.bounds);
-                safeSetSubIntervalList(sb, ps, col++, nrg.bounds.getSamples());
                 safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
+                safeSetSampledInterval(sb, ps, col++, nrg.bounds);
+                safeSetSubIntervalList(sb, ps, col++, nrg.bounds.getSamples());
             } else {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetSubIntervalList(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
+                safeSetSampledInterval(sb, ps, col++, null);
+                safeSetSubIntervalList(sb, ps, col++, null);
             }
             safeSetDouble(sb, ps, col++, nrg.getFreqWidth());
             safeSetDouble(sb, ps, col++, nrg.getFreqSampleSize());
             safeSetLong(sb, ps, col++, nrg.dimension);
             safeSetDouble(sb, ps, col++, nrg.resolvingPower);
+            if (nrg.resolvingPowerBounds != null) {
+                safeSetDouble(sb, ps, col++, nrg.resolvingPowerBounds.getLower());
+                safeSetDouble(sb, ps, col++, nrg.resolvingPowerBounds.getUpper());
+            } else {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+            safeSetInterval(sb, ps, col++, nrg.resolvingPowerBounds);
             safeSetDouble(sb, ps, col++, nrg.sampleSize);
             safeSetString(sb, ps, col++, nrg.bandpassName);
             if (nrg.transition != null) {
@@ -1519,18 +1560,26 @@ public class SQLGenerator {
             if (tim.bounds != null) {
                 safeSetDouble(sb, ps, col++, tim.bounds.getLower());
                 safeSetDouble(sb, ps, col++, tim.bounds.getUpper());
-                safeSetInterval(sb, ps, col++, tim.bounds);
-                safeSetSubIntervalList(sb, ps, col++, tim.bounds.getSamples());
                 safeSetDouble(sb, ps, col++, tim.bounds.getWidth());
+                safeSetSampledInterval(sb, ps, col++, tim.bounds);
+                safeSetSubIntervalList(sb, ps, col++, tim.bounds.getSamples());
             } else {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetSubIntervalList(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
+                safeSetSampledInterval(sb, ps, col++, null);
+                safeSetSubIntervalList(sb, ps, col++, null);
             }
             safeSetLong(sb, ps, col++, tim.dimension);
             safeSetDouble(sb, ps, col++, tim.resolution);
+            if (tim.resolutionBounds != null) {
+                safeSetDouble(sb, ps, col++, tim.resolutionBounds.getLower());
+                safeSetDouble(sb, ps, col++, tim.resolutionBounds.getUpper());
+            } else {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+            safeSetInterval(sb, ps, col++, tim.resolutionBounds);
             safeSetDouble(sb, ps, col++, tim.sampleSize);
             safeSetDouble(sb, ps, col++, tim.exposure);
 
@@ -1541,6 +1590,31 @@ public class SQLGenerator {
             }
             safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
             safeSetLong(sb, ps, col++, pol.dimension);
+            
+            // custom
+            if (plane.custom != null) {
+                safeSetString(sb, ps, col++, plane.custom.getCtype());
+                safeSetDouble(sb, ps, col++, plane.custom.bounds.getLower());
+                safeSetDouble(sb, ps, col++, plane.custom.bounds.getUpper());
+                safeSetDouble(sb, ps, col++, plane.custom.bounds.getWidth());
+                safeSetSampledInterval(sb, ps, col++, plane.custom.bounds);
+                safeSetSubIntervalList(sb, ps, col++, plane.custom.bounds.getSamples());
+                safeSetLong(sb, ps, col++, plane.custom.dimension);
+            } else {
+                safeSetString(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetSampledInterval(sb, ps, col++, null);
+                safeSetSubIntervalList(sb, ps, col++, null);
+                safeSetLong(sb, ps, col++, null);
+            }
+            // observable
+            if (plane.observable != null) {
+                safeSetString(sb, ps, col++, plane.observable.getUCD());
+            } else {
+                safeSetString(sb, ps, col++, null);
+            }
             
             if (persistOptimisations) {
                 if (basePublisherID == null) {
@@ -1558,6 +1632,8 @@ public class SQLGenerator {
                 safeSetGroupOptimisation(sb, ps, col++, plane.getDataReadGroups());
             }
 
+            
+            
             safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, plane.getMetaChecksum());
@@ -1678,6 +1754,12 @@ public class SQLGenerator {
             safeSetString(sb, ps, col++, artifact.contentType);
             safeSetLong(sb, ps, col++, artifact.contentLength);
             safeSetURI(sb, ps, col++, artifact.contentChecksum);
+            safeSetDate(sb, ps, col++, artifact.contentRelease, utcCalendar);
+            if (artifact.getContentReadGroups().isEmpty()) {
+                safeSetString(sb, ps, col++, null);
+            } else {
+                safeSetString(sb, ps, col++, Util.encodeURIs(artifact.getContentReadGroups()));
+            }
 
             if (persistOptimisations) {
                 safeSetDate(sb, ps, col++, Util.truncate(plane.metaRelease), utcCalendar);
@@ -1874,6 +1956,7 @@ public class SQLGenerator {
             safeSetInteger(sb, ps, col++, chunk.energyAxis);
             safeSetInteger(sb, ps, col++, chunk.timeAxis);
             safeSetInteger(sb, ps, col++, chunk.polarizationAxis);
+            safeSetInteger(sb, ps, col++, chunk.customAxis);
             safeSetInteger(sb, ps, col++, chunk.observableAxis);
 
             if (chunk.position != null) {
@@ -1896,14 +1979,12 @@ public class SQLGenerator {
                     safeSetDouble(sb, ps, col++, null);
                 }
                 //range
-                //safeSetString(sb, ps, col++, Util.encodeCoordRange2D(chunk.position.getAxis().range));
                 col += safeSet(sb, ps, col, chunk.position.getAxis().range);
 
                 // bounds
                 safeSetString(sb, ps, col++, Util.encodeCoordBounds2D(chunk.position.getAxis().bounds));
 
                 // function
-                //safeSetString(sb, ps, col++, Util.encodeCoordFunction2D(chunk.position.getAxis().function));
                 col += safeSet(sb, ps, col, chunk.position.getAxis().function);
 
                 // other fields
@@ -1920,12 +2001,10 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 //range
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordRange2D) null);
                 // bounds
                 safeSetString(sb, ps, col++, null);
                 // function
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordFunction2D) null);
                 // other fields
                 safeSetString(sb, ps, col++, null);
@@ -1944,12 +2023,10 @@ public class SQLGenerator {
                     safeSetDouble(sb, ps, col++, null);
                 }
                 //range
-                //safeSetString(sb, ps, col++, Util.encodeCoordRange1D(chunk.energy.getAxis().range));
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().range);
                 // bounds
                 safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.energy.getAxis().bounds));
                 // function
-                //safeSetString(sb, ps, col++, Util.encodeCoordFunction1D(chunk.energy.getAxis().function));
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().function);
 
                 // other fields
@@ -1976,12 +2053,10 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 //range
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
                 safeSetString(sb, ps, col++, null);
                 // function
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
 
                 // other fields
@@ -2010,12 +2085,10 @@ public class SQLGenerator {
                     safeSetDouble(sb, ps, col++, null);
                 }
                 //range
-                //safeSetString(sb, ps, col++, Util.encodeCoordRange1D(chunk.time.getAxis().range));
                 col += safeSet(sb, ps, col, chunk.time.getAxis().range);
                 // bounds
                 safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.time.getAxis().bounds));
                 // function
-                //safeSetString(sb, ps, col++, Util.encodeCoordFunction1D(chunk.time.getAxis().function));
                 col += safeSet(sb, ps, col, chunk.time.getAxis().function);
                 // other fields
                 safeSetString(sb, ps, col++, chunk.time.timesys);
@@ -2029,12 +2102,10 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 //range
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
                 safeSetString(sb, ps, col++, null);
                 // function
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
                 // other fields
                 safeSetString(sb, ps, col++, null);
@@ -2055,12 +2126,10 @@ public class SQLGenerator {
                     safeSetDouble(sb, ps, col++, null);
                 }
                 //range
-                //safeSetString(sb, ps, col++, Util.encodeCoordRange1D(chunk.polarization.getAxis().range));
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().range);
                 // bounds
                 safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.polarization.getAxis().bounds));
                 // function
-                //safeSetString(sb, ps, col++, Util.encodeCoordFunction1D(chunk.polarization.getAxis().function));
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().function);
             } else {
                 safeSetString(sb, ps, col++, null);
@@ -2068,12 +2137,40 @@ public class SQLGenerator {
                 safeSetDouble(sb, ps, col++, null);
                 safeSetDouble(sb, ps, col++, null);
                 //range
-                //safeSetString(sb, ps, col++, null);
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
                 safeSetString(sb, ps, col++, null);
                 // function
-                //safeSetString(sb, ps, col++, null);
+                col += safeSet(sb, ps, col, (CoordFunction1D) null);
+                // other fields
+            }
+            
+            if (chunk.custom != null) {
+                safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCtype());
+                safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCunit());
+                if (chunk.custom.getAxis().error != null) {
+                    safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.syser);
+                    safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.rnder);
+                } else {
+                    safeSetDouble(sb, ps, col++, null);
+                    safeSetDouble(sb, ps, col++, null);
+                }
+                //range
+                col += safeSet(sb, ps, col, chunk.custom.getAxis().range);
+                // bounds
+                safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.custom.getAxis().bounds));
+                // function
+                col += safeSet(sb, ps, col, chunk.custom.getAxis().function);
+            } else {
+                safeSetString(sb, ps, col++, null);
+                safeSetString(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                //range
+                col += safeSet(sb, ps, col, (CoordRange1D) null);
+                // bounds
+                safeSetString(sb, ps, col++, null);
+                // function
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
                 // other fields
             }
@@ -2437,11 +2534,16 @@ public class SQLGenerator {
         throw new UnsupportedOperationException();
     }
 
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
+    protected void safeSetSampledInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val)
+            throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+    
     protected void safeSetSubIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval> val)
             throws SQLException {
         throw new UnsupportedOperationException();
@@ -2902,6 +3004,7 @@ public class SQLGenerator {
             log.debug("found target.name = " + targ);
             if (targ != null) {
                 o.target = new Target(targ);
+                o.target.targetID = Util.getURI(rs, col++);
                 String tt = rs.getString(col++);
                 if (tt != null) {
                     o.target.type = TargetType.toValue(tt);
@@ -2912,8 +3015,8 @@ public class SQLGenerator {
                 getKeywords(rs, col++, o.target.getKeywords());
                 log.debug("found: " + o.target);
             } else {
-                skipAndLog(rs, col, 5);
-                col += 5; // skip
+                skipAndLog(rs, col, 6);
+                col += 6; // skip
             }
 
             String tposCs = rs.getString(col++);
@@ -3108,8 +3211,9 @@ public class SQLGenerator {
             m.backgroundStddev = Util.getDouble(rs, col++);
             m.fluxDensityLimit = Util.getDouble(rs, col++);
             m.magLimit = Util.getDouble(rs, col++);
+            m.sampleSNR = Util.getDouble(rs, col++);
             if (m.sourceNumberDensity != null || m.background != null || m.backgroundStddev != null
-                    || m.fluxDensityLimit != null || m.magLimit != null) {
+                    || m.fluxDensityLimit != null || m.magLimit != null || m.sampleSNR != null) {
                 p.metrics = m;
             }
 
@@ -3131,12 +3235,12 @@ public class SQLGenerator {
             Position pos = new Position();
             try {
                 pos.bounds = getCircle(rs, col);
-                col++; // position_bounds_points
-                col++; // position_bounds (spoly)
+                col++; // position_bounds
+                col++; // position_bounds_spoly
                 col++; // position_bounds_samples
             } catch (IllegalStateException ex) {
                 List<Point> points = getPointList(rs, col++);
-                col++; // position_bounds spoly
+                col++; // position_bounds_spoly
                 MultiPolygon mp = getMultiPolygon(rs, col++);
                 if (points != null) {
                     pos.bounds = new Polygon(points, mp);
@@ -3153,6 +3257,13 @@ public class SQLGenerator {
 
             pos.resolution = Util.getDouble(rs, col++);
             log.debug("position_resolution: " + pos.resolution);
+            Double rb1 = Util.getDouble(rs, col++);
+            Double rb2 = Util.getDouble(rs, col++);
+            if (rb1 != null && rb2 != null) {
+                pos.resolutionBounds = new Interval(rb1, rb2);
+            }
+            col++; // resolutionBounds polygon
+            log.debug("position_resolutionBounds: " + pos.resolutionBounds);
             pos.sampleSize = Util.getDouble(rs, col++);
             log.debug("position_sampleSize: " + pos.sampleSize);
             pos.timeDependent = Util.getBoolean(rs, col++);
@@ -3165,17 +3276,25 @@ public class SQLGenerator {
 
             Double elb = Util.getDouble(rs, col++);
             Double eub = Util.getDouble(rs, col++);
+            col++; // width
             col++; // energy_bounds polygon
             List<Interval> esi = getSubIntervalList(rs, col++);
             if (elb != null) {
                 nrg.bounds = new SampledInterval(elb, eub, esi);
             }
             log.debug("energy_bounds: " + nrg.bounds);
-            col += 3; // width, freqWidth, freqSampleSize
+            col += 2; // freqWidth, freqSampleSize
             nrg.dimension = Util.getLong(rs, col++);
             log.debug("energy_dimension: " + nrg.dimension);
             nrg.resolvingPower = Util.getDouble(rs, col++);
             log.debug("energy_resolvingPower: " + nrg.resolvingPower);
+            
+            rb1 = Util.getDouble(rs, col++);
+            rb2 = Util.getDouble(rs, col++);
+            if (rb1 != null && rb2 != null) {
+                nrg.resolvingPowerBounds = new Interval(rb1, rb2);
+            }
+            col++; // resolvingPowerBounds polygon
             nrg.sampleSize = Util.getDouble(rs, col++);
             log.debug("energy_sampleSize: " + nrg.sampleSize);
             nrg.bandpassName = rs.getString(col++);
@@ -3193,17 +3312,23 @@ public class SQLGenerator {
             Time tim = new Time();
             Double tlb = Util.getDouble(rs, col++);
             Double tub = Util.getDouble(rs, col++);
+            col++; // width
             col++; // time_bounds polygon
             List<Interval> tsi = getSubIntervalList(rs, col++);
             if (tlb != null) {
                 tim.bounds = new SampledInterval(tlb, tub, tsi);
             }
             log.debug("time_bounds: " + tim.bounds);
-            col++; // width
             tim.dimension = Util.getLong(rs, col++);
             log.debug("time_dimension: " + tim.dimension);
             tim.resolution = Util.getDouble(rs, col++);
             log.debug("time_resolution: " + tim.resolution);
+            rb1 = Util.getDouble(rs, col++);
+            rb2 = Util.getDouble(rs, col++);
+            if (rb1 != null && rb2 != null) {
+                tim.resolutionBounds = new Interval(rb1, rb2);
+            }
+            col++; // resolutionBounds polygon
             tim.sampleSize = Util.getDouble(rs, col++);
             log.debug("time_sampleSize: " + tim.sampleSize);
             tim.exposure = Util.getDouble(rs, col++);
@@ -3219,6 +3344,30 @@ public class SQLGenerator {
             pol.dimension = Util.getLong(rs, col++);
             p.polarization = pol;
 
+            String cct = rs.getString(col++);
+            if (cct != null) {
+                p.custom = new CustomAxis(cct);
+                log.debug("custom_ctype: " + p.custom.getCtype());
+                Double clb = Util.getDouble(rs, col++);
+                Double cub = Util.getDouble(rs, col++);
+                col++; // width
+                col++; // custom_bounds polygon
+                List<Interval> csi = getSubIntervalList(rs, col++);
+                if (clb != null) {
+                    p.custom.bounds = new SampledInterval(clb, cub, csi);
+                }
+                log.debug("custom_bounds: " + p.custom.bounds);
+                p.custom.dimension = Util.getLong(rs, col++);
+                log.debug("custom_dimension: " + p.custom.dimension);
+            } else {
+                col += 6;
+            }
+            
+            String oucd = rs.getString(col++);
+            if (oucd != null) {
+                p.observable = new Observable(oucd);
+            }
+            
             if (persistOptimisations) {
                 col += numOptPlaneColumns;
             }
@@ -3304,6 +3453,13 @@ public class SQLGenerator {
             log.debug("found a.contentLength = " + a.contentLength);
             a.contentChecksum = Util.getURI(rs, col++);
             log.debug("found a.contentChecksum = " + a.contentChecksum);
+            a.contentRelease = Util.getDate(rs, col++, utcCalendar);
+            log.debug("found a.contentRelease = " + a.contentRelease);
+            String crg = rs.getString(col++);
+            if (crg != null) {
+                Util.decodeURIs(crg, a.getContentReadGroups());
+            }
+            log.debug("found a.contentReadGrouops: " + a.getContentReadGroups().size());
 
             if (persistOptimisations) {
                 col += numOptArtifactColumns;
@@ -3447,6 +3603,7 @@ public class SQLGenerator {
             c.energyAxis = Util.getInteger(rs, col++);
             c.timeAxis = Util.getInteger(rs, col++);
             c.polarizationAxis = Util.getInteger(rs, col++);
+            c.customAxis = Util.getInteger(rs, col++);
             c.observableAxis = Util.getInteger(rs, col++);
 
             // position
@@ -3646,6 +3803,41 @@ public class SQLGenerator {
                 axis.bounds = pbounds;
                 axis.function = pfunction;
                 c.polarization = new PolarizationWCS(axis);
+            }
+            
+            // custom
+            final String cctype = rs.getString(col++);
+            final String ccunit = rs.getString(col++);
+            Double ces = Util.getDouble(rs, col++);
+            Double cer = Util.getDouble(rs, col++);
+            CoordRange1D crange = null; // Util.decodeCoordRange1D(rs.getString(col++));
+            pix1 = Util.getDouble(rs, col++);
+            val1 = Util.getDouble(rs, col++);
+            pix2 = Util.getDouble(rs, col++);
+            val2 = Util.getDouble(rs, col++);
+            if (pix1 != null) {
+                crange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+            }
+
+            CoordBounds1D cbounds = Util.decodeCoordBounds1D(rs.getString(col++));
+            CoordFunction1D cfunction = null; // Util.decodeCoordFunction1D(rs.getString(col++));
+            naxis = Util.getLong(rs, col++);
+            pix = Util.getDouble(rs, col++);
+            val = Util.getDouble(rs, col++);
+            delta = Util.getDouble(rs, col++);
+            if (naxis != null) {
+                cfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+            }
+
+            if (cctype != null) {
+                CoordAxis1D axis = new CoordAxis1D(new Axis(cctype, ccunit));
+                if (ces != null || cer != null) {
+                    axis.error = new CoordError(ces, cer);
+                }
+                axis.range = crange;
+                axis.bounds = cbounds;
+                axis.function = cfunction;
+                c.custom = new CustomWCS(axis);
             }
 
             // observable

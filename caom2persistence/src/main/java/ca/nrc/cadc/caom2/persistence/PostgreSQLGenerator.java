@@ -315,6 +315,27 @@ public class PostgreSQLGenerator extends SQLGenerator {
         }
     }
 
+    @Override
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval val) 
+            throws SQLException {
+        if (val == null) {
+            ps.setObject(col, null);
+            if (sb != null) {
+                sb.append("null,");
+            }
+        } else {
+            log.debug("[safeSetInterval] in: " + val);
+            PgInterval pgi = new PgInterval();
+            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.DoubleInterval(val.getLower(), val.getUpper()));
+            ps.setObject(col, poly);
+            if (sb != null) {
+                sb.append(poly.getValue());
+                sb.append(",");
+            }
+        }
+    }
+
+    
     /**
      * Store an interval in a polygon column.
      * 
@@ -325,7 +346,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
+    protected void safeSetSampledInterval(StringBuilder sb, PreparedStatement ps, int col, SampledInterval val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -333,7 +354,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.debug("[safeSetInterval] in: " + val);
+            log.debug("[safeSetSampledInterval] in: " + val);
             PgInterval pgi = new PgInterval();
             PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.DoubleInterval(val.getLower(), val.getUpper()));
             ps.setObject(col, poly);
@@ -362,7 +383,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.debug("[safeSetInterval] in: " + subs.size() + " SubIntervals");
+            log.debug("[safeSetSubIntervalList] in: " + subs.size() + " Intervals");
             ca.nrc.cadc.dali.DoubleInterval[] dis = new ca.nrc.cadc.dali.DoubleInterval[subs.size()];
             int i = 0;
             for (Interval si : subs) {
