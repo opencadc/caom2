@@ -176,6 +176,7 @@ public class Main {
                 System.exit(1);
             }
 
+            
             String destination = am.getValue("destination");
             boolean nodest = (destination == null || destination.trim().length() == 0);
             if (nodest) {
@@ -191,66 +192,23 @@ public class Main {
             }
             HarvestResource dest = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
 
-            // source can be a database or service
-            String source = am.getValue("source");
-
-            boolean nosrc = (source == null || source.trim().length() == 0);
-            if (nosrc) {
-                log.warn("missing required argument: --source=<server.database.schema>");
-                usage();
-                System.exit(1);
-            }
-
-            int sourceType = getSourceType(source);
-
-            HarvestResource src = null;
             int nthreads = 1;
-            switch (sourceType) {
-                case HarvestResource.SOURCE_URI:
+            HarvestResource src;
+            if (ENABLE_COMPUTE_FEATURES) {
+                src = dest;
+            } else {
+                src = getSource(am, collection);
+                if (src.getResourceType() != HarvestResource.SOURCE_DB) {
                     try {
-                        src = new HarvestResource(new URI(source), collection);
                         if (am.isSet("threads")) {
                             nthreads = Integer.parseInt(am.getValue("threads"));
                         }
-                    } catch (URISyntaxException ex) {
-                        log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
-                        usage();
-                        System.exit(1);
-                    } catch (NumberFormatException nfe) {
+                    } catch (NumberFormatException ex) {
                         log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
                         usage();
                         System.exit(1);
-                    }   
-                    break;
-                case HarvestResource.SOURCE_DB:
-                    String[] srcDS = source.split("[.]");
-                    if (srcDS.length != 3) {
-                        log.warn("malformed --source value, found " + source + " expected: server.database.schema");
-                        usage();
-                        System.exit(1);
-                    }   
-                    src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
-                    break;
-                case HarvestResource.SOURCE_CAP_URL:
-                    try {
-                        src = new HarvestResource(new URL(source), collection);
-                        if (am.isSet("threads")) {
-                            nthreads = Integer.parseInt(am.getValue("threads"));
-                        }
-                    } catch (MalformedURLException ex) {
-                        log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
-                        usage();
-                        System.exit(1);
-                    } catch (NumberFormatException nfe) {
-                        log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
-                        usage();
-                        System.exit(1);
-                    }   
-                    break;
-                default:
-                    log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
-                    usage();
-                    System.exit(1);
+                    }
+                }
             }
 
             URI basePublisherID = null;
@@ -388,13 +346,72 @@ public class Main {
         }
 
     }
+    
+    private static HarvestResource getSource(ArgumentMap am, String collection) {
+        // source can be a database or service
+        String source = am.getValue("source");
+
+        boolean nosrc = (source == null || source.trim().length() == 0);
+        if (nosrc) {
+            log.warn("missing required argument: --source=<server.database.schema> | <resourceID> | <capabilities URL>");
+            usage();
+            System.exit(1);
+        }
+
+        int sourceType = getSourceType(source);
+
+        HarvestResource src = null;
+        int nthreads = 1;
+        switch (sourceType) {
+            case HarvestResource.SOURCE_URI:
+                try {
+                    src = new HarvestResource(new URI(source), collection);
+                } catch (URISyntaxException ex) {
+                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                    usage();
+                    System.exit(1);
+                }   
+                break;
+            case HarvestResource.SOURCE_DB:
+                String[] srcDS = source.split("[.]");
+                if (srcDS.length != 3) {
+                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                    usage();
+                    System.exit(1);
+                }   
+                src = new HarvestResource(srcDS[0], srcDS[1], srcDS[2], collection);
+                break;
+            case HarvestResource.SOURCE_CAP_URL:
+                try {
+                    src = new HarvestResource(new URL(source), collection);
+                } catch (MalformedURLException ex) {
+                    log.warn("invalid value for --source parameter: " + source + " reason: " + ex.toString());
+                    usage();
+                    System.exit(1);
+                }  
+                break;
+            default:
+                log.warn("invalid value for --source parameter: " + source + " reason: Impossible to identify source type.");
+                usage();
+                System.exit(1);
+        }
+        return src;
+    }
 
     private static void usage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
-        sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
-        sb.append("\n         --destination=<server.database.schema> : persist output directly to a databsee server");
+        
+        if (ENABLE_COMPUTE_FEATURES) {
+            sb.append("\n         --destination=<server.database.schema> : persist output directly to a database server");
+            sb.append("\n         single database feature enabled: will read from --destination");
+        } else {
+            // normal mode
+            sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
+            sb.append("\n         --destination=<server.database.schema> : persist output directly to a database server");
+        }
+        
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
