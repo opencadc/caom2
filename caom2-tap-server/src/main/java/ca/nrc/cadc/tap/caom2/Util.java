@@ -233,4 +233,39 @@ public class Util
         }
         return upload;
     }
+
+    // considers tables in the ivoa schema to be caom2 tables as well
+    static boolean isCAOM2(Table t, List<Table> tabs) {
+        log.debug("isCAOM2: " + t);
+        boolean caom2 = false;
+        for (Table t2 : tabs) {
+            log.debug("   vs: " + t2.getWholeTableName() + " AS " + t2.getAlias());
+            if (t2.getSchemaName().equalsIgnoreCase("caom2") || t2.getSchemaName().equalsIgnoreCase("ivoa")) {
+                if (t != null && t2.getAlias() != null && t2.getAlias().equals(t.getName())) {
+                    return true;
+                }
+                if (t2.getAlias() == null) {
+                    caom2 = true; // unqualified caom2 table in the FROM clause
+                }
+            }
+        }
+        return caom2;
+    }
+
+    static boolean isUploadedTable(Table t, List<Table> tabs) {
+        log.debug("isUploadedTable: " + t);
+        boolean upload = false;
+        for (Table t2 : tabs) {
+            log.debug("   vs: " + t2.getWholeTableName() + " AS " + t2.getAlias());
+            if (t2.getSchemaName().equalsIgnoreCase("tap_upload")) {
+                if (t2.getAlias() != null && t2.getAlias().equals(t.getName())) {
+                    return true;
+                }
+                if (t2.getAlias() == null) {
+                    upload = true; // unqualified upload table in the FROM clause
+                }
+            }
+        }
+        return upload;
+    }
 }

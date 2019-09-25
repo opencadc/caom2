@@ -96,29 +96,7 @@ public class TestUtil
     
     public static TapSchema loadTapSchema()
     {
-        // TODO: load tap_schema from files: caom2.tap_schema_content.sql ivoa.tap_schema_content.sql
-        // so these tests can run without a DB
-        /*
-        try
-        {
-            DBConfig dbConfig = new DBConfig();
-            ConnectionConfig connectionConfig = dbConfig.getConnectionConfig("CAOM2_WS_TEST", "cvodb");
-            DataSource ds = DBUtil.getDataSource(connectionConfig, true, true);
-            TapSchemaDAO dao = new TapSchemaDAO();
-            dao.setDataSource(ds);
-            return dao.get();
-        }
-        catch(NoSuchElementException ex)
-        {
-            throw new RuntimeException("CONFIG: failed to find entry for [CAOM2_WS_TEST,cvodb] in .dbrc");
-        }
-        catch (IOException ignore)
-        {
-            log.debug("failed to read .dbrc - cannot load TapSchema");
-        }
-        */
-        TapDataType uuidType = new TapDataType("char", "36", "caom:uuid");
-        
+        TapDataType uuidType = new TapDataType("char", "36", "uuid");
         
         TableDesc obscore = new TableDesc("ivoa", "ivoa.ObsCore");
         obscore.getColumnDescs().add(new ColumnDesc(obscore.getTableName(), "s_region", new TapDataType("char", "*", "region")));
@@ -131,6 +109,11 @@ public class TestUtil
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "planeID", uuidType));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds_samples", new TapDataType("char", "*", "caom2:multipolygon")));
+        
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds", new TapDataType("char", "*", "interval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds", new TapDataType("char", "*", "interval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
         
         TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
         obs.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
