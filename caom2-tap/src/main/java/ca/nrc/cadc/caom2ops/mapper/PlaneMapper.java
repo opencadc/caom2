@@ -144,17 +144,18 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
               
-            //ca.nrc.cadc.dali.Polygon posBounds = (ca.nrc.cadc.dali.Polygon) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
-            double[] posBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.points"));
+            ca.nrc.cadc.dali.Shape posBounds = (ca.nrc.cadc.dali.Shape) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
             double[] posBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
             if (posBounds != null) {
                 plane.position = new Position();
-                if (posBounds.length == 3) { // circle
-                    plane.position.bounds = new Circle(new Point(posBounds[0], posBounds[1]), posBounds[2]);
-                } else { // polygon
+                if (posBounds instanceof ca.nrc.cadc.dali.Circle) {
+                    ca.nrc.cadc.dali.Circle c = (ca.nrc.cadc.dali.Circle) posBounds;
+                    plane.position.bounds = new Circle(new Point(c.getCenter().getLongitude(), c.getCenter().getLatitude()), c.getRadius());
+                } else if (posBounds instanceof ca.nrc.cadc.dali.Polygon) {
                     List<Point> pts = new ArrayList<Point>();
-                    for (int i = 0; i < posBounds.length; i += 2) {
-                        pts.add(new Point(posBounds[i], posBounds[i + 1]));
+                    ca.nrc.cadc.dali.Polygon pp = (ca.nrc.cadc.dali.Polygon) posBounds;
+                    for (ca.nrc.cadc.dali.Point p : pp.getVertices()) {
+                        pts.add(new Point(p.getLongitude(), p.getLatitude()));
                     }
                     MultiPolygon mp = new MultiPolygon();
                     if (posBoundsSamples != null) {
@@ -169,6 +170,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     } else {
                         log.warn("cannot reconstruct Plane.position.bounds Polygon: Plane.position.bounds.samples was null");
                     }
+                } else {
+                    throw new RuntimeException("OOPS: unexpected type for caom2:Plane.position.bounds: " + posBounds.getClass().getName());
                 }
                 
                 Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
