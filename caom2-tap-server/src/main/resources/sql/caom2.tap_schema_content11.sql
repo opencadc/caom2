@@ -150,7 +150,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 1,0,0 , 40),
 
-( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'double', '*', 'caom2:shape', 0,0,0 , 50),
+( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'caom2:shape', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'caom2:multipolygon', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'double', NULL, NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 52),
@@ -161,7 +161,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'energy_emBand', 'generic name for energy band (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray)', 'caom2:Plane.energy.emBand', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 60),
 ( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,0,0 , 61),
-( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '*', 'multiinterval', 0,0,0 , 61),
+( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '*', 'caom2:multiinterval', 0,0,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 62),
 ( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 63),
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 64),
@@ -176,7 +176,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 74),
 
 ( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 80),
-( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'm', 'double', '2x*', 'interval', 0,0,0 , 61),
+( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'm', 'double', '*', 'caom2:multiinterval', 0,0,0 , 61),
 ( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 81),
 ( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 82),
 ( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 83),
@@ -437,35 +437,35 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,datat
 insert into tap_schema.tables11 (schema_name,table_name,table_type,description,utype) values
 ( 'caom2', 'caom2.SIAv1', 'view', 'SIAv1 view on CAOM-2.0: caom.Observation JOIN caom.Plane JOIN caom2.Artifact, limited to calibrated science images', NULL );
 
-insert into tap_schema.columns11 (table_name,column_name,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std) values
-( 'caom2.SIAv1', 'collection', 		'data collection this observation belongs to', 		NULL, NULL, 			'char', NULL,NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, 	'char', '128*', NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, 	'char', '128*',NULL, 1,1,1 ),
+insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,unit,datatype,arraysize,xtype,principal,indexed,std) values
+( 'caom2.SIAv1', 'collection', 		'data collection this observation belongs to', 		NULL, NULL, NULL, 			'char', NULL,NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, NULL, 	'char', '128*', NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, NULL, 	'char', '128*',NULL, 1,1,1 ),
 
-( 'caom2.SIAv1', 'position_bounds', 	'boundary of the image', 				NULL, 'deg', 	'double', '*', 'polygon', 1,1,1 ),
+( 'caom2.SIAv1', 'position_bounds', 'positional coverage of the data', NULL, 'caom2:Plane.position.bounds', 'deg', 'char', '*', 'caom2:shape', 0,0,0),
 
-( 'caom2.SIAv1', 'position_center_ra', 	'RA of central coordinates', 				'POS_EQ_RA_MAIN', 'deg', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_center_dec', 'DEC of central coordinates', 				'POS_EQ_DEC_MAIN', 'deg', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_naxes', 	'number of axes', 					'VOX:Image_Naxes', NULL, 	'int', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_naxis',	'dimensions (number of pixels) along spatial axes', 	'VOX:Image_Naxis', NULL, 	'long', 2, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_scale', 	'pixel size along spatial axes', 			'VOX:Image_Scale', NULL, 	'double', 2, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_center_ra', 	'RA of central coordinates', 				'POS_EQ_RA_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_center_dec', 'DEC of central coordinates', 				'POS_EQ_DEC_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_naxes', 	'number of axes', 					'VOX:Image_Naxes', NULL, NULL, 	'int', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_naxis',	'dimensions (number of pixels) along spatial axes', 	'VOX:Image_Naxis', NULL, NULL, 	'long', 2, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_scale', 	'pixel size along spatial axes', 			'VOX:Image_Scale', NULL, NULL, 	'double', 2, NULL, 1,1,1 ),
 
-( 'caom2.SIAv1', 'energy_bounds_center', 'medianvalue on  energy axis (barycentric wavelength)',  'VOX:BandPass_RefValue', 'm', 'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_bounds_cval1', 'lower bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_LoLimit', 'm', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_bounds_cval2', 'upper bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_HiLimit', 'm', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, 	'char', '32*',NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'VOX:BandPass_ID', NULL, 'char', '32*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_bounds_center', 'medianvalue on  energy axis (barycentric wavelength)',  'VOX:BandPass_RefValue', NULL, 'm', 'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_bounds_cval1', 'lower bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_LoLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_bounds_cval2', 'upper bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_HiLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, NULL, 	'char', '32*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'VOX:BandPass_ID', NULL, NULL, 'char', '32*',NULL, 1,1,1 ),
 
-( 'caom2.SIAv1', 'time_bounds_center', 	'central value on time axis (Modified Julian Day)', 	'VOX:Image_MJDateObs', 'd', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'time_bounds_cval1', 	'lower bound on time axis (Modified Julian Day)', 	'time.start;obs.exposure', 'd', 'double', NULL, NULL, 1,1,0 ),
-( 'caom2.SIAv1', 'time_bounds_cval2', 	'upper bound on time axis (Modified Julian Day)', 	'time.end;obs.exposure', 'd', 	'double', NULL, NULL, 1,1,0 ),
-( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', 'sec', 'double', NULL, NULL, 1,1,0 ),
+( 'caom2.SIAv1', 'time_bounds_center', 	'central value on time axis (Modified Julian Day)', 	'VOX:Image_MJDateObs', NULL, 'd', 	'double', NULL, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'time_bounds_cval1', 	'lower bound on time axis (Modified Julian Day)', 	'time.start;obs.exposure', NULL, 'd', 'double', NULL, NULL, 1,1,0 ),
+( 'caom2.SIAv1', 'time_bounds_cval2', 	'upper bound on time axis (Modified Julian Day)', 	'time.end;obs.exposure', NULL, 'd', 	'double', NULL, NULL, 1,1,0 ),
+( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', NULL, 'sec', 'double', NULL, NULL, 1,1,0 ),
 
-( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, 'char', '128*', NULL, 1,0,1 ),
-( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, 'char', '*', 'clob', 1,0,1 ),
+( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '128*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'clob', 1,0,1 ),
 
-( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 ),
-( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL,                     'char', '23*', 'timestamp', 0,1,0 )
+( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 ),
+( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 )
 ;
 
 

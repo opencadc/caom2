@@ -94,7 +94,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     @Override
     public Format<Object> getFormat(TapSelectItem d) {
         Format<Object> ret = super.getFormat(d);
-        log.warn("fomatter: " + d + " " + ret.getClass().getName());
+        log.debug("fomatter: " + d + " " + ret.getClass().getName());
         return ret;
     }
     
@@ -123,7 +123,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         if (columnDesc.utype != null
                 && (columnDesc.utype.equals("caom2:Plane.position.bounds")
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
-            return new PositionBoundsRegionFormat();
+            return new PositionBoundsShapeFormat();
         }
         return super.getRegionFormat(columnDesc);
     }
