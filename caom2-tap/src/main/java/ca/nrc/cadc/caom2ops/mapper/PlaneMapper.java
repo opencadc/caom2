@@ -186,17 +186,20 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             ca.nrc.cadc.dali.DoubleInterval nrgBounds 
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
-            ca.nrc.cadc.dali.DoubleInterval[] nrgSamples 
-                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
+            //ca.nrc.cadc.dali.DoubleInterval[] nrgBoundsSamples 
+            //        = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
+            double[] nrgBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
             if (nrgBounds != null)
             {
                 plane.energy = new Energy();
                 plane.energy.bounds = new Interval(nrgBounds.getLower(), nrgBounds.getUpper());
-                if (nrgSamples != null) // actual sub-samples
+                if (nrgBoundsSamples != null)
                 {
-                    for (ca.nrc.cadc.dali.DoubleInterval si : nrgSamples)
+                    //for (ca.nrc.cadc.dali.DoubleInterval si : nrgSamples)
+                    for (int i = 0; i < nrgBoundsSamples.length; i += 2)
                     {
-                        plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
+                        //plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
+                        plane.energy.bounds.getSamples().add(new SubInterval(nrgBoundsSamples[i], nrgBoundsSamples[i+1]));
                     }
                 }
                 else // HACK: backwards compat
@@ -219,17 +222,20 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             
             ca.nrc.cadc.dali.DoubleInterval timBounds 
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
-            ca.nrc.cadc.dali.DoubleInterval[] timSamples 
-                    = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
+            //ca.nrc.cadc.dali.DoubleInterval[] timBoundsSamples 
+            //        = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
+            double[] timBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
             if (timBounds != null)
             {
                 plane.time = new Time();
                 plane.time.bounds = new Interval(timBounds.getLower(), timBounds.getUpper());
-                if (timSamples != null) // actual sub-samples
+                if (timBoundsSamples != null) // actual sub-samples
                 {
-                    for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
+                    //for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
+                    for (int i = 0; i < nrgBoundsSamples.length; i += 2)
                     {
-                        plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
+                        //plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
+                        plane.time.bounds.getSamples().add(new SubInterval(timBoundsSamples[i],timBoundsSamples[i+1]));
                     }
                 }
                 else // HACK: backwards compat
