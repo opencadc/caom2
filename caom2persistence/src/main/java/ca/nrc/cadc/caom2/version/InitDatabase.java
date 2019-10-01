@@ -107,7 +107,8 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     static String[] UPGRADE_SQL = new String[]{
         "caom2.upgrade-2.3.33.sql",
         "caom2.ObsCore.sql",
-        "caom2.SIAv1.sql"
+        "caom2.SIAv1.sql",
+        "caom2.permissions.sql"
     };
 
     public InitDatabase(DataSource dataSource, String database, String schema) {
