@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
@@ -104,7 +105,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
     public PostgreSQLGenerator(String database, String schema) {
         super(database, schema);
         this.useIntegerForBoolean = true;
-        this.persistComputed = true;
         this.persistOptimisations = true;
         this.persistReadAccessWithAsset = true;
         this.useLongForUUID = false;
@@ -118,34 +118,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
         }
         return "LIMIT " + batchSize;
     }
-
-    /*
-    @Override
-    protected String getUpdateAssetSQL(Class asset, Class ra, boolean add) {
-        StringBuilder sb = new StringBuilder();
-        String col = getReadAccessCol(ra);
-
-        sb.append("UPDATE ");
-        sb.append(getTable(asset));
-        sb.append(" SET ").append(col).append(" = ");
-        if (add) {
-            sb.append("(").append(col).append(" || ?::tsvector)");
-        } else {
-            sb.append("regexp_replace(");
-            sb.append("regexp_replace(").append(col).append("::text, ?, '')"); // remove group name
-            sb.append(", $$''$$, '', 'g')::tsvector"); // remove all tick marks before cast
-        }
-        sb.append(" WHERE ");
-        if (PlaneMetaReadAccess.class.equals(ra) && !Plane.class.equals(asset)) {
-            sb.append(getPrimaryKeyColumn(Plane.class)); // HACK: only works because column name is the same in all tables
-        } else {
-            sb.append(getPrimaryKeyColumn(asset));
-        }
-        sb.append(" = ?");
-
-        return sb.toString();
-    }
-    */
 
     @Override
     protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> val) throws SQLException {
@@ -207,21 +179,43 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
+    protected void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
             if (sb != null) {
                 sb.append("null,");
             }
-        } else {
-            log.debug("[safeSetPolygon] in: " + val);
-            Double[] dval = new Double[2 * val.size()]; // 2 numbers per point
+            return;
+        } 
+        
+        log.debug("[safeSetShape] in: " + val);
+        if (val instanceof Polygon) {
+            Polygon poly = (Polygon) val;
+            Double[] dval = new Double[2 * poly.getPoints().size()]; // 2 numbers per point
             int i = 0;
-            for (Point p : val) {
+            for (Point p : ((Polygon) val).getPoints()) {
                 dval[i++] = p.cval1;
                 dval[i++] = p.cval2;
             }
+            java.sql.Array arr = ps.getConnection().createArrayOf("float8", dval);
+            ps.setObject(col, arr);
+            if (sb != null) {
+                sb.append("[");
+                for (double d : dval) {
+                    sb.append(d).append(",");
+                }
+                sb.setCharAt(sb.length() - 1, ']'); // replace last comma with closing ]
+            }
+            return;
+        }
+        
+        if (val instanceof Circle) {
+            Circle circ = (Circle) val;
+            Double[] dval = new Double[3];
+            dval[0] = val.getCenter().cval1;
+            dval[1] = val.getCenter().cval2;
+            dval[2] = circ.getRadius();
             java.sql.Array arr = ps.getConnection().createArrayOf("float8", dval);
             ps.setObject(col, arr);
             if (sb != null) {
@@ -235,40 +229,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
     
     /**
-     * Store a circle value in a double[] column.
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    @Override
-    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
-            throws SQLException {
-        if (val == null) {
-            ps.setObject(col, null);
-            if (sb != null) {
-                sb.append("null,");
-            }
-        } else {
-            log.debug("[safeSetCircle] in: " + val);
-            Double[] dval = new Double[3];
-            dval[0] = val.getCenter().cval1;
-            dval[1] = val.getCenter().cval2;
-            dval[2] = val.getRadius();
-            java.sql.Array arr = ps.getConnection().createArrayOf("float8", dval);
-            ps.setObject(col, arr);
-            if (sb != null) {
-                sb.append("[");
-                for (double d : dval) {
-                    sb.append(d).append(",");
-                }
-                sb.setCharAt(sb.length() - 1, ']'); // replace last comma with closing ]
-            }
-        }
-    }
-
-    /**
      * Store polygon value in an spoly column.
      * 
      * @param sb
@@ -278,17 +238,21 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
+    protected void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
             if (sb != null) {
                 sb.append("null,");
             }
-        } else {
-            log.debug("[safeSetPositionBounds] in: " + val);
+            return;
+        } 
+        
+        log.debug("[safeSetShapeAsPolygon] in: " + val);
+        if (val instanceof Polygon) {
+            Polygon vp = (Polygon) val;
             ca.nrc.cadc.dali.Polygon poly = new ca.nrc.cadc.dali.Polygon();
-            for (Point p : val.getPoints()) {
+            for (Point p : vp.getPoints()) {
                 poly.getVertices().add(new ca.nrc.cadc.dali.Point(p.cval1, p.cval2));
             }
             PgSpoly pgs = new PgSpoly();
@@ -298,30 +262,12 @@ public class PostgreSQLGenerator extends SQLGenerator {
                 sb.append(pgo.getValue());
                 sb.append(",");
             }
+            return;
         }
-    }
-
-    /** 
-     * Store a circle value in an spoly column. This method generates a polygon 
-     * approximation of the circle.
-     * 
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    @Override
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val) 
-            throws SQLException {
-        if (val == null) {
-            ps.setObject(col, null);
-            if (sb != null) {
-                sb.append("null,");
-            }
-        } else {
-            log.debug("[safeSetPositionBounds] in: " + val);
-            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(val, 13);
+        
+        if (val instanceof Circle) {
+            Circle cv = (Circle) val;
+            ca.nrc.cadc.dali.Polygon poly = generatePolygonApproximation(cv, 13);
             PgSpoly pgs = new PgSpoly();
             PGobject pgo = pgs.generatePolygon(poly);
             ps.setObject(col, pgo);
@@ -329,7 +275,6 @@ public class PostgreSQLGenerator extends SQLGenerator {
                 sb.append(pgo.getValue());
                 sb.append(",");
             }
-            log.debug("[safeSetPositionBounds] out: " + pgo.getValue());
         }
     }
 
@@ -351,7 +296,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
                 sb.append("null,");
             }
         } else {
-            log.debug("[safeSetPolygon] in: " + val);
+            log.debug("[safeSetMultiPolygon] in: " + val);
             Double[] dval = new Double[3 * val.getVertices().size()]; // 3 numbers per vertex
             int i = 0;
             for (Vertex v : val.getVertices()) {

@@ -226,7 +226,11 @@ public class ObservationHarvester extends Harvester {
         config2.put("basePublisherID", basePublisherID.toASCIIString());
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
-        destObservationDAO.setOrigin(false); // copy as-is
+        if (src.getIdentifier().equals(dest.getIdentifier())) {
+            destObservationDAO.setOrigin(true); // reproc in a single db should update timestamps
+        } else {
+            destObservationDAO.setOrigin(false); // copy as-is
+        }
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
 
         if (srcObservationService != null) {

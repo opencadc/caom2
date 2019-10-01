@@ -73,7 +73,6 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SybaseSQLGenerator;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
@@ -94,8 +93,6 @@ public abstract class Harvester implements Runnable {
     private static Logger log = Logger.getLogger(Harvester.class);
 
     public static final String POSTGRESQL = "postgresql";
-    public static final String SYBASE = "sybase";
-    public static final String JTDS = "jtds";
 
     protected boolean dryrun;
 
@@ -148,9 +145,7 @@ public abstract class Harvester implements Runnable {
             throw new RuntimeException("failed to find JDBC driver for " + desc.getDatabaseServer() + " " + desc.getDatabase());
         }
 
-        if (driver.contains(SYBASE) || driver.contains(JTDS)) {
-            ret.put(SQLGenerator.class.getName(), SybaseSQLGenerator.class);
-        } else if (cc.getDriver().contains(POSTGRESQL)) {
+        if (cc.getDriver().contains(POSTGRESQL)) {
             ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             ret.put("disableHashJoin", Boolean.TRUE);
         } else {

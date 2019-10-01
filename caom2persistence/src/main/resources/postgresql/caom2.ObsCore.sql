@@ -55,7 +55,7 @@ create view <schema>.ObsCore
     lastModified,
 
 -- hidden columns (not in tap_schema)
-    position_bounds_points,
+    position_bounds_spoly,
 
 -- for CAOM access control
     dataRelease, dataReadAccessGroups,
@@ -119,7 +119,7 @@ AS SELECT
     o.maxLastModified,
 
 -- hidden columns    
-    p.position_bounds_points,
+    p.position_bounds_spoly,
     p.dataRelease, p.dataReadAccessGroups,
     p.planeID,
     p.metaRelease, p.metaReadAccessGroups

@@ -120,6 +120,7 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -212,7 +213,6 @@ public class SQLGenerator {
     // default configuration of features is for a complete caom2 model with no optimisations
     protected boolean useIntegerForBoolean = true; // TAP default
     protected boolean persistOptimisations = false;  // persist alternate representations to support optimisations
-    protected boolean persistComputed = true; // persist computed plane metadata
     protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
     protected boolean useLongForUUID = false;
     protected String fakeSchemaTablePrefix = null;
@@ -222,12 +222,6 @@ public class SQLGenerator {
      * is true.
      */
     protected String basePublisherID;
-
-    protected int numComputedObservationColumns;
-    protected int numComputedPlaneColumns;
-    protected int numComputedArtifactColumns;
-    protected int numComputedPartColumns;
-    protected int numComputedChunkColumns;
 
     protected int numOptObservationColumns;
     protected int numOptPlaneColumns;
@@ -369,6 +363,24 @@ public class SQLGenerator {
             "quality_flag",
             "metaReadGroups", 
             "dataReadGroups",
+            "position_bounds",
+            "position_bounds_spoly", "position_bounds_samples",
+            "position_bounds_center", "position_bounds_area", "position_bounds_size",
+            "position_dimension_naxis1", "position_dimension_naxis2",
+            "position_resolution", "position_sampleSize", "position_timeDependent",
+            "energy_emBand",
+            "energy_bounds_lower", "energy_bounds_upper",
+            "energy_bounds", "energy_bounds_samples",
+            "energy_bounds_width",
+            "energy_freqWidth", "energy_freqSampleSize",
+            "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
+            "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
+            "energy_restwav",
+            "time_bounds_lower", "time_bounds_upper",
+            "time_bounds", "time_bounds_samples",
+            "time_bounds_width",
+            "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
+            "polarization_states", "polarization_dimension",
             "lastModified", "maxLastModified",
             "metaChecksum", "accMetaChecksum",
             "planeID"
@@ -381,34 +393,6 @@ public class SQLGenerator {
                 "dataReadAccessGroups"  // optimisation (group names only)
             };
             this.numOptPlaneColumns = extraCols.length;
-            planeColumns = addExtraColumns(planeColumns, extraCols);
-        }
-        if (persistComputed) {
-            String[] extraCols = new String[]{
-                // position
-                "position_bounds_points",
-                "position_bounds", "position_bounds_samples",
-                "position_bounds_center", "position_bounds_area", "position_bounds_size",
-                "position_dimension_naxis1", "position_dimension_naxis2",
-                "position_resolution", "position_sampleSize", "position_timeDependent",
-                // energy
-                "energy_emBand",
-                "energy_bounds_lower", "energy_bounds_upper",
-                "energy_bounds", "energy_bounds_samples",
-                "energy_bounds_width",
-                "energy_freqWidth", "energy_freqSampleSize",
-                "energy_dimension", "energy_resolvingPower", "energy_sampleSize",
-                "energy_bandpassName", "energy_transition_species", "energy_transition_transition",
-                "energy_restwav",
-                // time
-                "time_bounds_lower", "time_bounds_upper",
-                "time_bounds", "time_bounds_samples",
-                "time_bounds_width",
-                "time_dimension", "time_resolution", "time_sampleSize", "time_exposure",
-                // polarization
-                "polarization_states", "polarization_dimension"
-            };
-            this.numComputedPlaneColumns = extraCols.length;
             planeColumns = addExtraColumns(planeColumns, extraCols);
         }
         columnMap.put(Plane.class, planeColumns);
@@ -1493,6 +1477,112 @@ public class SQLGenerator {
                 safeSetString(sb, ps, col++, Util.encodeURIs(plane.getDataReadGroups()));
             }
 
+            //position
+            Position pos = plane.position;
+            if (pos == null) {
+                pos = new Position();
+            }
+            if (pos.bounds != null) {
+                safeSetShape(sb, ps, col++, pos.bounds);
+                safeSetShapeAsPolygon(sb, ps, col++, pos.bounds);
+                if (pos.bounds instanceof Polygon) {
+                    Polygon poly = (Polygon) pos.bounds;
+                    safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
+                } else {
+                    safeSetMultiPolygon(sb, ps, col++, null);
+                }
+                safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+            } else {
+                safeSetShape(sb, ps, col++, null);
+                safeSetShapeAsPolygon(sb, ps, col++, null);
+                safeSetMultiPolygon(sb, ps, col++, null);
+                safeSetPoint(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+
+            if (pos.dimension != null) {
+                safeSetLong(sb, ps, col++, pos.dimension.naxis1);
+                safeSetLong(sb, ps, col++, pos.dimension.naxis2);
+            } else {
+                safeSetLong(sb, ps, col++, null);
+                safeSetLong(sb, ps, col++, null);
+            }
+            safeSetDouble(sb, ps, col++, pos.resolution);
+            safeSetDouble(sb, ps, col++, pos.sampleSize);
+            safeSetBoolean(sb, ps, col++, pos.timeDependent);
+
+            //energy
+            Energy nrg = plane.energy;
+            if (nrg == null) {
+                nrg = new Energy();
+            }
+            if (nrg.emBand != null) {
+                safeSetString(sb, ps, col++, nrg.emBand.getValue());
+            } else {
+                safeSetString(sb, ps, col++, null);
+            }
+            if (nrg.bounds != null) {
+                safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
+                safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
+                safeSetInterval(sb, ps, col++, nrg.bounds);
+                safeSetSubIntervalList(sb, ps, col++, nrg.bounds.getSamples());
+                safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
+            } else {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetInterval(sb, ps, col++, null);
+                safeSetSubIntervalList(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+            safeSetDouble(sb, ps, col++, nrg.getFreqWidth());
+            safeSetDouble(sb, ps, col++, nrg.getFreqSampleSize());
+            safeSetLong(sb, ps, col++, nrg.dimension);
+            safeSetDouble(sb, ps, col++, nrg.resolvingPower);
+            safeSetDouble(sb, ps, col++, nrg.sampleSize);
+            safeSetString(sb, ps, col++, nrg.bandpassName);
+            if (nrg.transition != null) {
+                safeSetString(sb, ps, col++, nrg.transition.getSpecies());
+                safeSetString(sb, ps, col++, nrg.transition.getTransition());
+            } else {
+                safeSetString(sb, ps, col++, null);
+                safeSetString(sb, ps, col++, null);
+            }
+            safeSetDouble(sb, ps, col++, nrg.restwav);
+
+            //time
+            Time tim = plane.time;
+            if (tim == null) {
+                tim = new Time();
+            }
+            if (tim.bounds != null) {
+                safeSetDouble(sb, ps, col++, tim.bounds.getLower());
+                safeSetDouble(sb, ps, col++, tim.bounds.getUpper());
+                safeSetInterval(sb, ps, col++, tim.bounds);
+                safeSetSubIntervalList(sb, ps, col++, tim.bounds.getSamples());
+                safeSetDouble(sb, ps, col++, tim.bounds.getWidth());
+            } else {
+                safeSetDouble(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+                safeSetInterval(sb, ps, col++, null);
+                safeSetSubIntervalList(sb, ps, col++, null);
+                safeSetDouble(sb, ps, col++, null);
+            }
+            safeSetLong(sb, ps, col++, tim.dimension);
+            safeSetDouble(sb, ps, col++, tim.resolution);
+            safeSetDouble(sb, ps, col++, tim.sampleSize);
+            safeSetDouble(sb, ps, col++, tim.exposure);
+
+            //polarization
+            Polarization pol = plane.polarization;
+            if (pol == null) {
+                pol = new Polarization();
+            }
+            safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
+            safeSetLong(sb, ps, col++, pol.dimension);
+            
             if (persistOptimisations) {
                 if (basePublisherID == null) {
                     throw new IllegalStateException("basePublisherID is null");
@@ -1507,121 +1597,6 @@ public class SQLGenerator {
                 
                 safeSetGroupOptimisation(sb, ps, col++, plane.getMetaReadGroups());
                 safeSetGroupOptimisation(sb, ps, col++, plane.getDataReadGroups());
-            }
-            if (persistComputed) {
-                //position
-                Position pos = plane.position;
-                if (pos == null) {
-                    pos = new Position();
-                }
-                if (pos.bounds != null) {
-                    if (pos.bounds instanceof Polygon) {
-                        Polygon poly = (Polygon) pos.bounds;
-                        safeSetPointList(sb, ps, col++, poly.getPoints());
-                        safeSetPositionBounds(sb, ps, col++, poly);
-                        safeSetMultiPolygon(sb, ps, col++, poly.getSamples());
-                        safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                        safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                        safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                    } else if (pos.bounds instanceof Circle) {
-                        Circle circ = (Circle) pos.bounds;
-                        safeSetCircle(sb, ps, col++, circ);
-                        safeSetPositionBounds(sb, ps, col++, circ);
-                        safeSetMultiPolygon(sb, ps, col++, null);
-                        safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                        safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                        safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                    } else {
-                        throw new UnsupportedOperationException("cannot persist: " + pos.bounds.getClass().getName());
-                    }
-                } else {
-                    safeSetPointList(sb, ps, col++, null);
-                    safeSetPositionBounds(sb, ps, col++, (Polygon) null);
-                    safeSetMultiPolygon(sb, ps, col++, null);
-                    safeSetPoint(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                }
-
-                if (pos.dimension != null) {
-                    safeSetLong(sb, ps, col++, pos.dimension.naxis1);
-                    safeSetLong(sb, ps, col++, pos.dimension.naxis2);
-                } else {
-                    safeSetLong(sb, ps, col++, null);
-                    safeSetLong(sb, ps, col++, null);
-                }
-                safeSetDouble(sb, ps, col++, pos.resolution);
-                safeSetDouble(sb, ps, col++, pos.sampleSize);
-                safeSetBoolean(sb, ps, col++, pos.timeDependent);
-
-                //energy
-                Energy nrg = plane.energy;
-                if (nrg == null) {
-                    nrg = new Energy();
-                }
-                if (nrg.emBand != null) {
-                    safeSetString(sb, ps, col++, nrg.emBand.getValue());
-                } else {
-                    safeSetString(sb, ps, col++, null);
-                }
-                if (nrg.bounds != null) {
-                    safeSetDouble(sb, ps, col++, nrg.bounds.getLower());
-                    safeSetDouble(sb, ps, col++, nrg.bounds.getUpper());
-                    safeSetInterval(sb, ps, col++, nrg.bounds);
-                    safeSetSubIntervalList(sb, ps, col++, nrg.bounds.getSamples());
-                    safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
-                } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetInterval(sb, ps, col++, null);
-                    safeSetSubIntervalList(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                }
-                safeSetDouble(sb, ps, col++, nrg.getFreqWidth());
-                safeSetDouble(sb, ps, col++, nrg.getFreqSampleSize());
-                safeSetLong(sb, ps, col++, nrg.dimension);
-                safeSetDouble(sb, ps, col++, nrg.resolvingPower);
-                safeSetDouble(sb, ps, col++, nrg.sampleSize);
-                safeSetString(sb, ps, col++, nrg.bandpassName);
-                if (nrg.transition != null) {
-                    safeSetString(sb, ps, col++, nrg.transition.getSpecies());
-                    safeSetString(sb, ps, col++, nrg.transition.getTransition());
-                } else {
-                    safeSetString(sb, ps, col++, null);
-                    safeSetString(sb, ps, col++, null);
-                }
-                safeSetDouble(sb, ps, col++, nrg.restwav);
-
-                //time
-                Time tim = plane.time;
-                if (tim == null) {
-                    tim = new Time();
-                }
-                if (tim.bounds != null) {
-                    safeSetDouble(sb, ps, col++, tim.bounds.getLower());
-                    safeSetDouble(sb, ps, col++, tim.bounds.getUpper());
-                    safeSetInterval(sb, ps, col++, tim.bounds);
-                    safeSetSubIntervalList(sb, ps, col++, tim.bounds.getSamples());
-                    safeSetDouble(sb, ps, col++, tim.bounds.getWidth());
-                } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetInterval(sb, ps, col++, null);
-                    safeSetSubIntervalList(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
-                }
-                safeSetLong(sb, ps, col++, tim.dimension);
-                safeSetDouble(sb, ps, col++, tim.resolution);
-                safeSetDouble(sb, ps, col++, tim.sampleSize);
-                safeSetDouble(sb, ps, col++, tim.exposure);
-
-                //polarization
-                Polarization pol = plane.polarization;
-                if (pol == null) {
-                    pol = new Polarization();
-                }
-                safeSetString(sb, ps, col++, Util.encodeStates(pol.states));
-                safeSetLong(sb, ps, col++, pol.dimension);
             }
 
             safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
@@ -2467,24 +2442,11 @@ public class SQLGenerator {
      * @param val
      * @throws SQLException 
      */
-    protected void safeSetPointList(StringBuilder sb, PreparedStatement ps, int col, List<Point> val)
+    protected void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
     
-    /**
-     * Store a circle so it can be reconstructed.
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    protected void safeSetCircle(StringBuilder sb, PreparedStatement ps, int col, Circle val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Store a polygon to support queries.
      * 
@@ -2494,21 +2456,7 @@ public class SQLGenerator {
      * @param val
      * @throws SQLException 
      */
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Polygon val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    /**
-     * Store a circle to support queries.
-     * 
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
-    protected void safeSetPositionBounds(StringBuilder sb, PreparedStatement ps, int col, Circle val)
+    protected void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
@@ -3120,9 +3068,6 @@ public class SQLGenerator {
             if (persistOptimisations) {
                 col += numOptObservationColumns;
             }
-            if (persistComputed) {
-                col += numComputedObservationColumns;
-            }
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
@@ -3263,108 +3208,104 @@ public class SQLGenerator {
                 Util.decodeURIs(drag, p.getDataReadGroups());
             }
             
+            Position pos = new Position();
+            try {
+                pos.bounds = getCircle(rs, col);
+                col++; // position_bounds_points
+                col++; // position_bounds (spoly)
+                col++; // position_bounds_samples
+            } catch (IllegalStateException ex) {
+                List<Point> points = getPointList(rs, col++);
+                col++; // position_bounds spoly
+                MultiPolygon mp = getMultiPolygon(rs, col++);
+                if (points != null) {
+                    pos.bounds = new Polygon(points, mp);
+                }
+            }
+            log.debug("position_bounds: " + pos.bounds);
+            col += 3; // center, area, size
+            Long pd1 = Util.getLong(rs, col++);
+            Long pd2 = Util.getLong(rs, col++);
+            if (pd1 != null) {
+                pos.dimension = new Dimension2D(pd1, pd2);
+            }
+            log.debug("position_dimension: " + pos.dimension);
+
+            pos.resolution = Util.getDouble(rs, col++);
+            log.debug("position_resolution: " + pos.resolution);
+            pos.sampleSize = Util.getDouble(rs, col++);
+            log.debug("position_sampleSize: " + pos.sampleSize);
+            pos.timeDependent = Util.getBoolean(rs, col++);
+            log.debug("position_timeDependent: " + pos.timeDependent);
+            p.position = pos;
+
+            Energy nrg = new Energy();
+            String emStr = rs.getString(col++);
+            if (emStr != null) {
+                nrg.emBand = EnergyBand.toValue(emStr);
+            }
+            log.debug("energy_emband: " + nrg.emBand);
+
+            Double elb = Util.getDouble(rs, col++);
+            Double eub = Util.getDouble(rs, col++);
+            col++; // energy_bounds polygon
+            List<SubInterval> esi = getSubIntervalList(rs, col++);
+            if (elb != null) {
+                nrg.bounds = new Interval(elb, eub, esi);
+            }
+            log.debug("energy_bounds: " + nrg.bounds);
+            col += 3; // width, freqWidth, freqSampleSize
+            nrg.dimension = Util.getLong(rs, col++);
+            log.debug("energy_dimension: " + nrg.dimension);
+            nrg.resolvingPower = Util.getDouble(rs, col++);
+            log.debug("energy_resolvingPower: " + nrg.resolvingPower);
+            nrg.sampleSize = Util.getDouble(rs, col++);
+            log.debug("energy_sampleSize: " + nrg.sampleSize);
+            nrg.bandpassName = rs.getString(col++);
+            log.debug("energy_bandpassName: " + nrg.bandpassName);
+            String ets = rs.getString(col++);
+            String ett = rs.getString(col++);
+            if (ets != null) {
+                nrg.transition = new EnergyTransition(ets, ett);
+            }
+            log.debug("energy_transition: " + nrg.transition);
+            nrg.restwav = Util.getDouble(rs, col++);
+            log.debug("energy_restwav: " + nrg.restwav);
+            p.energy = nrg;
+
+            Time tim = new Time();
+            Double tlb = Util.getDouble(rs, col++);
+            Double tub = Util.getDouble(rs, col++);
+            col++; // time_bounds polygon
+            List<SubInterval> tsi = getSubIntervalList(rs, col++);
+            if (tlb != null) {
+                tim.bounds = new Interval(tlb, tub, tsi);
+            }
+            log.debug("time_bounds: " + tim.bounds);
+            col++; // width
+            tim.dimension = Util.getLong(rs, col++);
+            log.debug("time_dimension: " + tim.dimension);
+            tim.resolution = Util.getDouble(rs, col++);
+            log.debug("time_resolution: " + tim.resolution);
+            tim.sampleSize = Util.getDouble(rs, col++);
+            log.debug("time_sampleSize: " + tim.sampleSize);
+            tim.exposure = Util.getDouble(rs, col++);
+            log.debug("time_exposure: " + tim.exposure);
+            p.time = tim;
+
+            Polarization pol = new Polarization();
+            String polStr = rs.getString(col++);
+            if (polStr != null) {
+                pol.states = new ArrayList<PolarizationState>();
+                Util.decodeStates(polStr, pol.states);
+            }
+            pol.dimension = Util.getLong(rs, col++);
+            p.polarization = pol;
+
             if (persistOptimisations) {
                 col += numOptPlaneColumns;
             }
-
-            if (persistComputed) {
-                Position pos = new Position();
-                try {
-                    pos.bounds = getCircle(rs, col);
-                    col++; // position_bounds_points
-                    col++; // position_bounds (spoly)
-                    col++; // position_bounds_samples
-                } catch (IllegalStateException ex) {
-                    List<Point> points = getPointList(rs, col++);
-                    col++; // position_bounds spoly
-                    MultiPolygon mp = getMultiPolygon(rs, col++);
-                    if (points != null) {
-                        pos.bounds = new Polygon(points, mp);
-                    }
-                }
-                log.debug("position_bounds: " + pos.bounds);
-                col += 3; // center, area, size
-                Long pd1 = Util.getLong(rs, col++);
-                Long pd2 = Util.getLong(rs, col++);
-                if (pd1 != null) {
-                    pos.dimension = new Dimension2D(pd1, pd2);
-                }
-                log.debug("position_dimension: " + pos.dimension);
-
-                pos.resolution = Util.getDouble(rs, col++);
-                log.debug("position_resolution: " + pos.resolution);
-                pos.sampleSize = Util.getDouble(rs, col++);
-                log.debug("position_sampleSize: " + pos.sampleSize);
-                pos.timeDependent = Util.getBoolean(rs, col++);
-                log.debug("position_timeDependent: " + pos.timeDependent);
-                p.position = pos;
-
-                Energy nrg = new Energy();
-                String emStr = rs.getString(col++);
-                if (emStr != null) {
-                    nrg.emBand = EnergyBand.toValue(emStr);
-                }
-                log.debug("energy_emband: " + nrg.emBand);
-
-                Double elb = Util.getDouble(rs, col++);
-                Double eub = Util.getDouble(rs, col++);
-                col++; // energy_bounds polygon
-                List<SubInterval> esi = getSubIntervalList(rs, col++);
-                if (elb != null) {
-                    nrg.bounds = new Interval(elb, eub, esi);
-                }
-                log.debug("energy_bounds: " + nrg.bounds);
-                col += 3; // width, freqWidth, freqSampleSize
-                nrg.dimension = Util.getLong(rs, col++);
-                log.debug("energy_dimension: " + nrg.dimension);
-                nrg.resolvingPower = Util.getDouble(rs, col++);
-                log.debug("energy_resolvingPower: " + nrg.resolvingPower);
-                nrg.sampleSize = Util.getDouble(rs, col++);
-                log.debug("energy_sampleSize: " + nrg.sampleSize);
-                nrg.bandpassName = rs.getString(col++);
-                log.debug("energy_bandpassName: " + nrg.bandpassName);
-                String ets = rs.getString(col++);
-                String ett = rs.getString(col++);
-                if (ets != null) {
-                    nrg.transition = new EnergyTransition(ets, ett);
-                }
-                log.debug("energy_transition: " + nrg.transition);
-                nrg.restwav = Util.getDouble(rs, col++);
-                log.debug("energy_restwav: " + nrg.restwav);
-                p.energy = nrg;
-
-                Time tim = new Time();
-                Double tlb = Util.getDouble(rs, col++);
-                Double tub = Util.getDouble(rs, col++);
-                col++; // time_bounds polygon
-                List<SubInterval> tsi = getSubIntervalList(rs, col++);
-                if (tlb != null) {
-                    tim.bounds = new Interval(tlb, tub, tsi);
-                }
-                log.debug("time_bounds: " + tim.bounds);
-                col++; // width
-                tim.dimension = Util.getLong(rs, col++);
-                log.debug("time_dimension: " + tim.dimension);
-                tim.resolution = Util.getDouble(rs, col++);
-                log.debug("time_resolution: " + tim.resolution);
-                tim.sampleSize = Util.getDouble(rs, col++);
-                log.debug("time_sampleSize: " + tim.sampleSize);
-                tim.exposure = Util.getDouble(rs, col++);
-                log.debug("time_exposure: " + tim.exposure);
-                p.time = tim;
-
-                Polarization pol = new Polarization();
-                String polStr = rs.getString(col++);
-                if (polStr != null) {
-                    pol.states = new ArrayList<PolarizationState>();
-                    Util.decodeStates(polStr, pol.states);
-                }
-                pol.dimension = Util.getLong(rs, col++);
-                p.polarization = pol;
-            } else {
-                col += numComputedPlaneColumns;
-            }
-
+            
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
             Util.assignLastModified(p, lastModified, "lastModified");
@@ -3450,9 +3391,6 @@ public class SQLGenerator {
             if (persistOptimisations) {
                 col += numOptArtifactColumns;
             }
-            if (persistComputed) {
-                col += numComputedArtifactColumns;
-            }
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
@@ -3522,9 +3460,6 @@ public class SQLGenerator {
 
             if (persistOptimisations) {
                 col += numOptPartColumns;
-            }
-            if (persistComputed) {
-                col += numComputedPartColumns;
             }
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
@@ -3813,9 +3748,6 @@ public class SQLGenerator {
 
             if (persistOptimisations) {
                 col += numOptChunkColumns;
-            }
-            if (persistComputed) {
-                col += numComputedChunkColumns;
             }
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
