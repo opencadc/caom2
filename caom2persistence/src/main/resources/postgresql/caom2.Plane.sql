@@ -92,6 +92,9 @@ create table <schema>.Plane
 -- custom axis
     custom_ctype            varchar(8),
     custom_bounds           polygon,
+    custom_bounds_lower     double precision,
+    custom_bounds_upper     double precision,
+    custom_bounds_width     double precision,
     custom_bounds_samples   polygon,
     custom_dimension        bigint,
 

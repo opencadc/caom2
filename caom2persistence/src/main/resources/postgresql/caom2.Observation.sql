@@ -77,13 +77,14 @@ create index i_maxLastModified on <schema>.Observation (maxLastModified)
 -- member join support
 create table <schema>.ObservationMember
 (
-    compositeID uuid not null references <schema>.Observation (obsID),
-    simpleID varchar(512) not null
+    parentID uuid not null references <schema>.Observation (obsID),
+    memberID varchar(512) not null
 )
 ;
 
-create unique index i_composite2simple on <schema>.ObservationMember (compositeID,simpleID)
+create unique index i_parent2member on <schema>.ObservationMember (parentID,memberID)
 ;
 
-create unique index i_simple2composite on <schema>.ObservationMember (simpleID,compositeID)
+create unique index i_member2parent on <schema>.ObservationMember (memberID,parentID)
 ;
+

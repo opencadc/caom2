@@ -2,11 +2,18 @@
 alter table caom2.Observation 
     add column target_id   varchar(128);
 
+drop index i_composite2simple;
+drop index i_simple2composite;
+
 alter table caom2.ObservationMember
     rename column compositeID to parentID;
 
 alter table caom2.ObservationMember
     rename column simpleID to memberID;
+
+create unique index i_parent2member on <schema>.ObservationMember (parentID,memberID);
+
+create unique index i_member2parent on <schema>.ObservationMember (memberID,parentID);
 
 alter table caom2.Plane 
     add column observable_ucd varchar(64),
@@ -55,3 +62,6 @@ alter table caom2.Chunk
     add column custom_axis_function_refCoord_pix double precision,
     add column custom_axis_function_refCoord_val double precision,
     add column custom_axis_function_delta double precision;
+
+drop index Plane_i_emBand_dataProductType;
+
