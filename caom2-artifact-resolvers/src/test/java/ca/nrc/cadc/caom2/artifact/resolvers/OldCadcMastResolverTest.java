@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -66,69 +66,72 @@
 ************************************************************************
 */
 
-
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.reg.Capabilities;
-import ca.nrc.cadc.reg.Capability;
-import ca.nrc.cadc.reg.Interface;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.MalformedURLException;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
-import javax.security.auth.Subject;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * StorageResolver implementation for the MAST archive.
- * This class can convert an MAST URI into a URL. This is an alternate version that uses the RegistryClient to find the data web service base URL.
  *
  * @author yeunga
  */
-public class CadcMastResolver implements StorageResolver, Traceable {
-    public static final String SCHEME = "mast";
-    private static final Logger log = Logger.getLogger(CadcMastResolver.class);
-    private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-    private String baseDataURL;
+public class OldCadcMastResolverTest {
+    private static final Logger log = Logger.getLogger(OldCadcMastResolverTest.class);
 
-    @Override
-    public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
-        }
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    }
 
+    private static final String FILE_URI = "mast:FOO/bar";
+    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
+
+    OldCadcMastResolver cadcMastResolver = new OldCadcMastResolver();
+
+    public OldCadcMastResolverTest() {
+
+    }
+
+    @Test
+    public void testGetScheme() {
+        Assert.assertTrue(OldCadcMastResolver.SCHEME.equals(cadcMastResolver.getScheme()));
+    }
+
+    @Test 
+    public void testTraceable() {
+        Assert.assertTrue(cadcMastResolver instanceof Traceable);
+    }
+    
+    @Test
+    public void testToURL() {
         try {
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            if (authMethod == null) {
-                authMethod = AuthMethod.ANON;
-            }
-            RegistryClient rc = new RegistryClient();
-            Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
-            Capability dataCap = caps.findCapability(Standards.DATA_10);
-            Interface ifc = dataCap.findInterface(authMethod);
-            if (ifc == null) {
-                throw new IllegalArgumentException("No interface for auth method " + authMethod);
-            }
-            String baseDataURL = ifc.getAccessURL().getURL().toString();
-            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG", ex);
-        } catch (Throwable t) {
-            String message = "Failed to convert to data URL";
-            throw new RuntimeException(message, t);
+            URI uri = new URI(FILE_URI);
+            URL url = cadcMastResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    @Override
-    public String getScheme() {
-        return SCHEME;
+    @Test
+    public void testInvalidSchemeURI() {
+        try {
+            URI uri = new URI(INVALID_SCHEME_URI1);
+            URL url = cadcMastResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("invalid scheme"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
