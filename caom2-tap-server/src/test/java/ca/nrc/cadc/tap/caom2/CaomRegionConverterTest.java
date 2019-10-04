@@ -83,13 +83,12 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -108,33 +107,9 @@ public class CaomRegionConverterTest {
 
     private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
 
-    /**
-     * @throws java.lang.Exception
-     */
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        Log4jInit.setLevel("ca.nrc.cadc.tap", org.apache.log4j.Level.INFO);
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception {
+    static {
+        //Log4jInit.setLevel("ca.nrc.cadc.tap", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
     }
 
     private class TestQuery extends AdqlQuery {
@@ -208,6 +183,19 @@ public class CaomRegionConverterTest {
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), p.position_bounds) = 1";
+        run();
+        log.debug(" expected: " + _expected);
+        Assert.assertEquals(_expected, prepareToCompare(_sql));
+    }
+    
+    @Test
+    public void testIntersectWithAliasAbuse() {
+        log.debug("testIntersectWithAliasAbuse START");
+        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && position_bounds_spoly";
+        _expected = prepareToCompare(_expected);
+
+        // alias in from but not in where
+        _query = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
