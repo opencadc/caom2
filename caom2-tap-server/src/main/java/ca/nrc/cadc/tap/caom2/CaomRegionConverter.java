@@ -126,6 +126,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         {
             Column c = (Column) left;
             Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
                 if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
                     c.setColumnName("position_bounds_spoly");
@@ -138,6 +142,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         {
             Column c = (Column) right;
             Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
                 if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
                     c.setColumnName("position_bounds_spoly");
@@ -211,6 +219,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         {
             Column c = (Column) left;
             Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
                 if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
                     c.setColumnName("position_bounds_spoly");
@@ -223,6 +235,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter
         {
             Column c = (Column) right;
             Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
                 if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_bounds_samples")) {
                     c.setColumnName("position_bounds_spoly");

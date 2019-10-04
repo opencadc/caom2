@@ -73,10 +73,12 @@ import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.tap.parser.ParserUtil;
-import java.io.IOException;
+import ca.nrc.cadc.tap.schema.ColumnDesc;
+import ca.nrc.cadc.tap.schema.SchemaDesc;
+import ca.nrc.cadc.tap.schema.TableDesc;
+import ca.nrc.cadc.tap.schema.TapSchema;
 import java.net.URI;
 import java.security.AccessControlException;
-import java.security.acl.Group;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
@@ -204,16 +206,23 @@ public class Util
         log.debug("isCAOM2: " + t);
         boolean caom2 = false;
         for (Table t2 : tabs) {
-            log.debug("   vs: " + t2.getWholeTableName() + " AS " + t2.getAlias());
+            log.debug("   vs: " + t2);
             if (t2.getSchemaName().equalsIgnoreCase("caom2") || t2.getSchemaName().equalsIgnoreCase("ivoa")) {
                 if (t != null && t2.getAlias() != null && t2.getAlias().equals(t.getName())) {
-                    return true;
+                    // t.name is a table alias
+                    caom2 = true;
+                }
+                if (t != null && t2.getAlias() != null && t2.getAlias().equals(t.getAlias())) {
+                    // t was found in the from clause via findTableWithColumn
+                    caom2 = true;
                 }
                 if (t2.getAlias() == null) {
-                    caom2 = true; // unqualified caom2 table in the FROM clause
+                    // unqualified caom2 table in the FROM clause
+                    caom2 = true; 
                 }
             }
         }
+        log.debug("isCAOM2: " + t + " = " + caom2);
         return caom2;
     }
 
@@ -232,5 +241,31 @@ public class Util
             }
         }
         return upload;
+    }
+    
+       
+    static Table findTableWithColumn(Column c, List<Table> tabs, TapSchema ts) {
+        log.debug("find: " + c.getColumnName());
+        Table ret = null;
+        for (SchemaDesc sd : ts.getSchemaDescs()) {
+            for (TableDesc td : sd.getTableDescs()) {
+                for (ColumnDesc cd : td.getColumnDescs()) {
+                    log.debug("find/check: " + cd.getColumnName() + " vs " + c.getColumnName());
+                    if (cd.getColumnName().equalsIgnoreCase(c.getColumnName())) {
+                        // found matching column: check if the table is in use
+                        for (Table t : tabs) {
+                            log.debug("find/verify: " + td.getTableName() + " vs " + t.getWholeTableName());
+                            if (td.getTableName().equalsIgnoreCase(t.getWholeTableName())) {
+                                if (ret != null) {
+                                    throw new IllegalArgumentException("ambigious column reference: " + c.getColumnName());
+                                }
+                                ret = t;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ret;
     }
 }

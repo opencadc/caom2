@@ -116,7 +116,7 @@ public class TestUtil
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
         
         TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
-        obs.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
+        sia.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
         
         SchemaDesc caom2 = new SchemaDesc("caom2");
         caom2.getTableDescs().add(obs);
