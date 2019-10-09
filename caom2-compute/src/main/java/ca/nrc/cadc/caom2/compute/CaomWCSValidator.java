@@ -86,6 +86,9 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -93,7 +96,8 @@ import org.apache.log4j.Logger;
  */
 public class CaomWCSValidator {
     private static final Logger log = Logger.getLogger(CaomWCSValidator.class);
-    
+
+    private static final String AXES_VALIDATION_ERROR = "Invalid Axes: ";
     private static final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS: ";
     private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS: ";
     private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS: ";
@@ -145,6 +149,7 @@ public class CaomWCSValidator {
      */
     public static void validateChunk(String context, Chunk c)
         throws IllegalArgumentException {
+        validateAxes(c);
         validateSpatialWCS(context, c.position);
         validateSpectralWCS(context, c.energy);
         validateTemporalWCS(context, c.time);
@@ -178,7 +183,8 @@ public class CaomWCSValidator {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             } catch (WCSLibRuntimeException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context , ex);
-            } catch (UnsupportedOperationException ex) {
+            }
+            catch (UnsupportedOperationException ex) {
                 // error thrown from toPolygon if WCS is too near a pole, or if the bounds
                 // value is not recognized
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
@@ -284,6 +290,68 @@ public class CaomWCSValidator {
             } catch (UnsupportedOperationException ex) {
                 throw new IllegalArgumentException(POLARIZATION_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             }
+        }
+    }
+
+    public static void validateAxes(Chunk chunk)  {
+        // Keep track of all errors in the axis definition
+        String errorMsg = "";
+
+        if (chunk.naxis != null) {
+            // Have axisList offset by 1 because the list will be counted
+            // from 1 to naxis. Nulls in the list are missing axi
+            // definitions.
+            String[] axisList = new String[chunk.naxis + 1];
+
+            Class myObjectClass = Chunk.class;
+
+            Field[] fields = myObjectClass.getFields();
+            Integer naxis = chunk.naxis;
+
+            for (Field f : fields) {
+                if (f.getType().getSimpleName().compareTo("Integer") == 0) {
+                    String fieldName = f.getName();
+
+                    // While building the axisList, duplicate entries can be found
+                    if (fieldName.compareTo("naxis") != 0) {
+                        try {
+                            Integer val = (Integer) f.get(chunk);
+                            if (val != null) { // Ignore axes that are not defined as part of the metadata
+                                if (val <= naxis) { // Ignore axes greater than naxis: situation is allowed
+                                    if (axisList[val] != null) { // Flag duplicate axis definitions
+                                        errorMsg += "\tDuplicate axis number: " + val + ": " + fieldName + ", " + axisList[val] + ".";
+                                    } else {
+                                        axisList[val] = fieldName;
+                                    }
+                                }
+                            }
+                        } catch (IllegalAccessException iae) {
+                            // This error is thrown by the f.get on line 322
+                            throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": could not access Chunk to validate axes.");
+                        }
+                    }
+                }
+            }
+
+            // Validate the number and quality of the axis definitions
+            // Count from 1, as 0 will never be filled
+            if (axisList[0] != null) {
+                errorMsg += "\tInvalid axis definition (0): " + axisList[0] + ".";
+            }
+            for (int i=1; i<= chunk.naxis; i++) {
+                if (axisList[i] == null) {
+                    errorMsg += "\tMissing axis number: " + i;
+                }
+            }
+
+        } else {
+            errorMsg += "\tnaxis is null.";
+        }
+
+
+        if (errorMsg.compareTo("") != 0) {
+            // report all errors found during validation, throw an error and go
+            throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": " + errorMsg);
         }
     }
 

@@ -39,6 +39,18 @@ public class ComputeDataGenerator {
 
     private TimeUtilTest tiTest = new TimeUtilTest();
 
+    Chunk getFreshChunk() {
+        Chunk testChunk = new Chunk();
+
+        // Define some sort of axis set that may or may not make sense in reality,
+        // but will pass validation
+        testChunk.naxis = 4;
+        testChunk.observableAxis = 1;
+        testChunk.positionAxis1 = 2;
+        testChunk.positionAxis2 = 3;
+        testChunk.timeAxis = 4;
+        return testChunk;
+    }
 
     Plane getTestPlane(ProductType ptype)
         throws URISyntaxException {
@@ -47,7 +59,7 @@ public class ComputeDataGenerator {
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
-        np.getChunks().add(new Chunk());
+        np.getChunks().add(getFreshChunk());
         return plane;
     }
 
@@ -180,7 +192,6 @@ public class ComputeDataGenerator {
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
         PolarizationWCS w = new PolarizationWCS(axis);
-
 
         c1 = new RefCoord(0.5, zeroErr);
         c2 = new RefCoord(1.5, zeroErr);
