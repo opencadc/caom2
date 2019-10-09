@@ -16,6 +16,7 @@ import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
@@ -38,17 +39,19 @@ public class ComputeDataGenerator {
     EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
 
     private TimeUtilTest tiTest = new TimeUtilTest();
+    private CustomUtilTest cuTest = new CustomUtilTest();
 
     Chunk getFreshChunk() {
         Chunk testChunk = new Chunk();
 
         // Define some sort of axis set that may or may not make sense in reality,
         // but will pass validation
-        testChunk.naxis = 4;
+        testChunk.naxis = 5;
         testChunk.observableAxis = 1;
         testChunk.positionAxis1 = 2;
         testChunk.positionAxis2 = 3;
         testChunk.timeAxis = 4;
+        testChunk.customAxis = 5;
         return testChunk;
     }
 
@@ -199,5 +202,25 @@ public class ComputeDataGenerator {
 
         return w;
     }
+
+    CustomWCS mkGoodCustomWCS() {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+
+        return cuTest.getTestFunction(px, sx * nx * ds, nx, ds);
+    }
+
+    CustomWCS mkBadCustomWCS() {
+        RefCoord c1 = new RefCoord(0.5, 0);
+        RefCoord c2 = new RefCoord(100.5, 0);
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
+        CustomWCS wcs = new CustomWCS(axis);
+        wcs.getAxis().range = new CoordRange1D(c1, c2);
+        return wcs;
+    }
+
 
 }

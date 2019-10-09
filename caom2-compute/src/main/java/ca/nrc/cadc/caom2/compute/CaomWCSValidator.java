@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
@@ -87,8 +88,6 @@ import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -98,6 +97,7 @@ public class CaomWCSValidator {
     private static final Logger log = Logger.getLogger(CaomWCSValidator.class);
 
     private static final String AXES_VALIDATION_ERROR = "Invalid Axes: ";
+    private static final String CUSTOM_WCS_VALIDATION_ERROR = "Invalid CustomWCS: ";
     private static final String SPATIAL_WCS_VALIDATION_ERROR = "Invalid SpatialWCS: ";
     private static final String SPECTRAL_WCS_VALIDATION_ERROR = "Invalid SpectralWCS: ";
     private static final String TEMPORAL_WCS_VALIDATION_ERROR = "Invalid TemporalWCS: ";
@@ -154,6 +154,16 @@ public class CaomWCSValidator {
         validateSpectralWCS(context, c.energy);
         validateTemporalWCS(context, c.time);
         validatePolarizationWCS(context, c.polarization);
+
+        // Only case to ignore is if both are declared as null
+        if (c.customAxis != null || c.custom != null) {
+            if (c.custom != null && c.customAxis != null ) {
+                validateCustomWCS(context, c.custom);
+            } else {
+                throw new IllegalArgumentException(CUSTOM_WCS_VALIDATION_ERROR + ": CustomWCS or axis definition null. Axis: " + c.customAxis + ", WCS:" + c.custom);
+            }
+
+        }
     }
 
 
@@ -348,10 +358,31 @@ public class CaomWCSValidator {
             errorMsg += "\tnaxis is null.";
         }
 
-
         if (errorMsg.compareTo("") != 0) {
             // report all errors found during validation, throw an error and go
             throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": " + errorMsg);
+        }
+    }
+
+    public static void validateCustomWCS(String context, CustomWCS custom) {
+        if (custom != null) {
+            try {
+                CoordAxis1D customAxis = custom.getAxis();
+                if (customAxis.range != null) {
+                    Interval s = CustomUtil.toInterval(custom, customAxis.range);
+                }
+                if (customAxis.bounds != null) {
+                    for (CoordRange1D cr : customAxis.bounds.getSamples()) {
+                        Interval s1 = CustomUtil.toInterval(custom, cr);
+                    }
+                }
+                if (customAxis.function != null) {
+                    Interval s2 = CustomUtil.toInterval(custom, customAxis.function);
+                }
+            } catch (UnsupportedOperationException ex) {
+                // axis is null, most likely
+                throw new IllegalArgumentException(CUSTOM_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
+            }
         }
     }
 

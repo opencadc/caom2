@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
@@ -118,6 +119,7 @@ public class CaomWCSValidatorTest {
             c.energy = dataGenerator.mkGoodSpectralWCS();
             c.time = dataGenerator.mkGoodTemporalWCS();
             c.polarization = dataGenerator.mkGoodPolarizationWCS();
+            c.custom = dataGenerator.mkGoodCustomWCS();
 
             CaomWCSValidator.validate(a);
 
@@ -143,6 +145,11 @@ public class CaomWCSValidatorTest {
             c.time = null;
             CaomWCSValidator.validate(a);
 
+            c.custom = null;
+            c.customAxis = null;
+            c.naxis = 4;
+            CaomWCSValidator.validate(a);
+
             // Assert: all WCS should be null at this step
             c.position = null;
             CaomWCSValidator.validate(a);
@@ -166,6 +173,7 @@ public class CaomWCSValidatorTest {
             c.energy = dataGenerator.mkGoodSpectralWCS();
             c.time = dataGenerator.mkGoodTemporalWCS();
             c.polarization = dataGenerator.mkGoodPolarizationWCS();
+            c.custom = dataGenerator.mkGoodCustomWCS();
 
             CaomWCSValidator.validate(a);
         } catch (Exception unexpected) {
@@ -415,6 +423,41 @@ public class CaomWCSValidatorTest {
             log.info("zeroErr -- caught expected: " + expected);
         }
     }
+
+
+    @Test
+    public void testCustomWCSValidator() {
+        CustomWCS custom = null;
+
+        try {
+            custom = dataGenerator.mkGoodCustomWCS();
+            CaomWCSValidator.validateCustomWCS("test", custom);
+
+            // Null value is acceptable
+            CaomWCSValidator.validateCustomWCS("test", null);
+        } catch (Exception unexpected) {
+            log.error(UNEXPECTED_EXCEPTION + " validating CustomWCS: " + custom.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + " validating CustomWCS: " + custom.toString() + unexpected);
+        }
+
+        log.info("done testCustomWCSValidator");
+    }
+
+
+    @Test
+    public void testInvalidCustomWCS() {
+        try {
+            CustomWCS w = dataGenerator.mkBadCustomWCS();
+            // At this point, the only thing that can be 'bad' is having the axis be null
+            // which is thrown as an error in the constructor in the above function.
+            Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
+        } catch (IllegalArgumentException expected) {
+            log.info("zeroErr -- caught expected: " + expected);
+        }
+        log.info("done testInvalidCustomWCS");
+    }
+
+
 
     //@Test
     public void testHPX2()
