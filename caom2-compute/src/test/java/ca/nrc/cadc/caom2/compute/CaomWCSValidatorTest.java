@@ -447,12 +447,11 @@ public class CaomWCSValidatorTest {
     @Test
     public void testInvalidCustomWCS() {
         try {
-            CustomWCS w = dataGenerator.mkBadCustomWCS();
-            // At this point, the only thing that can be 'bad' is having the axis be null
-            // which is thrown as an error in the constructor in the above function.
-            Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
+            CustomWCS c = dataGenerator.mkBadCustomWCS();
+            CaomWCSValidator.validateCustomWCS("test", c);
+            Assert.fail("expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
-            log.info("zeroErr -- caught expected: " + expected);
+            log.info("caught expected: " + expected);
         }
         log.info("done testInvalidCustomWCS");
     }

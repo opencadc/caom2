@@ -12,7 +12,6 @@ import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -39,7 +38,7 @@ public class ComputeDataGenerator {
     EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
 
     private TimeUtilTest tiTest = new TimeUtilTest();
-    private CustomUtilTest cuTest = new CustomUtilTest();
+    private CustomAxisUtilTest cuTest = new CustomAxisUtilTest();
 
     Chunk getFreshChunk() {
         Chunk testChunk = new Chunk();
@@ -216,7 +215,8 @@ public class ComputeDataGenerator {
         RefCoord c1 = new RefCoord(0.5, 0);
         RefCoord c2 = new RefCoord(100.5, 0);
 
-        CoordAxis1D axis = new CoordAxis1D(new Axis("UTC", "foo"));
+        // ctype must be defined
+        CoordAxis1D axis = new CoordAxis1D(new Axis("", "foo"));
         CustomWCS wcs = new CustomWCS(axis);
         wcs.getAxis().range = new CoordRange1D(c1, c2);
         return wcs;

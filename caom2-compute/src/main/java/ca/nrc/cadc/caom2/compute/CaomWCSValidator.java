@@ -369,15 +369,15 @@ public class CaomWCSValidator {
             try {
                 CoordAxis1D customAxis = custom.getAxis();
                 if (customAxis.range != null) {
-                    Interval s = CustomUtil.toInterval(custom, customAxis.range);
+                    Interval s = CustomAxisUtil.toInterval(custom, customAxis.range);
                 }
                 if (customAxis.bounds != null) {
                     for (CoordRange1D cr : customAxis.bounds.getSamples()) {
-                        Interval s1 = CustomUtil.toInterval(custom, cr);
+                        Interval s1 = CustomAxisUtil.toInterval(custom, cr);
                     }
                 }
                 if (customAxis.function != null) {
-                    Interval s2 = CustomUtil.toInterval(custom, customAxis.function);
+                    Interval s2 = CustomAxisUtil.toInterval(custom, customAxis.function);
                 }
             } catch (UnsupportedOperationException ex) {
                 // axis is null, most likely
