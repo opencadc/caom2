@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.WCSKeywordsImpl;
@@ -132,6 +133,24 @@ public class WCSWrapper extends WCSKeywordsImpl {
             doPut("CDELT" + axis, func.getDelta());
         } else {
             throw new UnsupportedOperationException("cannot wrap SpectralWCS: no SpectralWCS.axis.function");
+        }
+    }
+
+    public WCSWrapper(CustomWCS w, int axis) {
+        super();
+        doPut("NAXIS", new Integer(1));
+        doPut("CTYPE" + axis, w.getAxis().getAxis().getCtype());
+        doPut("CUNIT" + axis, w.getAxis().getAxis().getCunit());
+
+        CoordFunction1D func = w.getAxis().function;
+
+        if (func != null) {
+            doPut("NAXIS" + axis, func.getNaxis());
+            doPut("CRPIX" + axis, func.getRefCoord().pix);
+            doPut("CRVAL" + axis, func.getRefCoord().val);
+            doPut("CDELT" + axis, func.getDelta());
+        } else {
+            throw new UnsupportedOperationException("cannot wrap CustomWCS: no CustomWCS.axis.function");
         }
     }
 

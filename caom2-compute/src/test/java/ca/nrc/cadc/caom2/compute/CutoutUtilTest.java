@@ -117,19 +117,21 @@ import java.util.List;
 public class CutoutUtilTest {
     private static final Logger log = Logger.getLogger(CutoutUtilTest.class);
 
+    private ComputeDataGenerator dataGenerator = new ComputeDataGenerator();
+
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    //@Test
-    public void testTemplate() {
-        try {
-            // TODO
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+//    //@Test
+//    public void testTemplate() {
+//        try {
+//            // TODO
+//        } catch (Exception unexpected) {
+//            log.error("unexpected exception", unexpected);
+//            Assert.fail("unexpected exception: " + unexpected);
+//        }
+//    }
 
     @Test
     public void testIllegalArgs() {
@@ -153,6 +155,8 @@ public class CutoutUtilTest {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+
+        log.info("done testIllegalArgs");
     }
 
     @Test
@@ -178,6 +182,8 @@ public class CutoutUtilTest {
 
             c.observable = new ObservableAxis(new Slice(new Axis("stuff", "quatloobs"), 1L));
 
+            c.custom = dataGenerator.mkGoodCustomWCS();
+
             // axes are not bound to specific dimensions 1-5
             Assert.assertFalse(CutoutUtil.canCutout(c));
 
@@ -187,6 +193,7 @@ public class CutoutUtilTest {
             c.timeAxis = 4;
             c.polarizationAxis = 5;
             c.observableAxis = 6;
+            c.customAxis = 7;
 
             Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
@@ -218,6 +225,8 @@ public class CutoutUtilTest {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+
+        log.info("Done testComputeCutoutAll");
     }
 
     @Test
@@ -584,4 +593,67 @@ public class CutoutUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+
+    @Test
+    public void testCutoutCustom() {
+        try {
+            Chunk c = new Chunk();
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+
+            c.custom = dataGenerator.mkGoodCustomWCS();
+            c.naxis = 1;
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+
+            c.custom.getAxis().range = new CoordRange1D(new RefCoord(0.5, 300.0), new RefCoord(256.5, 550.0));
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+
+            c.customAxis = 1;
+            Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
+
+            // metadata only
+            c.customAxis = null;
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+
+            c.customAxis = 2;
+            Assert.assertFalse(CutoutUtil.canCutout(c));
+
+            // restore working structure
+            c.customAxis = 1;
+            Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
+
+            // cleanup so these don't effect cutouts
+            c.custom.getAxis().range = null;
+            c.custom.getAxis().bounds = null;
+
+//            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+//            Part p = new Part(0);
+//            a.getParts().add(p);
+//            p.getChunks().add(c);
+
+            // cutout requests: Need to have some sane requests placed here to
+            // test the cutouts.
+//            Interval miss = new Interval(600.0e-9, 800.0e-9);
+//            Interval inside = new Interval(440.0e-9, 480.0e-9);
+//            Interval inside = new Interval(440.0e-9, 480.0e-9);
+//            Interval outside = new Interval(200.0e-9, 900.0e-9);
+//
+//            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, miss);
+//            Assert.assertNotNull(cus);
+//            Assert.assertTrue(cus.isEmpty());
+
+//            cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
+//            Assert.assertNotNull(cus);
+//            log.info("cutout: " + cus);
+//            Assert.assertTrue(cus.size() == 1);
+//            String cutout = cus.get(0);
+//            log.debug("custom cutout: " + cutout);
+//            Assert.assertEquals("[0][]", cutout);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
 }
