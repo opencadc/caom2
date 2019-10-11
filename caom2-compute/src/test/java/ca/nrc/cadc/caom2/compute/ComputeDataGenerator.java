@@ -216,7 +216,7 @@ public class ComputeDataGenerator {
         RefCoord c2 = new RefCoord(100.5, 0);
 
         // ctype must be defined
-        CoordAxis1D axis = new CoordAxis1D(new Axis("", "foo"));
+        CoordAxis1D axis = new CoordAxis1D(new Axis("FDEP", "foo"));
         CustomWCS wcs = new CustomWCS(axis);
         wcs.getAxis().range = new CoordRange1D(c1, c2);
         return wcs;

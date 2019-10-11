@@ -92,6 +92,11 @@ public final class CustomAxisUtil {
 
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
+    private static final String FDEP_CTYPE = "FDEP";
+    private static final String RM_CTYPE = "RM";
+    // cunit is TBD
+//    private static final String CA_CUNIT = "d";
+
     private CustomAxisUtil() {
     }
 
@@ -305,6 +310,13 @@ public final class CustomAxisUtil {
      */
     private static void validateWCS(CustomWCS wcs) {
         StringBuilder sb = new StringBuilder();
+
+        String ctype = wcs.getAxis().getAxis().getCtype();
+        if (ctype.equals(FDEP_CTYPE) || ctype.equals(RM_CTYPE)) {
+            // OK
+        } else {
+            sb.append("unexpected CTYPE: ").append(ctype);
+        }
 
         if (wcs.getAxis() == null) {
             sb.append("axis is null.");

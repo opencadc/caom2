@@ -97,8 +97,8 @@ import org.junit.Test;
  */
 public class CustomAxisUtilTest {
     private static final Logger log = Logger.getLogger(CustomAxisUtilTest.class);
-    private static final String TEST_CTYPE = "customType";
-    private static final String TEST_CUNIT = "customUnit";
+    private static final String TEST_CTYPE = "FDEP";
+    private static final String TEST_CUNIT = "fdepUnit";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
@@ -217,7 +217,7 @@ public class CustomAxisUtilTest {
         }
 
         try {
-            CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
+            CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
             CustomWCS wcs = new CustomWCS(axis);
             // delata==0 allowed for single bin
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, new RefCoord(0.5, 54321.0));
