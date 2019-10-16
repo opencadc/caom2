@@ -131,7 +131,7 @@ public class CadcMastResolver implements StorageResolver, Traceable {
             String schemeSpecificPart = uri.getSchemeSpecificPart();
             String archive = schemeSpecificPart.split("/")[0];
             URL url = new URL(baseDataURL + "/" + uri.getSchemeSpecificPart());
-            if (HST_ARCHIVE.equals(archive) & isBackwardsCompatible) { 
+            if (HST_ARCHIVE.equalsIgnoreCase(archive) & isBackwardsCompatible) { 
                 url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
             }
             
