@@ -139,7 +139,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -154,7 +154,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -169,7 +169,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -184,7 +184,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -199,7 +199,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -214,7 +214,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
@@ -473,7 +473,7 @@ public class CaomRepoConfigTest {
             Assert.assertEquals("dsname", it.getDataSourceName());
             Assert.assertEquals("database", it.getDatabase());
             Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.caom2obs", it.getTestTable());
+            Assert.assertEquals("database.schema.Observation", it.getTestTable());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group1"), it.getReadOnlyGroup());
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
