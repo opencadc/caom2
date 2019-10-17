@@ -210,11 +210,42 @@ public class SQLGenerator {
     protected String database;
     protected String schema;
 
-    // default configuration of features is for a complete caom2 model with no optimisations
+    /**
+     * Store boolean values as integer (0 or 1). Default: true. 
+     * This is to conform to the TAP-1.0 usage.
+     */
     protected boolean useIntegerForBoolean = true; // TAP default
-    protected boolean persistOptimisations = false;  // persist alternate representations to support optimisations
-    protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
+    
+    /**
+     * Persist alternate representations to support optimisations. Default: false.
+     */
+    protected boolean persistOptimisations = false;
+    
+    /**
+     * Store optimized read access tuples in asset table(s). Default: false.
+     * This causes Plane metaReadAccess values to also be stored in the child 
+     * Artifact, Part, and Chunk tables so it is easier to do some access control 
+     * manipulations (e.g. in TAP query processing).
+     */
+    protected boolean persistReadAccessWithAsset = false;
+    
+    /**
+     * Store UUID values (surrogate primary keys) in a BIGINT column instead of a full 128-bit column. Default: false.
+     * This is here for historical reasons when the model used long values for SPKs; it stores the least significant 64-bits
+     * of the UUID and drops the rest.
+     */
     protected boolean useLongForUUID = false;
+    
+    /**
+     * Include the catalog (database) name in the fully-qualified table name in generated SQL. Default: true.
+     */
+    protected boolean useCatalogInQualifiedTableName = true;
+    
+    /**
+     * Use the schema name as a prefix on table names: {fakeSchemaTablePrefix}_{table}. Default: null.
+     * This can be used if you want to flag all caom2 tables but not use the actual RDBMS schema mechanism and/or
+     * put the tables in some other RDBMS schema for some reason. **No longer well tested.**
+     */
     protected String fakeSchemaTablePrefix = null;
 
     /**
@@ -2613,7 +2644,7 @@ public class SQLGenerator {
     public String getTable(Class c) {
         String tabName = (String) tableMap.get(c);
         StringBuilder sb = new StringBuilder();
-        if (database != null) {
+        if (useCatalogInQualifiedTableName && database != null) {
             sb.append(database);
             sb.append(".");
         }
