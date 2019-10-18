@@ -630,12 +630,14 @@ public class ObservationReaderWriterTest
             // revert to 2.0 compat
             CaomUtil.assignID(observation, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
             // nullify optional fields introduced after 2.0 so the comparison will work
+            observation.metaProducer = null;
             observation.requirements = null;
             observation.target.targetID = null;
             observation.getMetaReadGroups().clear();
             for (Plane p : observation.getPlanes())
             {
                 CaomUtil.assignID(p, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                p.metaProducer = null;
                 p.quality = null;
                 p.creatorID = null;
                 p.position = null;
@@ -650,12 +652,15 @@ public class ObservationReaderWriterTest
                 for (Artifact a : p.getArtifacts())
                 {
                     CaomUtil.assignID(a, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                    a.metaProducer = null;
                     a.contentChecksum = null;
                     a.contentRelease = null;
                     a.getContentReadGroups().clear();
                     for (Part pa : a.getParts()) {
                         CaomUtil.assignID(pa, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                        pa.metaProducer = null;
                         for (Chunk c : pa.getChunks()) {
+                            c.metaProducer = null;
                             c.customAxis = null;
                             c.custom = null;
                             CaomUtil.assignID(c, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
