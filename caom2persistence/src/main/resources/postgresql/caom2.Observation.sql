@@ -60,7 +60,8 @@ create table <schema>.Observation
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     metaChecksum varchar(136) not null,
-    accMetaChecksum varchar(136) not null
+    accMetaChecksum varchar(136) not null,
+    metaProducer varchar(128)
 )
 ;
 

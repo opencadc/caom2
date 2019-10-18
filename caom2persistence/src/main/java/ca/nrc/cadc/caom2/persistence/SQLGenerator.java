@@ -361,7 +361,7 @@ public class SQLGenerator {
             "members",
             "metaReadGroups", 
             "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum", "metaProducer",
             "obsID"
         };
         if (persistOptimisations) {
@@ -414,7 +414,7 @@ public class SQLGenerator {
             "custom_ctype", "custom_bounds_lower", "custom_bounds_upper", "custom_bounds_width", "custom_bounds", "custom_bounds_samples", "custom_dimension",
             "observable_ucd",
             "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum", "metaProducer",
             "planeID"
         };
         if (persistOptimisations) {
@@ -440,7 +440,7 @@ public class SQLGenerator {
             "contentType", "contentLength", "contentChecksum",
             "contentRelease", "contentReadGroups",
             "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum", "metaProducer",
             "artifactID"
         };
         if (persistOptimisations) {
@@ -459,7 +459,7 @@ public class SQLGenerator {
             "artifactID", "planeID", "obsID",
             "name", "productType",
             "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum", "metaProducer",
             "partID"
         };
         if (persistOptimisations) {
@@ -550,7 +550,7 @@ public class SQLGenerator {
             "observable_independent_axis_cunit",
             "observable_independent_bin",
             "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum",
+            "metaChecksum", "accMetaChecksum", "metaProducer",
             "chunkID"
         };
         if (persistOptimisations) {
@@ -580,15 +580,15 @@ public class SQLGenerator {
     }
 
     private String[] addExtraColumns(String[] origCols, String[] extraCols) {
-        // insert the extra columns before the CaomEntity columns and PK (last 5)
+        // insert the extra columns before the CaomEntity columns and PK (last 6)
         int n = origCols.length + extraCols.length;
         String[] allCols = new String[n];
 
-        System.arraycopy(origCols, 0, allCols, 0, origCols.length - 5);
-        int num = origCols.length - 5;
+        System.arraycopy(origCols, 0, allCols, 0, origCols.length - 6);
+        int num = origCols.length - 6;
         System.arraycopy(extraCols, 0, allCols, num, extraCols.length);
         num += extraCols.length;
-        System.arraycopy(origCols, origCols.length - 5, allCols, num, 5);
+        System.arraycopy(origCols, origCols.length - 6, allCols, num, 6);
         return allCols;
     }
 
@@ -1287,6 +1287,7 @@ public class SQLGenerator {
             safeSetDate(sb, ps, col++, obs.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, obs.getMetaChecksum());
             safeSetURI(sb, ps, col++, obs.getAccMetaChecksum());
+            safeSetURI(sb, ps, col++, obs.metaProducer);
 
             if (useLongForUUID) {
                 safeSetLongUUID(sb, ps, col++, obs.getID());
@@ -1670,6 +1671,7 @@ public class SQLGenerator {
             safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, plane.getMetaChecksum());
             safeSetURI(sb, ps, col++, plane.getAccMetaChecksum());
+            safeSetURI(sb, ps, col++, plane.metaProducer);
 
             if (useLongForUUID) {
                 safeSetLongUUID(sb, ps, col++, plane.getID());
@@ -1807,6 +1809,7 @@ public class SQLGenerator {
             safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, artifact.getMetaChecksum());
             safeSetURI(sb, ps, col++, artifact.getAccMetaChecksum());
+            safeSetURI(sb, ps, col++, artifact.metaProducer);
 
             if (useLongForUUID) {
                 safeSetLongUUID(sb, ps, col++, artifact.getID());
@@ -1902,6 +1905,7 @@ public class SQLGenerator {
             safeSetDate(sb, ps, col++, part.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, part.getMetaChecksum());
             safeSetURI(sb, ps, col++, part.getAccMetaChecksum());
+            safeSetURI(sb, ps, col++, part.metaProducer);
 
             if (useLongForUUID) {
                 safeSetLongUUID(sb, ps, col++, part.getID());
@@ -2243,6 +2247,7 @@ public class SQLGenerator {
             safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), utcCalendar);
             safeSetURI(sb, ps, col++, chunk.getMetaChecksum());
             safeSetURI(sb, ps, col++, chunk.getAccMetaChecksum());
+            safeSetURI(sb, ps, col++, chunk.metaProducer);
 
             if (useLongForUUID) {
                 safeSetLongUUID(sb, ps, col++, chunk.getID());
@@ -3133,6 +3138,7 @@ public class SQLGenerator {
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(o, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
+            o.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: observation.id = " + id);
@@ -3413,6 +3419,7 @@ public class SQLGenerator {
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
+            p.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: plane.id = " + id);
@@ -3506,6 +3513,7 @@ public class SQLGenerator {
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(a, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
+            a.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found artifact.id = " + id);
@@ -3576,7 +3584,8 @@ public class SQLGenerator {
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
-
+            p.metaProducer = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: part.id = " + id);
             Util.assignID(p, id);
@@ -3900,7 +3909,8 @@ public class SQLGenerator {
             URI accMetaChecksum = Util.getURI(rs, col++);
             Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
-
+            c.metaProducer = Util.getURI(rs, col++);
+            
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: chunk.id = " + id);
             Util.assignID(c, id);

@@ -192,7 +192,7 @@ public abstract class AbstractObservationDAOTest
         {
             log.error("BUG", oops);
         }
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
     }
 
     boolean deletionTrack;
@@ -261,7 +261,7 @@ public abstract class AbstractObservationDAOTest
         log.info("clearing old tables... OK");
     }
 
-    ////@Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -275,7 +275,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetState()
     {
         try
@@ -299,7 +299,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetObservationStateList()
     {
         try
@@ -401,7 +401,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetObservationListByCollection()
     {
         try
@@ -496,7 +496,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testGetDeleteNonExistentObservation()
     {
         try
@@ -525,7 +525,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testPutGetDelete()
     {
         try
@@ -600,7 +600,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testNonOriginPut()
     {
         try
@@ -733,7 +733,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testPutDerivedObservation()
     {
         try
@@ -782,7 +782,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testUpdateSimpleObservation()
     {
         try
@@ -938,7 +938,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testUpdateSimpleObservationAddRemovePlane()
     {
         try
@@ -1029,7 +1029,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testUpdateDerivedToSimple()
     {
         try
@@ -1041,7 +1041,7 @@ public abstract class AbstractObservationDAOTest
             log.debug("put: comp DONE");
             
             String sql = "SELECT count(*) from " + dao.gen.getTable(ObservationMember.class)
-                    + " WHERE compositeID = " + dao.gen.literal(comp.getID());
+                    + " WHERE parentID = " + dao.gen.literal(comp.getID());
             JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
             
             if (dao.gen.persistOptimisations) {
@@ -1104,7 +1104,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testGetObservationList()
     {
         try
@@ -1171,7 +1171,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
     
-    //@Test
+    @Test
     public void testPutObservationDeleteChildren()
     {
         try
@@ -1213,7 +1213,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testUpdateMaxLastModified()
     {
         try
@@ -1282,7 +1282,7 @@ public abstract class AbstractObservationDAOTest
         }
     }
 
-    //@Test
+    @Test
     public void testUpdateOptimisationFields()
     {
         try
@@ -1378,7 +1378,12 @@ public abstract class AbstractObservationDAOTest
         Assert.assertFalse("same objects", expected == actual);
         String cn = expected.getClass().getSimpleName();
         
-        Assert.assertEquals(cn+".ID", expected.getID(), actual.getID());
+        Assert.assertEquals(cn + ".ID", expected.getID(), actual.getID());
+        if (expected.metaProducer == null) {
+            Assert.assertNull(cn + ".metaProducer", actual.metaProducer);
+        } else {
+            Assert.assertEquals(cn + ".metaProducer", expected.metaProducer, actual.metaProducer);
+        }
     }
     
     private void testEntityChecksums(CaomEntity expected, CaomEntity actual)
@@ -1922,6 +1927,9 @@ public abstract class AbstractObservationDAOTest
 
         if (full)
         {
+            
+            o.metaProducer = URI.create("test:observation/roundrip-1.0");
+            
             if (sci)
                 o.intent = ObservationIntentType.SCIENCE;
             else
@@ -1985,6 +1993,8 @@ public abstract class AbstractObservationDAOTest
         Plane p = new Plane(productID);
         if (full)
         {
+            p.metaProducer = URI.create("test:plane/roundrip-1.0");
+            
             p.creatorID = URI.create("ivo://example.com/TEST?"+productID);
             p.calibrationLevel = CalibrationLevel.CALIBRATED;
             p.dataProductType = DataProductType.IMAGE;
@@ -2098,6 +2108,8 @@ public abstract class AbstractObservationDAOTest
         Artifact a = new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA);
         if (full)
         {
+            a.metaProducer = URI.create("test:artifact/roundrip-1.0");
+            
             a.contentType = "application/fits";
             a.contentLength = TEST_LONG;
             a.contentChecksum = URI.create("md5:fb696fe6e2fbb98dee340bd1e8811dcb");
@@ -2119,8 +2131,10 @@ public abstract class AbstractObservationDAOTest
     private Part getTestPart(boolean full, Integer pnum, int depth)
     {
         Part p = new Part(pnum);
-        if (full)
+        if (full) {
+            p.metaProducer = URI.create("test:part/roundrip-1.0");
             p.productType = ProductType.SCIENCE;
+        }
         
         if (depth <= 4)
             return p;
@@ -2134,8 +2148,10 @@ public abstract class AbstractObservationDAOTest
     private Part getTestPart(boolean full, String pname, int depth)
     {
         Part p = new Part(pname);
-        if (full)
+        if (full) {
+            p.metaProducer = URI.create("test:part/roundrip-1.0");
             p.productType = ProductType.SCIENCE;
+        }
 
         if (depth <= 4)
             return p;
@@ -2150,6 +2166,8 @@ public abstract class AbstractObservationDAOTest
     private Chunk getPosFunctionChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.positionAxis1 = new Integer(1);
@@ -2195,6 +2213,8 @@ public abstract class AbstractObservationDAOTest
     private Chunk getPosRangeChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.positionAxis1 = new Integer(1);
@@ -2214,6 +2234,8 @@ public abstract class AbstractObservationDAOTest
     private Chunk getSpecChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.energyAxis = new Integer(1);
@@ -2241,6 +2263,8 @@ public abstract class AbstractObservationDAOTest
     private Chunk getPolarChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.polarizationAxis = new Integer(1);
@@ -2252,6 +2276,8 @@ public abstract class AbstractObservationDAOTest
     private Chunk getCustomChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.customAxis = new Integer(1);
@@ -2267,12 +2293,14 @@ public abstract class AbstractObservationDAOTest
     private Chunk getEmptyChunk()
     {
         Chunk c = new Chunk();
-
+        
         return c;
     }
     private Chunk getObservableChunk(boolean full)
     {
         Chunk c = new Chunk();
+        c.metaProducer = URI.create("test:chunk/roundrip-1.0");
+        
         if (full)
             c.productType = ProductType.SCIENCE;
         c.observableAxis = new Integer(1);
