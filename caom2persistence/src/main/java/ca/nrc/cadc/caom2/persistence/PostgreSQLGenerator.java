@@ -107,6 +107,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         this.useIntegerForBoolean = true;
         this.persistOptimisations = true;
         this.useLongForUUID = false;
+        this.useCatalogInQualifiedTableName = false;
         super.init();
     }
 

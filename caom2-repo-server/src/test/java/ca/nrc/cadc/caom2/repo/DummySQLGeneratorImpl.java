@@ -79,7 +79,8 @@ import org.apache.log4j.Logger;
 public class DummySQLGeneratorImpl extends SQLGenerator {
     private static final Logger log = Logger.getLogger(DummySQLGeneratorImpl.class);
 
-    public DummySQLGeneratorImpl() {
-        super("server","database");
+    public DummySQLGeneratorImpl(String server, String database) {
+        super(server, database);
+        super.init();
     }
 }

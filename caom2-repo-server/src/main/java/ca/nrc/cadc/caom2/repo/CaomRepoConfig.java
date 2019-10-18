@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo;
 
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -78,6 +79,7 @@ import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -184,7 +186,9 @@ public class CaomRepoConfig {
         if (PostgreSQLGenerator.class.equals(i.getSqlGenerator())) {
             try {
                 DataSource ds = DBUtil.findJNDIDataSource(i.getDataSourceName());
-                InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
+                // in PG we do not need to specify database name as it is set in DataSource JDBC URL
+                //InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
+                InitDatabase init = new InitDatabase(ds, null, i.getSchema());
                 init.doInit();
             } catch (NamingException ex) {
                 throw new RuntimeException("CONFIG: failed to connect to database", ex);
@@ -288,7 +292,13 @@ public class CaomRepoConfig {
         }
 
         public String getTestTable() {
-            return database + "." + schema + "." + obsTableName;
+            try {
+                Constructor<?> ctor = sqlGenerator.getConstructor(String.class, String.class);
+                SQLGenerator gen = (SQLGenerator) ctor.newInstance(database, schema);
+                return gen.getTable(Observation.class);
+            } catch (Exception ex) {
+                throw new RuntimeException("failed to instantiate SQLGenerator: " + sqlGenerator.getName(), ex);
+            }
         }
 
         public String getCollection() {
