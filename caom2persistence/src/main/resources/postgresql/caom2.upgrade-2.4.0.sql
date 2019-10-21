@@ -1,22 +1,22 @@
 
-alter table caom2.Observation 
+alter table <schema>.Observation 
     add column target_id   varchar(128),
     add column metaProducer varchar(128);
 
 drop index i_composite2simple;
 drop index i_simple2composite;
 
-alter table caom2.ObservationMember
+alter table <schema>.ObservationMember
     rename column compositeID to parentID;
 
-alter table caom2.ObservationMember
+alter table <schema>.ObservationMember
     rename column simpleID to memberID;
 
 create unique index i_parent2member on <schema>.ObservationMember (parentID,memberID);
 
 create unique index i_member2parent on <schema>.ObservationMember (memberID,parentID);
 
-alter table caom2.Plane 
+alter table <schema>.Plane 
     add column observable_ucd varchar(64),
     add column metrics_sampleSNR double precision,
     add column position_resolutionBounds polygon,
@@ -38,22 +38,22 @@ alter table caom2.Plane
     add column metaProducer varchar(128);
 
 -- rename to match model
-alter table caom2.Plane
+alter table <schema>.Plane
     rename column energy_emBand to energy_energyBands;
 
 -- make room for all 8 values plus 7 separators; round up
-alter table caom2.Plane
+alter table <schema>.Plane
     alter column energy_energyBands set data type varchar(64);
 
-alter table caom2.Artifact
+alter table <schema>.Artifact
     add column contentRelease timestamp,
     add column contentReadGroups text,
     add column metaProducer varchar(128);
 
-alter table caom2.Part
+alter table <schema>.Part
     add column metaProducer varchar(128);
 
-alter table caom2.Chunk
+alter table <schema>.Chunk
     add column customAxis integer,
     add column custom_axis_axis_ctype varchar(16),
     add column custom_axis_axis_cunit varchar(16),
@@ -70,5 +70,5 @@ alter table caom2.Chunk
     add column custom_axis_function_delta double precision,
     add column metaProducer varchar(128);
 
-drop index Plane_i_emBand_dataProductType;
+drop index if exists Plane_i_emBand_dataProductType;
 
