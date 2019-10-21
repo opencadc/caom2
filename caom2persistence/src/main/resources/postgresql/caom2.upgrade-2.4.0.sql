@@ -1,6 +1,7 @@
 
 alter table caom2.Observation 
-    add column target_id   varchar(128);
+    add column target_id   varchar(128),
+    add column metaProducer varchar(128);
 
 drop index i_composite2simple;
 drop index i_simple2composite;
@@ -33,7 +34,8 @@ alter table caom2.Plane
     add column custom_bounds_upper double precision,
     add column custom_bounds_width double precision,
     add column custom_bounds_samples polygon,
-    add column custom_dimension bigint;
+    add column custom_dimension bigint,
+    add column metaProducer varchar(128);
 
 -- rename to match model
 alter table caom2.Plane
@@ -45,7 +47,11 @@ alter table caom2.Plane
 
 alter table caom2.Artifact
     add column contentRelease timestamp,
-    add column contentReadGroups text;
+    add column contentReadGroups text,
+    add column metaProducer varchar(128);
+
+alter table caom2.Part
+    add column metaProducer varchar(128);
 
 alter table caom2.Chunk
     add column customAxis integer,
@@ -61,7 +67,8 @@ alter table caom2.Chunk
     add column custom_axis_function_naxis bigint,
     add column custom_axis_function_refCoord_pix double precision,
     add column custom_axis_function_refCoord_val double precision,
-    add column custom_axis_function_delta double precision;
+    add column custom_axis_function_delta double precision,
+    add column metaProducer varchar(128);
 
 drop index Plane_i_emBand_dataProductType;
 
