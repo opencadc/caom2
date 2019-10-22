@@ -618,9 +618,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        //Date now = new Date();
-        boolean updateMax = false;
-
         // check for added or modified
         for (Plane plane : entity.getPlanes()) {
             PlaneSkeleton skel = null;
@@ -631,16 +628,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     }
                 }
             }
-            boolean ulm = updateEntity(plane, skel, now);
-            updateMax = updateMax || ulm;
-        }
-        // check for deleted (unmatched skel)
-        if (s != null) {
-            for (PlaneSkeleton ss : s.planes) {
-                Plane p = Util.findPlane(entity.getPlanes(), ss.id);
-                boolean ulm = (p == null);
-                updateMax = updateMax || ulm;
-            }
+            updateEntity(plane, skel, now);
         }
 
         // new or changed
@@ -656,15 +644,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
-            updateMax = true;
         }
 
-        if (updateMax && (origin || entity.getMaxLastModified() == null)) {
+        boolean accDelta = false;
+        if (s == null || s.accMetaChecksum == null) {
+            accDelta = true;
+        } else {
+            accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
+        }
+        if (accDelta && (origin || entity.getMaxLastModified() == null)) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
     }
 
-    private boolean updateEntity(Plane entity, PlaneSkeleton s, Date now) {
+    private void updateEntity(Plane entity, PlaneSkeleton s, Date now) {
         if (origin && s == null) {
             CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
@@ -674,7 +667,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        boolean updateMax = false;
         for (Artifact artifact : entity.getArtifacts()) {
             ArtifactSkeleton skel = null;
             if (s != null) {
@@ -684,16 +676,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     }
                 }
             }
-            boolean ulm = updateEntity(artifact, skel, now);
-            updateMax = updateMax || ulm;
-        }
-        // check for deleted (unmatched skel)
-        if (s != null) {
-            for (ArtifactSkeleton ss : s.artifacts) {
-                Artifact a = Util.findArtifact(entity.getArtifacts(), ss.id);
-                boolean ulm = (a == null);
-                updateMax = updateMax || ulm;
-            }
+            updateEntity(artifact, skel, now);
         }
 
         // new or changed
@@ -709,17 +692,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
-            updateMax = true;
         }
 
-        if (updateMax && (origin || entity.getMaxLastModified() == null)) {
+        boolean accDelta = false;
+        if (s == null || s.accMetaChecksum == null) {
+            accDelta = true;
+        } else {
+            accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
+        }
+        if (accDelta && (origin || entity.getMaxLastModified() == null)) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
-
-        return updateMax;
     }
 
-    private boolean updateEntity(Artifact entity, ArtifactSkeleton s, Date now) {
+    private void updateEntity(Artifact entity, ArtifactSkeleton s, Date now) {
         if (origin && s == null) {
             CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
@@ -729,7 +715,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        boolean updateMax = false;
         for (Part part : entity.getParts()) {
             PartSkeleton skel = null;
             if (s != null) {
@@ -739,16 +724,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     }
                 }
             }
-            boolean ulm = updateEntity(part, skel, now);
-            updateMax = updateMax || ulm;
-        }
-        // check for deleted (unmatched skel)
-        if (s != null) {
-            for (PartSkeleton ss : s.parts) {
-                Part p = Util.findPart(entity.getParts(), ss.id);
-                boolean ulm = (p == null);
-                updateMax = updateMax || ulm;
-            }
+            updateEntity(part, skel, now);
         }
 
         // new or changed
@@ -764,17 +740,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
-            updateMax = true;
         }
 
-        if (updateMax && (origin || entity.getMaxLastModified() == null)) {
+        boolean accDelta = false;
+        if (s == null || s.accMetaChecksum == null) {
+            accDelta = true;
+        } else {
+            accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
+        }
+        if (accDelta && (origin || entity.getMaxLastModified() == null)) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
-
-        return updateMax;
     }
 
-    private boolean updateEntity(Part entity, PartSkeleton s, Date now) {
+    private void updateEntity(Part entity, PartSkeleton s, Date now) {
         if (origin && s == null) {
             CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
@@ -784,7 +763,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        boolean updateMax = false;
         for (Chunk chunk : entity.getChunks()) {
             ChunkSkeleton skel = null;
             if (s != null) {
@@ -794,8 +772,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     }
                 }
             }
-            boolean ulm = updateEntity(chunk, skel, now);
-            updateMax = updateMax || ulm;
+            updateEntity(chunk, skel, now);
         }
 
         if (origin) {
@@ -806,15 +783,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             entity.getChunks().addAll(tmp);
         }
 
-        // check for deleted (unmatched skel)
-        if (s != null) {
-            for (ChunkSkeleton ss : s.chunks) {
-                Chunk c = Util.findChunk(entity.getChunks(), ss.id);
-                boolean ulm = (c == null);
-                updateMax = updateMax || ulm;
-            }
-        }
-
         // new or changed
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
@@ -828,17 +796,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
-            updateMax = true;
         }
 
-        if (updateMax && (origin || entity.getMaxLastModified() == null)) {
+        boolean accDelta = false;
+        if (s == null || s.accMetaChecksum == null) {
+            accDelta = true;
+        } else {
+            accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
+        }
+        if (accDelta && (origin || entity.getMaxLastModified() == null)) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
-
-        return updateMax;
     }
 
-    private boolean updateEntity(Chunk entity, ChunkSkeleton s, Date now) {
+    private void updateEntity(Chunk entity, ChunkSkeleton s, Date now) {
         if (origin && s == null) {
             CaomUtil.assignID(entity, gen.generateID(entity.getID()));
         }
@@ -848,8 +819,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
-        boolean updateMax = false;
-
         // new or changed
         digest.reset(); // just in case
         Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
@@ -863,13 +832,16 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         if (delta && (origin || entity.getLastModified() == null)) {
             Util.assignLastModified(entity, now, "lastModified");
-            updateMax = true;
         }
 
-        if (updateMax && (origin || entity.getMaxLastModified() == null)) {
+        boolean accDelta = false;
+        if (s == null || s.accMetaChecksum == null) {
+            accDelta = true;
+        } else {
+            accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
+        }
+        if (accDelta && (origin || entity.getMaxLastModified() == null)) {
             Util.assignLastModified(entity, now, "maxLastModified");
         }
-
-        return updateMax;
     }
 }
