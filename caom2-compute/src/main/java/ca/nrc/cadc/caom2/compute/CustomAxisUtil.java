@@ -92,10 +92,10 @@ public final class CustomAxisUtil {
 
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
-    private static final String FDEP_CTYPE = "FDEP";
+    private static final String FDEP_CTYPE = "FARADAY"; // may be 'FDEP'? - question in to Alex Hill
+    private static final String TARGET_FDEP_CUNIT = "hz";
     private static final String RM_CTYPE = "RM";
-    // cunit is TBD
-//    private static final String CA_CUNIT = "d";
+    private static final String TARGET_RM_CUNIT = "rad/m2";
 
     private CustomAxisUtil() {
     }
@@ -312,10 +312,28 @@ public final class CustomAxisUtil {
         StringBuilder sb = new StringBuilder();
 
         String ctype = wcs.getAxis().getAxis().getCtype();
-        if (ctype.equals(FDEP_CTYPE) || ctype.equals(RM_CTYPE)) {
-            // OK
-        } else {
-            sb.append("unexpected CTYPE: ").append(ctype);
+        String cunit = wcs.getAxis().getAxis().getCunit();
+
+        Boolean badCunit = false;
+
+        switch(ctype) {
+            case FDEP_CTYPE:
+                if (cunit.toLowerCase().compareTo(TARGET_FDEP_CUNIT) != 0) {
+                    badCunit = true;
+                }
+                break;
+            case RM_CTYPE:
+                if (cunit.toLowerCase().compareTo(TARGET_RM_CUNIT) != 0) {
+                    badCunit = true;
+                }
+                break;
+            default:
+                sb.append("unsupported CTYPE: ").append(ctype);
+                break;
+        }
+
+        if (badCunit) {
+            sb.append("unexpected CUNIT '" + cunit + "' for ctype:  " + ctype);
         }
 
         if (wcs.getAxis() == null) {

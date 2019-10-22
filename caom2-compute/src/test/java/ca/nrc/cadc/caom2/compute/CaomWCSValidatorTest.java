@@ -447,12 +447,21 @@ public class CaomWCSValidatorTest {
     @Test
     public void testInvalidCustomWCS() {
         try {
-            CustomWCS c = dataGenerator.mkBadCustomWCS();
+            CustomWCS c = dataGenerator.mkBadCtypeCustomWCS();
             CaomWCSValidator.validateCustomWCS("test", c);
-            Assert.fail("expected IllegalArgumentException. Validator passed when it should not have.");
+            Assert.fail("expected IllegalArgumentException. Validator passed ctype when it should not have.");
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);
         }
+
+        try {
+            CustomWCS c2 = dataGenerator.mkBadCunitCustomWCS();
+            CaomWCSValidator.validateCustomWCS("test", c2);
+            Assert.fail("expected IllegalArgumentException. Validator passed cunit when it should not have.");
+        } catch (IllegalArgumentException expected) {
+            log.info("caught expected: " + expected);
+        }
+
         log.info("done testInvalidCustomWCS");
     }
 

@@ -622,29 +622,27 @@ public class CutoutUtilTest {
             c.customAxis = 1;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
 
-            // cleanup so these don't effect cutouts
             c.custom.getAxis().range = null;
-            c.custom.getAxis().bounds = null;
 
-//            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
-//            Part p = new Part(0);
-//            a.getParts().add(p);
-//            p.getChunks().add(c);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Part p = new Part(0);
+            a.getParts().add(p);
+            p.getChunks().add(c);
 
             // cutout requests: Need to have some sane requests placed here to
             // test the cutouts.
 //            Interval miss = new Interval(600.0e-9, 800.0e-9);
-//            Interval inside = new Interval(440.0e-9, 480.0e-9);
+            Interval inside = new Interval(1, 450);
 //            Interval inside = new Interval(440.0e-9, 480.0e-9);
 //            Interval outside = new Interval(200.0e-9, 900.0e-9);
 //
-//            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, miss);
+            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
 //            Assert.assertNotNull(cus);
 //            Assert.assertTrue(cus.isEmpty());
 
 //            cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
 //            Assert.assertNotNull(cus);
-//            log.info("cutout: " + cus);
+            log.info("cutout: " + cus);
 //            Assert.assertTrue(cus.size() == 1);
 //            String cutout = cus.get(0);
 //            log.debug("custom cutout: " + cutout);

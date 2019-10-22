@@ -97,8 +97,10 @@ import org.junit.Test;
  */
 public class CustomAxisUtilTest {
     private static final Logger log = Logger.getLogger(CustomAxisUtilTest.class);
-    private static final String TEST_CTYPE = "FDEP";
-    private static final String TEST_CUNIT = "fdepUnit";
+    public static final String TEST_CTYPE = "FARADAY";
+    public static final String TEST_CUNIT = "Hz";
+    public static final String TEST_RM_CTYPE = "RM";
+    public static final String TEST_RM_CUNIT = "rad/m2";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
