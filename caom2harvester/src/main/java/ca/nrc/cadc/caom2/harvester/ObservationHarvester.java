@@ -152,10 +152,6 @@ public class ObservationHarvester extends Harvester {
     
     public void setComputePlaneMetadata(boolean computePlaneMetadata) {
         this.computePlaneMetadata = computePlaneMetadata;
-        if (computePlaneMetadata) {
-            log.info("computePlaneMeta: setting origin=true");
-            this.destObservationDAO.setOrigin(true);
-        }
     }
 
     public void setGenerateReadAccessTuples(File config) {
@@ -198,8 +194,6 @@ public class ObservationHarvester extends Harvester {
                 log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
             }
             this.acGenerator = new ReadAccessGenerator(src.getCollection(), groupConfig);
-            log.info("generateAC: setting origin=true");
-            this.destObservationDAO.setOrigin(true);
         } catch (IOException ex) {
             throw new RuntimeException("failed to read config from " + config, ex);
         } catch (Exception ex) {
@@ -227,12 +221,13 @@ public class ObservationHarvester extends Harvester {
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
         if (src.getIdentifier().equals(dest.getIdentifier())) {
+            log.info("source = destination = " + dest.getIdentifier() + ": setting origin=true");
             destObservationDAO.setOrigin(true); // reproc in a single db should update timestamps
         } else {
             destObservationDAO.setOrigin(false); // copy as-is
         }
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
-
+        
         if (srcObservationService != null) {
             if (srcObservationService.isObsAvailable()) {
                 ready = true;
