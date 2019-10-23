@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,106 +69,24 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
-import java.util.Date;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
- *
- * @author pdowler
+ * @author hjeeves
  */
+public class GetAction23 extends GetAction {
 
-// TODO: change the write function to be
-public class GetAction extends RepoAction {
-
-    private static final Logger log = Logger.getLogger(GetAction.class);
-
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-
-    public GetAction() {
-    }
+    public GetAction23() { }
 
     @Override
-    public void doAction() throws Exception {
-        log.debug("GET ACTION");
-        ObservationURI uri = getURI();
-        if (uri != null) {
-            doGetObservation(uri);
-            return;
-        } else if (getCollection() != null) {
-            InputParams ip = getInputParams();
-            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
-        } else {
-            // Responds to requests where no collection is provided.
-            // Returns list of all collections.
-            doGetCollectionList();
-        }
-    }
-
-    protected void doGetObservation(ObservationURI uri) throws Exception {
-        log.debug("START: " + uri);
-
-        checkReadPermission(uri.getCollection());
-
-        ObservationDAO dao = getDAO();
-        ObservationResponse resp = dao.getObservationResponse(uri);
-
-        if (resp == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        if (resp.observation == null) {
-            throw new RuntimeException("failed to retrieve observation: " + uri, resp.error);
-        }
-
-        // write with default schema
-        ObservationWriter ow = getObservationWriter();
-
-        syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(resp.observation, bc);
-        logInfo.setBytes(bc.getByteCount());
-
-        log.debug("DONE: " + uri);
-    }
-
-    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
-        log.debug("START: " + getCollection());
-
-        checkReadPermission(getCollection());
-
-        ObservationDAO dao = getDAO();
-
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
-                isAscending);
-
-        if (states == null) {
-            throw new ResourceNotFoundException("Collection not found: " + getCollection());
-        }
-
-        long byteCount = writeObservationList(states);
-        logInfo.setBytes(byteCount);
-
-        log.debug("DONE: " + getCollection());
-    }
-
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter();
-    }
-
     protected long writeObservationList(List<ObservationState> states) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");

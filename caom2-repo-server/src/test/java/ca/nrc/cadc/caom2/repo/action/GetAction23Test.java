@@ -69,6 +69,11 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.mock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -91,10 +96,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.mock;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
 import org.easymock.MockType;
 import org.junit.Assert;
 import org.junit.Before;
@@ -106,8 +107,8 @@ import org.junit.Test;
  */
 
 //@RunWith(EasyMockRunner.class)
-public class GetActionTest {
-    private static final Logger log = Logger.getLogger(GetActionTest.class);
+public class GetAction23Test {
+    private static final Logger log = Logger.getLogger(GetAction23Test.class);
 
     private ObservationDAO mockDao;
 
@@ -142,7 +143,7 @@ public class GetActionTest {
         Enumeration<String> params = Collections.emptyEnumeration();
         expect(mockRequest.getParameterNames()).andReturn(params);
         replay(mockDao, mockRequest);
-        GetAction getAction = new TestGetAction(mockDao);
+        GetAction23 getAction = new TestGetAction(mockDao);
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.doAction();
     }
@@ -152,7 +153,7 @@ public class GetActionTest {
         // test the doIt method when it returns 2 observations
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
-        GetAction getAction = new TestGetAction(mockDao);
+        GetAction23 getAction = new TestGetAction(mockDao);
         TestSyncOutput out = new TestSyncOutput();
         getAction.setSyncOutput(out);
 
@@ -234,7 +235,7 @@ public class GetActionTest {
     }
 
     // simple test subclass that mocks checkReadPermission to always return true
-    private class TestGetAction extends GetAction {
+    private class TestGetAction extends GetAction23 {
         ObservationDAO dao;
 
         TestGetAction(ObservationDAO dao) {
