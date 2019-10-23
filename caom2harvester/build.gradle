@@ -20,7 +20,7 @@ version = '2.4.12'
 ext {
     // release number for building packages (rpm, deb, etc)
     // when only library dependencies change
-    release = '1'
+    release = '2'
 }
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
