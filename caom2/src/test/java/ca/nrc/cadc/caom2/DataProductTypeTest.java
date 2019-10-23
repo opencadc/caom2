@@ -139,6 +139,20 @@ public class DataProductTypeTest
     }
     
     @Test
+    public void testRoundtripCompat()
+    {
+        try
+        {
+           // no supported values
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
     public void testRoundtripCustom()
     {
         try

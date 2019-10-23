@@ -111,14 +111,6 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
     public static final DataProductType EVENT = new DataProductType("event");
     
     /**
-     * ObsCore-1.0 eventlist. This constant was mistakenly labelled <em>eventlist</em>
-     * using an early draft version. The value is the same as <em>event</em>.
-     * 
-     * @deprecated 
-     */
-    public static final DataProductType EVENTLIST = new DataProductType("event");
-    
-    /**
      * ObsCore-1.0 cube.
      */
     public static final DataProductType CUBE = new DataProductType("cube");
@@ -141,7 +133,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENTLIST };
+                                       CUBE, SED, MEASUREMENTS, CATALOG };
     }
 
     private DataProductType(String value) {
@@ -153,10 +145,6 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
     }
 
     public static DataProductType toValue(String s) {
-        if ("catalog".equals(s)) {
-            return CATALOG; // backwards compatibility
-        }
-
         for (DataProductType d : values()) {
             if (d.getValue().equals(s)) {
                 return d;

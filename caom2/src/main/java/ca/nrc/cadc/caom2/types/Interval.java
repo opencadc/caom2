@@ -89,8 +89,7 @@ public class Interval implements Serializable {
 
     public Interval(double lower, double upper) {
         if (upper < lower) {
-            throw new IllegalArgumentException(
-                    "Interval: upper < lower for " + lower + "," + upper);
+            throw new IllegalArgumentException("Interval: upper < lower for " + lower + "," + upper);
         }
         this.lower = lower;
         this.upper = upper;
@@ -98,7 +97,7 @@ public class Interval implements Serializable {
 
     @Override
     public String toString() {
-        return "SubInterval[" + lower + "," + upper + "]";
+        return "Interval[" + lower + "," + upper + "]";
     }
 
     public double getLower() {

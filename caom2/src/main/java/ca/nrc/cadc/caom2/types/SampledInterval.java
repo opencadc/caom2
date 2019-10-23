@@ -91,7 +91,6 @@ public class SampledInterval implements Serializable {
     }
 
     public SampledInterval(double lower, double upper) {
-
         this.lower = lower;
         this.upper = upper;
     }

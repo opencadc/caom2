@@ -219,6 +219,7 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "OBJECT";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
@@ -244,6 +245,7 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "OBJECT";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
@@ -269,6 +271,7 @@ public class Caom2TestInstances
         DerivedObservation observation = new DerivedObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "field";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
@@ -374,6 +377,7 @@ public class Caom2TestInstances
             Plane p = new Plane("productID"+i);
             if (complete)
             {
+                p.metaProducer = URI.create("test:plane/rountrip-1.0");
                 p.creatorID = new URI("ivo://example.org/foo?" + p.getProductID());
                 p.metaRelease = ivoaDate;
                 p.getMetaReadGroups().addAll(metaGroups);
@@ -499,6 +503,7 @@ public class Caom2TestInstances
             Artifact artifact = new Artifact(new URI("ad:foo/bar"+i), ProductType.SCIENCE, ReleaseType.DATA);
             if (complete)
             {
+                artifact.metaProducer = URI.create("test:artifact/rountrip-1.0");
                 artifact.contentType = "application/fits";
                 artifact.contentLength = 12345L;
                 artifact.contentChecksum = new URI("md5:d41d8cd98f00b204e9800998ecf8427e");
@@ -522,6 +527,7 @@ public class Caom2TestInstances
             Part part = new Part("x"+i);
             if (complete)
             {
+                part.metaProducer = URI.create("test:part/rountrip-1.0");
                 part.productType = ProductType.SCIENCE;
             }
             if (depth > 4)
@@ -541,6 +547,7 @@ public class Caom2TestInstances
             Chunk chunk = new Chunk();
             if (complete)
             {
+                chunk.metaProducer = URI.create("test:chunk/rountrip-1.0");
                 chunk.naxis = 5;
                 chunk.positionAxis1 = 1;
                 chunk.positionAxis2 = 2;
