@@ -455,20 +455,6 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-            <attribute>
-                <vodml-id>CaomEntity.metaProducer</vodml-id>
-                <name>metaProducer</name>
-                <description>identifier indicating the producer of this entity; while there is no specific form requied, values
-                    should be short and informative to users so something like {site}:{software} with version numbers 
-                    (e.g. cadc:cfht2caom2-1.2) would help with diagnosing metadata issues</description>
-                <datatype>
-                    <vodml-ref>ivoa:anyURI</vodml-ref>
-                </datatype>
-                <multiplicity>
-                    <minOccurs>0</minOccurs>
-                    <maxOccurs>1</maxOccurs>
-                </multiplicity>
-            </attribute>
             
             <attribute>
                 <vodml-id>CaomEntity.lastModified</vodml-id>
