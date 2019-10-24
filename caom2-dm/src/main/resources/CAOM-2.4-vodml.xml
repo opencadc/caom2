@@ -467,7 +467,21 @@
                     <maxOccurs>1</maxOccurs>
                 </multiplicity>
             </attribute>
-
+            <attribute>
+                <vodml-id>CaomEntity.metaProducer</vodml-id>
+                <name>metaProducer</name>
+                <description>identifier indicating the producer of this entity; while there is no specific form requied, values
+                    should be short and informative to users so something like {site}:{software} with version numbers 
+                    (e.g. cadc:cfht2caom2-1.2) would help with diagnosing metadata issues</description>
+                <datatype>
+                    <vodml-ref>ivoa:anyURI</vodml-ref>
+                </datatype>
+                <multiplicity>
+                    <minOccurs>0</minOccurs>
+                    <maxOccurs>1</maxOccurs>
+                </multiplicity>
+            </attribute>
+            
             <attribute>
                 <vodml-id>CaomEntity.lastModified</vodml-id>
                 <name>lastModified</name>
@@ -504,8 +518,8 @@
                     
                     The URI must conform to the pattern {algorithm}:{value}, for example: md5:4be91751541fd804e7207663a0822f56.
                     The checksum of an entity is computed by accumulating byte representation of individual metadata values in
-                    the following order: (1) CaomEntity.id for entities, (2) state fields in alphabetic order (foo.a comes before 
-                    foo.b) and using depth-first recursion (foo.abc.x comes before foo.def). Null values are ignored so that the 
+                    the following order: (1) CaomEntity.id for entities, (2) CaomEntity.metaProducer, (3) state fields in alphabetic order 
+                    (foo.a comes before foo.b) and using depth-first recursion (foo.abc.x comes before foo.def). Null values are ignored so that the 
                     addition of new fields in future versions will not change/invalidate existing checksums until values are assigned.
                     Non-null values are converted to bytes as follows. 
                     
