@@ -136,24 +136,6 @@ public class WCSWrapper extends WCSKeywordsImpl {
         }
     }
 
-    public WCSWrapper(CustomWCS w, int axis) {
-        super();
-        doPut("NAXIS", new Integer(1));
-        doPut("CTYPE" + axis, w.getAxis().getAxis().getCtype());
-        doPut("CUNIT" + axis, w.getAxis().getAxis().getCunit());
-
-        CoordFunction1D func = w.getAxis().function;
-
-        if (func != null) {
-            doPut("NAXIS" + axis, func.getNaxis());
-            doPut("CRPIX" + axis, func.getRefCoord().pix);
-            doPut("CRVAL" + axis, func.getRefCoord().val);
-            doPut("CDELT" + axis, func.getDelta());
-        } else {
-            throw new UnsupportedOperationException("cannot wrap CustomWCS: no CustomWCS.axis.function");
-        }
-    }
-
     // safely put non-null values intp the map
     private void doPut(String key, Object val) {
         if (val != null) {

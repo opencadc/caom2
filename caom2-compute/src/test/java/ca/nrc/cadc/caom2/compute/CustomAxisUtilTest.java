@@ -107,13 +107,59 @@ public class CustomAxisUtilTest {
     }
 
     @Test
+    public void testMixedCtype() {
+        try {
+            // All chunks within artifact must have same ctype. Get one that has
+            // mixed ctypes that are all valid
+            Plane plane = getMixedTestSetRange(1, 2, 6, ProductType.SCIENCE);
+
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
+        } catch (IllegalArgumentException expected) {
+            log.info("zeroErr -- caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidCtype() {
+        try {
+            Plane plane = getInvalidTestSetRange(1, 2, 3, ProductType.SCIENCE);
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
+        } catch (IllegalArgumentException expected) {
+            log.info("zeroErr -- caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testNoComputableChunks() {
+        // The product type used in the set range here will not be detected by the
+        // Util.choseProductType90 function in the compute function, so it
+        // should return a null
+        try {
+            Plane plane = getTestSetRange(1, 2, 3, ProductType.DARK);
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.assertNull(ca);
+        } catch (IllegalArgumentException expected) {
+            log.info("zeroErr -- caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
     public void testEmptyList() {
         try {
             Plane plane = new Plane("foo");
-            CustomAxis ca = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
-            Assert.assertNotNull(ca);
-            Assert.assertNull(ca.bounds);
-            Assert.assertNull(ca.dimension);
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.assertNull(ca);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -131,7 +177,7 @@ public class CustomAxisUtilTest {
             CustomAxis actual;
 
             plane = getTestSetRange(1, 1, 1);
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromRange: " + actual);
 
@@ -159,7 +205,7 @@ public class CustomAxisUtilTest {
             CustomAxis actual;
 
             plane = getTestSetBounds(1, 1, 1);
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromBounds: " + actual);
 
@@ -187,7 +233,7 @@ public class CustomAxisUtilTest {
             CustomAxis actual;
 
             plane = getTestSetFunction(1, 1, 1, false);
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
             log.debug("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
@@ -242,7 +288,7 @@ public class CustomAxisUtilTest {
             CustomAxis actual;
 
             plane = getTestSetFunction(1, 2, 1, true);
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
             log.info("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
@@ -270,7 +316,7 @@ public class CustomAxisUtilTest {
             CustomAxis actual;
 
             plane = getTestSetFunction(1, 2, 1, false);
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
             log.info("testComputeFromMultipleFunctionOverlap: " + actual);
 
             Assert.assertNotNull(actual);
@@ -306,7 +352,7 @@ public class CustomAxisUtilTest {
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
 
@@ -336,14 +382,14 @@ public class CustomAxisUtilTest {
 
             plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
 
-            // add some aux artifacts, should not effect result
+            // add some aux artifacts, should not affect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
             Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
 
@@ -380,7 +426,7 @@ public class CustomAxisUtilTest {
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
-            actual = CustomAxisUtil.compute(TEST_CTYPE, plane.getArtifacts());
+            actual = CustomAxisUtil.compute(plane.getArtifacts());
 
             log.debug("testComputeFromScience: " + actual);
 
@@ -420,12 +466,106 @@ public class CustomAxisUtilTest {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
                     // just shift to higher values of coordX for each subsequent chunk
-                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds);
+                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
                     n++;
                 }
             }
         }
         log.debug("getTestSetRange: " + n + " chunks");
+        return plane;
+    }
+
+    Plane getInvalidTestSetRange(int numA, int numP, int numC, ProductType ptype)
+        throws URISyntaxException {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+        Plane plane = new Plane("foo");
+        int n = 0;
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
+            plane.getArtifacts().add(na);
+            for (int p = 0; p < numP; p++) {
+                Part np = new Part(new Integer(p));
+                na.getParts().add(np);
+                for (int c = 0; c < numC; c++) {
+                    Chunk nc = new Chunk();
+                    np.getChunks().add(nc);
+                    // just shift to higher values of coordX for each subsequent chunk
+                    // Invalid ctype & unit used
+                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, "foo", "foo_unit");
+                    n++;
+                }
+            }
+        }
+        log.debug("getInvalidTestSetRange: " + n + " chunks");
+        return plane;
+    }
+
+    Plane getMixedTestSetRange(int numA, int numP, int numC, ProductType ptype)
+        throws URISyntaxException {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+        Plane plane = new Plane("foo");
+        int n = 0;
+        for (int a = 0; a < numA; a++) {
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
+            plane.getArtifacts().add(na);
+            for (int p = 0; p < numP; p++) {
+                Part np = new Part(new Integer(p));
+                na.getParts().add(np);
+                for (int c = 0; c < numC; c++) {
+                    Chunk nc = new Chunk();
+                    // just shift to higher values of coordX for each subsequent chunk
+                    // Both ctypes are valid, just alternating - a case that shouldn't happen
+                    if ((c % 2) == 0) {
+                        nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
+                    } else {
+                        nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_RM_CUNIT);
+                    }
+                    np.getChunks().add(nc);
+                    n++;
+                }
+            }
+        }
+        log.debug("getMixedTestSetRange: " + n + " chunks");
+        return plane;
+    }
+
+    Plane getMixedProductTypeRange(int numA, int numP, int numC)
+        throws URISyntaxException {
+        double px = 0.5;
+        double sx = 54321.0;
+        double nx = 200.0;
+        double ds = 0.01;
+        ProductType ptype;
+        Plane plane = new Plane("foo");
+        int n = 0;
+        for (int a = 0; a < numA; a++) {
+            if ((a % 2) == 0) {
+                ptype = ProductType.CALIBRATION;
+            } else {
+                ptype = ProductType.SCIENCE;
+            }
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
+            plane.getArtifacts().add(na);
+            for (int p = 0; p < numP; p++) {
+                Part np = new Part(new Integer(p));
+                na.getParts().add(np);
+                for (int c = 0; c < numC; c++) {
+                    Chunk nc = new Chunk();
+                    // just shift to higher values of coordX for each subsequent chunk
+                    // Both ctypes are valid, just alternating - a case that shouldn't happen
+                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_RM_CUNIT);
+                    np.getChunks().add(nc);
+                    n++;
+                }
+            }
+        }
+        log.debug("getMixedProductTypeRange: " + n + " chunks");
         return plane;
     }
 
@@ -484,8 +624,8 @@ public class CustomAxisUtilTest {
         return plane;
     }
 
-    CustomWCS getTestRange(double px, double sx, double nx, double ds) {
-        CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
+    CustomWCS getTestRange(double px, double sx, double nx, double ds, String ctype, String cunit) {
+        CoordAxis1D axis = new CoordAxis1D(new Axis(ctype, cunit));
         CustomWCS wcs = new CustomWCS(axis);
 
         RefCoord c1 = new RefCoord(px, sx);
@@ -520,5 +660,7 @@ public class CustomAxisUtilTest {
 
         return wcs;
     }
+
+
 
 }

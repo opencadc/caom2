@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
@@ -92,26 +93,60 @@ public final class CustomAxisUtil {
 
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
-    private static final String FDEP_CTYPE = "FARADAY"; // may be 'FDEP'? - question in to Alex Hill
-    private static final String TARGET_FDEP_CUNIT = "hz";
-    private static final String RM_CTYPE = "RM";
-    private static final String TARGET_RM_CUNIT = "rad/m2";
+    public static final HashMap<String, String> ctypeCunitMap = new HashMap<String, String>() {{
+        put("FARADAY", "Hz");
+        put("RM", "rad/m2");
+    }};
 
     private CustomAxisUtil() {
     }
 
+    private static String getCtype(Set<Artifact> artifacts, ProductType productType) {
+        String firstCtype = null;
 
-    public static CustomAxis compute(String cType, Set<Artifact> artifacts) {
-        ProductType productType = Util.choseProductType(artifacts);
-        log.debug("compute custom axis for ctype: " + cType + ", product type: " + productType);
-
-        CustomAxis c = new CustomAxis(cType);
-        c.bounds = computeBounds(cType, artifacts, productType);
-        c.dimension = computeDimensionFromRangeBounds(cType, artifacts, productType);
-        if (c.dimension == null) {
-            c.dimension = computeDimensionFromWCS(cType, c.bounds, artifacts, productType);
+        for (Artifact a : artifacts) {
+                for (Part p : a.getParts()) {
+                       for (Chunk c : p.getChunks()) {
+                            if (c.custom != null
+                                && Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                                String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                                if (firstCtype == null) {
+                                    if (ctypeCunitMap.get(currentCtype) == null) {
+                                        throw new IllegalArgumentException("Invalid CTYPE: " + currentCtype);
+                                    }
+                                    firstCtype = currentCtype;
+                                }
+                               if (currentCtype.compareTo(firstCtype) != 0) {
+                                   throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + firstCtype);
+                                }
+                            }
+                        }
+                }
         }
-        return c;
+
+        return firstCtype;
+    }
+
+    public static CustomAxis compute(Set<Artifact> artifacts) {
+        ProductType productType = Util.choseProductType(artifacts);
+        String axisCtype = getCtype(artifacts, productType);
+
+        if (axisCtype != null ) {
+
+            CustomAxis c = new CustomAxis(axisCtype);
+
+            if (productType != null) {
+                c.bounds = computeBounds(artifacts, productType, axisCtype);
+                c.dimension = computeDimensionFromRangeBounds(artifacts, productType, axisCtype);
+                if (c.dimension == null) {
+                    c.dimension = computeDimensionFromWCS(c.bounds, artifacts, productType, axisCtype);
+                }
+            }
+            return c;
+        } else {
+            // no ctype found for chosen product type
+            return null;
+        }
     }
 
     /**
@@ -121,7 +156,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static SampledInterval computeBounds(String cType, Set<Artifact> artifacts, ProductType productType) {
+    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
         double unionScale = 0.02;
         List<Interval> subs = new ArrayList<Interval>();
 
@@ -129,27 +164,29 @@ public final class CustomAxisUtil {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        // Aggregate only values with the declared cType
-                        if (c.custom != null
-                            && c.custom.getAxis().getAxis().getCtype().compareTo(cType) == 0) {
-
-                            CoordRange1D range = c.custom.getAxis().range;
-                            CoordBounds1D bounds = c.custom.getAxis().bounds;
-                            CoordFunction1D function = c.custom.getAxis().function;
-                            if (range != null) {
-                                Interval s = toInterval(c.custom, range);
-                                log.debug("[computeBounds] range -> sub: " + s);
-                                Util.mergeIntoList(s, subs, unionScale);
-                            } else if (bounds != null) {
-                                for (CoordRange1D cr : bounds.getSamples()) {
-                                    Interval s = toInterval(c.custom, cr);
-                                    log.debug("[computeBounds] bounds -> sub: " + s);
+                        if (c.custom != null) {
+                            String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                            if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
+                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                            } else {
+                                CoordRange1D range = c.custom.getAxis().range;
+                                CoordBounds1D bounds = c.custom.getAxis().bounds;
+                                CoordFunction1D function = c.custom.getAxis().function;
+                                if (range != null) {
+                                    Interval s = toInterval(c.custom, range);
+                                    log.debug("[computeBounds] range -> sub: " + s);
+                                    Util.mergeIntoList(s, subs, unionScale);
+                                } else if (bounds != null) {
+                                    for (CoordRange1D cr : bounds.getSamples()) {
+                                        Interval s = toInterval(c.custom, cr);
+                                        log.debug("[computeBounds] bounds -> sub: " + s);
+                                        Util.mergeIntoList(s, subs, unionScale);
+                                    }
+                                } else if (function != null) {
+                                    Interval s = CustomAxisUtil.toInterval(c.custom, function);
+                                    log.debug("[computeBounds] function -> sub: " + s);
                                     Util.mergeIntoList(s, subs, unionScale);
                                 }
-                            } else if (function != null) {
-                                Interval s = CustomAxisUtil.toInterval(c.custom, function);
-                                log.debug("[computeBounds] function -> sub: " + s);
-                                Util.mergeIntoList(s, subs, unionScale);
                             }
                         }
                     }
@@ -180,7 +217,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static Long computeDimensionFromWCS(String cType, SampledInterval bounds, Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -194,14 +231,17 @@ public final class CustomAxisUtil {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        // Use only values with the declared cType
-                        if (c.custom != null && c.custom.getAxis().function != null
-                            && c.custom.getAxis().getAxis().getCtype().compareTo(cType) == 0) {
-                            num++;
-                            double ss = Math.abs(c.custom.getAxis().function.getDelta());
-                            if (ss >= scale) {
-                                scale = ss;
-                                sw = c.custom;
+                        if (c.custom != null) {
+                            String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                            if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
+                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                            } else {
+                                num++;
+                                double ss = Math.abs(c.custom.getAxis().function.getDelta());
+                                if (ss >= scale) {
+                                    scale = ss;
+                                    sw = c.custom;
+                                }
                             }
                         }
                     }
@@ -234,18 +274,22 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static Long computeDimensionFromRangeBounds(String cType, Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
         // assumption: all   pixels are distinct so just add up the number of pixels
         double numPixels = 0;
+
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
-                    // Use only values with the declared cType
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)
-                        && c.custom.getAxis().getAxis().getCtype().compareTo(cType) == 0) {
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         if (c.custom != null) {
-                            double n = Util.getNumPixels(c.custom.getAxis(), false);
-                            numPixels += n;
+                            String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                            if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
+                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                            } else {
+                                double n = Util.getNumPixels(c.custom.getAxis(), false);
+                                numPixels += n;
+                            }
                         }
                     }
                 }
@@ -306,47 +350,19 @@ public final class CustomAxisUtil {
     /**
      *
      * @param wcs
-     * Throws UnsupportedOperationException if axis is null
+     * Throws IllegalArgumentException if CTYPE or CUNIT invalid
      */
     private static void validateWCS(CustomWCS wcs) {
-        StringBuilder sb = new StringBuilder();
-
         String ctype = wcs.getAxis().getAxis().getCtype();
         String cunit = wcs.getAxis().getAxis().getCunit();
+        String mapCunit = ctypeCunitMap.get(ctype);
 
-        Boolean badCunit = false;
-
-        switch(ctype) {
-            case FDEP_CTYPE:
-                if (cunit.toLowerCase().compareTo(TARGET_FDEP_CUNIT) != 0) {
-                    badCunit = true;
-                }
-                break;
-            case RM_CTYPE:
-                if (cunit.toLowerCase().compareTo(TARGET_RM_CUNIT) != 0) {
-                    badCunit = true;
-                }
-                break;
-            default:
-                sb.append("unsupported CTYPE: ").append(ctype);
-                break;
+        if (mapCunit == null) {
+            throw new IllegalArgumentException("Invalid CTYPE: " + ctype);
         }
 
-        if (badCunit) {
-            sb.append("unexpected CUNIT '" + cunit + "' for ctype:  " + ctype);
-        }
-
-        if (wcs.getAxis() == null) {
-            sb.append("axis is null.");
-        }
-
-        if (wcs.getAxis().getAxis().getCtype().compareTo("") == 0 ||
-            wcs.getAxis().getAxis().getCtype() == null) {
-            sb.append("ctype not declared in axis.");
-        }
-
-        if (sb.length() > 0) {
-            throw new UnsupportedOperationException(sb.toString());
+        if (mapCunit != cunit) {
+            throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: " + mapCunit + ". Found: " + cunit);
         }
     }
 
