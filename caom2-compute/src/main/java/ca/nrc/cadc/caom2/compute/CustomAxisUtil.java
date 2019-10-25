@@ -367,7 +367,7 @@ public final class CustomAxisUtil {
     }
 
 
-    private static double val2pix(CustomWCS wcs, CoordFunction1D func, double val) {
+    public static double val2pix(CustomWCS wcs, CoordFunction1D func, double val) {
         validateWCS(wcs);
         return Util.val2pix(func, val);
     }
