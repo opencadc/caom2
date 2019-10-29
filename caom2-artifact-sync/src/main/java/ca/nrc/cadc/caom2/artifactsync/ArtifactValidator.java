@@ -249,7 +249,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            if (checkAddToSkipTable(nextLogical, "contentLengths are different")) {
+                            if (checkAddToSkipTable(nextLogical, "ContentLengths are different")) {
                                 skipURICount++;
                             } else {
                                 inSkipURICount++;
@@ -272,7 +272,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        if (checkAddToSkipTable(nextLogical, "checksums are different")) {
+                        if (checkAddToSkipTable(nextLogical, "Checksums are different")) {
                             skipURICount++;
                         } else {
                             inSkipURICount++;
@@ -467,7 +467,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     harvestSkipURIDAO.put(skip);
                     
                     // validate 
-                    String errorMessageString = (errorMessage == null) ? "null" : ArtifactHarvester.PROPRIETARY;
+                    String errorMessageString = (errorMessage == null) ? "null" : errorMessage;
                     DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
                     logJSON(new String[]
                         {"logType", "detail",

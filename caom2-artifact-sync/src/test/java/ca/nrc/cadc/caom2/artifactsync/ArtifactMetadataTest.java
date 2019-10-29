@@ -73,17 +73,13 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
-import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
-import ca.nrc.cadc.util.PropertiesReader;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -207,7 +203,7 @@ public class ArtifactMetadataTest
             this.storagePolicy = policy;
         }
 
-        public boolean contains(URI artifactURI, URI checksum) throws TransientException {
+        public ArtifactMetadata get(URI artifactURI) throws TransientException {
             // not used by the unit test
             throw new UnsupportedOperationException("This method should not have been invoked.");
         }
