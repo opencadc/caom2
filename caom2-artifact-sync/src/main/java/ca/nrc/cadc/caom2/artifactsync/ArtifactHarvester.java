@@ -253,7 +253,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                                 .contentChecksum + " correct copy: " + correctCopy);
                                         }
 
-                                        if ((StoragePolicy.PUBLIC_ONLY == storagePolicy && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
+                                        if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
+                                                && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                             if (skip == null) {
                                                 // not in skip table, add it
@@ -322,8 +323,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     private boolean checkContentLength(String artifactContentLength) {
         // no contentLength in a CAOM artifact is considered a match
-        if (this.caomContentLength.equalsIgnoreCase("null") ||
-            Long.valueOf(this.caomContentLength) == 0) {
+        if (this.caomContentLength.equalsIgnoreCase("null") 
+            || Long.valueOf(this.caomContentLength) == 0) {
             return true;
         } else {
             this.storageContentLength = Long.getLong(artifactContentLength);
