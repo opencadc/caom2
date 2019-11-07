@@ -232,7 +232,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 if (timBoundsSamples != null) // actual sub-samples
                 {
                     //for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
-                    for (int i = 0; i < nrgBoundsSamples.length; i += 2)
+                    for (int i = 0; i < timBoundsSamples.length; i += 2)
                     {
                         //plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
                         plane.time.bounds.getSamples().add(new SubInterval(timBoundsSamples[i],timBoundsSamples[i+1]));

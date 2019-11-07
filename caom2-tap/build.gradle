@@ -14,7 +14,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '1.6.13'
+version = '1.6.14'
 
 dependencies {
     compile 'log4j:log4j:[1.2.0,)'
@@ -65,7 +65,7 @@ tasks.withType(Test) {
 
 task intTest(type: Test) {
     // set the configuration context
-    testClassesDir = sourceSets.intTest.output.classesDir
+    testClassesDirs = sourceSets.intTest.output.classesDirs
     classpath = sourceSets.intTest.runtimeClasspath
     
     // run the tests always
