@@ -214,17 +214,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         ArtifactMetadata nextLogical = null;
         for (ArtifactMetadata nextPhysical : physicalMetadata) {
             
-            String physicalLastModified = "null";
-            if (nextPhysical.lastModified != null) {
-                physicalLastModified = df.format(nextPhysical.lastModified);
-            }
             if (logicalMetadata.contains(nextPhysical)) {
                 nextLogical = logicalMetadata.ceiling(nextPhysical);
                 logicalMetadata.remove(nextLogical);
-                String logicalicalLastModified = "null";
-                if (nextLogical.lastModified != null) {
-                    logicalicalLastModified = df.format(nextLogical.lastModified);
-                }
                 if (matches(nextLogical.checksum, nextPhysical.checksum)) {
                     if (matches(nextLogical.contentLength, nextPhysical.contentLength)) {
                         if (matches(nextLogical.contentType, nextPhysical.contentType)) {
@@ -237,12 +229,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                                  "anomaly", "diffType",
                                  "observationID", nextLogical.observationID,
                                  "artifactURI", nextLogical.artifactURI.toString(),
-                                 "storageID", nextLogical.storageID,
                                  "caomContentType", nextLogical.contentType,
                                  "storageContentType", nextPhysical.contentType,
-                                 "caomCollection", collection,
-                                 "caomLastModified", logicalicalLastModified,
-                                 "ingestDate", physicalLastModified},
+                                 "caomCollection", collection},
                                 false);
                         }
                     } else {
@@ -260,12 +249,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                              "anomaly", "diffLength",
                              "observationID", nextLogical.observationID,
                              "artifactURI", nextLogical.artifactURI.toString(),
-                             "storageID", nextLogical.storageID,
                              "caomContentLength", nextLogical.contentLength,
                              "storageContentLength", nextPhysical.contentLength,
-                             "caomCollection", collection,
-                             "caomLastModified", logicalicalLastModified,
-                             "ingestDate", physicalLastModified},
+                             "caomCollection", collection},
                             false);
                     }
                 } else {
@@ -283,14 +269,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "anomaly", "diffChecksum",
                          "observationID", nextLogical.observationID,
                          "artifactURI", nextLogical.artifactURI.toString(),
-                         "storageID", nextLogical.storageID,
                          "caomChecksum", nextLogical.checksum,
                          "caomSize", nextLogical.contentLength,
                          "storageChecksum", nextPhysical.checksum,
                          "storageSize", nextPhysical.contentLength,
-                         "caomCollection", collection,
-                         "caomLastModified", logicalicalLastModified,
-                         "ingestDate", physicalLastModified},
+                         "caomCollection", collection},
                         false);
                 }
             } else {
@@ -298,8 +281,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 logJSON(new String[]
                     {"logType", "detail",
                      "anomaly", "notInCAOM",
-                     "storageID", nextPhysical.storageID,
-                     "ingestDate", physicalLastModified},
+                     "artifactURI", nextPhysical.artifactURI.toString()},
                     false);
             }
         }
@@ -311,10 +293,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         Date now = new Date();
         for (ArtifactMetadata metadata : logicalMetadata) {
             String errorMessage = null; 
-            String lastModified = "null";
-            if (metadata.lastModified != null) {
-                lastModified = df.format(metadata.lastModified);
-            }
             
             Artifact artifact = new Artifact(metadata.artifactURI, metadata.productType, metadata.releaseType);
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
@@ -363,9 +341,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                      "releaseDate", releaseDateString,
                      "observationID", metadata.observationID,
                      "artifactURI", metadata.artifactURI.toString(),
-                     "storageID", metadata.storageID,
-                     "caomCollection", collection,
-                     "caomLastModified", lastModified},
+                     "caomCollection", collection},
                     false);
             }
         }
@@ -468,14 +444,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     
                     // validate 
                     String errorMessageString = (errorMessage == null) ? "null" : errorMessage;
-                    DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
                     logJSON(new String[]
                         {"logType", "detail",
                          "action", "addedToSkipTable",
                          "artifactURI", metadata.artifactURI.toString(),
                          "caomCollection", collection,
                          "caomChecksum", metadata.checksum,
-                         "caomLastModified", df.format(metadata.lastModified),
                          "errorMessage", errorMessageString},
                         true);
                 }
@@ -532,7 +506,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.lastModified, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+            String adql = "select distinct(a.uri), a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                     + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
@@ -566,8 +540,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             metadata.contentLength = Long.toString(artifact.contentLength);
         }
         metadata.contentType = artifact.contentType;
-        metadata.lastModified = artifact.getLastModified();
-        metadata.storageID = artifactStore.toStorageID(artifact.getURI().toASCIIString());
         metadata.productType = artifact.getProductType();
         metadata.releaseType = artifact.getReleaseType();
         metadata.metaRelease = metaRelease;

@@ -263,12 +263,18 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                             } else {
                                                 if (this.errorMessage == ArtifactHarvester.PROPRIETARY) {
                                                     // artifact is private, update skip table
-                                                    message = this.errorMessage + " artifact already exists in skip table.";
+                                                    message = this.errorMessage 
+                                                            + " artifact already exists in skip table, update tryAfter date to relese date.";
                                                     skip.setTryAfter(releaseDate);
                                                     skip.errorMessage = this.errorMessage;
                                                     addToSkip = true;
                                                 } else {
-                                                    message = "Public artifact already exists in skip table.";
+                                                    String msg = "artifact already exists in skip table.";;
+                                                    if (this.reason.equalsIgnoreCase("None")) {
+                                                        this.reason = "Public " + msg;
+                                                    } else {
+                                                        this.reason = this.reason + " and public " + msg;
+                                                    }
                                                 }
                                             }
 
@@ -393,35 +399,39 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
 
     private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
-        StringBuilder startMessage = new StringBuilder();
-        startMessage.append("END: {");
-        startMessage.append("\"observationID\":\"").append(observationID).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"success\":\"").append(success).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"added\":\"").append(added).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"reason\":\"").append(this.reason).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"caomChecksum\":\"").append(this.caomChecksum).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"caomContentLength\":\"").append(this.caomContentLength).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"storageChecksum\":\"").append(this.storageChecksum).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"storageContentLength\":\"").append(this.storageContentLength).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"collection\":\"").append(this.collection).append("\"");
-        if (message != null) {
-            startMessage.append(",");
-            startMessage.append("\"message\":\"").append(message).append("\"");
+        StringBuilder endMessage = new StringBuilder();
+        endMessage.append("END: {");
+        endMessage.append("\"observationID\":\"").append(observationID).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"success\":\"").append(success).append("\"");
+        endMessage.append(",");
+        if (message != null && message.contains("update tryAfter date")) {
+            endMessage.append("\"updated\":\"").append(added).append("\"");
+        } else {
+            endMessage.append("\"added\":\"").append(added).append("\"");
         }
-        startMessage.append(",");
-        startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
-        startMessage.append("}");
-        log.info(startMessage.toString());
+        endMessage.append(",");
+        endMessage.append("\"reason\":\"").append(this.reason).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"caomChecksum\":\"").append(this.caomChecksum).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"caomContentLength\":\"").append(this.caomContentLength).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"storageChecksum\":\"").append(this.storageChecksum).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"storageContentLength\":\"").append(this.storageContentLength).append("\"");
+        endMessage.append(",");
+        endMessage.append("\"collection\":\"").append(this.collection).append("\"");
+        if (message != null) {
+            endMessage.append(",");
+            endMessage.append("\"message\":\"").append(message).append("\"");
+        }
+        endMessage.append(",");
+        endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
+        endMessage.append("}");
+        log.info(endMessage.toString());
     }
     
     private void logBatchEnd() {
