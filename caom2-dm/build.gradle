@@ -12,7 +12,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.4'
+version = '2.4.1'
 
 jar {
     enabled = true
@@ -50,5 +50,5 @@ xslt {
 dependencies {
     testCompile 'org.opencadc:cadc-vodml:[1.0.4,)'
 
-    testCompile 'junit:junit:4.+' 
+    testCompile 'junit:junit:[4,5)' 
 }
