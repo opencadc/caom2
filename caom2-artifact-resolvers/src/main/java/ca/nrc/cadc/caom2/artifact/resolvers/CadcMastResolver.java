@@ -94,20 +94,8 @@ public class CadcMastResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(CadcMastResolver.class);
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-    private static final String HST_ARCHIVE = "HST";
-    
-    // For HST archive only, 
-    // backwards compatible is MAST/HST/product/<filename>
-    // not backwards compatible is HST/product/<filename>
-    private boolean isBackwardsCompatible = true;
+    private String baseDataURL;
 
-    // A subclass can set the isBackwardsCompatible flag
-    protected CadcMastResolver(boolean isCompatible) {
-        this.isBackwardsCompatible = isCompatible;
-    }
-    
-    public CadcMastResolver() {}
-    
     @Override
     public URL toURL(URI uri) {
         if (!SCHEME.equals(uri.getScheme())) {
@@ -128,13 +116,7 @@ public class CadcMastResolver implements StorageResolver, Traceable {
                 throw new IllegalArgumentException("No interface for auth method " + authMethod);
             }
             String baseDataURL = ifc.getAccessURL().getURL().toString();
-            String schemeSpecificPart = uri.getSchemeSpecificPart();
-            String archive = schemeSpecificPart.split("/")[0];
-            URL url = new URL(baseDataURL + "/" + uri.getSchemeSpecificPart());
-            if (HST_ARCHIVE.equalsIgnoreCase(archive) & isBackwardsCompatible) { 
-                url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
-            }
-            
+            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
