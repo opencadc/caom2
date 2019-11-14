@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
@@ -210,7 +211,24 @@ public final class CutoutUtil {
                         }
                     }
                 }
-                // no time cutout
+
+                // time cutout
+                if (timeInter != null) {
+                    if (canTimeCutout(c)) {
+                        long[] cut = getTimeBounds(c.time, timeInter);
+                        if (timCut == null) {
+                            timCut = cut;
+                        } else if (customCut.length == 2 && cut != null) { // subset
+                            if (cut.length == 0) {
+                                timCut = cut;
+                            } else { // both are length 4
+                                timCut[0] = Math.min(timCut[0], cut[0]);
+                                timCut[1] = Math.max(timCut[1], cut[1]);
+                            }
+                        }
+                    }
+                }
+
                 // polarization cutout
                 if (polarStates != null && !polarStates.isEmpty()) {
                     if (canPolarizationCutout(c)) {
@@ -856,8 +874,7 @@ public final class CutoutUtil {
     }
 
     /**
-     * Compute a pixel cutout for the specified bounds. The bounds are assumed to be
-     * barycentric wavelength in meters.
+     * Compute custom axis bounds.
      *
      * @param wcs
      * @param bounds
@@ -879,6 +896,39 @@ public final class CutoutUtil {
 
             double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
+
+            long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
+            long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
+
+            return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
+        }
+
+        return null;
+    }
+
+    /**
+     * Compute time bounds.
+     *
+     * @param wcs
+     * @param bounds
+     * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
+     *     null if no pixels are included
+     */
+    static long[] getTimeBounds(TemporalWCS wcs, Interval bounds)
+        throws WCSLibRuntimeException {
+        if (wcs.getAxis().function != null) {
+
+            CoordFunction1D func = wcs.getAxis().function;
+
+            if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
+                throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
+            }
+
+            // convert wcs to custom axis interval
+            Interval si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+
+            double d1 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
+            double d2 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
 
             long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);

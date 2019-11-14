@@ -117,7 +117,7 @@ public final class CustomAxisUtil {
                                     firstCtype = currentCtype;
                                 }
                                if (currentCtype.compareTo(firstCtype) != 0) {
-                                   throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + firstCtype);
+                                   throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + " and " + firstCtype);
                                 }
                             }
                         }
