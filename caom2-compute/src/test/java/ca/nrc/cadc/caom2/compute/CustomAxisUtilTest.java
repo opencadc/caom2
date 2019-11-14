@@ -158,6 +158,7 @@ public class CustomAxisUtilTest {
             // Normalization should happen with the alternate cunits,
             // compute should still pass
             Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_CTYPE, TEST_ALT_CUNIT);
+            log.info("plane: " + plane);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

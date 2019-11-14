@@ -79,12 +79,10 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 /**
  * Utility class for Custom calculations.
@@ -96,7 +94,7 @@ public final class CustomAxisUtil {
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
     public static final HashMap<String, String> ctypeCunitMap = new HashMap<String,String>() {{
-        put("FARADAY", "Hz");
+        put("FARADAY", "rad/m**2");
         put("RM", "rad/m**2");
     }};
 
@@ -364,16 +362,16 @@ public final class CustomAxisUtil {
             throw new IllegalArgumentException("Invalid CTYPE: " + ctype);
         }
 
-        if (mapCunit != cunit) {
+        if (!mapCunit.equals(cunit)) {
             throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: " + mapCunit + ". Found: " + cunit + " (normalized, raw: " + rawCunit + ")");
         }
     }
 
     private static String normalizeUnit(String rawUnit) {
         String normalizedUnit = rawUnit;
-        if (rawUnit.matches ("\\^")) {
+        if (rawUnit.contains("^")) {
             normalizedUnit = rawUnit.replaceAll("\\^", "**" );
-            log.info("normalized unit: " + rawUnit);
+            log.debug("normalized unit: " + rawUnit + " to: " + normalizedUnit);
         }
         return normalizedUnit;
     }
