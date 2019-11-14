@@ -79,10 +79,12 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
+import org.springframework.util.StringUtils;
 
 /**
  * Utility class for Custom calculations.
@@ -93,9 +95,9 @@ public final class CustomAxisUtil {
 
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
-    public static final HashMap<String, String> ctypeCunitMap = new HashMap<String, String>() {{
+    public static final HashMap<String, String> ctypeCunitMap = new HashMap<String,String>() {{
         put("FARADAY", "Hz");
-        put("RM", "rad/m2");
+        put("RM", "rad/m**2");
     }};
 
     private CustomAxisUtil() {
@@ -354,7 +356,8 @@ public final class CustomAxisUtil {
      */
     private static void validateWCS(CustomWCS wcs) {
         String ctype = wcs.getAxis().getAxis().getCtype();
-        String cunit = wcs.getAxis().getAxis().getCunit();
+        String rawCunit = wcs.getAxis().getAxis().getCunit();
+        String cunit = normalizeUnit(rawCunit);
         String mapCunit = ctypeCunitMap.get(ctype);
 
         if (mapCunit == null) {
@@ -362,8 +365,17 @@ public final class CustomAxisUtil {
         }
 
         if (mapCunit != cunit) {
-            throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: " + mapCunit + ". Found: " + cunit);
+            throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: " + mapCunit + ". Found: " + cunit + " (normalized, raw: " + rawCunit + ")");
         }
+    }
+
+    private static String normalizeUnit(String rawUnit) {
+        String normalizedUnit = rawUnit;
+        if (rawUnit.matches ("\\^")) {
+            normalizedUnit = rawUnit.replaceAll("\\^", "**" );
+            log.info("normalized unit: " + rawUnit);
+        }
+        return normalizedUnit;
     }
 
 

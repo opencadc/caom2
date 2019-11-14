@@ -98,9 +98,10 @@ import org.junit.Test;
 public class CustomAxisUtilTest {
     private static final Logger log = Logger.getLogger(CustomAxisUtilTest.class);
     public static final String TEST_CTYPE = "FARADAY";
-    public static final String TEST_CUNIT = "Hz";
     public static final String TEST_RM_CTYPE = "RM";
-    public static final String TEST_RM_CUNIT = "rad/m2";
+    public static final String TEST_CUNIT = "rad/m**2";
+    public static final String TEST_ALT_CUNIT = "rad/m^2";
+    public static final String TEST_INVALID_CUNIT = "Hz";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
@@ -126,7 +127,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testInvalidCtype() {
         try {
-            Plane plane = getInvalidTestSetRange(1, 2, 3, ProductType.SCIENCE);
+            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, "foo", "foo_unit");
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
@@ -136,6 +137,35 @@ public class CustomAxisUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testInvalidCunit() {
+        try {
+            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_RM_CTYPE, TEST_INVALID_CUNIT);
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
+        } catch (IllegalArgumentException expected) {
+            log.info("zeroErr -- caught expected: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testAltCunit() {
+        try {
+            // Normalization should happen with the alternate cunits,
+            // compute should still pass
+            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_CTYPE, TEST_ALT_CUNIT);
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+
 
     @Test
     public void testNoComputableChunks() {
@@ -450,32 +480,34 @@ public class CustomAxisUtilTest {
 
     Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
         throws URISyntaxException {
-        double px = 0.5;
-        double sx = 54321.0;
-        double nx = 200.0;
-        double ds = 0.01;
-        Plane plane = new Plane("foo");
-        int n = 0;
-        for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
-            plane.getArtifacts().add(na);
-            for (int p = 0; p < numP; p++) {
-                Part np = new Part(new Integer(p));
-                na.getParts().add(np);
-                for (int c = 0; c < numC; c++) {
-                    Chunk nc = new Chunk();
-                    np.getChunks().add(nc);
-                    // just shift to higher values of coordX for each subsequent chunk
-                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
-                    n++;
-                }
-            }
-        }
-        log.debug("getTestSetRange: " + n + " chunks");
-        return plane;
+        return getTestSetRange(numA, numP, numC, ptype, TEST_CTYPE, TEST_CUNIT);
+
+//        double px = 0.5;
+//        double sx = 54321.0;
+//        double nx = 200.0;
+//        double ds = 0.01;
+//        Plane plane = new Plane("foo");
+//        int n = 0;
+//        for (int a = 0; a < numA; a++) {
+//            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
+//            plane.getArtifacts().add(na);
+//            for (int p = 0; p < numP; p++) {
+//                Part np = new Part(new Integer(p));
+//                na.getParts().add(np);
+//                for (int c = 0; c < numC; c++) {
+//                    Chunk nc = new Chunk();
+//                    np.getChunks().add(nc);
+//                    // just shift to higher values of coordX for each subsequent chunk
+//                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
+//                    n++;
+//                }
+//            }
+//        }
+//        log.debug("getTestSetRange: " + n + " chunks");
+//        return plane;
     }
 
-    Plane getInvalidTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype, String ctype, String cunit)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
@@ -494,7 +526,7 @@ public class CustomAxisUtilTest {
                     np.getChunks().add(nc);
                     // just shift to higher values of coordX for each subsequent chunk
                     // Invalid ctype & unit used
-                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, "foo", "foo_unit");
+                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, ctype, cunit);
                     n++;
                 }
             }
@@ -524,7 +556,7 @@ public class CustomAxisUtilTest {
                     if ((c % 2) == 0) {
                         nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
                     } else {
-                        nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_RM_CUNIT);
+                        nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_CUNIT);
                     }
                     np.getChunks().add(nc);
                     n++;
@@ -559,7 +591,7 @@ public class CustomAxisUtilTest {
                     Chunk nc = new Chunk();
                     // just shift to higher values of coordX for each subsequent chunk
                     // Both ctypes are valid, just alternating - a case that shouldn't happen
-                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_RM_CUNIT);
+                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_RM_CTYPE, TEST_ALT_CUNIT);
                     np.getChunks().add(nc);
                     n++;
                 }
@@ -660,7 +692,5 @@ public class CustomAxisUtilTest {
 
         return wcs;
     }
-
-
 
 }
