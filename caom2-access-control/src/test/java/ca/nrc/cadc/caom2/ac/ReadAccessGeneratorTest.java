@@ -67,11 +67,15 @@
 
 package ca.nrc.cadc.caom2.ac;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.Proposal;
+import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +98,7 @@ public class ReadAccessGeneratorTest {
     public ReadAccessGeneratorTest() { }
     
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom.ac", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.ac", Level.DEBUG);
     }
 
     protected void setup() throws Exception {
@@ -116,14 +120,48 @@ public class ReadAccessGeneratorTest {
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
-            da.createObservationMetaReadAccess(obs, now, propGroupName);
+            da.generateTuples(obs, now, propGroupName);
             Assert.assertEquals("omra", 0, obs.getMetaReadGroups().size());
+            for (Plane p : obs.getPlanes()) {
+                Assert.assertEquals("pmra", 0, p.getMetaReadGroups().size());
+                Assert.assertEquals("pdra", 0, p.getDataReadGroups().size());
+                Assert.assertFalse(p.getArtifacts().isEmpty());
+                for (Artifact a : p.getArtifacts()) {
+                    Assert.assertTrue(a.getContentReadGroups().isEmpty());
+                }
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testPrivateArtifact() {
+        try {
+            setup();
+            Date now = new Date();
             
+            Observation obs = getSampleObservation("1", 1, now, -20L); // 20ms in the past
+            obs.getPlanes().iterator().next().getArtifacts().iterator().next().contentRelease = new Date(now.getTime() + 2000L); // 2 sec in future
+                    
+            ReadAccessGenerator da = new ReadAccessGenerator(collection, groupConfig);
+            
+            GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
+
+            da.generateTuples(obs, now, propGroupName);
+            Assert.assertEquals("omra", 0, obs.getMetaReadGroups().size());
             for (Plane p : obs.getPlanes()) {
                 da.createPlaneMetaReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pmra", 0, p.getMetaReadGroups().size());
                 da.createPlaneDataReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pdra", 0, p.getDataReadGroups().size());
+                Assert.assertFalse(p.getArtifacts().isEmpty());
+                for (Artifact a : p.getArtifacts()) {
+                    log.debug("check: " + a);
+                    Assert.assertFalse(a.getContentReadGroups().isEmpty());
+                    Assert.assertEquals("acra", 3, a.getContentReadGroups().size());
+                }
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -143,14 +181,15 @@ public class ReadAccessGeneratorTest {
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
-            da.createObservationMetaReadAccess(obs, now, propGroupName);
+            da.generateTuples(obs, now, propGroupName);
             Assert.assertEquals("omra", 3, obs.getMetaReadGroups().size());
-            
             for (Plane p : obs.getPlanes()) {
-                da.createPlaneMetaReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pmra", 3, p.getMetaReadGroups().size());
-                da.createPlaneDataReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pdra", 3, p.getDataReadGroups().size());
+                Assert.assertFalse(p.getArtifacts().isEmpty());
+                for (Artifact a : p.getArtifacts()) {
+                    Assert.assertTrue(a.getContentReadGroups().isEmpty());
+                }
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -170,14 +209,15 @@ public class ReadAccessGeneratorTest {
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
-            da.createObservationMetaReadAccess(obs, now, propGroupName);
+            da.generateTuples(obs, now, propGroupName);
             Assert.assertEquals("omra", 3, obs.getMetaReadGroups().size());
-            
             for (Plane p : obs.getPlanes()) {
-                da.createPlaneMetaReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pmra", 3, p.getMetaReadGroups().size());
-                da.createPlaneDataReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pdra", 3, p.getDataReadGroups().size());
+                Assert.assertFalse(p.getArtifacts().isEmpty());
+                for (Artifact a : p.getArtifacts()) {
+                    Assert.assertTrue(a.getContentReadGroups().isEmpty());
+                }
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -198,14 +238,15 @@ public class ReadAccessGeneratorTest {
             
             GroupURI propGroupName = da.getProposalGroupID(collection, obs.proposal);
 
-            da.createObservationMetaReadAccess(obs, now, propGroupName);
+            da.generateTuples(obs, now, propGroupName);
             Assert.assertEquals("omra", 2, obs.getMetaReadGroups().size());
-            
             for (Plane p : obs.getPlanes()) {
-                da.createPlaneMetaReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pmra", 2, p.getMetaReadGroups().size());
-                da.createPlaneDataReadAccess(p, now, propGroupName);
                 Assert.assertEquals("pdra", 2, p.getDataReadGroups().size());
+                Assert.assertFalse(p.getArtifacts().isEmpty());
+                for (Artifact a : p.getArtifacts()) {
+                    Assert.assertTrue(a.getContentReadGroups().isEmpty());
+                }
             }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -228,6 +269,8 @@ public class ReadAccessGeneratorTest {
                 p.dataRelease = rd;
             }
             obs.getPlanes().add(p);
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            p.getArtifacts().add(a);
         }
         return obs;
     }
