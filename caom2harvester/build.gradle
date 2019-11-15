@@ -40,7 +40,7 @@ dependencies {
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
     
     // needed to run plane metadata compute plugin (--compute)
-    compile 'org.opencadc:caom2-compute:[2.3.14,2.4)'
+    compile 'org.opencadc:caom2-compute:[2.4,2.5)'
     
     // needed to run access-control regen plugin (--generate-ac)
     compile 'org.opencadc:caom2-access-control:[2.3.1,2.4)'
