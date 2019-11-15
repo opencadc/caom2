@@ -18,6 +18,11 @@ group = 'org.opencadc'
 
 // version at release TBD
 version = '2.4.x'
+ext {
+    // release number for building packages (rpm, deb, etc)
+    // when only library dependencies change
+    release = '1'
+}
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
@@ -35,10 +40,10 @@ dependencies {
     compile 'org.opencadc:caom2-persist:[2.3.3,)'
     
     // needed to run plane metadata compute plugin (--compute)
-    compile 'org.opencadc:caom2-compute:[2.3.14,)'
+    compile 'org.opencadc:caom2-compute:[2.3.14,2.4)'
     
     // needed to run access-control regen plugin (--generate-ac)
-    compile 'org.opencadc:caom2-access-control:[2.3.1,)'
+    compile 'org.opencadc:caom2-access-control:[2.3.1,2.4)'
 
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
@@ -47,3 +52,15 @@ dependencies {
 
 apply from: '../opencadc.gradle'
 
+distributions {
+    main {
+        contents {
+            into('bin') {
+                from {
+                    'src/scripts'
+                }
+                fileMode 0755
+            }
+        }
+    }
+}
