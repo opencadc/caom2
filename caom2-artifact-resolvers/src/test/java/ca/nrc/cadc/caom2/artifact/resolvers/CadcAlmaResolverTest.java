@@ -88,7 +88,7 @@ public class CadcAlmaResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "alma:ALMA/some/name/space/bar.fits";
+    private static final String FILE_URI = "alma:ALMA/bar.fits";
     private static final String INVALID_ARCHIVE_URI = "alma:bar.fits";
     private static final String INVALID_FILE_ID_URI = "alma:ALMA/";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
@@ -131,8 +131,9 @@ public class CadcAlmaResolverTest {
             URI uri = new URI(INVALID_ARCHIVE_URI);
             URL url = cadcAlmaResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("cannot extract archive from"));
+        } catch (RuntimeException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Failed to convert to data URL"));
+            Assert.assertTrue(expected.getCause().getMessage().contains("malformed AD URI, expected 2 path componets, found 1"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -146,8 +147,9 @@ public class CadcAlmaResolverTest {
             URI uri = new URI(INVALID_FILE_ID_URI);
             URL url = cadcAlmaResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("cannot extract fileID from"));
+        } catch (RuntimeException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Failed to convert to data URL"));
+            Assert.assertTrue(expected.getCause().getMessage().contains("malformed AD URI, expected 2 path componets, found 1"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
