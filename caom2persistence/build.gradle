@@ -18,12 +18,12 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.35'
+version = '2.3.36'
 
 mainClassName = 'ca.nrc.cadc.caom2.version.Main'
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
+    compile 'log4j:log4j:[1.2,1.3)'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     compile 'org.postgresql:postgresql:9.4.1209.jre7'
     
@@ -36,7 +36,7 @@ dependencies {
     testCompile 'junit:junit:4.+'
     
     // JDBC drivers
-    intTestRuntime 'net.sourceforge.jtds:jtds:1.+'
+    intTestRuntime 'net.sourceforge.jtds:jtds:[1,2)'
     intTestRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
 }
 

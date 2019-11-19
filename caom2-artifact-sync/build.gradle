@@ -34,7 +34,7 @@ dependencies {
     runtime 'net.sourceforge.jtds:jtds:[1.0,)'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    testCompile 'junit:junit:[4.+,)'
+    testCompile 'junit:junit:[4,)'
 }
 
 apply from: '../opencadc.gradle'

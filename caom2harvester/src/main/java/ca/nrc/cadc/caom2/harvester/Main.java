@@ -419,8 +419,8 @@ public class Main {
             sb.append("\n\nSource selection:");
             sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
             sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
-            sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints");
-            sb.append("\n                      (use: unregistered service)");
+            sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository "
+                    + "endpoints (use: unregistered service)");
             sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
         }
 

@@ -18,12 +18,12 @@ group = 'org.opencadc'
 version = '2.3.13'
 
 dependencies {
-    compile 'log4j:log4j:[1.2.+,)'
+    compile 'log4j:log4j:[1.2,)'
     
-    compile 'org.opencadc:cadc-util:[1.+,)'
+    compile 'org.opencadc:cadc-util:[1,)'
     compile 'org.opencadc:caom2:[2.3.13,2.4)'
 
-    testCompile 'junit:junit:[4.+,)'
+    testCompile 'junit:junit:[4,)'
 }
 
 apply from: '../opencadc.gradle'
