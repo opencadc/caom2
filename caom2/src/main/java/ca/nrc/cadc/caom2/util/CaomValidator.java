@@ -108,8 +108,23 @@ public final class CaomValidator {
     public static void assertNotNull(Class caller, String name, Object test)
             throws IllegalArgumentException {
         if (test == null) {
-            throw new IllegalArgumentException(
-                    caller.getSimpleName() + ": null " + name);
+            throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
+        }
+    }
+    
+    /**
+     * Utility method so constructors can validate arguments.
+     * 
+     * @param caller
+     * @param name
+     * @param test
+     * @throws IllegalArgumentException 
+     */
+    public static void assertNotEmpty(Class caller, String name, String test)
+            throws IllegalArgumentException {
+        assertNotNull(caller, name, test);
+        if (test.isEmpty()) {
+            throw new IllegalArgumentException(caller.getSimpleName() + ": zero-length string value in " + name);
         }
     }
 

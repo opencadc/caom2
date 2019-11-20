@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,52 +62,59 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.wcs;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogMF;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class Axis implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
+public class AxisTest {
+    private static final Logger log = Logger.getLogger(AxisTest.class);
 
-    // immutable state
-    private String ctype;
-    private String cunit;
-
-    public static final String[] CTOR_UTYPES = { "ctype", "cunit" };
-
-    /**
-     * Constructor.
-     * 
-     * @param ctype
-     * @param cunit
-     */
-    public Axis(String ctype, String cunit) {
-        CaomValidator.assertNotEmpty(getClass(), "ctype", ctype);
-        this.ctype = ctype;
-        this.cunit = cunit;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", Level.INFO);
     }
-
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + "[" + ctype + "," + cunit
-                + "]";
+    
+    public AxisTest() { 
     }
-
-    public String getCtype() {
-        return ctype;
-    }
-
-    public String getCunit() {
-        return cunit;
+    
+    @Test
+    public void testCtor() {
+        try {
+            Axis a;
+            
+            a = new Axis("speed", "m/s");
+            log.info("created: " + a);
+        
+            a = new Axis("STOKES", null);
+            log.info("created: " + a);
+            
+            try {
+                a = new Axis(null, null);
+                Assert.fail("expected IllegalArgumentException - created: " + a);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected exception: " + expected);
+            }
+            
+            try {
+                a = new Axis("", null);
+                Assert.fail("expected IllegalArgumentException - created: " + a);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected exception: " + expected);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception:" + unexpected);
+        }
     }
 }
