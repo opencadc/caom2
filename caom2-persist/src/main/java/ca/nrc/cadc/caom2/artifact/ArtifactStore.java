@@ -85,13 +85,11 @@ import java.util.Set;
 public interface ArtifactStore {
 
     /**
-     * Checks for artifact existence.
+     * Get the artifact metadata for the specified artifact.
      *
      * @param artifactURI
      *            The artifact identifier.
-     * @param checksum
-     *            The checksum of the artifact.
-     * @return True in the artifact exists with the given checksum.
+     * @return archive metadata object, null if none found.
      *
      * @throws UnsupportedOperationException
      *             If the artifact uri cannot be resolved.
@@ -106,7 +104,7 @@ public interface ArtifactStore {
      * @throws RuntimeException
      *             If an unrecovarable error occurs.
      */
-    public boolean contains(URI artifactURI, URI checksum)
+    public ArtifactMetadata get(URI artifactURI)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
@@ -150,14 +148,14 @@ public interface ArtifactStore {
     /**
      * Get the list of all artifacts in a certain archive.
      *
-     * @param archive
-     *            The archive on which to search for files.
+     * @param collection
+     *            The collection on which to search for files.
      * @return A list of archive metadata objects
      * @throws TransientException
      * @throws UnsupportedOperationException
      * @throws AccessControlException
      */
-    public Set<ArtifactMetadata> list(String archive) throws TransientException, UnsupportedOperationException, AccessControlException;
+    public Set<ArtifactMetadata> list(String collection) throws TransientException, UnsupportedOperationException, AccessControlException;
 
     /**
      * Convert an artifact URI to a storage ID.

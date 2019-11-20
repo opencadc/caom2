@@ -92,9 +92,7 @@ public class ArtifactMetadata {
     public String checksum;
     public String contentLength;
     public String contentType;
-    public Date lastModified;
     public ProductType productType;
-    public String storageID;
     public ReleaseType releaseType;
     public Date dataRelease;
     public Date metaRelease;
@@ -112,7 +110,7 @@ public class ArtifactMetadata {
         return new Comparator<ArtifactMetadata>() {
             @Override
             public int compare(ArtifactMetadata o1, ArtifactMetadata o2) {
-                return o1.storageID.compareTo(o2.storageID);
+                return o1.artifactURI.compareTo(o2.artifactURI);
             }
         };
     }

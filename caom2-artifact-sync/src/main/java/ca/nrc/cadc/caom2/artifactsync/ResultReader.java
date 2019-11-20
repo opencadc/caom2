@@ -100,12 +100,10 @@ public class ResultReader implements InputStreamWrapper {
     private static final Logger log = Logger.getLogger(ResultReader.class);
     
     TreeSet<ArtifactMetadata> metadata;
-    private ArtifactStore artifactStore;
     
     public ResultReader(ArtifactStore artifactStore) 
             throws NoSuchAlgorithmException {
         metadata = new TreeSet<>(ArtifactMetadata.getComparator());
-        this.artifactStore = artifactStore;
     }
 
     @Override
@@ -128,46 +126,37 @@ public class ResultReader implements InputStreamWrapper {
                     } else {
                         am = new ArtifactMetadata();
                         am.artifactURI = new URI(parts[0]);
-                        am.storageID = this.artifactStore.toStorageID(am.artifactURI.toString());
                         
-                        // read lastModified
-                        String dateString = parts[1];
-                        if (dateString == null || dateString.length() == 0) {
-                            am.lastModified = null;
-                        } else {
-                            am.lastModified = df.parse(dateString);
-                        }
-                        
-                        if (parts.length > 2) {
-                            String checksum = parts[2];
+                        if (parts.length > 1) {
+                            String checksum = parts[1];
                             int colon = checksum.indexOf(":");
                             am.checksum = checksum.substring(colon + 1, checksum.length());
                         }
+                        if (parts.length > 2) {
+                            am.contentLength = parts[2];
+                        }
                         if (parts.length > 3) {
-                            am.contentLength = parts[3];
+                            am.contentType = parts[3];
                         }
                         if (parts.length > 4) {
-                            am.contentType = parts[4];
+                            am.observationID = parts[4];
                         }
                         if (parts.length > 5) {
-                            am.observationID = parts[5];
+                            am.productType = ProductType.toValue(parts[5]);
                         }
                         if (parts.length > 6) {
-                            am.productType = ProductType.toValue(parts[6]);
+                            am.releaseType = ReleaseType.toValue(parts[6]);
                         }
                         if (parts.length > 7) {
-                            am.releaseType = ReleaseType.toValue(parts[7]);
-                        }
-                        if (parts.length > 8) {
-                            dateString = parts[8];
+                            String dateString = parts[7];
                             if (dateString == null || dateString.length() == 0) {
                                 am.dataRelease = null;
                             } else {
                                 am.dataRelease = df.parse(dateString);
                             }
                         }
-                        if (parts.length > 9) {
-                            dateString = parts[9];
+                        if (parts.length > 8) {
+                            String dateString = parts[8];
                             if (dateString == null || dateString.length() == 0) {
                                 am.metaRelease = null;
                             } else {
