@@ -334,8 +334,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
                 // check again to be sure the destination doesn't already have it
                 ArtifactMetadata tempMetadata = artifactStore.get(artifactURI);
-                if (tempMetadata != null && tempMetadata.checksum != null  
-                        && tempMetadata.checksum.equals(artifact.contentChecksum.getSchemeSpecificPart())) {
+                if (tempMetadata != null && tempMetadata.getChecksum() != null  
+                        && tempMetadata.getChecksum().equals(artifact.contentChecksum.getSchemeSpecificPart())) {
                     result.message = "ArtifactStore already has correct copy";
                     result.success = true;
                     return result;

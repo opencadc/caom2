@@ -118,7 +118,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     
     private String caomChecksum;
     private String storageChecksum;
-    private String caomContentLength;
+    private Long caomContentLength;
     private long storageContentLength;
     private String reason = "None";
     private String errorMessage;
@@ -225,9 +225,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                     }
                                     
                                     if (artifact.contentLength == null) {
-                                        this.caomContentLength = "null";
+                                        this.caomContentLength = null;
                                     } else {
-                                        this.caomContentLength = Long.toString(artifact.contentLength);
+                                        this.caomContentLength = artifact.contentLength;
                                     }
                                     
                                     this.storageContentLength = 0;
@@ -327,14 +327,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         }
     }
 
-    private boolean checkContentLength(String artifactContentLength) {
+    private boolean checkContentLength(Long artifactContentLength) {
         // no contentLength in a CAOM artifact is considered a match
-        if (this.caomContentLength.equalsIgnoreCase("null") 
-            || Long.valueOf(this.caomContentLength) == 0) {
+        if (this.caomContentLength == null || this.caomContentLength == 0) {
             return true;
         } else {
-            this.storageContentLength = Long.getLong(artifactContentLength);
-            if (this.storageContentLength == Long.valueOf(this.caomContentLength)) {
+            this.storageContentLength = artifactContentLength;
+            if (this.storageContentLength == this.caomContentLength) {
                 return true;
             } else {
                 this.reason = "ContentLengths are different";
@@ -372,7 +371,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
             return false;
         }
 
-        if (checkChecksum(artifactMetadata.checksum)) {
+        if (checkChecksum(artifactMetadata.getChecksum())) {
             return checkContentLength(artifactMetadata.contentLength);
         } else {
             return false;
