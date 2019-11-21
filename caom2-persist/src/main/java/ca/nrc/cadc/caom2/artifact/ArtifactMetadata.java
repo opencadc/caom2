@@ -81,9 +81,8 @@ import java.util.Date;
  * Class to hold meta information about an artifact.
  * validate mode uses checksum.
  * Other attributes are optional and can be left as null.
- * </p><p>
- *
- * Extra fields marked <em>transient</em> allow applications store the CAOM 
+ * 
+ * <p>Extra fields marked <em>transient</em> allow applications store the CAOM 
  * values to support application logic and logging. These values are not part 
  * of the state and not expected to be stored and returned by an ArtifactStore 
  * implementation.
