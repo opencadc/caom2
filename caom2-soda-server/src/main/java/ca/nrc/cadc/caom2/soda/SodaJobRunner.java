@@ -126,7 +126,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     }
 
     @Override
-    public URL toURL(int serialNum, URI uri, Cutout<Shape> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol) 
+    public URL toURL(int serialNum, URI uri, Cutout<Shape> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol, Cutout<Interval> custom) 
             throws IOException {
         String runID = job.getRunID();
         if (runID == null)
@@ -151,7 +151,8 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             }
 
 
-            List<String> cutout = CutoutUtil.computeCutout(a, dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut));
+            List<String> cutout = CutoutUtil.computeCutout(a, 
+                dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut), custom.name, dali2caom2(custom.cut));
             if (cutout != null && !cutout.isEmpty())
             {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);

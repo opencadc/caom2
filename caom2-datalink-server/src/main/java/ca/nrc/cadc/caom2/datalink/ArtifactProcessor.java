@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.datalink;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -276,9 +277,14 @@ public class ArtifactProcessor
     {
         public String circle;
         public String poly;
-        public String bandMin, bandMax;
-        public String timeMin, timeMax;
+        public String bandMin;
+        public String bandMax;
+        public String timeMin;
+        public String timeMax;
         public List<PolarizationState> pol;
+        public String customParam;
+        public String customMin;
+        public String customMax;
     }
     
     private boolean canCutout(Artifact a) {
@@ -329,7 +335,7 @@ public class ArtifactProcessor
         }
 
         Time tim = TimeUtil.compute(aset);
-        if (nrg != null) log.debug("tim: " + tim.bounds + " " + tim.dimension);
+        if (tim != null) log.debug("tim: " + tim.bounds + " " + tim.dimension);
         if (tim != null && tim.bounds != null && tim.dimension != null && tim.dimension > 1)
         {
             //double[] val = new double[] { tim.bounds.getLower(), tim.bounds.getUpper() };
@@ -343,6 +349,14 @@ public class ArtifactProcessor
         if (pol != null && pol.dimension != null && pol.dimension > 1)
         {
             ret.pol = pol.states;
+        }
+        
+        CustomAxis ca = CustomAxisUtil.compute(aset);
+        if (ca != null) log.debug("custom: " + ca.getCtype() + " " + ca.bounds + " " + ca.dimension);
+        if (ca != null && ca.bounds != null && ca.dimension != null && ca.dimension > 1) {
+            ret.customParam = ca.getCtype();
+            ret.customMin = Double.toString(ca.bounds.getLower());
+            ret.customMax = Double.toString(ca.bounds.getUpper());
         }
             
         return ret;
@@ -432,6 +446,13 @@ public class ArtifactProcessor
             {
                 sp.getOptions().add(s.stringValue());
             }
+            sd.getInputParams().add(sp);
+        }
+        if (ab.customParam != null && (ab.customMin != null || ab.customMax != null)) {
+            sp = new ServiceParameter(ab.customParam, "double", "2", null);
+            sp.xtype = "interval";
+            sp.unit = CustomAxisUtil.getUnits(ab.customParam);
+            sp.setMinMax(ab.customMin, ab.customMax);
             sd.getInputParams().add(sp);
         }
 
