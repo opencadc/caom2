@@ -79,24 +79,52 @@ import java.util.Date;
 
 /**
  * Class to hold meta information about an artifact.
- * validate mode uses checksum. StorageID must not be null.
+ * validate mode uses checksum.
  * Other attributes are optional and can be left as null.
+ * 
+ * <p>Extra fields marked <em>transient</em> allow applications store the CAOM 
+ * values to support application logic and logging. These values are not part 
+ * of the state and not expected to be stored and returned by an ArtifactStore 
+ * implementation.
  * 
  * @author majorb
  *
  */
 public class ArtifactMetadata {
-
-    public String observationID;
-    public URI artifactURI;
-    public String checksum;
-    public String contentLength;
-    public String contentType;
-    public ProductType productType;
-    public ReleaseType releaseType;
-    public Date dataRelease;
-    public Date metaRelease;
+    private final URI artifactURI;
+    private final String checksum;
     
+    public Long contentLength;
+    public String contentType;
+    
+    public transient ProductType productType;
+    public transient ReleaseType releaseType;
+    public transient Date dataRelease;
+    public transient Date metaRelease;
+    public transient String observationID;
+
+    /**
+     * Constructor. 
+     * @param artifactURI cannot be null
+     * @param checksum allowed to be null but highly discouraged!!
+     */
+    public ArtifactMetadata(URI artifactURI, String checksum) {
+        if (artifactURI == null) {
+            throw new IllegalArgumentException("artifactURI cannot be null");
+        }
+        this.artifactURI = artifactURI;
+        this.checksum = checksum;
+    }
+
+    public URI getArtifactURI() {
+        return artifactURI;
+    }
+
+    public String getChecksum() {
+        return checksum;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o instanceof ArtifactMetadata) {
             ArtifactMetadata other = (ArtifactMetadata) o;
@@ -106,6 +134,10 @@ public class ArtifactMetadata {
         return false;
     }
     
+    /**
+     * Return a comparator that compares artifactURI values.
+     * @return comparator
+     */
     public static Comparator<ArtifactMetadata> getComparator() {
         return new Comparator<ArtifactMetadata>() {
             @Override
