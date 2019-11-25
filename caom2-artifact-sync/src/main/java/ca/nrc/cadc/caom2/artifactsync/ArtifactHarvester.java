@@ -405,8 +405,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
 
     private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
-        String caomContentLengthStr = safeToString(this.caomContentLength);
-        String storageContentLengthStr = safeToString(this.storageContentLength);
+        final String caomContentLengthStr = safeToString(this.caomContentLength);
+        final String storageContentLengthStr = safeToString(this.storageContentLength);
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("END: {");
         endMessage.append("\"observationID\":\"").append(observationID).append("\"");
