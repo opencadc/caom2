@@ -385,6 +385,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         return id.toString();
     }
     
+    private String safeToString(Long n) {
+        if (n == null) {
+            return "null";
+        }
+        return n.toString();
+    }
+
     private void logStart(String observationID, Artifact artifact) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
@@ -398,6 +405,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
 
     private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
+        final String caomContentLengthStr = safeToString(this.caomContentLength);
+        final String storageContentLengthStr = safeToString(this.storageContentLength);
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("END: {");
         endMessage.append("\"observationID\":\"").append(observationID).append("\"");
@@ -416,11 +425,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         endMessage.append(",");
         endMessage.append("\"caomChecksum\":\"").append(this.caomChecksum).append("\"");
         endMessage.append(",");
-        endMessage.append("\"caomContentLength\":\"").append(this.caomContentLength).append("\"");
+        endMessage.append("\"caomContentLength\":\"").append(caomContentLengthStr).append("\"");
         endMessage.append(",");
         endMessage.append("\"storageChecksum\":\"").append(this.storageChecksum).append("\"");
         endMessage.append(",");
-        endMessage.append("\"storageContentLength\":\"").append(this.storageContentLength).append("\"");
+        endMessage.append("\"storageContentLength\":\"").append(storageContentLengthStr).append("\"");
         endMessage.append(",");
         endMessage.append("\"collection\":\"").append(this.collection).append("\"");
         if (message != null) {
