@@ -112,22 +112,22 @@ public final class CutoutUtil {
     private CutoutUtil() {
     }
 
-    /**
-     * Compute a cfitsio-style cutout string in pixel coordinates for the specified
-     * artifact and bounds.
-     *
-     * @param a
-     * @param shape
-     * @param energyInter
-     * @param timeInter
-     * @param polarStates
-     * @return
-     * @throws NoSuchKeywordException
-     */
-    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates)
-        throws NoSuchKeywordException {
-            return computeCutout(a, shape, energyInter, timeInter, polarStates, null);
-    }
+//    /**
+//     * Compute a cfitsio-style cutout string in pixel coordinates for the specified
+//     * artifact and bounds.
+//     *
+//     * @param a
+//     * @param shape
+//     * @param energyInter
+//     * @param timeInter
+//     * @param polarStates
+//     * @return
+//     * @throws NoSuchKeywordException
+//     */
+//    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates)
+//        throws NoSuchKeywordException {
+//            return computeCutout(a, shape, energyInter, timeInter, polarStates, null);
+//    }
 
     /**
      * Compute a cfitsio-style cutout string in pixel coordinates for the specified
@@ -568,7 +568,6 @@ public final class CutoutUtil {
             && c.custom != null && c.custom.getAxis().function != null
             && c.customAxis != null && c.customAxis.intValue() <= c.naxis.intValue()
             && c.custom.getAxis().getAxis().getCtype() != null
-            && c.custom.getAxis().getAxis().getCtype().compareTo("") != 0
         );
         return customCutout;
     }

@@ -112,7 +112,7 @@ public final class CustomAxisUtil {
                                 String currentCtype = c.custom.getAxis().getAxis().getCtype();
                                 if (firstCtype == null) {
                                     if (ctypeCunitMap.get(currentCtype) == null) {
-                                        throw new IllegalArgumentException("Invalid CTYPE: " + currentCtype);
+                                        throw new IllegalArgumentException("Unsupported CTYPE: " + currentCtype);
                                     }
                                     firstCtype = currentCtype;
                                 }
@@ -164,29 +164,27 @@ public final class CustomAxisUtil {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        if (c.custom != null) {
-                            String currentCtype = c.custom.getAxis().getAxis().getCtype();
-                            if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
-                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
-                            } else {
-                                CoordRange1D range = c.custom.getAxis().range;
-                                CoordBounds1D bounds = c.custom.getAxis().bounds;
-                                CoordFunction1D function = c.custom.getAxis().function;
-                                if (range != null) {
-                                    Interval s = toInterval(c.custom, range);
-                                    log.debug("[computeBounds] range -> sub: " + s);
-                                    Util.mergeIntoList(s, subs, unionScale);
-                                } else if (bounds != null) {
-                                    for (CoordRange1D cr : bounds.getSamples()) {
-                                        Interval s = toInterval(c.custom, cr);
-                                        log.debug("[computeBounds] bounds -> sub: " + s);
-                                        Util.mergeIntoList(s, subs, unionScale);
-                                    }
-                                } else if (function != null) {
-                                    Interval s = CustomAxisUtil.toInterval(c.custom, function);
-                                    log.debug("[computeBounds] function -> sub: " + s);
+                        String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                        if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
+                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                        } else {
+                            CoordRange1D range = c.custom.getAxis().range;
+                            CoordBounds1D bounds = c.custom.getAxis().bounds;
+                            CoordFunction1D function = c.custom.getAxis().function;
+                            if (range != null) {
+                                Interval s = toInterval(c.custom, range);
+                                log.debug("[computeBounds] range -> sub: " + s);
+                                Util.mergeIntoList(s, subs, unionScale);
+                            } else if (bounds != null) {
+                                for (CoordRange1D cr : bounds.getSamples()) {
+                                    Interval s = toInterval(c.custom, cr);
+                                    log.debug("[computeBounds] bounds -> sub: " + s);
                                     Util.mergeIntoList(s, subs, unionScale);
                                 }
+                            } else if (function != null) {
+                                Interval s = CustomAxisUtil.toInterval(c.custom, function);
+                                log.debug("[computeBounds] function -> sub: " + s);
+                                Util.mergeIntoList(s, subs, unionScale);
                             }
                         }
                     }
@@ -231,17 +229,15 @@ public final class CustomAxisUtil {
             for (Part p : a.getParts()) {
                 for (Chunk c : p.getChunks()) {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        if (c.custom != null) {
-                            String currentCtype = c.custom.getAxis().getAxis().getCtype();
-                            if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
-                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
-                            } else {
-                                num++;
-                                double ss = Math.abs(c.custom.getAxis().function.getDelta());
-                                if (ss >= scale) {
-                                    scale = ss;
-                                    sw = c.custom;
-                                }
+                        String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                        if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
+                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                        } else {
+                            num++;
+                            double ss = Math.abs(c.custom.getAxis().function.getDelta());
+                            if (ss >= scale) {
+                                scale = ss;
+                                sw = c.custom;
                             }
                         }
                     }
