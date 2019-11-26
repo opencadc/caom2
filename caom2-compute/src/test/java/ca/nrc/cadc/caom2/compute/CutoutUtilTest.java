@@ -605,9 +605,6 @@ public class CutoutUtilTest {
             c.naxis = 1;
             Assert.assertFalse(CutoutUtil.canCutout(c));
 
-            c.custom.getAxis().range = new CoordRange1D(new RefCoord(0.5, 300.0), new RefCoord(256.5, 550.0));
-            Assert.assertFalse(CutoutUtil.canCutout(c));
-
             c.customAxis = 1;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
 
@@ -632,16 +629,19 @@ public class CutoutUtilTest {
             // cutout requests: Need to have some sane requests placed here to
             // test the cutouts.
 //            Interval miss = new Interval(600.0e-9, 800.0e-9);
-            Interval inside = new Interval(1, 450);
-//            Interval inside = new Interval(440.0e-9, 480.0e-9);
-//            Interval outside = new Interval(200.0e-9, 900.0e-9);
-//
-            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
-//            Assert.assertNotNull(cus);
-//            Assert.assertTrue(cus.isEmpty());
+            Interval inside = new Interval(54321.5, 54322.5);
+            Interval outside_below = new Interval(54300.0, 54300.5);
 
-//            cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
-//            Assert.assertNotNull(cus);
+            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_below);
+            Assert.assertNotNull(cus);
+            log.info("cutout from compute: " + cus);
+            log.info(cus.size());
+            Assert.assertTrue(cus.isEmpty());
+
+            // long [0]
+            Interval includes = new Interval(54321.0, 54323.0);
+            cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
+            Assert.assertNotNull(cus);
             log.info("cutout: " + cus);
 //            Assert.assertTrue(cus.size() == 1);
 //            String cutout = cus.get(0);

@@ -201,6 +201,7 @@ public final class CutoutUtil {
                         long[] cut = getEnergyBounds(c.energy, energyInter);
                         if (nrgCut == null) {
                             nrgCut = cut;
+                            log.info("energy interval cut:" + cut);
                         } else if (nrgCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
                                 nrgCut = cut;
@@ -218,7 +219,7 @@ public final class CutoutUtil {
                         long[] cut = getTimeBounds(c.time, timeInter);
                         if (timCut == null) {
                             timCut = cut;
-                        } else if (customCut.length == 2 && cut != null) { // subset
+                        } else if (timCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
                                 timCut = cut;
                             } else { // both are length 4
@@ -250,12 +251,15 @@ public final class CutoutUtil {
                 if (customInter != null) {
                     if (canCustomCutout(c)) {
                         long[] cut = getCustomAxisBounds(c.custom, customInter);
+                        System.out.println(cut);
                         if (customCut == null) {
                             customCut = cut;
                         } else if (customCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
+                                log.info("cut length is 0");
                                 customCut = cut;
                             } else { // both are length 4
+                                log.info("cut length is 4??");
                                 customCut[0] = Math.min(customCut[0], cut[0]);
                                 customCut[1] = Math.max(customCut[1], cut[1]);
                             }
@@ -886,6 +890,7 @@ public final class CutoutUtil {
         if (wcs.getAxis().function != null) {
 
             CoordFunction1D func = wcs.getAxis().function;
+            log.info("func" + func);
 
             if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
                 throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
@@ -893,12 +898,16 @@ public final class CutoutUtil {
 
             // convert wcs to custom axis interval
             Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+            log.info("si" + si);
 
             double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
+            log.info("d1, d2" + d1 + " " + d2);
 
             long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
+            log.info("x1, x2" + x1 + " " + x2);
+            log.info("naxis long: " + wcs.getAxis().function.getNaxis().longValue());
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
@@ -947,7 +956,7 @@ public final class CutoutUtil {
         if (x2 > len) {
             x2 = len;
         }
-        //log.warn("doClipCheck1D: " + len + " " + x1 + ":" + x2);
+        log.warn("doClipCheck1D: " + len + " " + x1 + ":" + x2);
 
         // validity check
         //if (len == 1 && x1 == 1 && x2 == 1) {
@@ -957,13 +966,13 @@ public final class CutoutUtil {
         
         // all pixels includes
         if (x1 == 1 && x2 == len) {
-            //log.warn("doClipCheck1D: all");
+            log.warn("doClipCheck1D: all");
             return new long[0];
         }
         
         // no pixels included
         if (x1 > len || x2 < 1) {
-            //log.warn("doClipCheck1D: none");
+            log.warn("doClipCheck1D: none");
             return null;
         }
         

@@ -694,4 +694,7 @@ public class CustomAxisUtilTest {
         return wcs;
     }
 
+
+    // TODO: add getBounds test as in EnergyUtilTest. testGetBoundsWaveBounds()
+
 }

@@ -212,8 +212,8 @@ public class ComputeDataGenerator {
     }
 
     CustomWCS mkBadCtypeCustomWCS() {
-        RefCoord c1 = new RefCoord(0.5, 0);
-        RefCoord c2 = new RefCoord(100.5, 0);
+        RefCoord c1 = new RefCoord(0.5, 10.0);
+        RefCoord c2 = new RefCoord(100.5, 20.0);
 
         CoordAxis1D axis = new CoordAxis1D(new Axis("BAD_CTYPE", CustomAxisUtilTest.TEST_CUNIT));
         CustomWCS wcs = new CustomWCS(axis);
@@ -222,8 +222,8 @@ public class ComputeDataGenerator {
     }
 
     CustomWCS mkBadCunitCustomWCS() {
-        RefCoord c1 = new RefCoord(0.5, 0);
-        RefCoord c2 = new RefCoord(100.5, 0);
+        RefCoord c1 = new RefCoord(0.5, 10.0);
+        RefCoord c2 = new RefCoord(100.5, 20.0);
 
         CoordAxis1D axis = new CoordAxis1D(new Axis(CustomAxisUtilTest.TEST_RM_CTYPE, "HelloKitty"));
         CustomWCS wcs = new CustomWCS(axis);
