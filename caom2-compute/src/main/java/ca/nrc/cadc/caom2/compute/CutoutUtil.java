@@ -251,7 +251,7 @@ public final class CutoutUtil {
                 if (customInter != null) {
                     if (canCustomCutout(c)) {
                         long[] cut = getCustomAxisBounds(c.custom, customInter);
-                        System.out.println(cut);
+                        System.out.println("custom interval: " + cut);
                         if (customCut == null) {
                             customCut = cut;
                         } else if (customCut.length == 2 && cut != null) { // subset
@@ -889,7 +889,7 @@ public final class CutoutUtil {
         if (wcs.getAxis().function != null) {
 
             CoordFunction1D func = wcs.getAxis().function;
-            log.info("func" + func);
+            log.info("\nfunc" + func);
 
             if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
                 throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
@@ -898,9 +898,21 @@ public final class CutoutUtil {
             // convert wcs to custom axis interval
             Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
             log.info("si: " + si);
+            log.info("bound: " + bounds);
 
-            double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
-            double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
+            // compute intersection
+            Interval inter = Interval.intersection(si, bounds);
+
+            if (inter == null) {
+                log.info("bounds INTERSECT wcs.function == null");
+                return null;
+            }
+
+            log.info("inter: " + inter);
+            log.info("interval upper/lower: " + inter.getLower() +", " + inter.getUpper());
+
+            double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
+            double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
             log.info("d1, d2: " + d1 + " " + d2);
 
             long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
