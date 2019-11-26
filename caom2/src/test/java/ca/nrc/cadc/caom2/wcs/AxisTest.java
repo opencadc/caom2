@@ -62,113 +62,59 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.resolvers;
+package ca.nrc.cadc.caom2.wcs;
 
-import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URL;
 import org.apache.log4j.Level;
+import org.apache.log4j.LogMF;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  *
- * @author yeunga
+ * @author pdowler
  */
-public class CadcAlmaResolverTest {
-    private static final Logger log = Logger.getLogger(CadcAlmaResolverTest.class);
+public class AxisTest {
+    private static final Logger log = Logger.getLogger(AxisTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", Level.INFO);
     }
-
-    private static final String FILE_URI = "alma:ALMA/bar.fits";
-    private static final String INVALID_ARCHIVE_URI = "alma:bar.fits";
-    private static final String INVALID_FILE_ID_URI = "alma:ALMA/";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
-
-    CadcAlmaResolver cadcAlmaResolver = new CadcAlmaResolver();
-
-    public CadcAlmaResolverTest() {
-
-    }
-
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcAlmaResolver.SCHEME.equals(cadcAlmaResolver.getScheme()));
-    }
-
-    @Test 
-    public void testTraceable() {
-        Assert.assertTrue(cadcAlmaResolver instanceof Traceable);
+    
+    public AxisTest() { 
     }
     
     @Test
-    public void testToURL() {
+    public void testCtor() {
         try {
-            URI uri = new URI(FILE_URI);
-            URL url = cadcAlmaResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            String[] parts = url.toString().split("/");
-            Assert.assertEquals("incorrect archive", "ALMA", parts[parts.length - 2]);
-            Assert.assertEquals("incorrect archive", "bar.fits", parts[parts.length - 1]);
-            log.info("testFile: " + uri + " -> " + url);
+            Axis a;
+            
+            a = new Axis("speed", "m/s");
+            log.info("created: " + a);
+        
+            a = new Axis("STOKES", null);
+            log.info("created: " + a);
+            
+            try {
+                a = new Axis(null, null);
+                Assert.fail("expected IllegalArgumentException - created: " + a);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected exception: " + expected);
+            }
+            
+            try {
+                a = new Axis("", null);
+                Assert.fail("expected IllegalArgumentException - created: " + a);
+            } catch (IllegalArgumentException expected) {
+                log.info("caught expected exception: " + expected);
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidArchiveURI() {
-        try {
-            URI uri = new URI(INVALID_ARCHIVE_URI);
-            URL url = cadcAlmaResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (RuntimeException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Failed to convert to data URL"));
-            Assert.assertTrue(expected.getCause().getMessage().contains("malformed AD URI, expected 2 path componets, found 1"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidFileIdURI() {
-        try {
-            URI uri = new URI(INVALID_FILE_ID_URI);
-            URL url = cadcAlmaResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (RuntimeException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Failed to convert to data URL"));
-            Assert.assertTrue(expected.getCause().getMessage().contains("malformed AD URI, expected 2 path componets, found 1"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidSchemeURI() {
-        try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = cadcAlmaResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception:" + unexpected);
         }
     }
 }

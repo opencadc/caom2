@@ -92,8 +92,7 @@ public class Axis implements Serializable {
      * @param cunit
      */
     public Axis(String ctype, String cunit) {
-        CaomValidator.assertNotNull(getClass(), "ctype", ctype);
-        // CaomValidator.assertNotNull(getClass(), "cunit", cunit);
+        CaomValidator.assertNotEmpty(getClass(), "ctype", ctype);
         this.ctype = ctype;
         this.cunit = cunit;
     }
