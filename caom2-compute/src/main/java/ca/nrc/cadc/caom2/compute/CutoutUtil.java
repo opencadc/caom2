@@ -897,15 +897,15 @@ public final class CutoutUtil {
 
             // convert wcs to custom axis interval
             Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
-            log.info("si" + si);
+            log.info("si: " + si);
 
             double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
-            log.info("d1, d2" + d1 + " " + d2);
+            log.info("d1, d2: " + d1 + " " + d2);
 
             long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
-            log.info("x1, x2" + x1 + " " + x2);
+            log.info("x1, x2: " + x1 + " " + x2);
             log.info("naxis long: " + wcs.getAxis().function.getNaxis().longValue());
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);

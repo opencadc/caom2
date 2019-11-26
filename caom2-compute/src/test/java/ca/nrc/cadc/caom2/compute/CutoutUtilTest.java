@@ -629,7 +629,7 @@ public class CutoutUtilTest {
             // cutout requests: Need to have some sane requests placed here to
             // test the cutouts.
 //            Interval miss = new Interval(600.0e-9, 800.0e-9);
-            Interval inside = new Interval(108643, 108644);
+            Interval inside = new Interval(10, 20);
             log.info("inside check : ");
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
             Assert.assertNotNull(cus);

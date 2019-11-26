@@ -204,9 +204,9 @@ public class ComputeDataGenerator {
 
     CustomWCS mkGoodCustomWCS() {
         double px = 0.5;
-        double sx = 54321.0;
+        double sx = 1.0; // 54321.0;
         double nx = 200.0;
-        double ds = 0.01;
+        double ds = 1; //0.01;
 
         return cuTest.getTestFunction(px, sx * nx * ds, nx, ds);
     }
