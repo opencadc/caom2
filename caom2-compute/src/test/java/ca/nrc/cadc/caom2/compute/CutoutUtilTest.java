@@ -628,14 +628,15 @@ public class CutoutUtilTest {
             a.getParts().add(p);
             p.getChunks().add(c);
 
-            // cutout requests: Need to have some sane requests placed here to
-            // test the cutouts.
-//            Interval miss = new Interval(600.0e-9, 800.0e-9);
+            // test a range of cutout requests to make sure templating is working correctly
             Interval inside = new Interval(210, 220);
-            log.info("inside check : ");
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
+            Assert.assertTrue(cus.size() == 2);
+
+
+            Interval outside_include = new Interval(100, 500);
+            cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_include);
             Assert.assertNotNull(cus);
-            log.info("inside cutout: " + cus);
 
             Interval outside_below = new Interval(100, 150);
             log.info("outside below check: ");
@@ -643,18 +644,26 @@ public class CutoutUtilTest {
             Assert.assertNotNull(cus);
             log.info("outside cutout: " + cus);
             log.info("cutout size: " + cus.size());
-//            Assert.assertTrue(cus.isEmpty());
+            Assert.assertTrue(cus.isEmpty());
+
+            Interval outside_above = new Interval(500, 650);
+            log.info("outside above check: ");
+            cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_above);
+            Assert.assertNotNull(cus);
+            log.info("outside cutout: " + cus);
+            log.info("cutout size: " + cus.size());
+            Assert.assertTrue(cus.isEmpty());
 
             // long [0] - matches boundary exactly
-            Interval includes = new Interval(54321.0, 54323.0);
+            Interval includes = new Interval(200.0, 400.0);
             log.info("includes check : ");
             cus = CutoutUtil.computeCutout(a, null, null, null, null, includes);
             Assert.assertNotNull(cus);
             log.info("includes cutout: " + cus);
-//            Assert.assertTrue(cus.size() == 1);
-//            String cutout = cus.get(0);
-//            log.debug("custom cutout: " + cutout);
-//            Assert.assertEquals("[0][]", cutout);
+            Assert.assertTrue(cus.size() == 1);
+            String cutout = cus.get(0);
+            log.debug("custom cutout: " + cutout);
+            Assert.assertEquals("[0][*]", cutout);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

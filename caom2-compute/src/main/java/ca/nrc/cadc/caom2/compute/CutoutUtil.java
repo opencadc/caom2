@@ -107,6 +107,7 @@ public final class CutoutUtil {
     private static final String TIM_CUT = "tt";
     private static final String POL_CUT = "pp";
     private static final String OBS_CUT = "oo";
+    private static final String CUST_CUT = "cc";
     private static final int CUT_LEN = 2;
 
     private CutoutUtil() {
@@ -251,15 +252,15 @@ public final class CutoutUtil {
                 if (customInter != null) {
                     if (canCustomCutout(c)) {
                         long[] cut = getCustomAxisBounds(c.custom, customInter);
-                        System.out.println("custom interval: " + cut);
                         if (customCut == null) {
                             customCut = cut;
+                            log.debug("customCut was null, is now: " + cut);
                         } else if (customCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
-                                log.info("cut length is 0");
+                                log.debug("cut length is 0");
                                 customCut = cut;
                             } else { // both are length 4
-                                log.info("cut length is 4??");
+                                log.debug("cut length is 4??");
                                 customCut[0] = Math.min(customCut[0], cut[0]);
                                 customCut[1] = Math.max(customCut[1], cut[1]);
                             }
@@ -331,7 +332,21 @@ public final class CutoutUtil {
                 doCut = false;
             }
 
-            // time cutout: not supported
+            if (timCut != null) {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==2 means interval picks a subset of pixels
+                int i = sb.indexOf(TIM_CUT);
+                if (timCut.length == 2) {
+                    sb.replace(i, i + CUT_LEN, timCut[0] + ":" + timCut[1]);
+                } else {
+                    sb.replace(i, i + CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("time cutout: " + a.getURI() + "," + p.getName() + ", Chunk: " + cs);
+            } else if (customInter != null) {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no time overlap");
+                doCut = false;
+            }
 
             if (polCut != null) {
                 // cut.length==0 means cut contains all pixels
@@ -357,6 +372,24 @@ public final class CutoutUtil {
                 log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
             } else {
                 log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
+            }
+
+            if (customCut != null) {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==2 means interval picks a subset of pixels
+                int i = sb.indexOf(CUST_CUT);
+                log.debug("cust cut index, length: " + i + ", " + customCut.length);
+                if (customCut.length == 2) {
+                    sb.replace(i, i + CUT_LEN, customCut[0] + ":" + customCut[1]);
+                } else {
+                    sb.replace(i, i + CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("custom cutout: " + a.getURI() + "," + p.getName() + ", Chunk: " + cs);
+                doCut = true;
+            } else if (customInter != null) {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no custom overlap");
+                doCut = false;
             }
 
             // for any axis in the data but not in the cutout: keep all pixels
@@ -391,10 +424,16 @@ public final class CutoutUtil {
                 sb.replace(i, i + CUT_LEN, "*");
             }
 
+            i = sb.indexOf(CUST_CUT);
+            if (i > 0) {
+                sb.replace(i, i + CUT_LEN, "*");
+            }
+
             if (doCut) {
                 ret.add(sb.toString());
             }
         }
+        log.info("return string:" + ret);
         return ret;
     }
 
@@ -485,6 +524,7 @@ public final class CutoutUtil {
         boolean tim = false;
         boolean pol = false;
         boolean obs = false;
+        boolean cust = false;
         int naxis = 0;
         for (Chunk c : p.getChunks()) {
             naxis = Math.max(naxis, c.naxis);
@@ -495,6 +535,7 @@ public final class CutoutUtil {
                 tim = tim || (c.timeAxis != null && i == c.timeAxis);
                 pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis);
                 obs = obs || (c.observableAxis != null && i == c.observableAxis);
+                cust = cust || (c.customAxis != null && i == c.customAxis);
             }
         }
         if (pos1) {
@@ -514,6 +555,9 @@ public final class CutoutUtil {
         }
         if (obs) {
             sb.append(OBS_CUT).append(",");
+        }
+        if (cust) {
+            sb.append(CUST_CUT).append(",");
         }
         sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
         log.debug("cutout template: " + sb.toString());
@@ -919,7 +963,7 @@ public final class CutoutUtil {
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
             log.info("d1, d2: " + d1 + " " + d2);
 
-            long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
+            long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
             log.info("x1, x2: " + x1 + " " + x2);
             log.info("naxis long: " + wcs.getAxis().function.getNaxis().longValue());
@@ -954,7 +998,7 @@ public final class CutoutUtil {
             double d1 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
             double d2 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
 
-            long x1 = (long) Math.floor(Math.min(d1, d2 + 0.5));
+            long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
@@ -978,7 +1022,7 @@ public final class CutoutUtil {
         //    log.warn("doClipCheck1D: single");
         //    return new long[0]; // the single pixel is included
         //}
-        
+
         // all pixels includes
         if (x1 == 1 && x2 == len) {
             log.warn("doClipCheck1D: all");
@@ -990,7 +1034,7 @@ public final class CutoutUtil {
             log.warn("doClipCheck1D: none");
             return null;
         }
-        
+
         // an actual cutout
         return new long[] {x1, x2};
     }
