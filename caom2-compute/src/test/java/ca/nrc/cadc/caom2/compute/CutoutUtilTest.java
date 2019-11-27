@@ -381,7 +381,7 @@ public class CutoutUtilTest {
             bounds.getSamples().add(new CoordRange1D(new RefCoord(220.0, 500.0), new RefCoord(256.5, 550.0)));
             Assert.assertFalse(CutoutUtil.canCutout(c));
 
-            CoordFunction1D function = new CoordFunction1D(2500L, 0.1, new RefCoord(0.5, 300.0));
+            CoordFunction1D function = new CoordFunction1D(2000L, 0.1, new RefCoord(0.5, 300.0)); // 300-500 nm
             Assert.assertFalse(CutoutUtil.canCutout(c));
 
             c.energyAxis = 1;
@@ -419,7 +419,7 @@ public class CutoutUtilTest {
 
             // cutout requests: must be wavelength in meters
             Interval miss = new Interval(600.0e-9, 800.0e-9);
-            Interval inside = new Interval(440.0e-9, 480.0e-9);
+            Interval inside = new Interval(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
             Interval outside = new Interval(200.0e-9, 900.0e-9);
 
             List<String> cus = CutoutUtil.computeCutout(a, null, miss, null, null);
@@ -431,14 +431,14 @@ public class CutoutUtilTest {
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             log.info("energy cutout: " + cutout);
-            Assert.assertEquals("[0][1400:1800]", cutout);
+            Assert.assertEquals("[0][999:1001]", cutout); // 3 pixels
 
             cus = CutoutUtil.computeCutout(a, null, outside, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);
             log.info("energy cutout: " + cutout);
-            Assert.assertEquals("[0][*]", cutout); // one pixel in the middle of part [0]
+            Assert.assertEquals("[0][*]", cutout); // all pixels
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
