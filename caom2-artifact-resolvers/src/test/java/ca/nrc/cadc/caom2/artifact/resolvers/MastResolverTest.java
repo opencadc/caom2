@@ -156,4 +156,27 @@ public class MastResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    // TODO:
+    // Temporary code to test usage of the TEST JWST server
+    // Remove when the JWST production server is used.
+    @Test
+    public void testJWSTURI() {
+        String jwstTestBaseURL = "https://pwjwdmsauiweb.stsci.edu/portal/Download/file/";
+        String jwstFile = "JWST/product/file.fits";
+        String hstBaseURL = "https://mastpartners.stsci.edu/portal/Download/file/";
+        String hstFile = "HST/production/file.fits";
+        try {
+            URI uri = new URI("mast:" + jwstFile);
+            URL url = mastResolver.toURL(uri);
+            Assert.assertTrue("Failed to convert JWST URI to JWST test server", url.toString().contains(jwstTestBaseURL));
+            
+            uri = new URI("mast:" + hstFile);
+            url = mastResolver.toURL(uri);
+            Assert.assertTrue("Failed to convert HST URI to MAST server", url.toString().contains(hstBaseURL));
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }
