@@ -72,14 +72,9 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.log4j.Logger;
 
 /**
  * StorageResolver implementation for the ALMA archive.
@@ -89,61 +84,14 @@ import org.apache.log4j.Logger;
  */
 public class CadcAlmaResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "alma";
-    private static final Logger log = Logger.getLogger(CadcAlmaResolver.class);
-
-    private void sanitize(String s) {
-        Pattern regex = Pattern.compile("^[a-zA-Z 0-9\\_\\.\\,\\-\\+\\@]*$");
-        Matcher matcher = regex.matcher(s);
-        if (!matcher.find()) {
-            throw new IllegalArgumentException("Invalid dataset characters.");
-        }
-    }
-   
-    private String removeNamespace(final URI uri) {
-        String archive = null;
-        String fileID = null;
-        String parts = uri.getRawSchemeSpecificPart();
-        int i = parts.indexOf('/');
-        if (i > 0) {
-            archive = parts.substring(0,i);
-            parts = parts.substring(i + 1); // namespace+fileID
-        }
-
-        i = parts.lastIndexOf('/');
-        if (i > 0) {
-            fileID = parts.substring(i + 1);
-        } else {
-            fileID = parts;
-        }
-        
-        if (!StringUtil.hasText(archive)) {
-            throw new IllegalArgumentException("cannot extract archive from " + uri);
-        }
-        
-        if (!StringUtil.hasText(fileID)) {
-            throw new IllegalArgumentException("cannot extract fileID from " + uri);
-        }
-
-        sanitize(archive);
-        sanitize(fileID);
-
-        // trim the archive to 6 characters
-        // TODO: Remove this trim when AD supports longer archive names
-        if (archive.length() > 6) {
-            archive = archive.substring(0, 6);
-        }
-        
-        return archive + "/" + fileID;
-    }
     
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-        String uriStringWithNoNamespace = removeNamespace(uri);
 
         try {
             AdResolver adResolver = new AdResolver();
-            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uriStringWithNoNamespace));
+            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getRawSchemeSpecificPart()));
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);
