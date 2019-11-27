@@ -69,6 +69,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.URI;
 import java.net.URL;
 
@@ -83,6 +84,10 @@ public class MastResolver implements StorageResolver {
 
     public static final String SCHEME = "mast";
     private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
+    // TODO:
+    // temporary base url to JWST testing, remove after testing has completed
+    private static final String JWST_ARCHIVE = "JWST";
+    private static final String JWST_TEST_BASE_ARTIFACT_URL = "https://pwjwdmsauiweb.stsci.edu/portal/Download/file/";
 
     public MastResolver() {
     }
@@ -108,8 +113,31 @@ public class MastResolver implements StorageResolver {
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-        return ResolverUtil.createURLFromPath(uri, MAST_BASE_ARTIFACT_URL);
+        String sourceURL = MAST_BASE_ARTIFACT_URL;
+        // TODO:
+        // Temporary code to use the JWST test server.
+        // Remove when the JWST production server is used.
+        if (isJWST(uri)) {
+            sourceURL = JWST_TEST_BASE_ARTIFACT_URL;
+        }
+        return ResolverUtil.createURLFromPath(uri, sourceURL);
     }
 
+    // TODO:
+    // Temporary method to use the JWST test server. 
+    // Remove when the JWST production server is used.
+    private boolean isJWST(URI uri) {
+        boolean isJWST = false;
+        
+        String schemeSpecificPart = uri.getSchemeSpecificPart();
+        if (schemeSpecificPart.length() > 0) {
+            String archive = schemeSpecificPart.split("/")[0];
+            if (JWST_ARCHIVE.equalsIgnoreCase(archive)) {
+                isJWST = true;
+            }
+        }
+        
+        return isJWST;
+    }
 }
 
