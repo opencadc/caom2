@@ -613,10 +613,10 @@ public final class CutoutUtil {
         }
 
         // convert npoly to pixel coordinates and find min/max
-        long x1 = Integer.MAX_VALUE;
-        long x2 = -1 * x1;
-        long y1 = x1;
-        long y2 = -1 * y1;
+        double x1 = Double.MAX_VALUE;
+        double x2 = -1 * x1;
+        double y1 = x1;
+        double y2 = -1 * y1;
         log.debug("converting npoly to pixel coordinates");
         double[] coords = new double[2];
         for (Vertex v : npoly.getVertices()) {
@@ -633,21 +633,25 @@ public final class CutoutUtil {
                 // impose a limit/cutout - so we can safely skip it
                 if (tr != null) {
                     //log.warn("pixel coords: " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = (long) Math.floor(Math.min(x1, tr.coordinates[0] + 0.5));
-                    x2 = (long) Math.ceil(Math.max(x2, tr.coordinates[0]) - 0.5);
-                    y1 = (long) Math.floor(Math.min(y1, tr.coordinates[1] + 0.5));
-                    y2 = (long) Math.ceil(Math.max(y2, tr.coordinates[1]) - 0.5);
-                    //log.warn("clipped: " + x1 + ":" + x2 + " " + y1 + ":" + y2);
+                    x1 = Math.min(x1, tr.coordinates[0]);
+                    x2 = Math.max(x2, tr.coordinates[0]);
+                    y1 = Math.min(y1, tr.coordinates[1]);
+                    y2 = Math.max(y2, tr.coordinates[1]);
                 }
                 //else
                 //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
             }
         }
+        //log.warn(x1 + " " + x2 + " " + y1 + " " +y2);
+        long ix1 = (long) Math.floor(x1 + 0.5);
+        long ix2 = (long) Math.ceil(x2 - 0.5);
+        long iy1 = (long) Math.floor(y1 + 0.5);
+        long iy2 = (long) Math.ceil(y2 - 0.5);
 
         // clipping
         long naxis1 = wcs.getAxis().function.getDimension().naxis1;
         long naxis2 = wcs.getAxis().function.getDimension().naxis2;
-        return doPositionClipCheck(naxis1, naxis2, x1, x2, y1, y2);
+        return doPositionClipCheck(naxis1, naxis2, ix1, ix2, iy1, iy2);
     }
 
     private static long[] doPositionClipCheck(long w, long h, long x1, long x2, long y1, long y2) {
@@ -717,7 +721,7 @@ public final class CutoutUtil {
             //log.debug("getBounds: sky2pix " + b + " -> " + p2.coordinates[0] + p2.units[0]);
 
             // values can be inverted if WCS is in freq or energy instead of wavelength
-            long x1 = (long) Math.floor(Math.min(p1.coordinates[0], p2.coordinates[0] + 0.5));
+            long x1 = (long) Math.floor(Math.min(p1.coordinates[0], p2.coordinates[0]) + 0.5);
             long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]) - 0.5);
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);

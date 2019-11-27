@@ -282,7 +282,7 @@ public class CutoutUtilTest {
             p.getChunks().add(c);
 
             Circle miss = new Circle(new Point(2.0, 2.0), 0.1);
-            Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-4);
+            Circle inside = new Circle(new Point(10.0, 10.0), 1.0e-3); // 3x3 cutout
             Circle outside = new Circle(new Point(10.0, 10.0), 1.0);
 
             List<String> cus;
@@ -295,12 +295,14 @@ public class CutoutUtilTest {
             Assert.assertNotNull(cus);
             Assert.assertEquals(1, cus.size());
             String cutout = cus.get(0);
-            Assert.assertEquals("[0][128:128,128:128]", cutout); // one pixel in the middle of part [0]
+            log.info("position cut: " + cutout);
+            Assert.assertEquals("[0][127:129,127:129]", cutout); // 3x3 pixel in the middle of part [0]
 
             cus = CutoutUtil.computeCutout(a, outside, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);
+            log.info("position cut: " + cutout);
             Assert.assertEquals("[0][*,*]", cutout); // [part name][*,*] for all pixels
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -428,14 +430,14 @@ public class CutoutUtilTest {
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
-            log.debug("energy cutout: " + cutout);
+            log.info("energy cutout: " + cutout);
             Assert.assertEquals("[0][1400:1800]", cutout);
 
             cus = CutoutUtil.computeCutout(a, null, outside, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
             cutout = cus.get(0);
-            log.debug("energy cutout: " + cutout);
+            log.info("energy cutout: " + cutout);
             Assert.assertEquals("[0][*]", cutout); // one pixel in the middle of part [0]
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
