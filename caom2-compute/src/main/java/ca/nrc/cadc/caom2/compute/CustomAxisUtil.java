@@ -82,6 +82,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
@@ -93,7 +94,7 @@ public final class CustomAxisUtil {
 
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
-    public static final HashMap<String, String> ctypeCunitMap = new HashMap<String,String>() {{
+    private static final TreeMap<String, String> ctypeCunitMap = new TreeMap<String,String>() {{
         put("FARADAY", "rad/m**2");
         put("RM", "rad/m**2");
     }};
@@ -376,5 +377,9 @@ public final class CustomAxisUtil {
     public static double val2pix(CustomWCS wcs, CoordFunction1D func, double val) {
         validateWCS(wcs);
         return Util.val2pix(func, val);
+    }
+
+    public static String getUnits(String customCtype) {
+        return ctypeCunitMap.get(customCtype);
     }
 }

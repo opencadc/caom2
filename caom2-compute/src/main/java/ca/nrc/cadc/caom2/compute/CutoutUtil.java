@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -112,23 +111,6 @@ public final class CutoutUtil {
 
     private CutoutUtil() {
     }
-
-//    /**
-//     * Compute a cfitsio-style cutout string in pixel coordinates for the specified
-//     * artifact and bounds.
-//     *
-//     * @param a
-//     * @param shape
-//     * @param energyInter
-//     * @param timeInter
-//     * @param polarStates
-//     * @return
-//     * @throws NoSuchKeywordException
-//     */
-//    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates)
-//        throws NoSuchKeywordException {
-//            return computeCutout(a, shape, energyInter, timeInter, polarStates, null);
-//    }
 
     /**
      * Compute a cfitsio-style cutout string in pixel coordinates for the specified
@@ -593,11 +575,9 @@ public final class CutoutUtil {
 
     // check if time cutout is possible (currently function only)
     protected static boolean canTimeCutout(Chunk c) {
-        boolean timeCutout = false;
-        //(c.naxis != null && c.naxis.intValue() >= 1
-        //            && c.time != null && c.time.getAxis().function != null
-        //            && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
-        return timeCutout;
+        return (c.naxis != null && c.naxis.intValue() >= 1
+                    && c.time != null && c.time.getAxis().function != null
+                    && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
     }
 
     // check if polarization cutout is possible (currently function only)

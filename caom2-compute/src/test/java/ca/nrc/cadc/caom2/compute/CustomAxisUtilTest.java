@@ -482,30 +482,6 @@ public class CustomAxisUtilTest {
     Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
         throws URISyntaxException {
         return getTestSetRange(numA, numP, numC, ptype, TEST_CTYPE, TEST_CUNIT);
-
-//        double px = 0.5;
-//        double sx = 54321.0;
-//        double nx = 200.0;
-//        double ds = 0.01;
-//        Plane plane = new Plane("foo");
-//        int n = 0;
-//        for (int a = 0; a < numA; a++) {
-//            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
-//            plane.getArtifacts().add(na);
-//            for (int p = 0; p < numP; p++) {
-//                Part np = new Part(new Integer(p));
-//                na.getParts().add(np);
-//                for (int c = 0; c < numC; c++) {
-//                    Chunk nc = new Chunk();
-//                    np.getChunks().add(nc);
-//                    // just shift to higher values of coordX for each subsequent chunk
-//                    nc.custom = getTestRange(px, sx + n * nx * ds, nx, ds, TEST_CTYPE, TEST_CUNIT);
-//                    n++;
-//                }
-//            }
-//        }
-//        log.debug("getTestSetRange: " + n + " chunks");
-//        return plane;
     }
 
     Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype, String ctype, String cunit)
