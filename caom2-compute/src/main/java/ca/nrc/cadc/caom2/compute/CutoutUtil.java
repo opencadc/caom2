@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
@@ -411,48 +410,40 @@ public final class CutoutUtil {
         return new long[] {o1, o2};
     }
 
-    private static StringBuilder initCutout(String partName, Part p) {
+    // protected for unit test
+    static StringBuilder initCutout(String partName, Part p) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(partName).append("]");
-        // create template cutout for each axis in the data array in the right order
         sb.append("[");
-        boolean pos1 = false;
-        boolean pos2 = false;
-        boolean nrg = false;
-        boolean tim = false;
-        boolean pol = false;
-        boolean obs = false;
-        int naxis = 0;
+
+        // create template cutout for each axis in the data array in the right order
         for (Chunk c : p.getChunks()) {
-            naxis = Math.max(naxis, c.naxis);
-            for (int i = 1; i <= c.naxis.intValue(); i++) {
-                pos1 = pos1 || (c.positionAxis1 != null && i == c.positionAxis1);
-                pos2 = pos2 || (c.positionAxis2 != null && i == c.positionAxis2);
-                nrg = nrg || (c.energyAxis != null && i == c.energyAxis);
-                tim = tim || (c.timeAxis != null && i == c.timeAxis);
-                pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis);
-                obs = obs || (c.observableAxis != null && i == c.observableAxis);
+            int n = 0;
+            if (c.naxis != null) {
+                n = c.naxis;
+            }
+            for (int i = 1; i <= n; i++) {
+                if (c.positionAxis1 != null && i == c.positionAxis1) {
+                    sb.append(POS1_CUT).append(",");
+                } else if (c.positionAxis2 != null && i == c.positionAxis2) {
+                    sb.append(POS2_CUT).append(",");
+                } else if (c.energyAxis != null && i == c.energyAxis) {
+                    sb.append(NRG_CUT).append(",");
+                } else if (c.timeAxis != null && i == c.timeAxis) {
+                    sb.append(TIM_CUT).append(",");
+                } else if (c.polarizationAxis != null && i == c.polarizationAxis) {
+                    sb.append(POL_CUT).append(",");
+                } else if (c.observableAxis != null && i == c.observableAxis) {
+                    sb.append(OBS_CUT).append(",");
+                }
             }
         }
-        if (pos1) {
-            sb.append(POS1_CUT).append(",");
+        if (sb.indexOf(",") > 0) {
+            sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+        } else {
+            sb.append("]");
         }
-        if (pos2) {
-            sb.append(POS2_CUT).append(",");
-        }
-        if (nrg) {
-            sb.append(NRG_CUT).append(",");
-        }
-        if (tim) {
-            sb.append(TIM_CUT).append(",");
-        }
-        if (pol) {
-            sb.append(POL_CUT).append(",");
-        }
-        if (obs) {
-            sb.append(OBS_CUT).append(",");
-        }
-        sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+        
         log.debug("cutout template: " + sb.toString());
         return sb;
     }

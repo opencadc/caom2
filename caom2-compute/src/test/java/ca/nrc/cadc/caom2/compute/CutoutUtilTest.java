@@ -130,6 +130,52 @@ public class CutoutUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testInitCutout() {
+        try {
+            Part p = new Part("name");
+            Chunk c = new Chunk();
+            p.getChunks().add(c);
+            StringBuilder sb;
+            
+            // no axes
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            String nox = sb.toString();
+            log.info("no axes: " + nox);
+            Assert.assertEquals("[name][]", nox);
+            
+            // all axes in typical order
+            c.naxis = 6;
+            c.positionAxis1 = 1;
+            c.positionAxis2 = 2;
+            c.energyAxis = 3;
+            c.timeAxis = 4;
+            c.polarizationAxis = 5;
+            c.observableAxis = 6;
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            String tox = sb.toString();
+            log.info("typical axes: " + tox);
+            Assert.assertEquals("[name][px,py,ee,tt,pp,oo]", tox);
+            
+            // all axes in reverse order
+            c.naxis = 6;
+            c.positionAxis1 = 6;
+            c.positionAxis2 = 5;
+            c.energyAxis = 4;
+            c.timeAxis = 3;
+            c.polarizationAxis = 2;
+            c.observableAxis = 1;
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            String rox = sb.toString();
+            log.info("reverse axes: " + rox);
+            Assert.assertEquals("[name][oo,pp,tt,ee,py,px]", rox);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testIllegalArgs() {
@@ -504,28 +550,57 @@ public class CutoutUtilTest {
     }
 
     @Test
-    public void testCanCutoutObservable() {
+    public void testCutoutObservable() {
         try {
             Chunk c = new Chunk();
             Assert.assertFalse(CutoutUtil.canObservableCutout(c));
+            
+            c.energyAxis = 1;
+            c.energy = new SpectralWCS(new CoordAxis1D(new Axis("WAVE", "nm")), "TOPOCENT");
+            c.energy.getAxis().function = new CoordFunction1D(2000L, 0.1, new RefCoord(0.5, 300.0)); // 300-500 nm
 
             Slice s1 = new Slice(new Axis("foo", "m"), 1L);
             Slice s2 = new Slice(new Axis("bar", "s"), 2L);
-
             c.observable = new ObservableAxis(s1);
-            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
-
-            c.naxis = 1;
-            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
-
             c.observableAxis = 2;
-            Assert.assertFalse(CutoutUtil.canObservableCutout(c));
-
-            c.observableAxis = 1;
+            c.naxis = 2;
+            
             Assert.assertTrue(CutoutUtil.canObservableCutout(c));
 
             c.observable.independent = s2;
             Assert.assertTrue(CutoutUtil.canObservableCutout(c));
+            
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Part p = new Part(0);
+            a.getParts().add(p);
+            p.getChunks().add(c);
+            
+            // cutout requests: must be wavelength in meters
+            Interval miss = new Interval(600.0e-9, 800.0e-9);
+            Interval inside = new Interval(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
+            Interval outside = new Interval(200.0e-9, 900.0e-9);
+
+            List<String> cus = CutoutUtil.computeCutout(a, null, miss, null, null);
+            Assert.assertNotNull(cus);
+            for (String s : cus) {
+                log.info("empty energy+observable cutout: " + s);
+            }
+            Assert.assertTrue(cus.isEmpty());
+
+            cus = CutoutUtil.computeCutout(a, null, inside, null, null);
+            Assert.assertNotNull(cus);
+            Assert.assertTrue(cus.size() == 1);
+            String cutout = cus.get(0);
+            log.info("energy+observable cutout: " + cutout);
+            Assert.assertEquals("[0][999:1001,1:2]", cutout); // 3 pixels
+
+            cus = CutoutUtil.computeCutout(a, null, outside, null, null);
+            Assert.assertNotNull(cus);
+            Assert.assertTrue(cus.size() == 1);
+            cutout = cus.get(0);
+            log.info("energy+observable cutout: " + cutout);
+            Assert.assertEquals("[0][*,1:2]", cutout); // all pixels
+            
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
