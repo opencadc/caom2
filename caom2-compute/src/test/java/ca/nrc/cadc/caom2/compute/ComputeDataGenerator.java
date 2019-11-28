@@ -133,12 +133,11 @@ public class ComputeDataGenerator {
 
     TemporalWCS mkGoodTemporalWCS() {
         double px = 0.5;
-        double sx = 54321.0;
+        double sx = 1.0;
         double nx = 200.0;
-        double ds = 0.01;
+        double ds = 1;
 
         return tiTest.getTestFunction(true, px, sx * nx * ds, nx, ds);
-
     }
 
     TemporalWCS mkBadTemporalWCSCunit() {

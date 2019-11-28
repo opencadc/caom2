@@ -125,7 +125,9 @@ public final class CutoutUtil {
      * @return
      * @throws NoSuchKeywordException
      */
-    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates, Interval customInter)
+    public static List<String> computeCutout(Artifact a, Shape shape,
+            Interval energyInter, Interval timeInter, List<PolarizationState> polarStates,
+            String customCtype, Interval customInter)
         throws NoSuchKeywordException {
         if (a == null) {
             throw new IllegalArgumentException("null Artifact");
@@ -232,11 +234,13 @@ public final class CutoutUtil {
 
                 // custom cutout
                 if (customInter != null) {
-                    if (canCustomCutout(c)) {
+                    if (customCtype == null) {
+                        throw new IllegalArgumentException("ctype not declared for custom interval.");
+                    }
+                    if (canCustomCutout(c, customCtype)) {
                         long[] cut = getCustomAxisBounds(c.custom, customInter);
                         if (customCut == null) {
                             customCut = cut;
-                            log.debug("customCut was null, is now: " + cut);
                         } else if (customCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
                                 log.debug("cut length is 0");
@@ -325,7 +329,7 @@ public final class CutoutUtil {
                 }
                 String cs = sb.toString();
                 log.debug("time cutout: " + a.getURI() + "," + p.getName() + ", Chunk: " + cs);
-            } else if (customInter != null) {
+            } else if (timeInter != null) {
                 log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no time overlap");
                 doCut = false;
             }
@@ -462,7 +466,7 @@ public final class CutoutUtil {
         boolean energyCutout = canEnergyCutout(c);
         boolean timeCutout = canTimeCutout(c);
         boolean polCutout = canPolarizationCutout(c);
-        boolean customCutout = canCustomCutout(c);
+        boolean customCutout = c.custom != null && canCustomCutout(c, c.custom.getAxis().getAxis().getCtype());
 
         return posCutout || energyCutout || timeCutout || polCutout || customCutout;
     }
@@ -589,11 +593,12 @@ public final class CutoutUtil {
     }
 
     // check if custom cutout is possible (currently function only)
-    protected static boolean canCustomCutout(Chunk c) {
+    protected static boolean canCustomCutout(Chunk c, String ctype) {
         boolean customCutout = (c.naxis != null && c.naxis.intValue() >= 1
             && c.custom != null && c.custom.getAxis().function != null
             && c.customAxis != null && c.customAxis.intValue() <= c.naxis.intValue()
             && c.custom.getAxis().getAxis().getCtype() != null
+            && c.custom.getAxis().getAxis().getCtype().equals(ctype)
         );
         return customCutout;
     }
@@ -966,11 +971,18 @@ public final class CutoutUtil {
                 throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
             }
 
-            // convert wcs to custom axis interval
+            // convert wcs to time axis interval
             Interval si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
 
-            double d1 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getLower());
-            double d2 = TimeUtil.val2pix(wcs, wcs.getAxis().function, si.getUpper());
+            // compute intersection
+            Interval inter = Interval.intersection(si, bounds);
+            if (inter == null) {
+                log.debug("bounds INTERSECT wcs.function == null");
+                return null;
+            }
+
+            double d1 = TimeUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
+            double d2 = TimeUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
 
             long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
