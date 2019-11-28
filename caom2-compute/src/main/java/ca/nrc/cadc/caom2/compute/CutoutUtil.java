@@ -202,7 +202,7 @@ public final class CutoutUtil {
                         long[] cut = getEnergyBounds(c.energy, energyInter);
                         if (nrgCut == null) {
                             nrgCut = cut;
-                            log.info("energy interval cut:" + cut);
+                            log.debug("energy interval cut:" + cut);
                         } else if (nrgCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
                                 nrgCut = cut;
@@ -365,15 +365,6 @@ public final class CutoutUtil {
                 doCut = false;
             }
 
-            if (obsCut != null) {
-                int i = sb.indexOf(OBS_CUT);
-                sb.replace(i, i + CUT_LEN, obsCut[0] + ":" + obsCut[1]);
-                String cs = sb.toString();
-                log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
-            } else {
-                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
-            }
-
             if (customCut != null) {
                 // cut.length==0 means circle contains all pixels
                 // cut.length==2 means interval picks a subset of pixels
@@ -391,6 +382,17 @@ public final class CutoutUtil {
                 log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no custom overlap");
                 doCut = false;
             }
+
+            if (obsCut != null) {
+                int i = sb.indexOf(OBS_CUT);
+                sb.replace(i, i + CUT_LEN, obsCut[0] + ":" + obsCut[1]);
+                String cs = sb.toString();
+                log.debug("observable cutout: " + a.getURI() + "," + p.getName() + ",Chunk: " + cs);
+            } else {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
+            }
+
+
 
             // for any axis in the data but not in the cutout: keep all pixels
             int i;
@@ -433,7 +435,6 @@ public final class CutoutUtil {
                 ret.add(sb.toString());
             }
         }
-        log.info("return string:" + ret);
         return ret;
     }
 
@@ -553,12 +554,13 @@ public final class CutoutUtil {
         if (pol) {
             sb.append(POL_CUT).append(",");
         }
-        if (obs) {
-            sb.append(OBS_CUT).append(",");
-        }
         if (cust) {
             sb.append(CUST_CUT).append(",");
         }
+        if (obs) {
+            sb.append(OBS_CUT).append(",");
+        }
+
         sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
         log.debug("cutout template: " + sb.toString());
         return sb;
@@ -814,7 +816,6 @@ public final class CutoutUtil {
 
             // compute intersection
             Interval inter = Interval.intersection(si, bounds);
-            //log.info("getBounds: intersection = " + inter);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;
@@ -845,7 +846,6 @@ public final class CutoutUtil {
         }
 
         if (wcs.getAxis().bounds != null) {
-            //log.info("getBounds: " + bounds);
             // find min and max sky coords
             double pix1 = Double.MAX_VALUE;
             double pix2 = Double.MIN_VALUE;
@@ -880,7 +880,6 @@ public final class CutoutUtil {
             Interval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
             // compute intersection
             Interval inter = Interval.intersection(bwmRange, bounds);
-            //log.info("getBounds: intersection = " + inter);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.range == null");
                 return null;
@@ -937,7 +936,6 @@ public final class CutoutUtil {
         if (wcs.getAxis().function != null) {
 
             CoordFunction1D func = wcs.getAxis().function;
-            log.info("\nfunc" + func);
 
             if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
                 throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
@@ -945,28 +943,24 @@ public final class CutoutUtil {
 
             // convert wcs to custom axis interval
             Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
-            log.info("si: " + si);
-            log.info("bound: " + bounds);
 
             // compute intersection
             Interval inter = Interval.intersection(si, bounds);
 
             if (inter == null) {
-                log.info("bounds INTERSECT wcs.function == null");
+                log.debug("bounds INTERSECT wcs.function == null");
                 return null;
             }
 
-            log.info("inter: " + inter);
-            log.info("interval upper/lower: " + inter.getLower() +", " + inter.getUpper());
+            log.debug("interval upper/lower: " + inter.getLower() +", " + inter.getUpper());
 
             double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
-            log.info("d1, d2: " + d1 + " " + d2);
+            log.debug("d1, d2: " + d1 + " " + d2);
 
             long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
             long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
-            log.info("x1, x2: " + x1 + " " + x2);
-            log.info("naxis long: " + wcs.getAxis().function.getNaxis().longValue());
+            log.debug("x1, x2: " + x1 + " " + x2);
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }

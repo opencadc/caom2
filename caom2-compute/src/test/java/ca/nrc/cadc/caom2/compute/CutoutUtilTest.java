@@ -92,6 +92,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -598,7 +599,7 @@ public class CutoutUtilTest {
 
 
     @Test
-    public void testCutoutCustom() {
+    public void testCutoutCustomSimple() {
         try {
             Chunk c = new Chunk();
             Assert.assertFalse(CutoutUtil.canCutout(c));
@@ -629,41 +630,89 @@ public class CutoutUtilTest {
             p.getChunks().add(c);
 
             // test a range of cutout requests to make sure templating is working correctly
+            // WCS has range of 200 to 400
             Interval inside = new Interval(210, 220);
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
-            Assert.assertTrue(cus.size() == 2);
-
+            Assert.assertTrue(cus.size() == 1);
+            String cutout = cus.get(0);
+            log.debug("inside cutout: " + cutout);
+            Assert.assertEquals("[0][11:20]", cutout);
 
             Interval outside_include = new Interval(100, 500);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_include);
             Assert.assertNotNull(cus);
 
+            Interval overlap_lower = new Interval(100, 250);
+            cus = CutoutUtil.computeCutout(a, null, null, null, null, overlap_lower);
+            Assert.assertNotNull(cus);
+            Assert.assertTrue(cus.size() == 1);
+            cutout = cus.get(0);
+            log.debug("overlap_lower cutout: " + cutout);
+            Assert.assertEquals("[0][1:50]", cutout);
+
+            Interval overlap_upper = new Interval(300, 550);
+            cus = CutoutUtil.computeCutout(a, null, null, null, null, overlap_upper);
+            Assert.assertNotNull(cus);
+            Assert.assertTrue(cus.size() == 1);
+            cutout = cus.get(0);
+            log.debug("overlap_upper cutout: " + cutout);
+            Assert.assertEquals("[0][101:200]", cutout);
+
+
             Interval outside_below = new Interval(100, 150);
-            log.info("outside below check: ");
             cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_below);
             Assert.assertNotNull(cus);
-            log.info("outside cutout: " + cus);
-            log.info("cutout size: " + cus.size());
+            log.debug("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
             Interval outside_above = new Interval(500, 650);
-            log.info("outside above check: ");
             cus = CutoutUtil.computeCutout(a, null, null, null, null, outside_above);
             Assert.assertNotNull(cus);
-            log.info("outside cutout: " + cus);
-            log.info("cutout size: " + cus.size());
+            log.debug("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
             // long [0] - matches boundary exactly
             Interval includes = new Interval(200.0, 400.0);
-            log.info("includes check : ");
             cus = CutoutUtil.computeCutout(a, null, null, null, null, includes);
             Assert.assertNotNull(cus);
-            log.info("includes cutout: " + cus);
+            Assert.assertTrue(cus.size() == 1);
+            cutout = cus.get(0);
+            log.debug("overlap_upper cutout: " + cutout);
+            Assert.assertEquals("[0][*]", cutout);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testCutoutCustom() {
+        try {
+            Chunk c = new Chunk();
+            c.naxis = 3;
+
+            c.energyAxis = 1;
+            c.energy = dataGenerator.mkGoodSpectralWCS();
+
+            c.positionAxis1 = 2;
+            c.position = dataGenerator.mkGoodSpatialWCS();
+
+            c.customAxis = 3;
+            c.custom = dataGenerator.mkGoodCustomWCS();
+
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Part p = new Part(0);
+            a.getParts().add(p);
+            p.getChunks().add(c);
+
+            // test a single cutout request to make sure templating is working correctly
+            // full suite of tests is in another function
+            Interval inside = new Interval(210, 220);
+            List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, inside);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
-            log.debug("custom cutout: " + cutout);
-            Assert.assertEquals("[0][*]", cutout);
+            Assert.assertEquals("[0][*,*,11:20]", cutout);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
