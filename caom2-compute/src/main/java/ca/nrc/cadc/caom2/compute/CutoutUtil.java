@@ -926,7 +926,7 @@ public final class CutoutUtil {
                 return null;
             }
 
-            log.debug("interval upper/lower: " + inter.getLower() +", " + inter.getUpper());
+            log.debug("interval upper/lower: " + inter.getLower() + ", " + inter.getUpper());
 
             double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
             double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
